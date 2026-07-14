@@ -4,7 +4,7 @@ _Phase 1 inventory snapshot — 2026-07-14. This document describes the current 
 
 ## Safety status
 
-The workspace is **not a Git repository**. Phase 0's baseline commit and manual smoke checklist do not exist, so this Phase 1 inventory cannot be committed or compared to a trustworthy historical baseline. No application code was changed while producing this map.
+The workspace is now tracked in Git with a merged baseline on `main`. The manual smoke gate is recorded in `docs/manual-smoke-checklist.md`. No application code was changed while producing the original Phase 1 inventory.
 
 ## Scale snapshot
 
@@ -233,4 +233,3 @@ npm run build
 npm run lint
 npm run test
 ```
-

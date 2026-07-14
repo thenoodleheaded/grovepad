@@ -25,13 +25,13 @@ import {
 // Detection
 // ---------------------------------------------------------------------------
 
-export interface StructuralLevel {
+interface StructuralLevel {
   count: number
   /** Singular noun for titles: "Topic", "Step"… */
   noun: string
 }
 
-export interface StructuralAttachment {
+interface StructuralAttachment {
   /** Explicit widget type, or the first of the study rotation when vague. */
   type: ModuleType
   /** Wrap the attachment and its host node in a real widget group. */
@@ -125,7 +125,7 @@ const SUBJECT_CATEGORIES: ReadonlyArray<[RegExp, string]> = [
   [/\b(programming|coding|javascript|typescript|python|rust|algorithms?)\b/i, 'coding'],
 ]
 
-export function studyWidgetsForSubject(subject: string): ModuleType[] {
+function studyWidgetsForSubject(subject: string): ModuleType[] {
   for (const [pattern, category] of SUBJECT_CATEGORIES) {
     if (pattern.test(subject)) return STUDY_WIDGETS[category]!
   }
@@ -273,7 +273,7 @@ function expandedNodeCount(levels: StructuralLevel[], attachments: StructuralAtt
  * literal request would exceed it, the deepest level is scaled down and a
  * visible warning explains exactly what changed. Never silently truncates.
  */
-export function buildStructuralPlan(spec: StructuralSpec, source: string): ThoughtPlan {
+function buildStructuralPlan(spec: StructuralSpec, source: string): ThoughtPlan {
   const warnings: ThoughtPlan['warnings'] = []
   const levels = spec.levels.map((level) => ({ ...level }))
 

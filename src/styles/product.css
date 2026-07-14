@@ -921,7 +921,7 @@ body[data-theme='light'][data-canvas-lod='far'] .gp-widget-card {
 }
 
 /* Type hierarchy (Article XVII) lives in the Widget Constitution enforcement
-   layer further down (.gp-label / .gp-value / .gp-hero / .gp-hero-unit). */
+   layer further down (.gp-label / .gp-value / .gp-hero). */
 
 /* One grid cell is 40px, so 8px is the hard 0.2-cell gap ceiling. */
 .gp-widget-content :is(.flex, .grid):has(> :is(.gp-subpanel, .gp-subdivision)) {
@@ -1224,20 +1224,6 @@ body[data-theme='light'][data-canvas-lod='far'] .gp-widget-card {
 
 [data-theme='light'] .gp-hero {
   filter: saturate(1.3) brightness(0.72);
-}
-
-/* Small muted unit riding a hero ("days", "%", "left"). */
-.gp-hero-unit {
-  font-size: 11.5px;
-  font-weight: 500;
-  letter-spacing: 0;
-  text-transform: none;
-  color: rgb(238 242 238 / .4);
-  margin-left: 5px;
-}
-
-[data-theme='light'] .gp-hero-unit {
-  color: rgb(23 31 26 / .5);
 }
 
 /* Radius constitution: repeated internal surfaces are 14px; controls, chips,

@@ -38,16 +38,3 @@ export function useCanvasWidgetIds(canvasId?: string): readonly string[] {
 export function useCanvasWidgetCount(canvasId?: string): number {
   return useCanvasWidgetIds(canvasId).length
 }
-
-export function useSubCanvasCount(parentCanvasId: string): number {
-  const structureVersion = useWidgetStore((state) => state.widgetStructureVersion)
-
-  return useMemo(() => {
-    void structureVersion
-    let count = 0
-    for (const canvas of Object.values(useWidgetStore.getState().canvases)) {
-      if (canvas.parentCanvasId === parentCanvasId) count++
-    }
-    return count
-  }, [parentCanvasId, structureVersion])
-}

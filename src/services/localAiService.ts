@@ -20,7 +20,7 @@ import {
 const ENABLED_KEY = 'grovepad:local-ai-enabled:v1'
 const CACHE_LIMIT = 24
 
-export type LocalAiPhase = 'heuristic'|'available'|'downloading'|'ready'|'thinking'|'error'|'unsupported'
+type LocalAiPhase = 'heuristic'|'available'|'downloading'|'ready'|'thinking'|'error'|'unsupported'
 export interface LocalAiStatus { phase:LocalAiPhase; tier:string; modelId:string|null; progress:number; message:string; enabled:boolean }
 export interface PredictionOptions { signal?:AbortSignal; allowModel?:boolean; mode?:'fast'|'deep'|'compose'; skeleton?:ThoughtPlan }
 interface StorageLike { getItem(key:string):string|null; setItem(key:string,value:string):void }

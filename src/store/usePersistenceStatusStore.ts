@@ -1,10 +1,10 @@
 import { create } from 'zustand'
 import type { PersistedBoard } from '../utils/persistence'
 
-export type SaveState = 'idle' | 'saving' | 'saved' | 'error'
-export type SyncState = 'guest' | 'saving' | 'synced' | 'error'
+type SaveState = 'idle' | 'saving' | 'saved' | 'error'
+type SyncState = 'guest' | 'saving' | 'synced' | 'error'
 
-export interface CloudConflict {
+interface CloudConflict {
   local: PersistedBoard
   cloud: PersistedBoard
   cloudUpdatedAt: string | null

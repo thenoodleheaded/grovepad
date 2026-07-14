@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import type { Size, Vector2D } from '../types/spatial'
 import { clampZoom } from '../types/spatial'
 
-export interface CanvasFitRect {
+interface CanvasFitRect {
   x: number
   y: number
   width: number

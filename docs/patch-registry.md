@@ -18,7 +18,7 @@ The diagnostic question for every fix remains: **where is the bad state produced
 
 | ID | Priority | Location | Suspicious spot | Symptom currently suppressed / risk created | Root direction |
 |---|---|---|---|---|---|
-| S-001 | P0 | Workspace root | No `.git` repository | There is no trustworthy baseline, reviewable diff, commit gate, or bisect path for later phases | Complete Phase 0 before deletions or structural moves |
+| S-001 | Resolved | Workspace root | Git baseline and phase gate | The project is tracked on `main`; build, lint, tests, and the manual smoke checklist form the phase gate | Keep the gate green and commit each phase independently |
 | S-002 | P1 | `useWidgetStore.ts` (3,501 lines) | One store owns nearly every board domain | Any board change requires loading and reasoning about unrelated history, layout, hierarchy, group, relation and widget logic | Split by domain with contract tests; move only in Phase 3 |
 | S-003 | P1 | `spatial.ts` (1,881 lines; fan-in 123) | One file is the universal type and constants hub | Almost every feature imports the same catalogue, increasing edit blast radius and cycle pressure | Split neutral primitives, canvas hierarchy, widget-data families and persistence schema |
 | S-004 | P1 | `fields.ts` / `registry.ts` | Root contracts and generated family implementations point at each other | Type-only cycles obscure the real runtime graph and make family extraction harder | Move `WidgetDefinition` and field contract types to dependency-neutral modules |
@@ -139,12 +139,11 @@ Summary: **15 Keep, 8 follow-up**. Only T-003, T-014 and T-020 are credible stat
 
 ## Recommended execution order after Phase 1
 
-1. **Complete Phase 0 first:** initialize Git deliberately, review `.gitignore`, record the green baseline, and add the manual smoke checklist.
+1. **Phase 0 complete:** Git baseline, reviewed ignore rules, green automated checks, and the manual smoke checklist are in place.
 2. **Phase 2 deletion:** K-001 and truly unused implementations first; remove only export modifiers for internally used values. Re-run Knip after every cluster.
 3. **Before Phase 3:** add tests around board hydration, history reset, persistence initialization, and widget removal animation races.
 4. **Phase 3 contracts:** extract persisted schema, registry contracts, field contracts, and neutral spatial primitives before moving store slices.
 5. **Phase 4 visuals:** share line renderer primitives and CSS layers without merging relation/dependency/wire semantics.
 6. **Phase 5 root heals:** T-020, T-014, T-003, then lifecycle hygiene entries.
 
-Every implementation phase should end with build, lint, tests, the manual smoke checklist, and a commit. That gate is currently unavailable until S-001 is resolved.
-
+Every implementation phase should end with build, lint, tests, the manual smoke checklist, and a commit.

@@ -19,7 +19,7 @@ import { commandsFor, fieldsFor } from '../widgets/fields'
  *  of the rounded corner (r0 = 26) so no port ever sits on the curve. */
 const RAIL_PADDING = 26
 /** How far a drop may land from a port and still latch onto it (world px). */
-export const PORT_HIT_RADIUS = 22
+const PORT_HIT_RADIUS = 22
 
 export interface PortSpec {
   /** Field key, or command key for command ports. */
@@ -101,7 +101,7 @@ export function findInputPort(type: ModuleType, key: string, kind: PortSpec['kin
  * card. That keeps every visual port and hit target on the side it belongs
  * to, even for automation widgets with many inputs.
  */
-export function portSpacing(height: number, count: number): number {
+function portSpacing(height: number, count: number): number {
   if (count <= 1) return 0
   const padding = Math.min(RAIL_PADDING, Math.max(0, height / 2))
   return Math.max(0, height - padding * 2) / (count - 1)

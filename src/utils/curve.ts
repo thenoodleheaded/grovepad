@@ -10,7 +10,7 @@ import type { Vector2D } from '../types/spatial'
  */
 export type CurveAxis = 'auto' | 'vertical'
 
-export interface CubicCurveGeometry {
+interface CubicCurveGeometry {
   start: Vector2D
   c1: Vector2D
   c2: Vector2D
@@ -81,13 +81,6 @@ function pointOnCubic(curve: CubicCurveGeometry, t: number): Vector2D {
   }
 }
 
-function sampleCubic(curve: CubicCurveGeometry, pointCount: number): Vector2D[] {
-  const count = Math.max(2, Math.floor(pointCount))
-  const points: Vector2D[] = []
-  for (let i = 0; i < count; i++) points.push(pointOnCubic(curve, i / (count - 1)))
-  return points
-}
-
 /** Cubic geometry shared by SVG rendering, hit testing, and obstacle routing. */
 function curvedGeometry(
   start: Vector2D,
@@ -102,16 +95,6 @@ function curvedGeometry(
 export function curvedPath(start: Vector2D, end: Vector2D, axis: CurveAxis = 'auto'): string {
   const { c1, c2 } = curvedGeometry(start, end, axis)
   return `M ${start.x} ${start.y} C ${c1.x} ${c1.y} ${c2.x} ${c2.y} ${end.x} ${end.y}`
-}
-
-/** Evenly sampled points on the relation curve. */
-export function curvedPoints(
-  start: Vector2D,
-  end: Vector2D,
-  axis: CurveAxis = 'auto',
-  pointCount = 6,
-): Vector2D[] {
-  return sampleCubic(curvedGeometry(start, end, axis), pointCount)
 }
 
 /**
@@ -241,9 +224,4 @@ function flowCurveGeometry(start: Vector2D, end: Vector2D): CubicCurveGeometry {
   const c1 = { x: start.x + reach, y: start.y }
   const c2 = { x: end.x - reach, y: end.y }
   return { start, c1, c2, end }
-}
-
-/** Evenly sampled points on the field-wire cubic. */
-export function flowCurvePoints(start: Vector2D, end: Vector2D, pointCount = 6): Vector2D[] {
-  return sampleCubic(flowCurveGeometry(start, end), pointCount)
 }
