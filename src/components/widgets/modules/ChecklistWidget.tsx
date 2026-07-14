@@ -2,7 +2,8 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Plus, X } from 'lucide-react'
 import type { ChecklistData } from '../../../types/spatial'
 import { useFieldAnchor } from '../../../hooks/useFieldAnchor'
-import { PANEL_EXIT_MS, WidgetPanel } from '../WidgetPanel'
+import { WidgetPanel } from '../WidgetPanel'
+import { withoutPanelItem } from '../panelRemoval'
 
 interface ChecklistWidgetProps {
   data: ChecklistData
@@ -20,8 +21,6 @@ export function ChecklistWidget({ data, onChange, onHeightChange }: ChecklistWid
   const inputRefs = useRef(new Map<string, HTMLInputElement>())
   const pendingFocusId = useRef<string | null>(null)
   const rootRef = useRef<HTMLDivElement>(null)
-  const latestItems = useRef(data.items)
-  latestItems.current = data.items
   const [removingIds, setRemovingIds] = useState<ReadonlySet<string>>(new Set())
   const doneCountRef = useFieldAnchor<HTMLSpanElement>('done_count')
   const allDoneRef = useFieldAnchor<HTMLSpanElement>('all_done')
@@ -45,17 +44,18 @@ export function ChecklistWidget({ data, onChange, onHeightChange }: ChecklistWid
   const setLabel = (id: string, label: string) =>
     onChange({ items: data.items.map((item) => (item.id === id ? { ...item, label } : item)) })
 
-  const removeItem = (id: string) => {
-    // Exit animation first; the data actually changes when it finishes.
+  const beginRemove = (id: string) => {
     setRemovingIds((prev) => new Set(prev).add(id))
-    setTimeout(() => {
-      setRemovingIds((prev) => {
-        const next = new Set(prev)
-        next.delete(id)
-        return next
-      })
-      onChange({ items: latestItems.current.filter((item) => item.id !== id) })
-    }, PANEL_EXIT_MS)
+  }
+
+  const finishRemove = (id: string) => {
+    setRemovingIds((prev) => {
+      if (!prev.has(id)) return prev
+      const next = new Set(prev)
+      next.delete(id)
+      return next
+    })
+    onChange({ items: withoutPanelItem(data.items, id) })
   }
 
   const insertAfter = (index: number) => {
@@ -76,7 +76,7 @@ export function ChecklistWidget({ data, onChange, onHeightChange }: ChecklistWid
       e.preventDefault()
       const neighbor = data.items[index - 1] ?? data.items[index + 1]
       if (neighbor) pendingFocusId.current = neighbor.id
-      removeItem(item.id)
+      beginRemove(item.id)
     }
   }
 
@@ -89,6 +89,7 @@ export function ChecklistWidget({ data, onChange, onHeightChange }: ChecklistWid
         <WidgetPanel
           key={item.id}
           removing={removingIds.has(item.id)}
+          onExitComplete={() => finishRemove(item.id)}
           island={item.id}
           sizing="width"
           className="group/row flex h-8 items-center gap-2 px-2.5 pr-4"
@@ -138,7 +139,7 @@ export function ChecklistWidget({ data, onChange, onHeightChange }: ChecklistWid
           <button
             type="button"
             aria-label="Remove task"
-            onClick={() => removeItem(item.id)}
+            onClick={() => beginRemove(item.id)}
             className="shrink-0 text-neutral-700 opacity-0 transition-opacity hover:text-red-400 group-hover/row:opacity-100"
           >
             <X size={11} />

@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState, type ReactNode } from 'react'
+import { useLayoutEffect, useRef, type ReactNode } from 'react'
 import {
   ArrowLeftRight,
   Check,
@@ -41,6 +41,7 @@ import type {
 } from '../../../types/spatial'
 import { GRID_SIZE } from '../../../types/spatial'
 import { useFieldAnchor } from '../../../hooks/useFieldAnchor'
+import { useTransientValue } from '../../../hooks/useTransientValue'
 import { WidgetPanel } from '../WidgetPanel'
 
 const inputClass =
@@ -1364,7 +1365,7 @@ export function UnitConverterWidget({
 }) {
   const inputRef = useFieldAnchor<HTMLDivElement>('input')
   const outputRef = useFieldAnchor<HTMLDivElement>('output')
-  const [copied, setCopied] = useState(false)
+  const [copied, showCopied] = useTransientValue(false)
   const output = convertUnit(data)
   const precision = clamp(Math.round(data.precision), 0, 8)
   const formatted = Number.isFinite(output) ? Number(output.toFixed(precision)).toString() : '0'
@@ -1375,8 +1376,7 @@ export function UnitConverterWidget({
   }
   const copy = () => {
     void navigator.clipboard?.writeText(formatted)
-    setCopied(true)
-    window.setTimeout(() => setCopied(false), 900)
+    showCopied(true, 900)
   }
 
   return (

@@ -176,11 +176,21 @@ export function runWave(input: WaveInput): WaveResult {
 // no timers, no missed changes.
 // ---------------------------------------------------------------------------
 
-let engineStarted = false
+let activeCircuitDispose: (() => void) | null = null
 
-export function initCircuitEngine(): void {
-  if (engineStarted) return
-  engineStarted = true
+export function initCircuitEngine(): () => void {
+  if (activeCircuitDispose) return activeCircuitDispose
+  let disposed = false
+  let cleanup: (() => void) | null = null
+
+  const dispose = () => {
+    if (disposed) return
+    disposed = true
+    cleanup?.()
+    cleanup = null
+    if (activeCircuitDispose === dispose) activeCircuitDispose = null
+  }
+  activeCircuitDispose = dispose
 
   // Deferred imports keep the pure wave core dependency-free for tests.
   void Promise.all([
@@ -189,6 +199,7 @@ export function initCircuitEngine(): void {
     import('./automationExecutor'),
     import('../store/useToastStore'),
   ]).then(([{ useWidgetStore }, { useCircuitStore }, { executeAutomationWidget }, { useToastStore }]) => {
+    if (disposed) return
     let prevWidgets = useWidgetStore.getState().widgets
     let prevConnections = useWidgetStore.getState().connections
     let index = buildConnectionIndex(prevConnections)
@@ -301,12 +312,12 @@ export function initCircuitEngine(): void {
       }
     }
 
-    useWidgetStore.subscribe(process)
+    const unsubscribe = useWidgetStore.subscribe(process)
     process()
 
     // Minute-class heartbeat for time-sensitive source fields (countdowns,
     // due dates). Zero wires with such sources → the tick exits immediately.
-    window.setInterval(() => {
+    const heartbeat = window.setInterval(() => {
       if (document.visibilityState === 'hidden') return
       const state = useWidgetStore.getState()
       const sources = timeSensitiveSourceIds(state.connections, state.widgets)
@@ -314,13 +325,27 @@ export function initCircuitEngine(): void {
       for (const id of sources) forcedSeeds.add(id)
       process()
     }, 30_000)
-    document.addEventListener('visibilitychange', () => {
+    const refreshVisibleSources = () => {
       if (document.visibilityState !== 'visible') return
       const state = useWidgetStore.getState()
       for (const id of timeSensitiveSourceIds(state.connections, state.widgets)) forcedSeeds.add(id)
       process()
-    })
+    }
+    document.addEventListener('visibilitychange', refreshVisibleSources)
+    cleanup = () => {
+      unsubscribe()
+      window.clearInterval(heartbeat)
+      document.removeEventListener('visibilitychange', refreshVisibleSources)
+    }
+    if (disposed) {
+      cleanup()
+      cleanup = null
+    }
+  }).catch((error: unknown) => {
+    if (!disposed) console.error('Circuit engine failed to start:', error)
   })
+
+  return dispose
 }
 
 /** Source widget-ids of wires whose source field re-reads on the clock. */

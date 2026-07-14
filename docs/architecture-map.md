@@ -45,7 +45,7 @@ flowchart TD
   Canvas --> Layers["Canvas layers\ngrid, groups, widgets, relations, dependencies, wires"]
   Canvas --> UI["UI overlays\ntoolbar, quick add, picker, search, import"]
   Canvas --> Events["useCanvasEvents\npan, zoom, select, touch"]
-  Canvas --> Runtime["Runtime services\npersistence + circuit engine"]
+  Canvas --> Runtime["appRuntime boundary\npersistence + circuit engine"]
 
   Layers --> WidgetCard["WidgetCard\ninteraction shell"]
   WidgetCard --> Renderer["WidgetRenderer\nlazy type dispatch"]
@@ -78,7 +78,7 @@ flowchart TD
 
 1. `main.tsx` loads `index.css`, then `styles/product.css`, mounts the root error boundary, and renders `App`.
 2. `App.tsx` waits for `useAuthStore`, then lazily selects either login or canvas.
-3. Importing `CanvasViewport.tsx` calls `initPersistence(useWidgetStore, useCanvasStore)` and `initCircuitEngine()` at module scope.
+3. Mounting `CanvasViewport` starts `runtime/appRuntime.ts`; unmount, StrictMode replay, and HMR dispose persistence subscriptions and circuit listeners explicitly.
 4. `useWidgetStore` constructs its initial state from `loadPersistedBoard()`; `initPersistence` can later replace it with IndexedDB/cloud state.
 5. `CanvasViewport` composes every canvas layer, global overlay, and runtime helper.
 6. `WidgetLayer` culls/LOD-selects cards; each `WidgetCard` owns drag, scale-state, focus-mode, title chrome, ports, and renderer dispatch.
@@ -92,6 +92,7 @@ flowchart TD
 | Camera | `useCanvasStore.ts`, `useCanvasEvents.ts`, `canvasView.ts` | Pan, zoom, viewport size, camera history | Widget geometry persistence |
 | Canonical board | `useWidgetStore.ts`, `store/slices/*Slice.ts` | Widgets, relations, connections, groups, hierarchy, selection, undo | Render-only animation state |
 | Circuit runtime | `circuitEngine.ts`, `useCircuitStore.ts`, `transforms.ts` | Deterministic propagation, delivery memory, wire-drag/runtime feedback | Widget renderer details |
+| Application runtime | `runtime/appRuntime.ts` | Idempotent start/stop ownership for persistence and circuit services | Domain behavior or visual rendering |
 | Widget definition | `registry.ts`, `registry/*`, `widgets/contracts/registry.ts` | Metadata, defaults, sizing, packs | Live widget state |
 | Field definition | `fields.ts`, `fields/*`, `widgets/contracts/fields.ts` | Read/write fields, commands, semantic units | Canvas drawing |
 | Widget rendering | `WidgetCard.tsx`, `WidgetRenderer.tsx`, `modules/*` | Card interaction shell and typed content | Persistence orchestration |
@@ -172,10 +173,10 @@ sequenceDiagram
     P->>C: lazy import and reconcile/push
     C-->>P: cloud board or status/error
   end
-  Note over P: pagehide/hidden flushes pending saves
+  Note over P: pagehide/hidden flushes; runtime disposal removes subscriptions and listeners
 ```
 
-`PersistedBoard` lives in `types/persistence.ts`, while validation and migration live in `persistedBoardSchema.ts`. IndexedDB, cloud sync, status, and the store consume those neutral modules without importing the persistence orchestrator.
+`PersistedBoard` lives in `types/persistence.ts`, while validation and migration live in `persistedBoardSchema.ts`. IndexedDB, cloud sync, status, and the store consume those neutral modules without importing the persistence orchestrator. `initPersistence` owns and disposes every subscription, DOM listener, and pending saver it creates.
 
 ## Dependency graph status
 

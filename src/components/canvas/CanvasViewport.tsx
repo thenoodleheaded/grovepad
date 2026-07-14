@@ -9,9 +9,9 @@ import { useCanvasEvents } from '../../hooks/useCanvasEvents'
 import { GRID_SIZE, screenToWorld } from '../../types/spatial'
 import type { Widget } from '../../types/spatial'
 import { boundsForWidgets } from '../../utils/widgetBounds'
-import { initPersistence } from '../../utils/persistence'
 import { stagePendingImport } from '../../utils/pendingImport'
 import { writeMediaBlob } from '../../utils/boardDatabase'
+import { startAppRuntime } from '../../runtime/appRuntime'
 import { GhostTreeShaper } from './GhostTreeShaper'
 import { QuickAddPreviewLayer } from './QuickAddPreviewLayer'
 import { GridLayer } from './GridLayer'
@@ -20,7 +20,6 @@ import { RelationLines } from './RelationLines'
 import { DependencyLines } from './DependencyLines'
 import { WireLayer } from './WireLayer'
 import { AutomationRuntime } from './AutomationRuntime'
-import { initCircuitEngine } from '../../engine/circuitEngine'
 import { useCircuitStore } from '../../store/useCircuitStore'
 import { useFocusStore } from '../../store/useFocusStore'
 import { GroupLayer } from '../widgets/GroupLayer'
@@ -62,11 +61,6 @@ const AiDebugPanel = AI_DEBUG_ENABLED
       import('./AiDebugPanel').then((module) => ({ default: module.AiDebugPanel })),
     )
   : null
-
-// The canvas is a lazy route. Restore its saved camera and attach persistence
-// here so the login route never pays to parse the board/store/registry graph.
-initPersistence(useWidgetStore, useCanvasStore)
-initCircuitEngine()
 
 if (import.meta.env.DEV) {
   Object.assign(window, { __grovepad: { useWidgetStore, useCanvasStore, useAiDebugStore, useCircuitStore } })
@@ -118,6 +112,12 @@ const LOD_FAR_EXIT = 0.45
 const RELATION_OUTLINE_SCREEN_PX = 2
 
 export function CanvasViewport() {
+  useEffect(() => {
+    // The canvas is a lazy route, so login never starts board persistence or
+    // circuit listeners. StrictMode/HMR can tear this boundary down safely.
+    const disposeRuntime = startAppRuntime()
+    return disposeRuntime
+  }, [])
   const viewportRef = useRef<HTMLDivElement>(null)
   const worldRef = useRef<HTMLDivElement>(null)
 

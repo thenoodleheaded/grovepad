@@ -379,7 +379,7 @@ function dataFor(type: ModuleType, source: string, lines: ParsedLine[]): ModuleD
   const percent = source.match(/(\d+(?:\.\d+)?)\s*%/)
   switch (type) {
     case 'checklist': return { items: lines.map((line) => ({ id: uid(), label: line.text, done: line.checked ?? false })) }
-    case 'bullets': return { items: titleLines }
+    case 'bullets': return { items: titleLines.map((text) => ({ id: uid(), text })) }
     case 'links': return { items: (source.match(URL) ?? []).map((url) => ({ id: uid(), label: url.replace(/^https?:\/\//, '').split('/')[0]!, url })) }
     case 'code': {
       const fenced = source.match(/```([^\n]*)\n?([\s\S]*?)```/)

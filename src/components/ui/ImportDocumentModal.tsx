@@ -568,7 +568,10 @@ function formatHydrationData(type: string, rawData: any) {
       };
     case 'bullets':
       return {
-        items: (rawData.items || []).map((s: any) => String(s || '')).filter(Boolean)
+        items: (rawData.items || [])
+          .map((value: any) => String(value || '').trim())
+          .filter(Boolean)
+          .map((text: string) => ({ id: crypto.randomUUID(), text }))
       };
     case 'quote':
       return {

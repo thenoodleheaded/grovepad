@@ -89,6 +89,36 @@ describe('persisted board schema', () => {
     expect(parsePersistedBoard(source)?.canvasViews.canvas?.zoom).toBe(3)
   })
 
+  it('upgrades legacy bullet strings to stable item ids', () => {
+    const source = validBoard()
+    source.widgets.alpha = {
+      ...source.widgets.alpha!,
+      type: 'bullets',
+      data: { items: ['First', 'Second'] },
+    } as unknown as PersistedBoard['widgets'][string]
+
+    expect(parsePersistedBoard(source)?.widgets.alpha?.data).toEqual({
+      items: [
+        { id: 'alpha:bullet:0', text: 'First' },
+        { id: 'alpha:bullet:1', text: 'Second' },
+      ],
+    })
+  })
+
+  it('resets an interrupted generator request during hydration', () => {
+    const source = validBoard()
+    source.widgets.alpha = {
+      ...source.widgets.alpha!,
+      type: 'ai_generator',
+      data: { prompt: 'Build a launch plan', status: 'generating' },
+    } as unknown as PersistedBoard['widgets'][string]
+
+    expect(parsePersistedBoard(source)?.widgets.alpha?.data).toEqual({
+      prompt: 'Build a launch plan',
+      status: 'idle',
+    })
+  })
+
   it('migrates a flat v1 widget into a valid workspace and canvas', () => {
     const source = validBoard()
     const legacyWidget = { ...source.widgets.alpha!, canvasId: undefined }

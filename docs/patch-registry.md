@@ -22,14 +22,14 @@ The diagnostic question for every fix remains: **where is the bad state produced
 | S-002 | Resolved | `useWidgetStore.ts` + `store/slices/` | Store actions are split by navigation, creation, layout, circuit, groups, selection and UI/linking | The facade is 318 lines and each slice is below 400 lines | Keep new actions in their owning slice |
 | S-003 | Resolved | `types/spatial.ts` + domain type modules | Canvas, relation, workspace, module and widget-data domains are separate | The compatibility facade is 156 lines; every new type file is below 400 lines | Import neutral domain contracts directly in new infrastructure |
 | S-004 | Resolved | `widgets/contracts/` | Registry and field contracts are dependency-neutral | Family modules no longer import their root implementation for types | Keep contracts free of family implementation imports |
-| S-005 | P1 | `CanvasViewport.tsx` | Composition root also starts persistence and circuit services at module scope | HMR/re-import can multiply listeners because persistence has no initialization guard; routing and runtime lifecycle are fused | Add an application runtime boundary with explicit init/dispose |
-| S-006 | In progress | `persistence.ts`, `persistedBoardSchema.ts`, `types/persistence.ts` | Schema and validation are now neutral; scheduling and reconciliation remain together | Adapter back-edges are gone, while runtime lifecycle work remains for Phase 5 | Split runtime lifecycle only with initialization/disposal tests |
+| S-005 | Resolved | `runtime/appRuntime.ts`, `CanvasViewport.tsx` | Canvas mount owns one application runtime boundary | StrictMode/HMR teardown is explicit and idempotent | Keep service startup out of component-module scope |
+| S-006 | Resolved | `persistence.ts`, `persistedBoardSchema.ts`, `types/persistence.ts` | Schema/validation are neutral and the persistence runtime returns a disposer | Scheduling, reconciliation, subscriptions and DOM listeners have one owned lifetime | Keep initialization/disposal tests green when adding adapters |
 | S-007 | Resolved | `CanvasEdge.tsx`, `canvasEdgePolicy.ts`, three semantic layers | SVG paint order, viewport shell, hit path, detail thresholds, corridor culling and interaction CSS are shared | Relation, dependency and wire geometry/semantics remain independent while visual infrastructure changes once | Keep endpoint policy and menus in each semantic owner |
 | S-008 | P2 | `index.css` + `styles/product.css` (2,700 lines) | Two unlayered global stylesheets load in order | Cascade ownership is implicit; later rules can silently override earlier contracts | Introduce explicit CSS layers/tokens, then migrate by subsystem |
 | S-009 | P1 | `WidgetRenderer.tsx` (fan-out 60) | Central exhaustive dispatcher knows every concrete renderer and data type | Adding or moving one widget touches a global switch; lazy imports help startup but not authorship coupling | Generate dispatch from per-family renderer maps after type split |
-| S-010 | P1 | UI/widgets/hooks tests | No direct tests under `components/ui`, widget modules, or hooks | Visual and lifecycle refactors rely on manual testing; timeout/unmount races have no automated guard | Add focused interaction tests before Phase 4/5 changes |
-| S-011 | P2 | `circuitEngine.ts:309` | Module-lifetime interval and visibility listener have no disposer | Safe in one production boot, but dev HMR/tests cannot clean the runtime up | Return/store a disposer from engine initialization |
-| S-012 | P2 | `persistence.ts:473` | `initPersistence` has no one-shot guard or disposer | Re-import/HMR can create duplicate subscriptions and global listeners | Make initialization idempotent and expose teardown |
+| S-010 | In progress | UI/widgets/hooks tests | Phase 5 adds generation cancellation, stable removal, owned-timeout, flash and runtime-boundary tests | Critical lifecycle races now have deterministic guards; broader visual interaction coverage remains | Add direct interaction coverage opportunistically per widget |
+| S-011 | Resolved | `circuitEngine.ts` | Engine initialization is one-shot and returns an idempotent disposer | Subscription, heartbeat interval and visibility listener share one lifetime | Keep the pure wave core independent from runtime tests |
+| S-012 | Resolved | `persistence.ts` | Initialization is one-shot and returns an idempotent disposer | Store subscriptions, auth subscription, pending savers and DOM listeners are all released | New persistence resources must join the disposer |
 
 ## Knip findings
 
@@ -93,7 +93,7 @@ There are 23 call sites, not the earlier estimate of 26.
 |---|---|---|---|---|
 | T-001 | Keep | `useToastStore.ts:26` | Auto-dismiss toast | Legitimate UI lifetime; id-based removal is idempotent |
 | T-002 | Keep | `useWidgetStore.ts:1294` | Fresh-spawn animation TTL | Legitimate module-lifetime cache; no sequencing dependency |
-| T-003 | P2 | `useWidgetStore.ts:1932` | Clear widget flash after 1.5s | Re-flashing the same id before the first timer fires lets the older timer clear the newer flash; use a token/deadline or owned timer |
+| T-003 | Resolved | `widgetCreationSlice.ts` | Clear widget flash after 1.5s | The slice owns one replaceable timer, so a newer flash receives its full lifetime |
 | T-004 | Keep | `automationExecutor.ts:39` | Terminate runaway script worker | Required hard safety deadline; cleared on message/error |
 | T-005 | Keep | `webLlmAdapter.ts:104` | Detect worker finalization stall | Required bounded failure path; cleared in `finally` |
 | T-006 | Keep | `webLlmAdapter.ts:323` | Bound model generation | Required request deadline; interrupts engine and clears in `finally` |
@@ -102,20 +102,20 @@ There are 23 call sites, not the earlier estimate of 26.
 | T-009 | Keep | `persistence.ts:434` | Idle-callback fallback | Zero-delay task scheduling, not a race workaround; owned by saver cancellation |
 | T-010 | Keep | `useSharedClock.ts:27` | Schedule next shared subscriber tick | Efficient visibility-aware scheduler; timer is centrally owned |
 | T-011 | Keep | `DecisionWidget.tsx:45` | Eased roulette animation | Presentation timeline with unmount cleanup |
-| T-012 | P3 | `GhostTreeShaper.tsx:44` | Hold removed ghost nodes for exit animation | Previous timer is cleared, but component unmount has no cleanup; own timer in an effect cleanup |
+| T-012 | Resolved | `GhostTreeShaper.tsx` | Hold removed ghost nodes for exit animation | The existing replaceable timer is now cleared on unmount |
 | T-013 | Keep | `QuickAddPreviewLayer.tsx:178` | Hold departing preview chips | Presentation lifetime with effect cleanup |
-| T-014 | P1 | `BulletsWidget.tsx:42` | Delay deletion until panel animation ends | Index identity can shift during the delay, concurrent removal resets all flags, and no timer is owned; give bullets stable ids and finalize by id/transition lifecycle |
+| T-014 | Resolved | `BulletsWidget.tsx`, `panelRemoval.ts` | Animate bullet removal | Persisted stable ids and transition completion remove exactly the intended item |
 | T-015 | Keep | `GroupPlate.tsx:64` | Hold group drop morph for CSS transition | Explicit animation lifetime with cleanup |
 | T-016 | Keep | `ColorPaletteWidget.tsx:40` | Clear copy acknowledgement | Timer is owned, replaced, and cleaned on unmount |
 | T-017 | Keep | `QuickAddSheet.tsx:235` | Debounce fast local-model enrichment | Intentional settled-text threshold; timer cleanup and AbortController prevent stale application |
 | T-018 | Keep | `QuickAddSheet.tsx:342` | Debounce deep compose model | Intentional higher-cost threshold; timer cleanup and AbortController are present |
-| T-019 | P2 | `ChecklistWidget.tsx:51` | Delay deletion until panel animation ends | Stable ids avoid the Bullets bug, but an unowned timer can call `onChange` after widget unmount; centralize panel-exit completion/cancellation |
-| T-020 | P1 | `AiGeneratorWidget.tsx:45` | Pretend generation latency, then spawn canned notes | The delay is the implementation: it masks the absence of a real generator contract and can create output after context changed; replace with a real service/action or clearly reclassify as a template widget |
-| T-021 | P3 | `EssentialWidgets.tsx:1379` | Clear converter copy acknowledgement | No timer ownership/cleanup; use shared copied-state hook or owned timer |
-| T-022 | P3 | `CitationWidget.tsx:39` | Clear citation copy acknowledgement | Conditional state reset is stale-safe, but timer is not cleaned on unmount |
-| T-023 | P3 | `CodeWidget.tsx:19` | Clear code-copy acknowledgement | Timer is not cleaned and repeated copies can clear the newest acknowledgement early |
+| T-019 | Resolved | `ChecklistWidget.tsx`, `WidgetPanel.tsx` | Animate checklist removal | Stable ids finalize from the CSS transition with no post-unmount timer |
+| T-020 | Resolved | `widgetGeneration.ts`, `AiGeneratorWidget.tsx` | Generate structured canvas output | The widget calls the real deterministic/local-AI plan service; in-flight state is transient, while cancellation and parent deletion prevent stale commits |
+| T-021 | Resolved | `EssentialWidgets.tsx`, `useTransientValue.ts` | Clear converter copy acknowledgement | Shared owned timeout replaces older acknowledgements and disposes on unmount |
+| T-022 | Resolved | `CitationWidget.tsx`, `useTransientValue.ts` | Clear citation copy acknowledgement | Shared owned timeout replaces older acknowledgements and disposes on unmount |
+| T-023 | Resolved | `CodeWidget.tsx`, `useTransientValue.ts` | Clear code-copy acknowledgement | Shared owned timeout replaces older acknowledgements and disposes on unmount |
 
-Summary: **15 Keep, 8 follow-up**. Only T-003, T-014 and T-020 are credible state/behavior patches; the remaining follow-ups are lifecycle hygiene.
+Summary after Phase 5: **15 Keep, 8 resolved**. The three state/behavior root heals and all five lifecycle hygiene entries have deterministic ownership.
 
 ## Other suspicious guards and lifecycle spots
 
@@ -136,6 +136,6 @@ Summary: **15 Keep, 8 follow-up**. Only T-003, T-014 and T-020 are credible stat
 3. **Before Phase 3:** add tests around board hydration, history reset, persistence initialization, and widget removal animation races.
 4. **Phase 3 contracts:** extract persisted schema, registry contracts, field contracts, and neutral spatial primitives before moving store slices.
 5. **Phase 4 visuals:** share line renderer primitives and CSS layers without merging relation/dependency/wire semantics.
-6. **Phase 5 root heals:** T-020, T-014, T-003, then lifecycle hygiene entries.
+6. **Phase 5 complete:** T-020, T-014, T-003 and every lifecycle hygiene entry are resolved behind tested ownership boundaries.
 
 Every implementation phase should end with build, lint, tests, the manual smoke checklist, and a commit.

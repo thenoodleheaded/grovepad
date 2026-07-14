@@ -1,7 +1,7 @@
 import { Copy, Plus, X } from 'lucide-react'
-import { useState } from 'react'
 import type { CitationData, CitationSource, CitationStyle } from '../../../types/spatial'
 import { useFieldAnchor } from '../../../hooks/useFieldAnchor'
+import { useTransientValue } from '../../../hooks/useTransientValue'
 
 interface CitationWidgetProps {
   data: CitationData
@@ -21,7 +21,7 @@ function formatSource(style: CitationStyle, s: CitationSource): string {
 }
 
 export function CitationWidget({ data, onChange }: CitationWidgetProps) {
-  const [copiedId, setCopiedId] = useState<string | null>(null)
+  const [copiedId, showCopiedId] = useTransientValue<string | null>(null)
   const countRef = useFieldAnchor<HTMLSpanElement>('count')
 
   const setSource = (id: string, patch: Partial<CitationSource>) =>
@@ -35,8 +35,7 @@ export function CitationWidget({ data, onChange }: CitationWidgetProps) {
 
   const copy = (s: CitationSource) => {
     navigator.clipboard?.writeText(formatSource(data.style, s)).then(() => {
-      setCopiedId(s.id)
-      setTimeout(() => setCopiedId((c) => (c === s.id ? null : c)), 1100)
+      showCopiedId(s.id, 1100)
     })
   }
 

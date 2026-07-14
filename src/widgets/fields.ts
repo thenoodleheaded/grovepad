@@ -417,7 +417,7 @@ const WIDGET_FIELDS: Partial<Record<ModuleType, FieldDescriptor[]>> = {
       label: 'Items',
       valueType: 'number',
       unit: 'count',
-      get: (d) => (d as BulletsData).items.filter((i) => i.trim()).length,
+      get: (d) => (d as BulletsData).items.filter((item) => item.text.trim()).length,
     },
   ],
   table: [
@@ -1372,7 +1372,10 @@ const WIDGET_COMMANDS: Partial<Record<ModuleType, CommandDescriptor[]>> = {
       label: 'Add bullet from wire',
       acceptsPayload: true,
       run: (d, payload) => ({
-        items: [...(d as BulletsData).items, text(payload ?? '').trim() || 'New item'],
+        items: [
+          ...(d as BulletsData).items,
+          { id: crypto.randomUUID(), text: text(payload ?? '').trim() || 'New item' },
+        ],
       }),
     },
   ],

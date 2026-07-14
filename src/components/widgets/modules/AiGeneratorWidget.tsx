@@ -1,6 +1,8 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Sparkles } from 'lucide-react'
+import { generateWidgetOutput } from '../../../services/widgetGeneration'
 import { useWidgetStore } from '../../../store/useWidgetStore'
+import { useToastStore } from '../../../store/useToastStore'
 import type { AiGeneratorData } from '../../../types/spatial'
 import { useFieldAnchor } from '../../../hooks/useFieldAnchor'
 
@@ -28,39 +30,51 @@ function GeneratingDots() {
 export function AiGeneratorWidget({ data, widgetId, onChange }: AiGeneratorWidgetProps) {
   const dataRef = useRef(data)
   dataRef.current = data
-  const timeoutRef = useRef<number | null>(null)
+  const requestRef = useRef<AbortController | null>(null)
+  const mountedRef = useRef(false)
+  const [isGenerating, setIsGenerating] = useState(false)
   const promptRef = useFieldAnchor<HTMLTextAreaElement>('prompt')
   const doneRef = useFieldAnchor<HTMLButtonElement>('done')
 
-  useEffect(
-    () => () => {
-      if (timeoutRef.current !== null) window.clearTimeout(timeoutRef.current)
-    },
-    [],
-  )
+  useEffect(() => {
+    mountedRef.current = true
+    return () => {
+      mountedRef.current = false
+      requestRef.current?.abort()
+    }
+  }, [])
 
-  const generate = () => {
-    if (!dataRef.current.prompt.trim()) return
-    onChange({ ...dataRef.current, status: 'generating' })
-    timeoutRef.current = window.setTimeout(() => {
-      onChange({ ...dataRef.current, status: 'done' })
+  const generate = async () => {
+    const prompt = dataRef.current.prompt.trim()
+    if (!prompt) return
+    requestRef.current?.abort()
+    const controller = new AbortController()
+    requestRef.current = controller
+    setIsGenerating(true)
+    if (dataRef.current.status !== 'idle') {
+      onChange({ ...dataRef.current, status: 'idle' })
+    }
 
-      const store = useWidgetStore.getState()
-      const parent = store.widgets[widgetId]
-      if (parent) {
-        const spawnX = parent.position.x + parent.size.width + 80
-        const spawnY = parent.position.y
-        const childTitle = `Generated: ${dataRef.current.prompt.trim().slice(0, 32) || 'Output'}`
-        const childId = store.createWidget(childTitle, { x: spawnX, y: spawnY }, 'notes')
-        store.updateWidgetData(childId, {
-          text: `AI output for: "${dataRef.current.prompt}"\n\n1. Analyze the core logic.\n2. Verify the interfaces.\n3. Run validation.`,
-        })
-        store.addRelation(widgetId, childId, 'parent')
+    try {
+      const created = await generateWidgetOutput(widgetId, prompt, controller.signal)
+      // The commit itself is the acceptance boundary. It may change layout
+      // enough to remount this renderer; once cards exist, still clear the
+      // persisted generating state through the store-backed onChange action.
+      onChange({ prompt, status: 'done' })
+      useToastStore.getState().addToast(
+        created.length === 1 ? 'Generated 1 card' : `Generated ${created.length} cards`,
+        { action: { label: 'Undo', run: () => useWidgetStore.getState().undo() } },
+      )
+    } catch {
+      if (!controller.signal.aborted) {
+        useToastStore.getState().addToast('Generation could not finish — your prompt is unchanged')
       }
-    }, 1200)
+    } finally {
+      if (requestRef.current === controller) requestRef.current = null
+      if (mountedRef.current) setIsGenerating(false)
+    }
   }
 
-  const isGenerating = data.status === 'generating'
   const isDone = data.status === 'done'
 
   return (
@@ -76,7 +90,7 @@ export function AiGeneratorWidget({ data, widgetId, onChange }: AiGeneratorWidge
         onKeyDown={(e) => {
           if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
             e.preventDefault()
-            if (!isGenerating) generate()
+            if (!isGenerating) void generate()
           }
         }}
         className="flex-1 w-full resize-none rounded-lg border gp-hairline bg-neutral-800/30 px-3 py-2.5 text-[13px] leading-[1.55] text-neutral-200 outline-none transition-colors placeholder:text-neutral-700 gp-hairline-focus focus:bg-neutral-800/50 disabled:opacity-50"
@@ -87,7 +101,7 @@ export function AiGeneratorWidget({ data, widgetId, onChange }: AiGeneratorWidge
         ref={doneRef}
         type="button"
         disabled={isGenerating || !data.prompt.trim()}
-        onClick={generate}
+        onClick={() => void generate()}
         className={`flex h-9 w-full shrink-0 items-center justify-center gap-2 rounded-lg text-[12px] font-semibold transition-all ${
           isGenerating
             ? 'border border-violet-500/30 bg-violet-500/10 text-violet-400 cursor-default'

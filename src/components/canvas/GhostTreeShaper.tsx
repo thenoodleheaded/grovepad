@@ -30,6 +30,10 @@ function ActiveGhostTree({ config }: { config: GhostTreeConfig }) {
   const exitTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [exitingNodes, setExitingNodes] = useState<GhostTreeNode[]>([])
 
+  useEffect(() => () => {
+    if (exitTimer.current) clearTimeout(exitTimer.current)
+  }, [])
+
   useLayoutEffect(() => {
     const live = new Set(config.nodes.map((node) => node.id))
     const removed = previousNodes.current.filter((node) => !live.has(node.id))

@@ -114,6 +114,7 @@ function writeStorage(key: string, value: unknown): void {
 interface DebouncedSaver {
   schedule: () => void
   flush: () => void
+  cancel: () => void
 }
 
 function debouncedSaver(delayMs: number, save: () => void): DebouncedSaver {
@@ -163,6 +164,10 @@ function debouncedSaver(delayMs: number, save: () => void): DebouncedSaver {
       cancelScheduled()
       run()
     },
+    cancel: () => {
+      pending = false
+      cancelScheduled()
+    },
   }
 }
 
@@ -186,6 +191,7 @@ export function buildBoardSnapshot(state: PersistedBoard): PersistedBoard {
 }
 
 let conflictResolver: ((choice: 'local' | 'cloud') => void) | null = null
+let activePersistenceDispose: (() => void) | null = null
 
 export function resolveCloudConflict(choice: 'local' | 'cloud'): void {
   conflictResolver?.(choice)
@@ -199,7 +205,12 @@ export function initPersistence<
 >(
   widgetStore: StoreApi<WidgetState>,
   canvasStore: StoreApi<CanvasState>,
-): void {
+): () => void {
+  if (activePersistenceDispose) return activePersistenceDispose
+  let disposed = false
+  let invalidateReconcile = () => {}
+  let unsubscribeAuth: (() => void) | null = null
+  let runtimeConflictResolver: ((choice: 'local' | 'cloud') => void) | null = null
   const view = loadPersistedView()
   if (view) canvasStore.getState().setView(view.pan, view.zoom)
   try {
@@ -210,6 +221,7 @@ export function initPersistence<
 
   const localReady = readBoardDatabase()
     .then(async (raw) => {
+      if (disposed) return
       const board = raw ? parsePersistedBoard(raw) : null
       if (board) {
         widgetStore.getState().loadBoard(board)
@@ -262,6 +274,7 @@ export function initPersistence<
   // ── Cloud sync: reconcile whenever the auth session changes ──────────────
   if (supabaseConfigured) {
     let reconcileToken = 0
+    invalidateReconcile = () => { reconcileToken += 1 }
     const reconcile = async (userId: string | null) => {
       const token = ++reconcileToken
       cloudUserId = null
@@ -274,7 +287,7 @@ export function initPersistence<
         await localReady
         const { fetchCloudBoard, pushCloudBoard } = await loadCloudSync()
         const cloudResult = await fetchCloudBoard(userId)
-        if (token !== reconcileToken) return // a newer session superseded this fetch
+        if (disposed || token !== reconcileToken) return // a newer session superseded this fetch
         if (cloudResult) {
           const local = buildBoardSnapshot(widgetStore.getState())
           const cloud = cloudResult.board
@@ -285,10 +298,15 @@ export function initPersistence<
               cloud,
               cloudUpdatedAt: cloudResult.updatedAt,
             })
+            let resolveThisConflict: (choice: 'local' | 'cloud') => void = () => {}
             const choice = await new Promise<'local' | 'cloud'>((resolve) => {
-              conflictResolver = resolve
+              resolveThisConflict = resolve
+              runtimeConflictResolver = resolveThisConflict
+              conflictResolver = resolveThisConflict
             })
-            if (token !== reconcileToken) return
+            if (conflictResolver === resolveThisConflict) conflictResolver = null
+            if (runtimeConflictResolver === resolveThisConflict) runtimeConflictResolver = null
+            if (disposed || token !== reconcileToken) return
             if (choice === 'cloud') widgetStore.getState().loadBoard(cloud)
             else await pushCloudBoard(userId, local)
           } else {
@@ -299,19 +317,20 @@ export function initPersistence<
           // (including guest work made before signing in).
           await pushCloudBoard(userId, buildBoardSnapshot(widgetStore.getState()))
         }
+        if (disposed || token !== reconcileToken) return
         cloudUserId = userId
         usePersistenceStatusStore.getState().setCloudSync('synced')
         usePersistenceStatusStore.getState().setLastSyncedAt(Date.now())
       } catch {
         // Cloud code is optional. Local persistence remains the source of truth
         // if its chunk cannot load or the network/client is unavailable.
-        usePersistenceStatusStore.getState().setCloudSync('error')
+        if (!disposed) usePersistenceStatusStore.getState().setCloudSync('error')
       }
     }
 
     let lastUserId = useAuthStore.getState().session?.user.id ?? null
     void reconcile(lastUserId)
-    useAuthStore.subscribe((state) => {
+    unsubscribeAuth = useAuthStore.subscribe((state) => {
       const userId = state.session?.user.id ?? null
       if (userId === lastUserId) return
       lastUserId = userId
@@ -325,7 +344,7 @@ export function initPersistence<
   })
 
   let gestureDirty = false
-  widgetStore.subscribe((state, prev) => {
+  const unsubscribeWidget = widgetStore.subscribe((state, prev) => {
     if (
       state.widgets === prev.widgets &&
       state.relations === prev.relations &&
@@ -360,7 +379,7 @@ export function initPersistence<
   window.addEventListener('pointercancel', scheduleGestureSave, true)
 
   let viewGestureDirty = false
-  canvasStore.subscribe((state, prev) => {
+  const unsubscribeCanvas = canvasStore.subscribe((state, prev) => {
     const cameraChanged = state.pan !== prev.pan || state.zoom !== prev.zoom
     if (state.isPanning && cameraChanged) {
       viewGestureDirty = true
@@ -388,11 +407,38 @@ export function initPersistence<
     viewSaver.flush()
   }
   window.addEventListener('pagehide', flushAll)
-  window.addEventListener('beforeunload', (event) => {
+  const warnBeforeUnload = (event: BeforeUnloadEvent) => {
     if (!gestureDirty && usePersistenceStatusStore.getState().localSave !== 'saving') return
     event.preventDefault()
-  })
-  document.addEventListener('visibilitychange', () => {
+  }
+  const flushWhenHidden = () => {
     if (document.visibilityState === 'hidden') flushAll()
-  })
+  }
+  window.addEventListener('beforeunload', warnBeforeUnload)
+  document.addEventListener('visibilitychange', flushWhenHidden)
+
+  const dispose = () => {
+    if (disposed) return
+    flushAll()
+    disposed = true
+    invalidateReconcile()
+    const pendingConflict = runtimeConflictResolver
+    runtimeConflictResolver = null
+    if (conflictResolver === pendingConflict) conflictResolver = null
+    pendingConflict?.('local')
+    usePersistenceStatusStore.getState().setConflict(null)
+    unsubscribeAuth?.()
+    unsubscribeWidget()
+    unsubscribeCanvas()
+    window.removeEventListener('pointerup', scheduleGestureSave, true)
+    window.removeEventListener('pointercancel', scheduleGestureSave, true)
+    window.removeEventListener('pagehide', flushAll)
+    window.removeEventListener('beforeunload', warnBeforeUnload)
+    document.removeEventListener('visibilitychange', flushWhenHidden)
+    boardSaver.cancel()
+    viewSaver.cancel()
+    if (activePersistenceDispose === dispose) activePersistenceDispose = null
+  }
+  activePersistenceDispose = dispose
+  return dispose
 }

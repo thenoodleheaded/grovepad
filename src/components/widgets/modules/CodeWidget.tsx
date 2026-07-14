@@ -1,7 +1,7 @@
-import { useState } from 'react'
 import { Check, Copy } from 'lucide-react'
 import type { CodeData } from '../../../types/spatial'
 import { useFieldAnchor } from '../../../hooks/useFieldAnchor'
+import { useTransientValue } from '../../../hooks/useTransientValue'
 
 interface CodeWidgetProps {
   data: CodeData
@@ -10,13 +10,12 @@ interface CodeWidgetProps {
 
 /** Monospace snippet block with a language tag and one-click copy. */
 export function CodeWidget({ data, onChange }: CodeWidgetProps) {
-  const [copied, setCopied] = useState(false)
+  const [copied, showCopied] = useTransientValue(false)
   const codeRef = useFieldAnchor<HTMLTextAreaElement>('code')
 
   const copy = () => {
     navigator.clipboard?.writeText(data.code).then(() => {
-      setCopied(true)
-      setTimeout(() => setCopied(false), 1200)
+      showCopied(true, 1200)
     })
   }
 

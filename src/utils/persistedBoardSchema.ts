@@ -37,6 +37,31 @@ function isVector(value: unknown): value is Vector2D {
   return isRecord(value) && isFiniteNumber(value.x) && isFiniteNumber(value.y)
 }
 
+/** One-time compatibility normalization for evolved widget data contracts. */
+function normalizeWidgetData(widget: Widget): Widget {
+  if (widget.type === 'ai_generator') {
+    const data = widget.data as unknown as Record<string, unknown>
+    if (data.status === 'generating') {
+      return { ...widget, data: { ...data, status: 'idle' } as Widget['data'] }
+    }
+  }
+  if (widget.type !== 'bullets') return widget
+  const data = widget.data as unknown as Record<string, unknown>
+  const rawItems = Array.isArray(data.items)
+    ? data.items as unknown[]
+    : []
+  const items = rawItems.flatMap((value, index) => {
+    if (typeof value === 'string') {
+      return [{ id: `${widget.id}:bullet:${index}`, text: value }]
+    }
+    if (isRecord(value) && typeof value.id === 'string' && typeof value.text === 'string') {
+      return [{ id: value.id, text: value.text }]
+    }
+    return []
+  })
+  return { ...widget, data: { items } }
+}
+
 /** Widget shape check. `requireCanvasId` is false when migrating v1 data. */
 function isValidWidget(value: unknown, requireCanvasId: boolean): value is Widget {
   if (!isRecord(value)) return false
@@ -168,7 +193,7 @@ export function migrateLegacyBoard(parsed: unknown): PersistedBoard | null {
   const widgets: Record<string, Widget> = {}
   for (const [id, widget] of Object.entries(parsed.widgets)) {
     if (isValidWidget(widget, false) && widget.id === id) {
-      widgets[id] = { ...widget, canvasId: MIGRATED_ROOT_CANVAS_ID }
+      widgets[id] = normalizeWidgetData({ ...widget, canvasId: MIGRATED_ROOT_CANVAS_ID })
     }
   }
 
@@ -235,7 +260,7 @@ export function parsePersistedBoard(parsed: unknown): PersistedBoard | null {
   const widgets: Record<string, Widget> = {}
   for (const [id, widget] of Object.entries(parsed.widgets)) {
     if (isValidWidget(widget, true) && widget.id === id && canvases[widget.canvasId]) {
-      widgets[id] = widget
+      widgets[id] = normalizeWidgetData(widget)
     }
   }
 

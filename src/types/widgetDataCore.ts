@@ -6,8 +6,13 @@ export interface NotesData {
   text: string
 }
 
+export interface BulletItem {
+  id: string
+  text: string
+}
+
 export interface BulletsData {
-  items: string[]
+  items: BulletItem[]
 }
 
 export interface ChecklistItem {
@@ -352,4 +357,3 @@ export interface WorldClockData {
 }
 
 // ── Study & learning module schemas ────────────────────────────────────────
-

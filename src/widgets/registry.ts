@@ -166,7 +166,7 @@ export const WIDGET_REGISTRY: Record<ModuleType, WidgetDefinition> = {
     accent: '#93c5fd',
     defaultSize: { width: 280, height: C * 4 },
     sizing: { minWidth: C * 4, autoHeight: true },
-    defaultData: () => ({ items: ['First point'] }),
+    defaultData: () => ({ items: [{ id: crypto.randomUUID(), text: 'First point' }] }),
   },
   quote: {
     type: 'quote',

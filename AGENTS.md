@@ -47,6 +47,8 @@ Prefer `rg --files` and `rg -n`. Trace at most one importer/consumer hop at a ti
 - Registry files own widget metadata/defaults/sizing; their neutral types live in `src/widgets/contracts/`. Field files own ports, commands, and typed circuit behavior. Renderer modules own visual content.
 - Relation, dependency, and wire layers retain separate geometry/semantic policies, then render through `CanvasEdge.tsx` and `canvasEdgePolicy.ts`. Shared paint or LOD changes belong there; endpoint logic stays in the owning layer.
 - Persistence validates unknown data before store hydration. Optional cloud or local-AI failure must not break local board work.
+- `runtime/appRuntime.ts` owns persistence and circuit startup/teardown. Runtime services must return idempotent disposers; do not start listeners at component-module scope.
+- Animated list removal uses stable item ids and the panel transition lifecycle. Short UI acknowledgements use the owned transient-state helper, never loose component timers.
 
 ## Change workflow
 

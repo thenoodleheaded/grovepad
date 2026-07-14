@@ -1,4 +1,9 @@
-import { forwardRef, type CSSProperties, type ReactNode } from 'react'
+import {
+  forwardRef,
+  type CSSProperties,
+  type ReactNode,
+  type TransitionEventHandler,
+} from 'react'
 import { GripVertical } from 'lucide-react'
 import type { IslandSizing } from './FocusModeLayer'
 
@@ -8,8 +13,10 @@ interface WidgetPanelProps {
   style?: CSSProperties
   /** Per-panel drag button — grabbing it drags the whole widget. */
   grip?: boolean
-  /** Plays the exit animation; the caller removes the panel ~130ms later. */
+  /** Plays the exit animation; `onExitComplete` finalizes its data removal. */
   removing?: boolean
+  /** Finalize removal from the CSS transition itself, not from a guessed timer. */
+  onExitComplete?: () => void
   /** Stable island id for focus-mode layout persistence (XVIII.1). */
   island?: string
   /** Sizing charter class — how focus mode may scale this island. */
@@ -37,6 +44,7 @@ export const WidgetPanel = forwardRef<HTMLDivElement, WidgetPanelProps>(function
   style,
   grip = true,
   removing = false,
+  onExitComplete,
   island,
   sizing,
   minWidth,
@@ -55,6 +63,11 @@ export const WidgetPanel = forwardRef<HTMLDivElement, WidgetPanelProps>(function
       data-island-max-h={maxHeight}
       className={`gp-island gp-subpanel ${removing ? 'gp-subpanel-exit' : 'gp-subpanel-enter'} ${className}`}
       style={style}
+      onTransitionEnd={onExitComplete ? ((event) => {
+        if (event.target === event.currentTarget && event.propertyName === 'opacity') {
+          onExitComplete()
+        }
+      }) satisfies TransitionEventHandler<HTMLDivElement> : undefined}
     >
       {grip && (
         <span
@@ -70,6 +83,3 @@ export const WidgetPanel = forwardRef<HTMLDivElement, WidgetPanelProps>(function
     </div>
   )
 })
-
-/** Delay (ms) between starting a panel's exit animation and removing it. */
-export const PANEL_EXIT_MS = 130

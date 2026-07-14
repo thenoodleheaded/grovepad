@@ -9,12 +9,15 @@ import { buildWidget, computeDataHeight } from '../widgetSizing'
 import { settleWidgetLayout, settleWidgetsByCanvas } from '../widgetSettling'
 import type { WidgetStoreSlice, WidgetStoreSliceContext } from '../widgetStoreSliceContext'
 export function createWidgetCreationSlice({ set, get, pushHistory, markSpawned }: WidgetStoreSliceContext): WidgetStoreSlice {
+  let flashTimer: ReturnType<typeof setTimeout> | null = null
   return {
   flashWidgetId: null,
   flashWidget: (id) => {
     if (!get().widgets[id]) return
+    if (flashTimer) clearTimeout(flashTimer)
     set({ flashWidgetId: id })
-    setTimeout(() => {
+    flashTimer = setTimeout(() => {
+      flashTimer = null
       if (get().flashWidgetId === id) set({ flashWidgetId: null })
     }, 1500)
   },
