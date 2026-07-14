@@ -1,6 +1,6 @@
 import type { AutomationCoreData, ModuleData, ModuleType } from '../../types/spatial'
 import type { FieldCommand } from '../../types/fieldConnections'
-import type { CommandDescriptor, FieldDescriptor, FieldValue } from '../fields'
+import type { CommandDescriptor, FieldDescriptor, FieldValue } from '../contracts/fields'
 import { AUTOMATION_CORE_TYPES } from '../automationCoreCatalog'
 
 const d=(value:ModuleData)=>value as AutomationCoreData

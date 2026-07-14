@@ -1,4 +1,4 @@
-import type { PersistedBoard } from './persistence'
+import type { PersistedBoard } from '../types/persistence'
 
 const DB_NAME = 'grovepad'
 const DB_VERSION = 2

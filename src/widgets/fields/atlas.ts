@@ -1,6 +1,6 @@
 import type { AtlasWidgetData, ModuleData, ModuleType } from '../../types/spatial'
 import type { FieldCommand, FieldValueType, SemanticUnit } from '../../types/fieldConnections'
-import type { CommandDescriptor, FieldDescriptor, FieldValue } from '../fields'
+import type { CommandDescriptor, FieldDescriptor, FieldValue } from '../contracts/fields'
 import { ATLAS_CATALOG, ATLAS_TYPES, type AtlasFieldSpec, type AtlasType } from '../atlasCatalog'
 
 const asData=(data:ModuleData)=>data as AtlasWidgetData

@@ -1,6 +1,6 @@
 # Grovepad Architecture Map
 
-_Phase 1 inventory snapshot — 2026-07-14. This document describes the current code; it does not prescribe the Phase 3 split._
+_Current architecture after the Phase 3 structural split — 2026-07-14. The original Phase 1 findings remain in the patch registry._
 
 ## Fast navigation
 
@@ -16,27 +16,23 @@ The workspace is now tracked in Git with a merged baseline on `main`. The manual
 
 | Measure | Current value |
 |---|---:|
-| TS/TSX source | 39,768 lines |
-| Files processed by Madge | 197 |
-| Test files | 17 |
-| Vitest tests | 467 |
-| `setTimeout` call sites | 23 |
-| Source-level cycles reported by Madge | 13 |
-| Knip unused files | 1 |
-| Knip unused exports | 13 |
-| Knip unused exported types | 107 |
-| Unused package dependencies reported by Knip | 0 |
+| TS/TSX source | 40,289 lines |
+| Files processed by Madge | 238 |
+| Test files | 21 |
+| Vitest tests | 483 |
+| `setTimeout` call sites | 24 |
+| Source-level cycles reported by Madge | 0 |
 
 Largest coordination surfaces:
 
 | File | Lines | Current responsibility |
 |---|---:|---|
-| `src/store/useWidgetStore.ts` | 3,501 | Board model, widgets, relations, groups, selection, history, layout, packs, canvas hierarchy |
-| `src/types/spatial.ts` | 1,881 | Canvas primitives, module catalogue, every widget data shape, persistence-facing board types |
 | `src/widgets/fields.ts` | 1,722 | Field/command descriptors and circuit-facing behavior |
 | `src/components/widgets/modules/EssentialWidgets.tsx` | 1,398 | Twenty essential widget renderers |
 | `src/utils/scenarioResolver.ts` | 1,268 | Scenario classification, preferences, routing, and resolution |
 | `src/widgets/registry.ts` | 1,158 | Widget metadata, defaults, sizing, category and pack policy |
+| `src/store/useWidgetStore.ts` | 318 | Store assembly, hydration, history bridge and compatibility exports |
+| `src/types/spatial.ts` | 156 | Compatibility facade plus widget/group metadata |
 
 ## Runtime map
 
@@ -55,16 +51,18 @@ flowchart TD
   WidgetCard --> Renderer["WidgetRenderer\nlazy type dispatch"]
   Renderer --> Modules["Widget modules\nindividual + essential + atlas + expansion"]
 
-  UI --> WidgetStore["useWidgetStore\ncanonical board state"]
+  UI --> WidgetStore["useWidgetStore facade\ncanonical board state"]
   Layers --> WidgetStore
   Events --> CanvasStore["useCanvasStore\ncamera state"]
   Runtime --> WidgetStore
   Runtime --> CircuitStore["useCircuitStore\ntransient wire runtime"]
 
+  WidgetStore --> Slices["domain slices\nnavigation, layout, circuit, groups, selection"]
   WidgetStore --> Registry["widget registry\nmetadata + defaults"]
   WidgetStore --> Fields["field registry\nports + commands"]
-  Registry --> Spatial["spatial.ts\ntype catalogue"]
-  Fields --> Spatial
+  Registry --> Contracts["neutral registry/field contracts"]
+  Fields --> Contracts
+  Slices --> Types["domain types\ncanvas, modules, widget data, relations"]
 
   Runtime --> Persistence["persistence.ts"]
   Persistence --> IndexedDB["boardDatabase.ts\nIndexedDB + rolling snapshots"]
@@ -92,13 +90,13 @@ flowchart TD
 |---|---|---|---|
 | Authentication | `useAuthStore.ts`, `LoginPage.tsx`, `lib/supabase.ts` | Session/guest route state | Board mutations |
 | Camera | `useCanvasStore.ts`, `useCanvasEvents.ts`, `canvasView.ts` | Pan, zoom, viewport size, camera history | Widget geometry persistence |
-| Canonical board | `useWidgetStore.ts` | Widgets, relations, connections, groups, hierarchy, selection, undo | Render-only animation state |
+| Canonical board | `useWidgetStore.ts`, `store/slices/*Slice.ts` | Widgets, relations, connections, groups, hierarchy, selection, undo | Render-only animation state |
 | Circuit runtime | `circuitEngine.ts`, `useCircuitStore.ts`, `transforms.ts` | Deterministic propagation, delivery memory, wire-drag/runtime feedback | Widget renderer details |
-| Widget definition | `registry.ts` and `registry/*` | Metadata, defaults, sizing, packs | Live widget state |
-| Field definition | `fields.ts` and `fields/*` | Read/write fields, commands, semantic units | Canvas drawing |
+| Widget definition | `registry.ts`, `registry/*`, `widgets/contracts/registry.ts` | Metadata, defaults, sizing, packs | Live widget state |
+| Field definition | `fields.ts`, `fields/*`, `widgets/contracts/fields.ts` | Read/write fields, commands, semantic units | Canvas drawing |
 | Widget rendering | `WidgetCard.tsx`, `WidgetRenderer.tsx`, `modules/*` | Card interaction shell and typed content | Persistence orchestration |
 | Spatial graph drawing | `RelationLines.tsx`, `DependencyLines.tsx`, `WireLayer.tsx` | SVG descriptors, LOD/culling, hit paths and menus | Graph mutation rules |
-| Persistence | `persistence.ts`, `boardDatabase.ts`, `cloudSync.ts` | Validation, local snapshots, debounced saves, optional cloud reconciliation | UI component lifecycle |
+| Persistence | `persistence.ts`, `persistedBoardSchema.ts`, `types/persistence.ts`, adapters | Validation, local snapshots, debounced saves, optional cloud reconciliation | UI component lifecycle |
 | Thought interpretation | `thoughtInterpreter.ts`, `scenarioResolver.ts`, `scenarios/catalogue.ts` | Deterministic parsing, scenario candidates, local preference learning | Direct board rendering |
 | Optional local AI | `localAiService.ts`, `services/local-ai/*` | Model lifecycle, request cancellation/deadlines, curated plan protocol | Unvalidated graph writes |
 | UI orchestration | `components/ui/*` | Pickers, command surfaces, dialogs, import, quick capture | Canonical domain logic |
@@ -107,7 +105,7 @@ flowchart TD
 
 | Store | Persistent? | Main consumers | Notes |
 |---|---|---|---|
-| `useWidgetStore` | Yes | Almost every canvas/UI subsystem | 48 direct importers; highest-risk god store |
+| `useWidgetStore` | Yes | Almost every canvas/UI subsystem | Stable facade; action implementations are routed by domain slice |
 | `useCanvasStore` | View only | Canvas events, layers, focus, zoom controls | Camera saves separately from board |
 | `useCircuitStore` | No | Port rail, wire layer, engine | Transient drag/firing/damped presentation |
 | `useFocusStore` | No | Widget card, focus layer, canvas events | Locks camera and restores prior view |
@@ -133,9 +131,9 @@ Shared duplication includes viewport corridor checks, render limits, rich/standa
 
 ```mermaid
 flowchart LR
-  Type["ModuleType + ModuleData\nspatial.ts"] --> Definition["WidgetDefinition\nregistry.ts"]
+  Type["ModuleType + ModuleData\nmoduleTypes + widgetData families"] --> Definition["WidgetDefinition\nregistry contracts + families"]
   Type --> Field["Field/command descriptors\nfields.ts"]
-  Definition --> Create["createWidget\nuseWidgetStore"]
+  Definition --> Create["createWidget\nwidgetCreationSlice"]
   Create --> Card["WidgetCard"]
   Card --> Render["WidgetRenderer"]
   Render --> Module["Typed widget module"]
@@ -152,7 +150,7 @@ There are three catalogue families layered onto the base registry:
 - Expansion widgets live in `registry/expansion.ts` and `fields/expansion.ts`.
 - Atlas and automation-core families generate definitions/fields from compact catalogues.
 
-The family modules import their root contract types back from `registry.ts`/`fields.ts`; this accounts for most Madge cycles.
+Family modules import neutral contracts from `widgets/contracts/`; no family points back to its root implementation.
 
 ## Persistence flow
 
@@ -177,9 +175,11 @@ sequenceDiagram
   Note over P: pagehide/hidden flushes pending saves
 ```
 
-`PersistedBoard` currently lives in `persistence.ts`, causing type-only back-edges from the status store and IndexedDB adapter. Moving the schema/validator contract to a dependency-neutral module would collapse most persistence cycles without changing behavior.
+`PersistedBoard` lives in `types/persistence.ts`, while validation and migration live in `persistedBoardSchema.ts`. IndexedDB, cloud sync, status, and the store consume those neutral modules without importing the persistence orchestrator.
 
-## Dependency graph pressure points
+## Dependency graph status
+
+Phase 3 removed all 13 registered cycles. `npx --yes madge --circular --extensions ts,tsx src` now reports no circular dependencies. The Phase 1 fan-in/fan-out measurements below are retained as historical pressure data; rerun Madge before using their exact numbers for a new refactor.
 
 Madge fan-in (number of source files importing a module):
 
@@ -213,7 +213,7 @@ Madge fan-out:
 
 ### Madge 8.0.0
 
-Madge reports 13 source-level cycles. Twelve close through `import type`, so they disappear from emitted JavaScript. The cloud-sync cycle is a real runtime edge but is loaded dynamically after `persistence.ts` has initialized. See `patch-registry.md` for every path and disposition.
+The Phase 1 scan reported 13 cycles. The Phase 3 contract and schema extraction removed every registered path; current Madge output is zero cycles. See `patch-registry.md` for their resolved destinations.
 
 ## Architectural invariants worth protecting
 

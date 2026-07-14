@@ -1,5 +1,6 @@
 import { getSupabaseClient } from '../lib/supabase'
-import { parsePersistedBoard, type PersistedBoard } from './persistence'
+import type { PersistedBoard } from '../types/persistence'
+import { parsePersistedBoard } from './persistedBoardSchema'
 
 // ---------------------------------------------------------------------------
 // One row per signed-in user in the `boards` table (see README/schema note in

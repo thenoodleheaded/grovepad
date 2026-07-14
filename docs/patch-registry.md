@@ -19,11 +19,11 @@ The diagnostic question for every fix remains: **where is the bad state produced
 | ID | Priority | Location | Suspicious spot | Symptom currently suppressed / risk created | Root direction |
 |---|---|---|---|---|---|
 | S-001 | Resolved | Workspace root | Git baseline and phase gate | The project is tracked on `main`; build, lint, tests, and the manual smoke checklist form the phase gate | Keep the gate green and commit each phase independently |
-| S-002 | P1 | `useWidgetStore.ts` (3,501 lines) | One store owns nearly every board domain | Any board change requires loading and reasoning about unrelated history, layout, hierarchy, group, relation and widget logic | Split by domain with contract tests; move only in Phase 3 |
-| S-003 | P1 | `spatial.ts` (1,881 lines; fan-in 123) | One file is the universal type and constants hub | Almost every feature imports the same catalogue, increasing edit blast radius and cycle pressure | Split neutral primitives, canvas hierarchy, widget-data families and persistence schema |
-| S-004 | P1 | `fields.ts` / `registry.ts` | Root contracts and generated family implementations point at each other | Type-only cycles obscure the real runtime graph and make family extraction harder | Move `WidgetDefinition` and field contract types to dependency-neutral modules |
+| S-002 | Resolved | `useWidgetStore.ts` + `store/slices/` | Store actions are split by navigation, creation, layout, circuit, groups, selection and UI/linking | The facade is 318 lines and each slice is below 400 lines | Keep new actions in their owning slice |
+| S-003 | Resolved | `types/spatial.ts` + domain type modules | Canvas, relation, workspace, module and widget-data domains are separate | The compatibility facade is 156 lines; every new type file is below 400 lines | Import neutral domain contracts directly in new infrastructure |
+| S-004 | Resolved | `widgets/contracts/` | Registry and field contracts are dependency-neutral | Family modules no longer import their root implementation for types | Keep contracts free of family implementation imports |
 | S-005 | P1 | `CanvasViewport.tsx` | Composition root also starts persistence and circuit services at module scope | HMR/re-import can multiply listeners because persistence has no initialization guard; routing and runtime lifecycle are fused | Add an application runtime boundary with explicit init/dispose |
-| S-006 | P1 | `persistence.ts` | Schema, validation, scheduling, IndexedDB, cloud reconciliation and UI status live together | Adapters import their contract back from the orchestrator; failures are hard to isolate | Extract persisted schema/validation, local adapter and cloud coordinator |
+| S-006 | In progress | `persistence.ts`, `persistedBoardSchema.ts`, `types/persistence.ts` | Schema and validation are now neutral; scheduling and reconciliation remain together | Adapter back-edges are gone, while runtime lifecycle work remains for Phase 5 | Split runtime lifecycle only with initialization/disposal tests |
 | S-007 | P1 | Three canvas line layers | Each repeats culling, descriptor LOD, SVG paths, markers, hit paths and menu plumbing | Visual fixes must be repeated and can drift; earlier dependency work already needed parallel relation-line logic | Extract shared edge-render primitives, preserving separate endpoint/semantic strategies |
 | S-008 | P2 | `index.css` + `styles/product.css` (2,700 lines) | Two unlayered global stylesheets load in order | Cascade ownership is implicit; later rules can silently override earlier contracts | Introduce explicit CSS layers/tokens, then migrate by subsystem |
 | S-009 | P1 | `WidgetRenderer.tsx` (fan-out 60) | Central exhaustive dispatcher knows every concrete renderer and data type | Adding or moving one widget touches a global switch; lazy imports help startup but not authorship coupling | Generate dispatch from per-family renderer maps after type split |
@@ -77,21 +77,13 @@ Madge reported 13 cycles. The “back edge” column identifies what closes each
 
 | ID | Reported path | Back edge | Runtime impact | Disposition |
 |---|---|---|---|---|
-| C-001 | `atlasCatalog → registry → registry/atlas` | `atlasCatalog` imports `WidgetCategory` as type | None after TS emit | Extract registry contract type |
-| C-002 | `registry → registry/atlas` | `registry/atlas` imports `WidgetDefinition` as type | None after TS emit | Same contract extraction |
-| C-003 | `registry → registry/automationCore → automationCoreCatalog` | Catalogue imports `WidgetCategory` as type | None after TS emit | Same contract extraction |
-| C-004 | `registry → registry/automationCore` | Family imports `WidgetDefinition` as type | None after TS emit | Same contract extraction |
-| C-005 | `registry → registry/expansion` | Family imports `WidgetDefinition` as type | None after TS emit | Same contract extraction |
-| C-006 | `scenarioResolver → scenarios/catalogue` | Catalogue imports `ArchetypeSpec`/`ScenarioDomain` as types | None after TS emit | Move scenario contracts to a neutral type module |
-| C-007 | `persistence → usePersistenceStatusStore` | Status store imports `PersistedBoard` as type | None after TS emit | Extract persisted schema contract |
-| C-008 | `useWidgetStore → persistence` | Persistence imports `WidgetStoreState` as type | None after TS emit | Make load/schema independent of store API |
-| C-009 | `persistence → boardDatabase` | Database imports `PersistedBoard` as type | None after TS emit | Extract persisted schema contract |
-| C-010 | `persistence → cloudSync` | `cloudSync` imports runtime parser from persistence; persistence dynamically imports cloud adapter | Real but deferred and currently initialization-safe | Put parser/schema in neutral module so adapter is one-way |
-| C-011 | `fields → fields/atlas` | Family imports root field contract types | None after TS emit | Extract field descriptor contracts |
-| C-012 | `fields → fields/automationCore` | Family imports root field contract types | None after TS emit | Extract field descriptor contracts |
-| C-013 | `fields → fields/expansion` | Family imports root field contract types | None after TS emit | Extract field descriptor contracts |
+| C-001 | Resolved | Registry contract extracted | None | `widgets/contracts/registry.ts` |
+| C-002–C-005 | Resolved | Registry family contract back-edges removed | None | `widgets/contracts/registry.ts` |
+| C-006 | Resolved | Scenario catalogue contract back-edge removed | None | `utils/scenarios/contracts.ts` |
+| C-007–C-010 | Resolved | Persistence schema/parser and board type back-edges removed | Runtime graph is now one-way | `types/persistence.ts`, `utils/persistedBoardSchema.ts` |
+| C-011–C-013 | Resolved | Field family contract back-edges removed | None | `widgets/contracts/fields.ts` |
 
-These are architectural coupling signals, not evidence that the current bundle executes partially initialized modules. Phase 2 should not “fix” them opportunistically; they belong with the Phase 3 contract split.
+Phase 3 removed every registered cycle. Madge now reports no circular dependencies.
 
 ## Complete `setTimeout` audit
 

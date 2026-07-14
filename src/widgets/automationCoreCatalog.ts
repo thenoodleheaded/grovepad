@@ -1,7 +1,7 @@
 import type { LucideIcon } from 'lucide-react'
 import { Activity, Archive, Beaker, Blocks, Braces, Bug, CirclePlay, Combine, Database, FileClock, FileJson, Focus, GitBranch, GitMerge, Globe2, Group, Hand, KeyRound, Layers3, ListEnd, ListPlus, LockKeyhole, Network, PackageOpen, Radio, Repeat2, Route, ScrollText, Send, Server, ShieldCheck, Shuffle, Split, SquareStack, TestTube2, Trash2, Variable, Webhook, Workflow, Wrench } from 'lucide-react'
 import type { AutomationCoreData, ModuleType } from '../types/spatial'
-import type { WidgetCategory } from './registry'
+import type { WidgetCategory } from './contracts/registry'
 
 export const AUTOMATION_CORE_TYPES = [
   'loop','batch_processor','parallel_runner','race','transaction','subroutine','approval_gate','workflow_lock',

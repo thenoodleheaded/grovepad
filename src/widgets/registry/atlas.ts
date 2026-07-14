@@ -1,4 +1,4 @@
-import type { WidgetDefinition } from '../registry'
+import type { WidgetDefinition } from '../contracts/registry'
 import type { AtlasType } from '../atlasCatalog'
 import { ATLAS_CATALOG, ATLAS_TYPES, defaultAtlasData } from '../atlasCatalog'
 import { GRID_SIZE } from '../../types/spatial'

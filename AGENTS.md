@@ -26,8 +26,8 @@ If the constitution describes intended behavior that the source does not impleme
 
 The following files are coordination surfaces. Search them by symbol and read only the relevant neighborhood unless a full-file audit is explicitly required:
 
-- `src/store/useWidgetStore.ts`
-- `src/types/spatial.ts`
+- `src/store/slices/*Slice.ts`
+- `src/types/widgetData*.ts` and `src/types/module*.ts`
 - `src/widgets/fields.ts`
 - `src/widgets/registry.ts`
 - `src/components/widgets/modules/EssentialWidgets.tsx`
@@ -40,11 +40,11 @@ Prefer `rg --files` and `rg -n`. Trace at most one importer/consumer hop at a ti
 
 ## Ownership rules
 
-- `useWidgetStore` owns the canonical board model, history, widgets, relations, connections, groups, and hierarchy.
+- `useWidgetStore` owns the canonical board model. Its domain actions live in `src/store/slices/`; history, layout, and graph helpers live beside the facade in `src/store/`.
 - `useCanvasStore` and `useCanvasEvents` own camera and viewport interaction. Never mutate a partial camera object in a browser test; use public actions such as `setView`.
 - `useCircuitStore` and the circuit engine own transient wire execution state.
 - `useFocusStore` owns focus entry/exit and camera locking; persisted island order and size live in widget metadata.
-- Registry files own widget metadata/defaults/sizing. Field files own ports, commands, and typed circuit behavior. Renderer modules own visual content.
+- Registry files own widget metadata/defaults/sizing; their neutral types live in `src/widgets/contracts/`. Field files own ports, commands, and typed circuit behavior. Renderer modules own visual content.
 - Relation, dependency, and wire layers share drawing ideas but retain separate semantic and endpoint policies.
 - Persistence validates unknown data before store hydration. Optional cloud or local-AI failure must not break local board work.
 

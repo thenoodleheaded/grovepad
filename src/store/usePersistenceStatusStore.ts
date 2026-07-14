@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { PersistedBoard } from '../utils/persistence'
+import type { PersistedBoard } from '../types/persistence'
 
 type SaveState = 'idle' | 'saving' | 'saved' | 'error'
 type SyncState = 'guest' | 'saving' | 'synced' | 'error'

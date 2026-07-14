@@ -1,6 +1,6 @@
 import { GRID_SIZE } from '../../types/spatial'
 import { AUTOMATION_CORE_CATALOG, AUTOMATION_CORE_TYPES, defaultAutomationCoreData, type AutomationCoreType } from '../automationCoreCatalog'
-import type { WidgetDefinition } from '../registry'
+import type { WidgetDefinition } from '../contracts/registry'
 
 export const AUTOMATION_CORE_DEFINITIONS=Object.fromEntries(AUTOMATION_CORE_TYPES.map(type=>{
   const spec=AUTOMATION_CORE_CATALOG[type]

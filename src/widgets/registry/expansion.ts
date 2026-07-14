@@ -6,7 +6,7 @@ import {
 } from 'lucide-react'
 import type { ModuleType } from '../../types/spatial'
 import { GRID_SIZE } from '../../types/spatial'
-import type { WidgetDefinition } from '../registry'
+import type { WidgetDefinition } from '../contracts/registry'
 
 const C = GRID_SIZE
 const uid = () => crypto.randomUUID()

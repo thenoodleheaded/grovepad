@@ -73,9 +73,9 @@ import type {
   VocabData,
   WeeklyPlannerData,
   WorldClockData,
-  SeriesPoint,
 } from '../types/spatial'
-import type { FieldCommand, FieldValueType, SemanticUnit } from '../types/fieldConnections'
+import type { CommandDescriptor, FieldDescriptor, FieldValue } from './contracts/fields'
+export type { CommandDescriptor, FieldDescriptor, FieldValue } from './contracts/fields'
 import { EXPANSION_COMMANDS, EXPANSION_FIELDS } from './fields/expansion'
 import { ATLAS_COMMANDS, ATLAS_FIELDS } from './fields/atlas'
 import { AUTOMATION_CORE_COMMANDS, AUTOMATION_CORE_FIELDS } from './fields/automationCore'
@@ -92,21 +92,6 @@ import { AUTOMATION_CORE_COMMANDS, AUTOMATION_CORE_FIELDS } from './fields/autom
 // slot on the card edge, so the wire layer and the port overlay agree on
 // coordinates without any DOM measurement.
 // ---------------------------------------------------------------------------
-
-export type FieldValue = number | boolean | string | SeriesPoint[]
-
-export interface FieldDescriptor {
-  key: string
-  label: string
-  valueType: FieldValueType
-  get: (data: ModuleData) => FieldValue
-  /** Absent = read-only source field. */
-  set?: (data: ModuleData, value: FieldValue) => ModuleData
-  /** Re-read on the shared minute heartbeat when this field is connected. */
-  timeSensitive?: boolean
-  /** Advisory semantic tag — drives auto-suggested wire transforms, never gates a connection. */
-  unit?: SemanticUnit
-}
 
 function num(v: FieldValue): number {
   if (Array.isArray(v)) return v.at(-1)?.v ?? 0
@@ -1316,22 +1301,6 @@ const WIDGET_FIELDS: Partial<Record<ModuleType, FieldDescriptor[]>> = {
 // ---------------------------------------------------------------------------
 // Trigger commands — one-shot mutations a trigger connection can fire.
 // ---------------------------------------------------------------------------
-
-export interface CommandDescriptor {
-  key: FieldCommand
-  label: string
-  /**
-   * `payload` is the trigger wire's source value (post-transform), when the
-   * wire's source field is connected. Commands that ignore it (resets,
-   * check_all, …) simply omit the parameter — existing implementations need
-   * no change. Commands that consume it (`add_item`-style appenders) accept
-   * it and should set `acceptsPayload` so the inspector knows to offer a
-   * transform on the wire.
-   */
-  run: (data: ModuleData, payload?: FieldValue) => ModuleData
-  /** True when `run` reads `payload` — lets the wire inspector show a transform for trigger wires too. */
-  acceptsPayload?: boolean
-}
 
 const WIDGET_COMMANDS: Partial<Record<ModuleType, CommandDescriptor[]>> = {
   stopwatch: [

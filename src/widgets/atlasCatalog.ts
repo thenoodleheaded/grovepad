@@ -8,7 +8,7 @@ import {
   ShieldCheck, Sparkles, Sprout, Star, Stethoscope, Sun, Tags, TentTree, Users, WalletCards,
 } from 'lucide-react'
 import type { AtlasWidgetData, DomainPack, ModuleType } from '../types/spatial'
-import type { WidgetCategory } from './registry'
+import type { WidgetCategory } from './contracts/registry'
 
 export const ATLAS_TYPES = [
   'savings_circle','zakat','remittance_planner','price_book','utility_runway','fuel_log','side_income','wishlist_saver',

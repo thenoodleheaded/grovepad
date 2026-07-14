@@ -1,4 +1,3 @@
-import type { LucideIcon } from 'lucide-react'
 import {
   ArrowLeftRight,
   AudioLines,
@@ -61,8 +60,10 @@ import {
   Vote,
   Workflow,
 } from 'lucide-react'
-import type { DomainPack, ModuleData, ModuleType, Size } from '../types/spatial'
+import type { ModuleType } from '../types/spatial'
 import { GRID_SIZE, MODULE_PACK_REQUIREMENTS } from '../types/spatial'
+import type { WidgetCategory, WidgetDefinition, WidgetSizing } from './contracts/registry'
+export type { WidgetCategory, WidgetDefinition, WidgetSizing } from './contracts/registry'
 import { EXPANSION_WIDGET_DEFINITIONS } from './registry/expansion'
 import { ATLAS_WIDGET_DEFINITIONS } from './registry/atlas'
 import { AUTOMATION_CORE_DEFINITIONS } from './registry/automationCore'
@@ -75,18 +76,6 @@ import { AUTOMATION_CORE_DEFINITIONS } from './registry/automationCore'
 // defaults (size, starter data), and pack gating. Stores and UI read from
 // here so adding a widget type is one entry + one renderer case.
 // ---------------------------------------------------------------------------
-
-export type WidgetCategory =
-  | 'structure'
-  | 'notes'
-  | 'planning'
-  | 'study'
-  | 'data'
-  | 'media'
-  | 'tracking'
-  | 'automation'
-  | 'life'
-  | 'specialist'
 
 export const CATEGORY_LABELS: Record<WidgetCategory, string> = {
   structure: 'Structure',
@@ -119,32 +108,9 @@ export const CATEGORY_ORDER: readonly WidgetCategory[] = [
  * whose height always follows its content sets `autoHeight` — the resize
  * handle then adjusts width only and the card's height reporter owns height.
  */
-export interface WidgetSizing {
-  minWidth?: number
-  minHeight?: number
-  maxWidth?: number
-  maxHeight?: number
-  autoHeight?: boolean
-}
-
 export const DEFAULT_SIZING: Required<Pick<WidgetSizing, 'minWidth' | 'minHeight'>> = {
   minWidth: GRID_SIZE * 4,
   minHeight: GRID_SIZE * 2,
-}
-
-export interface WidgetDefinition {
-  type: ModuleType
-  label: string
-  description: string
-  icon: LucideIcon
-  category: WidgetCategory
-  /** Accent hue used for picker tiles, card icons, and hover bloom. */
-  accent: string
-  defaultSize: Size
-  defaultData: () => ModuleData
-  sizing?: WidgetSizing
-  /** Present when the type is gated behind a domain pack. */
-  pack?: DomainPack
 }
 
 const C = GRID_SIZE

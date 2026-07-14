@@ -3,6 +3,8 @@ import { WIDGET_REGISTRY, widgetDefinition } from '../widgets/registry'
 import type { ThoughtPlan, ProposedNode } from './thoughtInterpreter'
 import { detectDate } from './thoughtInterpreter'
 import { EXTENDED_ARCHETYPES } from './scenarios/catalogue'
+import type { ArchetypeSpec, DirectionSpec, QuestionSpec, ScenarioDomain } from './scenarios/contracts'
+export type { ArchetypeSpec, ScenarioDomain } from './scenarios/contracts'
 import { buildVocabulary, canonicalToken, normalizeLanguage, tokenCoverage, type NormalizedLanguage } from './languageNormalization'
 
 /**
@@ -57,36 +59,6 @@ function analyzeSpecificity(source: string): SpecificityProfile {
 // ---------------------------------------------------------------------------
 // Archetype catalogue
 // ---------------------------------------------------------------------------
-
-interface DirectionSpec {
-  id: string
-  label: string
-  tagline: string
-  /** `{topic}` in a title is replaced with the extracted topic. */
-  widgets: ReadonlyArray<{ type: ModuleType; title: string }>
-}
-
-interface QuestionSpec {
-  prompt: string
-  options: ReadonlyArray<{ label: string; directionId: string }>
-}
-
-export type ScenarioDomain = 'learning' | 'career' | 'money' | 'home' | 'health' | 'people' | 'travel' | 'creative' | 'food' | 'admin' | 'business' | 'community'
-
-export interface ArchetypeSpec {
-  id: string
-  label: string
-  /** First capture group, when present, becomes the topic. */
-  patterns: readonly RegExp[]
-  topicFallback: string
-  directions: readonly DirectionSpec[]
-  question: QuestionSpec
-  domain?: ScenarioDomain
-  tone?: 'standard' | 'gentle'
-  priority?: number
-  keywords?: readonly string[]
-  slots?: { deadline?: ModuleType; amount?: ModuleType; people?: ModuleType; links?: ModuleType }
-}
 
 const LANGUAGES = 'spanish|french|german|italian|portuguese|japanese|chinese|mandarin|korean|arabic|russian|hindi|dutch|swedish|polish|turkish|greek|hebrew|latin|english'
 

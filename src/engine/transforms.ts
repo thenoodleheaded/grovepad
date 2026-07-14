@@ -1,4 +1,4 @@
-import type { FieldValue } from '../widgets/fields'
+import type { FieldValue } from '../widgets/contracts/fields'
 import type { WireTransform } from '../types/circuit'
 
 // ---------------------------------------------------------------------------

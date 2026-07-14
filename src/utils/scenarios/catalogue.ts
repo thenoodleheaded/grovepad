@@ -1,5 +1,5 @@
 import type { ModuleType } from '../../types/spatial'
-import type { ArchetypeSpec, ScenarioDomain } from '../scenarioResolver'
+import type { ArchetypeSpec, ScenarioDomain } from './contracts'
 
 type CompactEntry = readonly [id: string, label: string, trigger: string, widgets?: readonly ModuleType[], tone?: 'standard' | 'gentle']
 

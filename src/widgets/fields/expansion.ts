@@ -1,6 +1,6 @@
 import type { ModuleData, ModuleDataMap, ModuleType } from '../../types/spatial'
 import type { SemanticUnit } from '../../types/fieldConnections'
-import type { CommandDescriptor, FieldDescriptor, FieldValue } from '../fields'
+import type { CommandDescriptor, FieldDescriptor, FieldValue } from '../contracts/fields'
 import {
   DAY_MS, appendSample, daysUntilDate, localDayKey, monthsSince, projectDebtPayoff,
   seriesAverage, seriesDelta7d, settleExpenses,
