@@ -5,11 +5,16 @@ import { getCriticalPath, useWidgetStore } from '../../store/useWidgetStore'
 import { useOverlayLifecycle } from '../../store/useOverlayStore'
 import type { RelationType, Vector2D, Widget } from '../../types/spatial'
 import { GRID_SIZE, RELATION_LABELS } from '../../types/spatial'
-import { widgetIntersectsRect, type WorldRect } from '../../utils/canvasView'
+import { widgetIntersectsRect } from '../../utils/canvasView'
 import { anchoredCurveMidpoint, anchoredCurvePath, curvedPath } from '../../utils/curve'
 import { groupWorldBounds } from '../../utils/groupGeometry'
 import { useQuantizedView } from '../../hooks/useQuantizedView'
 import { widgetDefinition } from '../../widgets/registry'
+import {
+  CanvasEdge,
+  CanvasEdgeLayer,
+} from './CanvasEdge'
+import { edgeCorridorIntersectsRect, edgeDetailFor, type EdgeDetail } from './canvasEdgePolicy'
 
 const EDGE_OVERSCAN_SCREEN = 700
 const EDGE_RENDER_LIMIT = 950
@@ -278,8 +283,6 @@ interface MergedEdge {
   singleRelationId: string | null
 }
 
-type EdgeDetail = 'rich' | 'standard' | 'minimal'
-
 // ---------------------------------------------------------------------------
 // Edge component
 // ---------------------------------------------------------------------------
@@ -304,45 +307,34 @@ const RelationEdge = memo(function RelationEdge({ edge, detail, onOpenMenu }: Re
   const endMarker = conflictMarker
 
   return (
-    <g
-      className={`gp-edge-group ${edge.hoverAccent ? 'gp-edge-connected' : ''}`}
+    <CanvasEdge
+      d={d}
+      variant="relation"
+      detail={detail}
+      connected={Boolean(edge.hoverAccent)}
+      resolved={muted}
       style={edge.hoverAccent ? ({ '--gp-edge-accent': edge.hoverAccent } as CSSProperties) : undefined}
+      highlight={edge.highlighted ? { stroke: '#34d399', width: 6, opacity: 0.35 } : undefined}
+      halo={{ stroke, width: 7 }}
+      main={{
+        stroke,
+        width: style.width,
+        dash: style.dash,
+        markerStart: conflictMarker,
+        markerEnd: endMarker,
+      }}
+      flow={{ stroke: edge.hoverAccent ?? '#4ade80', width: 2, dash: '2 6' }}
+      hitArea={{
+        width: 14,
+        cursor: edge.singleRelationId ? 'context-menu' : 'default',
+        onContextMenu: (event) => {
+          if (!edge.singleRelationId) return
+          event.preventDefault()
+          event.stopPropagation()
+          onOpenMenu(edge.singleRelationId, event.clientX, event.clientY)
+        },
+      }}
     >
-      {edge.highlighted && detail !== 'minimal' && (
-        <path
-          className="gp-route-motion"
-          d={d} fill="none"
-          stroke="#34d399" strokeWidth={6} strokeOpacity={0.35} strokeLinecap="round"
-        />
-      )}
-      {/* Hover halo — invisible until the pointer rests on the edge */}
-      {(detail === 'rich' || edge.hoverAccent) && (
-        <path
-          className="gp-edge-halo gp-route-motion"
-          d={d} fill="none"
-          stroke={stroke} strokeWidth={7} strokeLinecap="round"
-          vectorEffect="non-scaling-stroke"
-        />
-      )}
-      <path
-        className="gp-edge-main gp-route-motion"
-        d={d} fill="none"
-        stroke={stroke} strokeWidth={style.width} strokeDasharray={style.dash}
-        strokeLinecap="round"
-        markerStart={conflictMarker} markerEnd={endMarker}
-        vectorEffect="non-scaling-stroke"
-      />
-      {/* Hover-only dotted flow — the solid stroke fades out and this dashed
-          stroke fades in, so the line reads as *becoming* dotted rather than
-          gaining a second line on top. Only animates on the hovered edge. */}
-      {detail === 'rich' && (
-        <path
-          className="gp-edge-flow gp-route-motion"
-          d={d} fill="none"
-          stroke={edge.hoverAccent ?? '#4ade80'} strokeWidth={2} strokeDasharray="2 6" strokeLinecap="round"
-          vectorEffect="non-scaling-stroke"
-        />
-      )}
       {edge.type === 'blocker' && detail !== 'minimal' && (
         <g className="gp-route-chip-motion" transform={`translate(${midX}, ${midY})`}>
           <circle r={7} fill="#171717" stroke={stroke} strokeWidth={1.5} />
@@ -352,26 +344,7 @@ const RelationEdge = memo(function RelationEdge({ edge, detail, onOpenMenu }: Re
           </text>
         </g>
       )}
-      {/* Wide invisible hit area — drives hover/press styling and the context menu */}
-      {detail !== 'minimal' && (
-        <path
-          className="gp-route-motion"
-          d={d} fill="none"
-          stroke="transparent" strokeWidth={14}
-          vectorEffect="non-scaling-stroke"
-          style={{
-            pointerEvents: 'stroke',
-            cursor: edge.singleRelationId ? 'context-menu' : 'default',
-          }}
-          onContextMenu={(e) => {
-            if (!edge.singleRelationId) return
-            e.preventDefault()
-            e.stopPropagation()
-            onOpenMenu(edge.singleRelationId, e.clientX, e.clientY)
-          }}
-        />
-      )}
-    </g>
+    </CanvasEdge>
   )
 }, (prev, next) =>
   prev.edge.d === next.edge.d &&
@@ -678,7 +651,12 @@ export function RelationLines() {
         !important &&
         !widgetIntersectsRect(fromWidget, visibleRect) &&
         !widgetIntersectsRect(toWidget, visibleRect) &&
-        !corridorIntersectsRect(widgetCenter(fromWidget), widgetCenter(toWidget), visibleRect)
+        !edgeCorridorIntersectsRect(
+          widgetCenter(fromWidget),
+          widgetCenter(toWidget),
+          visibleRect,
+          CORRIDOR_MARGIN,
+        )
       ) {
         continue
       }
@@ -772,29 +750,15 @@ export function RelationLines() {
     [],
   )
   const closeMenu = useCallback(() => setMenu(null), [])
-  const edgeDetail: EdgeDetail =
-    view.zoom < 0.32 || edges.length > 700
-      ? 'minimal'
-      : view.zoom < 0.58 || edges.length > 320
-        ? 'standard'
-        : 'rich'
+  const edgeDetail = edgeDetailFor(view.zoom, edges.length)
 
   return (
     <>
-      <svg
-        className="absolute"
-        style={{
-          left: visibleRect.x,
-          top: visibleRect.y,
-          width: visibleRect.width,
-          height: visibleRect.height,
-          pointerEvents: 'none',
-          overflow: 'visible',
-        }}
-        viewBox={`${visibleRect.x} ${visibleRect.y} ${visibleRect.width} ${visibleRect.height}`}
-        shapeRendering={edgeDetail === 'minimal' ? 'optimizeSpeed' : 'geometricPrecision'}
-      >
-        <defs>
+      <CanvasEdgeLayer
+        visibleRect={visibleRect}
+        detail={edgeDetail}
+        defs={
+          <>
           <marker id="rel-arrow-conflict" viewBox="0 0 10 10" refX="9" refY="5"
             markerWidth="7" markerHeight="7" orient="auto-start-reverse">
             <path d="M 0 0 L 10 5 L 0 10 z" fill="#f97316" />
@@ -803,14 +767,16 @@ export function RelationLines() {
             markerWidth="7" markerHeight="7" orient="auto-start-reverse">
             <path d="M 0 0 L 10 5 L 0 10 z" fill={MUTED_STROKE} />
           </marker>
-        </defs>
+          </>
+        }
+      >
 
         {edges.map((edge) => (
           <RelationEdge key={edge.key} edge={edge} detail={edgeDetail} onOpenMenu={openMenu} />
         ))}
 
         <RelationLinkPreview groupGeo={groupGeo} />
-      </svg>
+      </CanvasEdgeLayer>
 
       {menu && (
         <LineContextMenu
@@ -821,18 +787,5 @@ export function RelationLines() {
         />
       )}
     </>
-  )
-}
-
-function corridorIntersectsRect(a: Vector2D, b: Vector2D, rect: WorldRect): boolean {
-  const left = Math.min(a.x, b.x) - CORRIDOR_MARGIN
-  const top = Math.min(a.y, b.y) - CORRIDOR_MARGIN
-  const right = Math.max(a.x, b.x) + CORRIDOR_MARGIN
-  const bottom = Math.max(a.y, b.y) + CORRIDOR_MARGIN
-  return (
-    left < rect.x + rect.width &&
-    right > rect.x &&
-    top < rect.y + rect.height &&
-    bottom > rect.y
   )
 }

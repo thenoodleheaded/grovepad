@@ -502,77 +502,140 @@ body[data-widget-dragging] .gp-card-motion {
 }
 
 /* ---------------------------------------------------------------------------
- * Field data wires
+ * Shared canvas edge paint system
  *
- * Rest state: translucent, thin, data-type colored (stroke set as an SVG
- * attribute; these rules layer states on top). Hover: opaque + thicker +
- * a marching directional dash showing flow direction — the dash animates
- * on at most one hovered wire at a time, so idle canvases animate nothing.
- * Warning ([data-warn], an unsatisfied gate): amber pulsing dash.
+ * Relation, dependency, and circuit layers own different geometry and
+ * semantics, but use one paint stack: highlight → track → halo → main → flow
+ * → semantic accessory → hit target. Only the active edge animates.
  * ------------------------------------------------------------------------- */
 
-.gp-wire-halo {
-  opacity: 0;
+.gp-canvas-edge-main,
+.gp-canvas-edge-halo,
+.gp-canvas-edge-track,
+.gp-canvas-edge-flow,
+.gp-canvas-edge-highlight {
   transition:
     d var(--gp-motion-layout) var(--gp-ease-layout),
+    stroke var(--gp-motion-fast) var(--gp-ease-standard),
+    stroke-width var(--gp-motion-fast) var(--gp-ease-standard),
     opacity var(--gp-motion-fast) var(--gp-ease-standard);
 }
 
-.gp-wire-main {
-  opacity: 0.6;
-  transition:
-    d var(--gp-motion-layout) var(--gp-ease-layout),
-    opacity var(--gp-motion-fast) var(--gp-ease-standard),
-    stroke-width var(--gp-motion-fast) var(--gp-ease-standard);
+.gp-canvas-edge-halo,
+.gp-canvas-edge-flow {
+  opacity: 0;
 }
 
-.gp-wire-group:hover .gp-wire-halo {
+@keyframes gp-edge-dash-march {
+  to { stroke-dashoffset: -18; }
+}
+
+@keyframes gp-wire-dash {
+  to { stroke-dashoffset: -24; }
+}
+
+.gp-link-dash {
+  animation: gp-edge-dash-march 600ms linear infinite;
+}
+
+/* Relations and dependencies replace their solid stroke with directional
+   dotted flow on hover. Widget-connected state uses the same transition. */
+:is(.gp-canvas-edge-relation, .gp-canvas-edge-dependency):hover .gp-canvas-edge-main {
+  opacity: 0;
+}
+
+:is(.gp-canvas-edge-relation, .gp-canvas-edge-dependency):hover .gp-canvas-edge-flow,
+:is(.gp-canvas-edge-relation, .gp-canvas-edge-dependency)[data-connected] .gp-canvas-edge-flow {
+  opacity: 1;
+  animation: gp-edge-dash-march 450ms linear infinite;
+}
+
+:is(.gp-canvas-edge-relation, .gp-canvas-edge-dependency)[data-connected] .gp-canvas-edge-main {
+  stroke: var(--gp-edge-accent);
+  opacity: 0.2;
+}
+
+.gp-canvas-edge-dependency .gp-canvas-edge-track {
+  opacity: 0.12;
+}
+
+.gp-canvas-edge-dependency:hover .gp-canvas-edge-track,
+.gp-canvas-edge-dependency[data-connected] .gp-canvas-edge-track {
+  opacity: 0.22;
+}
+
+.gp-canvas-edge-dependency[data-connected] .gp-canvas-edge-main {
+  opacity: 0.3;
+}
+
+.gp-canvas-edge-dependency[data-resolved] .gp-canvas-edge-track {
+  opacity: 0.06;
+}
+
+.gp-dependency-port {
+  transition:
+    stroke var(--gp-motion-fast) var(--gp-ease-standard),
+    opacity var(--gp-motion-fast) var(--gp-ease-standard);
+}
+
+:is(.gp-canvas-edge-relation, .gp-canvas-edge-dependency):active .gp-canvas-edge-main {
+  opacity: 0.95;
+  stroke: var(--color-emerald-400);
+  stroke-width: 3.2;
+}
+
+:is(.gp-canvas-edge-relation, .gp-canvas-edge-dependency):active .gp-canvas-edge-halo {
+  opacity: 0.55;
+  stroke: var(--color-emerald-400);
+}
+
+:is(.gp-canvas-edge-relation, .gp-canvas-edge-dependency):active .gp-canvas-edge-flow {
+  opacity: 0;
+  animation: none;
+}
+
+/* Circuit wires remain solid and type-colored. Hover only strengthens their
+   existing stroke; delivery pulses remain one-shot SVG overlays. */
+.gp-canvas-edge-wire .gp-canvas-edge-main {
+  opacity: 0.6;
+}
+
+.gp-canvas-edge-wire:hover .gp-canvas-edge-halo {
   opacity: 0.14;
 }
 
-.gp-wire-group:hover .gp-wire-main {
+.gp-canvas-edge-wire:hover .gp-canvas-edge-main {
   opacity: 1;
   stroke-width: 2.4;
 }
 
-@keyframes gp-wire-dash {
-  to {
-    stroke-dashoffset: -24;
-  }
-}
-
-/* Unsatisfied gate/visibility: the wire itself warns. Overrides the
-   attribute-set stroke (CSS wins over presentation attributes). */
 @keyframes gp-wire-warn {
-  0%, 100% {
-    opacity: 0.45;
-  }
-  50% {
-    opacity: 1;
-  }
+  0%, 100% { opacity: 0.45; }
+  50% { opacity: 1; }
 }
 
-.gp-wire-group[data-warn] .gp-wire-main {
-  stroke: #f59e0b;
-  stroke-dasharray: 5 4;
+.gp-canvas-edge-wire[data-warning] .gp-canvas-edge-main {
+  stroke: #f87171;
   opacity: 0.9;
 }
 
-/* Warning wires are vivid but idle-safe. The pulse runs only while the user
-   is inspecting that wire, never across a whole board in the background. */
-.gp-wire-group[data-warn]:hover .gp-wire-main {
+.gp-canvas-edge-wire[data-warning]:hover .gp-canvas-edge-main {
   animation: gp-wire-warn 1.1s ease-in-out infinite;
 }
 
-.gp-wire-group[data-warn] .gp-wire-chip circle {
-  stroke: #f59e0b;
+.gp-canvas-edge-wire[data-warning] .gp-wire-chip circle {
+  stroke: #f87171;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .gp-wire-group[data-warn]:hover .gp-wire-main {
+  .gp-link-dash,
+  :is(.gp-canvas-edge-relation, .gp-canvas-edge-dependency):hover .gp-canvas-edge-flow,
+  :is(.gp-canvas-edge-relation, .gp-canvas-edge-dependency)[data-connected] .gp-canvas-edge-flow,
+  .gp-canvas-edge-wire[data-warning]:hover .gp-canvas-edge-main {
     animation: none;
   }
-  .gp-wire-group[data-warn] .gp-wire-main {
+
+  .gp-canvas-edge-wire[data-warning] .gp-canvas-edge-main {
     opacity: 1;
   }
 }
@@ -713,11 +776,11 @@ body[data-circuit-mode] .gp-port-label {
 }
 
 /* Circuit mode: wires step forward, everything else recedes a touch. */
-body[data-circuit-mode] .gp-wire-main {
+body[data-circuit-mode] .gp-canvas-edge-wire .gp-canvas-edge-main {
   opacity: 0.95;
 }
 
-body[data-circuit-mode] .gp-wire-halo {
+body[data-circuit-mode] .gp-canvas-edge-wire .gp-canvas-edge-halo {
   opacity: 0.1;
 }
 
@@ -776,140 +839,6 @@ body[data-circuit-mode] .gp-widget-card {
     radial-gradient(48% 42% at 78% 78%, oklch(70% 0.14 250 / 0.06) 0%, transparent 70%);
 }
 
-/* ---------------------------------------------------------------------------
- * Connection lines
- *
- * Rest: a plain solid stroke. Hover: the solid stroke fades out while a
- * dashed "flow" stroke on the same path fades in and marches — the line
- * reads as *becoming* dotted, not gaining a second line on top of itself.
- * Press: the flow stops, and the main stroke lights up toxic green and
- * thickens. .gp-edge transitions fire only on hover/press changes; the dash
- * march is the only continuously-running animation, and only ever on the
- * one edge under the pointer.
- * ------------------------------------------------------------------------- */
-
-.gp-edge-main {
-  transition:
-    d var(--gp-motion-layout) var(--gp-ease-layout),
-    stroke var(--gp-motion-fast) var(--gp-ease-standard),
-    stroke-width var(--gp-motion-fast) var(--gp-ease-standard),
-    opacity var(--gp-motion-fast) var(--gp-ease-standard);
-}
-
-.gp-edge-halo {
-  opacity: 0;
-  transition:
-    d var(--gp-motion-layout) var(--gp-ease-layout),
-    stroke var(--gp-motion-fast) var(--gp-ease-standard),
-    opacity var(--gp-motion-fast) var(--gp-ease-standard);
-}
-
-/* A hovered relation becomes a dotted flow directly on its own path. Do not
-   paint the old gray halo above it; that visual read like a separate chip. */
-.gp-edge-group:hover .gp-edge-halo {
-  opacity: 0;
-}
-
-.gp-edge-group:hover .gp-edge-main {
-  opacity: 0;
-}
-
-@keyframes gp-dash-march {
-  to { stroke-dashoffset: -18; }
-}
-
-.gp-link-dash {
-  animation: gp-dash-march 600ms linear infinite;
-}
-
-/* Dotted flow — solid at rest (opacity 0, inert), takes over from the main
- * stroke on hover. The animation itself only runs on the one edge actually
- * under the pointer (CSS :hover scopes both the opacity and the `animation`
- * declaration), so idling over a canvas with hundreds of edges costs
- * nothing extra. */
-.gp-edge-flow {
-  opacity: 0;
-  transition:
-    d var(--gp-motion-layout) var(--gp-ease-layout),
-    opacity var(--gp-motion-fast) var(--gp-ease-standard);
-}
-
-.gp-edge-group:hover .gp-edge-flow {
-  opacity: 1;
-  animation: gp-dash-march 450ms linear infinite;
-}
-
-/* Widget hover lights every connected relation in that card's registry
-   accent. This is state-driven rather than CSS sibling magic, so it works
-   even though SVG edges render below the widget layer. */
-.gp-edge-connected .gp-edge-main {
-  stroke: var(--gp-edge-accent);
-  opacity: 0.2;
-}
-
-.gp-edge-connected .gp-edge-flow {
-  opacity: 0.95;
-  animation: gp-dash-march 450ms linear infinite;
-}
-
-/* Dependencies share the relation layer's path morphing, hover takeover and
- * interaction-only motion, but keep a separate amber visual grammar. The
- * faint track makes direction readable at rest without adding an idle
- * animation; resolved dependencies become quiet and dashed. */
-.gp-dependency-track {
-  opacity: 0.12;
-  transition:
-    d var(--gp-motion-layout) var(--gp-ease-layout),
-    stroke var(--gp-motion-fast) var(--gp-ease-standard),
-    opacity var(--gp-motion-fast) var(--gp-ease-standard);
-}
-
-.gp-dependency-main,
-.gp-dependency-port {
-  transition:
-    d var(--gp-motion-layout) var(--gp-ease-layout),
-    stroke var(--gp-motion-fast) var(--gp-ease-standard),
-    opacity var(--gp-motion-fast) var(--gp-ease-standard);
-}
-
-.gp-dependency-group:hover .gp-dependency-track,
-.gp-dependency-group.gp-edge-connected .gp-dependency-track {
-  opacity: 0.22;
-}
-
-.gp-dependency-group.gp-edge-connected .gp-edge-main {
-  opacity: 0.3;
-}
-
-.gp-dependency-resolved .gp-dependency-track {
-  opacity: 0.06;
-}
-
-/* Press: light up, thicken, toxic green — the same neon accent used for the
- * app's emerald scale (see :root), so a pressed line reads as "live" rather
- * than picking a one-off color. */
-.gp-edge-group:active .gp-edge-main {
-  opacity: 0.95;
-  stroke: var(--color-emerald-400);
-  stroke-width: 3.2;
-}
-
-.gp-edge-group:active .gp-edge-halo {
-  opacity: 0.55;
-  stroke: var(--color-emerald-400);
-}
-
-.gp-edge-group:active .gp-edge-flow {
-  opacity: 0;
-  animation: none;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .gp-link-dash,
-  .gp-edge-group:hover .gp-edge-flow {
-    animation: none;
-  }
-}
 
 /* ---------------------------------------------------------------------------
  * Quick add

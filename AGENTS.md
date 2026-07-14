@@ -45,7 +45,7 @@ Prefer `rg --files` and `rg -n`. Trace at most one importer/consumer hop at a ti
 - `useCircuitStore` and the circuit engine own transient wire execution state.
 - `useFocusStore` owns focus entry/exit and camera locking; persisted island order and size live in widget metadata.
 - Registry files own widget metadata/defaults/sizing; their neutral types live in `src/widgets/contracts/`. Field files own ports, commands, and typed circuit behavior. Renderer modules own visual content.
-- Relation, dependency, and wire layers share drawing ideas but retain separate semantic and endpoint policies.
+- Relation, dependency, and wire layers retain separate geometry/semantic policies, then render through `CanvasEdge.tsx` and `canvasEdgePolicy.ts`. Shared paint or LOD changes belong there; endpoint logic stays in the owning layer.
 - Persistence validates unknown data before store hydration. Optional cloud or local-AI failure must not break local board work.
 
 ## Change workflow

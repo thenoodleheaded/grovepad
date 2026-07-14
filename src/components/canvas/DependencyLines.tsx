@@ -6,10 +6,15 @@ import { getCriticalPath, useWidgetStore } from '../../store/useWidgetStore'
 import { useOverlayLifecycle } from '../../store/useOverlayStore'
 import type { RelationType, Vector2D, Widget } from '../../types/spatial'
 import { RELATION_LABELS } from '../../types/spatial'
-import { widgetIntersectsRect, type WorldRect } from '../../utils/canvasView'
+import { widgetIntersectsRect } from '../../utils/canvasView'
 import { anchoredCurveMidpoint, anchoredCurvePath } from '../../utils/curve'
 import { dependencyAnchors } from '../../utils/dependencyGeometry'
 import { groupWorldBounds } from '../../utils/groupGeometry'
+import {
+  CanvasEdge,
+  CanvasEdgeLayer,
+} from './CanvasEdge'
+import { edgeCorridorIntersectsRect, edgeDetailFor, type EdgeDetail } from './canvasEdgePolicy'
 
 const EDGE_OVERSCAN_SCREEN = 700
 const EDGE_RENDER_LIMIT = 950
@@ -17,8 +22,6 @@ const CRITICAL_EDGE_RENDER_LIMIT = 1600
 const CORRIDOR_MARGIN = 360
 const DEPENDENCY_STROKE = '#f59e0b'
 const RESOLVED_STROKE = '#64748b'
-
-type EdgeDetail = 'rich' | 'standard' | 'minimal'
 
 interface EndpointGeometry {
   center: Vector2D
@@ -58,68 +61,38 @@ const DependencyEdge = memo(function DependencyEdge({
   const marker = edge.isResolved ? 'url(#dependency-arrow-resolved)' : 'url(#dependency-arrow)'
 
   return (
-    <g
-      className={`gp-edge-group gp-dependency-group ${edge.connected ? 'gp-edge-connected' : ''} ${edge.isResolved ? 'gp-dependency-resolved' : ''}`}
+    <CanvasEdge
+      d={edge.d}
+      variant="dependency"
+      detail={detail}
+      connected={edge.connected}
+      resolved={edge.isResolved}
       style={{ '--gp-edge-accent': DEPENDENCY_STROKE } as CSSProperties}
+      highlight={edge.highlighted ? { stroke: '#34d399', width: 7, opacity: 0.38 } : undefined}
+      track={{ stroke, width: 6 }}
+      halo={{ stroke, width: 8 }}
+      main={{
+        stroke,
+        width: edge.isResolved ? 1.5 : 2.2,
+        dash: edge.isResolved ? '4 6' : undefined,
+        markerEnd: marker,
+      }}
+      flow={{
+        stroke: DEPENDENCY_STROKE,
+        width: 2.2,
+        dash: '2 6',
+        markerEnd: marker,
+      }}
+      hitArea={{
+        width: 16,
+        cursor: 'context-menu',
+        onContextMenu: (event) => {
+          event.preventDefault()
+          event.stopPropagation()
+          onOpenMenu(edge.id, event.clientX, event.clientY)
+        },
+      }}
     >
-      {edge.highlighted && detail !== 'minimal' && (
-        <path
-          className="gp-route-motion"
-          d={edge.d}
-          fill="none"
-          stroke="#34d399"
-          strokeWidth={7}
-          strokeOpacity={0.38}
-          strokeLinecap="round"
-          vectorEffect="non-scaling-stroke"
-        />
-      )}
-      {detail !== 'minimal' && (
-        <path
-          className="gp-dependency-track gp-route-motion"
-          d={edge.d}
-          fill="none"
-          stroke={stroke}
-          strokeWidth={6}
-          strokeLinecap="round"
-          vectorEffect="non-scaling-stroke"
-        />
-      )}
-      {(detail === 'rich' || edge.connected) && (
-        <path
-          className="gp-edge-halo gp-route-motion"
-          d={edge.d}
-          fill="none"
-          stroke={stroke}
-          strokeWidth={8}
-          strokeLinecap="round"
-          vectorEffect="non-scaling-stroke"
-        />
-      )}
-      <path
-        className="gp-edge-main gp-dependency-main gp-route-motion"
-        d={edge.d}
-        fill="none"
-        stroke={stroke}
-        strokeWidth={edge.isResolved ? 1.5 : 2.2}
-        strokeDasharray={edge.isResolved ? '4 6' : undefined}
-        strokeLinecap="round"
-        markerEnd={marker}
-        vectorEffect="non-scaling-stroke"
-      />
-      {detail === 'rich' && (
-        <path
-          className="gp-edge-flow gp-route-motion"
-          d={edge.d}
-          fill="none"
-          stroke={DEPENDENCY_STROKE}
-          strokeWidth={2.2}
-          strokeDasharray="2 6"
-          strokeLinecap="round"
-          markerEnd={marker}
-          vectorEffect="non-scaling-stroke"
-        />
-      )}
       {detail !== 'minimal' && (
         <>
           <circle
@@ -150,23 +123,7 @@ const DependencyEdge = memo(function DependencyEdge({
           )}
         </>
       )}
-      {detail !== 'minimal' && (
-        <path
-          className="gp-route-motion"
-          d={edge.d}
-          fill="none"
-          stroke="transparent"
-          strokeWidth={16}
-          vectorEffect="non-scaling-stroke"
-          style={{ pointerEvents: 'stroke', cursor: 'context-menu' }}
-          onContextMenu={(event) => {
-            event.preventDefault()
-            event.stopPropagation()
-            onOpenMenu(edge.id, event.clientX, event.clientY)
-          }}
-        />
-      )}
-    </g>
+    </CanvasEdge>
   )
 })
 
@@ -338,7 +295,12 @@ export function DependencyLines() {
         !connected &&
         !widgetIntersectsRect(fromWidget, visibleRect) &&
         !widgetIntersectsRect(toWidget, visibleRect) &&
-        !corridorIntersectsRect(widgetCenter(fromWidget), widgetCenter(toWidget), visibleRect)
+        !edgeCorridorIntersectsRect(
+          widgetCenter(fromWidget),
+          widgetCenter(toWidget),
+          visibleRect,
+          CORRIDOR_MARGIN,
+        )
       ) continue
 
       const fromGroupId = widgetGroupIndex[relation.fromId]
@@ -381,50 +343,31 @@ export function DependencyLines() {
     [],
   )
   const closeMenu = useCallback(() => setMenu(null), [])
-  const detail: EdgeDetail = view.zoom < 0.32 || edges.length > 700
-    ? 'minimal'
-    : view.zoom < 0.58 || edges.length > 320
-      ? 'standard'
-      : 'rich'
+  const detail = edgeDetailFor(view.zoom, edges.length)
 
   return (
     <>
-      <svg
-        className="absolute"
-        style={{
-          left: visibleRect.x,
-          top: visibleRect.y,
-          width: visibleRect.width,
-          height: visibleRect.height,
-          pointerEvents: 'none',
-          overflow: 'visible',
-        }}
-        viewBox={`${visibleRect.x} ${visibleRect.y} ${visibleRect.width} ${visibleRect.height}`}
-        shapeRendering={detail === 'minimal' ? 'optimizeSpeed' : 'geometricPrecision'}
-      >
-        <defs>
+      <CanvasEdgeLayer
+        visibleRect={visibleRect}
+        detail={detail}
+        defs={
+          <>
           <marker id="dependency-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
             <path d="M 0 0 L 10 5 L 0 10 z" fill={DEPENDENCY_STROKE} />
           </marker>
           <marker id="dependency-arrow-resolved" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
             <path d="M 0 0 L 10 5 L 0 10 z" fill={RESOLVED_STROKE} />
           </marker>
-        </defs>
+          </>
+        }
+      >
         {edges.map((edge) => (
           <DependencyEdge key={edge.id} edge={edge} detail={detail} onOpenMenu={openMenu} />
         ))}
-      </svg>
+      </CanvasEdgeLayer>
       {menu && (
         <DependencyContextMenu relationId={menu.relationId} x={menu.x} y={menu.y} onClose={closeMenu} />
       )}
     </>
   )
-}
-
-function corridorIntersectsRect(a: Vector2D, b: Vector2D, rect: WorldRect): boolean {
-  const left = Math.min(a.x, b.x) - CORRIDOR_MARGIN
-  const top = Math.min(a.y, b.y) - CORRIDOR_MARGIN
-  const right = Math.max(a.x, b.x) + CORRIDOR_MARGIN
-  const bottom = Math.max(a.y, b.y) + CORRIDOR_MARGIN
-  return left < rect.x + rect.width && right > rect.x && top < rect.y + rect.height && bottom > rect.y
 }

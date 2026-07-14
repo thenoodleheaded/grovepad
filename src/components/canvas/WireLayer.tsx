@@ -19,7 +19,7 @@ import {
   WIRE_TRANSFORM_OPS,
 } from '../../types/circuit'
 import { flowCurve } from '../../utils/curve'
-import { widgetIntersectsRect, type WorldRect } from '../../utils/canvasView'
+import { widgetIntersectsRect } from '../../utils/canvasView'
 import {
   findInputPort,
   findOutputPort,
@@ -29,6 +29,8 @@ import {
 } from '../../utils/portGeometry'
 import { fieldDescriptor, type FieldValue } from '../../widgets/fields'
 import { applyTransform } from '../../engine/transforms'
+import { CanvasEdge, CanvasEdgeLayer } from './CanvasEdge'
+import { edgeCorridorIntersectsRect } from './canvasEdgePolicy'
 
 const EDGE_OVERSCAN_SCREEN = 700
 const WIRE_RENDER_LIMIT = 600
@@ -45,14 +47,6 @@ interface WireDescriptor {
   damped: boolean
   pulseKey: number | null
   valueLabel: string | null
-}
-
-function corridorIntersectsRect(a: Vector2D, b: Vector2D, rect: WorldRect): boolean {
-  const left = Math.min(a.x, b.x) - CORRIDOR_MARGIN
-  const top = Math.min(a.y, b.y) - CORRIDOR_MARGIN
-  const right = Math.max(a.x, b.x) + CORRIDOR_MARGIN
-  const bottom = Math.max(a.y, b.y) + CORRIDOR_MARGIN
-  return left < rect.x + rect.width && right > rect.x && top < rect.y + rect.height && bottom > rect.y
 }
 
 function shortValue(value: FieldValue): string {
@@ -96,26 +90,31 @@ const Wire = memo(function Wire({
 }) {
   const stroke = wire.damped ? '#f87171' : wire.enabled ? wire.color : '#525b6b'
   return (
-    <g className="gp-wire-group" style={{ '--gp-wire-color': stroke } as CSSProperties}>
-      <path
-        className="gp-wire-halo"
-        d={wire.d}
-        fill="none"
-        stroke={stroke}
-        strokeWidth={7}
-        strokeLinecap="round"
-        vectorEffect="non-scaling-stroke"
-      />
-      <path
-        className="gp-wire-main"
-        d={wire.d}
-        fill="none"
-        stroke={stroke}
-        strokeWidth={wire.isTrigger ? 1.8 : 2.1}
-        strokeDasharray={wire.isTrigger ? '5 5' : !wire.enabled ? '2 5' : undefined}
-        strokeLinecap="round"
-        vectorEffect="non-scaling-stroke"
-      />
+    <CanvasEdge
+      d={wire.d}
+      variant="wire"
+      style={{ '--gp-wire-color': stroke } as CSSProperties}
+      halo={{ stroke, width: 7 }}
+      main={{
+        stroke,
+        width: wire.isTrigger ? 1.8 : 2.1,
+        dash: wire.isTrigger ? '5 5' : !wire.enabled ? '2 5' : undefined,
+      }}
+      hitArea={{
+        width: 16,
+        cursor: 'pointer',
+        onPointerDown: (event) => {
+          event.preventDefault()
+          event.stopPropagation()
+          onOpen(wire.id, event.clientX, event.clientY)
+        },
+        onContextMenu: (event) => {
+          event.preventDefault()
+          event.stopPropagation()
+          onOpen(wire.id, event.clientX, event.clientY)
+        },
+      }}
+    >
       {wire.pulseKey !== null && wire.enabled && !wire.damped && (
         <path
           key={wire.pulseKey}
@@ -156,25 +155,7 @@ const Wire = memo(function Wire({
           </text>
         </g>
       )}
-      <path
-        d={wire.d}
-        fill="none"
-        stroke="transparent"
-        strokeWidth={16}
-        vectorEffect="non-scaling-stroke"
-        style={{ pointerEvents: 'stroke', cursor: 'pointer' }}
-        onPointerDown={(event) => {
-          event.preventDefault()
-          event.stopPropagation()
-          onOpen(wire.id, event.clientX, event.clientY)
-        }}
-        onContextMenu={(event) => {
-          event.preventDefault()
-          event.stopPropagation()
-          onOpen(wire.id, event.clientX, event.clientY)
-        }}
-      />
-    </g>
+    </CanvasEdge>
   )
 })
 
@@ -545,7 +526,7 @@ export function WireLayer() {
         relevant.length <= WIRE_RENDER_LIMIT &&
         !widgetIntersectsRect(source, visibleRect) &&
         !widgetIntersectsRect(target, visibleRect) &&
-        !corridorIntersectsRect(endpoints.start, endpoints.end, visibleRect)
+        !edgeCorridorIntersectsRect(endpoints.start, endpoints.end, visibleRect, CORRIDOR_MARGIN)
       ) {
         continue
       }
@@ -581,24 +562,12 @@ export function WireLayer() {
 
   return (
     <>
-      <svg
-        className="absolute"
-        data-circuit-layer
-        style={{
-          left: visibleRect.x,
-          top: visibleRect.y,
-          width: visibleRect.width,
-          height: visibleRect.height,
-          pointerEvents: 'none',
-          overflow: 'visible',
-        }}
-        viewBox={`${visibleRect.x} ${visibleRect.y} ${visibleRect.width} ${visibleRect.height}`}
-      >
+      <CanvasEdgeLayer visibleRect={visibleRect} detail="rich" dataCircuitLayer>
         {wires.map((wire) => (
           <Wire key={wire.id} wire={wire} onOpen={openInspector} />
         ))}
         <GhostWire />
-      </svg>
+      </CanvasEdgeLayer>
       {inspector && (
         <WireInspector
           connectionId={inspector.connectionId}

@@ -115,9 +115,9 @@ flowchart TD
 | `useAuthStore` | Session | App, persistence, account UI | Cloud sync observes it directly |
 | Toast/theme/debug/preview stores | No | Narrow UI/runtime consumers | Appropriate small stores |
 
-## The three line systems
+## Shared edge rendering with three semantic systems
 
-All three are valid semantic systems, but repeat a large rendering shell.
+All three systems keep their own model, endpoint policy, geometry, menus, and accessories. They converge only at `CanvasEdge`, which owns the SVG paint order, hit path, viewport shell, detail thresholds, and shared interaction CSS.
 
 | Layer | Source model | Endpoint policy | Route helper | Unique behavior |
 |---|---|---|---|---|
@@ -125,7 +125,7 @@ All three are valid semantic systems, but repeat a large rendering shell.
 | `DependencyLines` | `blocker` relations only | Dedicated right-to-left dependency anchors | `dependencyAnchors` + `anchoredCurvePath` | Directional arrow, resolved state, dependency status chip |
 | `WireLayer` | Typed `Connection` records | Exact left/right I/O port rails | `portWorldPosition` + `flowCurve` | Typed values, transforms, trigger state, pulse/execution inspector |
 
-Shared duplication includes viewport corridor checks, render limits, rich/standard/minimal detail, SVG halo/main/hit paths, portal menus, selected/connected emphasis, and marker definitions. A future shared renderer should extract these primitives while preserving each layer's endpoint and semantic rules.
+`CanvasEdge.tsx` renders the shared highlight → track → halo → main → flow → accessory → hit-target stack. `canvasEdgePolicy.ts` owns common detail and corridor-culling policy. Marker definitions, portal menus, status chips, value labels, firing pulses, and endpoint calculation remain in the semantic layer that understands them.
 
 ## Widget pipeline
 
