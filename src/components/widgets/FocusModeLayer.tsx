@@ -1,0 +1,585 @@
+import { useEffect, useLayoutEffect, useRef, useState, type PointerEvent as ReactPointerEvent, type RefObject } from 'react'
+import { useFocusStore } from '../../store/useFocusStore'
+import { useWidgetStore } from '../../store/useWidgetStore'
+import type { IslandLayout } from '../../types/spatial'
+import { GRID_SIZE } from '../../types/spatial'
+import { widgetDefinition } from '../../widgets/registry'
+
+// ---------------------------------------------------------------------------
+// Focus mode — island rearrangement (glass constitution, Article XVIII).
+//
+// One component, two duties:
+//
+// 1. ALWAYS: apply the widget's persisted `islandLayout` (order + sizes) to
+//    its `.gp-island` elements, so an arrangement made in focus mode is what
+//    the resting card shows. Order is applied via CSS `order`; a plain block
+//    stack is promoted to a flex column (`gp-island-flow`) only once the
+//    user has actually reordered — untouched widgets render byte-identically.
+//
+// 2. IN FOCUS: overlay per-island chrome. Each reorderable island's whole
+//    body is a drag surface — grab it anywhere to float it and rearrange,
+//    its siblings sliding aside (FLIP) to open a landing slot. Where the
+//    island's sizing charter allows, a resize handle rides its corner; every
+//    resize is clamped by the behavior class and min/max bounds and snapped
+//    to the 4px sub-grid. Escape or clicking outside the card exits.
+//
+// Island identity: `data-island="<id>"` set by the renderer, falling back to
+// the island's slot index (`i0`, `i1`, …) — the same stable-order assumption
+// the retired panelSizes system used.
+// ---------------------------------------------------------------------------
+
+/** Sizing charter behaviors — see Article XVIII.1 in the glass constitution. */
+export type IslandSizing = 'free' | 'width' | 'aspect' | 'fixed'
+
+interface IslandInfo {
+  id: string
+  element: HTMLElement
+  sizing: IslandSizing
+  /** Overlay-space rect (host-relative, unscaled CSS px). */
+  x: number
+  y: number
+  width: number
+  height: number
+  /** Reordering is meaningful only inside a sibling flow domain. */
+  reorderable: boolean
+}
+
+/** Material islands, plus bare `data-island` opt-ins (e.g. chart surfaces
+ *  that keep their own styling but still participate in focus layout). */
+const ISLAND_SELECTOR = '.gp-island, [data-island]'
+/** Charter floors/ceilings (Article XVIII.1). */
+const MIN_W = 96
+const MIN_H = 32
+const MAX_H = 420
+/** The 4px sub-grid every focus-mode geometry change snaps to. */
+const SUB_GRID = 4
+
+const snap4 = (value: number) => Math.round(value / SUB_GRID) * SUB_GRID
+const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value))
+const sameOrder = (a: string[], b: string[]) => a.length === b.length && a.every((id, i) => id === b[i])
+
+/** Lift a real island out of the flow so it can float under the cursor. */
+function liftIsland(element: HTMLElement): void {
+  element.classList.add('gp-island-lift')
+  element.style.position = 'relative'
+  element.style.zIndex = '40'
+  element.style.willChange = 'transform'
+  element.style.pointerEvents = 'none'
+  element.style.transition = 'none'
+}
+
+/** Return a lifted island to the flow; also clears any FLIP leftovers. */
+function resetIsland(element: HTMLElement): void {
+  element.classList.remove('gp-island-lift')
+  element.style.position = ''
+  element.style.zIndex = ''
+  element.style.willChange = ''
+  element.style.pointerEvents = ''
+  element.style.transition = ''
+  element.style.transform = ''
+}
+
+function islandSizing(element: HTMLElement): IslandSizing {
+  const declared = element.getAttribute('data-island-size')
+  if (declared === 'free' || declared === 'width' || declared === 'aspect' || declared === 'fixed') {
+    return declared
+  }
+  return 'free'
+}
+
+function numberAttr(element: HTMLElement, name: string, fallback: number): number {
+  const raw = element.getAttribute(name)
+  const parsed = raw === null ? NaN : parseFloat(raw)
+  return Number.isFinite(parsed) ? parsed : fallback
+}
+
+function collectIslands(host: HTMLElement): HTMLElement[] {
+  const all = [...host.querySelectorAll<HTMLElement>(ISLAND_SELECTOR)]
+  // Islands never nest (Article XIII) — keep outermost only, defensively.
+  return all.filter((island) => !all.some((other) => other !== island && other.contains(island)))
+}
+
+function islandId(element: HTMLElement, index: number): string {
+  return element.getAttribute('data-island') ?? `i${index}`
+}
+
+function measureIslands(host: HTMLElement): IslandInfo[] {
+  const hostRect = host.getBoundingClientRect()
+  const scaleX = host.offsetWidth > 0 ? hostRect.width / host.offsetWidth : 1
+  const scaleY = host.offsetHeight > 0 ? hostRect.height / host.offsetHeight : 1
+  const elements = collectIslands(host)
+  const siblingCounts = new Map<HTMLElement, number>()
+  elements.forEach((element) => {
+    const parent = element.parentElement
+    if (parent) siblingCounts.set(parent, (siblingCounts.get(parent) ?? 0) + 1)
+  })
+  return elements
+    .map((element, index) => {
+      const rect = element.getBoundingClientRect()
+      const parent = element.parentElement
+      return {
+        id: islandId(element, index),
+        element,
+        sizing: islandSizing(element),
+        x: (rect.left - hostRect.left) / scaleX,
+        y: (rect.top - hostRect.top) / scaleY,
+        width: rect.width / scaleX,
+        height: rect.height / scaleY,
+        reorderable: parent !== null && (siblingCounts.get(parent) ?? 0) > 1,
+      }
+    })
+    .sort((a, b) => a.y - b.y || a.x - b.x)
+}
+
+/** Apply persisted order + sizes to the live DOM islands. Idempotent. */
+function applyLayout(host: HTMLElement, layout: IslandLayout | undefined): void {
+  const islands = collectIslands(host)
+  if (islands.length === 0) return
+  const order = layout?.order
+  if (order && order.length > 0) {
+    const parents = new Set(islands.map((island) => island.parentElement).filter(Boolean))
+    parents.forEach((parent) => {
+      if (!(parent instanceof HTMLElement)) return
+      const siblings = islands.filter((island) => island.parentElement === parent)
+      // Promote a block stack to an ordered flex column; flex/grid parents
+      // honor `order` natively and keep their own layout.
+      if (getComputedStyle(parent).display === 'block') parent.classList.add('gp-island-flow')
+      siblings.forEach((island) => {
+        const globalIndex = islands.indexOf(island)
+        const position = order.indexOf(islandId(island, globalIndex))
+        island.style.order = position >= 0 ? String(position) : String(order.length + globalIndex)
+      })
+    })
+  }
+  islands.forEach((island, index) => {
+    const size = layout?.sizes?.[islandId(island, index)]
+    if (!size) return
+    const sizing = islandSizing(island)
+    if (sizing === 'fixed') return
+    if (size.width !== undefined) island.style.width = `${size.width}px`
+    if (size.height !== undefined && sizing !== 'width') island.style.height = `${size.height}px`
+    if (size.width !== undefined || size.height !== undefined) island.style.flex = '0 0 auto'
+  })
+}
+
+function persistLayout(widgetId: string, patch: Partial<IslandLayout>): void {
+  useWidgetStore.setState((state) => {
+    const widget = state.widgets[widgetId]
+    if (!widget) return state
+    const current = widget.metadata.islandLayout ?? {}
+    return {
+      widgets: {
+        ...state.widgets,
+        [widgetId]: {
+          ...widget,
+          metadata: { ...widget.metadata, islandLayout: { ...current, ...patch } },
+        },
+      },
+    }
+  })
+}
+
+/** Grow the card if the new island arrangement overflows it (never shrink). */
+function growCardToContent(widgetId: string, host: HTMLElement): void {
+  const content = host.querySelector<HTMLElement>('.gp-widget-content')
+  if (!content) return
+  const overflow = Math.ceil(content.scrollHeight - content.clientHeight)
+  if (overflow <= 1) return
+  const store = useWidgetStore.getState()
+  const widget = store.widgets[widgetId]
+  if (!widget) return
+  const maxHeight = widgetDefinition(widget.type).sizing?.maxHeight ?? Infinity
+  const height = Math.min(
+    maxHeight,
+    Math.ceil((widget.size.height + overflow + 4) / GRID_SIZE) * GRID_SIZE,
+  )
+  if (height > widget.size.height) store.resizeWidget(widgetId, { ...widget.size, height })
+}
+
+interface FocusModeLayerProps {
+  widgetId: string
+  hostRef: RefObject<HTMLElement | null>
+  /** True while this widget is the focus-mode subject. */
+  active: boolean
+  layout: IslandLayout | undefined
+  /** Re-measure trigger — the widget's data object. */
+  version: unknown
+}
+
+export function FocusModeLayer({ widgetId, hostRef, active, layout, version }: FocusModeLayerProps) {
+  const [islands, setIslands] = useState<IslandInfo[]>([])
+  type ResizeGesture = {
+    kind: 'resize'
+    pointerId: number
+    id: string
+    element: HTMLElement
+    sizing: IslandSizing
+    startX: number
+    startY: number
+    startW: number
+    startH: number
+    ratio: number
+    minW: number
+    minH: number
+    maxW: number
+    maxH: number
+    scale: number
+    changed: boolean
+  }
+  type ReorderGesture = {
+    kind: 'reorder'
+    pointerId: number
+    id: string
+    element: HTMLElement
+    parent: HTMLElement
+    /** All islands in the card, in stable DOM order — for id lookup + persist. */
+    all: HTMLElement[]
+    /** The reorder domain: the dragged island and its flow siblings. */
+    siblings: HTMLElement[]
+    startCursorX: number
+    startCursorY: number
+    /** Dragged island's viewport top at gesture start. */
+    startTop: number
+    /** Dragged island's natural (transform-cleared) top at the current order. */
+    naturalTop: number
+    /** Current visual order (island ids) within the domain. */
+    order: string[]
+    changed: boolean
+  }
+  const gestureRef = useRef<ResizeGesture | ReorderGesture | null>(null)
+  /** The island currently lifted for a float-drag, so an interrupted gesture
+   *  (focus exit / unmount) can restore it instead of leaving stuck styles. */
+  const liftedRef = useRef<HTMLElement | null>(null)
+
+  // Duty 1 — saved arrangements always apply, focused or not. Re-runs when
+  // the widget's data changes shape (rows added, panels mounted, …).
+  useLayoutEffect(() => {
+    const host = hostRef.current
+    if (host) applyLayout(host, layout)
+  }, [hostRef, layout, version, active])
+
+  // Duty 2 — measure islands for the chrome overlay while focused.
+  useLayoutEffect(() => {
+    const host = hostRef.current
+    if (!active || !host) {
+      setIslands([])
+      return
+    }
+    let raf = 0
+    const measure = () => {
+      cancelAnimationFrame(raf)
+      raf = requestAnimationFrame(() => {
+        setIslands(measureIslands(host))
+      })
+    }
+    measure()
+    const observer = new ResizeObserver(measure)
+    observer.observe(host)
+    collectIslands(host).forEach((island) => observer.observe(island))
+    return () => {
+      cancelAnimationFrame(raf)
+      observer.disconnect()
+    }
+  }, [active, hostRef, version, layout])
+
+  // Exit paths: Escape anywhere, or any pointerdown outside the card.
+  useEffect(() => {
+    if (!active) return
+    const host = hostRef.current
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return
+      event.preventDefault()
+      event.stopPropagation()
+      useFocusStore.getState().exitFocus()
+    }
+    const onPointerDown = (event: PointerEvent) => {
+      if (host && event.target instanceof Node && host.contains(event.target)) return
+      event.preventDefault()
+      event.stopPropagation()
+      useFocusStore.getState().exitFocus()
+    }
+    window.addEventListener('keydown', onKeyDown, { capture: true })
+    window.addEventListener('pointerdown', onPointerDown, { capture: true })
+    return () => {
+      window.removeEventListener('keydown', onKeyDown, { capture: true })
+      window.removeEventListener('pointerdown', onPointerDown, { capture: true })
+    }
+  }, [active, hostRef])
+
+  // If focus is left (or the card unmounts) mid-drag, restore the lifted
+  // island — its transient float styles live outside React and would stick.
+  useEffect(() => {
+    if (active) return
+    if (liftedRef.current) resetIsland(liftedRef.current)
+    liftedRef.current = null
+    gestureRef.current = null
+    hostRef.current?.removeAttribute('data-focus-reordering')
+  }, [active, hostRef])
+
+  useEffect(() => () => {
+    if (liftedRef.current) resetIsland(liftedRef.current)
+    liftedRef.current = null
+  }, [])
+
+  if (!active || islands.length === 0) return null
+
+  const beginResize = (event: ReactPointerEvent<HTMLButtonElement>, island: IslandInfo) => {
+    if (event.button !== 0) return
+    event.preventDefault()
+    event.stopPropagation()
+    try {
+      event.currentTarget.setPointerCapture(event.pointerId)
+    } catch {
+      /* pointer vanished — gesture simply won't track */
+    }
+    const host = hostRef.current
+    const hostRect = host?.getBoundingClientRect()
+    const scale = host && hostRect && host.offsetWidth > 0 ? hostRect.width / host.offsetWidth : 1
+    const containerW = island.element.parentElement?.clientWidth ?? island.width
+    const minW = Math.max(MIN_W, numberAttr(island.element, 'data-island-min-w', MIN_W))
+    const minH = Math.max(MIN_H, numberAttr(island.element, 'data-island-min-h', MIN_H))
+    // Renderer-specific values may tighten the charter, never loosen it.
+    const maxW = Math.max(minW, Math.min(containerW, numberAttr(island.element, 'data-island-max-w', containerW)))
+    const maxH = Math.max(minH, Math.min(MAX_H, numberAttr(island.element, 'data-island-max-h', MAX_H)))
+    useWidgetStore.getState().snapshotHistory(`island:${widgetId}`)
+    gestureRef.current = {
+      kind: 'resize',
+      pointerId: event.pointerId,
+      id: island.id,
+      element: island.element,
+      sizing: island.sizing,
+      startX: event.clientX,
+      startY: event.clientY,
+      startW: island.width,
+      startH: island.height,
+      ratio: island.height > 0 ? island.width / island.height : 1,
+      minW,
+      minH,
+      maxW,
+      maxH,
+      scale,
+      changed: false,
+    }
+  }
+
+  const moveResize = (event: ReactPointerEvent<HTMLButtonElement>) => {
+    const gesture = gestureRef.current
+    if (!gesture || gesture.kind !== 'resize' || gesture.pointerId !== event.pointerId) return
+    event.preventDefault()
+    const dx = (event.clientX - gesture.startX) / gesture.scale
+    const dy = (event.clientY - gesture.startY) / gesture.scale
+    let width = snap4(Math.min(gesture.maxW, Math.max(gesture.minW, gesture.startW + dx)))
+    let height = snap4(Math.min(gesture.maxH, Math.max(gesture.minH, gesture.startH + dy)))
+    if (gesture.sizing === 'width') {
+      height = gesture.startH
+    } else if (gesture.sizing === 'aspect') {
+      // Width leads; height follows the locked ratio, then both re-clamp.
+      height = snap4(Math.min(gesture.maxH, Math.max(gesture.minH, width / gesture.ratio)))
+      width = snap4(Math.min(gesture.maxW, Math.max(gesture.minW, height * gesture.ratio)))
+    }
+    gesture.element.style.width = `${width}px`
+    if (gesture.sizing !== 'width') gesture.element.style.height = `${height}px`
+    gesture.element.style.flex = '0 0 auto'
+    gesture.changed = true
+  }
+
+  const endResize = (event: ReactPointerEvent<HTMLButtonElement>) => {
+    const gesture = gestureRef.current
+    if (!gesture || gesture.kind !== 'resize' || gesture.pointerId !== event.pointerId) return
+    gestureRef.current = null
+    if (!gesture.changed) return
+    const rect = gesture.element.getBoundingClientRect()
+    const size: { width?: number; height?: number } = { width: Math.round(rect.width / gesture.scale) }
+    if (gesture.sizing !== 'width') size.height = Math.round(rect.height / gesture.scale)
+    const current = useWidgetStore.getState().widgets[widgetId]?.metadata.islandLayout
+    persistLayout(widgetId, { sizes: { ...current?.sizes, [gesture.id]: size } })
+    const host = hostRef.current
+    if (host) growCardToContent(widgetId, host)
+  }
+
+  // --- Reorder as a float-drag ------------------------------------------
+  // The panel is grabbed anywhere on its body (no handle). The dragged
+  // island lifts out of the flow and tracks the cursor; its siblings slide
+  // to open a landing slot via FLIP. On release it eases into that slot.
+
+  const beginReorder = (event: ReactPointerEvent<HTMLDivElement>, island: IslandInfo) => {
+    if (event.button !== 0) return
+    const host = hostRef.current
+    const parent = island.element.parentElement
+    if (!host || !parent) return
+    event.preventDefault()
+    event.stopPropagation()
+    try {
+      event.currentTarget.setPointerCapture(event.pointerId)
+    } catch {
+      /* pointer vanished — gesture simply won't track */
+    }
+    const all = collectIslands(host)
+    const siblings = all.filter((element) => element.parentElement === parent)
+    const order = [...siblings]
+      .sort((a, b) => a.getBoundingClientRect().top - b.getBoundingClientRect().top)
+      .map((element) => islandId(element, all.indexOf(element)))
+    useWidgetStore.getState().snapshotHistory(`island:${widgetId}`)
+    const startTop = island.element.getBoundingClientRect().top
+    liftIsland(island.element)
+    liftedRef.current = island.element
+    siblings.forEach((element) => {
+      if (element !== island.element) element.classList.add('gp-island-settle')
+    })
+    host.setAttribute('data-focus-reordering', '')
+    gestureRef.current = {
+      kind: 'reorder',
+      pointerId: event.pointerId,
+      id: island.id,
+      element: island.element,
+      parent,
+      all,
+      siblings,
+      startCursorX: event.clientX,
+      startCursorY: event.clientY,
+      startTop,
+      naturalTop: startTop,
+      order,
+      changed: false,
+    }
+  }
+
+  const moveReorder = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const gesture = gestureRef.current
+    if (!gesture || gesture.kind !== 'reorder' || gesture.pointerId !== event.pointerId) return
+    event.preventDefault()
+    const { element: dragged, siblings, all } = gesture
+    const idOf = (el: HTMLElement) => islandId(el, all.indexOf(el))
+    const cursorY = event.clientY
+
+    // Where would the dragged island land? Insert it among the *other*
+    // islands at the first one whose midpoint the cursor sits above.
+    const others = siblings
+      .filter((el) => el !== dragged)
+      .map((el) => ({ el, rect: el.getBoundingClientRect() }))
+      .sort((a, b) => a.rect.top - b.rect.top)
+    let target = others.length
+    for (let i = 0; i < others.length; i++) {
+      if (cursorY < others[i]!.rect.top + others[i]!.rect.height / 2) {
+        target = i
+        break
+      }
+    }
+    const nextOrder = others.map((o) => idOf(o.el))
+    nextOrder.splice(target, 0, gesture.id)
+
+    if (!sameOrder(nextOrder, gesture.order)) {
+      // FLIP: record the others' current tops, reflow into the new order,
+      // then invert-and-play so they glide into place.
+      const first = new Map(others.map((o) => [o.el, o.rect.top] as const))
+      dragged.style.transform = '' // measure the dragged slot naturally
+      nextOrder.forEach((id, index) => {
+        const el = siblings.find((s) => idOf(s) === id)
+        if (el) el.style.order = String(index)
+      })
+      if (getComputedStyle(gesture.parent).display === 'block') {
+        gesture.parent.classList.add('gp-island-flow')
+      }
+      others.forEach(({ el }) => {
+        const last = el.getBoundingClientRect().top
+        const delta = (first.get(el) ?? last) - last
+        if (delta) {
+          el.style.transition = 'none'
+          el.style.transform = `translateY(${delta}px)`
+        }
+      })
+      requestAnimationFrame(() => {
+        others.forEach(({ el }) => {
+          el.style.transition = ''
+          el.style.transform = ''
+        })
+      })
+      gesture.naturalTop = dragged.getBoundingClientRect().top
+      gesture.order = nextOrder
+      gesture.changed = true
+    }
+
+    // Keep the lifted panel under the cursor. Vertical follow is exact (the
+    // reorder axis); horizontal drift is damped so it never leaves the card.
+    const ty = gesture.startTop - gesture.naturalTop + (cursorY - gesture.startCursorY)
+    const tx = clamp((event.clientX - gesture.startCursorX) * 0.22, -18, 18)
+    dragged.style.transform = `translate(${tx}px, ${ty}px) scale(1.015)`
+  }
+
+  const endReorder = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const gesture = gestureRef.current
+    if (!gesture || gesture.kind !== 'reorder' || gesture.pointerId !== event.pointerId) return
+    gestureRef.current = null
+    const host = hostRef.current
+    const dragged = gesture.element
+    host?.removeAttribute('data-focus-reordering')
+    gesture.siblings.forEach((el) => el.classList.remove('gp-island-settle'))
+
+    // Ease the panel from its floating position into the landing slot.
+    let settled = false
+    const settle = () => {
+      if (settled) return
+      settled = true
+      dragged.removeEventListener('transitionend', settle)
+      resetIsland(dragged)
+      liftedRef.current = null
+      if (host) requestAnimationFrame(() => setIslands(measureIslands(host)))
+    }
+    dragged.style.transition = 'transform 240ms cubic-bezier(0.2, 0.7, 0.25, 1)'
+    dragged.style.transform = 'translate(0px, 0px) scale(1)'
+    dragged.addEventListener('transitionend', settle)
+    window.setTimeout(settle, 320)
+
+    if (!gesture.changed || !host) return
+    // Persist: splice the new sibling order back into the card's full order.
+    const idOf = (el: HTMLElement) => islandId(el, gesture.all.indexOf(el))
+    const siblingOrder = [...gesture.siblings]
+      .sort((a, b) => Number(a.style.order || 0) - Number(b.style.order || 0))
+      .map(idOf)
+    const siblingSet = new Set(siblingOrder)
+    const savedOrder = useWidgetStore.getState().widgets[widgetId]?.metadata.islandLayout?.order ?? []
+    const allIds = gesture.all.map((element, index) => islandId(element, index))
+    const baseOrder = [...savedOrder.filter((id) => allIds.includes(id)), ...allIds.filter((id) => !savedOrder.includes(id))]
+    const queue = [...siblingOrder]
+    persistLayout(widgetId, { order: baseOrder.map((id) => (siblingSet.has(id) ? queue.shift()! : id)) })
+  }
+
+  return (
+    <div role="group" aria-label="Focused panel layout controls" className="pointer-events-none absolute inset-0 z-30">
+      {islands.map((island) => (
+        <div
+          key={island.id}
+          role={island.reorderable ? 'button' : undefined}
+          aria-label={island.reorderable ? `Drag to rearrange panel ${island.id}` : undefined}
+          title={island.reorderable ? 'Drag to rearrange' : undefined}
+          className={`gp-focus-island absolute${island.reorderable ? ' gp-focus-island--drag pointer-events-auto' : ''}`}
+          style={{ left: island.x, top: island.y, width: island.width, height: island.height }}
+          onPointerDown={island.reorderable ? (event) => beginReorder(event, island) : undefined}
+          onPointerMove={island.reorderable ? moveReorder : undefined}
+          onPointerUp={island.reorderable ? endReorder : undefined}
+          onPointerCancel={island.reorderable ? endReorder : undefined}
+        >
+          {island.sizing !== 'fixed' && (
+            <button
+              type="button"
+              aria-label={`Resize panel ${island.id}`}
+              title={
+                island.sizing === 'aspect'
+                  ? 'Resize (keeps its proportions)'
+                  : island.sizing === 'width'
+                    ? 'Resize width'
+                    : 'Resize'
+              }
+              data-sizing={island.sizing}
+              className="gp-focus-resize pointer-events-auto"
+              onPointerDown={(event) => beginResize(event, island)}
+              onPointerMove={moveResize}
+              onPointerUp={endResize}
+              onPointerCancel={endResize}
+            />
+          )}
+        </div>
+      ))}
+    </div>
+  )
+}

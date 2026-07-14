@@ -1,0 +1,1308 @@
+@import url('https://api.fontshare.com/v2/css?f[]=clash-display@300,400,500,600,700&display=swap');
+@import 'tailwindcss';
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  /* Kill browser rubber-banding and back/forward swipe on trackpads. */
+  overscroll-behavior: none;
+}
+
+body {
+  background-color: #0a0a0a;
+  color: #e5e5e5;
+  font-family:
+    'Clash Display',
+    'Inter',
+    system-ui,
+    -apple-system,
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Grid line colors ──────────────────────────────────────────────────────── */
+
+:root {
+  --gp-grid-coarse: rgba(148, 163, 184, 0.10);
+  --gp-grid-fine: rgba(148, 163, 184, 0.06);
+
+  /* Pure-white hairlines for widget UI contrast in dark mode; light mode
+     flips them to pure black. Applied via .gp-hairline. */
+  --gp-hairline: rgba(255, 255, 255, 0.10);
+  --gp-hairline-strong: rgba(255, 255, 255, 0.18);
+  /* One structural outline language for parent relations, widgets, compact
+     widget proxies, title capsules, and widget-like floating panels. */
+  --gp-relation-outline: #94a3b8;
+  --gp-relation-outline-width: 2px;
+
+  /* Shared motion language: quick feedback, confident layout movement, and
+     a softer reveal. Pointer-tracked gestures always bypass these timings. */
+  --gp-motion-instant: 90ms;
+  --gp-motion-fast: 170ms;
+  --gp-motion-layout: 300ms;
+  --gp-motion-reveal: 260ms;
+  --gp-ease-standard: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --gp-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --gp-ease-layout: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* Toxic/neon green accent — overrides Tailwind's emerald scale so every
+     text-emerald-*, bg-emerald-*, border-emerald-* class uses this hue. */
+  --color-emerald-200: oklch(94% 0.14 136);
+  --color-emerald-300: oklch(90% 0.22 136);
+  --color-emerald-400: oklch(88% 0.31 136);
+  --color-emerald-500: oklch(76% 0.26 133);
+  --color-emerald-600: oklch(62% 0.20 130);
+  --color-emerald-700: oklch(48% 0.16 132);
+  --color-emerald-800: oklch(34% 0.11 133);
+  --color-emerald-900: oklch(24% 0.07 134);
+  --color-emerald-950: oklch(16% 0.05 134);
+}
+
+[data-theme="light"] {
+  --gp-relation-outline: #64748b;
+}
+
+/* ---------------------------------------------------------------------------
+ * Motion system
+ *
+ * Every animation here is either a one-shot keyframe (fires once on a discrete
+ * state change: mount, spawn, leap) or a CSS transition (fires only when the
+ * property actually changes). Nothing runs per frame while the canvas idles.
+ * All movement uses compositor-friendly properties (opacity, scale, transform,
+ * box-shadow) and is disabled for prefers-reduced-motion.
+ * ------------------------------------------------------------------------- */
+
+/*
+ * Widget position/appearance transitions. Widgets are positioned with an
+ * inline `transform`, so settle/undo/nudge position changes glide instead of
+ * teleporting. While any widget drag gesture is live the body carries
+ * data-widget-dragging and transitions collapse to zero so per-frame drag
+ * updates are never smoothed (which would feel laggy).
+ */
+.gp-widget-motion {
+  transition:
+    transform var(--gp-motion-layout) var(--gp-ease-layout),
+    opacity var(--gp-motion-fast) var(--gp-ease-standard),
+    box-shadow var(--gp-motion-fast) var(--gp-ease-standard),
+    border-color var(--gp-motion-fast) var(--gp-ease-standard),
+    background-color var(--gp-motion-fast) var(--gp-ease-standard);
+}
+
+/* WidgetCard owns world position and size on its outer wrapper. Keeping this
+   timing identical to SVG route morphing prevents endpoints from detaching
+   during settle, nudge, collapse, undo, and redo. */
+.gp-widget-layout-motion {
+  transition:
+    transform var(--gp-motion-layout) var(--gp-ease-layout),
+    width var(--gp-motion-layout) var(--gp-ease-layout),
+    height var(--gp-motion-layout) var(--gp-ease-layout);
+}
+
+.gp-route-motion {
+  transition: d var(--gp-motion-layout) var(--gp-ease-layout);
+}
+
+.gp-route-chip-motion {
+  transition: transform var(--gp-motion-layout) var(--gp-ease-layout);
+}
+
+/* Group band path. Color/width shifts always glide, and the shrink-wrap
+   shape (`d`) morphs on discrete changes: drop-target relax/tighten, settle,
+   undo. While a live drag reshapes the hull every frame the `d` transition
+   must collapse — otherwise each frame's new path becomes a fresh 220ms ease
+   target and the band corners trail the dragged widget. [data-drop-morph]
+   (set while the plate is a drop target, plus a short tail) keeps the
+   taut↔relaxed morph animated: the dragged widget isn't a member then, so
+   the hull is static and the transition is safe. */
+.gp-band-motion {
+  transition:
+    stroke 180ms ease,
+    fill 180ms ease,
+    stroke-width 180ms ease,
+    d 220ms ease;
+}
+
+body[data-widget-dragging] .gp-band-motion:not([data-drop-morph]) {
+  transition:
+    stroke 180ms ease,
+    fill 180ms ease,
+    stroke-width 180ms ease;
+}
+
+body[data-widget-dragging] .gp-widget-motion,
+body[data-widget-dragging] .gp-widget-layout-motion,
+body[data-widget-dragging] .gp-route-motion,
+body[data-widget-dragging] .gp-route-chip-motion {
+  transition: none;
+}
+
+/*
+ * WidgetCard variant of the motion system: also transitions width/height/
+ * border-radius so collapse-to-pill and the resize-release grid snap glide.
+ * Only ever fires on discrete changes — live resize drags set
+ * data-widget-dragging on <body>, which collapses these to zero, so
+ * per-frame size updates track the pointer exactly.
+ */
+.gp-card-motion {
+  transition:
+    border-radius var(--gp-motion-layout) var(--gp-ease-layout),
+    opacity var(--gp-motion-fast) var(--gp-ease-standard),
+    box-shadow var(--gp-motion-fast) var(--gp-ease-standard),
+    border-color var(--gp-motion-fast) var(--gp-ease-standard),
+    background-color var(--gp-motion-fast) var(--gp-ease-standard),
+    scale var(--gp-motion-fast) var(--gp-ease-out),
+    translate var(--gp-motion-fast) var(--gp-ease-out);
+}
+
+body[data-widget-dragging] .gp-card-motion {
+  transition: none;
+}
+
+/* One-shot entrance for newly created widgets. Uses the independent `scale`
+ * property so it composes with the inline positioning transform. */
+@keyframes gp-spawn {
+  from {
+    opacity: 0;
+    scale: 0.9;
+  }
+  to {
+    opacity: 1;
+    scale: 1;
+  }
+}
+
+.gp-spawn {
+  animation: gp-spawn var(--gp-motion-reveal) var(--gp-ease-out) backwards;
+}
+
+/* One-shot entrance for menus, pickers, and modals. */
+@keyframes gp-pop {
+  from {
+    opacity: 0;
+    scale: 0.96;
+  }
+  to {
+    opacity: 1;
+    scale: 1;
+  }
+}
+
+.gp-pop {
+  animation: gp-pop var(--gp-motion-fast) var(--gp-ease-out) backwards;
+}
+
+@keyframes gp-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.gp-fade {
+  animation: gp-fade var(--gp-motion-fast) var(--gp-ease-standard) backwards;
+}
+
+/* Locator pulse when leaping to a widget from the command palette. */
+@keyframes gp-flash {
+  0% {
+    box-shadow:
+      0 0 0 2px oklch(88% 0.31 136 / 0.75),
+      0 0 0 2px oklch(88% 0.31 136 / 0.55);
+  }
+  100% {
+    box-shadow:
+      0 0 0 2px oklch(88% 0.31 136 / 0),
+      0 0 0 26px oklch(88% 0.31 136 / 0);
+  }
+}
+
+.gp-flash::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  border-radius: inherit;
+  pointer-events: none;
+  animation: gp-flash 700ms ease-out 2;
+}
+
+/* Generating-dots blink used by AiGeneratorWidget. Pure CSS, no JS timers. */
+@keyframes gp-blink {
+  0%, 80%, 100% { opacity: 0.2; transform: scaleY(0.8); }
+  40% { opacity: 1; transform: scaleY(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+  .gp-widget-motion,
+  .gp-widget-layout-motion,
+  .gp-route-motion,
+  .gp-route-chip-motion,
+  .gp-band-motion,
+  .gp-card-motion {
+    transition: none;
+  }
+  .gp-spawn,
+  .gp-pop,
+  .gp-fade,
+  .gp-flash::after {
+    animation: none;
+  }
+  /* Suppress AI generator dot pulse */
+  @keyframes gp-blink {
+    from { opacity: 0.6; }
+    to { opacity: 0.6; }
+  }
+}
+
+/* ---------------------------------------------------------------------------
+ * Light theme
+ *
+ * Tailwind v4 exposes every color as a CSS custom property (--color-neutral-*).
+ * Overriding those properties in [data-theme="light"] flips the entire neutral
+ * scale so dark backgrounds become light and dark text becomes readable on the
+ * new background — zero component changes needed. Accent colors (emerald, sky,
+ * violet …) are left untouched. Three manual overrides handle values that
+ * bypass the variable system: the body background, grid lines, and the
+ * sketchpad dot pattern.
+ * ------------------------------------------------------------------------- */
+
+[data-theme="light"] {
+  /* Invert the neutral scale end-to-end.
+     neutral-950 (canvas bg, darkest) ↔ neutral-50 (near-white)
+     neutral-900 (card bg)            ↔ neutral-100 (very light)
+     neutral-800 (input bg)           ↔ neutral-200 (light)
+     …and so on. neutral-500 is the midpoint — stays the same. */
+  --color-neutral-100: oklch(20.5% 0 0);
+  --color-neutral-200: oklch(26.9% 0 0);
+  --color-neutral-300: oklch(37.1% 0 0);
+  --color-neutral-400: oklch(43.9% 0 0);
+  --color-neutral-600: oklch(70.8% 0 0);
+  --color-neutral-700: oklch(87% 0 0);
+  --color-neutral-800: oklch(92.2% 0 0);
+  --color-neutral-900: oklch(97% 0 0);
+  --color-neutral-950: oklch(98.8% 0 0);
+
+  /* Grid lines — dark on light canvas. */
+  --gp-grid-coarse: rgba(0, 0, 0, 0.07);
+  --gp-grid-fine: rgba(0, 0, 0, 0.04);
+
+  /* Hairlines invert: pure black at the same subtlety. */
+  --gp-hairline: rgba(0, 0, 0, 0.10);
+  --gp-hairline-strong: rgba(0, 0, 0, 0.18);
+}
+
+/* In light mode the neon green (L=88%) is illegible against near-white panels.
+   Swap to a deep vivid green that reads as the same brand hue but has contrast. */
+[data-theme="light"] {
+  --color-emerald-200: oklch(32% 0.14 138);
+  --color-emerald-300: oklch(40% 0.18 138);
+  --color-emerald-400: oklch(48% 0.22 137);
+  --color-emerald-500: oklch(56% 0.22 136);
+  --color-emerald-600: oklch(62% 0.20 135);
+}
+
+[data-theme="light"] body {
+  background-color: #f8f8f8;
+  color: #1c1c1c;
+}
+
+/* hover:text-white is invisible against a light background — remap it to
+   near-black so every button label stays legible on hover. */
+[data-theme="light"] .hover\:text-white:hover {
+  color: oklch(14.5% 0 0);
+}
+
+/* ---------------------------------------------------------------------------
+ * Glassy widget card surface
+ *
+ * Pure CSS glass: layered gradients + inset highlights + deep shadow. No
+ * backdrop-filter (that forces GPU compositing on every repaint) — every
+ * layer here is a static background paint, computed once per card and free
+ * on pan/zoom/drag since it never changes per frame. Four layers simulate
+ * glass: a corner specular sheen, a glossy top-edge streak, a faint cool
+ * tint, and the body gradient. Light mode inverts to near-white.
+ * ------------------------------------------------------------------------- */
+
+.gp-glass {
+  background:
+    radial-gradient(130% 100% at 14% 0%, oklch(100% 0 0 / 0.13) 0%, transparent 52%),
+    linear-gradient(to bottom, oklch(100% 0 0 / 0.07) 0%, transparent 9%),
+    radial-gradient(90% 60% at 88% 100%, oklch(76% 0.06 150 / 0.05) 0%, transparent 60%),
+    linear-gradient(160deg, oklch(26% 0.004 250 / 0.97) 0%, oklch(10% 0.004 250 / 0.98) 100%);
+}
+
+[data-theme="light"] .gp-glass {
+  background:
+    radial-gradient(130% 100% at 14% 0%, oklch(100% 0 0 / 0.65) 0%, transparent 52%),
+    linear-gradient(to bottom, oklch(100% 0 0 / 0.5) 0%, transparent 9%),
+    radial-gradient(90% 60% at 88% 100%, oklch(76% 0.06 150 / 0.06) 0%, transparent 60%),
+    linear-gradient(160deg, oklch(100% 0 0 / 0.97) 0%, oklch(93.5% 0.002 250 / 0.98) 100%);
+}
+
+/* Glass instrument primitives: the same material language as cards/panels,
+   expressed at control scale. Fixed-dark wells are the sanctioned screen
+   islands in both themes; raised keys reuse the glass recipe without filters. */
+.gp-display-well{position:relative;overflow:hidden;border:0;border-radius:var(--gp-r2, 8px);background:rgba(6,8,7,.72);box-shadow:inset 0 1.5px 3px rgb(0 0 0/.5),inset 0 -1px 0 rgba(255,255,255,.04),0 1px 0 rgba(255,255,255,.045)}
+.gp-display-well::before{content:none}
+.gp-glass-key{border:1px solid transparent;border-radius:var(--gp-r2, 8px);background:rgba(255,255,255,.045);box-shadow:inset 0 1px 0 rgba(255,255,255,.065),0 2px 4px rgb(0 0 0/.2);transition:transform var(--gp-motion-instant),background-color var(--gp-motion-instant),border-color var(--gp-motion-instant)}
+.gp-glass-key:hover{border-color:color-mix(in oklab,var(--gp-widget-accent),transparent 72%);background:rgba(255,255,255,.07)}
+.gp-glass-key:active{transform:translateY(1px) scale(.98);box-shadow:inset 0 1px 3px rgb(0 0 0/.35)}
+.gp-led-colon{color:var(--gp-widget-accent);font:700 24px ui-monospace;line-height:1}
+[data-running='true'] .gp-led-colon{animation:gp-led-colon 1s steps(1,end) infinite}
+@keyframes gp-led-colon{50%{opacity:.2}}
+@media(prefers-reduced-motion:reduce){[data-running='true'] .gp-led-colon{animation:none}}
+
+/* ---------------------------------------------------------------------------
+ * Accent-infused card identity
+ *
+ * Every card carries its registry accent as --gp-widget-accent. The glass,
+ * the hover bloom, and the selection ring are all mixed from that one hue,
+ * so a canvas full of widgets reads as a colorful garden — each card glows
+ * in its own color — while staying one design system. All of it is static
+ * paint or hover/selection-triggered shadow transitions: nothing per-frame,
+ * no backdrop-filter, and far-zoom LOD still strips shadows and flattens
+ * the background exactly as before.
+ * ------------------------------------------------------------------------- */
+
+.gp-widget-card.gp-glass {
+  background:
+    radial-gradient(120% 85% at 12% -4%, color-mix(in oklab, var(--gp-widget-accent), transparent 91%) 0%, transparent 56%),
+    radial-gradient(130% 100% at 14% 0%, oklch(100% 0 0 / 0.11) 0%, transparent 52%),
+    linear-gradient(to bottom, oklch(100% 0 0 / 0.07) 0%, transparent 9%),
+    radial-gradient(95% 65% at 90% 104%, color-mix(in oklab, var(--gp-widget-accent), transparent 94%) 0%, transparent 62%),
+    linear-gradient(160deg, oklch(26% 0.004 250 / 0.97) 0%, oklch(10% 0.004 250 / 0.98) 100%);
+}
+
+[data-theme="light"] .gp-widget-card.gp-glass {
+  background:
+    radial-gradient(120% 85% at 12% -4%, color-mix(in oklab, var(--gp-widget-accent), transparent 92%) 0%, transparent 56%),
+    radial-gradient(130% 100% at 14% 0%, oklch(100% 0 0 / 0.65) 0%, transparent 52%),
+    linear-gradient(to bottom, oklch(100% 0 0 / 0.5) 0%, transparent 9%),
+    radial-gradient(95% 65% at 90% 104%, color-mix(in oklab, var(--gp-widget-accent), transparent 93%) 0%, transparent 62%),
+    linear-gradient(160deg, oklch(100% 0 0 / 0.97) 0%, oklch(93.5% 0.002 250 / 0.98) 100%);
+}
+
+/* Resting, hover, selected, and link-source card shadows — previously
+   hardcoded lime in the component, now mixed from each card's own accent. */
+.gp-widget-card {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 5px 16px rgba(0, 0, 0, 0.32),
+    0 1px 2px rgba(0, 0, 0, 0.16);
+}
+
+@media (hover: hover) {
+  body:not([data-widget-dragging]):not([data-canvas-lod="far"])
+    .gp-widget-card:not([data-selected="true"]):not([data-link-source="true"]):hover {
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.1),
+      0 10px 30px rgba(0, 0, 0, 0.42),
+      0 0 22px color-mix(in oklab, var(--gp-widget-accent), transparent 80%);
+    border-color: color-mix(in oklab, var(--gp-widget-accent), var(--gp-relation-outline) 55%);
+  }
+}
+
+.gp-widget-card[data-selected="true"] {
+  border-color: color-mix(in oklab, var(--gp-widget-accent), var(--gp-relation-outline) 30%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.09),
+    0 0 0 3px color-mix(in oklab, var(--gp-widget-accent), transparent 70%),
+    0 0 30px color-mix(in oklab, var(--gp-widget-accent), transparent 76%),
+    0 6px 22px rgba(0, 0, 0, 0.38);
+}
+
+.gp-widget-card[data-link-source="true"] {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.09),
+    0 0 0 3px rgba(99, 102, 241, 0.38),
+    0 0 26px rgba(99, 102, 241, 0.3),
+    0 6px 22px rgba(0, 0, 0, 0.38);
+}
+
+
+/* ---------------------------------------------------------------------------
+ * Hover lift & bloom
+ *
+ * The card's position lives in an inline `transform`, so lift uses the
+ * independent `scale` property (composes with transform, stays on the
+ * compositor). The bloom is a box-shadow transition — it fires exactly once
+ * per hover change, never per frame. All of it switches off while dragging
+ * and at far zoom where cards are sub-pixel and hundreds may be visible.
+ * ------------------------------------------------------------------------- */
+
+.gp-card-motion {
+  scale: 1;
+  translate: 0 0;
+  transform-box: border-box;
+  transform-origin: 50% 50%;
+  transition-property: border-radius, opacity, box-shadow, border-color,
+    background-color, scale, translate;
+}
+
+@media (hover: hover) {
+  body:not([data-widget-dragging]):not([data-canvas-lod="far"])
+    [data-widget-id].gp-card-motion:hover {
+    scale: 1.015;
+    translate: 0 -2px;
+    z-index: 5;
+  }
+}
+
+/* Selection settles into a restrained lift. It is a transition instead of a
+   keyframe so it composes with spawn/locator effects and never replays merely
+   because another drag toggled the body gesture attribute. */
+[data-widget-id].gp-card-motion[data-selected="true"] {
+  scale: 1.006;
+}
+
+@media (hover: hover) {
+  body:not([data-widget-dragging]):not([data-canvas-lod="far"])
+    [data-widget-id].gp-card-motion[data-selected="true"]:hover {
+    scale: 1.015;
+  }
+}
+
+/* Widget picker tiles — lift + accent wash on hover. */
+/* ---------------------------------------------------------------------------
+ * Widget picker (full-screen library)
+ *
+ * One blurred scrim layer for the whole overlay — cards never blur
+ * individually. Tiles animate border/background only (paint, no layout);
+ * the icon block lifts with the compositor-friendly `scale` property.
+ * Section entrances are one-shot keyframes with a small stagger.
+ * ------------------------------------------------------------------------- */
+
+.gp-picker-icon {
+  scale: 1;
+  transition: scale 180ms cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+
+/* Accent hexes are tuned for dark glass; on the light scrim the palest ones
+   (slate, near-white) wash out. One static filter re-anchors them all. */
+[data-theme="light"] .gp-picker-icon {
+  filter: saturate(1.5) brightness(0.55);
+}
+
+.gp-picker-row:hover .gp-picker-icon,
+.gp-picker-row[data-active] .gp-picker-icon {
+  scale: 1.08;
+}
+
+/* ---------------------------------------------------------------------------
+ * Field data wires
+ *
+ * Rest state: translucent, thin, data-type colored (stroke set as an SVG
+ * attribute; these rules layer states on top). Hover: opaque + thicker +
+ * a marching directional dash showing flow direction — the dash animates
+ * on at most one hovered wire at a time, so idle canvases animate nothing.
+ * Warning ([data-warn], an unsatisfied gate): amber pulsing dash.
+ * ------------------------------------------------------------------------- */
+
+.gp-wire-halo {
+  opacity: 0;
+  transition:
+    d var(--gp-motion-layout) var(--gp-ease-layout),
+    opacity var(--gp-motion-fast) var(--gp-ease-standard);
+}
+
+.gp-wire-main {
+  opacity: 0.6;
+  transition:
+    d var(--gp-motion-layout) var(--gp-ease-layout),
+    opacity var(--gp-motion-fast) var(--gp-ease-standard),
+    stroke-width var(--gp-motion-fast) var(--gp-ease-standard);
+}
+
+.gp-wire-flow {
+  opacity: 0;
+  transition:
+    d var(--gp-motion-layout) var(--gp-ease-layout),
+    opacity var(--gp-motion-fast) var(--gp-ease-standard);
+}
+
+.gp-wire-group:hover .gp-wire-halo {
+  opacity: 0.14;
+}
+
+.gp-wire-group:hover .gp-wire-main {
+  opacity: 1;
+  stroke-width: 2.4;
+}
+
+@keyframes gp-wire-dash {
+  to {
+    stroke-dashoffset: -24;
+  }
+}
+
+.gp-wire-group:hover .gp-wire-flow {
+  opacity: 0.9;
+  animation: gp-wire-dash 700ms linear infinite;
+}
+
+/* Unsatisfied gate/visibility: the wire itself warns. Overrides the
+   attribute-set stroke (CSS wins over presentation attributes). */
+@keyframes gp-wire-warn {
+  0%, 100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.gp-wire-group[data-warn] .gp-wire-main {
+  stroke: #f59e0b;
+  stroke-dasharray: 5 4;
+  opacity: 0.9;
+}
+
+/* Warning wires are vivid but idle-safe. The pulse runs only while the user
+   is inspecting that wire, never across a whole board in the background. */
+.gp-wire-group[data-warn]:hover .gp-wire-main {
+  animation: gp-wire-warn 1.1s ease-in-out infinite;
+}
+
+.gp-wire-group[data-warn] .gp-wire-chip circle {
+  stroke: #f59e0b;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gp-wire-group:hover .gp-wire-flow,
+  .gp-wire-group[data-warn]:hover .gp-wire-main {
+    animation: none;
+  }
+  .gp-wire-group[data-warn] .gp-wire-main {
+    opacity: 1;
+  }
+}
+
+/* Compatible-target pulse while a field wire is in flight. Animates only
+   the handful of highlighted port dots, never the cards. */
+@keyframes gp-port-pulse {
+  0%, 100% { scale: 1; }
+  50% { scale: 1.35; }
+}
+
+.gp-port-pulse {
+  animation: gp-port-pulse 900ms ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gp-port-pulse {
+    animation: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+ * Circuit engine — ports, delivery pulses, ghost wire, circuit mode.
+ *
+ * Ports are invisible at rest (the rail component only mounts on hover, wire
+ * drag, or circuit mode, so idle canvases pay zero cost). The delivery pulse
+ * is a one-shot dash draw along the wire path keyed by fire timestamp.
+ * ------------------------------------------------------------------------- */
+
+.gp-port {
+  position: absolute;
+  display: block;
+  width: 10px;
+  height: 10px;
+  border-radius: 9999px;
+  border: 1.5px solid var(--gp-port-color, #64748b);
+  background: #0c1017;
+  box-shadow: 0 0 6px color-mix(in oklab, var(--gp-port-color, #64748b) 45%, transparent);
+  translate: 0 -50%;
+  animation: gp-fade var(--gp-motion-fast) var(--gp-ease-out) backwards;
+}
+
+[data-theme="light"] .gp-port {
+  background: #f8fafc;
+}
+
+/* Invisible hit-area extension so a 10px dot never demands 10px aim. On an
+   expanded (full) card the halo widens further — the rail is the card's
+   whole connective edge, so generous targets cost nothing visually. */
+.gp-port::after {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: 9999px;
+}
+
+.gp-port-rail[data-expanded] .gp-port::after {
+  inset: -13px;
+}
+
+.gp-port-out {
+  right: -5px;
+  cursor: crosshair;
+  pointer-events: auto;
+}
+
+.gp-port-out:hover,
+.gp-port-out[data-active] {
+  scale: 1.4;
+  background: var(--gp-port-color, #64748b);
+}
+
+.gp-port-in {
+  left: -5px;
+}
+
+.gp-port-in[data-command] {
+  border-radius: 3px;
+  rotate: 45deg;
+}
+
+.gp-port-in[data-hot] {
+  scale: 1.5;
+  background: var(--gp-port-color, #64748b);
+  box-shadow: 0 0 12px var(--gp-port-color, #64748b);
+}
+
+.gp-port-label {
+  position: absolute;
+  top: 50%;
+  translate: 0 -50%;
+  white-space: nowrap;
+  pointer-events: none;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--gp-port-color, #94a3b8);
+  background: rgba(9, 12, 18, 0.92);
+  border: 1px solid color-mix(in oklab, var(--gp-port-color, #64748b) 35%, transparent);
+  border-radius: 6px;
+  padding: 1px 5px;
+  opacity: 0;
+  transition: opacity var(--gp-motion-fast) var(--gp-ease-standard);
+}
+
+[data-theme="light"] .gp-port-label {
+  background: rgba(255, 255, 255, 0.94);
+}
+
+.gp-port-label-out {
+  right: 14px;
+}
+
+.gp-port-label-in {
+  left: 14px;
+  rotate: 0deg;
+}
+
+.gp-port-in[data-command] .gp-port-label-in {
+  rotate: -45deg;
+  transform-origin: left center;
+}
+
+.gp-port:hover .gp-port-label,
+.gp-port[data-hot] .gp-port-label,
+body[data-circuit-mode] .gp-port-label {
+  opacity: 1;
+}
+
+/* One-shot delivery pulse: a bright dash sweeps source → target. */
+@keyframes gp-wire-fire {
+  from {
+    stroke-dashoffset: 1;
+    opacity: 1;
+  }
+  70% {
+    opacity: 1;
+  }
+  to {
+    stroke-dashoffset: -0.35;
+    opacity: 0;
+  }
+}
+
+.gp-wire-fire {
+  stroke-dasharray: 0.35 1;
+  stroke-dashoffset: 1;
+  opacity: 0;
+  filter: drop-shadow(0 0 4px var(--gp-wire-color, currentColor));
+  animation: gp-wire-fire 900ms var(--gp-ease-out) forwards;
+}
+
+.gp-wire-ghost {
+  animation: gp-wire-dash 600ms linear infinite;
+}
+
+/* Circuit mode: wires step forward, everything else recedes a touch. */
+body[data-circuit-mode] .gp-wire-main {
+  opacity: 0.95;
+}
+
+body[data-circuit-mode] .gp-wire-halo {
+  opacity: 0.1;
+}
+
+body[data-circuit-mode] .gp-widget-card {
+  filter: saturate(0.82);
+}
+
+.gp-wire-chip {
+  opacity: 0.95;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gp-wire-fire,
+  .gp-wire-ghost {
+    animation: none;
+  }
+  .gp-wire-fire {
+    opacity: 0;
+  }
+}
+
+/* One-shot rise-in for picker sections and pack cards. */
+@keyframes gp-rise {
+  from {
+    opacity: 0;
+    translate: 0 10px;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+.gp-rise {
+  animation: gp-rise var(--gp-motion-reveal) var(--gp-ease-out) backwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gp-rise {
+    animation: none;
+  }
+  .gp-picker-icon {
+    transition: none;
+  }
+}
+
+/* Canvas-node folder glyph — a soft signature glow. */
+.gp-canvas-node-glyph {
+  box-shadow: 0 0 18px oklch(88% 0.31 136 / 0.14), inset 0 1px 0 oklch(100% 0 0 / 0.1);
+}
+
+/* Login page ambient bloom — two static radial glows, painted once. */
+.gp-login-glow {
+  background:
+    radial-gradient(42% 38% at 24% 22%, oklch(88% 0.31 136 / 0.07) 0%, transparent 70%),
+    radial-gradient(48% 42% at 78% 78%, oklch(70% 0.14 250 / 0.06) 0%, transparent 70%);
+}
+
+/* ---------------------------------------------------------------------------
+ * Connection lines
+ *
+ * Rest: a plain solid stroke. Hover: the solid stroke fades out while a
+ * dashed "flow" stroke on the same path fades in and marches — the line
+ * reads as *becoming* dotted, not gaining a second line on top of itself.
+ * Press: the flow stops, and the main stroke lights up toxic green and
+ * thickens. .gp-edge transitions fire only on hover/press changes; the dash
+ * march is the only continuously-running animation, and only ever on the
+ * one edge under the pointer.
+ * ------------------------------------------------------------------------- */
+
+.gp-edge-main {
+  transition:
+    d var(--gp-motion-layout) var(--gp-ease-layout),
+    stroke var(--gp-motion-fast) var(--gp-ease-standard),
+    stroke-width var(--gp-motion-fast) var(--gp-ease-standard),
+    opacity var(--gp-motion-fast) var(--gp-ease-standard);
+}
+
+.gp-edge-halo {
+  opacity: 0;
+  transition:
+    d var(--gp-motion-layout) var(--gp-ease-layout),
+    stroke var(--gp-motion-fast) var(--gp-ease-standard),
+    opacity var(--gp-motion-fast) var(--gp-ease-standard);
+}
+
+/* A hovered relation becomes a dotted flow directly on its own path. Do not
+   paint the old gray halo above it; that visual read like a separate chip. */
+.gp-edge-group:hover .gp-edge-halo {
+  opacity: 0;
+}
+
+.gp-edge-group:hover .gp-edge-main {
+  opacity: 0;
+}
+
+@keyframes gp-dash-march {
+  to { stroke-dashoffset: -18; }
+}
+
+.gp-link-dash {
+  animation: gp-dash-march 600ms linear infinite;
+}
+
+/* Dotted flow — solid at rest (opacity 0, inert), takes over from the main
+ * stroke on hover. The animation itself only runs on the one edge actually
+ * under the pointer (CSS :hover scopes both the opacity and the `animation`
+ * declaration), so idling over a canvas with hundreds of edges costs
+ * nothing extra. */
+.gp-edge-flow {
+  opacity: 0;
+  transition:
+    d var(--gp-motion-layout) var(--gp-ease-layout),
+    opacity var(--gp-motion-fast) var(--gp-ease-standard);
+}
+
+.gp-edge-group:hover .gp-edge-flow {
+  opacity: 1;
+  animation: gp-dash-march 450ms linear infinite;
+}
+
+/* Widget hover lights every connected relation in that card's registry
+   accent. This is state-driven rather than CSS sibling magic, so it works
+   even though SVG edges render below the widget layer. */
+.gp-edge-connected .gp-edge-main {
+  stroke: var(--gp-edge-accent);
+  opacity: 0.2;
+}
+
+.gp-edge-connected .gp-edge-flow {
+  opacity: 0.95;
+  animation: gp-dash-march 450ms linear infinite;
+}
+
+/* Dependencies share the relation layer's path morphing, hover takeover and
+ * interaction-only motion, but keep a separate amber visual grammar. The
+ * faint track makes direction readable at rest without adding an idle
+ * animation; resolved dependencies become quiet and dashed. */
+.gp-dependency-track {
+  opacity: 0.12;
+  transition:
+    d var(--gp-motion-layout) var(--gp-ease-layout),
+    stroke var(--gp-motion-fast) var(--gp-ease-standard),
+    opacity var(--gp-motion-fast) var(--gp-ease-standard);
+}
+
+.gp-dependency-main,
+.gp-dependency-port {
+  transition:
+    d var(--gp-motion-layout) var(--gp-ease-layout),
+    stroke var(--gp-motion-fast) var(--gp-ease-standard),
+    opacity var(--gp-motion-fast) var(--gp-ease-standard);
+}
+
+.gp-dependency-group:hover .gp-dependency-track,
+.gp-dependency-group.gp-edge-connected .gp-dependency-track {
+  opacity: 0.22;
+}
+
+.gp-dependency-group.gp-edge-connected .gp-edge-main {
+  opacity: 0.3;
+}
+
+.gp-dependency-resolved .gp-dependency-track {
+  opacity: 0.06;
+}
+
+/* Press: light up, thicken, toxic green — the same neon accent used for the
+ * app's emerald scale (see :root), so a pressed line reads as "live" rather
+ * than picking a one-off color. */
+.gp-edge-group:active .gp-edge-main {
+  opacity: 0.95;
+  stroke: var(--color-emerald-400);
+  stroke-width: 3.2;
+}
+
+.gp-edge-group:active .gp-edge-halo {
+  opacity: 0.55;
+  stroke: var(--color-emerald-400);
+}
+
+.gp-edge-group:active .gp-edge-flow {
+  opacity: 0;
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gp-link-dash,
+  .gp-edge-group:hover .gp-edge-flow {
+    animation: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+ * Quick add
+ *
+ * One-shot entrance keyframes only — elements rise in with a slight stagger
+ * (per-element animation-delay set inline). Nothing loops; once settled the
+ * sheet costs nothing per frame.
+ * ------------------------------------------------------------------------- */
+
+@keyframes gp-qa-rise {
+  from {
+    opacity: 0;
+    transform: translateY(7px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.gp-qa-rise {
+  animation: gp-qa-rise 300ms var(--gp-ease-out) both;
+}
+
+@keyframes gp-qa-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.gp-qa-fade {
+  animation: gp-qa-fade 220ms var(--gp-ease-standard) both;
+}
+
+/* Tree Shaper: each new cell blooms into place, while its curved connector
+   draws like a taut rope. Removed branches play the same motion in reverse.
+   These one-shot animations only exist while the shaper itself is visible. */
+@keyframes gp-ghost-cell-open {
+  from { opacity: 0; transform: translateY(-10px) scale(0.82); }
+  72% { opacity: 1; transform: translateY(2px) scale(1.025); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes gp-ghost-cell-close {
+  to { opacity: 0; transform: translateY(-8px) scale(0.78); filter: blur(2px); }
+}
+
+@keyframes gp-ghost-rope-open {
+  from { stroke-dashoffset: 42; opacity: 0; }
+  40% { opacity: 0.95; }
+  to { stroke-dashoffset: 0; opacity: 0.7; }
+}
+
+@keyframes gp-ghost-rope-close {
+  to { stroke-dashoffset: -28; opacity: 0; }
+}
+
+.gp-ghost-cell {
+  transform-origin: 50% 0%;
+  animation: gp-ghost-cell-open 300ms var(--gp-ease-out) both;
+  transition:
+    left var(--gp-motion-layout) var(--gp-ease-layout),
+    top var(--gp-motion-layout) var(--gp-ease-layout),
+    border-color var(--gp-motion-fast) var(--gp-ease-standard),
+    background-color var(--gp-motion-fast) var(--gp-ease-standard);
+}
+
+.gp-ghost-cell--closing {
+  animation: gp-ghost-cell-close 220ms cubic-bezier(0.55, 0, 1, 0.45) both;
+}
+
+.gp-ghost-rope {
+  /* World-unit dashes stay identical on short vertical and long diagonal
+     connectors. Never normalize these with SVG pathLength. */
+  stroke-dasharray: 6 8;
+  stroke-dashoffset: 0;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 2px rgb(192 132 252 / 0.85));
+  animation: gp-ghost-rope-open 520ms var(--gp-ease-out) both;
+  transition: d var(--gp-motion-layout) var(--gp-ease-layout);
+}
+
+.gp-ghost-outline {
+  stroke-dasharray: 6 8;
+  stroke-dashoffset: 0;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 2px rgb(192 132 252 / 0.6));
+  animation: gp-ghost-rope-open 520ms var(--gp-ease-out) both;
+}
+
+.gp-ghost-rope--closing {
+  animation: gp-ghost-rope-close 200ms cubic-bezier(0.55, 0, 1, 0.45) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gp-qa-rise,
+  .gp-qa-fade,
+  .gp-ghost-cell,
+  .gp-ghost-cell--closing,
+  .gp-ghost-rope,
+  .gp-ghost-rope--closing,
+  .gp-ghost-outline {
+    animation: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+ * Quick Add blueprint preview
+ *
+ * The live template tree drawn on the canvas beneath the compact Quick Add
+ * bar. Everything here is tuned to read as a *sketch being drawn*, not real
+ * widgets flickering in and out:
+ *   - chips are miniature, dashed, and single-toned (real cards are solid)
+ *   - new chips bloom in with a depth stagger, like strokes of a pen
+ *   - surviving chips GLIDE to their new position when the plan reshapes
+ *     (left/top transition) instead of teleporting
+ *   - removed chips fold away with a slight blur
+ *   - while the local model refines the plan, chips "breathe" and a shimmer
+ *     sweeps across them — clearly alive, clearly not final
+ * All animation is one-shot or paused-when-idle; nothing loops after the
+ * preview settles except the cheap breathe/shimmer during model inference.
+ * ------------------------------------------------------------------------- */
+
+@keyframes gp-bp-bloom {
+  from {
+    opacity: 0;
+    transform: translateY(-12px) scale(0.86);
+    filter: blur(3px);
+  }
+  65% {
+    opacity: 1;
+    transform: translateY(2px) scale(1.02);
+    filter: blur(0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes gp-bp-fold {
+  to {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.82);
+    filter: blur(3px);
+  }
+}
+
+@keyframes gp-bp-breathe {
+  0%, 100% { opacity: 0.72; }
+  50% { opacity: 1; }
+}
+
+@keyframes gp-bp-sketch-border {
+  0%, 100% { border-color: oklch(87% 0.17 162 / 0.28); }
+  50% { border-color: oklch(87% 0.17 162 / 0.55); }
+}
+
+@keyframes gp-bp-shimmer {
+  from { transform: translateX(-110%) skewX(-14deg); }
+  to { transform: translateX(240%) skewX(-14deg); }
+}
+
+@keyframes gp-bp-rope-draw {
+  from { stroke-dashoffset: 1; opacity: 0; }
+  30% { opacity: 0.8; }
+  to { stroke-dashoffset: 0; opacity: 0.62; }
+}
+
+@keyframes gp-bp-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.gp-bp-chip {
+  border: 1.5px dashed oklch(87% 0.17 162 / 0.32);
+  background:
+    linear-gradient(160deg, oklch(87% 0.17 162 / 0.075), oklch(87% 0.17 162 / 0.02) 55%),
+    color-mix(in oklab, var(--color-neutral-950) 78%, transparent);
+  box-shadow: 0 6px 22px -10px rgb(0 0 0 / 0.55);
+  transform-origin: 50% 0%;
+  overflow: hidden;
+  animation: gp-bp-bloom 340ms var(--gp-ease-out) backwards;
+  transition:
+    left 340ms var(--gp-ease-out),
+    top 340ms var(--gp-ease-out),
+    border-color 220ms var(--gp-ease-standard);
+}
+
+.gp-bp-chip--root {
+  border-color: oklch(87% 0.17 162 / 0.5);
+  background:
+    linear-gradient(160deg, oklch(87% 0.17 162 / 0.13), oklch(87% 0.17 162 / 0.035) 60%),
+    color-mix(in oklab, var(--color-neutral-950) 72%, transparent);
+}
+
+.gp-bp-chip--closing {
+  animation: gp-bp-fold 220ms cubic-bezier(0.55, 0, 1, 0.45) both;
+  transition: none;
+  pointer-events: none;
+}
+
+/* Model-refinement state: pen still moving. The ::after shimmer is one
+ * compositor layer per chip and only exists while the class is applied. */
+.gp-bp-chip--sketch {
+  animation:
+    gp-bp-bloom 340ms var(--gp-ease-out) backwards,
+    gp-bp-sketch-border 1.6s ease-in-out 400ms infinite;
+}
+
+.gp-bp-chip--sketch::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  width: 45%;
+  background: linear-gradient(90deg, transparent, oklch(87% 0.17 162 / 0.09), transparent);
+  animation: gp-bp-shimmer 1.9s ease-in-out 600ms infinite;
+}
+
+.gp-bp-rope {
+  stroke: oklch(87% 0.17 162 / 0.55);
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-dasharray: 0.05 0.032;
+  filter: drop-shadow(0 0 3px oklch(87% 0.17 162 / 0.35));
+  animation: gp-bp-rope-draw 480ms var(--gp-ease-out) backwards;
+  /* `d` is set both as attribute and CSS property; engines that support the
+   * CSS form glide ropes alongside their chips, others jump gracefully. */
+  transition: d 340ms var(--gp-ease-out);
+}
+
+.gp-bp-rope--blocker {
+  stroke: oklch(83% 0.16 75 / 0.6);
+  filter: drop-shadow(0 0 3px oklch(83% 0.16 75 / 0.35));
+}
+
+.gp-bp-band {
+  border: 1.5px dashed oklch(87% 0.17 162 / 0.22);
+  background: oklch(87% 0.17 162 / 0.03);
+  animation: gp-bp-bloom 380ms var(--gp-ease-out) backwards;
+  transition:
+    left 340ms var(--gp-ease-out),
+    top 340ms var(--gp-ease-out),
+    width 340ms var(--gp-ease-out),
+    height 340ms var(--gp-ease-out);
+}
+
+.gp-bp-pill {
+  animation: gp-bp-bloom 300ms var(--gp-ease-out) backwards;
+  transition: left 340ms var(--gp-ease-out), top 340ms var(--gp-ease-out);
+}
+
+.gp-bp-breathe {
+  animation: gp-bp-breathe 1.4s ease-in-out infinite;
+}
+
+.gp-bp-spin {
+  animation: gp-bp-spin 1.6s linear infinite;
+}
+
+[data-theme="light"] .gp-bp-chip {
+  background:
+    linear-gradient(160deg, oklch(70% 0.15 162 / 0.09), oklch(70% 0.15 162 / 0.025) 55%),
+    color-mix(in oklab, var(--color-neutral-950) 86%, transparent);
+  box-shadow: 0 6px 22px -12px rgb(15 40 30 / 0.35);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gp-bp-chip,
+  .gp-bp-chip--closing,
+  .gp-bp-chip--sketch,
+  .gp-bp-chip--sketch::after,
+  .gp-bp-rope,
+  .gp-bp-band,
+  .gp-bp-pill,
+  .gp-bp-breathe,
+  .gp-bp-spin {
+    animation: none;
+    transition: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+ * Far-zoom detail shedding
+ *
+ * CanvasViewport puts data-canvas-lod="far" on <body> below ~0.4 zoom. At
+ * that scale hundreds of cards can be on screen, and three per-card costs
+ * dominate frame time while being visually sub-pixel:
+ *   - backdrop-filter on each card's title capsule and hover buttons —
+ *     every blur region makes the compositor resample the backdrop per
+ *     frame; measured at ~77% of pan/zoom frame cost with ~400 cards
+ *   - box-shadows on the card body
+ *   - the floating chrome itself (capsule, corner buttons, resize handle
+ *     are a few pixels tall at 0.4 zoom and unreadable well before that)
+ * Card gradient, borders, badges, and inner content are untouched: 394
+ * visible cards go from ~117ms/frame to ~11ms with no visible change.
+ * :focus-within keeps a capsule alive while its title is being edited.
+ */
+body[data-canvas-lod="far"] .gp-card-chrome:not(:focus-within) {
+  display: none;
+}
+body[data-canvas-lod="far"] [data-widget-id] {
+  box-shadow: none;
+}
+body[data-canvas-lod="far"] [data-world-layer] .backdrop-blur {
+  backdrop-filter: none;
+}
+
+/* Theme-aware hairline border color for widget-internal dividers, table
+   grids, and input outlines — pure white in dark mode, pure black in light.
+   Layered as a utility so hover:/focus: variants still win the cascade. */
+@layer utilities {
+  .gp-hairline {
+    border-color: var(--gp-hairline);
+  }
+
+  .gp-hairline-focus:focus {
+    border-color: var(--gp-hairline-strong);
+  }
+}
+
+/* Native date pickers follow the app theme, not the fixed dark hint the
+   widgets set for dark mode. */
+[data-theme="light"] input[type="date"] {
+  color-scheme: light;
+}
+
+/* Sketchpad dot-grid surface. Replaces the Tailwind arbitrary-value class
+   so the pattern can be inverted for light mode. */
+.gp-sketch-surface {
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.07) 1px, transparent 1px);
+  background-size: 12px 12px;
+}
+
+[data-theme="light"] .gp-sketch-surface {
+  background-image: radial-gradient(circle, rgba(0, 0, 0, 0.12) 1px, transparent 1px);
+}
+@media (prefers-contrast: more) {
+  :root { --gp-hairline: rgba(255, 255, 255, 0.28); }
+  .text-neutral-500 { color: rgb(212 212 212) !important; }
+  .text-neutral-600 { color: rgb(163 163 163) !important; }
+  .gp-widget-card:focus-visible { outline: 2px solid var(--gp-widget-accent, #a78bfa); outline-offset: 4px; }
+}
+
+.gp-atlas-object { box-shadow: inset 0 1px 0 rgba(255,255,255,.055), 0 14px 28px rgba(0,0,0,.12); }
+.gp-atlas-object[data-visual="plant"] .gp-atlas-piece:not(:has(svg)) { transform: rotate(4deg); }
+.gp-atlas-object[data-visual="tags"] .gp-atlas-piece { border-style: dashed; }
+.gp-atlas-object[data-visual="boxes"] .gp-atlas-piece:nth-child(even) { transform: translateY(-8px) rotate(2deg); }
+.gp-atlas-object[data-visual="hourglass"] .gp-atlas-piece { clip-path: polygon(8% 0,92% 0,64% 48%,92% 100%,8% 100%,36% 48%); }
+.gp-atlas-object[data-visual="ladder"] .gp-atlas-piece { border-radius: 4px 4px 10px 10px; }
+.gp-atlas-object[data-visual="stamps"] .gp-atlas-piece { transform: rotate(-3deg); border-width: 2px; }
+.gp-atlas-object[data-visual="film"] .gp-atlas-piece { border-top-style: dashed; border-bottom-style: dashed; }
+.gp-atlas-object[data-visual="passport"] { background-image: repeating-linear-gradient(0deg,transparent 0 17px,rgba(239,68,68,.06) 18px); }
+.gp-atlas-object[data-visual="frost"] { background-image: linear-gradient(135deg,rgba(255,255,255,.09),transparent 60%); }
+.gp-atlas-liquid::before { content:""; position:absolute; inset:-2px 0 auto; height:4px; border-radius:50%; background:rgba(255,255,255,.38); }
+.gp-atlas-breathe { transform-box:fill-box; transform-origin:center; animation:gp-atlas-breathe 2.2s ease-in-out infinite; }
+@keyframes gp-atlas-breathe { 50% { transform:scale(1.22); opacity:.72; } }
+@keyframes gp-port-ack {
+  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--gp-atlas-accent) 0%, transparent); }
+  35% { box-shadow: 0 0 0 1px color-mix(in srgb, var(--gp-atlas-accent) 72%, transparent), 0 0 22px color-mix(in srgb, var(--gp-atlas-accent) 28%, transparent); }
+  100% { box-shadow: 0 0 0 1px color-mix(in srgb, var(--gp-atlas-accent) 24%, transparent); }
+}
+.gp-port-ack { animation: gp-port-ack 720ms cubic-bezier(.2,.8,.2,1) both; }
+@media (prefers-reduced-motion: reduce) {
+  .gp-atlas-breathe, .gp-port-ack { animation:none; }
+  .gp-port-ack { box-shadow: 0 0 0 1px color-mix(in srgb, var(--gp-atlas-accent) 24%, transparent); }
+}
