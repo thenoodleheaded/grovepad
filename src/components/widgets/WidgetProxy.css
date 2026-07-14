@@ -1,0 +1,100 @@
+.gp-widget-proxy-shell {
+  --gp-proxy-accent: #a3e635;
+  position: absolute;
+  left: 0;
+  top: 0;
+  contain: strict;
+}
+
+.gp-widget-proxy {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  appearance: none;
+  overflow: hidden;
+  border: var(--gp-world-outline-width, var(--gp-relation-outline-width)) solid var(--gp-relation-outline);
+  color: #e5e5e5;
+  cursor: pointer;
+  text-align: left;
+  transform-origin: center;
+  transition:
+    border-color 120ms ease,
+    box-shadow 120ms ease,
+    opacity 120ms ease;
+}
+
+.gp-widget-proxy--map {
+  container-type: size;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6cqmin;
+  padding: 10cqmin;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--gp-proxy-accent) 10%, #171717);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 6%);
+}
+
+.gp-widget-proxy__icon {
+  display: inline-flex;
+  width: 34cqmin;
+  height: 34cqmin;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  color: var(--gp-proxy-accent);
+}
+
+.gp-widget-proxy__title {
+  display: -webkit-box;
+  max-width: 100%;
+  overflow: hidden;
+  color: #d4d4d4;
+  font-size: 12cqmin;
+  font-weight: 600;
+  line-height: 1.25;
+  text-align: center;
+  text-overflow: ellipsis;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.gp-widget-proxy:hover {
+  border-color: var(--gp-relation-outline);
+}
+
+.gp-widget-proxy[data-selected='true'] {
+  border-color: var(--gp-relation-outline);
+  box-shadow:
+    inset 0 0 0 1px rgb(163 230 53 / 35%),
+    0 0 0 2px rgb(163 230 53 / 20%);
+}
+
+.gp-widget-proxy[data-blocked='true'] {
+  opacity: 0.5;
+}
+
+.gp-widget-proxy:focus-visible {
+  outline: none;
+  border-color: var(--gp-relation-outline);
+  box-shadow: inset 0 0 0 3px rgb(163 230 53 / 42%);
+}
+
+[data-theme='light'] .gp-widget-proxy--map {
+  background: color-mix(in srgb, var(--gp-proxy-accent) 8%, #f5f5f5);
+}
+
+[data-theme='light'] .gp-widget-proxy__title {
+  color: #262626;
+}
+
+body[data-widget-dragging] .gp-widget-proxy {
+  transition: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gp-widget-proxy {
+    transition: none;
+  }
+}
