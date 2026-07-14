@@ -13,7 +13,7 @@ export const AUTOMATION_CORE_TYPES = [
 ] as const satisfies readonly ModuleType[]
 
 export type AutomationCoreType=(typeof AUTOMATION_CORE_TYPES)[number]
-export type AutomationKind='orchestrator'|'source'|'join'|'canvas'|'state'|'integration'|'observability'
+type AutomationKind='orchestrator'|'source'|'join'|'canvas'|'state'|'integration'|'observability'
 interface Spec {label:string;description:string;icon:LucideIcon;category:WidgetCategory;accent:string;kind:AutomationKind;aliases:string[]}
 const s=(label:string,description:string,icon:LucideIcon,kind:AutomationKind,aliases:string[]=[],accent='#a78bfa'):Spec=>({label,description,icon,kind,aliases,accent,category:kind==='state'?'data':kind==='observability'?'tracking':'automation'})
 

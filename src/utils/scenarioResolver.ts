@@ -25,7 +25,7 @@ import { buildVocabulary, canonicalToken, normalizeLanguage, tokenCoverage, type
 
 /** How pinned-down each slot of the thought is (0..1 each). A sentence can
  *  be confidently understood and still score near zero on most of these. */
-export interface SpecificityProfile {
+interface SpecificityProfile {
   topic: number
   immediateGoal: number
   desiredOutput: number
@@ -58,7 +58,7 @@ function analyzeSpecificity(source: string): SpecificityProfile {
 // Archetype catalogue
 // ---------------------------------------------------------------------------
 
-export interface DirectionSpec {
+interface DirectionSpec {
   id: string
   label: string
   tagline: string
@@ -66,7 +66,7 @@ export interface DirectionSpec {
   widgets: ReadonlyArray<{ type: ModuleType; title: string }>
 }
 
-export interface QuestionSpec {
+interface QuestionSpec {
   prompt: string
   options: ReadonlyArray<{ label: string; directionId: string }>
 }
@@ -760,7 +760,7 @@ export const ARCHETYPES: readonly ArchetypeSpec[] = [...BASE_ARCHETYPES, ...EXTE
 // Resolution
 // ---------------------------------------------------------------------------
 
-export interface ResolvedDirection {
+interface ResolvedDirection {
   id: string
   label: string
   tagline: string

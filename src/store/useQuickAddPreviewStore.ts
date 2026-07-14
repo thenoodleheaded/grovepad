@@ -8,7 +8,7 @@ import type { ThoughtPlan } from '../utils/thoughtInterpreter'
  * transform). The bar owns all inputs and decisions; the layer only draws.
  */
 
-export type QuickAddPreviewPhase =
+type QuickAddPreviewPhase =
   /** Deterministic plan, settled — this is what ⏎ creates. */
   | 'live'
   /** Scaffold showing while the local model elaborates it (≤ 5s). */

@@ -52,7 +52,7 @@ export interface InterpretationContext {
   canvasName?: string
 }
 
-export interface ExtractedMeaning {
+interface ExtractedMeaning {
   clauses: string[]
   people: string[]
   dates: string[]
@@ -74,7 +74,7 @@ export interface ThoughtPrediction {
 
 /** A tiny local model may select a curated scenario, but never authors its
  * widget graph. Slots are hints only and are revalidated before hydration. */
-export interface ScenarioRoute {
+interface ScenarioRoute {
   archetypeId: string
   confidence: number
   topic?: string

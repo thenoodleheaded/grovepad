@@ -526,13 +526,6 @@ body[data-widget-dragging] .gp-card-motion {
     stroke-width var(--gp-motion-fast) var(--gp-ease-standard);
 }
 
-.gp-wire-flow {
-  opacity: 0;
-  transition:
-    d var(--gp-motion-layout) var(--gp-ease-layout),
-    opacity var(--gp-motion-fast) var(--gp-ease-standard);
-}
-
 .gp-wire-group:hover .gp-wire-halo {
   opacity: 0.14;
 }
@@ -546,11 +539,6 @@ body[data-widget-dragging] .gp-card-motion {
   to {
     stroke-dashoffset: -24;
   }
-}
-
-.gp-wire-group:hover .gp-wire-flow {
-  opacity: 0.9;
-  animation: gp-wire-dash 700ms linear infinite;
 }
 
 /* Unsatisfied gate/visibility: the wire itself warns. Overrides the
@@ -581,29 +569,11 @@ body[data-widget-dragging] .gp-card-motion {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .gp-wire-group:hover .gp-wire-flow,
   .gp-wire-group[data-warn]:hover .gp-wire-main {
     animation: none;
   }
   .gp-wire-group[data-warn] .gp-wire-main {
     opacity: 1;
-  }
-}
-
-/* Compatible-target pulse while a field wire is in flight. Animates only
-   the handful of highlighted port dots, never the cards. */
-@keyframes gp-port-pulse {
-  0%, 100% { scale: 1; }
-  50% { scale: 1.35; }
-}
-
-.gp-port-pulse {
-  animation: gp-port-pulse 900ms ease-in-out infinite;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .gp-port-pulse {
-    animation: none;
   }
 }
 
@@ -1296,13 +1266,6 @@ body[data-canvas-lod="far"] [data-world-layer] .backdrop-blur {
 .gp-atlas-liquid::before { content:""; position:absolute; inset:-2px 0 auto; height:4px; border-radius:50%; background:rgba(255,255,255,.38); }
 .gp-atlas-breathe { transform-box:fill-box; transform-origin:center; animation:gp-atlas-breathe 2.2s ease-in-out infinite; }
 @keyframes gp-atlas-breathe { 50% { transform:scale(1.22); opacity:.72; } }
-@keyframes gp-port-ack {
-  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--gp-atlas-accent) 0%, transparent); }
-  35% { box-shadow: 0 0 0 1px color-mix(in srgb, var(--gp-atlas-accent) 72%, transparent), 0 0 22px color-mix(in srgb, var(--gp-atlas-accent) 28%, transparent); }
-  100% { box-shadow: 0 0 0 1px color-mix(in srgb, var(--gp-atlas-accent) 24%, transparent); }
-}
-.gp-port-ack { animation: gp-port-ack 720ms cubic-bezier(.2,.8,.2,1) both; }
 @media (prefers-reduced-motion: reduce) {
-  .gp-atlas-breathe, .gp-port-ack { animation:none; }
-  .gp-port-ack { box-shadow: 0 0 0 1px color-mix(in srgb, var(--gp-atlas-accent) 24%, transparent); }
+  .gp-atlas-breathe { animation:none; }
 }

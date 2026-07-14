@@ -26,7 +26,7 @@ import { applyTransform, fieldValueAsBool, serializeFieldValue } from './transfo
 // ---------------------------------------------------------------------------
 
 /** Consecutive engine-fed waves allowed before the loop breaker trips. */
-export const BURST_LIMIT = 24
+const BURST_LIMIT = 24
 
 export interface DeliveryState {
   serialized: string

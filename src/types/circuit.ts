@@ -19,7 +19,7 @@ import type { FieldCommand, FieldValueType, SemanticUnit } from './fieldConnecti
 // cascade-delete exactly like relations do.
 // ---------------------------------------------------------------------------
 
-export type WireKind = 'value' | 'trigger'
+type WireKind = 'value' | 'trigger'
 
 /** Which source-field movement fires a trigger wire. */
 export type TriggerEdge = 'rising' | 'falling' | 'change'
@@ -180,7 +180,7 @@ function isFiniteNumber(value: unknown): value is number {
   return typeof value === 'number' && Number.isFinite(value)
 }
 
-export function isValidTransform(value: unknown): value is WireTransform {
+function isValidTransform(value: unknown): value is WireTransform {
   if (typeof value !== 'object' || value === null) return false
   const t = value as Record<string, unknown>
   switch (t.op) {

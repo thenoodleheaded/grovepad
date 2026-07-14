@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 
 export type AiCallPhase = 'topology' | 'hydration' | 'quickadd-deterministic' | 'quickadd-model'
-export type AiCallStatus = 'pending' | 'ok' | 'error' | 'aborted'
+type AiCallStatus = 'pending' | 'ok' | 'error' | 'aborted'
 
 export interface AiDebugEntry {
   id: string

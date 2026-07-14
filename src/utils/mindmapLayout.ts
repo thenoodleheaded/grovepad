@@ -1,12 +1,12 @@
 import type { Widget, WidgetGroup, Relation, ModuleType, GroupColor } from '../types/spatial';
 import { widgetDefinition } from '../widgets/registry';
 
-export interface MinifiedGroup {
+interface MinifiedGroup {
   id: string;
   label: string;
 }
 
-export interface MinifiedWidget {
+interface MinifiedWidget {
   id: string;
   type: ModuleType;
   title: string;
@@ -17,7 +17,7 @@ export interface MinifiedWidget {
   sourceRefs: string[];
 }
 
-export interface MinifiedRelation {
+interface MinifiedRelation {
   from: string;
   to: string;
   type: 'parent' | 'co-parent' | 'cousin' | 'blocker' | 'conflict';

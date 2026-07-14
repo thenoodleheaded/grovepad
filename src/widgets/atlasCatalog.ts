@@ -22,8 +22,8 @@ export const ATLAS_TYPES = [
 ] as const satisfies readonly ModuleType[]
 
 export type AtlasType = (typeof ATLAS_TYPES)[number]
-export type AtlasVisual = 'ring'|'crescent'|'arc'|'ledger'|'vessel'|'gauge'|'streams'|'frost'|'monitor'|'orbit'|'eclipse'|'moon'|'deck'|'horizon'|'book'|'jar'|'constellation'|'schedule'|'tags'|'plant'|'bag'|'bins'|'dome'|'boxes'|'meter'|'hourglass'|'combs'|'pressure'|'clipboard'|'stamps'|'pager'|'receipt'|'grid'|'ladder'|'dishes'|'vault'|'beads'|'balance'|'vu'|'plates'|'stars'|'pet'|'passport'|'suitcase'|'clocks'|'wallet'|'easels'|'film'
-export type AtlasValueType = 'number'|'text'|'boolean'|'series'
+type AtlasVisual = 'ring'|'crescent'|'arc'|'ledger'|'vessel'|'gauge'|'streams'|'frost'|'monitor'|'orbit'|'eclipse'|'moon'|'deck'|'horizon'|'book'|'jar'|'constellation'|'schedule'|'tags'|'plant'|'bag'|'bins'|'dome'|'boxes'|'meter'|'hourglass'|'combs'|'pressure'|'clipboard'|'stamps'|'pager'|'receipt'|'grid'|'ladder'|'dishes'|'vault'|'beads'|'balance'|'vu'|'plates'|'stars'|'pet'|'passport'|'suitcase'|'clocks'|'wallet'|'easels'|'film'
+type AtlasValueType = 'number'|'text'|'boolean'|'series'
 export interface AtlasFieldSpec { key:string; label:string; valueType:AtlasValueType; timeSensitive?:boolean; writable?:'primary'|'secondary'|'target'|'text'|'date'|'timeStart'|'timeEnd'|'enabled' }
 export interface AtlasSpec {
   label:string; description:string; icon:LucideIcon; category:WidgetCategory; pack?:DomainPack
