@@ -3,6 +3,7 @@ import { useFocusStore } from '../../store/useFocusStore'
 import { useWidgetStore } from '../../store/useWidgetStore'
 import type { IslandLayout } from '../../types/spatial'
 import { GRID_SIZE } from '../../types/spatial'
+import { insertDraggedAtPointer, mergeReorderDomain } from '../../utils/focusModeReorder'
 import { widgetDefinition } from '../../widgets/registry'
 
 // ---------------------------------------------------------------------------
@@ -57,6 +58,8 @@ const SUB_GRID = 4
 const snap4 = (value: number) => Math.round(value / SUB_GRID) * SUB_GRID
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value))
 const sameOrder = (a: string[], b: string[]) => a.length === b.length && a.every((id, i) => id === b[i])
+const prefersReducedMotion = () =>
+  typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches
 
 /** Lift a real island out of the flow so it can float under the cursor. */
 function liftIsland(element: HTMLElement): void {
@@ -244,6 +247,10 @@ export function FocusModeLayer({ widgetId, hostRef, active, layout, version }: F
     naturalTop: number
     /** Current visual order (island ids) within the domain. */
     order: string[]
+    /** Card zoom, so screen-space FLIP deltas convert to local px. */
+    scale: number
+    /** Live FLIP slide per sibling, so a new move supersedes the old one. */
+    flips: Map<HTMLElement, Animation>
     changed: boolean
   }
   const gestureRef = useRef<ResizeGesture | ReorderGesture | null>(null)
@@ -307,9 +314,14 @@ export function FocusModeLayer({ widgetId, hostRef, active, layout, version }: F
   }, [active, hostRef])
 
   // If focus is left (or the card unmounts) mid-drag, restore the lifted
-  // island — its transient float styles live outside React and would stick.
+  // island and any siblings still carrying transient FLIP styles — they live
+  // outside React and would otherwise stick.
   useEffect(() => {
     if (active) return
+    const gesture = gestureRef.current
+    if (gesture?.kind === 'reorder') {
+      gesture.flips.forEach((anim) => anim.cancel())
+    }
     if (liftedRef.current) resetIsland(liftedRef.current)
     liftedRef.current = null
     gestureRef.current = null
@@ -419,13 +431,12 @@ export function FocusModeLayer({ widgetId, hostRef, active, layout, version }: F
     const order = [...siblings]
       .sort((a, b) => a.getBoundingClientRect().top - b.getBoundingClientRect().top)
       .map((element) => islandId(element, all.indexOf(element)))
+    const hostRect = host.getBoundingClientRect()
+    const scale = host.offsetWidth > 0 ? hostRect.width / host.offsetWidth : 1
     useWidgetStore.getState().snapshotHistory(`island:${widgetId}`)
     const startTop = island.element.getBoundingClientRect().top
     liftIsland(island.element)
     liftedRef.current = island.element
-    siblings.forEach((element) => {
-      if (element !== island.element) element.classList.add('gp-island-settle')
-    })
     host.setAttribute('data-focus-reordering', '')
     gestureRef.current = {
       kind: 'reorder',
@@ -440,6 +451,8 @@ export function FocusModeLayer({ widgetId, hostRef, active, layout, version }: F
       startTop,
       naturalTop: startTop,
       order,
+      scale,
+      flips: new Map(),
       changed: false,
     }
   }
@@ -458,19 +471,17 @@ export function FocusModeLayer({ widgetId, hostRef, active, layout, version }: F
       .filter((el) => el !== dragged)
       .map((el) => ({ el, rect: el.getBoundingClientRect() }))
       .sort((a, b) => a.rect.top - b.rect.top)
-    let target = others.length
-    for (let i = 0; i < others.length; i++) {
-      if (cursorY < others[i]!.rect.top + others[i]!.rect.height / 2) {
-        target = i
-        break
-      }
-    }
-    const nextOrder = others.map((o) => idOf(o.el))
-    nextOrder.splice(target, 0, gesture.id)
+    const nextOrder = insertDraggedAtPointer(
+      gesture.id,
+      others.map(({ el, rect }) => ({ id: idOf(el), top: rect.top, height: rect.height })),
+      cursorY,
+    )
 
     if (!sameOrder(nextOrder, gesture.order)) {
-      // FLIP: record the others' current tops, reflow into the new order,
-      // then invert-and-play so they glide into place.
+      // FLIP via the Web Animations API: record the others' current tops,
+      // reflow into the new order, then play each from its old position with
+      // a self-cleaning animation — no inline transform is ever left behind,
+      // so an interrupted drag can't strand a panel mid-slide.
       const first = new Map(others.map((o) => [o.el, o.rect.top] as const))
       dragged.style.transform = '' // measure the dragged slot naturally
       nextOrder.forEach((id, index) => {
@@ -480,19 +491,20 @@ export function FocusModeLayer({ widgetId, hostRef, active, layout, version }: F
       if (getComputedStyle(gesture.parent).display === 'block') {
         gesture.parent.classList.add('gp-island-flow')
       }
+      const duration = prefersReducedMotion() ? 0 : 200
       others.forEach(({ el }) => {
         const last = el.getBoundingClientRect().top
-        const delta = (first.get(el) ?? last) - last
-        if (delta) {
-          el.style.transition = 'none'
-          el.style.transform = `translateY(${delta}px)`
-        }
-      })
-      requestAnimationFrame(() => {
-        others.forEach(({ el }) => {
-          el.style.transition = ''
-          el.style.transform = ''
-        })
+        // Screen-space delta → local px (the card itself is zoom-scaled).
+        const delta = ((first.get(el) ?? last) - last) / gesture.scale
+        if (!delta) return
+        gesture.flips.get(el)?.cancel()
+        gesture.flips.set(
+          el,
+          el.animate(
+            [{ transform: `translateY(${delta}px)` }, { transform: 'translateY(0)' }],
+            { duration, easing: 'cubic-bezier(0.2, 0.7, 0.25, 1)' },
+          ),
+        )
       })
       gesture.naturalTop = dragged.getBoundingClientRect().top
       gesture.order = nextOrder
@@ -513,9 +525,9 @@ export function FocusModeLayer({ widgetId, hostRef, active, layout, version }: F
     const host = hostRef.current
     const dragged = gesture.element
     host?.removeAttribute('data-focus-reordering')
-    gesture.siblings.forEach((el) => el.classList.remove('gp-island-settle'))
 
-    // Ease the panel from its floating position into the landing slot.
+    // Ease the panel from its floating position into the landing slot. The
+    // siblings' FLIP animations own themselves and settle without help.
     let settled = false
     const settle = () => {
       if (settled) return
@@ -536,12 +548,9 @@ export function FocusModeLayer({ widgetId, hostRef, active, layout, version }: F
     const siblingOrder = [...gesture.siblings]
       .sort((a, b) => Number(a.style.order || 0) - Number(b.style.order || 0))
       .map(idOf)
-    const siblingSet = new Set(siblingOrder)
     const savedOrder = useWidgetStore.getState().widgets[widgetId]?.metadata.islandLayout?.order ?? []
     const allIds = gesture.all.map((element, index) => islandId(element, index))
-    const baseOrder = [...savedOrder.filter((id) => allIds.includes(id)), ...allIds.filter((id) => !savedOrder.includes(id))]
-    const queue = [...siblingOrder]
-    persistLayout(widgetId, { order: baseOrder.map((id) => (siblingSet.has(id) ? queue.shift()! : id)) })
+    persistLayout(widgetId, { order: mergeReorderDomain(savedOrder, allIds, siblingOrder) })
   }
 
   return (

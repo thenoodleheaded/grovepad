@@ -69,7 +69,7 @@ initPersistence(useWidgetStore, useCanvasStore)
 initCircuitEngine()
 
 if (import.meta.env.DEV) {
-  Object.assign(window, { __grovepad: { useWidgetStore, useCanvasStore, useAiDebugStore, useCircuitStore, useFocusStore } })
+  Object.assign(window, { __grovepad: { useWidgetStore, useCanvasStore, useAiDebugStore, useCircuitStore } })
 }
 
 /** In-memory clipboard — persists across interactions but not page reloads. */

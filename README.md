@@ -12,9 +12,12 @@ npm run dev
 Production checks:
 
 ```bash
-npm run build
-npm run lint
+npm run check:full
 ```
+
+## Project navigation
+
+AI assistants and contributors should start with [AGENTS.md](AGENTS.md). Codex loads it directly; [CLAUDE.md](CLAUDE.md) imports the same guide for Claude Code, so the two agents share one navigation and verification contract. The guide points to the compact [codebase map](docs/codebase-map.md), which routes common task language to source owners, UX contracts, search symbols, and targeted verification. The deeper [architecture map](docs/architecture-map.md) is reserved for cross-system reasoning.
 
 ## Product architecture
 

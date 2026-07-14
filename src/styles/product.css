@@ -431,17 +431,13 @@ body {
 }
 
 /* Glass chrome (toolbars, dialogs, menus, toasts, widget cards) reads as
-   elevation through shadow alone now — no structural stroke. The widget
-   picker's rows are the one deliberate exception: each row's border leans
-   toward its own widget's accent, making the library read as a spectrum. */
+   elevation through shadow alone — no structural stroke. */
 .gp-panel {
   border: none;
 }
 
 .gp-picker-row {
-  border-style: solid;
-  border-width: var(--gp-relation-outline-width);
-  border-color: var(--gp-relation-outline);
+  border: none;
 }
 
 .gp-selection-bar {
@@ -479,8 +475,9 @@ body {
 
 [data-theme='light'] .gp-picker-scrim {
   background:
-    radial-gradient(70% 55% at 50% 12%, oklch(62% 0.08 145 / 0.08), transparent 70%),
-    oklch(98% 0 0 / 0.97);
+    radial-gradient(70% 58% at 18% 2%, oklch(76% 0.11 142 / 0.16), transparent 68%),
+    radial-gradient(62% 48% at 92% 18%, oklch(78% 0.07 225 / 0.1), transparent 72%),
+    oklch(96.5% 0.008 150 / 0.985);
 }
 
 /* Library search pill — quiet glass at rest, accent halo while typing. */
@@ -499,36 +496,215 @@ body {
     0 10px 34px rgb(0 0 0 / 0.25);
 }
 
-/* Each library tile's structural outline leans faintly toward its widget's
-   accent, and hover commits to it — the library reads as a spectrum. */
+[data-theme='light'] .gp-picker-title {
+  background-image: linear-gradient(90deg, oklch(22% 0.015 250), oklch(42% 0.12 145), oklch(22% 0.015 250));
+}
+
+[data-theme='light'] .gp-picker-subtitle,
+[data-theme='light'] .gp-picker-category-label,
+[data-theme='light'] .gp-picker-footer {
+  color: oklch(42% 0.018 250);
+}
+
+[data-theme='light'] .gp-picker-search {
+  background: rgb(255 255 255 / 0.82);
+  box-shadow:
+    0 14px 34px rgb(30 41 59 / 0.1),
+    inset 0 1px 0 rgb(255 255 255 / 0.92);
+}
+
+[data-theme='light'] .gp-picker-search:focus-within {
+  box-shadow:
+    0 0 0 4px oklch(64% 0.16 145 / 0.14),
+    0 16px 38px rgb(30 41 59 / 0.13);
+}
+
+[data-theme='light'] .gp-picker-search-input {
+  color: oklch(20% 0.014 250);
+}
+
+[data-theme='light'] .gp-picker-search-input::placeholder {
+  color: oklch(54% 0.018 250);
+}
+
+[data-theme='light'] .gp-picker-pack-button {
+  border-color: rgb(15 23 42 / 0.1);
+  background: rgb(255 255 255 / 0.74);
+  color: oklch(29% 0.018 250);
+  box-shadow: 0 8px 22px rgb(30 41 59 / 0.08);
+}
+
+[data-theme='light'] .gp-picker-close {
+  color: oklch(40% 0.018 250);
+}
+
+/* Widget choices are dark pieces of accent-tinted glass. Depth and colour
+   replace structural outlines; the bright icon island is embedded at left. */
 .gp-picker-row {
-  border-color: color-mix(
-    in oklab,
-    var(--gp-tile-accent, var(--gp-relation-outline)),
-    var(--gp-relation-outline) 76%
-  );
+  isolation: isolate;
+  background:
+    radial-gradient(
+      78% 150% at -4% 50%,
+      color-mix(in oklab, var(--gp-tile-accent) 15%, transparent),
+      transparent 66%
+    ),
+    linear-gradient(
+      145deg,
+      color-mix(in oklab, var(--gp-tile-accent) 7%, oklch(18% 0.009 250)),
+      color-mix(in oklab, var(--gp-tile-accent) 2%, oklch(12.5% 0.006 250))
+    );
+  box-shadow:
+    0 14px 30px rgb(0 0 0 / 0.27),
+    0 5px 18px color-mix(in oklab, var(--gp-tile-accent) 7%, transparent);
+  transition:
+    translate var(--gp-duration-snap) var(--gp-ease-snap),
+    box-shadow var(--gp-duration-snap) var(--gp-ease-snap),
+    background-color var(--gp-duration-snap) var(--gp-ease-snap);
+}
+
+.gp-picker-row::after {
+  content: '';
+  position: absolute;
+  z-index: 0;
+  right: 14px;
+  bottom: 12px;
+  width: 30px;
+  height: 3px;
+  border-radius: 999px;
+  background: var(--gp-tile-accent);
+  opacity: 0.28;
+  box-shadow: 0 0 14px color-mix(in oklab, var(--gp-tile-accent) 46%, transparent);
+}
+
+.gp-picker-icon {
+  z-index: 2;
+  background:
+    radial-gradient(circle at 30% 18%, rgb(255 255 255 / 0.2), transparent 42%),
+    linear-gradient(
+      145deg,
+      color-mix(in oklab, var(--gp-tile-accent) 46%, oklch(24% 0.012 250)),
+      color-mix(in oklab, var(--gp-tile-accent) 22%, oklch(13% 0.008 250))
+    );
+  box-shadow:
+    0 10px 22px rgb(0 0 0 / 0.4),
+    0 4px 22px color-mix(in oklab, var(--gp-tile-accent) 38%, transparent),
+    inset 0 1px 0 rgb(255 255 255 / 0.14);
+  filter: saturate(1.14) brightness(1.16);
+}
+
+.gp-picker-row[data-active] {
+  translate: 0 -3px;
+  background:
+    radial-gradient(
+      82% 150% at -4% 50%,
+      color-mix(in oklab, var(--gp-tile-accent) 23%, transparent),
+      transparent 66%
+    ),
+    linear-gradient(
+      145deg,
+      color-mix(in oklab, var(--gp-tile-accent) 10%, oklch(19% 0.009 250)),
+      color-mix(in oklab, var(--gp-tile-accent) 3%, oklch(13% 0.006 250))
+    );
+  box-shadow:
+    0 20px 40px rgb(0 0 0 / 0.29),
+    0 8px 28px color-mix(in oklab, var(--gp-tile-accent) 21%, transparent);
 }
 
 @media (hover: hover) {
   .gp-picker-row:hover {
-    translate: 0 -1px;
+    translate: 0 -3px;
+    box-shadow:
+      0 20px 40px rgb(0 0 0 / 0.29),
+      0 8px 28px color-mix(in oklab, var(--gp-tile-accent) 21%, transparent);
   }
 
   .gp-picker-row:not([data-active]):hover {
-    border-color: color-mix(in oklab, var(--gp-tile-accent, var(--gp-relation-outline)), transparent 42%);
-    background: linear-gradient(
-      120deg,
-      color-mix(in oklab, var(--gp-tile-accent, transparent), transparent 90%),
-      transparent 75%
-    );
+    background:
+      radial-gradient(
+        82% 150% at -4% 50%,
+        color-mix(in oklab, var(--gp-tile-accent) 21%, transparent),
+        transparent 66%
+      ),
+      linear-gradient(
+        145deg,
+        color-mix(in oklab, var(--gp-tile-accent) 9%, oklch(19% 0.009 250)),
+        color-mix(in oklab, var(--gp-tile-accent) 3%, oklch(13% 0.006 250))
+      );
   }
 }
 
-.gp-picker-row {
-  transition:
-    border-color var(--gp-duration-snap) var(--gp-ease-snap),
-    background-color var(--gp-duration-snap) var(--gp-ease-snap),
-    translate var(--gp-duration-snap) var(--gp-ease-snap);
+[data-theme='light'] .gp-picker-row {
+  background:
+    radial-gradient(
+      78% 150% at -4% 50%,
+      color-mix(in oklab, var(--gp-tile-accent) 17%, transparent),
+      transparent 66%
+    ),
+    linear-gradient(
+      145deg,
+      color-mix(in oklab, var(--gp-tile-accent) 5%, oklch(31% 0.009 250)),
+      color-mix(in oklab, var(--gp-tile-accent) 1%, oklch(23% 0.006 250))
+    );
+  box-shadow:
+    0 16px 34px rgb(30 41 59 / 0.18),
+    0 5px 20px color-mix(in oklab, var(--gp-tile-accent) 12%, transparent);
+}
+
+[data-theme='light'] .gp-picker-tile-title {
+  color: oklch(96% 0.004 250);
+}
+
+[data-theme='light'] .gp-picker-tile-description {
+  color: oklch(74% 0.012 250 / 0.82);
+}
+
+[data-theme='light'] .gp-picker-icon {
+  background:
+    radial-gradient(circle at 30% 18%, rgb(255 255 255 / 0.2), transparent 42%),
+    linear-gradient(
+      145deg,
+      color-mix(in oklab, var(--gp-tile-accent) 48%, oklch(25% 0.012 250)),
+      color-mix(in oklab, var(--gp-tile-accent) 24%, oklch(14% 0.008 250))
+    );
+  box-shadow:
+    0 11px 24px rgb(15 23 42 / 0.3),
+    0 5px 22px color-mix(in oklab, var(--gp-tile-accent) 34%, transparent),
+    inset 0 1px 0 rgb(255 255 255 / 0.14);
+  filter: saturate(1.12) brightness(1.12);
+}
+
+[data-theme='light'] .gp-picker-row[data-active] {
+  background:
+    radial-gradient(
+      82% 150% at -4% 50%,
+      color-mix(in oklab, var(--gp-tile-accent) 27%, transparent),
+      transparent 66%
+    ),
+    linear-gradient(
+      145deg,
+      color-mix(in oklab, var(--gp-tile-accent) 8%, oklch(34% 0.009 250)),
+      color-mix(in oklab, var(--gp-tile-accent) 2%, oklch(25% 0.006 250))
+    );
+  box-shadow:
+    0 20px 40px rgb(30 41 59 / 0.23),
+    0 8px 28px color-mix(in oklab, var(--gp-tile-accent) 23%, transparent);
+}
+
+@media (hover: hover) {
+  [data-theme='light'] .gp-picker-row:hover,
+  [data-theme='light'] .gp-picker-row:not([data-active]):hover {
+    background:
+      radial-gradient(
+        82% 150% at -4% 50%,
+        color-mix(in oklab, var(--gp-tile-accent) 24%, transparent),
+        transparent 66%
+      ),
+      linear-gradient(
+        145deg,
+        color-mix(in oklab, var(--gp-tile-accent) 7%, oklch(34% 0.009 250)),
+        color-mix(in oklab, var(--gp-tile-accent) 2%, oklch(25% 0.006 250))
+      );
+  }
 }
 
 @media (max-width: 639px) {
@@ -1318,22 +1494,14 @@ body[data-focus-mode] .gp-widget-card[data-focused] .gp-island {
     0 18px 40px rgb(0 0 0 / 0.42);
 }
 
-/* Siblings glide to open a landing slot as the dragged panel passes. */
-.gp-island-settle {
-  transition: transform 220ms cubic-bezier(0.2, 0.7, 0.25, 1);
-}
+/* Siblings glide to open a landing slot as the dragged panel passes — the
+   slide itself is a self-cleaning Web Animation driven from the layer. */
 
 /* While a reorder drag runs, mute the resize brackets so they don't fight
    the float gesture or trail behind the moving panels. */
 .gp-widget-card[data-focus-reordering] .gp-focus-resize {
   opacity: 0;
   pointer-events: none;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .gp-island-settle {
-    transition: none;
-  }
 }
 
 /* Resize handle — bottom-right corner bracket. */

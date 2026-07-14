@@ -6,8 +6,13 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "typecheck": "tsc -b --pretty false",
     "lint": "oxlint",
     "test": "vitest run",
+    "test:focus": "vitest run src/utils/focusModeReorder.test.ts",
+    "docs:check": "node scripts/check-codebase-map.mjs",
+    "check": "npm run typecheck && npm run lint && npm run test && npm run docs:check",
+    "check:full": "npm run build && npm run lint && npm run test && npm run docs:check",
     "preview": "vite preview"
   },
   "dependencies": {

@@ -2,6 +2,12 @@
 
 _Phase 1 inventory snapshot — 2026-07-14. This document describes the current code; it does not prescribe the Phase 3 split._
 
+## Fast navigation
+
+Fresh AI tasks should begin with the root [agent guide](../AGENTS.md) and the compact [codebase map](codebase-map.md). The compact map routes user language to entrypoints, owners, contracts, search symbols, and targeted verification. This document remains the deeper reference for cross-system flow, scale, dependency pressure, and architectural invariants.
+
+When ownership or an entrypoint changes, update the compact map in the same commit and run `npm run docs:check`. Avoid adding line-number navigation here; use stable symbols and paths.
+
 ## Safety status
 
 The workspace is now tracked in Git with a merged baseline on `main`. The manual smoke gate is recorded in `docs/manual-smoke-checklist.md`. No application code was changed while producing the original Phase 1 inventory.

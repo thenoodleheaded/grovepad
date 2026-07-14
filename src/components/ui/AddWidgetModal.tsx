@@ -38,13 +38,14 @@ const PACK_BLURBS: Partial<Record<DomainPack, string>> = {
 /** Grid column count must mirror the responsive grid classes below so
  *  arrow-key navigation moves where the eye expects. */
 function columnsForViewport(): number {
+  if (window.innerWidth >= 1280) return 4
   if (window.innerWidth >= 1024) return 3
   if (window.innerWidth >= 640) return 2
   return 1
 }
 
 // ---------------------------------------------------------------------------
-// Widget tile — big icon, name and description beside it
+// Widget tile — dark accent glass with a bright icon island embedded at left
 // ---------------------------------------------------------------------------
 
 function WidgetTile({
@@ -73,37 +74,20 @@ function WidgetTile({
       data-active={active || undefined}
       onClick={onSpawn}
       onPointerEnter={onHover}
-      className="gp-picker-row group/tile flex items-center gap-3.5 rounded-2xl border p-3 text-left"
-      style={
-        {
-          '--gp-tile-accent': def.accent,
-          ...(active
-            ? {
-                borderColor: `${def.accent}59`,
-                background: `linear-gradient(120deg, ${def.accent}17 0%, ${def.accent}08 55%, transparent 100%)`,
-                boxShadow: `0 6px 24px ${def.accent}14, inset 0 1px 0 ${def.accent}14`,
-              }
-            : undefined),
-        } as React.CSSProperties
-      }
+      className="gp-picker-row group/tile relative flex min-h-[112px] items-center rounded-[22px] py-4 pr-4 pl-[88px] text-left"
+      style={{ '--gp-tile-accent': def.accent } as React.CSSProperties}
     >
       <span
-        className="gp-picker-icon flex h-12 w-12 shrink-0 items-center justify-center rounded-[14px]"
-        style={{
-          color: def.accent,
-          background: `linear-gradient(145deg, ${def.accent}2b 0%, ${def.accent}0d 100%)`,
-          boxShadow: active
-            ? `inset 0 0 0 1px ${def.accent}59, 0 4px 16px ${def.accent}30`
-            : `inset 0 0 0 1px ${def.accent}24`,
-        }}
+        className="gp-picker-icon absolute top-1/2 left-4 flex h-14 w-14 -translate-y-1/2 shrink-0 items-center justify-center rounded-[18px]"
+        style={{ color: def.accent }}
       >
-        <Icon size={22} aria-hidden />
+        <Icon size={25} strokeWidth={2} aria-hidden />
       </span>
-      <span className="min-w-0 flex-1">
-        <span className="block truncate text-[13px] font-medium text-neutral-200">
+      <span className="relative z-[1] min-w-0 flex-1">
+        <span className="gp-picker-tile-title block truncate text-[15.5px] font-semibold tracking-[-0.015em] text-neutral-100">
           {def.label}
         </span>
-        <span className="mt-0.5 line-clamp-2 block text-[11px] leading-snug text-neutral-500">
+        <span className="gp-picker-tile-description mt-1.5 line-clamp-2 block text-[11.5px] leading-[1.45] text-neutral-400/85">
           {def.description}
         </span>
       </span>
@@ -342,7 +326,7 @@ export function AddWidgetModal({ worldPos, onClose }: AddWidgetModalProps) {
       <div
         ref={dialogRef}
         tabIndex={-1}
-        className="relative z-10 mx-auto flex h-full w-full max-w-5xl flex-col px-6 outline-none sm:px-10"
+        className="relative z-10 mx-auto flex h-full w-full max-w-none flex-col px-4 outline-none sm:px-6 lg:px-8 2xl:px-10"
       >
         {view === 'packs' ? (
           <div className="flex min-h-0 flex-1 flex-col pt-10">
@@ -351,12 +335,12 @@ export function AddWidgetModal({ worldPos, onClose }: AddWidgetModalProps) {
         ) : (
           <>
             {/* Header */}
-            <div className="flex shrink-0 items-center justify-between gap-3 pt-10 pb-1">
+            <div className="gp-picker-header flex shrink-0 items-center justify-between gap-3 pt-10 pb-1">
               <div className="min-w-0">
-                <h2 className="bg-gradient-to-r from-neutral-100 via-emerald-300 to-neutral-100 bg-clip-text text-2xl font-semibold tracking-tight text-transparent">
+                <h2 className="gp-picker-title bg-gradient-to-r from-neutral-100 via-emerald-300 to-neutral-100 bg-clip-text text-2xl font-semibold tracking-tight text-transparent">
                   Widget Library
                 </h2>
-                <p className="mt-0.5 text-[12px] text-neutral-500">
+                <p className="gp-picker-subtitle mt-0.5 text-[12px] text-neutral-500">
                   Pick a card — it lands right where you clicked.
                 </p>
               </div>
@@ -364,7 +348,7 @@ export function AddWidgetModal({ worldPos, onClose }: AddWidgetModalProps) {
                 <button
                   type="button"
                   onClick={() => setView('packs')}
-                  className="flex h-8 items-center gap-1.5 rounded-lg border gp-hairline px-3 text-[12px] font-medium text-neutral-300 transition-colors hover:border-emerald-400/40 hover:text-emerald-300"
+                  className="gp-picker-pack-button flex h-8 items-center gap-1.5 rounded-lg border gp-hairline px-3 text-[12px] font-medium text-neutral-300 transition-colors hover:border-emerald-400/40 hover:text-emerald-300"
                 >
                   <Blocks size={13} aria-hidden />
                   Packs
@@ -373,7 +357,7 @@ export function AddWidgetModal({ worldPos, onClose }: AddWidgetModalProps) {
                   type="button"
                   aria-label="Close"
                   onClick={onClose}
-                  className="flex h-8 w-8 items-center justify-center rounded-lg text-neutral-500 transition-colors hover:bg-neutral-800 hover:text-neutral-200"
+                  className="gp-picker-close flex h-8 w-8 items-center justify-center rounded-lg text-neutral-500 transition-colors hover:bg-neutral-800 hover:text-neutral-200"
                 >
                   <X size={15} aria-hidden />
                 </button>
@@ -392,7 +376,7 @@ export function AddWidgetModal({ worldPos, onClose }: AddWidgetModalProps) {
                   setQuery(e.target.value)
                   setActiveIndex(0)
                 }}
-                className="w-full bg-transparent text-[16px] text-neutral-100 outline-none placeholder:text-neutral-600"
+                className="gp-picker-search-input w-full bg-transparent text-[16px] text-neutral-100 outline-none placeholder:text-neutral-600"
               />
               {query && (
                 <button
@@ -433,7 +417,7 @@ export function AddWidgetModal({ worldPos, onClose }: AddWidgetModalProps) {
                           boxShadow: `0 0 8px ${defs[0]!.accent}90`,
                         }}
                       />
-                      <h3 className="font-mono text-[10px] uppercase tracking-[0.18em] text-neutral-500">
+                      <h3 className="gp-picker-category-label font-mono text-[10px] uppercase tracking-[0.18em] text-neutral-500">
                         {CATEGORY_LABELS[category]}
                       </h3>
                       <span
@@ -444,7 +428,7 @@ export function AddWidgetModal({ worldPos, onClose }: AddWidgetModalProps) {
                         }}
                       />
                     </div>
-                    <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-3">
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                       {defs.map((def, defIndex) => {
                         const flatIndex = groupOffsets[groupIndex]! + defIndex
                         return (
@@ -464,7 +448,7 @@ export function AddWidgetModal({ worldPos, onClose }: AddWidgetModalProps) {
             </div>
 
             {/* Foot hints */}
-            <div className="flex h-11 shrink-0 items-center justify-between border-t gp-hairline text-[11px] text-neutral-600">
+            <div className="gp-picker-footer flex h-11 shrink-0 items-center justify-between border-t gp-hairline text-[11px] text-neutral-600">
               <span>
                 <kbd className="rounded bg-neutral-800/80 px-1.5 py-0.5 font-mono text-[10px] text-neutral-400">↑↓←→</kbd>{' '}
                 navigate ·{' '}
