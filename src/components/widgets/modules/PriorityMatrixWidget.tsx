@@ -71,7 +71,7 @@ export function PriorityMatrixWidget({ data, onChange }: PriorityMatrixWidgetPro
                     type="button"
                     aria-label="Remove item"
                     onClick={() => removeItem(item.id)}
-                    className="shrink-0 text-neutral-700 opacity-0 transition-opacity hover:text-red-400 group-hover/row:opacity-100"
+                    className="shrink-0 text-neutral-700 pointer-events-none opacity-0 transition-opacity hover:text-red-400 group-hover/row:opacity-100 group-hover/row:pointer-events-auto"
                   >
                     <X size={9} aria-hidden />
                   </button>
@@ -83,7 +83,7 @@ export function PriorityMatrixWidget({ data, onChange }: PriorityMatrixWidgetPro
               aria-label={`Add to ${label}`}
               onClick={() => addItem(q)}
               className={`flex h-4 shrink-0 items-center gap-1 text-[9px] text-neutral-700 transition-all hover:text-neutral-400 ${
-                items.length === 0 ? '' : 'opacity-0 group-hover/quad:opacity-100'
+                items.length === 0 ? '' : 'pointer-events-none opacity-0 group-hover/quad:opacity-100 group-hover/quad:pointer-events-auto'
               }`}
             >
               <Plus size={8} aria-hidden />

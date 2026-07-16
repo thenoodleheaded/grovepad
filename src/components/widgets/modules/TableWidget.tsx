@@ -104,7 +104,7 @@ export function TableWidget({ data, onChange }: TableWidgetProps) {
                         type="button"
                         aria-label={`Remove row ${rowIndex + 1}`}
                         onClick={() => removeRow(rowIndex)}
-                        className="flex h-9 w-6 items-center justify-center text-neutral-700 opacity-0 transition-opacity hover:text-red-400 group-hover/row:opacity-100"
+                        className="flex h-9 w-6 items-center justify-center text-neutral-700 pointer-events-none opacity-0 transition-opacity hover:text-red-400 group-hover/row:opacity-100 group-hover/row:pointer-events-auto"
                       >
                         <Minus size={11} />
                       </button>

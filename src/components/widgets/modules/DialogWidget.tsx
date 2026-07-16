@@ -65,7 +65,7 @@ export function DialogWidget({ data, onChange }: DialogWidgetProps) {
                   type="button"
                   aria-label="Remove dialog line"
                   onClick={() => removeLine(line.id)}
-                  className="absolute right-0 top-0 text-neutral-700 opacity-0 transition-opacity hover:text-red-400 group-hover/line:opacity-100"
+                  className="absolute right-0 top-0 text-neutral-700 pointer-events-none opacity-0 transition-opacity hover:text-red-400 group-hover/line:opacity-100 group-hover/line:pointer-events-auto"
                 >
                   <X size={11} />
                 </button>

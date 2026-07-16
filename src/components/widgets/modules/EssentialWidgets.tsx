@@ -1060,11 +1060,11 @@ function SwotQuadrant({
           <div key={index} className="group/swot-row flex h-6 items-center gap-1">
             <span className="h-1 w-1 shrink-0 rounded-full" style={{ backgroundColor: color }} />
             <input value={item} placeholder="Add insight…" onChange={(event) => onChange(items.map((value, i) => i === index ? event.target.value : value))} className={`${inputClass} flex-1 text-[10px]`} />
-            <button type="button" aria-label="Remove insight" onClick={() => onChange(items.filter((_, i) => i !== index))} className="text-neutral-800 opacity-0 hover:text-red-400 group-hover/swot-row:opacity-100"><X size={8} /></button>
+            <button type="button" aria-label="Remove insight" onClick={() => onChange(items.filter((_, i) => i !== index))} className="text-neutral-800 pointer-events-none opacity-0 hover:text-red-400 group-hover/swot-row:opacity-100 group-hover/swot-row:pointer-events-auto"><X size={8} /></button>
           </div>
         ))}
       </div>
-      <button type="button" onClick={() => onChange([...items, ''])} className="mt-1 flex h-5 items-center gap-1 text-[9px] text-neutral-700 opacity-0 transition-opacity hover:text-neutral-400 group-hover/swot:opacity-100"><Plus size={8} /> Add</button>
+      <button type="button" onClick={() => onChange([...items, ''])} className="mt-1 flex h-5 items-center gap-1 text-[9px] text-neutral-700 pointer-events-none opacity-0 transition-opacity hover:text-neutral-400 group-hover/swot:opacity-100 group-hover/swot:pointer-events-auto"><Plus size={8} /> Add</button>
     </WidgetPanel>
   )
 }
@@ -1246,9 +1246,9 @@ export function LineChartWidget({
   }
 
   return (
-    <div className="flex h-full flex-col gap-2">
+    <div className="gp-flat-visual flex h-full flex-col gap-2">
       <div className="flex items-center justify-end"><input value={data.unit} placeholder="unit" onChange={(event) => onChange({ ...data, unit: event.target.value })} className="w-12 bg-transparent text-right font-mono text-[9px] text-neutral-600 outline-none" /></div>
-      <div role="button" tabIndex={0} aria-label="Oscilloscope. Click to add a point" data-island="scope" data-island-size="free" data-island-min-h="96" onClick={addAt} onKeyDown={event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();add()}}} className="gp-line-scope relative h-32 shrink-0 cursor-crosshair overflow-hidden rounded-xl border border-emerald-300/15 bg-[linear-gradient(rgba(74,222,128,.07)_1px,transparent_1px),linear-gradient(90deg,rgba(74,222,128,.07)_1px,transparent_1px)] bg-[length:24px_24px] outline-none focus-visible:ring-1 focus-visible:ring-emerald-300/50">
+      <div role="button" tabIndex={0} aria-label="Oscilloscope. Click to add a point" data-island="scope" data-island-size="free" data-island-min-h="96" onClick={addAt} onKeyDown={event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();add()}}} className="gp-line-scope gp-flat-visual-own relative h-32 shrink-0 cursor-crosshair overflow-hidden border border-emerald-300/15 outline-none focus-visible:ring-1 focus-visible:ring-emerald-300/50">
         <svg viewBox="0 0 300 96" preserveAspectRatio="none" className="h-full w-full" role="img" aria-label="Line chart">
           {chart.length > 1 && <polyline points={chart.map((point) => `${point.x},${point.y}`).join(' ')} fill="none" stroke="#38bdf8" strokeWidth="2" vectorEffect="non-scaling-stroke" />}
           {chart.map((point, index) => <circle key={data.points[index]?.id ?? index} cx={point.x} cy={point.y} r="3" fill="#0a0a0a" stroke="#7dd3fc" strokeWidth="1.5"><title>{data.points[index]?.label}: {values[index]}{data.unit}</title></circle>)}
@@ -1290,7 +1290,7 @@ export function PieChartWidget({
   const add = () => onChange({ ...data, segments: [...data.segments, { id: crypto.randomUUID(), label: `Segment ${data.segments.length + 1}`, value: 10, color: palette[data.segments.length % palette.length]! }] })
 
   return (
-    <div className="flex h-full flex-col gap-2">
+    <div className="gp-flat-visual flex h-full flex-col gap-2">
       <div className="flex items-center justify-end"><button type="button" onClick={() => onChange({ ...data, mode: data.mode === 'donut' ? 'pie' : 'donut' })} className="rounded-md border gp-hairline px-2 py-1 font-mono text-[8px] uppercase text-neutral-500">{data.mode}</button></div>
       <div className="gp-pie-layout grid min-h-0 flex-1 grid-cols-[minmax(96px,180px)_minmax(120px,1fr)] items-start gap-3">
         {/* A stretched circle is a lie (XVIII.1): the disc scales only proportionally. */}

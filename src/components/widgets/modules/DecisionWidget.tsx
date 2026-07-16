@@ -125,7 +125,7 @@ export function DecisionWidget({ data, onChange, onHeightChange }: DecisionWidge
                   type="button"
                   aria-label="Remove option"
                   onClick={() => removeOption(index)}
-                  className="shrink-0 text-neutral-700 opacity-0 transition-opacity hover:text-red-400 group-hover/row:opacity-100"
+                  className="shrink-0 text-neutral-700 pointer-events-none opacity-0 transition-opacity hover:text-red-400 group-hover/row:opacity-100 group-hover/row:pointer-events-auto"
                 >
                   <X size={10} aria-hidden />
                 </button>

@@ -43,7 +43,7 @@ export function MetricsWidget({ data, onChange }: MetricsWidgetProps) {
     })
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="gp-flat-visual flex h-full flex-col">
       <div className="grid grid-cols-2 gap-1.5">
         {data.tiles.map((tile, tileIndex) => (
           <div
@@ -55,7 +55,7 @@ export function MetricsWidget({ data, onChange }: MetricsWidgetProps) {
               type="button"
               aria-label="Remove metric"
               onClick={() => removeTile(tile.id)}
-              className="absolute right-1.5 top-1.5 text-neutral-700 opacity-0 transition-opacity hover:text-red-400 group-hover/tile:opacity-100"
+              className="absolute right-1.5 top-1.5 text-neutral-700 pointer-events-none opacity-0 transition-opacity hover:text-red-400 group-hover/tile:opacity-100 group-hover/tile:pointer-events-auto"
             >
               <X size={10} aria-hidden />
             </button>

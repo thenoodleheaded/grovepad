@@ -27,7 +27,7 @@ export function MeetingNotesWidget({ data, onChange }: MeetingNotesWidgetProps) 
     })
 
   return (
-    <div className="flex h-full flex-col gap-2">
+    <div className="gp-bare-field flex h-full flex-col gap-2">
       <div className="flex shrink-0 items-center gap-3">
         <label className="flex items-center gap-1.5 text-neutral-500">
           <CalendarClock size={11} className="shrink-0" aria-hidden />
@@ -101,7 +101,7 @@ export function MeetingNotesWidget({ data, onChange }: MeetingNotesWidgetProps) 
               type="button"
               aria-label="Remove action"
               onClick={() => removeAction(a.id)}
-              className="shrink-0 text-neutral-700 opacity-0 transition-opacity hover:text-red-400 group-hover/row:opacity-100"
+              className="shrink-0 text-neutral-700 pointer-events-none opacity-0 transition-opacity hover:text-red-400 group-hover/row:opacity-100 group-hover/row:pointer-events-auto"
             >
               <X size={10} aria-hidden />
             </button>

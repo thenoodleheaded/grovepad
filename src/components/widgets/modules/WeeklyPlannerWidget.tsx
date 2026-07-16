@@ -91,7 +91,7 @@ export function WeeklyPlannerWidget({ data, onChange }: WeeklyPlannerWidgetProps
                     type="button"
                     aria-label="Remove task"
                     onClick={() => removeTask(dayIndex, task.id)}
-                    className="shrink-0 text-neutral-700 opacity-0 transition-opacity hover:text-red-400 group-hover/task:opacity-100"
+                    className="shrink-0 text-neutral-700 pointer-events-none opacity-0 transition-opacity hover:text-red-400 group-hover/task:opacity-100 group-hover/task:pointer-events-auto"
                   >
                     <X size={10} aria-hidden />
                   </button>
@@ -102,7 +102,7 @@ export function WeeklyPlannerWidget({ data, onChange }: WeeklyPlannerWidgetProps
                 aria-label={`Add task to ${DAY_NAMES[dayIndex]}`}
                 onClick={() => addTask(dayIndex)}
                 className={`flex h-5 items-center gap-1 text-[10px] text-neutral-700 transition-all hover:text-neutral-400 ${
-                  tasks.length === 0 ? '' : 'opacity-0 group-hover/day:opacity-100'
+                  tasks.length === 0 ? '' : 'pointer-events-none opacity-0 group-hover/day:opacity-100 group-hover/day:pointer-events-auto'
                 }`}
               >
                 <Plus size={9} aria-hidden />

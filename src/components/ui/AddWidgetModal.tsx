@@ -109,7 +109,7 @@ function WidgetTile({
         className={`absolute top-3.5 right-3.5 z-[2] flex h-6 w-6 items-center justify-center rounded-full transition-opacity duration-150 ${
           favorited
             ? 'text-amber-300 opacity-100'
-            : 'text-neutral-500 opacity-0 hover:text-amber-200 focus-visible:opacity-100 group-hover/tile:opacity-100'
+            : 'text-neutral-500 pointer-events-none opacity-0 hover:text-amber-200 focus-visible:opacity-100 focus-visible:pointer-events-auto group-hover/tile:opacity-100 group-hover/tile:pointer-events-auto'
         }`}
       >
         <Star size={14} strokeWidth={1.8} fill={favorited ? 'currentColor' : 'none'} aria-hidden />

@@ -176,7 +176,7 @@ function WorkspaceDropdown() {
                       type="button"
                       aria-label={`Rename ${ws.name}`}
                       onClick={() => setRenamingId(ws.id)}
-                      className="shrink-0 rounded-md p-1 text-neutral-600 opacity-100 transition-opacity hover:text-neutral-300 focus-visible:opacity-100 sm:opacity-0 sm:group-hover/ws:opacity-100"
+                      className="shrink-0 rounded-md p-1 text-neutral-600 opacity-100 transition-opacity hover:text-neutral-300 focus-visible:opacity-100 focus-visible:pointer-events-auto sm:pointer-events-none sm:opacity-0 sm:group-hover/ws:opacity-100 sm:group-hover/ws:pointer-events-auto"
                     >
                       <Pencil size={11} aria-hidden />
                     </button>
@@ -188,7 +188,7 @@ function WorkspaceDropdown() {
                           setDeleteTarget({ id: ws.id, name: ws.name })
                           setOpen(false)
                         }}
-                        className="shrink-0 rounded-md p-1 text-neutral-600 opacity-100 transition-opacity hover:text-red-400 focus-visible:opacity-100 sm:opacity-0 sm:group-hover/ws:opacity-100"
+                        className="shrink-0 rounded-md p-1 text-neutral-600 opacity-100 transition-opacity hover:text-red-400 focus-visible:opacity-100 focus-visible:pointer-events-auto sm:pointer-events-none sm:opacity-0 sm:group-hover/ws:opacity-100 sm:group-hover/ws:pointer-events-auto"
                       >
                         <Trash2 size={11} aria-hidden />
                       </button>

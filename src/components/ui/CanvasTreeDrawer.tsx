@@ -48,7 +48,7 @@ export function CanvasTreeDrawer() {
           <button type="button" onClick={() => useWidgetStore.getState().navigateToCanvas(canvas.id)} className="min-w-0 flex-1 truncate text-left">{canvas.name}</button>
         )}
         <span className="font-mono text-[9px] text-neutral-600">{Object.values(widgets).filter((widget) => widget.canvasId === canvas.id).length}</span>
-        <button type="button" aria-label={`Rename ${canvas.name}`} onClick={() => setRenaming(canvas.id)} className="opacity-0 group-hover/tree:opacity-100"><Pencil size={10} /></button>
+        <button type="button" aria-label={`Rename ${canvas.name}`} onClick={() => setRenaming(canvas.id)} className="pointer-events-none opacity-0 group-hover/tree:opacity-100 group-hover/tree:pointer-events-auto"><Pencil size={10} /></button>
         {canvas.parentCanvasId !== null && (
           <button
             type="button"
@@ -58,7 +58,7 @@ export function CanvasTreeDrawer() {
               const owner = Object.values(state.widgets).find((widget) => widget.type === 'canvas_node' && (widget.data as { canvasId?: string }).canvasId === canvas.id)
               if (owner) state.deleteWidget(owner.id)
             }}
-            className="text-neutral-600 opacity-0 hover:text-red-400 group-hover/tree:opacity-100"
+            className="text-neutral-600 pointer-events-none opacity-0 hover:text-red-400 group-hover/tree:opacity-100 group-hover/tree:pointer-events-auto"
           ><Trash2 size={10} /></button>
         )}
       </div>

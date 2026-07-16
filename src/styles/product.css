@@ -1384,6 +1384,65 @@ body[data-theme='light'][data-canvas-lod='far'] .gp-widget-card {
   transition: outline-color var(--gp-duration-snap) var(--gp-ease-snap);
 }
 
+/* A table is one island (its own .rounded-lg.border wrapper); a cell is a
+   divider-separated region of that same surface, never a second glass pane.
+   This must win over the generic field-island auto-detector above, which
+   would otherwise glass every <td> that directly wraps an <input>. */
+.gp-widget-ui table :is(td, th) {
+  border-radius: 0 !important;
+  background-image: none !important;
+  background-color: transparent !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+}
+
+/* Escape hatch for a wrapper that would otherwise be auto-detected as a field
+   island (Article VII in the constitution: a lone full-card text control sits
+   directly on the card's own backplate, never inside a second glass pane). */
+.gp-widget-ui .gp-bare-field {
+  border-radius: 0 !important;
+  background-image: none !important;
+  background-color: transparent !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+}
+
+/* Charts and other visual/graph info panels are flat and minimalistic —
+   never standardized glass (Article VIII addendum). Hairline dividers and a
+   widget's own deliberate paint (bar tracks, pie discs, plot lines) are
+   untouched; only the auto-detected glass elevation is stripped. A region
+   with its own bespoke visual (the oscilloscope grid, a chart plot area)
+   opts out with .gp-flat-visual-own instead of being flattened too. */
+.gp-widget-ui .gp-flat-visual,
+.gp-widget-ui .gp-flat-visual :is(
+  .gp-island,
+  .gp-well,
+  .gp-subpanel,
+  .gp-subdivision,
+  .gp-display-well,
+  [data-island],
+  [class*='group/']
+):not(.gp-flat-visual-own) {
+  border-radius: 0 !important;
+  background-image: none !important;
+  background-color: transparent !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+}
+
+/* An escaped region keeps its own bespoke paint instead of inheriting
+   whatever an ancestor's glass/well rule would otherwise force on it. */
+.gp-widget-ui .gp-line-scope.gp-flat-visual-own {
+  border-radius: var(--gp-r1) !important;
+  background-color: transparent !important;
+  background-image:
+    linear-gradient(rgb(74 222 128 / .07) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(74 222 128 / .07) 1px, transparent 1px) !important;
+  background-size: 24px 24px !important;
+  box-shadow: none !important;
+  outline: 0 !important;
+}
+
 /* Compact controls keep the same readable inset without consuming a whole
    data column. Bare controls are used only inside a containing well. */
 .gp-widget-ui .gp-input--compact {

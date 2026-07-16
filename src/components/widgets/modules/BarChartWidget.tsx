@@ -29,7 +29,7 @@ export function BarChartWidget({ data, onChange }: BarChartWidgetProps) {
     })
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="gp-flat-visual flex h-full flex-col">
       <div className="flex flex-1 flex-col justify-center gap-2">
         {data.bars.map((bar) => (
           <div key={bar.id} className="group/row flex items-center gap-2">
@@ -57,7 +57,7 @@ export function BarChartWidget({ data, onChange }: BarChartWidgetProps) {
               type="button"
               aria-label="Remove bar"
               onClick={() => removeBar(bar.id)}
-              className="shrink-0 text-neutral-700 opacity-0 transition-opacity hover:text-red-400 group-hover/row:opacity-100"
+              className="shrink-0 text-neutral-700 pointer-events-none opacity-0 transition-opacity hover:text-red-400 group-hover/row:opacity-100 group-hover/row:pointer-events-auto"
             >
               <X size={11} aria-hidden />
             </button>

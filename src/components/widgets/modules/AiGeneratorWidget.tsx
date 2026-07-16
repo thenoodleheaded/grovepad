@@ -78,7 +78,7 @@ export function AiGeneratorWidget({ data, widgetId, onChange }: AiGeneratorWidge
   const isDone = data.status === 'done'
 
   return (
-    <div className="flex h-full flex-col gap-2">
+    <div className="gp-bare-field flex h-full flex-col gap-2">
       {/* Multi-line prompt textarea */}
       <textarea
         ref={promptRef}

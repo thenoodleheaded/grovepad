@@ -10,7 +10,7 @@ interface QuoteWidgetProps {
 export function QuoteWidget({ data, onChange }: QuoteWidgetProps) {
   const textFieldRef = useFieldAnchor<HTMLTextAreaElement>('text')
   return (
-    <div className="relative flex h-full flex-col justify-between gap-2 pl-5">
+    <div className="gp-bare-field relative flex h-full flex-col justify-between gap-2 pl-5">
       <span
         aria-hidden
         className="pointer-events-none absolute -left-0.5 -top-2 select-none font-serif text-5xl leading-none text-emerald-400/25"

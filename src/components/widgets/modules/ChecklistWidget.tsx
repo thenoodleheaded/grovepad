@@ -140,39 +140,36 @@ export function ChecklistWidget({ data, onChange, onHeightChange }: ChecklistWid
             type="button"
             aria-label="Remove task"
             onClick={() => beginRemove(item.id)}
-            className="shrink-0 text-neutral-700 opacity-0 transition-opacity hover:text-red-400 group-hover/row:opacity-100"
+            className="shrink-0 text-neutral-700 pointer-events-none opacity-0 transition-opacity hover:text-red-400 group-hover/row:opacity-100 group-hover/row:pointer-events-auto"
           >
             <X size={11} />
           </button>
         </WidgetPanel>
       ))}
 
-      {/* Add button — its own subdivision panel. */}
-      <WidgetPanel grip={false} island="add" sizing="fixed" className="flex h-8 items-center border-dashed px-2.5">
-        <button
-          type="button"
-          onClick={() => insertAfter(data.items.length - 1)}
-          className="flex items-center gap-1.5 text-[11px] text-neutral-600 transition-colors hover:text-neutral-400"
-        >
-          <Plus size={11} />
-          Add task
-          {totalCount > 0 && (
-            <span
-              ref={(el) => {
-                doneCountRef.current = el
-                allDoneRef.current = el
-              }}
-              aria-label={`${doneCount} of ${totalCount} done`}
-              className={`ml-1 font-mono text-[10px] tabular-nums transition-colors duration-300 ${
-                doneCount === totalCount ? '' : 'text-neutral-600'
-              }`}
-              style={doneCount === totalCount ? { color: 'var(--gp-widget-accent)' } : undefined}
-            >
-              {doneCount}/{totalCount}
-            </span>
-          )}
-        </button>
-      </WidgetPanel>
+      <button
+        type="button"
+        onClick={() => insertAfter(data.items.length - 1)}
+        className="flex h-8 shrink-0 items-center gap-1.5 px-2.5 text-[11px] text-neutral-600 transition-colors hover:text-neutral-400"
+      >
+        <Plus size={11} />
+        Add task
+        {totalCount > 0 && (
+          <span
+            ref={(el) => {
+              doneCountRef.current = el
+              allDoneRef.current = el
+            }}
+            aria-label={`${doneCount} of ${totalCount} done`}
+            className={`ml-1 font-mono text-[10px] tabular-nums transition-colors duration-300 ${
+              doneCount === totalCount ? '' : 'text-neutral-600'
+            }`}
+            style={doneCount === totalCount ? { color: 'var(--gp-widget-accent)' } : undefined}
+          >
+            {doneCount}/{totalCount}
+          </span>
+        )}
+      </button>
     </div>
   )
 }

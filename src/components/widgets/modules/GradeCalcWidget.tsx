@@ -78,7 +78,7 @@ export function GradeCalcWidget({ data, onChange }: GradeCalcWidgetProps) {
               type="button"
               aria-label="Remove component"
               onClick={() => removeComponent(c.id)}
-              className="w-4 shrink-0 text-neutral-700 opacity-0 transition-opacity hover:text-red-400 group-hover/row:opacity-100"
+              className="w-4 shrink-0 text-neutral-700 pointer-events-none opacity-0 transition-opacity hover:text-red-400 group-hover/row:opacity-100 group-hover/row:pointer-events-auto"
             >
               <X size={11} aria-hidden />
             </button>

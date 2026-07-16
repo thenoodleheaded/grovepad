@@ -408,6 +408,30 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
     }
   }
 
+  const onPointerCancel = (e: ReactPointerEvent<HTMLElement>) => {
+    const link = linkDragRef.current
+    if (link && link.pointerId === e.pointerId) {
+      if (link.rafId !== 0) cancelAnimationFrame(link.rafId)
+      linkDragRef.current = null
+      useWidgetStore.getState().endLinkDrag(null)
+      return
+    }
+
+    const session = dragRef.current
+    if (!session || session.pointerId !== e.pointerId) return
+    dragRef.current = null
+    const draggedId = activeDragWidgetId.current
+    groupDropRef.current = { groupId: null, since: 0 }
+    const state = useWidgetStore.getState()
+    state.setDragOverGroupId(null)
+    if (!session.end()) return
+    const ids =
+      state.selectedIds.has(draggedId) && state.selectedIds.size > 1
+        ? [...state.selectedIds]
+        : [draggedId]
+    state.settleWidgets(ids)
+  }
+
   const onContextMenu = (e: React.MouseEvent<HTMLElement>) => {
     e.preventDefault()
     e.stopPropagation()
@@ -672,7 +696,8 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
-        onPointerCancel={onPointerUp}
+        onPointerCancel={onPointerCancel}
+        onLostPointerCapture={onPointerCancel}
         onContextMenu={onContextMenu}
         className={`gp-widget-card gp-card-motion gp-glass group/widget absolute inset-0 flex flex-col ${
           isRecentlySpawned(widgetId) ? 'gp-spawn' : ''
@@ -724,7 +749,8 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
           }}
           onPointerMove={(e) => onPointerMove(e)}
           onPointerUp={(e) => onPointerUp(e)}
-          onPointerCancel={(e) => onPointerUp(e)}
+          onPointerCancel={(e) => onPointerCancel(e)}
+          onLostPointerCapture={(e) => onPointerCancel(e)}
         >
           <span
             aria-hidden
@@ -763,10 +789,10 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
         </div>
 
         <div
-          className={`pointer-events-auto flex items-center gap-1 transition-opacity duration-200 ${
+          className={`flex items-center gap-1 transition-opacity duration-200 ${
             widget.metadata.locked || widget.metadata.favorite
-              ? 'opacity-100'
-              : 'opacity-0 group-hover/widget:opacity-100 focus-within:opacity-100'
+              ? 'pointer-events-auto opacity-100'
+              : 'pointer-events-none opacity-0 group-hover/widget:pointer-events-auto group-hover/widget:opacity-100 focus-within:pointer-events-auto focus-within:opacity-100'
           }`}
         >
           <button
@@ -805,6 +831,25 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
               <LockKeyhole size={10} aria-hidden />
             )}
           </button>
+          {groupId && groupColor && (
+            <button
+              type="button"
+              title="Detach from group"
+              aria-label="Detach from group"
+              onPointerDown={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+              }}
+              onClick={(e) => {
+                e.stopPropagation()
+                useWidgetStore.getState().removeFromGroup(groupId, widgetId)
+              }}
+              className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border bg-neutral-950/90 text-neutral-400 transition-colors hover:text-neutral-200"
+              style={{ borderColor: `${groupColor}80` }}
+            >
+              <Unlink size={10} aria-hidden />
+            </button>
+          )}
         </div>
       </div>
 
@@ -882,29 +927,6 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
         className="gp-card-chrome gp-resize-handle absolute bottom-2 right-2 z-20 h-3 w-3 cursor-nwse-resize"
       />
 
-      {groupId && groupColor && (
-        <button
-          type="button"
-          title="Detach from group"
-          aria-label="Detach from group"
-          onPointerDown={(e) => {
-            e.preventDefault()
-            e.stopPropagation()
-          }}
-          onClick={(e) => {
-            e.stopPropagation()
-            useWidgetStore.getState().removeFromGroup(groupId, widgetId)
-          }}
-          className="gp-card-chrome absolute -right-2 top-2 z-30 flex h-7 w-7 scale-95 items-center justify-center rounded-full border bg-neutral-950/95 text-neutral-200 opacity-0 shadow-lg transition hover:scale-100 focus:scale-100 focus:opacity-100 group-hover/widget:opacity-100"
-          style={{
-            borderColor: `${groupColor}80`,
-            boxShadow: `0 0 0 1px ${groupColor}1f, 0 8px 24px rgba(0,0,0,0.35)`,
-          }}
-        >
-          <Unlink size={12} aria-hidden />
-        </button>
-      )}
-
       {!groupId && (
         <button
           type="button"
@@ -918,8 +940,9 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
           }}
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
-          onPointerCancel={onPointerUp}
-          className="gp-card-chrome absolute -right-2 top-1/2 z-30 flex h-4 w-4 -translate-y-1/2 scale-75 items-center justify-center rounded-full border border-violet-300/55 bg-neutral-950 text-violet-200 opacity-0 shadow-[0_0_14px_rgba(167,139,250,.45)] transition group-hover/widget:scale-100 group-hover/widget:opacity-100 focus:scale-100 focus:opacity-100"
+          onPointerCancel={onPointerCancel}
+          onLostPointerCapture={onPointerCancel}
+          className="gp-card-chrome pointer-events-none absolute -right-2 top-1/2 z-30 flex h-4 w-4 -translate-y-1/2 scale-75 items-center justify-center rounded-full border border-violet-300/55 bg-neutral-950 text-violet-200 opacity-0 shadow-[0_0_14px_rgba(167,139,250,.45)] transition group-hover/widget:pointer-events-auto group-hover/widget:scale-100 group-hover/widget:opacity-100 focus:pointer-events-auto focus:scale-100 focus:opacity-100"
         >
           <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-violet-300" />
         </button>
