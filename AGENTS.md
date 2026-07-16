@@ -1,95 +1,61 @@
 # Grovepad agent guide
 
-This is the automatically loaded entrypoint for AI-assisted work in Grovepad. Do not ask the user to explain the repository layout again. Route the task with [the compact codebase map](docs/codebase-map.md), then inspect only the relevant symbols and their direct consumers.
+Route every task with [the compact codebase map](docs/codebase-map.md), then inspect only the relevant symbols and their direct consumers. Do not ask the user to explain the repository layout.
 
 ## Explaining work to the project owner
 
-The project owner is not a professional software engineer. Every explanation of code, architecture, or a new implementation defaults to plain language — assume no familiarity with programming concepts, frameworks, or jargon (React, TypeScript, IndexedDB, ZIP internals, RLS, and so on) unless a term is introduced with a one-sentence plain-language gloss first.
-
-- Lead with what changed and why it matters to them, in everyday terms — not how it's implemented.
-- Prefer concrete analogies over technical vocabulary (e.g., "a shipping label any computer can read" instead of "content-addressed manifest").
-- Never assume familiarity with git, the terminal, file formats, or dev tooling; narrate what is happening, not just the command being run.
-- Technical detail can still follow underneath for accuracy, but the plain-language explanation comes first and must stand on its own.
-- This is a default, not a ceiling — go deeper whenever they ask a technical follow-up or signal they want more.
+The project owner is not a professional software engineer. Explain code, architecture, and changes in plain language first — lead with what changed and why it matters in everyday terms, prefer concrete analogies over jargon, and introduce any technical term with a one-sentence gloss. Never assume familiarity with git, the terminal, file formats, or dev tooling. Technical detail can follow underneath, but the plain-language explanation must stand on its own. Go deeper whenever they ask.
 
 ## First 90 seconds
 
 1. Run `git status --short` and preserve all pre-existing changes. Never overwrite or revert work you did not create.
-2. Search the compact map first: `rg -n -i "<task terms>" docs/codebase-map.md`.
-3. Read the matching route, contract, and verification row. Use [the deep architecture map](docs/architecture-map.md) only when ownership or cross-system flow is still unclear.
-4. Search symbols before opening source: `rg -n "<symbol|class|data-attribute>" <listed files>`.
-5. Read narrow ranges around matches. Do not dump a large coordination file into context.
-6. For reviews, inspect the diff before surrounding implementation: `git diff --stat`, `git diff --name-only`, then the relevant hunks.
+2. Search the map: `rg -n -i "<task terms>" docs/codebase-map.md`, then read the matching route. Use [the architecture map](docs/architecture-map.md) only when ownership or cross-system flow is still unclear.
+3. Search symbols before opening source (`rg -n "<symbol>"`) and read narrow ranges. For reviews, inspect the diff before surrounding implementation.
 
 ## Sources of truth
 
-- Current runtime behavior and types: source code.
-- Product and interaction rules: [widget constitution](docs/widget-constitution.md) and [glass/focus constitution](docs/widget-glass-constitution.md).
-- Fast ownership and task routing: [codebase map](docs/codebase-map.md).
-- Cross-system architecture and invariants: [architecture map](docs/architecture-map.md).
-- Known debt and phased repair boundaries: [patch registry](docs/patch-registry.md). Registry observations are not automatic authorization for unrelated cleanup.
+- Runtime behavior and types: source code.
+- Product and interaction rules: [widget constitution](docs/widget-constitution.md), [glass/focus constitution](docs/widget-glass-constitution.md), [circuit engine](docs/circuit-engine.md), [storage contract](docs/storage-format-plan.md).
+- Task routing: [codebase map](docs/codebase-map.md). Cross-system architecture: [architecture map](docs/architecture-map.md).
+- Known live debt: [patch registry](docs/patch-registry.md) — observations, not authorization for unrelated cleanup.
 - Phase gate: [manual smoke checklist](docs/manual-smoke-checklist.md).
 
-If the constitution describes intended behavior that the source does not implement, report the mismatch and follow the user's requested direction. Do not silently reinterpret the constitution to match current code.
+If a constitution describes behavior the source does not implement, report the mismatch; do not silently reinterpret the constitution to match the code.
 
 ## Context discipline
 
-The following files are coordination surfaces. Search them by symbol and read only the relevant neighborhood unless a full-file audit is explicitly required:
-
-- `src/store/slices/*Slice.ts`
-- `src/types/widgetData*.ts` and `src/types/module*.ts`
-- `src/widgets/fields.ts`
-- `src/widgets/registry.ts`
-- `src/components/widgets/modules/EssentialWidgets.tsx`
-- `src/components/widgets/WidgetCard.tsx`
-- `src/components/canvas/CanvasViewport.tsx`
-- `src/utils/scenarioResolver.ts`
-- `src/styles/product.css`
-
-Prefer `rg --files` and `rg -n`. Trace at most one importer/consumer hop at a time, then widen only when evidence shows the change crosses another owner. Summarize findings instead of retaining long raw file output.
+Coordination surfaces (`src/store/slices/*Slice.ts`, `src/widgets/fields.ts`, `src/widgets/registry.ts`, `EssentialWidgets.tsx`, `WidgetCard.tsx`, `CanvasViewport.tsx`, `scenarioResolver.ts`, `src/styles/product.css`) are searched by symbol, never dumped whole into context. Trace one importer/consumer hop at a time; widen only when evidence shows the change crosses another owner.
 
 ## Ownership rules
 
-- `useWidgetStore` owns the canonical board model. Its domain actions live in `src/store/slices/`; history, layout, and graph helpers live beside the facade in `src/store/`.
-- `useCanvasStore` and `useCanvasEvents` own camera and viewport interaction. Never mutate a partial camera object in a browser test; use public actions such as `setView`.
-- `useCircuitStore` and the circuit engine own transient wire execution state.
-- `useFocusStore` owns focus entry/exit and camera locking; persisted island order and size live in widget metadata.
-- Registry files own widget metadata/defaults/sizing; their neutral types live in `src/widgets/contracts/`. Field files own ports, commands, and typed circuit behavior. Renderer modules own visual content.
-- Relation, dependency, and wire layers retain separate geometry/semantic policies, then render through `CanvasEdge.tsx` and `canvasEdgePolicy.ts`. Shared paint or LOD changes belong there; endpoint logic stays in the owning layer.
-- Persistence validates unknown data before store hydration. Optional cloud or local-AI failure must not break local board work.
-- `runtime/appRuntime.ts` owns persistence and circuit startup/teardown. Runtime services must return idempotent disposers; do not start listeners at component-module scope.
-- Animated list removal uses stable item ids and the panel transition lifecycle. Short UI acknowledgements use the owned transient-state helper, never loose component timers.
+- `useWidgetStore` owns the canonical board model; domain actions live in `src/store/slices/`.
+- `useCanvasStore`/`useCanvasEvents` own camera and viewport interaction. Never mutate a partial camera object in a browser test; use public actions such as `setView`.
+- `useCircuitStore` and the circuit engine own transient wire execution state; `useFocusStore` owns focus entry/exit and camera locking.
+- Registry files own widget metadata/defaults/sizing; field files own ports/commands; renderer modules own visual content; neutral types live in `src/widgets/contracts/`.
+- Relation, dependency, and wire layers keep separate geometry/semantics and share paint through `CanvasEdge.tsx`/`canvasEdgePolicy.ts`.
+- Persistence validates unknown data before hydration; cloud or local-AI failure must not break local board work.
+- `runtime/appRuntime.ts` owns persistence and circuit startup/teardown; runtime services return idempotent disposers and never start listeners at component-module scope.
+- Animated list removal uses stable item ids and the panel transition lifecycle; short UI acknowledgements use `useTransientValue`, never loose component timers.
 
 ## Change workflow
 
-1. State the acceptance criteria in observable terms.
-2. Identify the state owner, render owner, style owner, contract, and nearest test from the route map.
-3. Make the smallest coherent change. Do not mix opportunistic cleanup into feature work.
-4. Add or update a deterministic test seam for behavior or geometry changes before relying on manual browser testing.
-5. Use the verification ladder below.
-6. Update `docs/codebase-map.md` in the same change whenever a file moves, a responsibility changes owners, or a new recurring subsystem is introduced.
+1. State the acceptance criteria in observable terms, then identify the state, render, and style owners from the route map.
+2. Make the smallest coherent change; no opportunistic cleanup mixed into feature work.
+3. Add or update a deterministic test seam for behavior or geometry changes before relying on manual browser testing.
+4. Update `docs/codebase-map.md` in the same change when a file moves, an owner changes, or a new recurring subsystem appears.
 
-For UI testing, start from a known state and use public UI/store actions. Do not leave scratch widgets, dev globals, altered camera persistence, or local-storage artifacts behind. Coordinate browser input from current screenshots/DOM measurements rather than assumed scale factors.
+For UI testing, start from a known state, use public UI/store actions, and leave no scratch widgets, dev globals, or storage artifacts behind.
 
 ## Verification ladder
 
 - Documentation/navigation only: `npm run docs:check`.
 - Focus-mode reorder logic: `npm run test:focus`.
-- Narrow TypeScript behavior: run the closest Vitest file, then `npm run typecheck` and `npm run lint`.
+- Narrow TypeScript behavior: the closest Vitest file, then `npm run typecheck` and `npm run lint`.
 - Store, persistence, shared type, registry, field, or routing changes: `npm run check`.
-- Production bundling, global CSS, or phase completion: `npm run check:full`, then all applicable manual smoke items.
+- Production bundling, global CSS, or phase completion: `npm run check:full`, then applicable manual smoke items.
 
-Do not claim browser verification unless the interaction was actually exercised. Record any skipped manual gate and why.
+Do not claim browser verification unless the interaction was actually exercised; record any skipped manual gate.
 
 ## Review protocol
 
-Review changed behavior, not just changed lines. For every touched subsystem, check:
-
-1. Canonical state and undo/persistence ownership.
-2. Direct callers and render consumers.
-3. Empty, deleted, interrupted, and reduced-motion states where applicable.
-4. Zoom/culling/LOD effects for canvas visuals.
-5. Keyboard, focus, pointer-cancel, and interactive-child behavior for gestures.
-6. Relevant automated checks and a concise manual verification recipe.
-
-Prioritize concrete correctness, data-loss, lifecycle, performance, and accessibility findings. Avoid speculative style comments without a violated contract.
+Review changed behavior, not just changed lines: canonical state and undo/persistence ownership; direct callers and render consumers; empty/deleted/interrupted/reduced-motion states; zoom/culling/LOD for canvas visuals; keyboard, focus, and pointer-cancel behavior for gestures. Prioritize concrete correctness, data-loss, lifecycle, performance, and accessibility findings over speculative style comments.

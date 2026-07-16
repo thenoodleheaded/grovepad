@@ -1,38 +1,6 @@
 # Grovepad Architecture Map
 
-_Current architecture after the Phase 3 structural split — 2026-07-14. The original Phase 1 findings remain in the patch registry._
-
-## Fast navigation
-
-Fresh AI tasks should begin with the root [agent guide](../AGENTS.md) and the compact [codebase map](codebase-map.md). The compact map routes user language to entrypoints, owners, contracts, search symbols, and targeted verification. This document remains the deeper reference for cross-system flow, scale, dependency pressure, and architectural invariants.
-
-When ownership or an entrypoint changes, update the compact map in the same commit and run `npm run docs:check`. Avoid adding line-number navigation here; use stable symbols and paths.
-
-## Safety status
-
-The workspace is now tracked in Git with a merged baseline on `main`. The manual smoke gate is recorded in `docs/manual-smoke-checklist.md`. No application code was changed while producing the original Phase 1 inventory.
-
-## Scale snapshot
-
-| Measure | Current value |
-|---|---:|
-| TS/TSX source | 40,289 lines |
-| Files processed by Madge | 238 |
-| Test files | 21 |
-| Vitest tests | 483 |
-| `setTimeout` call sites | 24 |
-| Source-level cycles reported by Madge | 0 |
-
-Largest coordination surfaces:
-
-| File | Lines | Current responsibility |
-|---|---:|---|
-| `src/widgets/fields.ts` | 1,722 | Field/command descriptors and circuit-facing behavior |
-| `src/components/widgets/modules/EssentialWidgets.tsx` | 1,398 | Twenty essential widget renderers |
-| `src/utils/scenarioResolver.ts` | 1,268 | Scenario classification, preferences, routing, and resolution |
-| `src/widgets/registry.ts` | 1,158 | Widget metadata, defaults, sizing, category and pack policy |
-| `src/store/useWidgetStore.ts` | 318 | Store assembly, hydration, history bridge and compatibility exports |
-| `src/types/spatial.ts` | 156 | Compatibility facade plus widget/group metadata |
+Fresh AI tasks should begin with the root [agent guide](../AGENTS.md) and the compact [codebase map](codebase-map.md), which routes user language to entrypoints, owners, contracts, and targeted verification. This document is the deeper reference for cross-system flow and architectural invariants. When ownership or an entrypoint changes, update the compact map in the same commit and run `npm run docs:check`. Use stable symbols and paths, never line numbers.
 
 ## Runtime map
 
@@ -147,13 +115,7 @@ flowchart LR
   Store --> Card
 ```
 
-There are three catalogue families layered onto the base registry:
-
-- Base widgets are declared directly in `registry.ts` and `fields.ts`.
-- Expansion widgets live in `registry/expansion.ts` and `fields/expansion.ts`.
-- Atlas and automation-core families generate definitions/fields from compact catalogues.
-
-Family modules import neutral contracts from `widgets/contracts/`; no family points back to its root implementation.
+Three catalogue families layer onto the base registry: base widgets declared directly in `registry.ts`/`fields.ts`; expansion widgets in `registry/expansion.ts`/`fields/expansion.ts`; Atlas and automation-core families generated from compact catalogues. Family modules import neutral contracts from `widgets/contracts/`; no family points back to its root implementation. The source dependency graph has zero cycles — keep it that way (`npx --yes madge --circular --extensions ts,tsx src`).
 
 ## Persistence flow
 
@@ -179,45 +141,7 @@ sequenceDiagram
   Note over P: pagehide/hidden flushes; runtime disposal removes subscriptions and listeners
 ```
 
-`PersistedBoard`, `PersistedDeviceState`, and their runtime state contracts live in `types/persistence.ts`. Board validation/migration lives in `persistedBoardSchema.ts`; local navigation validation lives in `persistedDeviceState.ts`; cloud index/canvas splitting, compression, and checksums live in `cloudDocuments.ts`. `cloudSync.ts` performs checksum-diffed dual writes and lazy legacy recovery. IndexedDB, status, and the store consume neutral contracts without importing the persistence orchestrator. `initPersistence` owns and disposes every subscription, DOM listener, and pending saver it creates.
-
-## Dependency graph status
-
-Phase 3 removed all 13 registered cycles. `npx --yes madge --circular --extensions ts,tsx src` now reports no circular dependencies. The Phase 1 fan-in/fan-out measurements below are retained as historical pressure data; rerun Madge before using their exact numbers for a new refactor.
-
-Madge fan-in (number of source files importing a module):
-
-| Module | Fan-in |
-|---|---:|
-| `types/spatial.ts` | 123 |
-| `hooks/useFieldAnchor.ts` | 51 |
-| `store/useWidgetStore.ts` | 48 |
-| `widgets/registry.ts` | 26 |
-| `store/useCanvasStore.ts` | 23 |
-| `widgets/fields.ts` | 16 |
-
-Madge fan-out:
-
-| Module | Fan-out | Interpretation |
-|---|---:|---|
-| `WidgetRenderer.tsx` | 4 | Thin shell; concrete renderer fan-out is isolated in family lazy-loader modules |
-| `CanvasViewport.tsx` | 46 | Composition root plus runtime initialization |
-| `WidgetCard.tsx` | 14 | Large interaction shell |
-| `QuickAddSheet.tsx` | 12 | UI plus deterministic/model handshake |
-| `useWidgetStore.ts` | 12 | Canonical model coupled to registries, persistence and layout utilities |
-
-## Scan results and interpretation
-
-### Knip 6.26.0
-
-- One unused file: `src/utils/i18n.ts`.
-- Thirteen exported values/functions have no external consumer. Several are still used privately in their own module, so Phase 2 should remove the `export` keyword rather than delete their implementation.
-- 107 exported types have no consumer outside their defining module. Most are leaf data-shape types aggregated into public unions/maps; they add API surface but no runtime weight.
-- No unused npm dependencies were reported.
-
-### Madge 8.0.0
-
-The Phase 1 scan reported 13 cycles. The Phase 3 contract and schema extraction removed every registered path; current Madge output is zero cycles. See `patch-registry.md` for their resolved destinations.
+`PersistedBoard`, `PersistedDeviceState`, and their runtime state contracts live in `types/persistence.ts`. Board validation/migration lives in `persistedBoardSchema.ts`; local navigation validation lives in `persistedDeviceState.ts`; cloud index/canvas splitting, compression, and checksums live in `cloudDocuments.ts`. `cloudSync.ts` performs checksum-diffed dual writes and lazy legacy recovery. `initPersistence` owns and disposes every subscription, DOM listener, and pending saver it creates. The format rules live in the [storage contract](storage-format-plan.md).
 
 ## Architectural invariants worth protecting
 
@@ -231,15 +155,3 @@ The Phase 1 scan reported 13 cycles. The Phase 3 contract and schema extraction 
 8. Canvas camera state is separate from board content and is restored independently.
 9. Line semantics remain distinct even if their SVG renderer primitives are unified.
 10. Widget modules should not acquire direct persistence, auth, or canvas-global orchestration.
-
-## Reproduction commands
-
-```bash
-npx --yes knip
-npx --yes madge --circular --extensions ts,tsx --ts-config tsconfig.app.json src
-rg -n "(?:window\\.)?setTimeout\\s*\\(" src
-wc -l $(rg --files src -g '*.ts' -g '*.tsx') | sort -nr | head -25
-npm run build
-npm run lint
-npm run test
-```

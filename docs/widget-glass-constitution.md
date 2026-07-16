@@ -2,21 +2,6 @@
 
 *Companion to [widget-constitution.md](widget-constitution.md), which governs what widgets ARE. This document governs what widgets LOOK LIKE. Binding for every essential (non-pack) widget renderer and for the focus-mode rearrangement system.*
 
-Live visual reference: the "Grovepad — The Widget Glass" artifact (Renewals Vault and Schedule Pulse rebuilt on this material).
-
----
-
-## Diagnosis — why the current glass fails
-
-1. **No substrate.** Panelized cards set `background: none` on the shell ([product.css:712](../src/styles/product.css)), so subpanels float over raw canvas inside an outline. Nothing binds them into one object.
-2. **Flat elevation.** Stat displays, inputs, containers, and buttons all get the same dark fill + full hairline border. One elevation = no hierarchy.
-3. **Radius chaos.** Subpanels inherit the shell's 28px radius at every nesting depth (`var(--gp-widget-radius, 28px)` in the subpanel block). Corners have no relationship.
-4. **Triple nesting.** Bordered row → bordered field → bordered input. Dark-on-dark-on-dark mud.
-5. **Debug chrome at rest.** Panel connector lines and corner scale-handles render on the resting card.
-6. **Trapped labels.** ALL-CAPS labels sit inside the value boxes, centered in some widgets, left in others.
-
----
-
 ## Article XIII — One backplate, three elevations
 
 A widget is exactly **one piece of glass** — the backplate — in the finalized shape of its panel arrangement, tinted with a whisper of the widget's accent. Everything else is either raised on it or cut into it. Three elevations exist; there is no fourth.
@@ -215,13 +200,6 @@ XII.1 of the widget constitution.
 
 ---
 
-## Appendix — Implementation map
+## Implementation notes
 
-| Where | Change |
-|:---|:---|
-| `src/index.css` | `.gp-glass` backplate keeps its recipe; accent bloom raised to ~9% mix; radius token becomes `--gp-r0` |
-| `src/styles/product.css` | Subpanel glass block (~lines 703–830) replaced by `.gp-island` / `.gp-well` / `.gp-input` elevation classes |
-| `WidgetCard.tsx` | ✅ `data-panels` stops nulling the shell background — the backplate always renders; `PanelConnectorLayer` (connector lines + resting scale handles) deleted outright — focus mode's `FocusModeLayer` is the only edit chrome |
-| `PANEL_SURFACE_SELECTOR` | ✅ Retired. Focus mode operates on `.gp-island` elements annotated with `data-island` (id) + `data-island-size` (behavior class, XVIII.1) |
-| `WidgetPanel.tsx` | Becomes the Island component: renders E1 material, exposes its declared id, hosts the reflow container |
-| Performance | Contract unchanged: zero `backdrop-filter`, all static paint; hull path recomputed only during focus-mode drags, then frozen |
+`WidgetPanel.tsx` is the Island component (E1 material, declared `data-island` id, reflow container). Focus mode operates on `.gp-island` elements annotated with `data-island` + `data-island-size`. Performance contract: zero `backdrop-filter`, all static paint; the hull path recomputes only during focus-mode drags, then freezes.
