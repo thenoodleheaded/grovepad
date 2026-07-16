@@ -132,9 +132,9 @@ The target cloud schema retains approximately 20-30 append-only revisions per ca
 
 ### Phase 3: portable documents
 
-- Implement `.grovepad` ZIP import/export using the same parser and serializer.
-- Include content-hashed media and checksums.
-- Retain JSON export as a diagnostic/legacy path until package recovery is proven.
+- [x] Implement `.grovepad` ZIP import/export using the same parser and serializer. The package reuses `splitCloudBoard`/`joinCloudBoard` and `parsePersistedBoard`/`serializePersistedBoard`, so it shares one fixture corpus with the cloud and IndexedDB transports. A dependency-free ZIP layer (`src/utils/zipArchive.ts`) writes spec-valid, CRC-verified archives via the platform `CompressionStream`.
+- [x] Include content-hashed media and checksums. Media blobs are stored content-addressed (`media/<sha256>.<ext>`, de-duplicated) and every JSON entry is checksummed in `manifest.json`; a `minReader` gate refuses packages from a newer writer before any state is touched.
+- [x] Retain JSON export as a diagnostic/legacy path until package recovery is proven. The account menu keeps "Export JSON backup" alongside the primary "Export .grovepad package"; import auto-detects ZIP vs JSON.
 
 ## Explicit non-goals for the current phases
 

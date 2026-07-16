@@ -114,7 +114,7 @@ export function KanbanWidget({ data, onChange }: KanbanWidgetProps) {
                     type="button"
                     aria-label="Move left"
                     onClick={() => moveCard(columnIndex, card.id, -1)}
-                    className="absolute -left-1 hidden h-4 w-4 items-center justify-center rounded-full border border-neutral-600 bg-neutral-950 text-neutral-400 hover:text-white group-hover/kcard:flex"
+                    className="hidden h-4 w-4 shrink-0 items-center justify-center rounded-full border border-neutral-600 bg-neutral-950 text-neutral-400 hover:text-white group-hover/kcard:flex"
                   >
                     <ChevronLeft size={9} aria-hidden />
                   </button>
@@ -138,7 +138,7 @@ export function KanbanWidget({ data, onChange }: KanbanWidgetProps) {
                     type="button"
                     aria-label="Move right"
                     onClick={() => moveCard(columnIndex, card.id, 1)}
-                    className="absolute -right-1 hidden h-4 w-4 items-center justify-center rounded-full border border-neutral-600 bg-neutral-950 text-neutral-400 hover:text-white group-hover/kcard:flex"
+                    className="hidden h-4 w-4 shrink-0 items-center justify-center rounded-full border border-neutral-600 bg-neutral-950 text-neutral-400 hover:text-white group-hover/kcard:flex"
                   >
                     <ChevronRight size={9} aria-hidden />
                   </button>

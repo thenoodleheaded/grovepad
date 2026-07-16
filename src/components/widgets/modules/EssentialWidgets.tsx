@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, type ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import {
   ArrowLeftRight,
   Check,
@@ -39,7 +39,6 @@ import type {
   UnitConverterData,
   WorkflowStatus,
 } from '../../../types/spatial'
-import { GRID_SIZE } from '../../../types/spatial'
 import { useFieldAnchor } from '../../../hooks/useFieldAnchor'
 import { useTransientValue } from '../../../hooks/useTransientValue'
 import { WidgetPanel } from '../WidgetPanel'
@@ -168,7 +167,7 @@ export function TextInputWidget({
 
   return (
     <div className="flex h-full flex-col gap-2">
-      <div className="flex items-center gap-2">
+      <div className="gp-text-input-header flex items-center gap-2">
         <input
           value={data.label}
           placeholder="Label"
@@ -245,7 +244,7 @@ export function NumberInputWidget({
         className="h-1.5 w-full cursor-pointer accent-sky-400"
       />
       </div>
-      <div data-island="bounds" data-island-size="fixed" className="mt-auto grid grid-cols-3 gap-2 border-t gp-hairline pt-2">
+      <div data-island="bounds" data-island-size="fixed" className="gp-number-bounds mt-auto grid grid-cols-3 gap-2 border-t gp-hairline pt-2">
         {(['min', 'max', 'step'] as const).map((key) => (
           <label key={key} className="flex items-center gap-1">
             <span className="font-mono text-[8px] uppercase text-neutral-700">{key}</span>
@@ -318,30 +317,19 @@ export function ToggleWidget({
 
 /**
  * Bool gate — two glued glass subpanels, one per outcome. The pill name is
- * the only title (the old question line is gone). At detail height (≥ 4
- * cells) each side grows a description; from then on the card's height
- * follows the descriptions, not manual drags.
+ * the only title (the old question line is gone). Both outcomes always keep
+ * the same geometry; the card switches from columns to a vertical pair when
+ * the two-column tier no longer has enough room for functional text.
  */
 export function BranchGateWidget({
   data,
   onChange,
-  height,
-  onHeightChange,
 }: {
   data: BranchGateData
   onChange: (data: BranchGateData) => void
-  height: number
-  onHeightChange?: (height: number) => void
 }) {
   const valueRef = useFieldAnchor<HTMLButtonElement>('value')
   const inverseRef = useFieldAnchor<HTMLButtonElement>('inverse')
-  const rootRef = useRef<HTMLDivElement>(null)
-  const detail = height >= GRID_SIZE * 4
-
-  useLayoutEffect(() => {
-    if (!detail || !rootRef.current) return
-    onHeightChange?.(rootRef.current.scrollHeight)
-  }, [detail, data.trueNote, data.falseNote, onHeightChange])
 
   const side = (isTrue: boolean) => {
     const active = data.value === isTrue
@@ -356,7 +344,7 @@ export function BranchGateWidget({
       // Paired outcomes are pixel-identical siblings forever (XVIII.1, the
       // symmetry rule): a True button bigger than its False twin is a thumb
       // on the scale, so neither side may be scaled at all.
-      <WidgetPanel grip={false} island={isTrue ? 'true' : 'false'} sizing="fixed" className="relative min-w-0">
+      <WidgetPanel grip={false} island={isTrue ? 'true' : 'false'} sizing="fixed" className="relative min-w-[112px]">
         <button
           ref={isTrue ? valueRef : inverseRef}
           type="button"
@@ -380,29 +368,27 @@ export function BranchGateWidget({
             }
             className="w-full min-w-0 bg-transparent text-center text-[11px] font-semibold text-neutral-300 outline-none"
           />
-          {detail && (
-            <textarea
-              value={(isTrue ? data.trueNote : data.falseNote) ?? ''}
-              placeholder="Describe this outcome…"
-              aria-label={isTrue ? 'True description' : 'False description'}
-              onClick={(event) => event.stopPropagation()}
-              onChange={(event) =>
-                onChange(
-                  isTrue
-                    ? { ...data, trueNote: event.target.value }
-                    : { ...data, falseNote: event.target.value },
-                )
-              }
-              className="gp-note-area mt-1 w-full resize-none bg-transparent text-center text-[10px] leading-relaxed text-neutral-400 outline-none placeholder:text-neutral-700"
-            />
-          )}
+          <textarea
+            value={(isTrue ? data.trueNote : data.falseNote) ?? ''}
+            placeholder="Describe this outcome…"
+            aria-label={isTrue ? 'True description' : 'False description'}
+            onClick={(event) => event.stopPropagation()}
+            onChange={(event) =>
+              onChange(
+                isTrue
+                  ? { ...data, trueNote: event.target.value }
+                  : { ...data, falseNote: event.target.value },
+              )
+            }
+            className="gp-note-area mt-1 min-h-12 w-full resize-none bg-transparent text-center text-[10px] leading-relaxed text-neutral-400 outline-none placeholder:text-neutral-700"
+          />
         </button>
       </WidgetPanel>
     )
   }
 
   return (
-    <div ref={rootRef} className="grid h-full grid-cols-2 gap-2">
+    <div className="gp-branch-gate grid grid-cols-2 gap-2">
       {side(true)}
       {side(false)}
     </div>
@@ -445,7 +431,7 @@ export function FormulaWidget({
         onChange={(event) => onChange({ ...data, label: event.target.value })}
         className="bg-transparent text-center text-[11px] font-medium text-neutral-500 outline-none"
       />
-      <div data-island="operands" data-island-size="fixed" className="grid grid-cols-[1fr_52px_1fr] items-center gap-2">
+      <div data-island="operands" data-island-size="fixed" className="gp-formula-operands grid grid-cols-[1fr_52px_1fr] items-center gap-2">
         {/* Operands are visually equal alternatives — fixed by the symmetry rule. */}
         <label ref={aRef} className={`${panelClass} px-2 py-2 text-center`}>
           <span className="block font-mono text-[8px] uppercase text-neutral-700">A</span>
@@ -520,7 +506,7 @@ export function StatusWidget({
           {current.label}
         </span>
       </div>
-      <div ref={statusRef} data-island="states" data-island-size="fixed" className="grid grid-cols-4 gap-2">
+      <div ref={statusRef} data-island="states" data-island-size="fixed" className="gp-status-states grid grid-cols-4 gap-2">
         {STATUS_META.map((item) => (
           <button
             key={item.value}
@@ -582,7 +568,7 @@ export function DatePickerWidget({
           Time
         </button>
       </div>
-      <div ref={dateRef} data-island="date" data-island-size="width" className={`${panelClass} flex items-center gap-2 px-3 py-2`}>
+      <div ref={dateRef} data-island="date" data-island-size="width" className={`${panelClass} gp-date-row flex items-center gap-2 px-3 py-2`}>
         <input
           type="date"
           value={data.date}
@@ -598,7 +584,7 @@ export function DatePickerWidget({
           />
         )}
       </div>
-      <div data-island="summary" data-island-size="fixed" className="grid grid-cols-2 gap-2">
+      <div data-island="summary" data-island-size="fixed" className="gp-date-summary grid grid-cols-2 gap-2">
         <Stat anchor={daysRef} label="Days until" value={data.date ? days : '—'} accent={days < 0 ? 'text-red-300' : 'text-orange-300'} />
         <Stat anchor={dueRef} label="Due state" value={!data.date ? 'Unset' : due ? 'Due' : 'Upcoming'} accent={due ? 'text-red-300' : 'text-emerald-300'} />
       </div>
@@ -740,7 +726,7 @@ export function FormWidget({
     })
 
   return (
-    <div className="flex h-full flex-col gap-2">
+    <div className="gp-pie-widget flex h-full flex-col gap-2">
       <div className="flex items-center justify-end">
         <span className={`rounded-full px-2 py-0.5 font-mono text-[8px] uppercase ${complete ? 'bg-emerald-400/10 text-emerald-300' : 'bg-neutral-800 text-neutral-600'}`}>
           {complete ? 'Ready' : 'Incomplete'}
@@ -1090,7 +1076,7 @@ export function SwotWidget({ data, onChange }: { data: SwotData; onChange: (data
   const threatRef = useFieldAnchor<HTMLDivElement>('threat_count')
   const anchors = [strengthRef, weaknessRef, opportunityRef, threatRef]
   return (
-    <div className="grid h-full grid-cols-2 grid-rows-2 gap-2">
+    <div className="gp-swot-grid grid h-full grid-cols-2 grid-rows-2 gap-2">
       {SWOT_META.map((meta, index) => (
         <SwotQuadrant key={meta.key} label={meta.label} color={meta.color} items={data[meta.key]} anchor={anchors[index]!} onChange={(items) => onChange({ ...data, [meta.key]: items })} />
       ))}
@@ -1262,7 +1248,7 @@ export function LineChartWidget({
   return (
     <div className="flex h-full flex-col gap-2">
       <div className="flex items-center justify-end"><input value={data.unit} placeholder="unit" onChange={(event) => onChange({ ...data, unit: event.target.value })} className="w-12 bg-transparent text-right font-mono text-[9px] text-neutral-600 outline-none" /></div>
-      <div role="button" tabIndex={0} aria-label="Oscilloscope. Click to add a point" data-island="scope" data-island-size="free" data-island-min-h="96" onClick={addAt} onKeyDown={event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();add()}}} className="relative h-32 shrink-0 cursor-crosshair overflow-hidden rounded-xl border border-emerald-300/15 bg-[linear-gradient(rgba(74,222,128,.07)_1px,transparent_1px),linear-gradient(90deg,rgba(74,222,128,.07)_1px,transparent_1px)] bg-[length:24px_24px] outline-none focus-visible:ring-1 focus-visible:ring-emerald-300/50">
+      <div role="button" tabIndex={0} aria-label="Oscilloscope. Click to add a point" data-island="scope" data-island-size="free" data-island-min-h="96" onClick={addAt} onKeyDown={event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();add()}}} className="gp-line-scope relative h-32 shrink-0 cursor-crosshair overflow-hidden rounded-xl border border-emerald-300/15 bg-[linear-gradient(rgba(74,222,128,.07)_1px,transparent_1px),linear-gradient(90deg,rgba(74,222,128,.07)_1px,transparent_1px)] bg-[length:24px_24px] outline-none focus-visible:ring-1 focus-visible:ring-emerald-300/50">
         <svg viewBox="0 0 300 96" preserveAspectRatio="none" className="h-full w-full" role="img" aria-label="Line chart">
           {chart.length > 1 && <polyline points={chart.map((point) => `${point.x},${point.y}`).join(' ')} fill="none" stroke="#38bdf8" strokeWidth="2" vectorEffect="non-scaling-stroke" />}
           {chart.map((point, index) => <circle key={data.points[index]?.id ?? index} cx={point.x} cy={point.y} r="3" fill="#0a0a0a" stroke="#7dd3fc" strokeWidth="1.5"><title>{data.points[index]?.label}: {values[index]}{data.unit}</title></circle>)}
@@ -1306,9 +1292,9 @@ export function PieChartWidget({
   return (
     <div className="flex h-full flex-col gap-2">
       <div className="flex items-center justify-end"><button type="button" onClick={() => onChange({ ...data, mode: data.mode === 'donut' ? 'pie' : 'donut' })} className="rounded-md border gp-hairline px-2 py-1 font-mono text-[8px] uppercase text-neutral-500">{data.mode}</button></div>
-      <div className="grid min-h-0 flex-1 grid-cols-[auto_1fr] gap-3">
+      <div className="gp-pie-layout grid min-h-0 flex-1 grid-cols-[minmax(96px,180px)_minmax(120px,1fr)] items-start gap-3">
         {/* A stretched circle is a lie (XVIII.1): the disc scales only proportionally. */}
-        <div data-island="disc" data-island-size="aspect" data-island-min-w="96" data-island-min-h="96" data-island-max-w="224" data-island-max-h="224" className="flex w-28 items-center justify-center self-start"><div className="relative aspect-square w-full rounded-full shadow-[0_10px_30px_rgba(0,0,0,0.25)]" style={{ background: pieGradient(data) }}>{data.mode === 'donut' && <div className="absolute inset-[25%] flex flex-col items-center justify-center rounded-full bg-neutral-950 shadow-inner"><span className="font-mono text-[8px] uppercase text-neutral-700">Total</span><strong className="font-mono text-sm text-neutral-200">{Math.round(total * 100) / 100}</strong></div>}</div></div>
+        <div data-island="disc" data-island-size="aspect" data-island-min-w="96" data-island-min-h="96" data-island-max-w="224" data-island-max-h="224" className="flex aspect-square h-full min-h-24 w-auto min-w-24 max-w-full items-center justify-center justify-self-center self-start"><div className="relative aspect-square h-full w-full rounded-full shadow-[0_10px_30px_rgba(0,0,0,0.25)]" style={{ background: pieGradient(data) }}>{data.mode === 'donut' && <div className="absolute inset-[25%] flex flex-col items-center justify-center rounded-full bg-neutral-950 shadow-inner"><span className="font-mono text-[8px] uppercase text-neutral-700">Total</span><strong className="font-mono text-sm text-neutral-200">{Math.round(total * 100) / 100}</strong></div>}</div></div>
         <div data-island="segments" data-island-size="free" data-island-min-w="120" data-island-min-h="96" data-island-max-h="260" className="min-h-0 overflow-y-auto">
           {data.segments.map((segment) => (
             <div key={segment.id} className="group/segment flex h-8 items-center gap-1.5 border-b gp-hairline last:border-0">
@@ -1320,7 +1306,7 @@ export function PieChartWidget({
           ))}
         </div>
       </div>
-      <div data-island="summary" data-island-size="fixed" className="grid grid-cols-3 gap-2"><Stat anchor={totalRef} label="Total" value={Math.round(total * 100) / 100} /><Stat anchor={shareRef} label="Largest share" value={`${Math.round(largestShare * 10) / 10}%`} accent="text-pink-300" /><Stat anchor={labelRef} label="Largest" value={largest?.label || '—'} accent="text-pink-300" /></div>
+      <div data-island="summary" data-island-size="fixed" className="gp-pie-summary grid grid-cols-3 gap-2"><Stat anchor={totalRef} label="Total" value={Math.round(total * 100) / 100} /><Stat anchor={shareRef} label="Largest share" value={`${Math.round(largestShare * 10) / 10}%`} accent="text-pink-300" /><Stat anchor={labelRef} label="Largest" value={largest?.label || '—'} accent="text-pink-300" /></div>
       <AddButton label="Add segment" onClick={add} />
     </div>
   )
@@ -1384,12 +1370,12 @@ export function UnitConverterWidget({
       <select value={data.category} onChange={(event) => setCategory(event.target.value as UnitConverterCategory)} className="mx-auto rounded-full border gp-hairline bg-neutral-900 px-3 py-1 font-mono text-[9px] uppercase tracking-wider text-emerald-300 outline-none">
         <option value="length">Length</option><option value="mass">Mass</option><option value="temperature">Temperature</option><option value="time">Time</option>
       </select>
-      <div data-island="conversion" data-island-size="fixed" className="grid grid-cols-[1fr_34px_1fr] items-stretch gap-2">
+      <div data-island="conversion" data-island-size="fixed" className="gp-unit-conversion grid grid-cols-[1fr_34px_1fr] items-stretch gap-2">
         <div ref={inputRef} className={`${panelClass} px-3 py-2`}><span className="font-mono text-[8px] uppercase text-neutral-700">Input</span><input type="number" value={data.value} onChange={(event) => onChange({ ...data, value: Number(event.target.value) })} className={`${numericClass} mt-1 w-full text-xl font-bold`} /><select value={data.from} onChange={(event) => onChange({ ...data, from: event.target.value })} className="mt-1 w-full bg-transparent font-mono text-[9px] text-neutral-500 outline-none">{units.map((unit) => <option key={unit}>{unit}</option>)}</select></div>
         <button type="button" aria-label="Swap units" onClick={() => onChange({ ...data, from: data.to, to: data.from })} className="flex items-center justify-center text-neutral-600 transition-transform hover:rotate-180 hover:text-emerald-300"><ArrowLeftRight size={14} /></button>
         <div ref={outputRef} className="rounded-xl border border-emerald-400/20 bg-emerald-400/[0.055] px-3 py-2"><span className="font-mono text-[8px] uppercase text-emerald-500/50">Output</span><div className="mt-1 flex items-center"><strong className="min-w-0 flex-1 truncate font-mono text-xl text-emerald-200">{formatted}</strong><button type="button" aria-label="Copy output" onClick={copy} className="text-emerald-500/50 hover:text-emerald-300">{copied ? <Check size={11} /> : <Copy size={11} />}</button></div><select value={data.to} onChange={(event) => onChange({ ...data, to: event.target.value })} className="mt-1 w-full bg-transparent font-mono text-[9px] text-emerald-500/60 outline-none">{units.map((unit) => <option key={unit}>{unit}</option>)}</select></div>
       </div>
-      <div data-island="precision" data-island-size="width" className="mt-auto flex items-center justify-between border-t gp-hairline pt-2">
+      <div data-island="precision" data-island-size="width" className="gp-unit-precision mt-auto flex items-center justify-between gap-2 border-t gp-hairline pt-2">
         <span className="font-mono text-[9px] text-neutral-700">1 {data.from} = {Number(convertUnit({ ...data, value: 1 }).toFixed(6))} {data.to}</span>
         <label className="font-mono text-[8px] uppercase text-neutral-700">Precision <input type="number" min={0} max={8} value={data.precision} onChange={(event) => onChange({ ...data, precision: clamp(Number(event.target.value), 0, 8) })} className={`${numericClass} w-7 text-right text-[9px] text-neutral-500`} /></label>
       </div>

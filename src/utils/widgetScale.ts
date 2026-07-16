@@ -1,5 +1,6 @@
 import type { Size } from '../types/spatial'
 import { COLLAPSED_SIZE, GRID_SIZE } from '../types/spatial'
+import type { WidgetSizing } from '../widgets/contracts/registry'
 
 // ---------------------------------------------------------------------------
 // Widget scale states — full → pill → icon.
@@ -12,6 +13,27 @@ import { COLLAPSED_SIZE, GRID_SIZE } from '../types/spatial'
 // ---------------------------------------------------------------------------
 
 export type WidgetScaleState = 'full' | 'pill' | 'icon'
+
+export interface FullWidgetResizeBounds {
+  minWidth: number
+  minHeight: number
+  maxWidth: number
+  maxHeight: number
+}
+
+/** Resolve the real full-card window. Gesture-start dimensions are
+ * deliberately absent: beginning a drag can never become a growth ceiling. */
+export function fullWidgetResizeBounds(
+  sizing: WidgetSizing | undefined,
+  fallback: FullWidgetResizeBounds,
+): FullWidgetResizeBounds {
+  return {
+    minWidth: sizing?.minWidth ?? fallback.minWidth,
+    minHeight: sizing?.minHeight ?? fallback.minHeight,
+    maxWidth: sizing?.maxWidth ?? fallback.maxWidth,
+    maxHeight: sizing?.maxHeight ?? fallback.maxHeight,
+  }
+}
 
 /** Pointer overshoot (world px) past a size floor that commits a state snap. */
 export const SNAP_OVERSHOOT_PX = 36

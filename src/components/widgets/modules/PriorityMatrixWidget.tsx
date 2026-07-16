@@ -32,7 +32,7 @@ export function PriorityMatrixWidget({ data, onChange }: PriorityMatrixWidgetPro
     setItem(item.id, { quadrant: ((item.quadrant + 1) % 4) as MatrixItem['quadrant'] })
 
   return (
-    <div className="grid h-full grid-cols-2 grid-rows-2 gap-1.5">
+    <div className="gp-priority-grid grid h-full grid-cols-2 grid-rows-2 gap-1.5">
       {QUADRANTS.map(({ q, label, hint, cls }) => {
         const items = data.items.filter((item) => item.quadrant === q)
         return (

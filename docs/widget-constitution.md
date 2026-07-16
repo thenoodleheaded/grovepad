@@ -283,6 +283,80 @@ Before merging, verify:
 - The field descriptors are registered in `fields.ts` (or `fields/expansion.ts`).
 - The registry entry is in `registry.ts` (or `registry/expansion.ts`).
 
+### Article XII.1 — Content-safe sizing and dead zones
+
+A widget may only expose sizes at which its interface remains valid. A **dead
+zone** is any width or height where the card technically exists but its content
+overlaps, clips, becomes unusable, or turns mostly into empty glass. Resize
+logic must prevent dead zones; CSS may not merely hide their symptoms.
+
+Five invariants are binding at every released size:
+
+1. **No overlap or occlusion.** Islands do not intersect, and a chart or visual
+   may never paint over a sibling input, button, or list.
+2. **No clipping.** Every island remains inside the content backplate.
+3. **Functional text stays whole.** Labels, button names, formatted dates,
+   currency, operators, and status values neither ellipsize nor break inside a
+   word. Free user prose may truncate only when the UI clearly offers access to
+   the full value.
+4. **Controls remain controls.** Inputs and buttons keep at least a 28px hit
+   height and remain the element hit at their visual center.
+5. **No decorative inflation.** A card may not grow along an axis its content
+   cannot use. As a review heuristic, visible content should occupy at least
+   roughly 55% of the available height.
+
+#### Ownership and authority
+
+- Every widget declares a static `sizing` window in the registry. This is the
+  fallback for creation, persistence hydration, and culled/unmounted cards.
+- Once mounted, real content measurement is authoritative and may raise the
+  instance's minimum width or natural height. Runtime measurements are
+  ephemeral and must never enter the persisted board model.
+- Control-only cards set `autoHeight`. Their height follows measured content,
+  stale oversized persisted heights heal on mount, and the whole-card resize
+  gesture adjusts width only. Lists, text wells, tables, and charts retain only
+  the axes that reveal useful additional content.
+- `minHeight` is width-dependent whenever wrapping changes the natural height.
+  Measure after the active width tier is applied; do not assume one constant
+  works at every width.
+
+#### Responsive tiers
+
+When a layout has more than one valid composition, the renderer declares
+discrete tiers rather than allowing a squash band between them. Examples:
+
+- paired outcomes: equal two-column panels, then equal stacked panels;
+- comparator/rule controls: one row, then operator above the numeric fields;
+- chart and legend: side by side, then legend below the chart;
+- summary stats: full formatted value, then an explicit compact format or a
+  stacked row. Ellipsis is not a compact format.
+
+If no useful reflow exists, the resize gesture must clamp or snap across the
+invalid band. It must never be possible to release the card inside it.
+
+The reviewed essential set uses three named full-card modes: `compact`,
+`standard`, and `expanded`. These modes recompose layout; they never scale a
+bitmap of the old interface. Growing a full card moves through those modes up
+to its declared `maxWidth`/`maxHeight`. The size at the start of a drag is not
+a ceiling and must never produce elastic resistance. Pill and icon are
+separate collapsed states reached only after the compact mode's safe floor;
+they are not substitutes for a compact full interface.
+
+#### Charts and aspect-bound visuals
+
+Sibling controls, legends, summaries, and add rows claim their minimum space
+first. A chart receives only the remaining rectangle. Radial and square-lattice
+visuals use the smaller remaining axis and keep their aspect ratio; they never
+size themselves from the whole card and then cover siblings.
+
+#### Calibration gate
+
+For a new or materially changed renderer, test representative worst-case data:
+long functional labels, realistic maximum digits, formatted dates, populated
+rows, and one long user word. Shrink each axis until the first invariant would
+fail, then place the fallback floor on the next 4px sub-grid step. Record a
+responsive tier instead when a useful narrower composition exists.
+
 ---
 
 ## Appendix A — The Current Widget Census

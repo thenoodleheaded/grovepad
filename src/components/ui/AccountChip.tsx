@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { CloudOff, Download, History, LogIn, LogOut, RefreshCw, Upload, UserRound } from 'lucide-react'
+import { CloudOff, Download, History, LogIn, LogOut, Package, RefreshCw, Upload, UserRound } from 'lucide-react'
 import { supabaseConfigured } from '../../lib/supabase'
 import { useAuthStore } from '../../store/useAuthStore'
 import { useOverlayLifecycle } from '../../store/useOverlayStore'
@@ -9,7 +9,10 @@ import { useWidgetStore } from '../../store/useWidgetStore'
 import { usePersistenceStatusStore } from '../../store/usePersistenceStatusStore'
 import { useToastStore } from '../../store/useToastStore'
 import { buildBoardSnapshot, parsePersistedBoard, requestCloudSync } from '../../utils/persistence'
-import { listRollingSnapshots, type LocalSnapshot } from '../../utils/boardDatabase'
+import { buildGrovepadPackage } from '../../utils/grovepadPackage'
+import { parseImportedBoardFile } from '../../utils/boardImport'
+import { useBoardImportStore } from '../../store/useBoardImportStore'
+import { listRollingSnapshots, writeMediaBlob, type LocalSnapshot } from '../../utils/boardDatabase'
 import { ConfirmDialog } from './ConfirmDialog'
 
 /** Top-bar account presence: avatar + menu when signed in, sign-in when not. */
@@ -20,7 +23,7 @@ export function AccountChip() {
   const anchorRef = useRef<HTMLButtonElement>(null)
   const [anchor, setAnchor] = useState({ x: 0, y: 0 })
   const fileRef = useRef<HTMLInputElement>(null)
-  const [pendingImport, setPendingImport] = useState<ReturnType<typeof parsePersistedBoard>>(null)
+  const pendingBoardImport = useBoardImportStore((state) => state.pending)
   const [snapshots, setSnapshots] = useState<LocalSnapshot[]>([])
   const [restoreSnapshot, setRestoreSnapshot] = useState<LocalSnapshot | null>(null)
   const [soundOn, setSoundOn] = useState(() => localStorage.getItem('grovepad:sound') === 'on')
@@ -52,15 +55,31 @@ export function AccountChip() {
     setOpen(true)
   }
 
-  const exportBoard = () => {
-    const board = buildBoardSnapshot(useWidgetStore.getState())
-    const blob = new Blob([JSON.stringify(board, null, 2)], { type: 'application/json' })
+  const download = (blob: Blob, filename: string) => {
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    link.download = `grovepad-backup-${new Date().toISOString().slice(0, 10)}.json`
+    link.download = filename
     link.click()
     URL.revokeObjectURL(url)
+  }
+
+  const today = () => new Date().toISOString().slice(0, 10)
+
+  const exportPackage = async () => {
+    try {
+      const bytes = await buildGrovepadPackage(useWidgetStore.getState())
+      download(new Blob([bytes as BlobPart], { type: 'application/octet-stream' }), `grovepad-${today()}.grovepad`)
+      useToastStore.getState().addToast('Grovepad package downloaded')
+    } catch {
+      useToastStore.getState().addToast('Could not build the Grovepad package')
+    }
+    setOpen(false)
+  }
+
+  const exportBoard = () => {
+    const board = buildBoardSnapshot(useWidgetStore.getState())
+    download(new Blob([JSON.stringify(board, null, 2)], { type: 'application/json' }), `grovepad-backup-${today()}.json`)
     useToastStore.getState().addToast('Board backup downloaded')
     setOpen(false)
   }
@@ -68,9 +87,9 @@ export function AccountChip() {
   const importFile = async (file: File | undefined) => {
     if (!file) return
     try {
-      const parsed = parsePersistedBoard(JSON.parse(await file.text()))
-      if (!parsed) throw new Error('Invalid board')
-      setPendingImport(parsed)
+      const bytes = new Uint8Array(await file.arrayBuffer())
+      const { board, media } = await parseImportedBoardFile(bytes, file.name)
+      useBoardImportStore.getState().requestImport({ board, media, source: 'file-picker' })
       setOpen(false)
     } catch {
       useToastStore.getState().addToast('That file is not a valid Grovepad backup')
@@ -109,7 +128,7 @@ export function AccountChip() {
       <input
         ref={fileRef}
         type="file"
-        accept="application/json,.json"
+        accept="application/json,.json,.grovepad"
         className="hidden"
         onChange={(event) => void importFile(event.currentTarget.files?.[0])}
       />
@@ -158,11 +177,11 @@ export function AccountChip() {
               <button
                 type="button"
                 role="menuitem"
-                onClick={exportBoard}
+                onClick={() => void exportPackage()}
                 className="mx-1.5 mt-1 flex h-8 w-[calc(100%-12px)] items-center gap-2 rounded-lg px-2 text-xs text-neutral-300 transition-colors hover:bg-neutral-800"
               >
-                <Download size={12} aria-hidden />
-                Export JSON backup
+                <Package size={12} aria-hidden />
+                Export .grovepad package
               </button>
               <button
                 type="button"
@@ -171,7 +190,16 @@ export function AccountChip() {
                 className="mx-1.5 flex h-8 w-[calc(100%-12px)] items-center gap-2 rounded-lg px-2 text-xs text-neutral-300 transition-colors hover:bg-neutral-800"
               >
                 <Upload size={12} aria-hidden />
-                Restore from backup
+                Open package or backup
+              </button>
+              <button
+                type="button"
+                role="menuitem"
+                onClick={exportBoard}
+                className="mx-1.5 flex h-8 w-[calc(100%-12px)] items-center gap-2 rounded-lg px-2 text-xs text-neutral-400 transition-colors hover:bg-neutral-800 hover:text-neutral-200"
+              >
+                <Download size={12} aria-hidden />
+                Export JSON backup
               </button>
               {snapshots[0] && (
                 <button
@@ -247,17 +275,29 @@ export function AccountChip() {
           document.body,
         )}
       <ConfirmDialog
-        open={Boolean(pendingImport)}
+        open={Boolean(pendingBoardImport)}
         title="Replace the current board?"
-        description="The imported backup will replace every workspace, canvas, widget, group, and connection currently open. A new local snapshot will be kept automatically after the change."
+        description={
+          pendingBoardImport?.source === 'native-open'
+            ? 'Opening this .grovepad file will replace every workspace, canvas, widget, group, and connection currently open. A new local snapshot will be kept automatically after the change.'
+            : 'The imported backup will replace every workspace, canvas, widget, group, and connection currently open. A new local snapshot will be kept automatically after the change.'
+        }
         confirmLabel="Restore backup"
         destructive
-        onClose={() => setPendingImport(null)}
+        onClose={() => useBoardImportStore.getState().clear()}
         onConfirm={() => {
-          if (pendingImport) {
-            useWidgetStore.getState().loadBoard(pendingImport)
+          const pending = pendingBoardImport
+          if (!pending) return
+          void (async () => {
+            // Media must land in IndexedDB before the board renders so image
+            // cards can resolve their blobs on first paint.
+            for (const { key, blob } of pending.media) {
+              await writeMediaBlob(key, blob).catch(() => undefined)
+            }
+            useWidgetStore.getState().loadBoard(pending.board)
+            useBoardImportStore.getState().clear()
             useToastStore.getState().addToast('Board restored from backup')
-          }
+          })()
         }}
       />
       <ConfirmDialog

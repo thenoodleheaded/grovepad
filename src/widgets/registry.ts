@@ -67,6 +67,7 @@ export type { WidgetCategory, WidgetDefinition, WidgetSizing } from './contracts
 import { EXPANSION_WIDGET_DEFINITIONS } from './registry/expansion'
 import { ATLAS_WIDGET_DEFINITIONS } from './registry/atlas'
 import { AUTOMATION_CORE_DEFINITIONS } from './registry/automationCore'
+import { REVIEWED_WIDGET_SIZING } from './sizingProfiles'
 
 // ---------------------------------------------------------------------------
 // Widget registry — the single database describing every widget type.
@@ -108,10 +109,15 @@ export const CATEGORY_ORDER: readonly WidgetCategory[] = [
  * whose height always follows its content sets `autoHeight` — the resize
  * handle then adjusts width only and the card's height reporter owns height.
  */
-export const DEFAULT_SIZING: Required<Pick<WidgetSizing, 'minWidth' | 'minHeight'>> = {
-  minWidth: GRID_SIZE * 4,
-  minHeight: GRID_SIZE * 2,
-}
+export const DEFAULT_SIZING = {
+  minWidth: GRID_SIZE * 5, // 200px — a floor that keeps control rows unclipped
+  minHeight: GRID_SIZE * 3, // 120px
+  // A card is never a screen-swallowing void. Content-fit widgets (autoHeight)
+  // opt out of the height ceiling so long content still grows freely.
+  maxWidth: GRID_SIZE * 32, // 1280px
+  maxHeight: GRID_SIZE * 32, // 1280px
+  autoHeight: false,
+} satisfies WidgetSizing
 
 const C = GRID_SIZE
 
@@ -274,7 +280,7 @@ export const WIDGET_REGISTRY: Record<ModuleType, WidgetDefinition> = {
     icon: Grid2x2,
     category: 'planning',
     accent: '#fca5a5',
-    defaultSize: { width: 380, height: C * 5 },
+    defaultSize: { width: 380, height: C * 6 },
     defaultData: () => ({ items: [] }),
   },
   decision: {
@@ -790,7 +796,7 @@ export const WIDGET_REGISTRY: Record<ModuleType, WidgetDefinition> = {
     icon: Binary,
     category: 'structure',
     accent: '#a78bfa',
-    defaultSize: { width: C * 4, height: C * 2 },
+    defaultSize: { width: C * 7, height: C * 3 },
     sizing: { minWidth: C * 4, minHeight: C * 2 },
     defaultData: () => ({
       value: false,
@@ -990,7 +996,7 @@ export const WIDGET_REGISTRY: Record<ModuleType, WidgetDefinition> = {
     icon: ChartPie,
     category: 'data',
     accent: '#f472b6',
-    defaultSize: { width: 360, height: C * 6 },
+    defaultSize: { width: 360, height: C * 7 },
     defaultData: () => ({
       title: 'Breakdown',
       mode: 'donut',
@@ -1050,6 +1056,15 @@ for (const type of Object.keys(WIDGET_REGISTRY) as ModuleType[]) {
   } else {
     delete WIDGET_REGISTRY[type].pack
   }
+}
+
+// Apply the calibrated 35-widget content-safety profiles after generated
+// families and local declarations meet. Existing per-type values remain the
+// base, so a profile only replaces the axes it intentionally owns.
+for (const [type, sizing] of Object.entries(REVIEWED_WIDGET_SIZING) as Array<
+  [keyof typeof REVIEWED_WIDGET_SIZING, WidgetSizing]
+>) {
+  WIDGET_REGISTRY[type].sizing = { ...WIDGET_REGISTRY[type].sizing, ...sizing }
 }
 
 export function widgetDefinition(type: ModuleType): WidgetDefinition {

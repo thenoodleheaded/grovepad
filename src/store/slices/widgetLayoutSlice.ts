@@ -6,6 +6,7 @@ import { useToastStore } from '../useToastStore'
 import { applyWidgetDelta, applyWidgetPositions, compactGroupPositions, movedIdsForWidget, uniqueExistingIds, withWidget } from '../widgetCollection'
 import { MIN_WIDGET_HEIGHT, MIN_WIDGET_WIDTH } from '../widgetLayoutConstants'
 import { fitWidgetSize, computeDataHeight } from '../widgetSizing'
+import { getLiveWidgetSizing, mergeWidgetSizing } from '../liveWidgetSizing'
 import { settleWidgetLayout } from '../widgetSettling'
 import { untangleCanvasLayout } from '../widgetUntangle'
 import type { WidgetStoreSlice, WidgetStoreSliceContext } from '../widgetStoreSliceContext'
@@ -156,14 +157,22 @@ export function createWidgetLayoutSlice({ set, get, pushHistory }: WidgetStoreSl
       // Full-state cards obey their type's size window. Pills and icon tiles
       // are state-managed sizes and skip the clamp entirely.
       if (!w.collapsed && !w.iconified) {
-        const rules = widgetDefinition(w.type).sizing
+        const rules = mergeWidgetSizing(
+          widgetDefinition(w.type).sizing,
+          getLiveWidgetSizing(id),
+        )
+        // Content-fit cards own their height, so the default height ceiling
+        // must not clip long notes/tables — only an explicit maxHeight caps them.
+        const maxHeight = rules?.autoHeight
+          ? rules?.maxHeight ?? Infinity
+          : rules?.maxHeight ?? DEFAULT_SIZING.maxHeight
         size = {
           width: Math.min(
-            rules?.maxWidth ?? Infinity,
+            rules?.maxWidth ?? DEFAULT_SIZING.maxWidth,
             Math.max(rules?.minWidth ?? DEFAULT_SIZING.minWidth, size.width),
           ),
           height: Math.min(
-            rules?.maxHeight ?? Infinity,
+            maxHeight,
             Math.max(rules?.minHeight ?? DEFAULT_SIZING.minHeight, size.height),
           ),
         }
@@ -278,7 +287,16 @@ export function createWidgetLayoutSlice({ set, get, pushHistory }: WidgetStoreSl
     set((state) => {
       const w = state.widgets[widgetId]
       if (!w) return state
-      const newHeight = computeDataHeight(w.type, data)
+      const rawHeight = computeDataHeight(w.type, data)
+      // Content-length estimates are unbounded (more rows == more height); clamp
+      // to the type's real window the same way a manual resize drag would, so a
+      // widget that grew a lot while collapsed can't reopen as a giant card.
+      const rules = mergeWidgetSizing(widgetDefinition(w.type).sizing, getLiveWidgetSizing(widgetId))
+      const maxHeight = rules?.autoHeight ? rules?.maxHeight ?? Infinity : rules?.maxHeight ?? DEFAULT_SIZING.maxHeight
+      const newHeight =
+        rawHeight > 0
+          ? Math.min(maxHeight, Math.max(rules?.minHeight ?? DEFAULT_SIZING.minHeight, rawHeight))
+          : 0
       // A collapsed pill keeps its size; content growth lands on the stored
       // expanded size so the card is right when it reopens.
       let widgets: Record<string, Widget>

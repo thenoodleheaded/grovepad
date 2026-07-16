@@ -36,7 +36,7 @@ A widget is exactly **one piece of glass** — the backplate — in the finalize
 ```css
 /* E0 — backplate (accent-infused gp-glass, unchanged in spirit) */
 .gp-backplate {
-  border-radius: var(--gp-r0);            /* 26px */
+  border-radius: var(--gp-r0);            /* 22px */
   padding: var(--gp-p0);                  /* 12px */
   border: 1px solid rgba(255,255,255,.085);
   background:
@@ -53,7 +53,7 @@ A widget is exactly **one piece of glass** — the backplate — in the finalize
 
 /* E1 — island */
 .gp-island {
-  border-radius: var(--gp-r1);            /* 14px = r0 − p0 */
+  border-radius: var(--gp-r1);            /* 10px = r0 − p0 */
   padding: var(--gp-p1);                  /* 12px */
   background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.024));
   box-shadow:
@@ -94,9 +94,9 @@ r_child = max(r_parent − gap, 8)
 
 | Token | Value | Derivation | Applies to |
 |:---|:---|:---|:---|
-| `--gp-r0` | 26px | chosen once | backplate, title-capsule ends |
+| `--gp-r0` | 22px | chosen once | backplate, title-capsule ends |
 | `--gp-p0` | 12px | chosen once | backplate padding |
-| `--gp-r1` | 14px | r0 − p0 | islands, island-level buttons (e.g. "Add row") |
+| `--gp-r1` | 10px | r0 − p0 | islands, island-level buttons (e.g. "Add row") |
 | `--gp-p1` | 12px | = p0 | island padding |
 | `--gp-r2` | 8px | max(r1 − p1, 8) | wells, inputs, chips, keys |
 | island gap | 8px | 0.2 grid cell | seams between islands (reads as engraving over one backplate) |
@@ -171,18 +171,37 @@ Not every island may be scaled, and none may be scaled arbitrarily. Every island
 
 **The symmetry rule.** Any island whose meaning depends on *visual equality between alternatives* is `fixed`. A True button rendered twice the size of its False twin is not a layout choice — it is a thumb on the scale, an implied recommendation the widget has no business making. Paired outcomes stay pixel-identical siblings forever; if one could be enlarged the pair would need enlarging together, and that is just the parent island resizing, which is what actually happens.
 
-**The floors and ceilings** (defaults; renderers may tighten with `data-island-min-w/-min-h/-max-w/-max-h`, never loosen past these):
+**The floors and ceilings** (defaults; renderers tighten them with
+`data-island-min-w/-min-h/-max-w/-max-h` from their real content contract):
 
 | Bound | Value | Rationale |
 |:---|:---|:---|
 | min height | 32px | 0.8 grid cell — one readable control line; below this content squashes |
-| min width | 96px | one readable label + value at Article XVII sizes |
+| min width | 64px absolute; content-derived in practice | The absolute floor supports compact numeric controls. Labels, selects, dates, and prose must declare the larger width their unbreakable content needs. |
 | max width | the island's container | an island never escapes the backplate |
 | max height | 420px | past this an island stops being a panel and starts being a monopoly; scroll inside instead |
 
 **Clamp behavior:** a drag past a bound stops at the bound. No elastic overshoot on islands (that vocabulary belongs to whole-card scale states); the handle simply refuses, which is how the user learns where the edge is.
 
-**Persistence:** order and per-island sizes save to `metadata.islandLayout`, keyed by `data-island` id (slot index fallback). They undo/redo as one history step per gesture, sync with the board, and survive reload. A widget the user never rearranged renders byte-identically to a fresh one — the flow container is only promoted to an ordered flex column after the first real reorder.
+**Composition beats an individual clamp.** Satisfying every island's own bounds
+is insufficient if the assembled card overlaps or clips. After applying saved
+sizes, the focus layer checks all outer island rectangles against the live
+content box and one another. It first clamps a stale size to the current parent;
+if the composition is still invalid, it drops the saved sizes and restores the
+renderer's natural flow. No persisted preference outranks operability.
+
+**Persistence:** order and per-island sizes save to `metadata.islandLayout`, keyed by `data-island` id (slot index fallback). They undo/redo as one history step per gesture, sync with the board, and survive reload. Saved sizes are revalidated whenever the card or its content box changes size, not only on focus entry. A widget the user never rearranged renders byte-identically to a fresh one — the flow container is only promoted to an ordered flex column after the first real reorder.
+
+### Article XVIII.2 — Whole-card size charters
+
+The island charter and the whole-card charter are one system. Registry windows
+provide safe unmounted fallbacks; mounted content may raise an instance floor.
+Control-only widgets are `autoHeight` and expose no meaningless vertical
+resize. Growable wells receive explicit min/max sizes. Radial charts remain
+aspect-locked and size from the rectangle left after siblings reserve their
+minima. Responsive layout tiers eliminate intermediate squash bands. The full
+invariants, calibration procedure, and dead-zone definition live in Article
+XII.1 of the widget constitution.
 
 ---
 

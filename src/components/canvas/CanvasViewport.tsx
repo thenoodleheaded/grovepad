@@ -525,8 +525,8 @@ export function CanvasViewport() {
       ref={viewportRef}
       data-canvas-viewport
       tabIndex={0}
-      className="gp-canvas-shell relative h-dvh w-screen touch-none select-none overflow-hidden bg-neutral-950"
-      style={{ backgroundColor: `color-mix(in srgb, #050806 97%, ${workspaceTint})` }}
+      className="gp-canvas-shell relative h-dvh w-screen touch-none select-none overflow-hidden"
+      style={{ backgroundColor: `color-mix(in srgb, var(--gp-canvas-tint-base) 97%, ${workspaceTint})` }}
       onDoubleClick={handleDoubleClick}
       onPointerDown={handleCanvasPointerDown}
     >

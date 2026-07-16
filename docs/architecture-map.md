@@ -48,8 +48,9 @@ flowchart TD
   Canvas --> Runtime["appRuntime boundary\npersistence + deploy monitor + circuit engine"]
 
   Layers --> WidgetCard["WidgetCard\ninteraction shell"]
-  WidgetCard --> Renderer["WidgetRenderer\nlazy type dispatch"]
-  Renderer --> Modules["Widget modules\nindividual + essential + atlas + expansion"]
+  WidgetCard --> Renderer["WidgetRenderer\nsuspense + responsive shell"]
+  Renderer --> Families["Renderer families\ncore, education, workflow, catalogues"]
+  Families --> Modules["Widget modules\nindividual + essential + atlas + expansion"]
 
   UI --> WidgetStore["useWidgetStore facade\ncanonical board state"]
   Layers --> WidgetStore
@@ -81,8 +82,8 @@ flowchart TD
 3. Mounting `CanvasViewport` starts `runtime/appRuntime.ts`; unmount, StrictMode replay, and HMR dispose persistence subscriptions, deploy checks, and circuit listeners explicitly.
 4. `useWidgetStore` constructs its initial state from `loadPersistedBoard()`; `initPersistence` can later replace it with IndexedDB/cloud state.
 5. `CanvasViewport` composes every canvas layer, global overlay, and runtime helper.
-6. `WidgetLayer` culls/LOD-selects cards; each `WidgetCard` owns drag, scale-state, focus-mode, title chrome, ports, and renderer dispatch.
-7. `WidgetRenderer` uses lazy imports so the high static fan-out does not force every widget implementation into the startup chunk.
+6. `WidgetLayer` culls/LOD-selects cards; each `WidgetCard` owns drag, scale-state, focus-mode, title chrome, and ports.
+7. `WidgetRenderer` owns suspense and the responsive content shell. Family maps under `components/widgets/renderers/` own typed dispatch, while their lazy-component files keep concrete implementations out of the startup chunk.
 
 ## Subsystem contracts
 
@@ -94,8 +95,9 @@ flowchart TD
 | Circuit runtime | `circuitEngine.ts`, `useCircuitStore.ts`, `transforms.ts` | Deterministic propagation, delivery memory, wire-drag/runtime feedback | Widget renderer details |
 | Application runtime | `runtime/appRuntime.ts`, `runtime/deployVersionMonitor.ts` | Idempotent start/stop ownership for persistence, stale-deploy checks, and circuit services | Domain behavior or visual rendering |
 | Widget definition | `registry.ts`, `registry/*`, `widgets/contracts/registry.ts` | Metadata, defaults, sizing, packs | Live widget state |
+| Widget sizing | `widgets/sizingProfiles.ts`, `store/liveWidgetSizing.ts`, `store/slices/widgetLayoutSlice.ts` | Static content-safe windows, compact/standard/expanded tiers, and ephemeral mounted minima | Persisted DOM measurements |
 | Field definition | `fields.ts`, `fields/*`, `widgets/contracts/fields.ts` | Read/write fields, commands, semantic units | Canvas drawing |
-| Widget rendering | `WidgetCard.tsx`, `WidgetRenderer.tsx`, `modules/*` | Card interaction shell and typed content | Persistence orchestration |
+| Widget rendering | `WidgetCard.tsx`, `WidgetRenderer.tsx`, `renderers/*`, `modules/*` | Card interaction shell, family-owned typed dispatch, and content | Persistence orchestration |
 | Spatial graph drawing | `RelationLines.tsx`, `DependencyLines.tsx`, `WireLayer.tsx` | SVG descriptors, LOD/culling, hit paths and menus | Graph mutation rules |
 | Persistence | `persistence.ts`, `persistedBoardSchema.ts`, `types/persistence.ts`, adapters | Validation, atomic migration snapshots, debounced saves, optional cloud reconciliation | UI component lifecycle |
 | Thought interpretation | `thoughtInterpreter.ts`, `scenarioResolver.ts`, `scenarios/catalogue.ts` | Deterministic parsing, scenario candidates, local preference learning | Direct board rendering |
@@ -198,7 +200,7 @@ Madge fan-out:
 
 | Module | Fan-out | Interpretation |
 |---|---:|---|
-| `WidgetRenderer.tsx` | 60 | Expected lazy dispatcher, but high edit surface |
+| `WidgetRenderer.tsx` | 4 | Thin shell; concrete renderer fan-out is isolated in family lazy-loader modules |
 | `CanvasViewport.tsx` | 46 | Composition root plus runtime initialization |
 | `WidgetCard.tsx` | 14 | Large interaction shell |
 | `QuickAddSheet.tsx` | 12 | UI plus deterministic/model handshake |

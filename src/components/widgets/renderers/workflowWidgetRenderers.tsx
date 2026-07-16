@@ -1,0 +1,56 @@
+import type { UnitConverterData } from '../../../types/widgetDataExpansion'
+import type {
+  BranchGateData,
+  DailyAgendaData,
+  DatePickerData,
+  DecisionMatrixData,
+  FormWidgetData,
+  FormulaData,
+  InventoryData,
+  LineChartData,
+  LogbookData,
+  NumberInputData,
+  OutlineData,
+  PieChartData,
+  ProcessData,
+  RiskRegisterData,
+  StatusData,
+  SwotData,
+  TextInputData,
+  TimesheetData,
+  ToggleData,
+} from '../../../types/widgetDataWorkflow'
+import type { WidgetRendererFamily } from './contracts'
+import {
+  BranchGateWidget, DailyAgendaWidget, DatePickerWidget, DecisionMatrixWidget,
+  FormWidget, FormulaWidget, InventoryWidget, LineChartWidget, LogbookWidget,
+  NumberInputWidget, OutlineWidget, PieChartWidget, ProcessWidget, RiskRegisterWidget,
+  StatusWidget, SwotWidget, TextInputWidget, TimesheetWidget, ToggleWidget,
+  UnitConverterWidget,
+} from './lazyWorkflowWidgets'
+
+export const workflowWidgetRendererFamily: WidgetRendererFamily = {
+  id: 'workflow',
+  renderers: {
+    text_input: ({ widget, onUpdate }) => <TextInputWidget data={widget.data as TextInputData} onChange={onUpdate} />,
+    number_input: ({ widget, onUpdate }) => <NumberInputWidget data={widget.data as NumberInputData} onChange={onUpdate} />,
+    toggle: ({ widget, onUpdate }) => <ToggleWidget data={widget.data as ToggleData} onChange={onUpdate} />,
+    branch_gate: ({ widget, onUpdate }) => <BranchGateWidget data={widget.data as BranchGateData} onChange={onUpdate} />,
+    formula: ({ widget, onUpdate }) => <FormulaWidget data={widget.data as FormulaData} onChange={onUpdate} />,
+    status: ({ widget, onUpdate }) => <StatusWidget data={widget.data as StatusData} onChange={onUpdate} />,
+    date_picker: ({ widget, onUpdate }) => <DatePickerWidget data={widget.data as DatePickerData} onChange={onUpdate} />,
+    outline: ({ widget, onUpdate }) => <OutlineWidget data={widget.data as OutlineData} onChange={onUpdate} />,
+    form: ({ widget, onUpdate }) => <FormWidget data={widget.data as FormWidgetData} onChange={onUpdate} />,
+    daily_agenda: ({ widget, onUpdate }) => <DailyAgendaWidget data={widget.data as DailyAgendaData} onChange={onUpdate} />,
+    process: ({ widget, onUpdate }) => <ProcessWidget data={widget.data as ProcessData} onChange={onUpdate} />,
+    risk_register: ({ widget, onUpdate }) => <RiskRegisterWidget data={widget.data as RiskRegisterData} onChange={onUpdate} />,
+    decision_matrix: ({ widget, onUpdate }) => <DecisionMatrixWidget data={widget.data as DecisionMatrixData} onChange={onUpdate} />,
+    swot: ({ widget, onUpdate }) => <SwotWidget data={widget.data as SwotData} onChange={onUpdate} />,
+    timesheet: ({ widget, onUpdate }) => <TimesheetWidget data={widget.data as TimesheetData} onChange={onUpdate} />,
+    inventory: ({ widget, onUpdate }) => <InventoryWidget data={widget.data as InventoryData} onChange={onUpdate} />,
+    logbook: ({ widget, onUpdate }) => <LogbookWidget data={widget.data as LogbookData} onChange={onUpdate} />,
+    line_chart: ({ widget, onUpdate }) => <LineChartWidget data={widget.data as LineChartData} onChange={onUpdate} />,
+    pie_chart: ({ widget, onUpdate }) => <PieChartWidget data={widget.data as PieChartData} onChange={onUpdate} />,
+    unit_converter: ({ widget, onUpdate }) => <UnitConverterWidget data={widget.data as UnitConverterData} onChange={onUpdate} />,
+  },
+}

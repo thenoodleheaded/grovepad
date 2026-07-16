@@ -7,6 +7,12 @@ interface BudgetWidgetProps {
   onChange: (data: BudgetData) => void
 }
 
+// A budget line can't sensibly exceed a trillion; clamping keeps totals
+// readable and stops `toFixed`/inputs from spilling into scientific notation.
+const AMOUNT_LIMIT = 1e12
+const formatMoney = (value: number) =>
+  value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+
 export function BudgetWidget({ data, onChange }: BudgetWidgetProps) {
   const total = data.items.reduce((sum, item) => sum + item.amount, 0)
   const totalRowRef = useFieldAnchor('total')
@@ -17,7 +23,9 @@ export function BudgetWidget({ data, onChange }: BudgetWidgetProps) {
 
   const setAmount = (id: string, raw: string) => {
     const parsed = Number.parseFloat(raw)
-    const amount = Number.isFinite(parsed) ? parsed : 0
+    const amount = Number.isFinite(parsed)
+      ? Math.max(-AMOUNT_LIMIT, Math.min(AMOUNT_LIMIT, parsed))
+      : 0
     onChange({ ...data, items: data.items.map((item) => (item.id === id ? { ...item, amount } : item)) })
   }
 
@@ -104,7 +112,7 @@ export function BudgetWidget({ data, onChange }: BudgetWidgetProps) {
           }`}
         >
           {data.currency}
-          {total.toFixed(2)}
+          {formatMoney(total)}
         </span>
       </div>
     </div>

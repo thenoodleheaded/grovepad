@@ -9,16 +9,20 @@
     "typecheck": "tsc -b --pretty false",
     "lint": "oxlint",
     "test": "vitest run",
-    "test:focus": "vitest run src/utils/focusModeReorder.test.ts",
+    "test:focus": "vitest run src/utils/focusModeReorder.test.ts src/utils/focusModeSizing.test.ts",
     "docs:check": "node scripts/check-codebase-map.mjs",
     "db:check": "node scripts/check-supabase-migrations.mjs",
     "check": "npm run typecheck && npm run lint && npm run test && npm run docs:check && npm run db:check",
     "check:full": "npm run build && npm run lint && npm run test && npm run docs:check && npm run db:check",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "tauri": "tauri",
+    "tauri:dev": "tauri dev",
+    "tauri:build": "tauri build"
   },
   "dependencies": {
     "@mlc-ai/web-llm": "^0.2.84",
     "@supabase/supabase-js": "^2.110.2",
+    "@tauri-apps/api": "^2.11.1",
     "lucide-react": "^1.23.0",
     "pdfjs-dist": "^6.1.200",
     "react": "^19.2.7",
@@ -27,6 +31,7 @@
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.2",
+    "@tauri-apps/cli": "^2.11.4",
     "@types/node": "^24.13.2",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",

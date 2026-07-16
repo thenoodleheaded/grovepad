@@ -71,20 +71,21 @@ function WidgetTile({
     <button
       ref={ref}
       type="button"
+      aria-label={`Add ${def.label}`}
       data-active={active || undefined}
       onClick={onSpawn}
       onPointerEnter={onHover}
-      className="gp-picker-row group/tile relative flex min-h-[112px] items-center rounded-[22px] py-4 pr-4 pl-[88px] text-left"
+      className="gp-picker-row group/tile relative flex min-h-[112px] items-center rounded-[22px] py-3 pr-5 pl-[108px] text-left"
       style={{ '--gp-tile-accent': def.accent } as React.CSSProperties}
     >
       <span
-        className="gp-picker-icon absolute top-1/2 left-4 flex h-14 w-14 -translate-y-1/2 shrink-0 items-center justify-center rounded-[18px]"
+        className="gp-picker-icon absolute top-1/2 left-3 flex h-20 w-20 -translate-y-1/2 shrink-0 items-center justify-center rounded-[18px]"
         style={{ color: def.accent }}
       >
-        <Icon size={25} strokeWidth={2} aria-hidden />
+        <Icon size={38} strokeWidth={1.8} aria-hidden />
       </span>
       <span className="relative z-[1] min-w-0 flex-1">
-        <span className="gp-picker-tile-title block truncate text-[15.5px] font-semibold tracking-[-0.015em] text-neutral-100">
+        <span className="gp-picker-tile-title block truncate text-[18px] font-semibold tracking-[-0.02em] text-neutral-100">
           {def.label}
         </span>
         <span className="gp-picker-tile-description mt-1.5 line-clamp-2 block text-[11.5px] leading-[1.45] text-neutral-400/85">

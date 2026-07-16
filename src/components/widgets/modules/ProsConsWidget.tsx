@@ -87,7 +87,7 @@ export function ProsConsWidget({ data, onChange }: ProsConsWidgetProps) {
           className="w-full bg-transparent text-[13px] font-medium text-neutral-200 outline-none placeholder:text-neutral-700"
         />
       </WidgetPanel>
-      <div className="flex min-h-0 flex-1 gap-1.5">
+      <div className="gp-pros-cons-columns flex min-h-0 flex-1 gap-1.5">
         <Column
           title="Pros"
           accent="pro"

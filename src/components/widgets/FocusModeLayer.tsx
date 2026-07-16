@@ -3,7 +3,13 @@ import { useFocusStore } from '../../store/useFocusStore'
 import { useWidgetStore } from '../../store/useWidgetStore'
 import type { IslandLayout } from '../../types/spatial'
 import { GRID_SIZE } from '../../types/spatial'
-import { insertDraggedAtPointer, mergeReorderDomain } from '../../utils/focusModeReorder'
+import {
+  insertDraggedAtPointer,
+  mergeReorderDomain,
+  screenVectorToLocal,
+  visualFlowOrder,
+} from '../../utils/focusModeReorder'
+import { safePersistedIslandSize } from '../../utils/focusModeSizing'
 import { widgetDefinition } from '../../widgets/registry'
 
 // ---------------------------------------------------------------------------
@@ -49,7 +55,7 @@ interface IslandInfo {
  *  that keep their own styling but still participate in focus layout). */
 const ISLAND_SELECTOR = '.gp-island, [data-island]'
 /** Charter floors/ceilings (Article XVIII.1). */
-const MIN_W = 96
+const MIN_W = 64
 const MIN_H = 32
 const MAX_H = 420
 /** The 4px sub-grid every focus-mode geometry change snaps to. */
@@ -134,10 +140,36 @@ function measureIslands(host: HTMLElement): IslandInfo[] {
     .sort((a, b) => a.y - b.y || a.x - b.x)
 }
 
-/** Apply persisted order + sizes to the live DOM islands. Idempotent. */
-function applyLayout(host: HTMLElement, layout: IslandLayout | undefined): void {
+function clearAppliedSize(island: HTMLElement): void {
+  if (!island.hasAttribute('data-focus-layout-size')) return
+  island.style.width = ''
+  island.style.height = ''
+  island.style.flex = ''
+  island.removeAttribute('data-focus-layout-size')
+}
+
+function rectsOverlap(a: DOMRect, b: DOMRect): boolean {
+  return Math.min(a.right, b.right) - Math.max(a.left, b.left) > 1 &&
+    Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) > 1
+}
+
+function layoutFitsContent(host: HTMLElement, islands: HTMLElement[]): boolean {
+  const content = host.querySelector<HTMLElement>('.gp-widget-content') ?? host
+  const bounds = content.getBoundingClientRect()
+  const rects = islands.map((island) => island.getBoundingClientRect())
+  if (rects.some((rect) =>
+    rect.left < bounds.left - 1 || rect.top < bounds.top - 1 ||
+    rect.right > bounds.right + 1 || rect.bottom > bounds.bottom + 1
+  )) return false
+  return !rects.some((rect, index) => rects.slice(index + 1).some((other) => rectsOverlap(rect, other)))
+}
+
+/** Apply persisted order + sizes to the live DOM islands. Returns false when
+ * stale geometry had to be dropped in favor of the renderer's natural flow. */
+function applyLayout(host: HTMLElement, layout: IslandLayout | undefined): boolean {
   const islands = collectIslands(host)
-  if (islands.length === 0) return
+  if (islands.length === 0) return true
+  let rejectedSize = false
   const order = layout?.order
   if (order && order.length > 0) {
     const parents = new Set(islands.map((island) => island.parentElement).filter(Boolean))
@@ -155,14 +187,33 @@ function applyLayout(host: HTMLElement, layout: IslandLayout | undefined): void 
     })
   }
   islands.forEach((island, index) => {
+    clearAppliedSize(island)
     const size = layout?.sizes?.[islandId(island, index)]
     if (!size) return
     const sizing = islandSizing(island)
-    if (sizing === 'fixed') return
-    if (size.width !== undefined) island.style.width = `${size.width}px`
-    if (size.height !== undefined && sizing !== 'width') island.style.height = `${size.height}px`
-    if (size.width !== undefined || size.height !== undefined) island.style.flex = '0 0 auto'
+    const parentWidth = island.parentElement?.clientWidth ?? 0
+    const minWidth = Math.max(MIN_W, numberAttr(island, 'data-island-min-w', MIN_W))
+    const minHeight = Math.max(MIN_H, numberAttr(island, 'data-island-min-h', MIN_H))
+    const safe = safePersistedIslandSize(size, {
+      sizing,
+      minWidth,
+      minHeight,
+      maxWidth: Math.max(minWidth, numberAttr(island, 'data-island-max-w', parentWidth)),
+      maxHeight: Math.max(minHeight, Math.min(MAX_H, numberAttr(island, 'data-island-max-h', MAX_H))),
+      containerWidth: parentWidth,
+    })
+    if (!safe || safe.width !== size.width || (sizing !== 'width' && safe.height !== size.height)) {
+      rejectedSize = true
+      return
+    }
+    if (safe.width !== undefined) island.style.width = `${safe.width}px`
+    if (safe.height !== undefined) island.style.height = `${safe.height}px`
+    island.style.flex = '0 0 auto'
+    island.setAttribute('data-focus-layout-size', '')
   })
+  if (!rejectedSize && layoutFitsContent(host, islands)) return true
+  islands.forEach(clearAppliedSize)
+  return false
 }
 
 function persistLayout(widgetId: string, patch: Partial<IslandLayout>): void {
@@ -226,7 +277,8 @@ export function FocusModeLayer({ widgetId, hostRef, active, layout, version }: F
     minH: number
     maxW: number
     maxH: number
-    scale: number
+    scaleX: number
+    scaleY: number
     changed: boolean
   }
   type ReorderGesture = {
@@ -243,12 +295,15 @@ export function FocusModeLayer({ widgetId, hostRef, active, layout, version }: F
     startCursorY: number
     /** Dragged island's viewport top at gesture start. */
     startTop: number
+    startLeft: number
     /** Dragged island's natural (transform-cleared) top at the current order. */
     naturalTop: number
+    naturalLeft: number
     /** Current visual order (island ids) within the domain. */
     order: string[]
-    /** Card zoom, so screen-space FLIP deltas convert to local px. */
-    scale: number
+    /** Card axes, so screen-space drag/FLIP deltas convert to local px. */
+    scaleX: number
+    scaleY: number
     /** Live FLIP slide per sibling, so a new move supersedes the old one. */
     flips: Map<HTMLElement, Animation>
     changed: boolean
@@ -262,8 +317,30 @@ export function FocusModeLayer({ widgetId, hostRef, active, layout, version }: F
   // the widget's data changes shape (rows added, panels mounted, …).
   useLayoutEffect(() => {
     const host = hostRef.current
-    if (host) applyLayout(host, layout)
-  }, [hostRef, layout, version, active])
+    if (!host) return
+    let raf = 0
+    let dropped = false
+    const apply = () => {
+      cancelAnimationFrame(raf)
+      raf = requestAnimationFrame(() => {
+        if (gestureRef.current) return
+        const accepted = applyLayout(host, layout)
+        if (!accepted && !dropped && layout?.sizes && Object.keys(layout.sizes).length > 0) {
+          dropped = true
+          persistLayout(widgetId, { sizes: {} })
+        }
+      })
+    }
+    apply()
+    const observer = new ResizeObserver(apply)
+    observer.observe(host)
+    const content = host.querySelector<HTMLElement>('.gp-widget-content')
+    if (content) observer.observe(content)
+    return () => {
+      cancelAnimationFrame(raf)
+      observer.disconnect()
+    }
+  }, [hostRef, layout, version, active, widgetId])
 
   // Duty 2 — measure islands for the chrome overlay while focused.
   useLayoutEffect(() => {
@@ -346,7 +423,8 @@ export function FocusModeLayer({ widgetId, hostRef, active, layout, version }: F
     }
     const host = hostRef.current
     const hostRect = host?.getBoundingClientRect()
-    const scale = host && hostRect && host.offsetWidth > 0 ? hostRect.width / host.offsetWidth : 1
+    const scaleX = host && hostRect && host.offsetWidth > 0 ? hostRect.width / host.offsetWidth : 1
+    const scaleY = host && hostRect && host.offsetHeight > 0 ? hostRect.height / host.offsetHeight : 1
     const containerW = island.element.parentElement?.clientWidth ?? island.width
     const minW = Math.max(MIN_W, numberAttr(island.element, 'data-island-min-w', MIN_W))
     const minH = Math.max(MIN_H, numberAttr(island.element, 'data-island-min-h', MIN_H))
@@ -369,7 +447,8 @@ export function FocusModeLayer({ widgetId, hostRef, active, layout, version }: F
       minH,
       maxW,
       maxH,
-      scale,
+      scaleX,
+      scaleY,
       changed: false,
     }
   }
@@ -378,8 +457,11 @@ export function FocusModeLayer({ widgetId, hostRef, active, layout, version }: F
     const gesture = gestureRef.current
     if (!gesture || gesture.kind !== 'resize' || gesture.pointerId !== event.pointerId) return
     event.preventDefault()
-    const dx = (event.clientX - gesture.startX) / gesture.scale
-    const dy = (event.clientY - gesture.startY) / gesture.scale
+    const { x: dx, y: dy } = screenVectorToLocal(
+      { x: event.clientX - gesture.startX, y: event.clientY - gesture.startY },
+      gesture.scaleX,
+      gesture.scaleY,
+    )
     let width = snap4(Math.min(gesture.maxW, Math.max(gesture.minW, gesture.startW + dx)))
     let height = snap4(Math.min(gesture.maxH, Math.max(gesture.minH, gesture.startH + dy)))
     if (gesture.sizing === 'width') {
@@ -401,8 +483,8 @@ export function FocusModeLayer({ widgetId, hostRef, active, layout, version }: F
     gestureRef.current = null
     if (!gesture.changed) return
     const rect = gesture.element.getBoundingClientRect()
-    const size: { width?: number; height?: number } = { width: Math.round(rect.width / gesture.scale) }
-    if (gesture.sizing !== 'width') size.height = Math.round(rect.height / gesture.scale)
+    const size: { width?: number; height?: number } = { width: Math.round(rect.width / gesture.scaleX) }
+    if (gesture.sizing !== 'width') size.height = Math.round(rect.height / gesture.scaleY)
     const current = useWidgetStore.getState().widgets[widgetId]?.metadata.islandLayout
     persistLayout(widgetId, { sizes: { ...current?.sizes, [gesture.id]: size } })
     const host = hostRef.current
@@ -428,13 +510,21 @@ export function FocusModeLayer({ widgetId, hostRef, active, layout, version }: F
     }
     const all = collectIslands(host)
     const siblings = all.filter((element) => element.parentElement === parent)
-    const order = [...siblings]
-      .sort((a, b) => a.getBoundingClientRect().top - b.getBoundingClientRect().top)
-      .map((element) => islandId(element, all.indexOf(element)))
+    const order = visualFlowOrder(siblings.map((element) => {
+      const rect = element.getBoundingClientRect()
+      return {
+        id: islandId(element, all.indexOf(element)),
+        left: rect.left,
+        top: rect.top,
+        width: rect.width,
+        height: rect.height,
+      }
+    }))
     const hostRect = host.getBoundingClientRect()
-    const scale = host.offsetWidth > 0 ? hostRect.width / host.offsetWidth : 1
+    const scaleX = host.offsetWidth > 0 ? hostRect.width / host.offsetWidth : 1
+    const scaleY = host.offsetHeight > 0 ? hostRect.height / host.offsetHeight : 1
     useWidgetStore.getState().snapshotHistory(`island:${widgetId}`)
-    const startTop = island.element.getBoundingClientRect().top
+    const startRect = island.element.getBoundingClientRect()
     liftIsland(island.element)
     liftedRef.current = island.element
     host.setAttribute('data-focus-reordering', '')
@@ -448,10 +538,13 @@ export function FocusModeLayer({ widgetId, hostRef, active, layout, version }: F
       siblings,
       startCursorX: event.clientX,
       startCursorY: event.clientY,
-      startTop,
-      naturalTop: startTop,
+      startTop: startRect.top,
+      startLeft: startRect.left,
+      naturalTop: startRect.top,
+      naturalLeft: startRect.left,
       order,
-      scale,
+      scaleX,
+      scaleY,
       flips: new Map(),
       changed: false,
     }
@@ -470,11 +563,16 @@ export function FocusModeLayer({ widgetId, hostRef, active, layout, version }: F
     const others = siblings
       .filter((el) => el !== dragged)
       .map((el) => ({ el, rect: el.getBoundingClientRect() }))
-      .sort((a, b) => a.rect.top - b.rect.top)
     const nextOrder = insertDraggedAtPointer(
       gesture.id,
-      others.map(({ el, rect }) => ({ id: idOf(el), top: rect.top, height: rect.height })),
-      cursorY,
+      others.map(({ el, rect }) => ({
+        id: idOf(el),
+        left: rect.left,
+        top: rect.top,
+        width: rect.width,
+        height: rect.height,
+      })),
+      { x: event.clientX, y: cursorY },
     )
 
     if (!sameOrder(nextOrder, gesture.order)) {
@@ -482,7 +580,7 @@ export function FocusModeLayer({ widgetId, hostRef, active, layout, version }: F
       // reflow into the new order, then play each from its old position with
       // a self-cleaning animation — no inline transform is ever left behind,
       // so an interrupted drag can't strand a panel mid-slide.
-      const first = new Map(others.map((o) => [o.el, o.rect.top] as const))
+      const first = new Map(others.map((o) => [o.el, { left: o.rect.left, top: o.rect.top }] as const))
       dragged.style.transform = '' // measure the dragged slot naturally
       nextOrder.forEach((id, index) => {
         const el = siblings.find((s) => idOf(s) === id)
@@ -493,28 +591,44 @@ export function FocusModeLayer({ widgetId, hostRef, active, layout, version }: F
       }
       const duration = prefersReducedMotion() ? 0 : 200
       others.forEach(({ el }) => {
-        const last = el.getBoundingClientRect().top
+        const last = el.getBoundingClientRect()
+        const start = first.get(el) ?? { left: last.left, top: last.top }
         // Screen-space delta → local px (the card itself is zoom-scaled).
-        const delta = ((first.get(el) ?? last) - last) / gesture.scale
-        if (!delta) return
+        const delta = screenVectorToLocal(
+          { x: start.left - last.left, y: start.top - last.top },
+          gesture.scaleX,
+          gesture.scaleY,
+        )
+        if (!delta.x && !delta.y) return
         gesture.flips.get(el)?.cancel()
         gesture.flips.set(
           el,
           el.animate(
-            [{ transform: `translateY(${delta}px)` }, { transform: 'translateY(0)' }],
+            [{ transform: `translate(${delta.x}px, ${delta.y}px)` }, { transform: 'translate(0, 0)' }],
             { duration, easing: 'cubic-bezier(0.2, 0.7, 0.25, 1)' },
           ),
         )
       })
-      gesture.naturalTop = dragged.getBoundingClientRect().top
+      const naturalRect = dragged.getBoundingClientRect()
+      gesture.naturalTop = naturalRect.top
+      gesture.naturalLeft = naturalRect.left
       gesture.order = nextOrder
       gesture.changed = true
     }
 
-    // Keep the lifted panel under the cursor. Vertical follow is exact (the
-    // reorder axis); horizontal drift is damped so it never leaves the card.
-    const ty = gesture.startTop - gesture.naturalTop + (cursorY - gesture.startCursorY)
-    const tx = clamp((event.clientX - gesture.startCursorX) * 0.22, -18, 18)
+    // Keep the original grab point under the cursor in both axes. Clamp the
+    // viewport target to the card, then convert that vector to local CSS px.
+    const hostRect = hostRef.current?.getBoundingClientRect()
+    const draggedRect = dragged.getBoundingClientRect()
+    const rawLeft = gesture.startLeft + event.clientX - gesture.startCursorX
+    const rawTop = gesture.startTop + cursorY - gesture.startCursorY
+    const targetLeft = hostRect ? clamp(rawLeft, hostRect.left, hostRect.right - draggedRect.width) : rawLeft
+    const targetTop = hostRect ? clamp(rawTop, hostRect.top, hostRect.bottom - draggedRect.height) : rawTop
+    const { x: tx, y: ty } = screenVectorToLocal(
+      { x: targetLeft - gesture.naturalLeft, y: targetTop - gesture.naturalTop },
+      gesture.scaleX,
+      gesture.scaleY,
+    )
     dragged.style.transform = `translate(${tx}px, ${ty}px) scale(1.015)`
   }
 

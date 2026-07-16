@@ -3,6 +3,7 @@ import { useCanvasStore } from '../store/useCanvasStore'
 import { useWidgetStore } from '../store/useWidgetStore'
 import { initPersistence } from '../utils/persistence'
 import { initDeployVersionMonitor } from './deployVersionMonitor'
+import { initNativeFileOpen } from './nativeFileOpen'
 
 /** Combine service disposers into one idempotent application boundary. */
 export function composeRuntimeDisposer(disposers: readonly (() => void)[]): () => void {
@@ -37,6 +38,7 @@ const appRuntime = createRuntimeBoundary(() => [
   initPersistence(useWidgetStore, useCanvasStore),
   initDeployVersionMonitor(),
   initCircuitEngine(),
+  initNativeFileOpen(),
 ])
 
 /** Start the canvas-owned services once and return their explicit teardown. */

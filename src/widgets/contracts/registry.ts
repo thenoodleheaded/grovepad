@@ -19,6 +19,11 @@ export interface WidgetSizing {
   maxWidth?: number
   maxHeight?: number
   autoHeight?: boolean
+  /** Discrete full-card compositions. These are separate from pill/icon. */
+  layoutTiers?: {
+    compactMaxWidth?: number
+    expandedMinWidth: number
+  }
 }
 
 export interface WidgetDefinition {

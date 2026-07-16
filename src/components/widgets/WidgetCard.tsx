@@ -4,12 +4,23 @@ import { ErrorBoundary } from '../ErrorBoundary'
 import { useCanvasStore } from '../../store/useCanvasStore'
 import { isRecentlySpawned, useWidgetStore } from '../../store/useWidgetStore'
 import { useFocusStore } from '../../store/useFocusStore'
+import {
+  clearLiveWidgetSizing,
+  getLiveWidgetSizing,
+  mergeWidgetSizing,
+  setLiveWidgetSizing,
+} from '../../store/liveWidgetSizing'
 import type { ModuleData, Size, Widget, WidgetGroup } from '../../types/spatial'
 import { GRID_SIZE } from '../../types/spatial'
 import { convexHull, paddedMemberCorners } from '../../utils/groupGeometry'
 import { linkAnchorId, resolveLinkTargetAt } from '../../utils/linkTarget'
 import { PointerDragSession } from '../../utils/pointerDrag'
-import { rubberStrainPx, SNAP_OVERSHOOT_PX, type WidgetScaleState } from '../../utils/widgetScale'
+import {
+  fullWidgetResizeBounds,
+  rubberStrainPx,
+  SNAP_OVERSHOOT_PX,
+  type WidgetScaleState,
+} from '../../utils/widgetScale'
 import { DEFAULT_SIZING, widgetDefinition } from '../../widgets/registry'
 import { FloatingBadges } from './FloatingBadges'
 import { FocusModeLayer } from './FocusModeLayer'
@@ -136,6 +147,74 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
   const contentRef = useRef<HTMLDivElement | null>(null)
   const shouldFitContent = Boolean(widget && !widget.collapsed && !widget.iconified)
   const fitContentType = widget?.type
+
+  // A mounted renderer is the authority on its own content floor. Registry
+  // profiles protect unmounted cards; this probe raises the live minimum when
+  // actual labels, values, or controls overflow, and owns both grow and shrink
+  // for content-hugged cards so stale persisted heights cannot leave dead glass.
+  useLayoutEffect(() => {
+    const content = contentRef.current
+    if (!content || !fitContentType || !shouldFitContent) {
+      clearLiveWidgetSizing(widgetId)
+      return
+    }
+    let raf = 0
+    let observedUi: HTMLElement | null = null
+    const resizeObserver = new ResizeObserver(() => measure())
+    const measure = () => {
+      cancelAnimationFrame(raf)
+      raf = requestAnimationFrame(() => {
+        const ui = content.querySelector<HTMLElement>('.gp-widget-ui')
+        if (!ui) return
+        if (ui !== observedUi) {
+          if (observedUi) resizeObserver.unobserve(observedUi)
+          observedUi = ui
+          resizeObserver.observe(ui)
+        }
+        const live = useWidgetStore.getState().widgets[widgetId]
+        if (!live || live.collapsed || live.iconified) return
+        const fallback = widgetDefinition(live.type).sizing
+        const overflowX = Math.max(0, ui.scrollWidth - ui.clientWidth)
+        const overflowY = Math.max(0, ui.scrollHeight - ui.clientHeight)
+        const measuredMinWidth = overflowX > 1
+          ? Math.ceil((live.size.width + overflowX) / 4) * 4
+          : fallback?.minWidth ?? DEFAULT_SIZING.minWidth
+        const measuredMinHeight = overflowY > 1
+          ? Math.min(
+              fallback?.maxHeight ?? Infinity,
+              Math.ceil((live.size.height + overflowY) / 4) * 4,
+            )
+          : fallback?.minHeight ?? DEFAULT_SIZING.minHeight
+        setLiveWidgetSizing(widgetId, {
+          minWidth: Math.max(fallback?.minWidth ?? DEFAULT_SIZING.minWidth, measuredMinWidth),
+          minHeight: Math.max(fallback?.minHeight ?? DEFAULT_SIZING.minHeight, measuredMinHeight),
+        })
+
+        if (!fallback?.autoHeight) return
+        const naturalHeight = ui.scrollHeight + 24
+        const targetHeight = Math.min(
+          fallback.maxHeight ?? Infinity,
+          Math.max(
+            fallback.minHeight ?? DEFAULT_SIZING.minHeight,
+            Math.ceil(naturalHeight / GRID_SIZE) * GRID_SIZE,
+          ),
+        )
+        if (Math.abs(targetHeight - live.size.height) > 1) {
+          useWidgetStore.getState().resizeWidget(widgetId, { ...live.size, height: targetHeight })
+        }
+      })
+    }
+    resizeObserver.observe(content)
+    const mutationObserver = new MutationObserver(measure)
+    mutationObserver.observe(content, { childList: true, subtree: true, characterData: true })
+    measure()
+    return () => {
+      cancelAnimationFrame(raf)
+      resizeObserver.disconnect()
+      mutationObserver.disconnect()
+      clearLiveWidgetSizing(widgetId)
+    }
+  }, [fitContentType, shouldFitContent, widgetId])
 
   // Lazy widget modules mount after the shell. Once the real module exists,
   // grow the card by its *actual* overflow only. Measuring the overflow delta
@@ -502,14 +581,17 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
 
     // Full state: clamp inside the type's size window; underflow strains and
     // then snaps into the pill, overflow past a hard ceiling only strains.
-    const sizing = widgetDefinition(widget.type).sizing
-    const minWidth = sizing?.minWidth ?? DEFAULT_SIZING.minWidth
-    const minHeight = sizing?.minHeight ?? DEFAULT_SIZING.minHeight
-    // A full card is already the large scale state. Manual dragging may make
-    // it more compact, but cannot inflate it past the size at gesture start;
-    // content growth remains the only path to a larger card.
-    const maxWidth = Math.min(sizing?.maxWidth ?? Infinity, resize.startWidth)
-    const maxHeight = Math.min(sizing?.maxHeight ?? Infinity, resize.startHeight)
+    const sizing = mergeWidgetSizing(
+      widgetDefinition(widget.type).sizing,
+      getLiveWidgetSizing(widgetId),
+    )
+    const { minWidth, minHeight, maxWidth, maxHeight } = fullWidgetResizeBounds(
+      sizing,
+      DEFAULT_SIZING,
+    )
+    // Full cards can grow through their standard and expanded layout tiers.
+    // Elastic strain begins only at the type's real constitution ceiling,
+    // never at the arbitrary size where this gesture happened to start.
     // Content-fit widgets: height always follows the content reporter, so the
     // handle only drives width.
     const lockHeight = sizing?.autoHeight === true
@@ -599,8 +681,8 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
   const Icon = def.icon
   const panelized = PANELIZED_TYPES.has(widget.type) && !collapsed && !isMicro
   const microIconSize = Math.max(14, Math.min(26, Math.round(Math.min(widget.size.width, widget.size.height) * 0.42)))
-  // Full cards use the backplate radius R0 = 26 (docs/widget-glass-constitution.md).
-  const widgetRadius = collapsed ? 20 : iconified ? 14 : 26
+  // Full cards use the slightly squarer backplate radius R0 = 22.
+  const widgetRadius = collapsed ? 18 : iconified ? 14 : 22
 
   return (
     // Positioning lives on this outer wrapper as its own translate3d, kept
@@ -626,6 +708,7 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
         data-widget-id={widgetId}
         data-selected={isSelected || undefined}
         data-focused={isFocused || undefined}
+        data-auto-height={def.sizing?.autoHeight || undefined}
         data-link-source={isLinkDragSource || undefined}
         data-panels={panelized || undefined}
         tabIndex={isSelected ? 0 : -1}
@@ -678,7 +761,7 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
       {widget.isHydrating && (
         <div
           className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-2 bg-neutral-950/90"
-          style={{ borderRadius: collapsed ? 20 : 26 }}
+          style={{ borderRadius: collapsed ? 18 : 22 }}
         >
           <div className="relative flex items-center justify-center">
             <Sparkles size={22} className="animate-pulse text-emerald-400" />
@@ -782,7 +865,7 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
           Panelized widgets carry their own glass subpanels, so the shell padding tightens. */}
       <div
         ref={contentRef}
-        className={`gp-widget-content flex-1 overflow-hidden rounded-[24px] p-3 transition-opacity duration-300 ${
+        className={`gp-widget-content flex-1 overflow-hidden rounded-[20px] p-3 transition-opacity duration-300 ${
           collapsed || isMicro ? 'pointer-events-none opacity-0' : 'opacity-100'
         }`}
       >
@@ -827,7 +910,7 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
           visible even when collapsed so a pill can still be resized back. */}
       <div
         role="presentation"
-        title="Resize"
+        title={def.sizing?.autoHeight ? 'Resize width' : 'Resize'}
         onPointerDown={onResizePointerDown}
         onPointerMove={onResizePointerMove}
         onPointerUp={onResizePointerEnd}

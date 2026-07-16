@@ -2,6 +2,16 @@
 
 This is the automatically loaded entrypoint for AI-assisted work in Grovepad. Do not ask the user to explain the repository layout again. Route the task with [the compact codebase map](docs/codebase-map.md), then inspect only the relevant symbols and their direct consumers.
 
+## Explaining work to the project owner
+
+The project owner is not a professional software engineer. Every explanation of code, architecture, or a new implementation defaults to plain language — assume no familiarity with programming concepts, frameworks, or jargon (React, TypeScript, IndexedDB, ZIP internals, RLS, and so on) unless a term is introduced with a one-sentence plain-language gloss first.
+
+- Lead with what changed and why it matters to them, in everyday terms — not how it's implemented.
+- Prefer concrete analogies over technical vocabulary (e.g., "a shipping label any computer can read" instead of "content-addressed manifest").
+- Never assume familiarity with git, the terminal, file formats, or dev tooling; narrate what is happening, not just the command being run.
+- Technical detail can still follow underneath for accuracy, but the plain-language explanation comes first and must stand on its own.
+- This is a default, not a ceiling — go deeper whenever they ask a technical follow-up or signal they want more.
+
 ## First 90 seconds
 
 1. Run `git status --short` and preserve all pre-existing changes. Never overwrite or revert work you did not create.
