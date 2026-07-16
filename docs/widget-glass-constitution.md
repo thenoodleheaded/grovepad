@@ -1,4 +1,4 @@
-# The Widget Glass — Material Constitution (Articles XIII–XVIII)
+# The Widget Glass — Material Constitution (Articles XIII–XIX)
 
 *Companion to [widget-constitution.md](widget-constitution.md), which governs what widgets ARE. This document governs what widgets LOOK LIKE. Binding for every essential (non-pack) widget renderer and for the focus-mode rearrangement system.*
 
@@ -199,6 +199,28 @@ dormant full size. The invariants and calibration procedure live in Article
 XII.1 of the widget constitution.
 
 ---
+
+## Article XIX — Chrome discipline
+
+*Ratified 2026-07-16, after an audit found double-glassed buttons, per-cell table glass, auto-glassed lone text fields, glassed chart readouts, and cursor flicker from invisible-but-hit-testable hover chrome.*
+
+**No shared corners.** Two nested rounded elements never touch or overlap at a corner. A child's inset from its parent's edge must be at least the parent's radius; an icon badge, chip, or control sitting at a card or island's corner clears the curve with real padding, never flush geometry. This is Article XIV's concentric formula applied to content, not only to material layers.
+
+**No solo-button islands.** A `WidgetPanel`/`.gp-subpanel` that wraps nothing but a single action (an "Add row" footer, a lone icon button) is deleted, not styled. The button renders directly in the parent's flow with no glass backing — text/icon plus a hover color change is the whole affordance.
+
+**No double-island buttons.** A button that already sits inside a well or island never *also* paints its own background, border, or shadow. If both exist today, remove both: the button becomes a ghost (no fill at rest, a subtle hover/focus tint, identical hit area) and the wrapper stops manufacturing a second surface beneath it.
+
+**Icon containment.** Every icon glyph and icon-badge chip stays fully inside its island's padding box at every supported size. An icon is never clipped by, nor made to overlap, a rounded corner it shares an ancestor with.
+
+**Hover-revealed chrome is invisible *and* inert at rest.** Any element that fades in via `opacity` on hover/focus (a row delete icon, a floating card action) sets `pointer-events: none` until the revealing state is active, then `pointer-events: auto`. An invisible element that still accepts pointer events is exactly what makes the OS cursor flicker between icons as the pointer crosses its hit-box — this is a correctness bug, not a style nit, everywhere it appears.
+
+**A table is one island.** Its cells are divider-separated regions of that single surface — hairlines between them, never independent glass panes per cell or per row.
+
+**A lone full-card text control has no second island.** A widget whose entire body is one textarea (Notes, Quote, a single-field composer) sits directly on the card's own backplate. The auto-detected "field island" treatment is for a control embedded among other content, not for a control that *is* the content.
+
+**Charts and other visual/graph info panels stay flat.** Bar tracks, pie discs, plot lines, and their summary readouts never carry the standard glass elevation — no gradient fill, no lift shadow, no auto-radius. A hairline divider or the chart's own deliberate paint (a grid, an axis) is not glass and stays.
+
+**The detach-from-group control lives in the title row**, in the same button cluster as favorite and lock — not as a separate floating button elsewhere on the card.
 
 ## Implementation notes
 
