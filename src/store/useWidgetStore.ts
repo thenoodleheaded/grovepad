@@ -1,5 +1,6 @@
 import { create } from 'zustand'
-import { loadPersistedBoard } from '../utils/persistence'
+import { loadPersistedBoard, loadPersistedDeviceState } from '../utils/persistence'
+import { resolvePersistedDeviceState } from '../utils/persistedDeviceState'
 import type { Connection } from '../types/circuit'
 import { widgetDefinition } from '../widgets/registry'
 import { useCanvasStore } from './useCanvasStore'
@@ -103,13 +104,19 @@ const initialRelations = persistedBoard?.relations ?? createSeedRelations()
 const initialConnections = persistedBoard?.connections ?? {}
 const initialGroups = persistedBoard?.groups ?? {}
 const initialPacks = persistedBoard?.activePacks ?? []
-const initialActiveWorkspaceId =
-  persistedBoard?.activeWorkspaceId ?? Object.keys(initialWorkspaces)[0] ?? SEED_WORKSPACE_ID
-const initialActiveCanvasId =
-  persistedBoard?.activeCanvasId ??
-  initialWorkspaces[initialActiveWorkspaceId]?.rootCanvasId ??
-  SEED_ROOT_CANVAS_ID
-const initialCanvasViews = persistedBoard?.canvasViews ?? {}
+const initialDeviceState = loadPersistedDeviceState(
+  { workspaces: initialWorkspaces, canvases: initialCanvases },
+  persistedBoard ?? {
+    activeWorkspaceId: Object.keys(initialWorkspaces)[0] ?? SEED_WORKSPACE_ID,
+    activeCanvasId: SEED_ROOT_CANVAS_ID,
+    canvasViews: {},
+  },
+)
+const initialPersistenceUnknownFields = persistedBoard?.persistenceUnknownFields ?? {}
+const initialPersistenceUnknownRelations = persistedBoard?.persistenceUnknownRelations ?? {}
+const initialPersistenceUnknownConnections = persistedBoard?.persistenceUnknownConnections ?? {}
+const initialPersistenceUnknownGroups = persistedBoard?.persistenceUnknownGroups ?? {}
+const initialPersistenceRawActivePacks = persistedBoard?.persistenceRawActivePacks ?? []
 
 /** Root → canvas chain used for the breadcrumb trail. */
 export function getCanvasPath(
@@ -245,9 +252,14 @@ export const useWidgetStore = create<WidgetStoreState>()((set, get) => {
 
   workspaces: initialWorkspaces,
   canvases: initialCanvases,
-  activeWorkspaceId: initialActiveWorkspaceId,
-  activeCanvasId: initialActiveCanvasId,
-  canvasViews: initialCanvasViews,
+  activeWorkspaceId: initialDeviceState.activeWorkspaceId,
+  activeCanvasId: initialDeviceState.activeCanvasId,
+  canvasViews: initialDeviceState.canvasViews,
+  persistenceUnknownFields: initialPersistenceUnknownFields,
+  persistenceUnknownRelations: initialPersistenceUnknownRelations,
+  persistenceUnknownConnections: initialPersistenceUnknownConnections,
+  persistenceUnknownGroups: initialPersistenceUnknownGroups,
+  persistenceRawActivePacks: initialPersistenceRawActivePacks,
 
   ...createNavigationSlice(sliceContext),
 
@@ -268,9 +280,12 @@ export const useWidgetStore = create<WidgetStoreState>()((set, get) => {
 
   snapshotHistory: (tag) => pushHistory(tag),
 
-  loadBoard: (board) => {
+  loadBoard: (board, options) => {
     history.clear()
     const current = get()
+    const deviceState = options?.restorePersistedDeviceState
+      ? loadPersistedDeviceState(board, board)
+      : resolvePersistedDeviceState(null, board, current)
     set({
       workspaces: board.workspaces,
       canvases: board.canvases,
@@ -281,9 +296,14 @@ export const useWidgetStore = create<WidgetStoreState>()((set, get) => {
       groups: board.groups,
       widgetGroupIndex: buildGroupIndex(board.groups),
       activePacks: board.activePacks,
-      activeWorkspaceId: board.activeWorkspaceId,
-      activeCanvasId: board.activeCanvasId,
-      canvasViews: board.canvasViews,
+      activeWorkspaceId: deviceState.activeWorkspaceId,
+      activeCanvasId: deviceState.activeCanvasId,
+      canvasViews: deviceState.canvasViews,
+      persistenceUnknownFields: board.persistenceUnknownFields ?? {},
+      persistenceUnknownRelations: board.persistenceUnknownRelations ?? {},
+      persistenceUnknownConnections: board.persistenceUnknownConnections ?? {},
+      persistenceUnknownGroups: board.persistenceUnknownGroups ?? {},
+      persistenceRawActivePacks: board.persistenceRawActivePacks ?? [],
       blockedWidgetIds: computeBlockedWidgetIds(board.relations),
       selectedIds: new Set(),
       contextMenu: null,

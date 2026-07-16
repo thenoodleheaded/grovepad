@@ -1,5 +1,5 @@
 import type { Connection } from '../types/circuit'
-import type { PersistedBoard } from '../types/persistence'
+import type { HydratedPersistedBoard } from '../types/persistence'
 import type {
   CanvasMeta,
   DomainPack,
@@ -37,6 +37,12 @@ export interface WidgetStoreState {
   activeCanvasId: string
   /** Last camera per canvas so navigation restores where you left off. */
   canvasViews: Record<string, { pan: Vector2D; zoom: number }>
+  /** Opaque future payload fields retained solely for lossless persistence. */
+  persistenceUnknownFields: Record<string, unknown>
+  persistenceUnknownRelations: Record<string, Record<string, unknown>>
+  persistenceUnknownConnections: Record<string, Record<string, unknown>>
+  persistenceUnknownGroups: Record<string, Record<string, unknown>>
+  persistenceRawActivePacks: string[]
 
   createWorkspace: (name: string) => string
   renameWorkspace: (id: string, name: string) => void
@@ -77,7 +83,10 @@ export interface WidgetStoreState {
   undo: () => void
   redo: () => void
   snapshotHistory: (tag?: string) => void
-  loadBoard: (board: PersistedBoard) => void
+  loadBoard: (
+    board: HydratedPersistedBoard,
+    options?: { restorePersistedDeviceState?: boolean },
+  ) => void
 
   flashWidgetId: string | null
   flashWidget: (id: string) => void

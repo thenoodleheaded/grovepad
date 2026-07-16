@@ -1,5 +1,7 @@
 import { lazy, Suspense } from 'react'
 import { useAuthStore } from './store/useAuthStore'
+import { usePersistenceStatusStore } from './store/usePersistenceStatusStore'
+import { PersistenceCompatibilityBlock } from './components/ui/PersistenceCompatibilityBlock'
 
 const LoginPage = lazy(() =>
   import('./components/auth/LoginPage').then((module) => ({ default: module.LoginPage })),
@@ -29,6 +31,11 @@ export default function App() {
   const session = useAuthStore((state) => state.session)
   const isGuest = useAuthStore((state) => state.isGuest)
   const loading = useAuthStore((state) => state.loading)
+  const compatibilityBlock = usePersistenceStatusStore((state) => state.compatibilityBlock)
+
+  if (compatibilityBlock) {
+    return <PersistenceCompatibilityBlock block={compatibilityBlock} />
+  }
 
   // Hold a blank frame for the brief initial session check so a signed-in
   // user never sees the login page flash before the canvas.

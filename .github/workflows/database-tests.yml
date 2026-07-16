@@ -1,0 +1,42 @@
+name: Database tests
+
+on:
+  pull_request:
+    paths:
+      - 'supabase/**'
+      - 'src/utils/cloudDocuments.ts'
+      - 'src/utils/cloudSync.ts'
+      - 'scripts/check-supabase-migrations.mjs'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/database-tests.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'supabase/**'
+      - 'src/utils/cloudDocuments.ts'
+      - 'src/utils/cloudSync.ts'
+      - 'scripts/check-supabase-migrations.mjs'
+      - 'package.json'
+      - 'package-lock.json'
+
+permissions:
+  contents: read
+
+jobs:
+  postgres:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run db:check
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.109.1
+      - run: supabase db start
+      - run: supabase test db

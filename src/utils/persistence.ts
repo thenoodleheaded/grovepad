@@ -1,13 +1,35 @@
 import type { StoreApi } from 'zustand'
-import type { PersistedBoard } from '../types/persistence'
+import type {
+  BoardDeviceState,
+  HydratedPersistedBoard,
+  PersistedBoard,
+  PersistedBoardDocumentState,
+  PersistedBoardState,
+} from '../types/persistence'
 import type { Vector2D } from '../types/spatial'
 import { clampZoom } from '../types/spatial'
 import { useAuthStore } from '../store/useAuthStore'
 import { supabaseConfigured } from '../lib/supabase'
 import { usePersistenceStatusStore } from '../store/usePersistenceStatusStore'
 import { useToastStore } from '../store/useToastStore'
-import { readBoardDatabase, saveRollingSnapshot, writeBoardDatabase } from './boardDatabase'
-import { migrateLegacyBoard, parsePersistedBoard } from './persistedBoardSchema'
+import {
+  readBoardDatabase,
+  saveRollingSnapshot,
+  writeBoardDatabase,
+  writeMigratedBoardDatabase,
+} from './boardDatabase'
+import {
+  FuturePersistedBoardVersionError,
+  getFuturePersistedBoardVersion,
+  migrateLegacyBoard,
+  parsePersistedBoard,
+  serializePersistedBoard,
+} from './persistedBoardSchema'
+import {
+  resolvePersistedDeviceState,
+  serializePersistedDeviceState,
+} from './persistedDeviceState'
+import { canonicalJson } from './cloudDocuments'
 
 export type { PersistedBoard } from '../types/persistence'
 export { parsePersistedBoard } from './persistedBoardSchema'
@@ -27,10 +49,47 @@ export { parsePersistedBoard } from './persistedBoardSchema'
 
 const BOARD_KEY_V1 = 'grovepad:board:v1'
 const BOARD_KEY = 'grovepad:board:v2'
+const DEVICE_KEY = 'grovepad:device:v1'
 const VIEW_KEY = 'grovepad:view:v1'
 const BOARD_SAVE_MS = 600
+const DEVICE_SAVE_MS = 300
 const VIEW_SAVE_MS = 800
 const DIRTY_KEY = 'grovepad:dirty-exit:v1'
+let futureVersionWriteLock = false
+let pendingLegacyMigrationSource: unknown = null
+
+// ---------------------------------------------------------------------------
+// Cloud sync quota — sync is opt-in (usePersistenceStatusStore.syncEnabled)
+// and, when on, reconciles with Supabase at most once per day automatically.
+// A successful reconcile stamps localStorage per user; "Sync now" bypasses
+// the quota. Debounced saves never touch the network.
+// ---------------------------------------------------------------------------
+
+const SYNC_STAMP_PREFIX = 'grovepad:cloud-sync:last:'
+const AUTO_SYNC_INTERVAL_MS = 24 * 60 * 60 * 1000
+
+function lastSyncStamp(userId: string): number | null {
+  try {
+    const raw = localStorage.getItem(SYNC_STAMP_PREFIX + userId)
+    const at = raw === null ? Number.NaN : Number(raw)
+    return Number.isFinite(at) ? at : null
+  } catch {
+    return null
+  }
+}
+
+function writeSyncStamp(userId: string, at: number): void {
+  try {
+    localStorage.setItem(SYNC_STAMP_PREFIX + userId, String(at))
+  } catch {
+    // Storage unavailable — the next activity check may sync again early.
+  }
+}
+
+/** True when the daily automatic sync window has elapsed for this user. */
+export function isAutoSyncDue(lastAt: number | null, now: number): boolean {
+  return lastAt === null || now - lastAt >= AUTO_SYNC_INTERVAL_MS
+}
 
 const loadCloudSync = () => import('./cloudSync')
 
@@ -39,8 +98,11 @@ interface PersistedView {
   zoom: number
 }
 
-interface PersistenceWidgetState extends PersistedBoard {
-  loadBoard: (board: PersistedBoard) => void
+interface PersistenceWidgetState extends PersistedBoardState {
+  loadBoard: (
+    board: HydratedPersistedBoard,
+    options?: { restorePersistedDeviceState?: boolean },
+  ) => void
 }
 
 interface PersistenceCanvasState {
@@ -87,10 +149,33 @@ function readJson(key: string): unknown {
  * visit, cleared storage, or unparseable payload) — the caller seeds then.
  * An empty-but-valid board is honored: deleting everything must stick.
  */
-export function loadPersistedBoard(): PersistedBoard | null {
-  const v2 = parsePersistedBoard(readJson(BOARD_KEY))
+export function loadPersistedBoard(): HydratedPersistedBoard | null {
+  const raw = readJson(BOARD_KEY)
+  const futureVersion = getFuturePersistedBoardVersion(raw)
+  if (futureVersion !== null) {
+    futureVersionWriteLock = true
+    usePersistenceStatusStore.getState().setCompatibilityBlock({
+      foundVersion: futureVersion,
+      source: 'local',
+    })
+  }
+  const v2 = parsePersistedBoard(raw)
   if (v2) return v2
-  return migrateLegacyBoard(readJson(BOARD_KEY_V1))
+  const legacy = readJson(BOARD_KEY_V1)
+  const migrated = migrateLegacyBoard(legacy)
+  if (migrated) {
+    pendingLegacyMigrationSource = legacy
+  }
+  return migrated
+}
+
+/** Load local-only navigation, migrating the former embedded v2 fields once. */
+export function loadPersistedDeviceState(
+  board: Pick<PersistedBoardDocumentState, 'workspaces' | 'canvases'>,
+  legacyFallback?: Partial<BoardDeviceState>,
+): BoardDeviceState {
+  const raw = readJson(DEVICE_KEY)
+  return resolvePersistedDeviceState(raw, board, legacyFallback)
 }
 
 function loadPersistedView(): PersistedView | null {
@@ -175,28 +260,24 @@ function debouncedSaver(delayMs: number, save: () => void): DebouncedSaver {
  * Restore the saved camera and start persisting both stores. Call once at
  * startup, before the first render.
  */
-export function buildBoardSnapshot(state: PersistedBoard): PersistedBoard {
-  return {
-    workspaces: state.workspaces,
-    canvases: state.canvases,
-    widgets: state.widgets,
-    relations: state.relations,
-    connections: state.connections,
-    groups: state.groups,
-    activePacks: state.activePacks,
-    activeWorkspaceId: state.activeWorkspaceId,
-    activeCanvasId: state.activeCanvasId,
-    canvasViews: state.canvasViews,
-  }
+export function buildBoardSnapshot(state: PersistedBoardState): PersistedBoard {
+  return serializePersistedBoard(state)
 }
 
 let conflictResolver: ((choice: 'local' | 'cloud') => void) | null = null
 let activePersistenceDispose: (() => void) | null = null
+let runtimeSyncTrigger: ((force: boolean) => void) | null = null
 
 export function resolveCloudConflict(choice: 'local' | 'cloud'): void {
   conflictResolver?.(choice)
   conflictResolver = null
   usePersistenceStatusStore.getState().setConflict(null)
+}
+
+/** Run a cloud reconcile now (the "Sync now" button). No-op for guests or
+ * when persistence/cloud is not initialized. */
+export function requestCloudSync(): void {
+  runtimeSyncTrigger?.(true)
 }
 
 export function initPersistence<
@@ -210,6 +291,9 @@ export function initPersistence<
   let disposed = false
   let invalidateReconcile = () => {}
   let unsubscribeAuth: (() => void) | null = null
+  let unsubscribeSyncPref: (() => void) | null = null
+  let syncWhenActive: (() => void) | null = null
+  let localWritesBlocked = futureVersionWriteLock
   let runtimeConflictResolver: ((choice: 'local' | 'cloud') => void) | null = null
   const view = loadPersistedView()
   if (view) canvasStore.getState().setView(view.pan, view.zoom)
@@ -221,65 +305,103 @@ export function initPersistence<
 
   const localReady = readBoardDatabase()
     .then(async (raw) => {
+      const futureVersion = getFuturePersistedBoardVersion(raw)
+      if (futureVersion !== null) {
+        localWritesBlocked = true
+        if (!disposed) {
+          usePersistenceStatusStore.getState().setLocalSave('error')
+          usePersistenceStatusStore.getState().setCompatibilityBlock({
+            foundVersion: futureVersion,
+            source: 'local',
+          })
+          useToastStore.getState().addToast('This board needs a newer Grovepad — saving is disabled to protect it')
+        }
+        return
+      }
       if (disposed) return
       const board = raw ? parsePersistedBoard(raw) : null
       if (board) {
-        widgetStore.getState().loadBoard(board)
-      } else {
-        await writeBoardDatabase(buildBoardSnapshot(widgetStore.getState()))
+        widgetStore.getState().loadBoard(board, { restorePersistedDeviceState: true })
+      } else if (!localWritesBlocked) {
+        const initialBoard = buildBoardSnapshot(widgetStore.getState())
+        if (pendingLegacyMigrationSource !== null) {
+          await writeMigratedBoardDatabase(pendingLegacyMigrationSource, 1, initialBoard)
+          pendingLegacyMigrationSource = null
+        } else {
+          await writeBoardDatabase(initialBoard)
+        }
       }
     })
-    .catch(() => undefined)
-
-  // The signed-in user id once cloud reconciliation has resolved for it —
-  // null means either signed out/guest, or the fetch for this session
-  // hasn't finished yet (debounced saves stay local-only meanwhile, so a
-  // fresh sign-in never overwrites a cloud board it hasn't seen yet).
-  let cloudUserId: string | null = null
+    .catch(() => {
+      if (pendingLegacyMigrationSource === null) return
+      // Never let a later debounced save bypass the source-snapshot contract
+      // after an IndexedDB read or atomic migration transaction fails.
+      localWritesBlocked = true
+      if (!disposed) {
+        usePersistenceStatusStore.getState().setLocalSave('error')
+        useToastStore.getState().addToast(
+          'Legacy board migration could not be protected — saving is paused; export a backup now',
+        )
+      }
+    })
 
   let storageToastShown = false
   let lastSnapshotAt = 0
   const boardSaver = debouncedSaver(BOARD_SAVE_MS, () => {
-    const board = buildBoardSnapshot(widgetStore.getState())
-    usePersistenceStatusStore.getState().setLocalSave('saving')
-    void writeBoardDatabase(board)
-      .then(() => {
-        usePersistenceStatusStore.getState().setLocalSave('saved')
-        try { localStorage.removeItem(DIRTY_KEY) } catch { /* storage unavailable */ }
-        if (Date.now() - lastSnapshotAt >= 10 * 60 * 1000) {
-          lastSnapshotAt = Date.now()
-          void saveRollingSnapshot(board).catch(() => undefined)
-        }
-      })
-      .catch(() => {
+    // Resolve the initial IndexedDB read before any write. Otherwise a slow
+    // read of a future-version document could race a debounced seed/save.
+    void localReady.then(() => {
+      if (localWritesBlocked) {
         usePersistenceStatusStore.getState().setLocalSave('error')
-        if (!storageToastShown) {
-          storageToastShown = true
-          useToastStore.getState().addToast('Changes are not being saved — export a backup now')
-        }
-      })
-    const userId = cloudUserId
-    if (userId) {
-      usePersistenceStatusStore.getState().setCloudSync('saving')
-      void loadCloudSync()
-        .then(({ pushCloudBoard }) => pushCloudBoard(userId, board))
+        return
+      }
+      const board = buildBoardSnapshot(widgetStore.getState())
+      usePersistenceStatusStore.getState().setLocalSave('saving')
+      void writeBoardDatabase(board)
         .then(() => {
-          usePersistenceStatusStore.getState().setCloudSync('synced')
-          usePersistenceStatusStore.getState().setLastSyncedAt(Date.now())
+          usePersistenceStatusStore.getState().setLocalSave('saved')
+          try { localStorage.removeItem(DIRTY_KEY) } catch { /* storage unavailable */ }
+          if (Date.now() - lastSnapshotAt >= 10 * 60 * 1000) {
+            lastSnapshotAt = Date.now()
+            void saveRollingSnapshot(board).catch(() => undefined)
+          }
         })
-        .catch(() => usePersistenceStatusStore.getState().setCloudSync('error'))
-    }
+        .catch(() => {
+          usePersistenceStatusStore.getState().setLocalSave('error')
+          if (!storageToastShown) {
+            storageToastShown = true
+            useToastStore.getState().addToast('Changes are not being saved — export a backup now')
+          }
+        })
+      // Cloud writes are deliberately absent here: sync is quota-gated in
+      // reconcile() below, never coupled to the local save cadence.
+    })
   })
 
-  // ── Cloud sync: reconcile whenever the auth session changes ──────────────
+  // ── Cloud sync: opt-in, reconciled on sign-in/activity under a daily quota ─
   if (supabaseConfigured) {
     let reconcileToken = 0
     invalidateReconcile = () => { reconcileToken += 1 }
-    const reconcile = async (userId: string | null) => {
+    const reconcile = async (userId: string | null, force = false) => {
+      // A visible conflict owns the reconcile pipeline until the user chooses.
+      // Starting another visibility/manual sync here would invalidate the
+      // awaiting token and replace its resolver, leaving a misleading dialog.
+      if (runtimeConflictResolver !== null) return
       const token = ++reconcileToken
-      cloudUserId = null
+      const status = usePersistenceStatusStore.getState()
+      if (!status.syncEnabled) {
+        status.setCloudSync('off')
+        return
+      }
       if (!userId) {
-        usePersistenceStatusStore.getState().setCloudSync('guest')
+        status.setCloudSync('guest')
+        return
+      }
+      const stamp = lastSyncStamp(userId)
+      if (!force && !isAutoSyncDue(stamp, Date.now())) {
+        // Synced within the last day — trust the stamp, skip the network.
+        status.setCloudSync('synced')
+        status.setLastSyncedAt(stamp)
         return
       }
       usePersistenceStatusStore.getState().setCloudSync('saving')
@@ -291,7 +413,8 @@ export function initPersistence<
         if (cloudResult) {
           const local = buildBoardSnapshot(widgetStore.getState())
           const cloud = cloudResult.board
-          const differs = JSON.stringify(local) !== JSON.stringify(cloud)
+          const cloudSnapshot = serializePersistedBoard(cloud)
+          const differs = canonicalJson(local) !== canonicalJson(cloudSnapshot)
           if (Object.keys(local.widgets).length > 0 && differs) {
             usePersistenceStatusStore.getState().setConflict({
               local,
@@ -307,10 +430,19 @@ export function initPersistence<
             if (conflictResolver === resolveThisConflict) conflictResolver = null
             if (runtimeConflictResolver === resolveThisConflict) runtimeConflictResolver = null
             if (disposed || token !== reconcileToken) return
-            if (choice === 'cloud') widgetStore.getState().loadBoard(cloud)
-            else await pushCloudBoard(userId, local)
+            if (choice === 'cloud') {
+              widgetStore.getState().loadBoard(cloud)
+              if (cloudResult.source === 'legacy') {
+                await pushCloudBoard(userId, cloudSnapshot)
+              }
+            } else {
+              await pushCloudBoard(userId, local)
+            }
           } else {
             widgetStore.getState().loadBoard(cloud)
+            if (cloudResult.source === 'legacy') {
+              await pushCloudBoard(userId, cloudSnapshot)
+            }
           }
         } else {
           // First sign-in on this account — seed the cloud with whatever's local
@@ -318,13 +450,22 @@ export function initPersistence<
           await pushCloudBoard(userId, buildBoardSnapshot(widgetStore.getState()))
         }
         if (disposed || token !== reconcileToken) return
-        cloudUserId = userId
+        const syncedAt = Date.now()
+        writeSyncStamp(userId, syncedAt)
         usePersistenceStatusStore.getState().setCloudSync('synced')
-        usePersistenceStatusStore.getState().setLastSyncedAt(Date.now())
-      } catch {
+        usePersistenceStatusStore.getState().setLastSyncedAt(syncedAt)
+      } catch (error) {
         // Cloud code is optional. Local persistence remains the source of truth
         // if its chunk cannot load or the network/client is unavailable.
-        if (!disposed) usePersistenceStatusStore.getState().setCloudSync('error')
+        if (!disposed) {
+          usePersistenceStatusStore.getState().setCloudSync('error')
+          if (error instanceof FuturePersistedBoardVersionError) {
+            usePersistenceStatusStore.getState().setCompatibilityBlock({
+              foundVersion: error.foundVersion,
+              source: 'cloud',
+            })
+          }
+        }
       }
     }
 
@@ -333,19 +474,55 @@ export function initPersistence<
     unsubscribeAuth = useAuthStore.subscribe((state) => {
       const userId = state.session?.user.id ?? null
       if (userId === lastUserId) return
+      // Cancel a conflict owned by the previous account without writing either
+      // side. The invalidated reconcile returns immediately after resolution.
+      const pendingConflict = runtimeConflictResolver
+      if (pendingConflict) {
+        reconcileToken += 1
+        runtimeConflictResolver = null
+        if (conflictResolver === pendingConflict) conflictResolver = null
+        usePersistenceStatusStore.getState().setConflict(null)
+        pendingConflict('cloud')
+      }
       lastUserId = userId
       void reconcile(userId)
     })
+
+    // "Sync now" — bypasses the daily quota for the current session user.
+    runtimeSyncTrigger = (force) => { void reconcile(lastUserId, force) }
+
+    // Enabling the toggle syncs immediately (that click is explicit intent);
+    // disabling stops all cloud traffic until it is turned back on.
+    let lastSyncEnabled = usePersistenceStatusStore.getState().syncEnabled
+    unsubscribeSyncPref = usePersistenceStatusStore.subscribe((state) => {
+      if (state.syncEnabled === lastSyncEnabled) return
+      lastSyncEnabled = state.syncEnabled
+      void reconcile(lastUserId, state.syncEnabled)
+    })
+
+    // Returning to the tab counts as "getting active": at most one automatic
+    // reconcile per day, enforced by the stamp check inside reconcile().
+    syncWhenActive = () => {
+      if (document.visibilityState !== 'visible') return
+      void reconcile(lastUserId)
+    }
+    document.addEventListener('visibilitychange', syncWhenActive)
   }
 
   const viewSaver = debouncedSaver(VIEW_SAVE_MS, () => {
     const { pan, zoom } = canvasStore.getState()
     writeStorage(VIEW_KEY, { pan, zoom })
   })
+  const deviceSaver = debouncedSaver(DEVICE_SAVE_MS, () => {
+    writeStorage(DEVICE_KEY, serializePersistedDeviceState(widgetStore.getState()))
+  })
+  void localReady.then(() => {
+    if (!disposed) deviceSaver.schedule()
+  })
 
   let gestureDirty = false
   const unsubscribeWidget = widgetStore.subscribe((state, prev) => {
-    if (
+    const documentChanged = !(
       state.widgets === prev.widgets &&
       state.relations === prev.relations &&
       state.connections === prev.connections &&
@@ -353,12 +530,19 @@ export function initPersistence<
       state.activePacks === prev.activePacks &&
       state.workspaces === prev.workspaces &&
       state.canvases === prev.canvases &&
-      state.activeWorkspaceId === prev.activeWorkspaceId &&
-      state.activeCanvasId === prev.activeCanvasId &&
-      state.canvasViews === prev.canvasViews
-    ) {
-      return
-    }
+      state.persistenceUnknownFields === prev.persistenceUnknownFields &&
+      state.persistenceUnknownRelations === prev.persistenceUnknownRelations &&
+      state.persistenceUnknownConnections === prev.persistenceUnknownConnections &&
+      state.persistenceUnknownGroups === prev.persistenceUnknownGroups &&
+      state.persistenceRawActivePacks === prev.persistenceRawActivePacks
+    )
+    const deviceChanged =
+      state.activeWorkspaceId !== prev.activeWorkspaceId ||
+      state.activeCanvasId !== prev.activeCanvasId ||
+      state.canvasViews !== prev.canvasViews
+    if (!documentChanged && !deviceChanged) return
+    if (deviceChanged) deviceSaver.schedule()
+    if (!documentChanged) return
     try { localStorage.setItem(DIRTY_KEY, String(Date.now())) } catch { /* storage unavailable */ }
     // Pointer gestures already commit canonical state on release. Avoid
     // cancel/recreating persistence timers for every high-frequency drag or
@@ -404,6 +588,7 @@ export function initPersistence<
       viewSaver.schedule()
     }
     boardSaver.flush()
+    deviceSaver.flush()
     viewSaver.flush()
   }
   window.addEventListener('pagehide', flushAll)
@@ -427,7 +612,10 @@ export function initPersistence<
     if (conflictResolver === pendingConflict) conflictResolver = null
     pendingConflict?.('local')
     usePersistenceStatusStore.getState().setConflict(null)
+    runtimeSyncTrigger = null
     unsubscribeAuth?.()
+    unsubscribeSyncPref?.()
+    if (syncWhenActive) document.removeEventListener('visibilitychange', syncWhenActive)
     unsubscribeWidget()
     unsubscribeCanvas()
     window.removeEventListener('pointerup', scheduleGestureSave, true)
@@ -436,6 +624,7 @@ export function initPersistence<
     window.removeEventListener('beforeunload', warnBeforeUnload)
     document.removeEventListener('visibilitychange', flushWhenHidden)
     boardSaver.cancel()
+    deviceSaver.cancel()
     viewSaver.cancel()
     if (activePersistenceDispose === dispose) activePersistenceDispose = null
   }

@@ -1,5 +1,6 @@
 import type { CanvasMeta, CanvasNodeData, Relation, Widget, WidgetGroup } from '../../types/spatial'
 import { GRID_SIZE, snapToGrid } from '../../types/spatial'
+import { getOpaqueWidgetType } from '../../utils/persistedBoardSchema'
 import { useToastStore } from '../useToastStore'
 import { buildGroupIndex, computeBlockedWidgetIds } from '../widgetGraph'
 import { settleWidgetLayout, settleWidgetsByCanvas } from '../widgetSettling'
@@ -143,6 +144,10 @@ export function createSelectionSlice({ set, get, pushHistory, markSpawned }: Wid
     const state = get()
     const source = state.widgets[id]
     if (!source) return ''
+    if (getOpaqueWidgetType(source)) {
+      useToastStore.getState().addToast('Update Grovepad before duplicating this widget')
+      return ''
+    }
     pushHistory()
     const nextId = crypto.randomUUID()
     const clone: Widget = {
@@ -182,7 +187,11 @@ export function createSelectionSlice({ set, get, pushHistory, markSpawned }: Wid
 
   duplicateWidgets: (ids) => {
     const state = get()
-    const validIds = uniqueExistingIds(ids, state.widgets)
+    const candidateIds = uniqueExistingIds(ids, state.widgets)
+    const validIds = candidateIds.filter((id) => !getOpaqueWidgetType(state.widgets[id]!))
+    if (validIds.length !== candidateIds.length) {
+      useToastStore.getState().addToast('Newer-version widgets were kept in place and not duplicated')
+    }
     if (validIds.length === 0) return []
     pushHistory()
 
@@ -252,13 +261,17 @@ export function createSelectionSlice({ set, get, pushHistory, markSpawned }: Wid
   },
 
   pasteWidgets: (sources) => {
-    if (sources.length === 0) return []
+    const supportedSources = sources.filter((source) => !getOpaqueWidgetType(source))
+    if (supportedSources.length !== sources.length) {
+      useToastStore.getState().addToast('Update Grovepad before copying newer-version widgets')
+    }
+    if (supportedSources.length === 0) return []
     pushHistory()
     const offset = { x: GRID_SIZE * 2, y: GRID_SIZE * 2 }
     const activeCanvasId = get().activeCanvasId
     const activeWorkspaceId = get().activeWorkspaceId
     const newCanvases: CanvasMeta[] = []
-    const clones: Widget[] = sources.map((src) => {
+    const clones: Widget[] = supportedSources.map((src) => {
       const clone: Widget = {
         ...src,
         id: crypto.randomUUID(),

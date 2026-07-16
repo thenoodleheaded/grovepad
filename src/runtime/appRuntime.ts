@@ -2,6 +2,7 @@ import { initCircuitEngine } from '../engine/circuitEngine'
 import { useCanvasStore } from '../store/useCanvasStore'
 import { useWidgetStore } from '../store/useWidgetStore'
 import { initPersistence } from '../utils/persistence'
+import { initDeployVersionMonitor } from './deployVersionMonitor'
 
 /** Combine service disposers into one idempotent application boundary. */
 export function composeRuntimeDisposer(disposers: readonly (() => void)[]): () => void {
@@ -34,6 +35,7 @@ export function createRuntimeBoundary(startServices: () => readonly (() => void)
 
 const appRuntime = createRuntimeBoundary(() => [
   initPersistence(useWidgetStore, useCanvasStore),
+  initDeployVersionMonitor(),
   initCircuitEngine(),
 ])
 

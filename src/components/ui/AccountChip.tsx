@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { CloudOff, Download, History, LogIn, LogOut, Upload, UserRound } from 'lucide-react'
+import { CloudOff, Download, History, LogIn, LogOut, RefreshCw, Upload, UserRound } from 'lucide-react'
 import { supabaseConfigured } from '../../lib/supabase'
 import { useAuthStore } from '../../store/useAuthStore'
 import { useOverlayLifecycle } from '../../store/useOverlayStore'
@@ -8,7 +8,7 @@ import { belowAnchor } from '../../utils/popoverPosition'
 import { useWidgetStore } from '../../store/useWidgetStore'
 import { usePersistenceStatusStore } from '../../store/usePersistenceStatusStore'
 import { useToastStore } from '../../store/useToastStore'
-import { buildBoardSnapshot, parsePersistedBoard } from '../../utils/persistence'
+import { buildBoardSnapshot, parsePersistedBoard, requestCloudSync } from '../../utils/persistence'
 import { listRollingSnapshots, type LocalSnapshot } from '../../utils/boardDatabase'
 import { ConfirmDialog } from './ConfirmDialog'
 
@@ -26,7 +26,7 @@ export function AccountChip() {
   const [soundOn, setSoundOn] = useState(() => localStorage.getItem('grovepad:sound') === 'on')
   const localSave = usePersistenceStatusStore((state) => state.localSave)
   const cloudSync = usePersistenceStatusStore((state) => state.cloudSync)
-  const lastSyncedAt = usePersistenceStatusStore((state) => state.lastSyncedAt)
+  const syncEnabled = usePersistenceStatusStore((state) => state.syncEnabled)
   const widgetCount = useWidgetStore((state) => Object.keys(state.widgets).length)
 
   useOverlayLifecycle(open)
@@ -79,11 +79,11 @@ export function AccountChip() {
     }
   }
 
-  const statusTone = localSave === 'error' || cloudSync === 'error'
+  const statusTone = localSave === 'error' || (syncEnabled && cloudSync === 'error')
     ? 'bg-red-400'
     : localSave === 'saving' || cloudSync === 'saving'
       ? 'bg-amber-300 animate-pulse'
-      : session && cloudSync === 'synced'
+      : session && syncEnabled && cloudSync === 'synced'
         ? 'bg-emerald-400'
         : 'bg-neutral-500'
 
@@ -131,9 +131,15 @@ export function AccountChip() {
                 {session ? (
                   <>
                     <p className="truncate text-xs font-medium text-neutral-200">{email}</p>
-                    <p className={`mt-0.5 flex items-center gap-1 text-[10px] ${cloudSync === 'error' ? 'text-amber-300' : 'text-emerald-400/90'}`}>
+                    <p className={`mt-0.5 flex items-center gap-1 text-[10px] ${syncEnabled && cloudSync === 'error' ? 'text-amber-300' : syncEnabled ? 'text-emerald-400/90' : 'text-neutral-500'}`}>
                       <span aria-hidden className={`h-1.5 w-1.5 rounded-full ${statusTone}`} />
-                      {cloudSync === 'saving' ? 'Saving…' : cloudSync === 'error' ? 'Cloud offline · local copy safe' : `Last synced ${lastSyncedAt ? new Date(lastSyncedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'just now'} · ${widgetCount} cards`}
+                      {!syncEnabled
+                        ? `Saving to this browser · ${widgetCount} cards`
+                        : cloudSync === 'saving'
+                          ? 'Syncing…'
+                          : cloudSync === 'error'
+                            ? 'Cloud offline · local copy safe'
+                            : `Cloud sync on · ${widgetCount} cards`}
                     </p>
                   </>
                 ) : (
@@ -185,6 +191,29 @@ export function AccountChip() {
                 Completion sounds
                 <input type="checkbox" checked={soundOn} onChange={(event) => { setSoundOn(event.target.checked); localStorage.setItem('grovepad:sound', event.target.checked ? 'on' : 'off') }} className="accent-emerald-400" />
               </label>
+              {session && supabaseConfigured && (
+                <label className="mx-1.5 flex h-8 cursor-pointer items-center justify-between rounded-lg px-2 text-xs text-neutral-400 hover:bg-neutral-800 hover:text-neutral-200">
+                  Cloud sync
+                  <input
+                    type="checkbox"
+                    checked={syncEnabled}
+                    onChange={(event) => usePersistenceStatusStore.getState().setSyncEnabled(event.target.checked)}
+                    className="accent-emerald-400"
+                  />
+                </label>
+              )}
+              {session && supabaseConfigured && syncEnabled && (
+                <button
+                  type="button"
+                  role="menuitem"
+                  disabled={cloudSync === 'saving'}
+                  onClick={() => requestCloudSync()}
+                  className="mx-1.5 flex h-8 w-[calc(100%-12px)] items-center gap-2 rounded-lg px-2 text-xs text-neutral-300 transition-colors hover:bg-neutral-800 disabled:opacity-50"
+                >
+                  <RefreshCw size={12} aria-hidden className={cloudSync === 'saving' ? 'animate-spin' : undefined} />
+                  {cloudSync === 'saving' ? 'Syncing…' : 'Sync now'}
+                </button>
+              )}
               <div className="mx-2 mt-1 border-t gp-hairline" />
               {session ? (
                 <button
@@ -240,8 +269,13 @@ export function AccountChip() {
         onClose={() => setRestoreSnapshot(null)}
         onConfirm={() => {
           if (restoreSnapshot) {
-            useWidgetStore.getState().loadBoard(restoreSnapshot.board)
-            useToastStore.getState().addToast('Local snapshot restored')
+            const board = parsePersistedBoard(restoreSnapshot.board)
+            if (board) {
+              useWidgetStore.getState().loadBoard(board)
+              useToastStore.getState().addToast('Local snapshot restored')
+            } else {
+              useToastStore.getState().addToast('That local snapshot is no longer readable')
+            }
           }
         }}
       />

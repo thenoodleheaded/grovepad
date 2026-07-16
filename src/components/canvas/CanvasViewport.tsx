@@ -37,6 +37,7 @@ import { EmptyCanvasState } from '../ui/EmptyCanvasState'
 import { CloudConflictDialog } from '../ui/CloudConflictDialog'
 import { CanvasNavigator } from '../ui/CanvasNavigator'
 import { GuestBackupNudge } from '../ui/GuestBackupNudge'
+import { DeployUpdateBanner } from '../ui/DeployUpdateBanner'
 import { CanvasTreeDrawer } from '../ui/CanvasTreeDrawer'
 import { TimerTitleRuntime } from './TimerTitleRuntime'
 
@@ -575,6 +576,7 @@ export function CanvasViewport() {
       )}
       <ToastContainer />
       <CloudConflictDialog />
+      <DeployUpdateBanner />
       <GuestBackupNudge />
       <EmptyCanvasState />
       {importOpen && (

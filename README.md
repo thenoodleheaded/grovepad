@@ -34,7 +34,7 @@ High-frequency pointer and camera paths are frame-batched. Offscreen widgets and
 
 The app works in guest mode without external services.
 
-- Supabase sync/auth: set `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`.
+- Supabase sync/auth: set `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`. Database migrations, RLS, revisions, and deployment verification are documented in [docs/database-deployment.md](docs/database-deployment.md).
 - Document-to-map import: enter an OpenAI API key in the importer or set `VITE_OPENAI_API_KEY`.
 
 Secrets belong in `.env.local`; never commit them.

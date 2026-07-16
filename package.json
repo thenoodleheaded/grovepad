@@ -11,8 +11,9 @@
     "test": "vitest run",
     "test:focus": "vitest run src/utils/focusModeReorder.test.ts",
     "docs:check": "node scripts/check-codebase-map.mjs",
-    "check": "npm run typecheck && npm run lint && npm run test && npm run docs:check",
-    "check:full": "npm run build && npm run lint && npm run test && npm run docs:check",
+    "db:check": "node scripts/check-supabase-migrations.mjs",
+    "check": "npm run typecheck && npm run lint && npm run test && npm run docs:check && npm run db:check",
+    "check:full": "npm run build && npm run lint && npm run test && npm run docs:check && npm run db:check",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -31,6 +32,7 @@
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.3",
     "oxlint": "^1.71.0",
+    "pgsql-parser": "^17.9.16",
     "tailwindcss": "^4.3.2",
     "typescript": "~6.0.2",
     "vite": "^8.1.1",

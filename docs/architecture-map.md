@@ -38,14 +38,14 @@ Largest coordination surfaces:
 
 ```mermaid
 flowchart TD
-  Main["main.tsx\nReact root + global CSS"] --> App["App.tsx\nauth route boundary"]
+  Main["main.tsx\nReact root + global CSS"] --> App["App.tsx\nauth + compatibility route boundary"]
   App --> Login["LoginPage"]
   App --> Canvas["CanvasViewport\ncomposition root"]
 
   Canvas --> Layers["Canvas layers\ngrid, groups, widgets, relations, dependencies, wires"]
   Canvas --> UI["UI overlays\ntoolbar, quick add, picker, search, import"]
   Canvas --> Events["useCanvasEvents\npan, zoom, select, touch"]
-  Canvas --> Runtime["appRuntime boundary\npersistence + circuit engine"]
+  Canvas --> Runtime["appRuntime boundary\npersistence + deploy monitor + circuit engine"]
 
   Layers --> WidgetCard["WidgetCard\ninteraction shell"]
   WidgetCard --> Renderer["WidgetRenderer\nlazy type dispatch"]
@@ -66,7 +66,7 @@ flowchart TD
 
   Runtime --> Persistence["persistence.ts"]
   Persistence --> IndexedDB["boardDatabase.ts\nIndexedDB + rolling snapshots"]
-  Persistence --> Cloud["cloudSync.ts\noptional Supabase adapter"]
+  Persistence --> Cloud["cloudSync.ts + cloudDocuments.ts\nindex/canvas sync + legacy recovery"]
   Persistence --> LocalStorage["localStorage\nview + legacy/fallback data"]
 
   UI --> Thought["thoughtInterpreter + scenarioResolver"]
@@ -77,8 +77,8 @@ flowchart TD
 ## Boot and ownership sequence
 
 1. `main.tsx` loads `index.css`, then `styles/product.css`, mounts the root error boundary, and renders `App`.
-2. `App.tsx` waits for `useAuthStore`, then lazily selects either login or canvas.
-3. Mounting `CanvasViewport` starts `runtime/appRuntime.ts`; unmount, StrictMode replay, and HMR dispose persistence subscriptions and circuit listeners explicitly.
+2. `App.tsx` first honors any persistence compatibility block, then waits for `useAuthStore` and lazily selects either login or canvas.
+3. Mounting `CanvasViewport` starts `runtime/appRuntime.ts`; unmount, StrictMode replay, and HMR dispose persistence subscriptions, deploy checks, and circuit listeners explicitly.
 4. `useWidgetStore` constructs its initial state from `loadPersistedBoard()`; `initPersistence` can later replace it with IndexedDB/cloud state.
 5. `CanvasViewport` composes every canvas layer, global overlay, and runtime helper.
 6. `WidgetLayer` culls/LOD-selects cards; each `WidgetCard` owns drag, scale-state, focus-mode, title chrome, ports, and renderer dispatch.
@@ -92,12 +92,12 @@ flowchart TD
 | Camera | `useCanvasStore.ts`, `useCanvasEvents.ts`, `canvasView.ts` | Pan, zoom, viewport size, camera history | Widget geometry persistence |
 | Canonical board | `useWidgetStore.ts`, `store/slices/*Slice.ts` | Widgets, relations, connections, groups, hierarchy, selection, undo | Render-only animation state |
 | Circuit runtime | `circuitEngine.ts`, `useCircuitStore.ts`, `transforms.ts` | Deterministic propagation, delivery memory, wire-drag/runtime feedback | Widget renderer details |
-| Application runtime | `runtime/appRuntime.ts` | Idempotent start/stop ownership for persistence and circuit services | Domain behavior or visual rendering |
+| Application runtime | `runtime/appRuntime.ts`, `runtime/deployVersionMonitor.ts` | Idempotent start/stop ownership for persistence, stale-deploy checks, and circuit services | Domain behavior or visual rendering |
 | Widget definition | `registry.ts`, `registry/*`, `widgets/contracts/registry.ts` | Metadata, defaults, sizing, packs | Live widget state |
 | Field definition | `fields.ts`, `fields/*`, `widgets/contracts/fields.ts` | Read/write fields, commands, semantic units | Canvas drawing |
 | Widget rendering | `WidgetCard.tsx`, `WidgetRenderer.tsx`, `modules/*` | Card interaction shell and typed content | Persistence orchestration |
 | Spatial graph drawing | `RelationLines.tsx`, `DependencyLines.tsx`, `WireLayer.tsx` | SVG descriptors, LOD/culling, hit paths and menus | Graph mutation rules |
-| Persistence | `persistence.ts`, `persistedBoardSchema.ts`, `types/persistence.ts`, adapters | Validation, local snapshots, debounced saves, optional cloud reconciliation | UI component lifecycle |
+| Persistence | `persistence.ts`, `persistedBoardSchema.ts`, `types/persistence.ts`, adapters | Validation, atomic migration snapshots, debounced saves, optional cloud reconciliation | UI component lifecycle |
 | Thought interpretation | `thoughtInterpreter.ts`, `scenarioResolver.ts`, `scenarios/catalogue.ts` | Deterministic parsing, scenario candidates, local preference learning | Direct board rendering |
 | Optional local AI | `localAiService.ts`, `services/local-ai/*` | Model lifecycle, request cancellation/deadlines, curated plan protocol | Unvalidated graph writes |
 | UI orchestration | `components/ui/*` | Pickers, command surfaces, dialogs, import, quick capture | Canonical domain logic |
@@ -112,7 +112,7 @@ flowchart TD
 | `useFocusStore` | No | Widget card, focus layer, canvas events | Locks camera and restores prior view |
 | `useCanvasTreeStore` | UI state | Tree drawer/navigation | Hierarchy data itself remains in widget store |
 | `useOverlayStore` | No | Dialogs, menus, canvas keyboard guards | Central overlay lifecycle counter |
-| `usePersistenceStatusStore` | No | Account/conflict/save UI | Imports the persisted board type back from persistence |
+| `usePersistenceStatusStore` | No | App compatibility gate and account/conflict/save UI | Imports the persisted board type back from persistence |
 | `useAuthStore` | Session | App, persistence, account UI | Cloud sync observes it directly |
 | Toast/theme/debug/preview stores | No | Narrow UI/runtime consumers | Appropriate small stores |
 
@@ -164,19 +164,20 @@ sequenceDiagram
   participant C as cloudSync.ts
 
   UI->>P: Zustand subscription reports canonical change
-  P->>LS: mark dirty exit
+  P->>LS: device document for active location + canvas views
+  P->>LS: active camera view
+  P->>LS: mark dirty exit for document changes
   P-->>P: debounce, then requestIdleCallback
-  P->>DB: write current board
+  P->>DB: write document-only current board
   P->>DB: rolling snapshot every 10 minutes
-  P->>LS: write camera separately
   opt signed-in user
-    P->>C: lazy import and reconcile/push
-    C-->>P: cloud board or status/error
+    P->>C: lazy import and reconcile/push changed checksums
+    C-->>P: split documents or legacy recovery board
   end
   Note over P: pagehide/hidden flushes; runtime disposal removes subscriptions and listeners
 ```
 
-`PersistedBoard` lives in `types/persistence.ts`, while validation and migration live in `persistedBoardSchema.ts`. IndexedDB, cloud sync, status, and the store consume those neutral modules without importing the persistence orchestrator. `initPersistence` owns and disposes every subscription, DOM listener, and pending saver it creates.
+`PersistedBoard`, `PersistedDeviceState`, and their runtime state contracts live in `types/persistence.ts`. Board validation/migration lives in `persistedBoardSchema.ts`; local navigation validation lives in `persistedDeviceState.ts`; cloud index/canvas splitting, compression, and checksums live in `cloudDocuments.ts`. `cloudSync.ts` performs checksum-diffed dual writes and lazy legacy recovery. IndexedDB, status, and the store consume neutral contracts without importing the persistence orchestrator. `initPersistence` owns and disposes every subscription, DOM listener, and pending saver it creates.
 
 ## Dependency graph status
 

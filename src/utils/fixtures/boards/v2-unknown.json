@@ -1,0 +1,112 @@
+{
+  "futureBoardField": { "mode": "tomorrow" },
+  "format": "grovepad-board",
+  "v": 2,
+  "workspaces": {
+    "workspace": {
+      "id": "workspace",
+      "name": "Workspace",
+      "rootCanvasId": "canvas",
+      "createdAt": 1,
+      "futureWorkspaceField": "kept"
+    }
+  },
+  "canvases": {
+    "canvas": {
+      "id": "canvas",
+      "name": "Origin",
+      "workspaceId": "workspace",
+      "parentCanvasId": null,
+      "futureCanvasField": { "kept": true }
+    }
+  },
+  "widgets": {
+    "alpha": {
+      "id": "alpha",
+      "type": "notes",
+      "title": "Alpha",
+      "canvasId": "canvas",
+      "position": { "x": 0, "y": 0 },
+      "size": { "width": 240, "height": 160 },
+      "data": { "text": "Known widget", "futureDataField": [1, 2, 3] },
+      "metadata": { "badges": [], "futureMetadataField": "kept" },
+      "futureWidgetField": { "nested": "kept" }
+    },
+    "future": {
+      "id": "future",
+      "type": "quantum_planner",
+      "title": "Future plan",
+      "canvasId": "canvas",
+      "position": { "x": 320, "y": 0 },
+      "size": { "width": 280, "height": 200 },
+      "data": { "entanglements": [{ "id": "q1", "state": "maybe" }] },
+      "metadata": { "badges": [], "futureChrome": "prismatic" },
+      "futureWidgetField": { "deep": { "value": 42 } }
+    }
+  },
+  "relations": {
+    "futureRelation": {
+      "id": "futureRelation",
+      "fromId": "alpha",
+      "toId": "future",
+      "type": "parent",
+      "isResolved": false,
+      "futureRelationField": "kept"
+    },
+    "futureRelationKind": {
+      "id": "futureRelationKind",
+      "fromId": "alpha",
+      "toId": "future",
+      "type": "supports",
+      "isResolved": false,
+      "futureRelationSemantics": { "strength": 0.8 }
+    }
+  },
+  "connections": {
+    "futureConnectionKind": {
+      "id": "futureConnectionKind",
+      "fromId": "alpha",
+      "fromField": "text",
+      "toId": "future",
+      "kind": "stream",
+      "enabled": true,
+      "futureStreamMode": "batched"
+    },
+    "futureTransform": {
+      "id": "futureTransform",
+      "fromId": "alpha",
+      "fromField": "text",
+      "toId": "future",
+      "toField": "prompt",
+      "kind": "value",
+      "transform": { "op": "quantize", "steps": 8 },
+      "enabled": true
+    }
+  },
+  "groups": {
+    "futureGroup": {
+      "id": "futureGroup",
+      "label": "Mixed versions",
+      "widgetIds": ["alpha", "future"],
+      "color": "#6366f1",
+      "futureGroupField": "kept"
+    },
+    "futureColorGroup": {
+      "id": "futureColorGroup",
+      "label": "Future color",
+      "widgetIds": ["alpha", "future"],
+      "color": "aurora-gradient",
+      "futureGroupField": "kept"
+    }
+  },
+  "activePacks": ["life", "quantum_research"],
+  "activeWorkspaceId": "workspace",
+  "activeCanvasId": "canvas",
+  "canvasViews": {
+    "canvas": {
+      "pan": { "x": 10, "y": 20 },
+      "zoom": 1,
+      "futureViewField": "kept"
+    }
+  }
+}

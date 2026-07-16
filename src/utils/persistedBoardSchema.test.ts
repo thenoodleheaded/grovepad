@@ -1,9 +1,22 @@
 import { describe, expect, it } from 'vitest'
-import type { PersistedBoard } from '../types/persistence'
-import { migrateLegacyBoard, parsePersistedBoard } from './persistedBoardSchema'
+import type { HydratedPersistedBoard, PersistedBoard } from '../types/persistence'
+import currentBoardFixture from './fixtures/boards/v2.json?raw'
+import unknownBoardFixture from './fixtures/boards/v2-unknown.json?raw'
+import futureBoardFixture from './fixtures/boards/v3.json?raw'
+import truncatedBoardFixture from './fixtures/boards/truncated.json.txt?raw'
+import {
+  getFuturePersistedBoardVersion,
+  getOpaqueWidgetType,
+  isPersistedBoardFromNewerVersion,
+  migrateLegacyBoard,
+  parsePersistedBoard,
+  serializePersistedBoard,
+} from './persistedBoardSchema'
 
-function validBoard(): PersistedBoard {
+function validBoard(): HydratedPersistedBoard {
   return {
+    format: 'grovepad-board',
+    v: 2,
     workspaces: {
       workspace: {
         id: 'workspace',
@@ -52,12 +65,114 @@ function validBoard(): PersistedBoard {
   }
 }
 
+function withoutEmbeddedDeviceState(value: Record<string, unknown>): Record<string, unknown> {
+  const document = { ...value }
+  Reflect.deleteProperty(document, 'activeWorkspaceId')
+  Reflect.deleteProperty(document, 'activeCanvasId')
+  Reflect.deleteProperty(document, 'canvasViews')
+  return document
+}
+
 describe('persisted board schema', () => {
   it('accepts a valid board without changing its canonical entities', () => {
     const source = validBoard()
     const parsed = parsePersistedBoard(source)
     expect(parsed?.widgets).toEqual(source.widgets)
     expect(parsed?.activeCanvasId).toBe('canvas')
+  })
+
+  it('grandfathers version-2 payloads written before embedded metadata existed', () => {
+    const source: Record<string, unknown> = { ...validBoard() }
+    Reflect.deleteProperty(source, 'format')
+    Reflect.deleteProperty(source, 'v')
+
+    expect(parsePersistedBoard(source)).toMatchObject({
+      format: 'grovepad-board',
+      v: 2,
+    })
+  })
+
+  it('rejects a payload for a different format or reader version', () => {
+    expect(parsePersistedBoard({ ...validBoard(), format: 'another-app' })).toBeNull()
+    expect(parsePersistedBoard({ ...validBoard(), v: 3 })).toBeNull()
+    expect(isPersistedBoardFromNewerVersion({ ...validBoard(), v: 3 })).toBe(true)
+    expect(getFuturePersistedBoardVersion({ ...validBoard(), v: 3 })).toBe(3)
+    expect(isPersistedBoardFromNewerVersion({ ...validBoard(), v: 1 })).toBe(false)
+  })
+
+  it('preserves unknown widget types and future fields without exposing internals', () => {
+    const fixture = JSON.parse(unknownBoardFixture) as Record<string, unknown>
+    const parsed = parsePersistedBoard(fixture)
+    expect(parsed).not.toBeNull()
+
+    const opaqueWidget = parsed!.widgets.future
+    expect(opaqueWidget?.type).toBe('notes')
+    expect(opaqueWidget && getOpaqueWidgetType(opaqueWidget)).toBe('quantum_planner')
+    expect(parsed!.relations.futureRelation).toBeDefined()
+    expect(parsed!.relations.futureRelationKind).toBeUndefined()
+    expect(parsed!.connections.futureConnectionKind).toBeUndefined()
+    expect(parsed!.connections.futureTransform).toBeUndefined()
+    expect(parsed!.groups.futureGroup?.widgetIds).toEqual(['alpha', 'future'])
+    expect(parsed!.groups.futureColorGroup).toBeUndefined()
+    expect(parsed!.activePacks).toEqual(['life'])
+    expect(parsed!.persistenceUnknownRelations).toHaveProperty('futureRelationKind')
+    expect(parsed!.persistenceUnknownConnections).toHaveProperty('futureConnectionKind')
+    expect(parsed!.persistenceUnknownConnections).toHaveProperty('futureTransform')
+    expect(parsed!.persistenceUnknownGroups).toHaveProperty('futureColorGroup')
+    expect(Object.keys(parsed!)).not.toContain('persistenceUnknownFields')
+    expect(Object.keys(parsed!)).not.toContain('persistenceUnknownRelations')
+
+    // Normal immutable widget updates retain the symbol-backed opaque source.
+    parsed!.widgets.future = {
+      ...opaqueWidget!,
+      position: { x: 999, y: 999 },
+    }
+    const serialized = serializePersistedBoard(parsed!) as PersistedBoard & Record<string, unknown>
+    expect(serialized).toEqual(withoutEmbeddedDeviceState(fixture))
+    expect(serialized.futureBoardField).toEqual({ mode: 'tomorrow' })
+
+    parsed!.activePacks = []
+    expect(serializePersistedBoard(parsed!).activePacks).toEqual(['quantum_research'])
+    parsed!.activePacks = ['software_eng']
+    expect(serializePersistedBoard(parsed!).activePacks).toEqual([
+      'quantum_research',
+      'software_eng',
+    ])
+  })
+
+  it('recognizes frozen future-version and truncated fixtures without accepting them', () => {
+    const future = JSON.parse(futureBoardFixture) as unknown
+    expect(isPersistedBoardFromNewerVersion(future)).toBe(true)
+    expect(parsePersistedBoard(future)).toBeNull()
+    expect(() => JSON.parse(truncatedBoardFixture)).toThrow()
+  })
+
+  it('canonicalizes runtime-only widget state before writing', () => {
+    const source = validBoard()
+    source.widgets.alpha = {
+      ...source.widgets.alpha!,
+      isHydrating: true,
+    }
+    source.widgets.bravo = {
+      ...source.widgets.bravo!,
+      type: 'ai_generator',
+      data: { prompt: 'Build a launch plan', status: 'generating' },
+    } as unknown as PersistedBoard['widgets'][string]
+
+    const serialized = serializePersistedBoard(source)
+    expect(serialized.widgets.alpha).not.toHaveProperty('isHydrating')
+    expect(serialized.widgets.bravo?.data).toMatchObject({ status: 'idle' })
+    expect(source.widgets.alpha?.isHydrating).toBe(true)
+  })
+
+  it('reads the frozen embedded-device fixture and writes a document-only payload', () => {
+    const fixture = JSON.parse(currentBoardFixture) as Record<string, unknown>
+    const parsed = parsePersistedBoard(fixture)
+    expect(parsed).not.toBeNull()
+    expect(serializePersistedBoard(parsed!)).toEqual(withoutEmbeddedDeviceState(fixture))
+    expect(serializePersistedBoard(parsed!)).not.toHaveProperty('activeWorkspaceId')
+    expect(serializePersistedBoard(parsed!)).not.toHaveProperty('activeCanvasId')
+    expect(serializePersistedBoard(parsed!)).not.toHaveProperty('canvasViews')
   })
 
   it('drops references to invalid widgets while preserving valid content', () => {
@@ -102,6 +217,19 @@ describe('persisted board schema', () => {
         { id: 'alpha:bullet:0', text: 'First' },
         { id: 'alpha:bullet:1', text: 'Second' },
       ],
+    })
+  })
+
+  it('keeps future fields nested inside known widget data', () => {
+    const source = validBoard()
+    source.widgets.alpha = {
+      ...source.widgets.alpha!,
+      type: 'bullets',
+      data: { items: [{ id: 'bullet-1', text: 'First', futureColor: 'ultraviolet' }] },
+    } as unknown as PersistedBoard['widgets'][string]
+
+    expect(parsePersistedBoard(source)?.widgets.alpha?.data).toEqual({
+      items: [{ id: 'bullet-1', text: 'First', futureColor: 'ultraviolet' }],
     })
   })
 
