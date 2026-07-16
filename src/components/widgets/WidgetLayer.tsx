@@ -1,9 +1,8 @@
-import { useEffect, useMemo } from 'react'
+import { useMemo } from 'react'
 import { useShallow } from 'zustand/react/shallow'
 import { useWidgetStore } from '../../store/useWidgetStore'
 import { widgetIntersectsRect } from '../../utils/canvasView'
 import {
-  publishWidgetDensity,
   widgetRenderBudget,
   widgetRenderMode,
   type WidgetRenderMode,
@@ -114,23 +113,6 @@ export function WidgetLayer() {
     append(false)
     return items
   }, [baseMode, candidates, pinnedIds])
-
-  const detailCount = useMemo(() => {
-    let count = 0
-    for (const item of rendered) {
-      if (item.mode === 'detail') count++
-    }
-    return count
-  }, [rendered])
-
-  useEffect(() => {
-    publishWidgetDensity({
-      mode: baseMode,
-      visibleCount: candidates.length,
-      renderedCount: rendered.length,
-      detailCount,
-    })
-  }, [baseMode, candidates.length, detailCount, rendered.length])
 
   return (
     <div className="absolute left-0 top-0">

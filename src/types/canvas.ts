@@ -17,8 +17,8 @@ export interface CanvasTransform {
   zoom: number
 }
 
-export const ZOOM_MIN = 0.1
-export const ZOOM_MAX = 3
+const ZOOM_MIN = 0.1
+const ZOOM_MAX = 3
 
 /** Base grid cell size in world units at zoom = 1. */
 export const GRID_SIZE = 40

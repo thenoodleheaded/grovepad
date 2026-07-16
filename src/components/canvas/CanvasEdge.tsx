@@ -8,9 +8,9 @@ import {
 import type { WorldRect } from '../../utils/canvasView'
 import type { EdgeDetail } from './canvasEdgePolicy'
 
-export type CanvasEdgeVariant = 'relation' | 'dependency' | 'wire'
+type CanvasEdgeVariant = 'relation' | 'dependency' | 'wire'
 
-export interface EdgePathStyle {
+interface EdgePathStyle {
   stroke: string
   width: number
   opacity?: number

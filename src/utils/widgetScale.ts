@@ -1,6 +1,4 @@
-import type { Size } from '../types/spatial'
 import type { WidgetSizing } from '../widgets/contracts/registry'
-import { pillSizeForTitle } from './collapsedWidget'
 
 export type WidgetScaleState = 'full' | 'pill' | 'icon'
 
@@ -36,5 +34,3 @@ export function crossedBothScaleAxes(
   return xDistance >= threshold && yDistance >= threshold
 }
 
-export { pillSizeForTitle }
-export type { Size }

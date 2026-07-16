@@ -31,8 +31,8 @@ import {
 } from './persistedBoardSchema'
 import { createZip, readZip, type ZipEntry } from './zipArchive'
 
-export const GROVEPAD_PACKAGE_FORMAT = 'grovepad-package' as const
-export const GROVEPAD_PACKAGE_VERSION = 1 as const
+const GROVEPAD_PACKAGE_FORMAT = 'grovepad-package' as const
+const GROVEPAD_PACKAGE_VERSION = 1 as const
 
 /** Raised when a package requires a newer reader than this build implements. */
 export class GrovepadPackageTooNewError extends Error {
@@ -216,8 +216,4 @@ export async function readGrovepadPackage(bytes: Uint8Array): Promise<ImportedPa
 /** True when the bytes begin with a local ZIP signature (`PK\x03\x04`). */
 export function looksLikeZipArchive(bytes: Uint8Array): boolean {
   return bytes.length >= 4 && bytes[0] === 0x50 && bytes[1] === 0x4b && bytes[2] === 0x03 && bytes[3] === 0x04
-}
-
-export async function readGrovepadPackageFile(file: File): Promise<ImportedPackage> {
-  return readGrovepadPackage(new Uint8Array(await file.arrayBuffer()))
 }

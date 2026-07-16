@@ -53,7 +53,7 @@ export interface DatePickerData {
   includeTime: boolean
 }
 
-export interface OutlineItem {
+interface OutlineItem {
   id: string
   text: string
   depth: number
@@ -79,7 +79,7 @@ export interface FormWidgetData {
   fields: FormField[]
 }
 
-export interface AgendaItem {
+interface AgendaItem {
   id: string
   time: string
   title: string
@@ -94,7 +94,7 @@ export interface DailyAgendaData {
 
 export type ProcessStepStatus = 'todo' | 'active' | 'done'
 
-export interface ProcessStep {
+interface ProcessStep {
   id: string
   label: string
   status: ProcessStepStatus
@@ -104,10 +104,10 @@ export interface ProcessData {
   steps: ProcessStep[]
 }
 
-export type RiskStatus = 'open' | 'resolved'
+type RiskStatus = 'open' | 'resolved'
 export type RiskLevel = 1 | 2 | 3 | 4 | 5
 
-export interface RiskItem {
+interface RiskItem {
   id: string
   risk: string
   likelihood: RiskLevel
@@ -120,13 +120,13 @@ export interface RiskRegisterData {
   items: RiskItem[]
 }
 
-export interface DecisionCriterion {
+interface DecisionCriterion {
   id: string
   label: string
   weight: number
 }
 
-export interface DecisionOption {
+interface DecisionOption {
   id: string
   label: string
   scores: number[]
@@ -144,7 +144,7 @@ export interface SwotData {
   threats: string[]
 }
 
-export interface TimesheetEntry {
+interface TimesheetEntry {
   id: string
   date: string
   label: string
@@ -158,7 +158,7 @@ export interface TimesheetData {
   entries: TimesheetEntry[]
 }
 
-export interface InventoryItem {
+interface InventoryItem {
   id: string
   name: string
   quantity: number
@@ -170,9 +170,9 @@ export interface InventoryData {
   items: InventoryItem[]
 }
 
-export type LogLevel = 'note' | 'info' | 'warning'
+type LogLevel = 'note' | 'info' | 'warning'
 
-export interface LogEntry {
+interface LogEntry {
   id: string
   timestamp: string
   text: string
@@ -183,7 +183,7 @@ export interface LogbookData {
   entries: LogEntry[]
 }
 
-export interface LineChartPoint {
+interface LineChartPoint {
   id: string
   label: string
   value: number
@@ -195,7 +195,7 @@ export interface LineChartData {
   points: LineChartPoint[]
 }
 
-export interface PieChartSegment {
+interface PieChartSegment {
   id: string
   label: string
   value: number

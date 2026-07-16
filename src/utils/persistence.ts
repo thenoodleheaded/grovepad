@@ -87,7 +87,7 @@ function writeSyncStamp(userId: string, at: number): void {
 }
 
 /** True when the daily automatic sync window has elapsed for this user. */
-export function isAutoSyncDue(lastAt: number | null, now: number): boolean {
+function isAutoSyncDue(lastAt: number | null, now: number): boolean {
   return lastAt === null || now - lastAt >= AUTO_SYNC_INTERVAL_MS
 }
 

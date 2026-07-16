@@ -6,7 +6,7 @@ export interface NotesData {
   text: string
 }
 
-export interface BulletItem {
+interface BulletItem {
   id: string
   text: string
 }
@@ -15,7 +15,7 @@ export interface BulletsData {
   items: BulletItem[]
 }
 
-export interface ChecklistItem {
+interface ChecklistItem {
   id: string
   label: string
   done: boolean
@@ -34,7 +34,7 @@ export interface SketchpadData {
   height: number
 }
 
-export interface BudgetItem {
+interface BudgetItem {
   id: string
   label: string
   amount: number
@@ -55,7 +55,7 @@ export interface AiGeneratorData {
   status: 'idle' | 'generating' | 'done'
 }
 
-export interface TimelinePhase {
+interface TimelinePhase {
   id: string
   label: string
   start: number
@@ -101,7 +101,7 @@ export interface KanbanCard {
   label: string
 }
 
-export interface KanbanColumn {
+interface KanbanColumn {
   id: string
   label: string
   cards: KanbanCard[]
@@ -124,7 +124,7 @@ export interface HabitData {
   streak: number
 }
 
-export interface LinkItem {
+interface LinkItem {
   id: string
   label: string
   url: string
@@ -144,7 +144,7 @@ export interface QuoteData {
   attribution: string
 }
 
-export interface PollOption {
+interface PollOption {
   id: string
   label: string
   votes: number
@@ -173,7 +173,7 @@ export interface MediaData {
 
 export type MetricTrend = 'up' | 'down' | 'flat'
 
-export interface MetricTile {
+interface MetricTile {
   id: string
   label: string
   value: string
@@ -236,7 +236,7 @@ export interface CalculatorData {
   result: string
 }
 
-export interface BarChartItem {
+interface BarChartItem {
   id: string
   label: string
   value: number
@@ -275,7 +275,7 @@ export interface WeeklyPlannerData {
   days: PlannerTask[][]
 }
 
-export interface GoalMilestone {
+interface GoalMilestone {
   id: string
   label: string
   done: boolean
@@ -307,7 +307,7 @@ export interface ReadingListData {
   items: ReadingItem[]
 }
 
-export interface Flashcard {
+interface Flashcard {
   id: string
   front: string
   back: string
@@ -319,7 +319,7 @@ export interface FlashcardsData {
   current: number
 }
 
-export interface MeetingActionItem {
+interface MeetingActionItem {
   id: string
   text: string
   done: boolean

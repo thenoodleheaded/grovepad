@@ -7,7 +7,7 @@ import {
 import type { Relation, Widget, WidgetGroup } from '../types/spatial'
 
 export const CLOUD_INDEX_FORMAT = 'grovepad-board-index' as const
-export const CLOUD_INDEX_VERSION = 1 as const
+const CLOUD_INDEX_VERSION = 1 as const
 export const CLOUD_CANVAS_FORMAT = 'grovepad-canvas' as const
 export const CLOUD_CANVAS_VERSION = 1 as const
 

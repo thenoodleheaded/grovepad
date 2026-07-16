@@ -14,7 +14,7 @@ export const PERSISTED_BOARD_VERSION = 2 as const
 export const PERSISTED_DEVICE_FORMAT = 'grovepad-device' as const
 export const PERSISTED_DEVICE_VERSION = 1 as const
 
-export type CanvasViews = Record<string, { pan: Vector2D; zoom: number }>
+type CanvasViews = Record<string, { pan: Vector2D; zoom: number }>
 
 /** Local-only navigation state. It must never enter cloud or exported board documents. */
 export interface BoardDeviceState {

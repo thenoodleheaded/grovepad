@@ -12,7 +12,7 @@ export interface PomodoroData {
   completed: number
 }
 
-export interface VocabTerm {
+interface VocabTerm {
   id: string
   term: string
   definition: string
@@ -23,7 +23,7 @@ export interface VocabData {
   terms: VocabTerm[]
 }
 
-export interface GradeComponent {
+interface GradeComponent {
   id: string
   name: string
   /** Score achieved, 0–100. */
@@ -36,7 +36,7 @@ export interface GradeCalcData {
   components: GradeComponent[]
 }
 
-export interface GpaCourse {
+interface GpaCourse {
   id: string
   name: string
   credits: number
@@ -50,7 +50,7 @@ export interface GpaData {
 
 export type AssignmentStatus = 'todo' | 'doing' | 'done'
 
-export interface AssignmentItem {
+interface AssignmentItem {
   id: string
   title?: string
   /** ISO date (yyyy-mm-dd). */
@@ -68,7 +68,7 @@ export interface CornellData {
   summary: string
 }
 
-export interface FormulaItem {
+interface FormulaItem {
   id: string
   name: string
   expression: string
@@ -98,7 +98,7 @@ export interface StudyGoalData {
   loggedHours: number
 }
 
-export interface QuizOption {
+interface QuizOption {
   id: string
   text: string
   correct: boolean

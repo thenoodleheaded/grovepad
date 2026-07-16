@@ -4,7 +4,7 @@ import type { ThoughtPlan, ProposedNode } from './thoughtInterpreter'
 import { detectDate } from './thoughtInterpreter'
 import { EXTENDED_ARCHETYPES } from './scenarios/catalogue'
 import type { ArchetypeSpec, DirectionSpec, QuestionSpec, ScenarioDomain } from './scenarios/contracts'
-export type { ArchetypeSpec, ScenarioDomain } from './scenarios/contracts'
+export type { ArchetypeSpec } from './scenarios/contracts'
 import { buildVocabulary, canonicalToken, normalizeLanguage, tokenCoverage, type NormalizedLanguage } from './languageNormalization'
 
 /**

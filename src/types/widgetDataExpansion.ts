@@ -12,61 +12,61 @@ export interface SeriesPoint { t: number; v: number }
 export interface ClockPulseData { label: string; mode: 'daily'|'weekly'|'interval'|'window'; time: string; days: number[]; intervalMinutes: number; windowStart: string; windowEnd: string; lastFiredAt: number | null }
 export interface ComparatorData { label: string; op: 'gt'|'gte'|'lt'|'lte'|'eq'|'between'; a: number; b: number; low: number; high: number }
 export interface AggregatorData { label: string; mode: 'avg'|'min'|'max'|'count_nonzero'|'count_true'; slots: number[] }
-export interface RangeBand { id: string; upTo: number; label: string; emoji?: string }
+interface RangeBand { id: string; upTo: number; label: string; emoji?: string }
 export interface RangeMapperData { label: string; input: number; bands: RangeBand[] }
 export interface LatchData { label: string; current: number; held: number; heldAt: number | null }
-export interface RandomPickerOption { id: string; text: string; weight: number }
+interface RandomPickerOption { id: string; text: string; weight: number }
 export interface RandomPickerData { label: string; options: RandomPickerOption[]; pick: string; history: string[]; lastRolledAt: number | null; noRepeatWindow: number }
-export interface SequencerStep { id: string; text: string }
+interface SequencerStep { id: string; text: string }
 export interface SequencerData { label: string; steps: SequencerStep[]; activeIndex: number; loop: boolean }
 export interface TemplateData { template: string; slotA: string; slotB: string; slotC: string; slotD: string }
 export interface RecorderData { label: string; input: number; samples: SeriesPoint[]; mode: 'on_change'|'daily'|'on_command'; lastRecordedAt: number | null }
 export interface NotifierData { label: string; message: string; channel: 'toast'|'browser'; cooldownMinutes: number; armed: boolean; lastFiredAt: number | null; fireCount: number; pendingFireAt: number | null }
 
-export interface SubscriptionRow { id: string; name: string; cost: number; cycle: 'monthly'|'yearly'|'weekly'; renewsOn: string; active: boolean }
+interface SubscriptionRow { id: string; name: string; cost: number; cycle: 'monthly'|'yearly'|'weekly'; renewsOn: string; active: boolean }
 export interface SubscriptionsData { rows: SubscriptionRow[] }
-export interface DebtRow { id: string; name: string; balance: number; apr: number; minPayment: number }
+interface DebtRow { id: string; name: string; balance: number; apr: number; minPayment: number }
 export interface DebtPayoffData { debts: DebtRow[]; extraPayment: number; strategy: 'snowball'|'avalanche' }
-export interface SplitExpense { id: string; desc: string; amount: number; paidBy: string; splitAmong: string[] }
+interface SplitExpense { id: string; desc: string; amount: number; paidBy: string; splitAmong: string[] }
 export interface ExpenseSplitData { people: string[]; you: string; expenses: SplitExpense[] }
-export interface InvoiceRow { id: string; client: string; amount: number; issued: string; due: string; status: 'draft'|'sent'|'paid' }
+interface InvoiceRow { id: string; client: string; amount: number; issued: string; due: string; status: 'draft'|'sent'|'paid' }
 export interface InvoicesData { rows: InvoiceRow[] }
-export interface MealSlot { id: string; day: number; meal: 'breakfast'|'lunch'|'dinner'; dish: string; recipeWidgetId?: string }
+interface MealSlot { id: string; day: number; meal: 'breakfast'|'lunch'|'dinner'; dish: string; recipeWidgetId?: string }
 export interface MealPlannerData { week: MealSlot[]; shoppingList: string }
-export interface RecipeIngredient { id: string; qty: number; unit: string; item: string }
-export interface RecipeStep { id: string; text: string; done: boolean }
+interface RecipeIngredient { id: string; qty: number; unit: string; item: string }
+interface RecipeStep { id: string; text: string; done: boolean }
 export interface RecipeData { title: string; servings: number; baseServings: number; ingredients: RecipeIngredient[]; steps: RecipeStep[]; cookMinutes: number }
-export interface MaintenanceRow { id: string; task: string; everyMonths: number; lastDone: string }
+interface MaintenanceRow { id: string; task: string; everyMonths: number; lastDone: string }
 export interface HomeMaintenanceData { rows: MaintenanceRow[] }
 export interface ChoreRotationData { people: string[]; chores: string[]; offset: number; cadenceLabel: string }
-export interface RenewalRow { id: string; item: string; expires: string; noteRef: string; renewLeadDays: number }
+interface RenewalRow { id: string; item: string; expires: string; noteRef: string; renewLeadDays: number }
 export interface RenewalsVaultData { rows: RenewalRow[] }
-export interface MedicationRow { id: string; name: string; timesPerDay: number; takenToday: boolean[]; pillsLeft: number; dailyUse: number }
+interface MedicationRow { id: string; name: string; timesPerDay: number; takenToday: boolean[]; pillsLeft: number; dailyUse: number }
 export interface MedicationsData { rows: MedicationRow[] }
-export interface WorkoutExercise { id: string; name: string; sets: number; reps: number; weight: number; done: boolean }
-export interface WorkoutDay { id: string; label: string; exercises: WorkoutExercise[] }
+interface WorkoutExercise { id: string; name: string; sets: number; reps: number; weight: number; done: boolean }
+interface WorkoutDay { id: string; label: string; exercises: WorkoutExercise[] }
 export interface WorkoutPlanData { days: WorkoutDay[]; activeDay: number; lastSession: string }
-export interface JobApplicationRow { id: string; company: string; role: string; stage: 'wishlist'|'applied'|'screen'|'interview'|'offer'|'closed'; applied: string; nextAction: string; followUpBy: string }
+interface JobApplicationRow { id: string; company: string; role: string; stage: 'wishlist'|'applied'|'screen'|'interview'|'offer'|'closed'; applied: string; nextAction: string; followUpBy: string }
 export interface JobApplicationsData { rows: JobApplicationRow[] }
-export interface KeyResult { id: string; label: string; current: number; target: number; weight: number }
+interface KeyResult { id: string; label: string; current: number; target: number; weight: number }
 export interface OkrData { objective: string; keyResults: KeyResult[] }
-export interface DecisionJournalEntry { id: string; decision: string; context: string; expected: string; confidence: number; decidedOn: string; reviewOn: string; actual?: string; verdict?: 'hit'|'miss'|'mixed' }
+interface DecisionJournalEntry { id: string; decision: string; context: string; expected: string; confidence: number; decidedOn: string; reviewOn: string; actual?: string; verdict?: 'hit'|'miss'|'mixed' }
 export interface DecisionJournalData { entries: DecisionJournalEntry[] }
-export interface ReviewPrompt { id: string; q: string; answer: string }
+interface ReviewPrompt { id: string; q: string; answer: string }
 export interface WeeklyReviewData { prompts: ReviewPrompt[]; weekOf: string; historyCount: number; streak: number; completedThisWeek: boolean }
-export interface SnippetEntry { id: string; title: string; body: string; tags: string[]; useCount: number }
+interface SnippetEntry { id: string; title: string; body: string; tags: string[]; useCount: number }
 export interface SnippetLibraryData { entries: SnippetEntry[] }
-export interface ContactCadenceRow { id: string; name: string; cadenceDays: number; lastContact: string; note: string }
+interface ContactCadenceRow { id: string; name: string; cadenceDays: number; lastContact: string; note: string }
 export interface KeepInTouchData { rows: ContactCadenceRow[] }
-export interface GiftOccasionRow { id: string; person: string; date: string; ideas: string; budget: number; bought: boolean }
+interface GiftOccasionRow { id: string; person: string; date: string; ideas: string; budget: number; bought: boolean }
 export interface GiftsOccasionsData { rows: GiftOccasionRow[] }
-export interface TripLeg { id: string; time: string; what: string; where: string; confirmation: string; booked: boolean }
-export interface TripDay { id: string; date: string; legs: TripLeg[] }
+interface TripLeg { id: string; time: string; what: string; where: string; confirmation: string; booked: boolean }
+interface TripDay { id: string; date: string; legs: TripLeg[] }
 export interface TripItineraryData { tripName: string; startDate: string; days: TripDay[] }
-export interface GuestRow { id: string; name: string; status: 'invited'|'yes'|'no'|'maybe'; plusOnes: number; dietary: string }
+interface GuestRow { id: string; name: string; status: 'invited'|'yes'|'no'|'maybe'; plusOnes: number; dietary: string }
 export interface GuestListData { rows: GuestRow[] }
 
-export interface AtlasItem {
+interface AtlasItem {
   id: string
   label: string
   value: number
@@ -97,7 +97,7 @@ export interface AtlasWidgetData {
   times: Record<string, string>
 }
 
-export interface AutomationCoreItem {
+interface AutomationCoreItem {
   id: string
   key: string
   value: string

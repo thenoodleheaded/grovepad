@@ -101,7 +101,7 @@ function controlText(element: HTMLElement): string {
  * single-line controls/ellipsis report their complete value, while prose is
  * allowed to wrap down to a readable two-word column.
  */
-export function intrinsicElementWidth(element: HTMLElement): number {
+function intrinsicElementWidth(element: HTMLElement): number {
   const style = getComputedStyle(element)
   const explicit = explicitMinimum(element, 'w')
   if (element.dataset.floorOverflow === 'scroll') return Math.max(explicit, READABLE_REFLOW_WIDTH)

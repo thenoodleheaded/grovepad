@@ -22,7 +22,7 @@ interface ClusterRect {
  * grid-aligned, so the sum can never drift from the exact target the way an
  * independent per-side rounding pass would.
  */
-export function splitGridCells(totalPixels: number): [number, number] {
+function splitGridCells(totalPixels: number): [number, number] {
   const cells = Math.round(totalPixels / GRID_SIZE)
   const near = Math.floor(cells / 2) * GRID_SIZE
   return [near, totalPixels - near]
