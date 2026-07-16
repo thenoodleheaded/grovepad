@@ -2,9 +2,10 @@ import type { Connection } from '../../types/circuit'
 import type { Relation } from '../../types/spatial'
 import { snapToGrid } from '../../types/spatial'
 import { commandsFor, fieldDescriptor } from '../../widgets/fields'
+import { widgetDefinition } from '../../widgets/registry'
 import { computeBlockedWidgetIds } from '../widgetGraph'
 import { MIN_PARENT_CHILD_GAP } from '../widgetLayoutConstants'
-import { computeDataHeight } from '../widgetSizing'
+import { computeDataHeight, computeDataWidth } from '../widgetSizing'
 import { settleWidgetLayout } from '../widgetSettling'
 import type { WidgetStoreSlice, WidgetStoreSliceContext } from '../widgetStoreSliceContext'
 export function createCircuitSlice({ set, get, pushHistory }: WidgetStoreSliceContext): WidgetStoreSlice {
@@ -173,19 +174,21 @@ export function createCircuitSlice({ set, get, pushHistory }: WidgetStoreSliceCo
         if (!widget || widget.data === data) continue
         if (widgets === state.widgets) widgets = { ...state.widgets }
         // Same content-height discipline as updateWidgetData: growth lands on
-        // the live card, or on the stored expanded size while collapsed.
+        // the live card, while a legacy collapsed card retains its pill size.
         const newHeight = computeDataHeight(widget.type, data)
+        const newWidth = computeDataWidth(widget.type, data)
         if (widget.collapsed || widget.iconified) {
-          const expandedSize =
-            newHeight > 0 && widget.expandedSize && newHeight !== widget.expandedSize.height
-              ? { ...widget.expandedSize, height: newHeight }
-              : widget.expandedSize
+          const previousExpanded = widget.expandedSize ?? widgetDefinition(widget.type).defaultSize
+          const expandedSize = {
+            width: Math.max(previousExpanded.width, newWidth),
+            height: Math.max(previousExpanded.height, newHeight),
+          }
           widgets[widgetId] = { ...widget, data, expandedSize }
         } else {
-          const size =
-            newHeight > 0 && newHeight !== widget.size.height
-              ? { ...widget.size, height: newHeight }
-              : widget.size
+          const size = {
+            width: Math.max(widget.size.width, newWidth),
+            height: Math.max(widget.size.height, newHeight),
+          }
           widgets[widgetId] = { ...widget, data, size }
           if (size !== widget.size) resized.push(widgetId)
         }

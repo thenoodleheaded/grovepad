@@ -6,6 +6,7 @@ import {
 } from 'react'
 import { GripVertical } from 'lucide-react'
 import type { IslandSizing } from './FocusModeLayer'
+import { panelClassForIsland, type PanelFloorClass } from '../../utils/widgetContentFloor'
 
 interface WidgetPanelProps {
   children: ReactNode
@@ -26,6 +27,10 @@ interface WidgetPanelProps {
   minHeight?: number
   maxWidth?: number
   maxHeight?: number
+  /** How this panel contributes to the full card's content-derived floor. */
+  floor?: PanelFloorClass
+  /** Deliberate internal scrolling: overflow here does not grow the card. */
+  allowOverflow?: boolean
 }
 
 /**
@@ -51,6 +56,8 @@ export const WidgetPanel = forwardRef<HTMLDivElement, WidgetPanelProps>(function
   minHeight,
   maxWidth,
   maxHeight,
+  floor,
+  allowOverflow = false,
 }, ref) {
   return (
     <div
@@ -61,6 +68,10 @@ export const WidgetPanel = forwardRef<HTMLDivElement, WidgetPanelProps>(function
       data-island-min-h={minHeight}
       data-island-max-w={maxWidth}
       data-island-max-h={maxHeight}
+      data-floor-panel={floor ?? panelClassForIsland(sizing)}
+      data-floor-min-w={minWidth}
+      data-floor-min-h={minHeight}
+      data-floor-overflow={allowOverflow ? 'scroll' : undefined}
       className={`gp-island gp-subpanel ${removing ? 'gp-subpanel-exit' : 'gp-subpanel-enter'} ${className}`}
       style={style}
       onTransitionEnd={onExitComplete ? ((event) => {

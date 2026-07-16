@@ -68,11 +68,12 @@ export interface WidgetStoreState {
   /** `snap: false` for live drag frames (free-form); the release call snaps. */
   resizeWidget: (id: string, newSize: Size, snap?: boolean) => void
   toggleWidgetCollapsed: (id: string) => void
-  setWidgetScaleState: (id: string, target: WidgetScaleState) => void
+  setWidgetScaleState: (id: string, target: WidgetScaleState, skipHistory?: boolean) => void
   setWidgetsCollapsed: (ids: string[], collapsed: boolean) => void
   updateWidgetData: (widgetId: string, data: ModuleData) => void
   updateWidgetTitle: (widgetId: string, title: string) => void
   toggleWidgetLocked: (widgetId: string) => void
+  toggleWidgetFavorite: (widgetId: string) => void
   setWidgetAccent: (widgetId: string, accent?: string) => void
   bringWidgetToFront: (widgetId: string) => void
   setWidgetHydration: (widgetId: string, isHydrating: boolean) => void

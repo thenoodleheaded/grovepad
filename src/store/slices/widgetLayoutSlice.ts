@@ -1,15 +1,37 @@
 import type { CanvasNodeData, ChecklistData, Widget } from '../../types/spatial'
 import { ICONIFIED_SIZE, snapToGrid } from '../../types/spatial'
 import { DEFAULT_SIZING, widgetDefinition } from '../../widgets/registry'
-import { pillSizeForTitle, type WidgetScaleState } from '../../utils/widgetScale'
+import { pillSizeForTitle } from '../../utils/collapsedWidget'
+import { getLiveWidgetSizing, mergeWidgetSizing } from '../liveWidgetSizing'
 import { useToastStore } from '../useToastStore'
 import { applyWidgetDelta, applyWidgetPositions, compactGroupPositions, movedIdsForWidget, uniqueExistingIds, withWidget } from '../widgetCollection'
 import { MIN_WIDGET_HEIGHT, MIN_WIDGET_WIDTH } from '../widgetLayoutConstants'
-import { fitWidgetSize, computeDataHeight } from '../widgetSizing'
-import { getLiveWidgetSizing, mergeWidgetSizing } from '../liveWidgetSizing'
+import { fitWidgetSize, computeDataHeight, computeDataWidth } from '../widgetSizing'
 import { settleWidgetLayout } from '../widgetSettling'
 import { untangleCanvasLayout } from '../widgetUntangle'
 import type { WidgetStoreSlice, WidgetStoreSliceContext } from '../widgetStoreSliceContext'
+
+function fullSizing(widget: Widget) {
+  return mergeWidgetSizing(widgetDefinition(widget.type).sizing, getLiveWidgetSizing(widget.id))
+}
+
+function clampFullSize(widget: Widget, requested: { width: number; height: number }) {
+  const rules = fullSizing(widget)
+  const dataWidth = computeDataWidth(widget.type, widget.data)
+  const dataHeight = computeDataHeight(widget.type, widget.data)
+  const minWidth = Math.max(rules.minWidth ?? DEFAULT_SIZING.minWidth, dataWidth)
+  const minHeight = Math.max(rules.minHeight ?? DEFAULT_SIZING.minHeight, dataHeight)
+  const maxWidth = Math.max(minWidth, rules.maxWidth ?? DEFAULT_SIZING.maxWidth)
+  const configuredMaxHeight = rules.autoHeight
+    ? rules.maxHeight ?? Infinity
+    : rules.maxHeight ?? DEFAULT_SIZING.maxHeight
+  const maxHeight = Math.max(minHeight, configuredMaxHeight)
+  return {
+    width: Math.min(maxWidth, Math.max(minWidth, requested.width)),
+    height: Math.min(maxHeight, Math.max(minHeight, requested.height)),
+  }
+}
+
 export function createWidgetLayoutSlice({ set, get, pushHistory }: WidgetStoreSliceContext): WidgetStoreSlice {
   return {
   moveWidget: (id, screenDelta, zoom) => {
@@ -154,29 +176,8 @@ export function createWidgetLayoutSlice({ set, get, pushHistory }: WidgetStoreSl
             width: Math.max(MIN_WIDGET_WIDTH, newSize.width),
             height: Math.max(MIN_WIDGET_HEIGHT, newSize.height),
           }
-      // Full-state cards obey their type's size window. Pills and icon tiles
-      // are state-managed sizes and skip the clamp entirely.
-      if (!w.collapsed && !w.iconified) {
-        const rules = mergeWidgetSizing(
-          widgetDefinition(w.type).sizing,
-          getLiveWidgetSizing(id),
-        )
-        // Content-fit cards own their height, so the default height ceiling
-        // must not clip long notes/tables — only an explicit maxHeight caps them.
-        const maxHeight = rules?.autoHeight
-          ? rules?.maxHeight ?? Infinity
-          : rules?.maxHeight ?? DEFAULT_SIZING.maxHeight
-        size = {
-          width: Math.min(
-            rules?.maxWidth ?? DEFAULT_SIZING.maxWidth,
-            Math.max(rules?.minWidth ?? DEFAULT_SIZING.minWidth, size.width),
-          ),
-          height: Math.min(
-            maxHeight,
-            Math.max(rules?.minHeight ?? DEFAULT_SIZING.minHeight, size.height),
-          ),
-        }
-      }
+      if (w.collapsed || w.iconified) return state
+      size = clampFullSize(w, size)
       if (size.width === w.size.width && size.height === w.size.height) return state
       return {
         widgets: withWidget(state.widgets, id, (w) => ({
@@ -188,89 +189,87 @@ export function createWidgetLayoutSlice({ set, get, pushHistory }: WidgetStoreSl
   },
 
   toggleWidgetCollapsed: (id) => {
-    const w = get().widgets[id]
-    if (!w) return
-    get().setWidgetScaleState(id, w.collapsed ? 'full' : 'pill')
+    const widget = get().widgets[id]
+    if (!widget) return
+    get().setWidgetScaleState(id, widget.collapsed ? 'full' : 'pill')
   },
 
-  setWidgetScaleState: (id, target) => {
-    const w = get().widgets[id]
-    if (!w || w.metadata.locked) return
-    const current: WidgetScaleState = w.collapsed ? 'pill' : w.iconified ? 'icon' : 'full'
+  setWidgetScaleState: (id, target, skipHistory = false) => {
+    const currentWidget = get().widgets[id]
+    if (!currentWidget || currentWidget.metadata.locked) return
+    const current = currentWidget.collapsed ? 'pill' : currentWidget.iconified ? 'icon' : 'full'
     if (current === target) return
-    pushHistory()
+    if (!skipHistory) pushHistory()
     set((state) => {
-      const widgets = withWidget(state.widgets, id, (widget) => {
-        // The size to restore on expand: stash it when leaving full state,
-        // carry it through pill↔icon hops.
-        const expandedSize =
-          widget.collapsed || widget.iconified ? widget.expandedSize : widget.size
-        if (target === 'full') {
-          return {
+      const widget = state.widgets[id]
+      if (!widget) return state
+      const expandedSize = widget.collapsed || widget.iconified
+        ? widget.expandedSize ?? widgetDefinition(widget.type).defaultSize
+        : widget.size
+      const next = target === 'full'
+        ? {
             ...widget,
             collapsed: false,
             iconified: false,
-            size: expandedSize ?? widget.size,
+            size: clampFullSize(widget, expandedSize),
             expandedSize: undefined,
           }
-        }
-        if (target === 'pill') {
-          return {
-            ...widget,
-            collapsed: true,
-            iconified: false,
-            expandedSize,
-            size: pillSizeForTitle(widget.title),
-          }
-        }
-        return {
-          ...widget,
-          collapsed: false,
-          iconified: true,
-          expandedSize,
-          size: { ...ICONIFIED_SIZE },
-        }
-      })
-      // Expanding can overlap neighbours — reuse the settle pass.
+        : target === 'pill'
+          ? {
+              ...widget,
+              collapsed: true,
+              iconified: false,
+              expandedSize,
+              size: pillSizeForTitle(widget.title),
+            }
+          : {
+              ...widget,
+              collapsed: false,
+              iconified: true,
+              expandedSize,
+              size: { ...ICONIFIED_SIZE },
+            }
+      const widgets = { ...state.widgets, [id]: next }
       return { widgets: target === 'full' ? settleWidgetLayout(widgets, [id]) : widgets }
     })
   },
 
   setWidgetsCollapsed: (ids, collapsed) => {
     const validIds = uniqueExistingIds(ids, get().widgets)
-    if (
-      validIds.length === 0 ||
-      !validIds.some((id) => get().widgets[id]?.collapsed !== collapsed)
-    ) {
-      return
-    }
+    const actionable = validIds.filter((id) => {
+      const widget = get().widgets[id]
+      return widget && !widget.metadata.locked && widget.collapsed !== collapsed
+    })
+    if (actionable.length === 0) return
     pushHistory()
     set((state) => {
       let widgets = state.widgets
       const toSettle: string[] = []
-      for (const id of validIds) {
-        const w = widgets[id]
-        if (!w || w.collapsed === collapsed) continue
+      for (const id of actionable) {
+        const widget = widgets[id]
+        if (!widget) continue
         if (collapsed) {
-          widgets = withWidget(widgets, id, (widget) => ({
-            ...widget,
+          const expandedSize = widget.iconified
+            ? widget.expandedSize ?? widgetDefinition(widget.type).defaultSize
+            : widget.size
+          widgets = withWidget(widgets, id, (item) => ({
+            ...item,
             collapsed: true,
             iconified: false,
-            expandedSize: widget.iconified ? widget.expandedSize : widget.size,
-            size: pillSizeForTitle(widget.title),
+            expandedSize,
+            size: pillSizeForTitle(item.title),
           }))
         } else {
-          widgets = withWidget(widgets, id, (widget) => ({
-            ...widget,
+          widgets = withWidget(widgets, id, (item) => ({
+            ...item,
             collapsed: false,
             iconified: false,
-            size: widget.expandedSize ?? widget.size,
+            size: clampFullSize(item, item.expandedSize ?? widgetDefinition(item.type).defaultSize),
             expandedSize: undefined,
           }))
           toSettle.push(id)
         }
       }
-      if (widgets === state.widgets) return state
       return { widgets: toSettle.length > 0 ? settleWidgetLayout(widgets, toSettle) : widgets }
     })
   },
@@ -288,27 +287,36 @@ export function createWidgetLayoutSlice({ set, get, pushHistory }: WidgetStoreSl
       const w = state.widgets[widgetId]
       if (!w) return state
       const rawHeight = computeDataHeight(w.type, data)
-      // Content-length estimates are unbounded (more rows == more height); clamp
-      // to the type's real window the same way a manual resize drag would, so a
-      // widget that grew a lot while collapsed can't reopen as a giant card.
-      const rules = mergeWidgetSizing(widgetDefinition(w.type).sizing, getLiveWidgetSizing(widgetId))
+      const rawWidth = computeDataWidth(w.type, data)
+      // Content-length estimates are unbounded (more rows == more height), so
+      // clamp them to the type's real full-card window.
+      const rules = widgetDefinition(w.type).sizing
       const maxHeight = rules?.autoHeight ? rules?.maxHeight ?? Infinity : rules?.maxHeight ?? DEFAULT_SIZING.maxHeight
       const newHeight =
         rawHeight > 0
           ? Math.min(maxHeight, Math.max(rules?.minHeight ?? DEFAULT_SIZING.minHeight, rawHeight))
           : 0
-      // A collapsed pill keeps its size; content growth lands on the stored
-      // expanded size so the card is right when it reopens.
+      // A legacy collapsed pill keeps its visible size. Preserve its dormant
+      // full-card dimensions while accepting data updates.
       let widgets: Record<string, Widget>
       if (w.collapsed || w.iconified) {
-        const expandedSize =
-          newHeight > 0 && w.expandedSize && newHeight !== w.expandedSize.height
-            ? { ...w.expandedSize, height: newHeight }
-            : w.expandedSize
+        const previousExpanded = w.expandedSize ?? widgetDefinition(w.type).defaultSize
+        const expandedSize = clampFullSize(
+          { ...w, data },
+          {
+            width: Math.max(previousExpanded.width, rawWidth),
+            height: Math.max(previousExpanded.height, newHeight),
+          },
+        )
         widgets = { ...state.widgets, [widgetId]: { ...w, data, expandedSize } }
       } else {
-        const size =
-          newHeight > 0 && newHeight !== w.size.height ? { ...w.size, height: newHeight } : w.size
+        const size = clampFullSize(
+          { ...w, data },
+          {
+            width: Math.max(w.size.width, rawWidth),
+            height: Math.max(w.size.height, newHeight),
+          },
+        )
         widgets = { ...state.widgets, [widgetId]: { ...w, data, size } }
         if (size !== w.size) widgets = settleWidgetLayout(widgets, [widgetId])
       }

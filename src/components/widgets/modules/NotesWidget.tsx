@@ -34,7 +34,7 @@ export function NotesWidget({ data, onChange, onHeightChange }: NotesWidgetProps
   const wordCount = localText.trim() ? localText.trim().split(/\s+/).length : 0
 
   return (
-    <div className="flex h-full flex-col">
+    <div data-floor-panel="reflow" data-floor-min-w="112" className="flex h-full flex-col">
       <textarea
         ref={(el) => {
           textareaRef.current = el

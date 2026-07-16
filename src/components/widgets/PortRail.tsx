@@ -136,7 +136,7 @@ export const PortRail = memo(function PortRail({ widgetId }: { widgetId: string 
   return (
     <div
       aria-hidden
-      data-expanded={(!widget.collapsed && !widget.iconified) || undefined}
+      data-expanded={!widget.collapsed && !widget.iconified || undefined}
       className="gp-port-rail pointer-events-none absolute inset-0 z-30"
     >
       {showOutputs &&

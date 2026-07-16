@@ -307,40 +307,42 @@ Five invariants are binding at every released size:
 
 #### Ownership and authority
 
-- Every widget declares a static `sizing` window in the registry. This is the
-  fallback for creation, persistence hydration, and culled/unmounted cards.
-- Once mounted, real content measurement is authoritative and may raise the
-  instance's minimum width or natural height. Runtime measurements are
-  ephemeral and must never enter the persisted board model.
-- Control-only cards set `autoHeight`. Their height follows measured content,
-  stale oversized persisted heights heal on mount, and the whole-card resize
-  gesture adjusts width only. Lists, text wells, tables, and charts retain only
-  the axes that reveal useful additional content.
-- `minHeight` is width-dependent whenever wrapping changes the natural height.
-  Measure after the active width tier is applied; do not assume one constant
-  works at every width.
+- Every widget declares a safe fallback `sizing` window in the registry. It
+  protects creation, hydration, and cards that are not currently mounted.
+- A mounted renderer reports a content-derived floor. Complete single-line
+  values are measured before ellipsis; reflowing prose, rows/lists, rigid
+  grids, and controls contribute according to their panel class. Mounted
+  content may raise the fallback floor but never loosen a registry minimum.
+- The board store is the final clamp for every resize path. A component-level
+  gesture and a programmatic resize obey the same merged floor and ceiling.
+- Control-only cards set `autoHeight`, so the gesture adjusts width only.
+  Reflowing content and rows grow the card vertically as their natural height
+  changes.
 
-#### Responsive tiers
+#### Dynamic re-flooring
 
-When a layout has more than one valid composition, the renderer declares
-discrete tiers rather than allowing a squash band between them. Examples:
+Content changes recalculate the floor immediately. If the current card is
+below the new floor, it grows to the floor on either axis. A card already above
+the new floor does not move. Removing or shortening content lowers the floor
+but never automatically shrinks the card; shrink remains a user action.
 
-- paired outcomes: equal two-column panels, then equal stacked panels;
-- comparator/rule controls: one row, then operator above the numeric fields;
-- chart and legend: side by side, then legend below the chart;
-- summary stats: full formatted value, then an explicit compact format or a
-  stacked row. Ellipsis is not a compact format.
+Collapsed or iconified cards retain a dormant full-card size. Data arriving
+through an editor or wire may grow that dormant size. Expansion rechecks it
+against static content estimates immediately and against the mounted content
+floor as soon as the renderer is present.
 
-If no useful reflow exists, the resize gesture must clamp or snap across the
-invalid band. It must never be possible to release the card inside it.
+#### One full-card composition
 
-The reviewed essential set uses three named full-card modes: `compact`,
-`standard`, and `expanded`. These modes recompose layout; they never scale a
-bitmap of the old interface. Growing a full card moves through those modes up
-to its declared `maxWidth`/`maxHeight`. The size at the start of a drag is not
-a ceiling and must never produce elastic resistance. Pill and icon are
-separate collapsed states reached only after the compact mode's safe floor;
-they are not substitutes for a compact full interface.
+A widget has one full-card interface. Resizing within the full state changes
+the room around that interface but does not introduce partial compact layouts.
+At its computed floor, live resizing clamps without elastic deformation. A
+state change occurs only when the same drag continues at least 36 world pixels
+past both the width and height minima. It commits exactly one neighbouring
+state, then requires release before another transition: full → pill → icon when
+shrinking, and the reverse when growing. Single-axis movement and growth beyond
+a maximum never collapse a widget. Expanding restores the remembered full size
+after rechecking the current floor. Context-menu actions expose the same full,
+pill, and icon states without requiring a precision gesture.
 
 #### Charts and aspect-bound visuals
 
@@ -355,7 +357,7 @@ For a new or materially changed renderer, test representative worst-case data:
 long functional labels, realistic maximum digits, formatted dates, populated
 rows, and one long user word. Shrink each axis until the first invariant would
 fail, then place the fallback floor on the next 4px sub-grid step. Record a
-responsive tier instead when a useful narrower composition exists.
+larger minimum when the single supported composition would otherwise squash.
 
 ---
 

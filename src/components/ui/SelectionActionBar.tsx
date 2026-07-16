@@ -27,7 +27,7 @@ function ActionButton({
       aria-label={label}
       disabled={disabled}
       onClick={onClick}
-      className={`flex h-9 items-center justify-center gap-1.5 rounded-xl text-xs font-medium transition-[background-color,color,transform] active:scale-[0.96] disabled:pointer-events-none disabled:opacity-40 ${
+      className={`flex h-9 items-center justify-center gap-1.5 rounded-xl text-xs font-medium transition-[background-color,color,transform,scale] active:scale-[0.96] disabled:pointer-events-none disabled:opacity-40 ${
         showLabel ? 'w-9 px-0 md:w-auto md:px-2.5' : 'w-9'
       } ${
         danger

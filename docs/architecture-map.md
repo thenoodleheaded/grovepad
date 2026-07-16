@@ -82,7 +82,7 @@ flowchart TD
 3. Mounting `CanvasViewport` starts `runtime/appRuntime.ts`; unmount, StrictMode replay, and HMR dispose persistence subscriptions, deploy checks, and circuit listeners explicitly.
 4. `useWidgetStore` constructs its initial state from `loadPersistedBoard()`; `initPersistence` can later replace it with IndexedDB/cloud state.
 5. `CanvasViewport` composes every canvas layer, global overlay, and runtime helper.
-6. `WidgetLayer` culls/LOD-selects cards; each `WidgetCard` owns drag, scale-state, focus-mode, title chrome, and ports.
+6. `WidgetLayer` culls/LOD-selects cards; each `WidgetCard` owns drag, bounded resizing, focus-mode, title chrome, and ports.
 7. `WidgetRenderer` owns suspense and the responsive content shell. Family maps under `components/widgets/renderers/` own typed dispatch, while their lazy-component files keep concrete implementations out of the startup chunk.
 
 ## Subsystem contracts
@@ -95,7 +95,7 @@ flowchart TD
 | Circuit runtime | `circuitEngine.ts`, `useCircuitStore.ts`, `transforms.ts` | Deterministic propagation, delivery memory, wire-drag/runtime feedback | Widget renderer details |
 | Application runtime | `runtime/appRuntime.ts`, `runtime/deployVersionMonitor.ts` | Idempotent start/stop ownership for persistence, stale-deploy checks, and circuit services | Domain behavior or visual rendering |
 | Widget definition | `registry.ts`, `registry/*`, `widgets/contracts/registry.ts` | Metadata, defaults, sizing, packs | Live widget state |
-| Widget sizing | `widgets/sizingProfiles.ts`, `store/liveWidgetSizing.ts`, `store/slices/widgetLayoutSlice.ts` | Static content-safe windows, compact/standard/expanded tiers, and ephemeral mounted minima | Persisted DOM measurements |
+| Widget sizing | `widgets/sizingProfiles.ts`, `utils/widgetContentFloor.ts`, `store/liveWidgetSizing.ts`, `store/slices/widgetLayoutSlice.ts` | Registry fallback windows, ephemeral mounted floors, grow-only adjustment, scale states, and resize clamping | Persisting browser-only measurements |
 | Field definition | `fields.ts`, `fields/*`, `widgets/contracts/fields.ts` | Read/write fields, commands, semantic units | Canvas drawing |
 | Widget rendering | `WidgetCard.tsx`, `WidgetRenderer.tsx`, `renderers/*`, `modules/*` | Card interaction shell, family-owned typed dispatch, and content | Persistence orchestration |
 | Spatial graph drawing | `RelationLines.tsx`, `DependencyLines.tsx`, `WireLayer.tsx` | SVG descriptors, LOD/culling, hit paths and menus | Graph mutation rules |

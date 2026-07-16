@@ -8,8 +8,6 @@ import {
   ChevronsUpDown,
   CircuitBoard,
   Ellipsis,
-  FileUp,
-  FolderPlus,
   Keyboard,
   Moon,
   Maximize2,
@@ -17,7 +15,6 @@ import {
   PanelLeft,
   Pencil,
   Plus,
-  Route,
   Search,
   Settings,
   SquarePlus,
@@ -32,7 +29,6 @@ import { useOverlayLifecycle } from '../../store/useOverlayStore'
 import { useThemeStore } from '../../store/useThemeStore'
 import { getCanvasPath, useWidgetStore } from '../../store/useWidgetStore'
 import { screenToWorld } from '../../types/spatial'
-import type { ModuleType } from '../../types/spatial'
 import { IconButton } from './IconButton'
 import { AccountChip } from './AccountChip'
 import { ConfirmDialog } from './ConfirmDialog'
@@ -46,10 +42,6 @@ function viewCenterWorld() {
     { x: viewportSize.width / 2, y: viewportSize.height / 2 },
     { x: pan.x, y: pan.y, zoom },
   )
-}
-
-function createAtViewCenter(type: ModuleType, title: string): void {
-  useWidgetStore.getState().createWidget(title, viewCenterWorld(), type)
 }
 
 // ---------------------------------------------------------------------------
@@ -365,38 +357,11 @@ function ToolbarOverflow() {
               <button
                 type="button"
                 role="menuitem"
-                onClick={() => action(() => createAtViewCenter('canvas_node', 'New Canvas'))}
-                className="flex h-9 w-full items-center gap-2.5 rounded-xl px-2.5 text-xs text-neutral-300 transition-colors hover:bg-neutral-800"
-              >
-                <FolderPlus size={13} className="text-sky-400" aria-hidden />
-                New canvas
-              </button>
-              <button
-                type="button"
-                role="menuitem"
-                onClick={() => action(() => useWidgetStore.getState().setImportOpen(true))}
-                className="flex h-9 w-full items-center gap-2.5 rounded-xl px-2.5 text-xs text-neutral-300 transition-colors hover:bg-neutral-800"
-              >
-                <FileUp size={13} className="text-violet-400" aria-hidden />
-                Import document
-              </button>
-              <button
-                type="button"
-                role="menuitem"
                 onClick={() => action(() => useCircuitStore.getState().toggleCircuitMode())}
                 className="flex h-9 w-full items-center gap-2.5 rounded-xl px-2.5 text-xs text-neutral-300 transition-colors hover:bg-neutral-800"
               >
                 <CircuitBoard size={13} className="text-sky-400" aria-hidden />
                 Circuit mode
-              </button>
-              <button
-                type="button"
-                role="menuitem"
-                onClick={() => action(() => useWidgetStore.getState().toggleCriticalPath())}
-                className="flex h-9 w-full items-center gap-2.5 rounded-xl px-2.5 text-xs text-neutral-300 transition-colors hover:bg-neutral-800"
-              >
-                <Route size={13} className="text-emerald-400" aria-hidden />
-                Critical path
               </button>
               <div className="my-1 border-t gp-hairline" />
               <button
@@ -457,8 +422,6 @@ function ToolbarOverflow() {
 
 /** Floating top bar: identity + navigation on the left, actions on the right. */
 export function CanvasToolbar() {
-  const criticalPathVisible = useWidgetStore((state) => state.criticalPathVisible)
-  const toggleCriticalPath = useWidgetStore((state) => state.toggleCriticalPath)
   const circuitMode = useCircuitStore((state) => state.circuitMode)
   const toggleCircuitMode = useCircuitStore((state) => state.toggleCircuitMode)
   const theme = useThemeStore((state) => state.theme)
@@ -510,7 +473,7 @@ export function CanvasToolbar() {
           type="button"
           onClick={() => useWidgetStore.getState().openAddWidget(viewCenterWorld())}
           title="Browse the widget library (or double-click the canvas)"
-          className="flex h-9 items-center gap-1.5 rounded-xl bg-gradient-to-br from-emerald-500/25 to-emerald-500/10 px-2.5 text-xs font-semibold text-emerald-300 shadow-[inset_0_0_0_1px_oklch(88%_0.31_136_/_0.28),0_0_16px_oklch(88%_0.31_136_/_0.10)] transition-[background-color,color,transform,box-shadow] hover:from-emerald-500/35 hover:to-emerald-500/15 hover:text-emerald-200 hover:shadow-[inset_0_0_0_1px_oklch(88%_0.31_136_/_0.45),0_0_22px_oklch(88%_0.31_136_/_0.22)] active:scale-[0.96]"
+          className="flex h-9 items-center gap-1.5 rounded-xl bg-gradient-to-br from-emerald-500/25 to-emerald-500/10 px-2.5 text-xs font-semibold text-emerald-300 shadow-[inset_0_0_0_1px_oklch(88%_0.31_136_/_0.28),0_0_16px_oklch(88%_0.31_136_/_0.10)] transition-[background-color,color,transform,box-shadow,scale] hover:from-emerald-500/35 hover:to-emerald-500/15 hover:text-emerald-200 hover:shadow-[inset_0_0_0_1px_oklch(88%_0.31_136_/_0.45),0_0_22px_oklch(88%_0.31_136_/_0.22)] active:scale-[0.96]"
         >
           <SquarePlus size={13} aria-hidden />
           <span className="hidden sm:inline">Widget</span>
@@ -520,7 +483,7 @@ export function CanvasToolbar() {
           onClick={() => useWidgetStore.getState().setQuickAddOpen(true)}
           title="Capture and interpret a thought (N)"
           aria-label="Quick capture (N)"
-          className="gp-toolbar-action flex h-9 items-center gap-1.5 rounded-xl px-2 text-xs font-medium text-neutral-400 transition-[background-color,color,transform] hover:bg-neutral-700/60 hover:text-white active:scale-[0.96]"
+          className="gp-toolbar-action flex h-9 items-center gap-1.5 rounded-xl px-2 text-xs font-medium text-neutral-400 transition-[background-color,color,transform,scale] hover:bg-neutral-700/60 hover:text-white active:scale-[0.96]"
         >
           <Zap size={13} aria-hidden />
           <span className="hidden xl:inline">Capture</span>
@@ -532,36 +495,15 @@ export function CanvasToolbar() {
             useWidgetStore.getState().startGhostShaper(point.x, point.y)
           }}
           title="Shape a tree directly on the canvas"
-          className="gp-toolbar-action hidden h-9 items-center gap-1.5 rounded-xl px-2 text-xs font-medium text-neutral-400 transition-[background-color,color,transform] hover:bg-neutral-700/60 hover:text-white active:scale-[0.96] md:flex"
+          className="gp-toolbar-action hidden h-9 items-center gap-1.5 rounded-xl px-2 text-xs font-medium text-neutral-400 transition-[background-color,color,transform,scale] hover:bg-neutral-700/60 hover:text-white active:scale-[0.96] md:flex"
         >
           <Network size={13} aria-hidden />
           <span className="hidden xl:inline">Shape</span>
-        </button>
-        <button
-          type="button"
-          onClick={() => createAtViewCenter('canvas_node', 'New Canvas')}
-          title="Create a canvas file here"
-          className="hidden h-9 items-center gap-1.5 rounded-xl px-2 text-xs text-neutral-400 transition-[background-color,color,transform] hover:bg-neutral-700/60 hover:text-white active:scale-[0.96] lg:flex"
-        >
-          <FolderPlus size={13} aria-hidden />
-          Canvas
-        </button>
-        <button
-          type="button"
-          onClick={() => useWidgetStore.getState().setImportOpen(true)}
-          title="Import a document"
-          className="hidden h-9 items-center gap-1.5 rounded-xl px-2 text-xs text-neutral-400 transition-[background-color,color,transform] hover:bg-neutral-700/60 hover:text-white active:scale-[0.96] lg:flex"
-        >
-          <FileUp size={13} aria-hidden />
-          Import
         </button>
         <div className="hidden h-5 w-px bg-neutral-700/70 lg:block" aria-hidden />
         <span className="hidden lg:inline-flex">
           <IconButton label="Circuit mode (W)" onClick={toggleCircuitMode}>
             <CircuitBoard size={14} className={circuitMode ? 'text-sky-400' : undefined} />
-          </IconButton>
-          <IconButton label="Critical path" onClick={toggleCriticalPath}>
-            <Route size={14} className={criticalPathVisible ? 'text-emerald-400' : undefined} />
           </IconButton>
         </span>
         <IconButton

@@ -55,7 +55,7 @@ export function TableWidget({ data, onChange }: TableWidgetProps) {
   }
 
   return (
-    <div className="flex h-full flex-col gap-0">
+    <div data-floor-panel="rows" className="flex h-full flex-col gap-0">
       {/* Table — rows are 36px each so 3 rows + 28px footer = 136px = inner height at default size */}
       <div className="flex-1 overflow-hidden rounded-lg border gp-hairline">
         <table className="w-full border-collapse">
@@ -77,6 +77,7 @@ export function TableWidget({ data, onChange }: TableWidgetProps) {
                       } ${rowIndex < data.rows.length - 1 ? 'border-b gp-hairline' : ''}`}
                     >
                       <input
+                        data-floor-label
                         ref={(el) => {
                           const key = `${rowIndex}:${colIndex}`
                           if (el) cellRefs.current.set(key, el)

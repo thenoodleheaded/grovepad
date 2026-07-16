@@ -25,7 +25,6 @@ import { useFocusStore } from '../../store/useFocusStore'
 import { GroupLayer } from '../widgets/GroupLayer'
 import { WidgetLayer } from '../widgets/WidgetLayer'
 import { CanvasContextMenu } from '../ui/CanvasContextMenu'
-import { CanvasLoadIndicator } from '../ui/CanvasLoadIndicator'
 import { CanvasToolbar } from '../ui/CanvasToolbar'
 import { SelectionActionBar } from '../ui/SelectionActionBar'
 import { ShaperHUD } from '../ui/ShaperHUD'
@@ -564,7 +563,6 @@ export function CanvasViewport() {
           <AiDebugPanel />
         </Suspense>
       )}
-      <CanvasLoadIndicator />
       <ZoomControls />
       <CanvasNavigator />
       <CanvasTreeDrawer />

@@ -1113,7 +1113,7 @@ Return ONLY a JSON object that adheres strictly to the response schema for this 
               value={openaiApiKey}
               onChange={(e) => handleApiKeyChange(e.target.value)}
               placeholder={import.meta.env.VITE_OPENAI_API_KEY ? "Using Key from environment config" : "Paste your OpenAI API Key..."}
-              className="h-10 w-full rounded-xl border gp-hairline bg-neutral-900/70 px-3 text-sm text-neutral-100 outline-none transition-colors placeholder:text-neutral-600 focus:border-emerald-400/50"
+              className="h-10 w-full rounded-xl border gp-hairline bg-neutral-900/70 px-3 text-sm text-neutral-100 outline-none transition-colors placeholder:text-neutral-600"
             />
           </label>
 
@@ -1125,7 +1125,7 @@ Return ONLY a JSON object that adheres strictly to the response schema for this 
               value={title}
               placeholder="e.g. Q3 Strategy Review"
               onChange={(e) => setTitle(e.target.value)}
-              className="h-10 w-full rounded-xl border gp-hairline bg-neutral-900/70 px-3 text-sm text-neutral-100 outline-none transition-colors placeholder:text-neutral-600 focus:border-emerald-400/50"
+              className="h-10 w-full rounded-xl border gp-hairline bg-neutral-900/70 px-3 text-sm text-neutral-100 outline-none transition-colors placeholder:text-neutral-600"
             />
           </label>
 
@@ -1203,7 +1203,7 @@ Return ONLY a JSON object that adheres strictly to the response schema for this 
               rows={4}
               placeholder="Tell Grove what to build, or paste raw text to digest…"
               onChange={(e) => setExtraText(e.target.value)}
-              className="w-full resize-none rounded-xl border gp-hairline bg-neutral-900/70 px-3 py-2.5 text-xs leading-relaxed text-neutral-200 outline-none transition-colors placeholder:text-neutral-600 focus:border-emerald-400/50"
+              className="w-full resize-none rounded-xl border gp-hairline bg-neutral-900/70 px-3 py-2.5 text-xs leading-relaxed text-neutral-200 outline-none transition-colors placeholder:text-neutral-600"
             />
           </label>
 

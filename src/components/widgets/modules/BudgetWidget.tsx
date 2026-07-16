@@ -39,7 +39,7 @@ export function BudgetWidget({ data, onChange }: BudgetWidgetProps) {
     })
 
   return (
-    <div className="flex h-full flex-col">
+    <div data-floor-panel="rows" className="flex h-full flex-col">
       {/* Line items — each row is 40px (1 grid cell) */}
       <div className="flex flex-col">
         {data.items.map((item) => {
@@ -55,6 +55,7 @@ export function BudgetWidget({ data, onChange }: BudgetWidgetProps) {
               </div>
 
               <input
+                data-floor-label
                 value={item.label}
                 placeholder="Line item…"
                 onChange={(e) => setLabel(item.id, e.target.value)}

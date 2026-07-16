@@ -191,8 +191,19 @@ export function computeDataWidth(type: ModuleType, data: ModuleData): number {
       const d = data as TableData
       const cols = d.rows.reduce((m, r) => Math.max(m, r.length), 0)
       if (cols === 0) return 0
-      // ~130px reading width per column + card padding.
-      return clamp(snapToGrid(cols * 130 + 24), C * 5, C * 20)
+      const widestColumn = Math.max(...Array.from({ length: cols }, (_, column) => {
+        const longest = d.rows.reduce((max, row) => Math.max(max, row[column]?.length ?? 0), 0)
+        return clamp(longest * 7 + 32, 96, 320)
+      }))
+      // TableWidget uses equal tracks, so the widest complete value defines
+      // every column's safe share.
+      return clamp(snapToGrid(widestColumn * cols + 24), C * 5, C * 32)
+    }
+    case 'budget': {
+      const d = data as BudgetData
+      const longest = d.items.reduce((max, item) => Math.max(max, item.label.length), 0)
+      // Label plus fixed amount/currency/remove affordances and card insets.
+      return clamp(snapToGrid(clamp(longest * 7 + 24, 120, 360) + 152), C * 5, C * 16)
     }
     case 'kanban': {
       const d = data as KanbanData

@@ -1,8 +1,10 @@
 import type { WidgetSizing } from '../widgets/contracts/registry'
 
-/** Mounted-card measurements are deliberately kept out of persisted Zustand
- * state. They are ephemeral DOM facts used by resize clamps while a card is
- * visible; the registry remains the fallback for culled cards. */
+/**
+ * Mounted-card measurements are browser facts, not board data. Keeping them
+ * outside Zustand means undo, persistence, and cloud sync never record a value
+ * that is only true for the current font/browser render.
+ */
 const liveSizing = new Map<string, WidgetSizing>()
 
 export function setLiveWidgetSizing(widgetId: string, sizing: WidgetSizing): void {
@@ -17,15 +19,24 @@ export function clearLiveWidgetSizing(widgetId: string): void {
   liveSizing.delete(widgetId)
 }
 
+/** Mounted content may tighten a registry window, never loosen it. */
 export function mergeWidgetSizing(
   fallback: WidgetSizing | undefined,
   live: WidgetSizing | undefined,
 ): WidgetSizing {
+  const minWidth = Math.max(fallback?.minWidth ?? 0, live?.minWidth ?? 0)
+  const minHeight = Math.max(fallback?.minHeight ?? 0, live?.minHeight ?? 0)
   return {
     ...fallback,
     ...live,
-    minWidth: Math.max(fallback?.minWidth ?? 0, live?.minWidth ?? 0) || undefined,
-    minHeight: Math.max(fallback?.minHeight ?? 0, live?.minHeight ?? 0) || undefined,
+    minWidth: minWidth || undefined,
+    minHeight: minHeight || undefined,
+    // A live floor is allowed to reach a static ceiling, but never silently
+    // replaces that ceiling. Content authors can raise the registry maximum
+    // when a composition genuinely needs a larger useful range.
+    maxWidth: fallback?.maxWidth,
+    maxHeight: fallback?.maxHeight,
+    autoHeight: fallback?.autoHeight,
   }
 }
 

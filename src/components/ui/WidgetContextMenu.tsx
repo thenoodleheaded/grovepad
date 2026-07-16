@@ -157,40 +157,20 @@ export function WidgetContextMenu() {
         <MenuButton
           label={
             widget.collapsed
-              ? actionIds.length > 1
-                ? `Expand ${actionIds.length}`
-                : 'Expand widget'
-              : actionIds.length > 1
-                ? `Collapse ${actionIds.length} to pills`
-                : 'Collapse to pill'
+              ? actionIds.length > 1 ? `Expand ${actionIds.length}` : 'Expand widget'
+              : actionIds.length > 1 ? `Collapse ${actionIds.length} to pills` : 'Collapse to pill'
           }
-          onClick={() =>
-            run(() => useWidgetStore.getState().setWidgetsCollapsed(actionIds, !widget.collapsed))
-          }
+          onClick={() => run(() => useWidgetStore.getState().setWidgetsCollapsed(actionIds, !widget.collapsed))}
         >
-          {widget.collapsed ? (
-            <ChevronsUpDown size={13} aria-hidden />
-          ) : (
-            <ChevronsDownUp size={13} aria-hidden />
-          )}
+          {widget.collapsed ? <ChevronsUpDown size={13} aria-hidden /> : <ChevronsDownUp size={13} aria-hidden />}
         </MenuButton>
         <MenuButton
           label={widget.iconified ? 'Expand from icon' : 'Shrink to icon'}
-          onClick={() =>
-            run(() =>
-              actionIds.forEach((id) =>
-                useWidgetStore
-                  .getState()
-                  .setWidgetScaleState(id, widget.iconified ? 'full' : 'icon'),
-              ),
-            )
-          }
+          onClick={() => run(() => actionIds.forEach((id) => {
+            useWidgetStore.getState().setWidgetScaleState(id, widget.iconified ? 'full' : 'icon')
+          }))}
         >
-          {widget.iconified ? (
-            <ChevronsUpDown size={13} aria-hidden />
-          ) : (
-            <Shrink size={13} aria-hidden />
-          )}
+          {widget.iconified ? <ChevronsUpDown size={13} aria-hidden /> : <Shrink size={13} aria-hidden />}
         </MenuButton>
         <MenuButton
           label="Group selected"

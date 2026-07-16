@@ -25,7 +25,7 @@ A widget is exactly **one piece of glass** — the backplate — in the finalize
 |:---|:---|:---|:---|
 | **E0** | Backplate | The widget's single glass plate | Existing `gp-glass` recipe; accent bloom at ~9% mix top-left; the only border; the only shadow cast to canvas |
 | **E1** | Island | A content group, raised on the backplate. The unit focus mode rearranges. | Lighter fill (white 5% → 2.4% vertical gradient), 1px top catch-light, soft contact shadow. **No full border.** |
-| **E−1** | Well | Sunken screen for *displayed* values (statuses, computed numbers, readouts) | Inset top shadow, faint bottom lip-light, no outer shadow. Editable inputs are shallow wells; displays are deep wells. |
+| **E−1** | Well | Sunken screen for *displayed* values (statuses, computed numbers, readouts) | Inset top shadow, faint bottom lip-light, no outer shadow. Displayed values may use deep wells; editable controls borrow the single surface of their containing field island. |
 
 **The nesting law:** a well may sit inside an island; an island may **never** sit inside an island. One material step per nesting level.
 
@@ -73,12 +73,17 @@ A widget is exactly **one piece of glass** — the backplate — in the finalize
     0 1px 0 rgba(255,255,255,.045);       /* bottom lip catch-light */
 }
 
-/* E−1 shallow — editable input */
-.gp-input {
-  border-radius: var(--gp-r2);
-  background: rgba(0,0,0,.26);
-  box-shadow: inset 0 1px 2px rgb(0 0 0 / .28);
-  border: 1px solid transparent;           /* border appears on hover/focus only */
+/* Editable field — the island owns all visible paint */
+.gp-field-island {
+  outline: 1px solid rgba(255,255,255,.10);
+}
+.gp-field-island:focus-within {
+  outline-color: var(--gp-widget-accent);
+}
+.gp-field-island :is(input, textarea, select) {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
 }
 ```
 
@@ -181,7 +186,7 @@ Not every island may be scaled, and none may be scaled arbitrarily. Every island
 | max width | the island's container | an island never escapes the backplate |
 | max height | 420px | past this an island stops being a panel and starts being a monopoly; scroll inside instead |
 
-**Clamp behavior:** a drag past a bound stops at the bound. No elastic overshoot on islands (that vocabulary belongs to whole-card scale states); the handle simply refuses, which is how the user learns where the edge is.
+**Clamp behavior:** a drag past a bound stops at the bound. There is no elastic overshoot or state transition; the handle simply refuses, which is how the user learns where the edge is.
 
 **Composition beats an individual clamp.** Satisfying every island's own bounds
 is insufficient if the assembled card overlaps or clips. After applying saved
@@ -195,12 +200,17 @@ renderer's natural flow. No persisted preference outranks operability.
 ### Article XVIII.2 — Whole-card size charters
 
 The island charter and the whole-card charter are one system. Registry windows
-provide safe unmounted fallbacks; mounted content may raise an instance floor.
-Control-only widgets are `autoHeight` and expose no meaningless vertical
-resize. Growable wells receive explicit min/max sizes. Radial charts remain
-aspect-locked and size from the rectangle left after siblings reserve their
-minima. Responsive layout tiers eliminate intermediate squash bands. The full
-invariants, calibration procedure, and dead-zone definition live in Article
+are the off-screen fallback; the mounted renderer composes a stricter live
+floor from reflowing text, rows/lists, rigid grids, and controls. Complete text
+width is measured before ellipsis. The store merges that floor into every
+resize path. Content changes can grow a card on either axis but never
+auto-shrink it. Control-only widgets are `autoHeight` and expose no meaningless
+vertical resize. Radial charts remain aspect-locked after siblings reserve
+their minima. Whole-card resizing clamps cleanly at the live floor. Crossing
+both width and height floors by the state threshold commits one neighbouring
+full/pill/icon state per gesture; single-axis movement and maximum-bound
+overscale never collapse the card. Expansion restores and revalidates the
+dormant full size. The invariants and calibration procedure live in Article
 XII.1 of the widget constitution.
 
 ---

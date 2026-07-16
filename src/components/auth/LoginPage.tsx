@@ -11,14 +11,6 @@ interface Notice {
   text: string
 }
 
-function GitHubMark() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden>
-      <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z" />
-    </svg>
-  )
-}
-
 function GoogleMark() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden>
@@ -61,14 +53,6 @@ function MicrosoftMark() {
   )
 }
 
-function DiscordMark() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 127.14 96.36" fill="#5865F2" aria-hidden>
-      <path d="M107.7 8.07A105.15 105.15 0 0 0 81.47 0a72.06 72.06 0 0 0-3.36 6.83 97.68 97.68 0 0 0-29.11 0A72.37 72.37 0 0 0 45.64 0a105.89 105.89 0 0 0-26.25 8.09C2.79 32.65-1.71 56.6.54 80.21a105.73 105.73 0 0 0 32.17 16.15 77.7 77.7 0 0 0 6.89-11.11 68.42 68.42 0 0 1-10.85-5.18c.91-.66 1.8-1.34 2.66-2a75.57 75.57 0 0 0 64.32 0c.87.71 1.76 1.39 2.66 2a68.68 68.68 0 0 1-10.87 5.19 77 77 0 0 0 6.89 11.1 105.25 105.25 0 0 0 32.19-16.14c2.64-27.38-4.51-51.11-18.9-72.15zM42.45 65.69C36.18 65.69 31 60 31 53s5-12.74 11.43-12.74S54 46 53.89 53s-5.05 12.69-11.44 12.69zm42.24 0C78.41 65.69 73.25 60 73.25 53s5-12.74 11.44-12.74S96.23 46 96.12 53s-5.04 12.69-11.43 12.69z" />
-    </svg>
-  )
-}
-
 function FacebookMark() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="#1877F2" aria-hidden>
@@ -78,14 +62,27 @@ function FacebookMark() {
 }
 
 /** Quick sign-in providers, in display order — add another Supabase OAuth
- *  provider here and it appears in the grid with no further wiring. */
-const OAUTH_PROVIDERS: Array<{ id: Provider; label: string; Mark: () => ReactElement }> = [
-  { id: 'google', label: 'Google', Mark: GoogleMark },
-  { id: 'apple', label: 'Apple', Mark: AppleMark },
-  { id: 'github', label: 'GitHub', Mark: GitHubMark },
-  { id: 'azure', label: 'Microsoft', Mark: MicrosoftMark },
-  { id: 'discord', label: 'Discord', Mark: DiscordMark },
-  { id: 'facebook', label: 'Facebook', Mark: FacebookMark },
+ *  provider here and it appears in the grid with no further wiring.
+ *
+ *  `tint` follows each brand's own sign-in button convention rather than one
+ *  uniform recipe: Google and Microsoft's marks already carry their official
+ *  multicolor palette, so their island stays neutral glass; Apple ships a
+ *  monochrome mark and is conventionally rendered on a near-black button;
+ *  Facebook's brand is a single solid blue, so its island is tinted with it.
+ *
+ *  `comingSoon` disables the button without removing it — the provider isn't
+ *  wired up on the Supabase project yet. */
+const OAUTH_PROVIDERS: Array<{
+  id: Provider
+  label: string
+  Mark: () => ReactElement
+  tint: string
+  comingSoon?: boolean
+}> = [
+  { id: 'google', label: 'Google', Mark: GoogleMark, tint: 'text-neutral-100 hover:bg-white/5' },
+  { id: 'apple', label: 'Apple', Mark: AppleMark, tint: 'bg-black/40 text-white', comingSoon: true },
+  { id: 'azure', label: 'Microsoft', Mark: MicrosoftMark, tint: 'text-neutral-100 hover:bg-white/5' },
+  { id: 'facebook', label: 'Facebook', Mark: FacebookMark, tint: 'bg-[#1877F2]/20 text-white hover:bg-[#1877F2]/28' },
 ]
 
 /** Full-screen login gate — Supabase auth with a local-first guest exit. */
@@ -204,28 +201,32 @@ export function LoginPage() {
         )}
 
         <form onSubmit={submitPassword} className="flex flex-col gap-2.5">
-          <input
-            type="email"
-            required
-            autoComplete="email"
-            value={email}
-            placeholder="Email"
-            aria-label="Email"
-            disabled={!supabaseConfigured}
-            onChange={(e) => setEmail(e.target.value)}
-            className="h-10 rounded-xl border gp-hairline bg-neutral-900/70 px-3 text-sm text-neutral-100 outline-none transition-colors placeholder:text-neutral-600 focus:border-emerald-400/50 disabled:opacity-50"
-          />
-          <input
-            type="password"
-            required
-            autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
-            value={password}
-            placeholder="Password"
-            aria-label="Password"
-            disabled={!supabaseConfigured}
-            onChange={(e) => setPassword(e.target.value)}
-            className="h-10 rounded-xl border gp-hairline bg-neutral-900/70 px-3 text-sm text-neutral-100 outline-none transition-colors placeholder:text-neutral-600 focus:border-emerald-400/50 disabled:opacity-50"
-          />
+          <div className="gp-field-island">
+            <input
+              type="email"
+              required
+              autoComplete="email"
+              value={email}
+              placeholder="Email"
+              aria-label="Email"
+              disabled={!supabaseConfigured}
+              onChange={(e) => setEmail(e.target.value)}
+              className="gp-input h-10 w-full text-sm text-neutral-100 placeholder:text-neutral-600 disabled:opacity-50"
+            />
+          </div>
+          <div className="gp-field-island">
+            <input
+              type="password"
+              required
+              autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
+              value={password}
+              placeholder="Password"
+              aria-label="Password"
+              disabled={!supabaseConfigured}
+              onChange={(e) => setPassword(e.target.value)}
+              className="gp-input h-10 w-full text-sm text-neutral-100 placeholder:text-neutral-600 disabled:opacity-50"
+            />
+          </div>
           <button
             type="submit"
             disabled={!supabaseConfigured || busy !== null}
@@ -246,17 +247,33 @@ export function LoginPage() {
           </button>
         </form>
 
-        <div className="mt-2 flex items-center justify-between">
+        {/* Create account and guest are equally weighted, real buttons — guest
+            is a first-class local-only path, not an afterthought link. */}
+        <div className="mt-2.5 grid grid-cols-2 gap-2">
           <button
             type="button"
             onClick={() => {
               setMode(mode === 'signin' ? 'signup' : 'signin')
               setNotice(null)
             }}
-            className="text-[11px] text-neutral-500 transition-colors hover:text-neutral-300"
+            className="gp-island gp-login-action gp-login-action--secondary flex h-10 items-center justify-center text-sm font-medium text-neutral-200 transition-all active:scale-[0.98]"
           >
-            {mode === 'signin' ? 'New here? Create an account' : 'Have an account? Sign in'}
+            {mode === 'signin' ? 'Create account' : 'Sign in instead'}
           </button>
+          <button
+            type="button"
+            onClick={continueAsGuest}
+            className="gp-island gp-login-action gp-login-action--guest flex h-10 items-center justify-center gap-1.5 text-sm font-medium text-emerald-300 transition-all active:scale-[0.98]"
+          >
+            Continue as guest
+            <ArrowRight size={13} aria-hidden />
+          </button>
+        </div>
+        <p className="mt-2 text-center text-[10px] leading-relaxed text-neutral-600">
+          Guest work saves to this browser only — sign in any time to sync.
+        </p>
+
+        <div className="mt-3 flex justify-center">
           <button
             type="button"
             disabled={!supabaseConfigured || busy !== null}
@@ -291,33 +308,22 @@ export function LoginPage() {
           <span className="h-px flex-1 bg-neutral-800" aria-hidden />
         </div>
 
-        <div className="flex justify-center gap-2">
-          {OAUTH_PROVIDERS.map(({ id, label, Mark }) => (
+        <div className="grid grid-cols-2 gap-2">
+          {OAUTH_PROVIDERS.map(({ id, label, Mark, tint, comingSoon }) => (
             <button
               key={id}
               type="button"
-              title={`Continue with ${label}`}
-              aria-label={`Continue with ${label}`}
-              disabled={!supabaseConfigured || busy !== null}
+              title={comingSoon ? `${label} sign-in is coming soon` : `Continue with ${label}`}
+              aria-label={comingSoon ? `${label} sign-in is coming soon` : `Continue with ${label}`}
+              disabled={comingSoon || !supabaseConfigured || busy !== null}
               onClick={() => oauth(id)}
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border gp-hairline bg-neutral-900/70 text-neutral-200 transition-all hover:border-neutral-500 hover:bg-neutral-800/70 active:scale-[0.94] disabled:opacity-40"
+              className={`gp-island gp-login-provider flex h-11 items-center justify-center gap-2 px-3 text-xs font-medium transition-all active:scale-[0.97] disabled:opacity-40 ${tint}`}
             >
-              {busy === id ? <Loader2 size={13} className="animate-spin" aria-hidden /> : <Mark />}
+              {busy === id ? <Loader2 size={14} className="animate-spin" aria-hidden /> : <Mark />}
+              {busy === id ? 'Connecting…' : label}
             </button>
           ))}
         </div>
-
-        <button
-          type="button"
-          onClick={continueAsGuest}
-          className="mt-5 flex w-full items-center justify-center gap-1.5 text-xs text-neutral-500 transition-colors hover:text-neutral-200"
-        >
-          Continue as guest
-          <ArrowRight size={12} aria-hidden />
-        </button>
-        <p className="mt-2 text-center text-[10px] leading-relaxed text-neutral-700">
-          Guest work saves to this browser only. Sign in any time to sync.
-        </p>
       </div>
     </div>
   )

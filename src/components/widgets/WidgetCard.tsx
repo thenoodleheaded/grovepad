@@ -1,34 +1,23 @@
 import { memo, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react'
-import { LockKeyhole, Sparkles, TriangleAlert, Unlink } from 'lucide-react'
+import { LockKeyhole, Sparkles, Star, TriangleAlert, Unlink, UnlockKeyhole } from 'lucide-react'
 import { ErrorBoundary } from '../ErrorBoundary'
 import { useCanvasStore } from '../../store/useCanvasStore'
 import { isRecentlySpawned, useWidgetStore } from '../../store/useWidgetStore'
 import { useFocusStore } from '../../store/useFocusStore'
-import {
-  clearLiveWidgetSizing,
-  getLiveWidgetSizing,
-  mergeWidgetSizing,
-  setLiveWidgetSizing,
-} from '../../store/liveWidgetSizing'
+import { clearLiveWidgetSizing, getLiveWidgetSizing, mergeWidgetSizing, setLiveWidgetSizing } from '../../store/liveWidgetSizing'
 import type { ModuleData, Size, Widget, WidgetGroup } from '../../types/spatial'
 import { GRID_SIZE } from '../../types/spatial'
 import { convexHull, paddedMemberCorners } from '../../utils/groupGeometry'
 import { linkAnchorId, resolveLinkTargetAt } from '../../utils/linkTarget'
 import { PointerDragSession } from '../../utils/pointerDrag'
-import {
-  fullWidgetResizeBounds,
-  rubberStrainPx,
-  SNAP_OVERSHOOT_PX,
-  type WidgetScaleState,
-} from '../../utils/widgetScale'
+import { measureWidgetContentFloor } from '../../utils/widgetContentFloor'
+import { crossedBothScaleAxes, fullWidgetResizeBounds, type WidgetScaleState } from '../../utils/widgetScale'
 import { DEFAULT_SIZING, widgetDefinition } from '../../widgets/registry'
 import { FloatingBadges } from './FloatingBadges'
 import { FocusModeLayer } from './FocusModeLayer'
 import { PortRail } from './PortRail'
 import { WidgetRenderer } from './WidgetRenderer'
 
-/** Both dimensions at or below this (2 grid cells) render the icon-only tile. */
-const MICRO_MAX = GRID_SIZE * 2
 const PANELIZED_TYPES = new Set([
   'checklist',
   'bullets',
@@ -58,13 +47,19 @@ interface ResizeState {
   startY: number
   startWidth: number
   startHeight: number
-  /** Scale state at drag start — full card, pill, or icon tile. */
   state: WidgetScaleState
-  /** Set once an overshoot commits a state snap; later moves are swallowed. */
-  snapped: boolean
+  committed: boolean
+  historyCaptured: boolean
   moved: boolean
   rafId: number
   pending: Size | null
+  disposeWindowListeners: () => void
+}
+
+interface ResizePointerSample {
+  pointerId: number
+  clientX: number
+  clientY: number
 }
 
 const GROUP_DROP_DWELL_MS = 350
@@ -148,10 +143,18 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
   const shouldFitContent = Boolean(widget && !widget.collapsed && !widget.iconified)
   const fitContentType = widget?.type
 
-  // A mounted renderer is the authority on its own content floor. Registry
-  // profiles protect unmounted cards; this probe raises the live minimum when
-  // actual labels, values, or controls overflow, and owns both grow and shrink
-  // for content-hugged cards so stale persisted heights cannot leave dead glass.
+  useEffect(() => () => {
+    const resize = resizeRef.current
+    if (!resize) return
+    if (resize.rafId !== 0) cancelAnimationFrame(resize.rafId)
+    resize.disposeWindowListeners()
+    document.body.removeAttribute('data-widget-dragging')
+    document.body.removeAttribute('data-widget-resizing')
+  }, [])
+
+  // The mounted renderer declares its real floor. Unlike an outer overflow
+  // check, this reads complete input/ellipsis text and recursively composes
+  // rows, grids, and stacked panels, so visually chopped text is detectable.
   useLayoutEffect(() => {
     const content = contentRef.current
     if (!content || !fitContentType || !shouldFitContent) {
@@ -159,74 +162,55 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
       return
     }
     let raf = 0
-    let observedUi: HTMLElement | null = null
-    const resizeObserver = new ResizeObserver(() => measure())
+    let ready = false
+    const readyTimer = window.setTimeout(() => {
+      ready = true
+      measure()
+    }, 360)
     const measure = () => {
+      if (!ready) return
       cancelAnimationFrame(raf)
       raf = requestAnimationFrame(() => {
         const ui = content.querySelector<HTMLElement>('.gp-widget-ui')
         if (!ui) return
-        if (ui !== observedUi) {
-          if (observedUi) resizeObserver.unobserve(observedUi)
-          observedUi = ui
-          resizeObserver.observe(ui)
-        }
         const live = useWidgetStore.getState().widgets[widgetId]
         if (!live || live.collapsed || live.iconified) return
-        const fallback = widgetDefinition(live.type).sizing
-        const overflowX = Math.max(0, ui.scrollWidth - ui.clientWidth)
-        const overflowY = Math.max(0, ui.scrollHeight - ui.clientHeight)
-        const measuredMinWidth = overflowX > 1
-          ? Math.ceil((live.size.width + overflowX) / 4) * 4
-          : fallback?.minWidth ?? DEFAULT_SIZING.minWidth
-        const measuredMinHeight = overflowY > 1
-          ? Math.min(
-              fallback?.maxHeight ?? Infinity,
-              Math.ceil((live.size.height + overflowY) / 4) * 4,
-            )
-          : fallback?.minHeight ?? DEFAULT_SIZING.minHeight
-        setLiveWidgetSizing(widgetId, {
-          minWidth: Math.max(fallback?.minWidth ?? DEFAULT_SIZING.minWidth, measuredMinWidth),
-          minHeight: Math.max(fallback?.minHeight ?? DEFAULT_SIZING.minHeight, measuredMinHeight),
-        })
-
-        if (!fallback?.autoHeight) return
-        const naturalHeight = ui.scrollHeight + 24
-        const targetHeight = Math.min(
-          fallback.maxHeight ?? Infinity,
-          Math.max(
-            fallback.minHeight ?? DEFAULT_SIZING.minHeight,
-            Math.ceil(naturalHeight / GRID_SIZE) * GRID_SIZE,
-          ),
-        )
-        if (Math.abs(targetHeight - live.size.height) > 1) {
-          useWidgetStore.getState().resizeWidget(widgetId, { ...live.size, height: targetHeight })
+        const fallback = {
+          ...DEFAULT_SIZING,
+          ...widgetDefinition(live.type).sizing,
+        }
+        const result = measureWidgetContentFloor(ui, live.size, fallback)
+        setLiveWidgetSizing(widgetId, result.sizing)
+        if (result.growTo.width > live.size.width || result.growTo.height > live.size.height) {
+          useWidgetStore.getState().resizeWidget(widgetId, result.growTo)
         }
       })
     }
+    const resizeObserver = new ResizeObserver(measure)
     resizeObserver.observe(content)
     const mutationObserver = new MutationObserver(measure)
     mutationObserver.observe(content, { childList: true, subtree: true, characterData: true })
-    measure()
+    content.addEventListener('input', measure, true)
+    content.addEventListener('change', measure, true)
+
     return () => {
       cancelAnimationFrame(raf)
+      window.clearTimeout(readyTimer)
       resizeObserver.disconnect()
       mutationObserver.disconnect()
+      content.removeEventListener('input', measure, true)
+      content.removeEventListener('change', measure, true)
       clearLiveWidgetSizing(widgetId)
     }
   }, [fitContentType, shouldFitContent, widgetId])
 
-  // Lazy widget modules mount after the shell. Once the real module exists,
-  // grow the card by its *actual* overflow only. Measuring the overflow delta
-  // (instead of scrollHeight + padding) is important: a card that already fits
-  // resolves to zero and can never become taller just because it remounted or
-  // was clicked.
+  // Lazy modules can first appear one frame after the shell. This outer probe
+  // is retained as a backstop for a renderer that has not yet declared enough
+  // information for the intrinsic floor composer.
   useLayoutEffect(() => {
     const content = contentRef.current
     if (!content || !shouldFitContent) return
-
     let raf = 0
-    let observer: MutationObserver | null = null
     const fitOverflow = () => {
       const live = useWidgetStore.getState().widgets[widgetId]
       if (!live || live.collapsed || live.iconified) return
@@ -242,28 +226,14 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
         useWidgetStore.getState().resizeWidget(widgetId, { ...live.size, height })
       }
     }
-    const scheduleFit = () => {
-      cancelAnimationFrame(raf)
+    const readyTimer = window.setTimeout(() => {
       raf = requestAnimationFrame(fitOverflow)
-    }
-
-    if (content.querySelector('.gp-widget-ui')) {
-      scheduleFit()
-    } else {
-      observer = new MutationObserver(() => {
-        if (!content.querySelector('.gp-widget-ui')) return
-        observer?.disconnect()
-        observer = null
-        scheduleFit()
-      })
-      observer.observe(content, { childList: true, subtree: true })
-    }
-
+    }, 360)
     return () => {
       cancelAnimationFrame(raf)
-      observer?.disconnect()
+      window.clearTimeout(readyTimer)
     }
-  }, [fitContentType, shouldFitContent, widgetId])
+  }, [shouldFitContent, widgetId])
 
   // Trigger title editing when renamed via F2 or external action.
   useEffect(() => {
@@ -486,43 +456,23 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
     }
   }
 
-  // ── Resize handle — scale-state machine with elastic snap ────────────────
-  //
-  // The drag never renders an in-between layout past a state's size floor:
-  // the card compresses elastically (visual `scale` only — it "unwillingly
-  // tries" to shrink), and past SNAP_OVERSHOOT_PX it commits the next scale
-  // state (full → pill → icon) in one springy jump. Growing does the same in
-  // reverse. Hard ceilings (e.g. canvas nodes can never exceed 2 cells tall)
-  // stretch elastically instead of resizing.
+  // ── Resize handle ────────────────────────────────────────────────────────
 
-  const setStrain = (sx: number, sy: number) => {
-    const el = articleRef.current
-    if (!el) return
-    if (sx === 1 && sy === 1) {
-      el.style.scale = ''
-      el.style.transformOrigin = ''
-    } else {
-      el.style.transformOrigin = 'top left'
-      el.style.scale = `${sx} ${sy}`
+  const commitScaleState = (resize: ResizeState, target: WidgetScaleState) => {
+    if (resize.rafId !== 0) {
+      cancelAnimationFrame(resize.rafId)
+      resize.rafId = 0
     }
-  }
-
-  const pulseSnap = () => {
-    const el = articleRef.current
-    if (!el) return
-    el.classList.remove('gp-snap-pulse')
-    void el.offsetWidth // restart the animation
-    el.classList.add('gp-snap-pulse')
-  }
-
-  const commitSnap = (resize: ResizeState, target: WidgetScaleState) => {
-    resize.snapped = true
     resize.pending = null
-    setStrain(1, 1)
-    // Re-enable transitions first so the state change glides springily.
+    resize.committed = true
+    if (!resize.historyCaptured) {
+      useWidgetStore.getState().snapshotHistory()
+      resize.historyCaptured = true
+    }
+    // A state change is a single terminal decision for this drag. Releasing
+    // and starting a new gesture is required before another state can change.
     document.body.removeAttribute('data-widget-dragging')
-    useWidgetStore.getState().setWidgetScaleState(widgetId, target)
-    pulseSnap()
+    useWidgetStore.getState().setWidgetScaleState(widgetId, target, true)
   }
 
   const onResizePointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
@@ -531,6 +481,15 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
     e.preventDefault()
     e.stopPropagation()
     e.currentTarget.setPointerCapture(e.pointerId)
+    document.body.setAttribute(
+      'data-widget-resizing',
+      widgetDefinition(widget.type).sizing?.autoHeight ? 'width' : 'both',
+    )
+    const move = (event: PointerEvent) => onResizePointerMove(event)
+    const end = (event: PointerEvent) => onResizePointerEnd(event)
+    window.addEventListener('pointermove', move)
+    window.addEventListener('pointerup', end)
+    window.addEventListener('pointercancel', end)
     resizeRef.current = {
       pointerId: e.pointerId,
       startX: e.clientX,
@@ -538,19 +497,28 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
       startWidth: widget.size.width,
       startHeight: widget.size.height,
       state: widget.collapsed ? 'pill' : widget.iconified ? 'icon' : 'full',
-      snapped: false,
+      committed: false,
+      historyCaptured: false,
       moved: false,
       rafId: 0,
       pending: null,
+      disposeWindowListeners: () => {
+        window.removeEventListener('pointermove', move)
+        window.removeEventListener('pointerup', end)
+        window.removeEventListener('pointercancel', end)
+      },
     }
   }
 
-  const onResizePointerMove = (e: ReactPointerEvent<HTMLDivElement>) => {
+  const onResizePointerMove = (e: ResizePointerSample) => {
     const resize = resizeRef.current
-    if (!resize || resize.pointerId !== e.pointerId || resize.snapped) return
+    if (!resize || resize.pointerId !== e.pointerId || resize.committed) return
     if (!resize.moved) {
       resize.moved = true
-      if (resize.state === 'full') useWidgetStore.getState().snapshotHistory()
+      if (resize.state === 'full') {
+        useWidgetStore.getState().snapshotHistory()
+        resize.historyCaptured = true
+      }
       // Suppress the size transition while the handle is held so per-frame
       // resize updates track the pointer exactly (same trick as drags).
       document.body.setAttribute('data-widget-dragging', 'true')
@@ -560,47 +528,30 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
     const dy = (e.clientY - resize.startY) / zoom
 
     if (resize.state === 'pill' || resize.state === 'icon') {
-      // Pills and icon tiles never resize for real — the gesture strains in
-      // place, then commits the neighbouring state past the threshold.
-      const grow = Math.max(dx, dy)
-      const shrink = Math.max(-dx, -dy)
-      if (grow >= SNAP_OVERSHOOT_PX) {
-        commitSnap(resize, resize.state === 'pill' ? 'full' : 'pill')
+      if (crossedBothScaleAxes(dx, dy)) {
+        commitScaleState(resize, resize.state === 'pill' ? 'full' : 'pill')
         return
       }
-      if (shrink >= SNAP_OVERSHOOT_PX && resize.state === 'pill') {
-        commitSnap(resize, 'icon')
+      if (resize.state === 'pill' && crossedBothScaleAxes(-dx, -dy)) {
+        commitScaleState(resize, 'icon')
         return
       }
-      const outward = grow >= shrink
-      const strain = rubberStrainPx(outward ? grow : shrink)
-      const signed = outward ? strain : -strain
-      setStrain(1 + signed / resize.startWidth, 1 + signed / resize.startHeight)
       return
     }
 
-    // Full state: clamp inside the type's size window; underflow strains and
-    // then snaps into the pill, overflow past a hard ceiling only strains.
-    const sizing = mergeWidgetSizing(
-      widgetDefinition(widget.type).sizing,
-      getLiveWidgetSizing(widgetId),
-    )
-    const { minWidth, minHeight, maxWidth, maxHeight } = fullWidgetResizeBounds(
-      sizing,
-      DEFAULT_SIZING,
-    )
-    // Full cards can grow through their standard and expanded layout tiers.
-    // Elastic strain begins only at the type's real constitution ceiling,
-    // never at the arbitrary size where this gesture happened to start.
+    const sizing = mergeWidgetSizing(widgetDefinition(widget.type).sizing, getLiveWidgetSizing(widgetId))
+    const { minWidth, minHeight, maxWidth, maxHeight } = fullWidgetResizeBounds(sizing, DEFAULT_SIZING)
     // Content-fit widgets: height always follows the content reporter, so the
     // handle only drives width.
     const lockHeight = sizing?.autoHeight === true
     const rawWidth = resize.startWidth + dx
-    const rawHeight = lockHeight ? resize.startHeight : resize.startHeight + dy
+    const rawHeightIntent = resize.startHeight + dy
+    const rawHeight = lockHeight ? resize.startHeight : rawHeightIntent
 
-    const underflow = Math.max(minWidth - rawWidth, lockHeight ? 0 : minHeight - rawHeight, 0)
-    if (underflow >= SNAP_OVERSHOOT_PX) {
-      commitSnap(resize, 'pill')
+    // Collapsing requires deliberate diagonal shrink intent beyond both live
+    // minima. A single-axis shrink or any maximum-bound overscale only clamps.
+    if (crossedBothScaleAxes(minWidth - rawWidth, minHeight - rawHeightIntent)) {
+      commitScaleState(resize, 'pill')
       return
     }
 
@@ -608,22 +559,6 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
       width: Math.min(maxWidth, Math.max(minWidth, rawWidth)),
       height: Math.min(maxHeight, Math.max(minHeight, rawHeight)),
     }
-
-    const overW = rawWidth - maxWidth
-    const overH = lockHeight ? 0 : rawHeight - maxHeight
-    const strainX =
-      minWidth - rawWidth > 0
-        ? -rubberStrainPx(minWidth - rawWidth)
-        : overW > 0
-          ? rubberStrainPx(overW)
-          : 0
-    const strainY =
-      !lockHeight && minHeight - rawHeight > 0
-        ? -rubberStrainPx(minHeight - rawHeight)
-        : overH > 0
-          ? rubberStrainPx(overH)
-          : 0
-    setStrain(1 + strainX / resize.pending.width, 1 + strainY / resize.pending.height)
 
     if (resize.rafId === 0) {
       resize.rafId = requestAnimationFrame(() => {
@@ -634,14 +569,15 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
     }
   }
 
-  const onResizePointerEnd = (e: ReactPointerEvent<HTMLDivElement>) => {
+  const onResizePointerEnd = (e: Pick<ResizePointerSample, 'pointerId'>) => {
     const resize = resizeRef.current
     if (!resize || resize.pointerId !== e.pointerId) return
     resizeRef.current = null
     if (resize.rafId !== 0) cancelAnimationFrame(resize.rafId)
+    resize.disposeWindowListeners()
     document.body.removeAttribute('data-widget-dragging')
-    setStrain(1, 1)
-    if (resize.moved && !resize.snapped && resize.state === 'full') {
+    document.body.removeAttribute('data-widget-resizing')
+    if (resize.moved && !resize.committed && resize.state === 'full') {
       if (resize.pending) useWidgetStore.getState().resizeWidget(widgetId, resize.pending)
       useWidgetStore.getState().settleWidgets([widgetId])
     }
@@ -673,14 +609,10 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
 
   const collapsed = widget.collapsed === true
   const iconified = widget.iconified === true
-  const isMicro =
-    iconified ||
-    (!collapsed && widget.size.width <= MICRO_MAX && widget.size.height <= MICRO_MAX)
-  const capsuleHidden = (collapsed || isMicro) && !titleEditing
+  const capsuleHidden = (collapsed || iconified) && !titleEditing
   const def = widgetDefinition(widget.type)
   const Icon = def.icon
-  const panelized = PANELIZED_TYPES.has(widget.type) && !collapsed && !isMicro
-  const microIconSize = Math.max(14, Math.min(26, Math.round(Math.min(widget.size.width, widget.size.height) * 0.42)))
+  const panelized = PANELIZED_TYPES.has(widget.type) && !collapsed && !iconified
   // Full cards use the slightly squarer backplate radius R0 = 22.
   const widgetRadius = collapsed ? 18 : iconified ? 14 : 22
 
@@ -723,9 +655,7 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
           e.preventDefault()
           e.stopPropagation()
           if (collapsed || iconified) {
-            // A pill or icon tile springs back to its full card on double-click.
             useWidgetStore.getState().setWidgetScaleState(widgetId, 'full')
-            pulseSnap()
             return
           }
           // An expanded card enters focus mode — camera locks on, islands unlock.
@@ -771,15 +701,18 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
         </div>
       )}
 
-      {/* Floating editable title capsule — sits above the card border.
-          Fades out when collapsed: the pill body takes over as the title. */}
+      {/* Floating editable title capsule — sits above the card border,
+          left-aligned to the card edge. Fades out when collapsed: the pill
+          body takes over as the title. Lock/favorite share the same row,
+          just to the title's right — subtle, revealed on hover, and staying
+          visible once toggled on. */}
       <div
-        className={`gp-card-chrome pointer-events-none absolute inset-x-0 -top-9 z-20 flex justify-center transition-opacity duration-300 ${
+        className={`gp-card-chrome pointer-events-none absolute inset-x-0 -top-9 z-20 flex items-center gap-1.5 pl-3 transition-opacity duration-300 ${
           capsuleHidden ? 'opacity-0' : 'opacity-100'
         }`}
       >
         <div
-          className={`gp-title-capsule flex h-8 min-w-[64px] max-w-[80%] cursor-grab items-center justify-center rounded-full border border-neutral-600 bg-neutral-950/95 px-3 shadow-md active:cursor-grabbing ${
+          className={`gp-title-capsule flex h-8 min-w-[64px] max-w-[62%] cursor-grab items-center justify-center rounded-full border border-neutral-600 bg-neutral-950/95 px-3 shadow-md active:cursor-grabbing ${
             capsuleHidden ? 'pointer-events-none' : 'pointer-events-auto'
           }`}
           onPointerDown={(e) => {
@@ -828,6 +761,51 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
             </span>
           )}
         </div>
+
+        <div
+          className={`pointer-events-auto flex items-center gap-1 transition-opacity duration-200 ${
+            widget.metadata.locked || widget.metadata.favorite
+              ? 'opacity-100'
+              : 'opacity-0 group-hover/widget:opacity-100 focus-within:opacity-100'
+          }`}
+        >
+          <button
+            type="button"
+            aria-label={widget.metadata.favorite ? 'Remove from favorites' : 'Favorite widget'}
+            aria-pressed={!!widget.metadata.favorite}
+            onClick={(e) => {
+              e.stopPropagation()
+              useWidgetStore.getState().toggleWidgetFavorite(widgetId)
+            }}
+            className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border bg-neutral-950/90 transition-colors ${
+              widget.metadata.favorite
+                ? 'border-amber-400/50 text-amber-300'
+                : 'border-neutral-700/70 text-neutral-500 hover:text-amber-200'
+            }`}
+          >
+            <Star size={10} aria-hidden fill={widget.metadata.favorite ? 'currentColor' : 'none'} />
+          </button>
+          <button
+            type="button"
+            aria-label={widget.metadata.locked ? 'Unlock widget' : 'Lock widget'}
+            aria-pressed={!!widget.metadata.locked}
+            onClick={(e) => {
+              e.stopPropagation()
+              useWidgetStore.getState().toggleWidgetLocked(widgetId)
+            }}
+            className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border bg-neutral-950/90 transition-colors ${
+              widget.metadata.locked
+                ? 'border-neutral-500 text-neutral-300'
+                : 'border-neutral-700/70 text-neutral-500 hover:text-neutral-300'
+            }`}
+          >
+            {widget.metadata.locked ? (
+              <UnlockKeyhole size={10} aria-hidden />
+            ) : (
+              <LockKeyhole size={10} aria-hidden />
+            )}
+          </button>
+        </div>
       </div>
 
       {/* Collapsed pill title — lives inside the body so the pill IS the widget */}
@@ -845,6 +823,16 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
         </span>
       </div>
 
+      {/* Icon mode keeps one unmistakable identity mark and no partial UI. */}
+      <div
+        aria-hidden={!iconified}
+        className={`pointer-events-none absolute inset-0 z-10 flex items-center justify-center transition-opacity duration-300 ${
+          iconified ? 'opacity-100' : 'opacity-0'
+        }`}
+      >
+        <Icon size={28} style={{ color: def.accent }} aria-hidden />
+      </div>
+
       {/* Dependency explainer — dimming alone doesn't say why a card is muted */}
       {isBlocked && (
         <div className="pointer-events-none absolute -bottom-2.5 left-1/2 z-20 flex -translate-x-1/2 items-center gap-1 rounded-full border border-amber-500/40 bg-neutral-950/95 px-2 py-0.5 shadow-md">
@@ -855,18 +843,12 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
         </div>
       )}
 
-      {widget.metadata.locked && (
-        <span aria-label="Locked widget" title="Locked" className="gp-card-chrome pointer-events-none absolute left-3 top-3 z-20 flex h-6 w-6 items-center justify-center rounded-full border gp-hairline bg-neutral-950/80 text-neutral-400">
-          <LockKeyhole size={10} aria-hidden />
-        </span>
-      )}
-
-      {/* Widget content — fades out as the card collapses into a pill or shrinks to a micro tile.
+      {/* Widget content — fades out for dormant collapsed cards.
           Panelized widgets carry their own glass subpanels, so the shell padding tightens. */}
       <div
         ref={contentRef}
-        className={`gp-widget-content flex-1 overflow-hidden rounded-[20px] p-3 transition-opacity duration-300 ${
-          collapsed || isMicro ? 'pointer-events-none opacity-0' : 'opacity-100'
+        className={`gp-widget-content flex-1 overflow-hidden rounded-[20px] p-2.5 transition-opacity duration-300 ${
+          collapsed || iconified ? 'pointer-events-none opacity-0' : 'opacity-100'
         }`}
       >
         <ErrorBoundary
@@ -893,29 +875,11 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
         </ErrorBoundary>
       </div>
 
-
-      {/* Micro tile — both dimensions shrunk to <=2 grid cells: name and
-          content fade away, leaving just the widget's icon centered and
-          scaled to the card on the glassy panel. */}
-      <div
-        aria-hidden={!isMicro}
-        className={`pointer-events-none absolute inset-0 z-10 flex items-center justify-center transition-opacity duration-300 ${
-          isMicro ? 'opacity-100' : 'opacity-0'
-        }`}
-      >
-        <Icon size={microIconSize} style={{ color: def.accent }} aria-hidden />
-      </div>
-
-      {/* Resize handle — a small dot inset from the rounded corner. Stays
-          visible even when collapsed so a pill can still be resized back. */}
       <div
         role="presentation"
-        title={def.sizing?.autoHeight ? 'Resize width' : 'Resize'}
+        title={collapsed || iconified ? 'Drag to expand' : def.sizing?.autoHeight ? 'Resize width' : 'Resize'}
         onPointerDown={onResizePointerDown}
-        onPointerMove={onResizePointerMove}
-        onPointerUp={onResizePointerEnd}
-        onPointerCancel={onResizePointerEnd}
-        className="gp-card-chrome gp-resize-handle absolute bottom-2 right-2 z-20 h-3.5 w-3.5 cursor-nwse-resize"
+        className="gp-card-chrome gp-resize-handle absolute bottom-2 right-2 z-20 h-3 w-3 cursor-nwse-resize"
       />
 
       {groupId && groupColor && (

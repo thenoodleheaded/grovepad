@@ -93,7 +93,7 @@ export function AiGeneratorWidget({ data, widgetId, onChange }: AiGeneratorWidge
             if (!isGenerating) void generate()
           }
         }}
-        className="flex-1 w-full resize-none rounded-lg border gp-hairline bg-neutral-800/30 px-3 py-2.5 text-[13px] leading-[1.55] text-neutral-200 outline-none transition-colors placeholder:text-neutral-700 gp-hairline-focus focus:bg-neutral-800/50 disabled:opacity-50"
+        className="flex-1 w-full resize-none rounded-lg border gp-hairline bg-neutral-800/30 px-3 py-2.5 text-[13px] leading-[1.55] text-neutral-200 outline-none transition-colors placeholder:text-neutral-700 disabled:opacity-50"
       />
 
       {/* Generate button — full-width, prominent */}

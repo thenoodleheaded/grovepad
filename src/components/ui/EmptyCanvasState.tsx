@@ -55,7 +55,7 @@ export function EmptyCanvasState() {
             <button
               type="button"
               onClick={() => useWidgetStore.getState().openAddWidget(viewCenterWorld())}
-              className="flex h-10 items-center justify-center gap-2 rounded-xl bg-emerald-400 text-xs font-semibold text-neutral-950 transition-[background-color,transform] hover:bg-emerald-300 active:scale-[0.97]"
+              className="flex h-10 items-center justify-center gap-2 rounded-xl bg-emerald-400 text-xs font-semibold text-neutral-950 transition-[background-color,transform,scale] hover:bg-emerald-300 active:scale-[0.97]"
             >
               <Plus size={14} aria-hidden />
               Add widget
@@ -63,7 +63,7 @@ export function EmptyCanvasState() {
             <button
               type="button"
               onClick={() => useWidgetStore.getState().setQuickAddOpen(true)}
-              className="flex h-10 items-center justify-center gap-2 rounded-xl border gp-hairline bg-neutral-900/65 text-xs font-semibold text-neutral-300 transition-[background-color,color,transform] hover:bg-neutral-800 hover:text-white active:scale-[0.97]"
+              className="flex h-10 items-center justify-center gap-2 rounded-xl border gp-hairline bg-neutral-900/65 text-xs font-semibold text-neutral-300 transition-[background-color,color,transform,scale] hover:bg-neutral-800 hover:text-white active:scale-[0.97]"
             >
               <Zap size={13} aria-hidden />
               Quick capture

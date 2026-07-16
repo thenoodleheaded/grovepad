@@ -184,7 +184,7 @@ function GhostWire() {
 
 function numberInput(value: number, onCommit: (next: number) => void, label: string) {
   return (
-    <label key={label} className="flex min-w-0 flex-1 flex-col gap-0.5">
+    <label key={label} className="gp-field-island flex min-w-0 flex-1 flex-col gap-0.5 px-2 py-1.5">
       <span className="text-[9px] uppercase tracking-wide text-neutral-600">{label}</span>
       <input
         type="number"
@@ -277,7 +277,7 @@ function WireInspector({
 
         {showTransform && (
           <div className="mx-1 mb-2 rounded-xl border gp-hairline p-2">
-            <label className="flex flex-col gap-1">
+            <label className="gp-field-island flex flex-col gap-1 px-2 py-1.5">
               <span className="text-[9px] font-semibold uppercase tracking-wide text-neutral-600">
                 {connection.kind === 'trigger' ? 'Payload transform' : 'Transform'}
               </span>
@@ -316,7 +316,7 @@ function WireInspector({
               </div>
             )}
             {transform.op === 'format' && (
-              <label className="mt-1.5 flex flex-col gap-0.5">
+              <label className="gp-field-island mt-1.5 flex flex-col gap-0.5 px-2 py-1.5">
                 <span className="text-[9px] uppercase tracking-wide text-neutral-600">Template ({'{value}'})</span>
                 <input
                   type="text"
@@ -335,7 +335,7 @@ function WireInspector({
 
         {connection.kind === 'trigger' && (
           <div className="mx-1 mb-2 rounded-xl border gp-hairline p-2">
-            <label className="flex flex-col gap-1">
+            <label className="gp-field-island flex flex-col gap-1 px-2 py-1.5">
               <span className="text-[9px] font-semibold uppercase tracking-wide text-neutral-600">Fires when source…</span>
               <select
                 value={connection.edge ?? 'rising'}

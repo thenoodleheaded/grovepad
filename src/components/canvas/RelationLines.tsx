@@ -70,9 +70,7 @@ const WIDGET_PILL_CHROME = 41
 const GROUP_PILL_CHROME = 36
 /** Matches the pill's `min-w-[64px]`. */
 const PILL_MIN_HALF_WIDTH = 32
-/** The floating title capsule is hidden while a card is collapsed or shrunk
- *  to a micro tile (WidgetCard's `capsuleHidden`) — no pill, nothing to dodge. */
-const MICRO_TILE_MAX = GRID_SIZE * 2
+/** The floating title capsule is hidden while a card is collapsed. */
 
 function clamp(v: number, lo: number, hi: number): number {
   return Math.min(hi, Math.max(lo, v))
@@ -617,8 +615,7 @@ export function RelationLines() {
           return null
         }
         const center = widgetCenter(w)
-        const isMicro = w.collapsed !== true && w.size.width <= MICRO_TILE_MAX && w.size.height <= MICRO_TILE_MAX
-        const pillHidden = w.collapsed === true || isMicro
+        const pillHidden = w.collapsed === true || w.iconified === true
         result = {
           center,
           halfW: w.size.width / 2,

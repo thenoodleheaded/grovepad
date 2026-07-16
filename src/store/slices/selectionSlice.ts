@@ -338,6 +338,17 @@ export function createSelectionSlice({ set, get, pushHistory, markSpawned }: Wid
     }))
   },
 
+  toggleWidgetFavorite: (widgetId) => {
+    if (!get().widgets[widgetId]) return
+    pushHistory()
+    set((state) => ({
+      widgets: withWidget(state.widgets, widgetId, (widget) => ({
+        ...widget,
+        metadata: { ...widget.metadata, favorite: !widget.metadata.favorite },
+      })),
+    }))
+  },
+
   setWidgetAccent: (widgetId, accent) => {
     if (!get().widgets[widgetId]) return
     pushHistory()

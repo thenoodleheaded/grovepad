@@ -73,6 +73,7 @@ export interface IslandLayout {
 export interface WidgetMetadata {
   badges: WidgetBadge[]
   locked?: boolean
+  favorite?: boolean
   accent?: string
   zIndex?: number
   /** @deprecated Superseded by `islandLayout`; retained so old boards parse. */
@@ -101,12 +102,12 @@ export interface Widget {
   size: Size
   data: ModuleData
   metadata: WidgetMetadata
-  /** Collapsed to a name pill. `size` holds the pill dims so all geometry
-      (relations, hulls, culling) stays correct; the card size to restore
-      on expand lives in `expandedSize`. */
+  /** Collapsed to a name pill. `size` is the visible pill geometry; the full
+      size to restore is retained in `expandedSize`. */
   collapsed?: boolean
-  /** Shrunk to a bare icon tile; mutually exclusive with `collapsed`. */
+  /** Reduced to a compact icon tile; mutually exclusive with `collapsed`. */
   iconified?: boolean
+  /** Dormant full-card size preserved while a widget is a pill or icon. */
   expandedSize?: Size
   isHydrating?: boolean
 }
@@ -116,7 +117,7 @@ export interface Widget {
     pill width is measured from the title via pillSizeForTitle(). */
 export const COLLAPSED_SIZE: Size = { width: 200, height: 40 }
 
-/** Icon-tile dimensions of an iconified widget (two grid cells square). */
+/** Two grid cells square: large enough to remain a dependable pointer target. */
 export const ICONIFIED_SIZE: Size = { width: 80, height: 80 }
 
 // ---------------------------------------------------------------------------

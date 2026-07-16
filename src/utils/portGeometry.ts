@@ -11,8 +11,8 @@ import { commandsFor, fieldsFor } from '../widgets/fields'
 //
 // Layout: output ports (every readable field) stack on the RIGHT rail;
 // input ports (settable fields first, then commands) stack on the LEFT rail.
-// Each rail clusters around the card's vertical center with a spacing that
-// compresses as the card shrinks, so pills and icon tiles remain wireable.
+// Each rail clusters around the card's vertical center with spacing that
+// remains usable across the card's allowed resize window.
 // ---------------------------------------------------------------------------
 
 /** Vertical padding each rail keeps from the card's top/bottom edge — clear

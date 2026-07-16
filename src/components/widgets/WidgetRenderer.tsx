@@ -1,7 +1,6 @@
 import { Suspense } from 'react'
 import type { ModuleData, Widget } from '../../types/spatial'
 import { getOpaqueWidgetType } from '../../utils/persistedBoardSchema'
-import { widgetLayoutTier } from '../../widgets/sizingProfiles'
 import { renderFromFamilies, WIDGET_RENDERER_FAMILIES } from './renderers'
 
 interface WidgetRendererProps {
@@ -44,7 +43,6 @@ export function WidgetRenderer({ widget, onUpdate, onHeightChange }: WidgetRende
       <div
         className="gp-widget-ui h-full w-full"
         data-widget-type={widget.type}
-        data-layout-tier={widgetLayoutTier(widget.type, widget.size.width)}
       >
         {renderFromFamilies(WIDGET_RENDERER_FAMILIES, { widget, onUpdate, onHeightChange })}
       </div>

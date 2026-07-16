@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { ArrowLeft, Blocks, Check, Search, X } from 'lucide-react'
+import { ArrowLeft, Blocks, Check, ChevronDown, Search, Star, X } from 'lucide-react'
 import { useFocusTrap } from '../../hooks/useFocusTrap'
 import { useOverlayLifecycle } from '../../store/useOverlayStore'
 import { useWidgetStore } from '../../store/useWidgetStore'
+import { useWidgetPickerPrefsStore } from '../../store/useWidgetPickerPrefsStore'
 import {
   CATEGORY_LABELS,
   CATEGORY_ORDER,
@@ -51,13 +52,17 @@ function columnsForViewport(): number {
 function WidgetTile({
   def,
   active,
+  favorited,
   onSpawn,
   onHover,
+  onToggleFavorite,
 }: {
   def: WidgetDefinition
   active: boolean
+  favorited: boolean
   onSpawn: () => void
   onHover: () => void
+  onToggleFavorite: () => void
 }) {
   const Icon = def.icon
   const ref = useRef<HTMLButtonElement>(null)
@@ -68,31 +73,48 @@ function WidgetTile({
   }, [active])
 
   return (
-    <button
-      ref={ref}
-      type="button"
-      aria-label={`Add ${def.label}`}
-      data-active={active || undefined}
-      onClick={onSpawn}
-      onPointerEnter={onHover}
-      className="gp-picker-row group/tile relative flex min-h-[112px] items-center rounded-[22px] py-3 pr-5 pl-[108px] text-left"
-      style={{ '--gp-tile-accent': def.accent } as React.CSSProperties}
-    >
-      <span
-        className="gp-picker-icon absolute top-1/2 left-3 flex h-20 w-20 -translate-y-1/2 shrink-0 items-center justify-center rounded-[18px]"
-        style={{ color: def.accent }}
+    <div className="relative" style={{ '--gp-tile-accent': def.accent } as React.CSSProperties}>
+      <button
+        ref={ref}
+        type="button"
+        aria-label={`Add ${def.label}`}
+        data-active={active || undefined}
+        onClick={onSpawn}
+        onPointerEnter={onHover}
+        className="gp-picker-row group/tile relative flex min-h-[112px] w-full items-center rounded-[22px] py-3 pr-5 pl-[108px] text-left"
       >
-        <Icon size={38} strokeWidth={1.8} aria-hidden />
-      </span>
-      <span className="relative z-[1] min-w-0 flex-1">
-        <span className="gp-picker-tile-title block truncate text-[18px] font-semibold tracking-[-0.02em] text-neutral-100">
-          {def.label}
+        <span
+          className="gp-picker-icon absolute top-1/2 left-3 flex h-20 w-20 -translate-y-1/2 shrink-0 items-center justify-center rounded-[18px]"
+          style={{ color: def.accent }}
+        >
+          <Icon size={38} strokeWidth={1.8} aria-hidden />
         </span>
-        <span className="gp-picker-tile-description mt-1.5 line-clamp-2 block text-[11.5px] leading-[1.45] text-neutral-400/85">
-          {def.description}
+        <span className="relative z-[1] flex min-w-0 flex-1 flex-col justify-between gap-1 self-stretch pr-7">
+          <span className="gp-picker-tile-title block truncate text-[19px] font-semibold tracking-[-0.02em] text-neutral-100">
+            {def.label}
+          </span>
+          <span className="gp-picker-tile-description line-clamp-2 block text-[11.5px] leading-[1.45] text-neutral-400/85">
+            {def.description}
+          </span>
         </span>
-      </span>
-    </button>
+      </button>
+      <button
+        type="button"
+        aria-label={favorited ? `Remove ${def.label} from favorites` : `Favorite ${def.label}`}
+        aria-pressed={favorited}
+        onClick={(e) => {
+          e.stopPropagation()
+          onToggleFavorite()
+        }}
+        className={`absolute top-3.5 right-3.5 z-[2] flex h-6 w-6 items-center justify-center rounded-full transition-opacity duration-150 ${
+          favorited
+            ? 'text-amber-300 opacity-100'
+            : 'text-neutral-500 opacity-0 hover:text-amber-200 focus-visible:opacity-100 group-hover/tile:opacity-100'
+        }`}
+      >
+        <Star size={14} strokeWidth={1.8} fill={favorited ? 'currentColor' : 'none'} aria-hidden />
+      </button>
+    </div>
   )
 }
 
@@ -103,6 +125,9 @@ function WidgetTile({
 function PacksView({ onBack }: { onBack: () => void }) {
   const activePacks = useWidgetStore((state) => state.activePacks)
   const togglePack = useWidgetStore((state) => state.togglePack)
+  const hiddenPackWidgetTypes = useWidgetPickerPrefsStore((state) => state.hiddenPackWidgetTypes)
+  const toggleHiddenPackWidgetType = useWidgetPickerPrefsStore((state) => state.toggleHiddenPackWidgetType)
+  const [expandedPack, setExpandedPack] = useState<DomainPack | null>(null)
   const allDefs = orderedDefinitions()
   // Only show packs that actually ship widgets — toggling an empty pack
   // would be a no-op, so don't advertise it as a choice yet.
@@ -134,43 +159,100 @@ function PacksView({ onBack }: { onBack: () => void }) {
           {availablePacks.map((pack, index) => {
             const isActive = activePacks.includes(pack)
             const packWidgets = allDefs.filter((d) => d.pack === pack)
+            const isExpanded = expandedPack === pack
             return (
-              <button
+              <div
                 key={pack}
-                type="button"
-                role="switch"
-                aria-checked={isActive}
-                onClick={() => togglePack(pack)}
-                className={`gp-rise flex items-center justify-between gap-3 rounded-2xl border p-4 text-left transition-colors duration-150 ${
+                className={`gp-rise flex flex-col rounded-2xl border transition-colors duration-150 ${
                   isActive
                     ? 'border-emerald-400/40 bg-emerald-400/[0.07]'
                     : 'border-neutral-800 bg-neutral-900/40 hover:border-neutral-700 hover:bg-neutral-800/40'
                 }`}
                 style={{ animationDelay: `${Math.min(index * 25, 250)}ms` }}
               >
-                <span className="min-w-0">
-                  <span
-                    className={`block text-[13px] font-medium transition-colors ${
-                      isActive ? 'text-emerald-300' : 'text-neutral-200'
-                    }`}
+                <div className="flex items-center gap-1.5 p-2 pl-4">
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={isActive}
+                    onClick={() => togglePack(pack)}
+                    className="flex min-w-0 flex-1 items-center justify-between gap-3 rounded-xl py-1.5 text-left"
                   >
-                    {DOMAIN_PACK_LABELS[pack]}
-                  </span>
-                  <span className="mt-0.5 block text-[11px] leading-snug text-neutral-500">
-                    {PACK_BLURBS[pack] ?? packWidgets.map((d) => d.label).join(' · ')}
-                  </span>
-                </span>
-                <span
-                  aria-hidden
-                  className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border transition-all ${
-                    isActive
-                      ? 'border-emerald-400 bg-emerald-400 text-neutral-950'
-                      : 'border-neutral-700 text-transparent'
-                  }`}
-                >
-                  <Check size={12} strokeWidth={3} />
-                </span>
-              </button>
+                    <span className="min-w-0">
+                      <span
+                        className={`block text-[13px] font-medium transition-colors ${
+                          isActive ? 'text-emerald-300' : 'text-neutral-200'
+                        }`}
+                      >
+                        {DOMAIN_PACK_LABELS[pack]}
+                      </span>
+                      <span className="mt-0.5 block text-[11px] leading-snug text-neutral-500">
+                        {PACK_BLURBS[pack] ?? packWidgets.map((d) => d.label).join(' · ')}
+                      </span>
+                    </span>
+                    <span
+                      aria-hidden
+                      className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border transition-all ${
+                        isActive
+                          ? 'border-emerald-400 bg-emerald-400 text-neutral-950'
+                          : 'border-neutral-700 text-transparent'
+                      }`}
+                    >
+                      <Check size={12} strokeWidth={3} />
+                    </span>
+                  </button>
+                  {isActive && (
+                    <button
+                      type="button"
+                      aria-label={
+                        isExpanded
+                          ? `Collapse ${DOMAIN_PACK_LABELS[pack]} widget list`
+                          : `Choose which ${DOMAIN_PACK_LABELS[pack]} widgets to show`
+                      }
+                      aria-expanded={isExpanded}
+                      onClick={() => setExpandedPack(isExpanded ? null : pack)}
+                      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-neutral-500 transition-colors hover:bg-neutral-800 hover:text-neutral-300"
+                    >
+                      <ChevronDown
+                        size={14}
+                        className={`transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
+                        aria-hidden
+                      />
+                    </button>
+                  )}
+                </div>
+                {isActive && isExpanded && (
+                  <div className="flex flex-col gap-0.5 border-t gp-hairline px-2 pt-1.5 pb-2">
+                    {packWidgets.map((def) => {
+                      const hidden = hiddenPackWidgetTypes.includes(def.type)
+                      return (
+                        <button
+                          key={def.type}
+                          type="button"
+                          role="switch"
+                          aria-checked={!hidden}
+                          onClick={() => toggleHiddenPackWidgetType(def.type)}
+                          className="flex items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-left text-[11.5px] transition-colors hover:bg-neutral-800/60"
+                        >
+                          <span className={hidden ? 'text-neutral-600 line-through' : 'text-neutral-300'}>
+                            {def.label}
+                          </span>
+                          <span
+                            aria-hidden
+                            className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${
+                              hidden
+                                ? 'border-neutral-700 text-transparent'
+                                : 'border-emerald-400 bg-emerald-400 text-neutral-950'
+                            }`}
+                          >
+                            <Check size={9} strokeWidth={3} />
+                          </span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
             )
           })}
         </div>
@@ -190,6 +272,9 @@ function PacksView({ onBack }: { onBack: () => void }) {
  */
 export function AddWidgetModal({ worldPos, onClose }: AddWidgetModalProps) {
   const activePacks = useWidgetStore((state) => state.activePacks)
+  const favoriteWidgetTypes = useWidgetPickerPrefsStore((state) => state.favoriteWidgetTypes)
+  const hiddenPackWidgetTypes = useWidgetPickerPrefsStore((state) => state.hiddenPackWidgetTypes)
+  const toggleFavoriteWidgetType = useWidgetPickerPrefsStore((state) => state.toggleFavoriteWidgetType)
   const initialView = useWidgetStore((state) => state.addWidgetView)
   const [view, setView] = useState<'widgets' | 'packs'>(initialView)
   const [query, setQuery] = useState('')
@@ -212,6 +297,7 @@ export function AddWidgetModal({ worldPos, onClose }: AddWidgetModalProps) {
     const q = query.toLowerCase().trim()
     const visible = orderedDefinitions().filter((def) => {
       if (def.pack && !activePacks.includes(def.pack)) return false
+      if (def.pack && hiddenPackWidgetTypes.includes(def.type)) return false
       if (!q) return true
       return (
         def.label.toLowerCase().includes(q) ||
@@ -221,17 +307,25 @@ export function AddWidgetModal({ worldPos, onClose }: AddWidgetModalProps) {
         (AUTOMATION_CORE_SET.has(def.type) && AUTOMATION_CORE_CATALOG[def.type as AutomationCoreType].aliases.some((alias) => alias.toLowerCase().includes(q)))
       )
     })
+    // Favorites are pulled out of their normal category and pinned first,
+    // always — a favorited widget never shows twice.
+    const favoriteSet = new Set(favoriteWidgetTypes)
+    const favorites = visible.filter((def) => favoriteSet.has(def.type))
+    const rest = visible.filter((def) => !favoriteSet.has(def.type))
     const byCategory = new Map<WidgetCategory, WidgetDefinition[]>()
-    for (const def of visible) {
+    for (const def of rest) {
       const list = byCategory.get(def.category)
       if (list) list.push(def)
       else byCategory.set(def.category, [def])
     }
-    return CATEGORY_ORDER.filter((c) => byCategory.has(c)).map((c) => ({
-      category: c,
+    const categoryGroups = CATEGORY_ORDER.filter((c) => byCategory.has(c)).map((c) => ({
+      category: c as WidgetCategory | 'favorites',
       defs: byCategory.get(c)!,
     }))
-  }, [query, activePacks])
+    return favorites.length > 0
+      ? [{ category: 'favorites' as const, defs: favorites }, ...categoryGroups]
+      : categoryGroups
+  }, [query, activePacks, hiddenPackWidgetTypes, favoriteWidgetTypes])
 
   /** All visible tiles in reading order — the keyboard walks this list. */
   const flat = useMemo(() => groups.flatMap((g) => g.defs), [groups])
@@ -403,48 +497,54 @@ export function AddWidgetModal({ worldPos, onClose }: AddWidgetModalProps) {
                 </p>
               )}
               <div className="flex flex-col gap-6">
-                {groups.map(({ category, defs }, groupIndex) => (
-                  <section
-                    key={category}
-                    className="gp-rise"
-                    style={{ animationDelay: `${Math.min(groupIndex * 40, 200)}ms` }}
-                  >
-                    <div className="flex items-center gap-2.5 pb-2">
-                      <span
-                        aria-hidden
-                        className="h-1.5 w-1.5 shrink-0 rounded-full"
-                        style={{
-                          background: defs[0]!.accent,
-                          boxShadow: `0 0 8px ${defs[0]!.accent}90`,
-                        }}
-                      />
-                      <h3 className="gp-picker-category-label font-mono text-[10px] uppercase tracking-[0.18em] text-neutral-500">
-                        {CATEGORY_LABELS[category]}
-                      </h3>
-                      <span
-                        aria-hidden
-                        className="h-px flex-1"
-                        style={{
-                          background: `linear-gradient(90deg, ${defs[0]!.accent}46, transparent)`,
-                        }}
-                      />
-                    </div>
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                      {defs.map((def, defIndex) => {
-                        const flatIndex = groupOffsets[groupIndex]! + defIndex
-                        return (
-                          <WidgetTile
-                            key={def.type}
-                            def={def}
-                            active={flatIndex === clampedActive}
-                            onSpawn={() => spawn(def.type)}
-                            onHover={() => setActiveIndex(flatIndex)}
-                          />
-                        )
-                      })}
-                    </div>
-                  </section>
-                ))}
+                {groups.map(({ category, defs }, groupIndex) => {
+                  const isFavorites = category === 'favorites'
+                  const dotAccent = isFavorites ? '#fbbf24' : defs[0]!.accent
+                  return (
+                    <section
+                      key={category}
+                      className="gp-rise"
+                      style={{ animationDelay: `${Math.min(groupIndex * 40, 200)}ms` }}
+                    >
+                      <div className="flex items-center gap-2.5 pb-2">
+                        <span
+                          aria-hidden
+                          className="h-1.5 w-1.5 shrink-0 rounded-full"
+                          style={{
+                            background: dotAccent,
+                            boxShadow: `0 0 8px ${dotAccent}90`,
+                          }}
+                        />
+                        <h3 className="gp-picker-category-label font-mono text-[10px] uppercase tracking-[0.18em] text-neutral-500">
+                          {isFavorites ? 'Favorites' : CATEGORY_LABELS[category]}
+                        </h3>
+                        <span
+                          aria-hidden
+                          className="h-px flex-1"
+                          style={{
+                            background: `linear-gradient(90deg, ${dotAccent}46, transparent)`,
+                          }}
+                        />
+                      </div>
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                        {defs.map((def, defIndex) => {
+                          const flatIndex = groupOffsets[groupIndex]! + defIndex
+                          return (
+                            <WidgetTile
+                              key={def.type}
+                              def={def}
+                              active={flatIndex === clampedActive}
+                              favorited={favoriteWidgetTypes.includes(def.type)}
+                              onSpawn={() => spawn(def.type)}
+                              onHover={() => setActiveIndex(flatIndex)}
+                              onToggleFavorite={() => toggleFavoriteWidgetType(def.type)}
+                            />
+                          )
+                        })}
+                      </div>
+                    </section>
+                  )
+                })}
               </div>
             </div>
 

@@ -10,10 +10,10 @@
   --gp-duration-snap: 150ms;
   --gp-ease-snap: cubic-bezier(0.2, 0.82, 0.2, 1);
   --gp-ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
-  --gp-surface-canvas: #080a09;
+  --gp-surface-canvas: #0d100e;
   /* Base the workspace-tint mix starts from — dark in dark mode, light in
      light mode. The canvas element mixes 3% of the workspace accent into it. */
-  --gp-canvas-tint-base: #050806;
+  --gp-canvas-tint-base: #0a0d0b;
   --gp-surface-panel: oklch(15% 0.008 148 / 0.96);
   --gp-focus: oklch(88% 0.31 136 / 0.72);
   --gp-grid-coarse: rgb(137 165 148 / 0.075);
@@ -30,27 +30,80 @@
   --gp-grid-fine: rgb(36 126 56 / 0.12);
 }
 
-/* A crisp focus treatment is shared by every native control. Components can
-   keep layout-specific outlines off without ever becoming keyboard-invisible. */
-:where(button, a, input, textarea, select, [tabindex]):focus-visible {
+/* Keyboard focus remains visible on actions, while text-entry surfaces stay
+   visually still when the caret enters them. */
+:where(button, a, [tabindex]):not(input, textarea, select, [contenteditable='true']):focus-visible {
   outline: 2px solid var(--gp-focus);
   outline-offset: 2px;
 }
 
-/* Text entry gets a thin light that follows the element's own rounded
-   silhouette. Box-shadow respects every component's radius, unlike a generic
-   rectangular outline, and works for native and contenteditable editors. */
-:where(input, textarea, select, [contenteditable='true']):focus {
-  outline: none;
-  border-color: color-mix(in oklab, var(--gp-focus), transparent 20%);
-  box-shadow:
-    0 0 0 1px var(--gp-focus),
-    0 0 14px color-mix(in oklab, var(--gp-focus), transparent 70%);
+:where(input, textarea, select, [contenteditable='true']):is(:focus, :focus-visible) {
+  outline: none !important;
+  box-shadow: none !important;
 }
 
-button:not(:disabled),
-[role='button']:not([aria-disabled='true']) {
+:where(
+  a[href],
+  button:not(:disabled),
+  summary,
+  select:not(:disabled),
+  input:is([type='button'], [type='submit'], [type='reset'], [type='checkbox'], [type='radio'], [type='range'], [type='color']):not(:disabled),
+  [role='button']:not([aria-disabled='true']),
+  [role='link']:not([aria-disabled='true']),
+  [role='menuitem']:not([aria-disabled='true']),
+  [role='option']:not([aria-disabled='true']),
+  [role='checkbox']:not([aria-disabled='true']),
+  [role='switch']:not([aria-disabled='true'])
+) {
   cursor: pointer;
+}
+
+/* Icons and labels inside an action inherit one cursor from their owner. This
+   avoids pointer/default flicker while crossing SVG paths and nested spans. */
+:where(
+  a[href],
+  button:not(:disabled),
+  summary,
+  [role='button']:not([aria-disabled='true']),
+  [role='link']:not([aria-disabled='true']),
+  [role='menuitem']:not([aria-disabled='true']),
+  [role='option']:not([aria-disabled='true']),
+  [role='checkbox']:not([aria-disabled='true']),
+  [role='switch']:not([aria-disabled='true'])
+) * {
+  cursor: inherit;
+}
+
+:where(button, input, select, [role='button'], [role='link'], [role='menuitem'], [role='option']):is(
+  :disabled,
+  [aria-disabled='true']
+) {
+  cursor: default;
+}
+
+:where(
+  input:not([type='button'], [type='submit'], [type='reset'], [type='checkbox'], [type='radio'], [type='range'], [type='color']),
+  textarea,
+  [contenteditable='true']
+) {
+  cursor: text;
+}
+
+/* Pointer capture can move across many nested surfaces. Lock the active
+   gesture cursor at the document level until release so it never oscillates. */
+body[data-widget-dragging]:not([data-widget-resizing]),
+body[data-widget-dragging]:not([data-widget-resizing]) * {
+  cursor: grabbing !important;
+}
+
+body[data-widget-resizing='both'],
+body[data-widget-resizing='both'] * {
+  cursor: nwse-resize !important;
+}
+
+body[data-widget-resizing='width'],
+body[data-widget-resizing='width'] * {
+  cursor: ew-resize !important;
 }
 
 :where(.transition, .transition-all, .transition-colors, .transition-opacity, .transition-transform) {
@@ -261,13 +314,6 @@ body {
     border-color var(--gp-duration-snap) var(--gp-ease-snap),
     background-color var(--gp-duration-snap) var(--gp-ease-snap),
     box-shadow var(--gp-duration-snap) var(--gp-ease-snap);
-}
-
-:where(.gp-panel, article) :where(input, textarea, select):focus {
-  border-color: color-mix(in oklab, var(--color-emerald-400), transparent 56%);
-  box-shadow:
-    0 0 0 1px var(--gp-accent-soft),
-    0 0 14px color-mix(in oklab, var(--color-emerald-400), transparent 78%);
 }
 
 :where(input, textarea)::placeholder {
@@ -485,20 +531,13 @@ body {
     oklch(96.5% 0.008 150 / 0.985);
 }
 
-/* Library search pill — quiet glass at rest, accent halo while typing. */
+/* Library search pill — quiet glass that stays still while typing. */
 .gp-picker-search {
   border: none;
   background: var(--gp-surface-control);
   transition:
     border-color var(--gp-duration-snap) var(--gp-ease-snap),
     box-shadow var(--gp-duration-snap) var(--gp-ease-snap);
-}
-
-.gp-picker-search:focus-within {
-  border-color: color-mix(in oklab, var(--color-emerald-400), transparent 40%);
-  box-shadow:
-    0 0 0 4px var(--gp-accent-soft),
-    0 10px 34px rgb(0 0 0 / 0.25);
 }
 
 [data-theme='light'] .gp-picker-title {
@@ -516,12 +555,6 @@ body {
   box-shadow:
     0 14px 34px rgb(30 41 59 / 0.1),
     inset 0 1px 0 rgb(255 255 255 / 0.92);
-}
-
-[data-theme='light'] .gp-picker-search:focus-within {
-  box-shadow:
-    0 0 0 4px oklch(64% 0.16 145 / 0.14),
-    0 16px 38px rgb(30 41 59 / 0.13);
 }
 
 [data-theme='light'] .gp-picker-search-input {
@@ -872,13 +905,6 @@ body[data-theme='light'][data-canvas-lod='far'] .gp-widget-card {
   caret-color: var(--gp-widget-accent);
 }
 
-.gp-widget-content :is(input, textarea, select):focus {
-  border-color: color-mix(in oklab, var(--gp-widget-accent), transparent 45%);
-  box-shadow:
-    0 0 0 1px color-mix(in oklab, var(--gp-widget-accent), transparent 48%),
-    0 0 14px color-mix(in oklab, var(--gp-widget-accent), transparent 76%);
-}
-
 .gp-widget-content ::selection {
   background: color-mix(in oklab, var(--gp-widget-accent), transparent 22%);
   color: oklch(12% 0 0);
@@ -1087,18 +1113,16 @@ body[data-theme='light'][data-canvas-lod='far'] .gp-widget-card {
   border-radius: var(--gp-r2);
 }
 
-/* Editable text entry is a shallow well by default (Article XIII, E−1).
-   Zero specificity via :where(), so any widget that styles its own inputs
-   (e.g. bg-transparent inline editors) wins without a fight. */
+/* Text controls borrow their visible surface from the island that contains
+   them. The control itself never paints a second well inside that island. */
 .gp-widget-content :where(input:not([type='checkbox'], [type='radio'], [type='range'], [type='color']), textarea, select) {
-  border-radius: var(--gp-r2);
-  background-color: rgb(0 0 0 / 0.42);
-  box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.4);
+  background-color: transparent;
+  box-shadow: none;
 }
 
 [data-theme='light'] .gp-widget-content :where(input:not([type='checkbox'], [type='radio'], [type='range'], [type='color']), textarea, select) {
-  background-color: rgb(0 0 0 / 0.42);
-  box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.4);
+  background-color: transparent;
+  box-shadow: none;
 }
 
 /* Type hierarchy (Article XVII) lives in the Widget Constitution enforcement
@@ -1165,31 +1189,6 @@ body[data-theme='light'][data-canvas-lod='far'] .gp-widget-card {
   pointer-events: none;
 }
 
-/* -------------------------------------------------------------------------
- * Scale-state snap — the Apple rubber-band
- *
- * While a resize drag pushes past a state's size floor the card compresses
- * elastically (inline `scale`, set per-frame in WidgetCard) without entering
- * any in-between layout; past the overshoot threshold the state commits and
- * the card pulses through a springy snap.
- * ------------------------------------------------------------------------- */
-
-@keyframes gp-snap-pulse {
-  0% {
-    scale: 0.965;
-  }
-  55% {
-    scale: 1.018;
-  }
-  100% {
-    scale: 1;
-  }
-}
-
-.gp-snap-pulse {
-  animation: gp-snap-pulse 340ms cubic-bezier(0.16, 1.18, 0.3, 1);
-}
-
 /* Canvas-node link affordances — the icon and name ARE the navigation. */
 .gp-canvas-link {
   cursor: pointer;
@@ -1232,7 +1231,6 @@ body[data-theme='light'][data-canvas-lod='far'] .gp-widget-card {
   --gp-label-ink: color-mix(in oklab, var(--gp-widget-ink, #f5f5f5), transparent 58%);
   color: color-mix(in oklab, var(--gp-widget-ink, #f5f5f5), transparent 10%);
   font-feature-settings: 'kern' 1, 'liga' 1, 'tnum' 1;
-  container-type: inline-size;
 }
 
 /* Content-hugged cards make their renderer measurable at natural height.
@@ -1293,8 +1291,8 @@ body[data-theme='light'][data-canvas-lod='far'] .gp-widget-card {
     inset 0 -1px 0 rgb(255 255 255 / .06) !important;
 }
 
-/* Inputs are shallow wells. Their border exists only as interaction feedback;
-   all old gloss gradients and arbitrary radii are neutralized here. */
+/* Text controls are only the editable contents of a field island. They never
+   paint another border, fill, radius, or shadow of their own. */
 .gp-input,
 .gp-widget-ui :where(
   input:not([type='checkbox'], [type='radio'], [type='range'], [type='color']),
@@ -1307,17 +1305,83 @@ body[data-theme='light'][data-canvas-lod='far'] .gp-widget-card {
   max-inline-size: 100%;
   min-height: 30px;
   padding-inline: 12px;
-  border: 1px solid transparent !important;
-  border-radius: var(--gp-r2) !important;
-  background: rgb(0 0 0 / .42) !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  outline: none;
+  background: transparent !important;
   background-image: none !important;
-  box-shadow: inset 0 1px 2px rgb(0 0 0 / .4) !important;
+  box-shadow: none !important;
   color: rgb(238 238 238 / .92);
   font-size: 12px;
   font-weight: 500;
   line-height: 1.35;
   text-transform: none;
   letter-spacing: normal;
+}
+
+/* A full text field is one island, not an island containing a second box.
+   Explicit field islands are the forward-facing primitive; the compatibility
+   selectors give existing widget rows the same behavior without per-widget
+   paint rules. Direct-child matching prevents nested ancestors from lighting
+   up around one deeply nested editor. */
+.gp-field-island {
+  border-radius: var(--gp-r1);
+  outline: 1px solid rgb(255 255 255 / .10);
+  outline-offset: -1px;
+  background-image: linear-gradient(180deg, rgb(255 255 255 / .08), rgb(255 255 255 / .035));
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / .10),
+    0 2px 4px rgb(0 0 0 / .22);
+  transition: outline-color var(--gp-duration-snap) var(--gp-ease-snap);
+}
+
+/* Legacy renderers often put a text control directly inside an ordinary
+   layout wrapper. That closest wrapper becomes the one field surface, so the
+   catalog cannot fall back to a floating borderless input. */
+.gp-widget-ui :where(div, section, article, li, fieldset, label, td):has(> :where(
+  input:not([type='checkbox'], [type='radio'], [type='range'], [type='color']),
+  textarea,
+  select
+)) {
+  border-radius: var(--gp-r1);
+  outline: 1px solid rgb(255 255 255 / .10);
+  outline-offset: -1px;
+  background-image: linear-gradient(180deg, rgb(255 255 255 / .08), rgb(255 255 255 / .035));
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / .10),
+    0 2px 4px rgb(0 0 0 / .22);
+  transition: outline-color var(--gp-duration-snap) var(--gp-ease-snap);
+}
+
+/* Inside an existing island the text control borrows that island instead of
+   manufacturing another outlined field wrapper. */
+.gp-widget-ui :where(.gp-island, [data-island], .gp-subpanel, .gp-subdivision)
+  :where(div, section, article, li, fieldset, label, td):has(> :where(
+    input:not([type='checkbox'], [type='radio'], [type='range'], [type='color']),
+    textarea,
+    select
+  )) {
+  outline: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.gp-widget-ui :where(
+  .gp-island,
+  .gp-subpanel,
+  .gp-subdivision,
+  .gp-well,
+  .gp-display-well,
+  [class*='group/'],
+  :is(div, section, article, li, fieldset, label, td):is(.border, .gp-hairline)
+):has(> :where(
+  input:not([type='checkbox'], [type='radio'], [type='range'], [type='color']),
+  textarea,
+  select
+)) {
+  outline: 1px solid rgb(255 255 255 / .10);
+  outline-offset: -1px;
+  transition: outline-color var(--gp-duration-snap) var(--gp-ease-snap);
 }
 
 /* Compact controls keep the same readable inset without consuming a whole
@@ -1357,7 +1421,7 @@ body[data-theme='light'][data-canvas-lod='far'] .gp-widget-card {
   textarea,
   select
 ):hover {
-  border-color: rgb(255 255 255 / .08) !important;
+  border-color: transparent !important;
 }
 
 .gp-widget-ui :where(
@@ -1365,10 +1429,9 @@ body[data-theme='light'][data-canvas-lod='far'] .gp-widget-card {
   textarea,
   select
 ):focus {
-  border-color: color-mix(in oklab, var(--gp-widget-accent), transparent 48%) !important;
-  box-shadow:
-    inset 0 1px 2px rgb(0 0 0 / .28),
-    0 0 0 1px color-mix(in oklab, var(--gp-widget-accent), transparent 62%) !important;
+  border-color: transparent !important;
+  outline: none;
+  box-shadow: none !important;
 }
 
 /* Raised controls get one quiet catch-light. Accent is spent only on hover,
@@ -1415,138 +1478,6 @@ body[data-theme='light'][data-canvas-lod='far'] .gp-widget-card {
 .gp-vital-value {
   overflow: visible;
   white-space: nowrap;
-}
-
-.gp-vital-short {
-  display: none;
-}
-
-/* Full-card responsive modes. These are content compositions, not scaled
-   screenshots: text and hit targets remain readable while islands reflow. */
-.gp-widget-ui[data-layout-tier='compact'] .gp-text-input-header,
-.gp-widget-ui[data-layout-tier='compact'] .gp-date-row,
-.gp-widget-ui[data-layout-tier='compact'] .gp-unit-precision {
-  flex-wrap: wrap;
-}
-
-.gp-widget-ui[data-layout-tier='compact'] .gp-text-input-header > :first-child,
-.gp-widget-ui[data-layout-tier='compact'] .gp-date-row > :first-child {
-  flex-basis: 100%;
-}
-
-.gp-widget-ui[data-layout-tier='compact'] .gp-pros-cons-columns {
-  flex-direction: column;
-}
-
-.gp-widget-ui[data-layout-tier='compact'] .gp-status-states,
-.gp-widget-ui[data-layout-tier='compact'] .gp-date-summary {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.gp-widget-ui[data-layout-tier='compact'] .gp-unit-conversion {
-  grid-template-columns: minmax(0, 1fr);
-}
-
-.gp-widget-ui[data-layout-tier='compact'] .gp-unit-conversion > button {
-  min-height: 28px;
-  transform: rotate(90deg);
-}
-
-.gp-widget-ui[data-layout-tier='compact'][data-widget-type='aggregator'] > div > .grid,
-.gp-widget-ui[data-layout-tier='compact'][data-widget-type='template'] > div > .grid {
-  grid-template-columns: minmax(0, 1fr);
-}
-
-.gp-widget-ui[data-layout-tier='compact'][data-widget-type='clock_pulse'] > div > .flex,
-.gp-widget-ui[data-layout-tier='compact'][data-widget-type='recorder'] > div > .flex {
-  flex-wrap: wrap;
-}
-
-.gp-widget-ui[data-layout-tier='compact'][data-widget-type='clock_pulse'] > div > .flex > *,
-.gp-widget-ui[data-layout-tier='compact'][data-widget-type='recorder'] > div > .flex > * {
-  flex-basis: 100%;
-}
-
-/* Expanded cards spend new space on useful content. Flexible charts claim
-   extra height; automation controls and live results become a two-column
-   instrument instead of merely stretching the same single row. */
-.gp-widget-ui[data-layout-tier='expanded'] .gp-line-scope {
-  height: auto;
-  min-height: 128px;
-  flex: 1 1 auto;
-}
-
-.gp-widget-ui[data-layout-tier='expanded'][data-widget-type='comparator'] > div {
-  display: grid;
-  grid-template-columns: minmax(240px, 1.25fr) minmax(180px, .75fr);
-  align-items: start;
-  gap: 12px;
-}
-
-.gp-widget-ui[data-layout-tier='expanded'][data-widget-type='clock_pulse'] > div {
-  display: grid;
-  grid-template-columns: minmax(180px, 1.15fr) minmax(140px, .85fr);
-  align-items: start;
-  gap: 12px;
-}
-
-.gp-widget-ui[data-layout-tier='expanded'][data-widget-type='clock_pulse'] > div > :first-child {
-  grid-column: 1 / -1;
-}
-
-/* Content-safe layout tiers. They close the invalid bands between wide and
-   narrow compositions rather than letting controls squash through them. */
-@container (max-width: 280px) {
-  .gp-vitals-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .gp-vital-long {
-    display: none;
-  }
-
-  .gp-vital-short {
-    display: inline;
-  }
-}
-
-@container (max-width: 260px) {
-  .gp-notifier-controls,
-  .gp-comparator-row {
-    flex-wrap: wrap;
-  }
-
-  .gp-notifier-controls > *,
-  .gp-comparator-row > :first-child {
-    flex-basis: 100%;
-  }
-}
-
-@container (max-width: 240px) {
-  .gp-branch-gate {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .gp-comparator-row > * {
-    flex-basis: 100%;
-  }
-}
-
-@container (max-width: 280px) {
-  .gp-pie-layout {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .gp-pie-layout > [data-island='disc'] {
-    height: min(180px, 100%);
-    width: auto;
-  }
-}
-
-@container (max-width: 220px) {
-  .gp-pie-summary {
-    grid-template-columns: minmax(0, 1fr);
-  }
 }
 
 [data-theme='light'] .gp-value {
@@ -1732,7 +1663,7 @@ body[data-focus-mode] .gp-widget-card[data-focused] .gp-island {
   textarea,
   select
 ) {
-  background: rgb(0 0 0 / .42) !important;
+  background: transparent !important;
   color: rgb(234 238 234 / .92);
-  box-shadow: inset 0 1px 2px rgb(0 0 0 / .4) !important;
+  box-shadow: none !important;
 }
