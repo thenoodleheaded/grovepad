@@ -361,7 +361,8 @@ export function QuickAddSheet() {
       controller.abort()
       setComposePending(false)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // Depends on the selection's primitive projections so a reference-only
+    // selection change cannot restart an in-flight compose request.
   }, [composeEligible, text, aiStatus.enabled, selectedWidget?.title, selectedWidget?.type])
 
   // --- Candidate trees --------------------------------------------------------

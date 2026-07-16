@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { ArrowLeft, Blocks, Check, ChevronDown, Search, Star, X } from 'lucide-react'
 import { useFocusTrap } from '../../hooks/useFocusTrap'
@@ -331,14 +331,14 @@ export function AddWidgetModal({ worldPos, onClose }: AddWidgetModalProps) {
   const flat = useMemo(() => groups.flatMap((g) => g.defs), [groups])
   const clampedActive = Math.min(activeIndex, Math.max(0, flat.length - 1))
 
-  const spawn = (type: ModuleType) => {
+  const spawn = useCallback((type: ModuleType) => {
     const snapped = { x: snapToGrid(worldPos.x), y: snapToGrid(worldPos.y) }
     const def = orderedDefinitions().find((d) => d.type === type)
     const id = useWidgetStore.getState().createWidget(def?.label ?? 'Widget', snapped, type)
     useWidgetStore.getState().selectWidget(id, false)
     useWidgetStore.getState().startRenaming(id)
     onClose()
-  }
+  }, [worldPos.x, worldPos.y, onClose])
 
   // One window-level key handler covers Esc everywhere plus grid navigation.
   useEffect(() => {
@@ -390,8 +390,7 @@ export function AddWidgetModal({ worldPos, onClose }: AddWidgetModalProps) {
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [view, flat, activeIndex, query, onClose])
+  }, [view, flat, activeIndex, query, onClose, spawn])
 
   // Flat index offset of each group's first tile, for active-state mapping.
   const groupOffsets = useMemo(() => {
