@@ -17,6 +17,7 @@ import {
 } from '../../utils/thoughtInterpreter'
 import { buildScaffold } from '../../utils/scaffoldPlanner'
 import { recordScenarioChoice, resolveArchetypeById, resolveScenario } from '../../utils/scenarioResolver'
+import { quickAddStatusPresentation } from '../../utils/quickAddStatus'
 
 const EXAMPLES = ['plan my week', 'i want to make a game', 'trip to japan?', 'get my life together']
 
@@ -55,23 +56,6 @@ function currentAiStatus(): QuickAddAiStatus {
     return localAiService.getStatus() ?? FALLBACK_AI_STATUS
   } catch {
     return FALLBACK_AI_STATUS
-  }
-}
-
-function statusPresentation(status: QuickAddAiStatus) {
-  const progress = Math.round(Math.max(0, Math.min(100, status.progress <= 1 ? status.progress * 100 : status.progress)))
-  switch (status.phase) {
-    case 'downloading':
-      return { label: `${progress}%`, tone: 'text-sky-300', dot: 'bg-sky-400' }
-    case 'thinking':
-      return { label: 'Thinking', tone: 'text-violet-300', dot: 'bg-violet-400' }
-    case 'ready':
-      return { label: 'Ready', tone: 'text-emerald-300', dot: 'bg-emerald-400' }
-    case 'error':
-    case 'unsupported':
-      return { label: 'Local', tone: 'text-amber-300/80', dot: 'bg-amber-400/80' }
-    default:
-      return { label: 'Local', tone: 'text-neutral-400', dot: 'bg-neutral-500' }
   }
 }
 
@@ -536,7 +520,7 @@ export function QuickAddSheet() {
 
   const singleLine = !text.includes('\n')
   const canCreate = Boolean(activeCandidate && activeCandidate.plan.nodes.length > 0 && text.trim())
-  const aiPresentation = statusPresentation(aiStatus)
+  const aiPresentation = quickAddStatusPresentation(aiStatus)
   const canDownloadModel = (aiStatus.phase === 'available' || aiStatus.phase === 'error') && !aiStatus.enabled
   const canThinkDeeper = aiStatus.enabled && localAiService.getCapabilities().profile.allowDeepPlanning && Boolean(activeCandidate)
   const warning = activeCandidate?.plan.warnings.find((entry) => entry.code === 'fallback' || entry.code === 'date')

@@ -2,6 +2,7 @@ import type { ModuleData, ModuleType, RelationType, WidgetMetadata } from '../ty
 import { WIDGET_REGISTRY, widgetDefinition } from '../widgets/registry'
 import { ATLAS_CATALOG, ATLAS_TYPES } from '../widgets/atlasCatalog'
 import { AUTOMATION_CORE_CATALOG, AUTOMATION_CORE_TYPES } from '../widgets/automationCoreCatalog'
+import { localDayKey } from './localDate'
 import { buildVocabulary, fuzzyPhraseMatch, normalizeLanguage, tokenCoverage, type NormalizedLanguage } from './languageNormalization'
 
 export interface InterpretationWarning {
@@ -422,7 +423,7 @@ function dataFor(type: ModuleType, source: string, lines: ParsedLine[]): ModuleD
     }
     case 'dialog': return { lines: lines.map((line) => { const [character, ...cue] = line.text.split(':'); return { id: uid(), character: cue.length ? character!.trim() : '', cue: cue.length ? cue.join(':').trim() : line.text } }) }
     case 'table': return { rows: lines.map((line) => line.text.split(/\s*[|,\t]\s*/).filter(Boolean)) }
-    case 'daily_agenda': return { date: detectDate(source) ?? new Date().toISOString().slice(0, 10), items: lines.map((line) => { const time = line.text.match(/\b([01]?\d|2[0-3]):([0-5]\d)\b/)?.[0] ?? ''; return { id: uid(), time, title: line.text.replace(time, '').trim(), done: line.checked ?? false } }) }
+    case 'daily_agenda': return { date: detectDate(source) ?? localDayKey(), items: lines.map((line) => { const time = line.text.match(/\b([01]?\d|2[0-3]):([0-5]\d)\b/)?.[0] ?? ''; return { id: uid(), time, title: line.text.replace(time, '').trim(), done: line.checked ?? false } }) }
     case 'logbook': return { entries: lines.map((line) => ({ id: uid(), timestamp: new Date().toISOString(), text: line.text, level: /warn|risk|issue/i.test(line.text) ? 'warning' as const : 'note' as const })) }
     case 'inventory': return { items: lines.map((line, index) => ({ id: uid(), name: line.text.replace(/[:=]\s*\d+.*$/, ''), quantity: numbers[index] ?? 1, minimum: 0, unit: 'pcs' })) }
     default: return defaults

@@ -1,4 +1,5 @@
 import { useWidgetStore } from '../store/useWidgetStore'
+import { localDayKey } from './localDate'
 import { boundsForWidgets } from './widgetBounds'
 
 function roundedRect(context: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, radius: number) {
@@ -76,7 +77,7 @@ export async function exportCanvasImage(copyToClipboard = true): Promise<void> {
   const url = URL.createObjectURL(blob)
   const link = document.createElement('a')
   link.href = url
-  link.download = `grovepad-canvas-${new Date().toISOString().slice(0, 10)}.png`
+  link.download = `grovepad-canvas-${localDayKey()}.png`
   link.click()
   URL.revokeObjectURL(url)
 }

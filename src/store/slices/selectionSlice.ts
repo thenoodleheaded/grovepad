@@ -1,10 +1,11 @@
-import type { CanvasMeta, CanvasNodeData, Relation, Widget, WidgetGroup } from '../../types/spatial'
+import type { CanvasMeta, Relation, Widget, WidgetGroup } from '../../types/spatial'
 import { GRID_SIZE, snapToGrid } from '../../types/spatial'
 import { getOpaqueWidgetType } from '../../utils/persistedBoardSchema'
 import { useToastStore } from '../useToastStore'
 import { buildGroupIndex, computeBlockedWidgetIds } from '../widgetGraph'
 import { settleWidgetLayout, settleWidgetsByCanvas } from '../widgetSettling'
 import { uniqueExistingIds, withWidget } from '../widgetCollection'
+import { analyzeWidgetDeletion } from '../widgetDeletion'
 import type { WidgetStoreSlice, WidgetStoreSliceContext } from '../widgetStoreSliceContext'
 export function createSelectionSlice({ set, get, pushHistory, markSpawned }: WidgetStoreSliceContext): WidgetStoreSlice {
   return {
@@ -43,10 +44,9 @@ export function createSelectionSlice({ set, get, pushHistory, markSpawned }: Wid
   },
 
   deleteWidgets: (ids) => {
-    const deletableIds = uniqueExistingIds(ids, get().widgets).filter(
-      (id) => !get().widgets[id]?.metadata.locked,
-    )
-    const deletedCount = deletableIds.length
+    const impact = analyzeWidgetDeletion(get(), ids)
+    const deletableIds = impact.directWidgetIds
+    const deletedCount = impact.removedWidgetIds.size
     if (deletedCount === 0) return
     pushHistory()
     set((state) => {
@@ -55,27 +55,7 @@ export function createSelectionSlice({ set, get, pushHistory, markSpawned }: Wid
 
       // Cascade: deleting a canvas node deletes its canvas, everything on it,
       // and recursively any canvases nested deeper down that branch.
-      const removedCanvasIds = new Set<string>()
-      const canvasQueue: string[] = []
-      for (const id of deletedIds) {
-        const widget = state.widgets[id]
-        if (widget?.type === 'canvas_node') {
-          const canvasId = (widget.data as CanvasNodeData).canvasId
-          if (state.canvases[canvasId] && !removedCanvasIds.has(canvasId)) {
-            removedCanvasIds.add(canvasId)
-            canvasQueue.push(canvasId)
-          }
-        }
-      }
-      while (canvasQueue.length > 0) {
-        const parentId = canvasQueue.pop()!
-        for (const canvas of Object.values(state.canvases)) {
-          if (canvas.parentCanvasId === parentId && !removedCanvasIds.has(canvas.id)) {
-            removedCanvasIds.add(canvas.id)
-            canvasQueue.push(canvas.id)
-          }
-        }
-      }
+      const removedCanvasIds = impact.removedCanvasIds
 
       const widgets: Record<string, Widget> = {}
       for (const [id, widget] of Object.entries(state.widgets)) {
@@ -135,7 +115,9 @@ export function createSelectionSlice({ set, get, pushHistory, markSpawned }: Wid
       }
     })
     useToastStore.getState().addToast(
-      deletedCount === 1 ? 'Deleted widget' : `Deleted ${deletedCount} widgets`,
+      impact.removedCanvasIds.size > 0
+        ? `Deleted ${deletedCount} widgets across ${impact.removedCanvasIds.size} nested canvas${impact.removedCanvasIds.size === 1 ? '' : 'es'}`
+        : deletedCount === 1 ? 'Deleted widget' : `Deleted ${deletedCount} widgets`,
       { action: { label: 'Undo', run: () => get().undo() } },
     )
   },

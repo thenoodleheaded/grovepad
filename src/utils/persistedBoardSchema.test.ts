@@ -74,6 +74,25 @@ function withoutEmbeddedDeviceState(value: Record<string, unknown>): Record<stri
 }
 
 describe('persisted board schema', () => {
+  it('reconciles interrupted automations and removes unprotected secret material on hydration', () => {
+    const source = validBoard()
+    source.widgets.alpha = {
+      ...source.widgets.alpha!,
+      type: 'http_request',
+      data: { label: 'HTTP', input: '', output: '', config: '{}', mode: 'standard', enabled: true, running: true, count: 0, concurrency: 1, lastRunAt: null, lastError: '', items: [] },
+    }
+    source.widgets.bravo = {
+      ...source.widgets.bravo!,
+      type: 'secret_reference',
+      data: { label: 'Secret', input: 'token-raw', output: 'token-raw', config: '{"secret":"token-raw"}', mode: 'standard', enabled: true, running: false, count: 1, concurrency: 1, lastRunAt: 1, lastError: '', items: [] },
+    }
+    const parsed = parsePersistedBoard(source)!
+    expect(parsed.widgets.alpha?.data).toMatchObject({ running: false })
+    expect((parsed.widgets.alpha!.data as unknown as { lastError: string }).lastError).toMatch(/interrupted/i)
+    expect(parsed.widgets.bravo?.data).toMatchObject({ input: '', output: '', config: '{}', enabled: false })
+    expect(JSON.stringify(parsed.widgets.bravo?.data)).not.toContain('token-raw')
+  })
+
   it('accepts a valid board without changing its canonical entities', () => {
     const source = validBoard()
     const parsed = parsePersistedBoard(source)

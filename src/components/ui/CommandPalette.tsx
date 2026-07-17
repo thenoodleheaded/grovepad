@@ -20,6 +20,8 @@ import {
 import type { ModuleType, SearchResult } from '../../types/spatial'
 import { boundsForWidgets } from '../../utils/widgetBounds'
 import { getCanvasPath } from '../../store/useWidgetStore'
+import { isWidgetTypePublic } from '../../widgets/registry'
+import { historyPaletteActionIds } from '../../utils/commandPaletteAvailability'
 
 // ---------------------------------------------------------------------------
 // Static action registry
@@ -30,6 +32,7 @@ type ActionItem = {
   title: string
   subtitle: string
   run: () => void
+  available?: () => boolean
 }
 
 /** Create a widget at the world point under the viewport center. */
@@ -54,6 +57,7 @@ const PALETTE_ACTIONS: ActionItem[] = [
     id: 'action-undo',
     title: 'Undo',
     subtitle: 'Revert the last board change (⌘Z)',
+    available: () => useWidgetStore.getState().canUndo,
     run: () => {
       useWidgetStore.getState().undo()
       useWidgetStore.getState().setPaletteOpen(false)
@@ -63,6 +67,7 @@ const PALETTE_ACTIONS: ActionItem[] = [
     id: 'action-redo',
     title: 'Redo',
     subtitle: 'Reapply the last undone change (⇧⌘Z)',
+    available: () => useWidgetStore.getState().canRedo,
     run: () => {
       useWidgetStore.getState().redo()
       useWidgetStore.getState().setPaletteOpen(false)
@@ -150,6 +155,14 @@ const PALETTE_ACTIONS: ActionItem[] = [
     },
   },
 ]
+
+function availablePaletteActionIds(canUndo: boolean, canRedo: boolean): string[] {
+  const historyIds = new Set(historyPaletteActionIds(canUndo, canRedo))
+  return PALETTE_ACTIONS.filter((action) => {
+    if (action.id === 'action-undo' || action.id === 'action-redo') return historyIds.has(action.id)
+    return action.available?.() ?? true
+  }).map((action) => action.id)
+}
 
 const ACTION_RUN_MAP = new Map<string, () => void>(
   PALETTE_ACTIONS.map((a) => [a.id, a.run]),
@@ -277,6 +290,8 @@ function Row({ label, value, mono = false }: { label: string; value: string; mon
 export function CommandPalette() {
   const open = useWidgetStore((state) => state.paletteOpen)
   const activePacks = useWidgetStore((state) => state.activePacks)
+  const canUndo = useWidgetStore((state) => state.canUndo)
+  const canRedo = useWidgetStore((state) => state.canRedo)
 
   const [query, setQuery] = useState('')
   const [category, setCategory] = useState<CategoryTab>('all')
@@ -318,6 +333,7 @@ export function CommandPalette() {
     const trimmed = query.trim()
 
     const createResults: SearchResult[] = MODULE_TYPES.filter((type) => {
+      if (!isWidgetTypePublic(type)) return false
       const req = MODULE_PACK_REQUIREMENTS[type]
       return !req || activePacks.includes(req)
     })
@@ -330,7 +346,9 @@ export function CommandPalette() {
       }))
       .filter((r) => matchesQuery(trimmed, r.title))
 
+    const availableActionIds = new Set(availablePaletteActionIds(canUndo, canRedo))
     const actionResults = PALETTE_ACTIONS
+      .filter((action) => availableActionIds.has(action.id))
       .filter((a) => matchesQuery(trimmed, a.title) || matchesQuery(trimmed, a.subtitle))
       .map(actionToResult)
       .concat(createResults)
@@ -362,7 +380,7 @@ export function CommandPalette() {
     if (category === 'actions') return trimmed ? actionResults : actionResults.slice(0, 4)
     if (category === 'widgets') return widgetResults
     return [...(trimmed ? actionResults : actionResults.slice(0, 4)), ...widgetResults]
-  }, [query, category, activePacks])
+  }, [query, category, activePacks, canUndo, canRedo])
 
   // Reset focus when results change
   useEffect(() => { setFocusedIndex(0) }, [results])

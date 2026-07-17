@@ -61,6 +61,8 @@ export function AudioPlayerWidget({ data, onChange }: AudioPlayerWidgetProps) {
         <button
           ref={playingRef}
           type="button"
+          aria-label={data.isPlaying ? 'Pause audio' : 'Play audio'}
+          aria-pressed={data.isPlaying}
           onClick={togglePlay}
           className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-colors ${
             data.isPlaying
@@ -68,7 +70,7 @@ export function AudioPlayerWidget({ data, onChange }: AudioPlayerWidgetProps) {
               : 'bg-neutral-800 text-neutral-300 hover:bg-neutral-700'
           }`}
         >
-          {data.isPlaying ? <Pause size={14} /> : <Play size={14} className="ml-0.5" />}
+          {data.isPlaying ? <Pause size={14} aria-hidden /> : <Play size={14} className="ml-0.5" aria-hidden />}
         </button>
 
         {/* BPM & Key controls */}

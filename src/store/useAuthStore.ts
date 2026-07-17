@@ -76,7 +76,12 @@ export function ensureAuthInitialized(): Promise<void> {
     useAuthStore.setState({ loading: false })
     return Promise.resolve()
   }
-  if (authInitialized) return Promise.resolve()
+  // Re-entering login after a completed guest/session check must not leave
+  // the boot screen waiting on work that has already finished.
+  if (authInitialized) {
+    useAuthStore.setState({ loading: false })
+    return Promise.resolve()
+  }
   if (authInitialization) return authInitialization
 
   useAuthStore.setState({ loading: true })

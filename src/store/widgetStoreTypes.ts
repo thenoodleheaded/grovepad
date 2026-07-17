@@ -108,10 +108,10 @@ export interface WidgetStoreState {
   createGroup: (widgetIds: string[], label?: string) => string
   dissolveGroup: (groupId: string) => void
   renameGroup: (groupId: string, label: string) => void
-  compactGroup: (groupId: string) => void
+  compactGroup: (groupId: string, options?: { skipHistory?: boolean }) => boolean
   addToGroup: (groupId: string, widgetId: string) => void
   joinGroup: (groupId: string, widgetId: string) => void
-  removeFromGroup: (groupId: string, widgetId: string) => void
+  removeFromGroup: (groupId: string, widgetId: string, options?: { skipHistory?: boolean }) => boolean
   moveGroup: (groupId: string, screenDelta: Vector2D, zoom: number) => void
 
   dragOverGroupId: string | null

@@ -230,7 +230,9 @@ export function createWidgetLayoutSlice({ set, get, pushHistory }: WidgetStoreSl
               size: { ...ICONIFIED_SIZE },
             }
       const widgets = { ...state.widgets, [id]: next }
-      return { widgets: target === 'full' ? settleWidgetLayout(widgets, [id]) : widgets }
+      // A scale-state round trip restores the same world geometry; expanding
+      // must not silently settle the card into a new location.
+      return { widgets }
     })
   },
 
@@ -244,7 +246,6 @@ export function createWidgetLayoutSlice({ set, get, pushHistory }: WidgetStoreSl
     pushHistory()
     set((state) => {
       let widgets = state.widgets
-      const toSettle: string[] = []
       for (const id of actionable) {
         const widget = widgets[id]
         if (!widget) continue
@@ -267,10 +268,9 @@ export function createWidgetLayoutSlice({ set, get, pushHistory }: WidgetStoreSl
             size: clampFullSize(item, item.expandedSize ?? widgetDefinition(item.type).defaultSize),
             expandedSize: undefined,
           }))
-          toSettle.push(id)
         }
       }
-      return { widgets: toSettle.length > 0 ? settleWidgetLayout(widgets, toSettle) : widgets }
+      return { widgets }
     })
   },
 

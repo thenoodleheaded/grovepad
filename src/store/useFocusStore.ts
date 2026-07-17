@@ -22,6 +22,7 @@ interface FocusState {
 
 /** Screen margin the focused card keeps from the viewport edges. */
 const FOCUS_FIT_MARGIN = 96
+let focusReturnTarget: HTMLElement | null = null
 
 export const useFocusStore = create<FocusState>()((set, get) => ({
   focusedWidgetId: null,
@@ -32,6 +33,7 @@ export const useFocusStore = create<FocusState>()((set, get) => ({
     const widget = useWidgetStore.getState().widgets[widgetId]
     if (!widget || widget.collapsed || widget.iconified) return
     const camera = useCanvasStore.getState()
+    focusReturnTarget = typeof document !== 'undefined' && document.activeElement instanceof HTMLElement ? document.activeElement : null
     const savedView = get().savedView ?? { pan: camera.pan, zoom: camera.zoom }
     camera.fitRect(
       {
@@ -41,19 +43,31 @@ export const useFocusStore = create<FocusState>()((set, get) => ({
         height: widget.size.height,
       },
       FOCUS_FIT_MARGIN,
+      true,
     )
-    document.body.setAttribute('data-focus-mode', 'true')
+    if (typeof document !== 'undefined') document.body.setAttribute('data-focus-mode', 'true')
     set({ focusedWidgetId: widgetId, savedView })
+    queueMicrotask(() => {
+      if (typeof document === 'undefined') return
+      const subject = [...document.querySelectorAll<HTMLElement>('article[data-widget-id]')]
+        .find((element) => element.dataset.widgetId === widgetId)
+      subject?.focus({ preventScroll: true })
+    })
   },
 
   exitFocus: () => {
     const { focusedWidgetId, savedView } = get()
     if (!focusedWidgetId) return
-    document.body.removeAttribute('data-focus-mode')
+    if (typeof document !== 'undefined') document.body.removeAttribute('data-focus-mode')
     if (savedView) {
       useCanvasStore.getState().animateView(savedView.pan, savedView.zoom, 240)
     }
     set({ focusedWidgetId: null, savedView: null })
+    const target = focusReturnTarget
+    focusReturnTarget = null
+    queueMicrotask(() => {
+      if (target?.isConnected) target.focus({ preventScroll: true })
+    })
   },
 }))
 

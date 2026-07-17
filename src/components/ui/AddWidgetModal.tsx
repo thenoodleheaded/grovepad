@@ -8,6 +8,7 @@ import { useWidgetPickerPrefsStore } from '../../store/useWidgetPickerPrefsStore
 import {
   CATEGORY_LABELS,
   CATEGORY_ORDER,
+  isWidgetTypePublic,
   orderedDefinitions,
   type WidgetCategory,
   type WidgetDefinition,
@@ -73,7 +74,7 @@ function WidgetTile({
   }, [active])
 
   return (
-    <div className="relative" style={{ '--gp-tile-accent': def.accent } as React.CSSProperties}>
+    <div className="group/tile relative" style={{ '--gp-tile-accent': def.accent } as React.CSSProperties}>
       <button
         ref={ref}
         type="button"
@@ -81,7 +82,7 @@ function WidgetTile({
         data-active={active || undefined}
         onClick={onSpawn}
         onPointerEnter={onHover}
-        className="gp-picker-row group/tile relative flex min-h-[112px] w-full items-center rounded-[22px] py-3 pr-5 pl-[108px] text-left"
+        className="gp-picker-row relative flex min-h-[112px] w-full items-center rounded-[22px] py-3 pr-5 pl-[108px] text-left"
       >
         <span
           className="gp-picker-icon absolute top-1/2 left-3 flex h-20 w-20 -translate-y-1/2 shrink-0 items-center justify-center rounded-[18px]"
@@ -109,7 +110,7 @@ function WidgetTile({
         className={`absolute top-3.5 right-3.5 z-[2] flex h-6 w-6 items-center justify-center rounded-full transition-opacity duration-150 ${
           favorited
             ? 'text-amber-300 opacity-100'
-            : 'text-neutral-500 pointer-events-none opacity-0 hover:text-amber-200 focus-visible:opacity-100 focus-visible:pointer-events-auto group-hover/tile:opacity-100 group-hover/tile:pointer-events-auto'
+            : 'text-neutral-500 opacity-0 hover:text-amber-200 focus-visible:opacity-100 group-hover/tile:opacity-100'
         }`}
       >
         <Star size={14} strokeWidth={1.8} fill={favorited ? 'currentColor' : 'none'} aria-hidden />
@@ -296,6 +297,7 @@ export function AddWidgetModal({ worldPos, onClose }: AddWidgetModalProps) {
   const groups = useMemo(() => {
     const q = query.toLowerCase().trim()
     const visible = orderedDefinitions().filter((def) => {
+      if (!isWidgetTypePublic(def.type)) return false
       if (def.pack && !activePacks.includes(def.pack)) return false
       if (def.pack && hiddenPackWidgetTypes.includes(def.type)) return false
       if (!q) return true

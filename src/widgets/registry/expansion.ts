@@ -6,12 +6,13 @@ import {
 } from 'lucide-react'
 import type { ModuleType } from '../../types/spatial'
 import { GRID_SIZE } from '../../types/spatial'
+import { localDayKey, localDayKeyInDays } from '../../utils/localDate'
 import type { WidgetDefinition } from '../contracts/registry'
 
 const C = GRID_SIZE
 const uid = () => crypto.randomUUID()
-const today = () => new Date().toISOString().slice(0, 10)
-const inDays = (days: number) => { const date = new Date(); date.setDate(date.getDate() + days); return date.toISOString().slice(0, 10) }
+const today = () => localDayKey()
+const inDays = (days: number) => localDayKeyInDays(days)
 
 type ExpansionType = Extract<ModuleType,
   'clock_pulse'|'comparator'|'aggregator'|'range_mapper'|'latch'|'random_picker'|'sequencer'|'template'|'recorder'|'notifier'|

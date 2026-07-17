@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { ChevronRight, File, Pencil, Trash2, X } from 'lucide-react'
 import { useCanvasTreeStore } from '../../store/useCanvasTreeStore'
 import { useWidgetStore } from '../../store/useWidgetStore'
+import { requestWidgetDeletion } from '../../store/useWidgetDeletionDialogStore'
 import type { CanvasMeta } from '../../types/spatial'
 
 export function CanvasTreeDrawer() {
@@ -56,7 +57,7 @@ export function CanvasTreeDrawer() {
             onClick={() => {
               const state = useWidgetStore.getState()
               const owner = Object.values(state.widgets).find((widget) => widget.type === 'canvas_node' && (widget.data as { canvasId?: string }).canvasId === canvas.id)
-              if (owner) state.deleteWidget(owner.id)
+              if (owner) requestWidgetDeletion([owner.id])
             }}
             className="text-neutral-600 pointer-events-none opacity-0 hover:text-red-400 group-hover/tree:opacity-100 group-hover/tree:pointer-events-auto"
           ><Trash2 size={10} /></button>

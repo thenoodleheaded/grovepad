@@ -5,19 +5,15 @@ import { useOverlayLifecycle } from '../../store/useOverlayStore'
 import { useWidgetStore } from '../../store/useWidgetStore'
 import { useFocusTrap } from '../../hooks/useFocusTrap'
 import { useCanvasStore } from '../../store/useCanvasStore'
-import { boundsForWidgets } from '../../utils/widgetBounds'
-import type { Widget } from '../../types/spatial'
+import { frameCanvas } from '../../utils/cameraFraming'
 
-const ACTIONABLE = new Set(['Frame selection / board', 'Zoom in / out', 'Reset zoom to 100%', 'Quick add — one card per line', 'Undo', 'Redo', 'Duplicate selection', 'Command palette — searches every canvas'])
+const ACTIONABLE = new Set(['Frame board', 'Zoom in / out', 'Reset zoom to 100%', 'Quick add — one card per line', 'Undo', 'Redo', 'Duplicate selection', 'Command palette — searches every canvas'])
 
 function runShortcut(label: string) {
   const widgets = useWidgetStore.getState()
   const canvas = useCanvasStore.getState()
-  if (label === 'Frame selection / board') {
-    const targets = widgets.selectedIds.size ? [...widgets.selectedIds].map((id) => widgets.widgets[id]).filter((widget): widget is Widget => Boolean(widget)) : Object.values(widgets.widgets).filter((widget) => widget.canvasId === widgets.activeCanvasId)
-    const rect = boundsForWidgets(targets)
-    if (rect) canvas.fitRect(rect, 150)
-  } else if (label === 'Zoom in / out') canvas.zoomToAnimated(canvas.zoom * 1.25, { x: canvas.viewportSize.width / 2, y: canvas.viewportSize.height / 2 })
+  if (label === 'Frame board') frameCanvas('board', 150)
+  else if (label === 'Zoom in / out') canvas.zoomToAnimated(canvas.zoom * 1.25, { x: canvas.viewportSize.width / 2, y: canvas.viewportSize.height / 2 })
   else if (label === 'Reset zoom to 100%') canvas.zoomToAnimated(1, { x: canvas.viewportSize.width / 2, y: canvas.viewportSize.height / 2 })
   else if (label === 'Quick add — one card per line') widgets.setQuickAddOpen(true)
   else if (label === 'Undo') widgets.undo()
@@ -44,7 +40,7 @@ const SECTIONS: ShortcutSection[] = [
       { keys: ['Scroll'], label: 'Pan the canvas' },
       { keys: ['⌘ Scroll', 'Pinch'], label: 'Zoom at cursor' },
       { keys: ['Space + Drag', 'Middle Drag'], label: 'Pan (grab)' },
-      { keys: ['F'], label: 'Frame selection / board' },
+      { keys: ['F'], label: 'Frame board' },
       { keys: ['+', '−'], label: 'Zoom in / out' },
       { keys: ['0'], label: 'Reset zoom to 100%' },
     ],

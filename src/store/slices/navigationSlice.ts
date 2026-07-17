@@ -8,6 +8,9 @@ export function createNavigationSlice({ set, get, pushHistory, navigateToCanvas 
   return {
   createWorkspace: (name) => {
     const trimmed = name.trim() || 'Untitled'
+    // Workspace creation is a canonical board mutation. Capturing it clears
+    // any stale redo branch before the new workspace becomes reachable.
+    pushHistory()
     const workspaceId = crypto.randomUUID()
     const rootCanvasId = crypto.randomUUID()
     set((state) => ({

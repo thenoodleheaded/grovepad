@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { WidgetSizing } from './contracts/registry'
 import { REVIEWED_WIDGET_SIZING, SIZING_REVIEW_TYPES } from './sizingProfiles'
-import { widgetDefinition } from './registry'
+import { widgetDefinition, WIDGET_REGISTRY } from './registry'
 
 describe('reviewed widget sizing profiles', () => {
   it('covers the 35-widget calibration set exactly once', () => {
@@ -30,6 +30,17 @@ describe('reviewed widget sizing profiles', () => {
       if (sizing.maxHeight !== undefined) {
         expect(definition.defaultSize.height).toBeLessThanOrEqual(sizing.maxHeight)
       }
+    }
+  })
+
+  it('spawns every registry widget inside its declared fallback window', () => {
+    for (const definition of Object.values(WIDGET_REGISTRY)) {
+      const sizing = definition.sizing
+      if (!sizing) continue
+      if (sizing.minWidth !== undefined) expect(definition.defaultSize.width, definition.type).toBeGreaterThanOrEqual(sizing.minWidth)
+      if (sizing.minHeight !== undefined) expect(definition.defaultSize.height, definition.type).toBeGreaterThanOrEqual(sizing.minHeight)
+      if (sizing.maxWidth !== undefined) expect(definition.defaultSize.width, definition.type).toBeLessThanOrEqual(sizing.maxWidth)
+      if (sizing.maxHeight !== undefined) expect(definition.defaultSize.height, definition.type).toBeLessThanOrEqual(sizing.maxHeight)
     }
   })
 })

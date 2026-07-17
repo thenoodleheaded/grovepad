@@ -26,7 +26,7 @@ export function ShaperHUD() {
   return (
     <div
       data-canvas-ui
-      className="gp-toolbar gp-pop gp-panel fixed bottom-6 left-1/2 z-30 flex -translate-x-1/2 select-none items-center gap-4 rounded-2xl border border-emerald-700/50 px-4 py-2.5 shadow-2xl"
+      className="gp-toolbar gp-pop gp-panel fixed bottom-6 left-1/2 z-[220] flex -translate-x-1/2 select-none items-center gap-4 rounded-2xl border border-emerald-700/50 px-4 py-2.5 shadow-2xl"
       style={{ transformOrigin: '50% 100%' }}
     >
       <Network size={16} className="shrink-0 text-emerald-400" aria-hidden />

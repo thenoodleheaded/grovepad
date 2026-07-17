@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Minus, Plus } from 'lucide-react'
 import type { TableData } from '../../../types/spatial'
 import { useFieldAnchor } from '../../../hooks/useFieldAnchor'
+import { summarizeNumericColumn } from '../../../utils/widgetValueValidation'
 
 interface TableWidgetProps {
   data: TableData
@@ -57,7 +58,7 @@ export function TableWidget({ data, onChange }: TableWidgetProps) {
   return (
     <div data-floor-panel="rows" className="flex h-full flex-col gap-0">
       {/* Table — rows are 36px each so 3 rows + 28px footer = 136px = inner height at default size */}
-      <div className="flex-1 overflow-hidden rounded-lg border gp-hairline">
+      <div data-floor-overflow="scroll" className="flex-1 overflow-hidden rounded-lg border gp-hairline">
         <table className="w-full border-collapse">
           <tbody>
             {data.rows.map((row, rowIndex) => {
@@ -143,7 +144,7 @@ export function TableWidget({ data, onChange }: TableWidgetProps) {
             <Minus size={10} /> Col
           </button>
         )}
-        <span className="ml-auto font-mono text-[9px] text-emerald-200/50">{(()=>{const nums=data.rows.slice(1).map(row=>Number(row[selected.col])).filter(Number.isFinite);return nums.length?`Σ ${nums.reduce((a,b)=>a+b,0)} · avg ${(nums.reduce((a,b)=>a+b,0)/nums.length).toFixed(1)}`:`R${selected.row+1} C${selected.col+1}`})()}</span>
+        <span className="ml-auto font-mono text-[9px] text-emerald-200/70">{summarizeNumericColumn(data.rows, selected.col) ?? `R${selected.row+1} C${selected.col+1} · no numeric data`}</span>
       </div>
     </div>
   )

@@ -1,7 +1,8 @@
 import type { CanvasMeta } from '../../types/spatial'
 import { snapToGrid } from '../../types/spatial'
 import { layoutThoughtPlan, layoutWidth } from '../../utils/planLayout'
-import { widgetDefinition } from '../../widgets/registry'
+import { isWidgetTypePublic, widgetDefinition } from '../../widgets/registry'
+import { useToastStore } from '../useToastStore'
 import { applyWidgetPositions, compactGroupPositions } from '../widgetCollection'
 import { buildGroupIndex, computeBlockedWidgetIds, nextGroupColor } from '../widgetGraph'
 import { appendDraftRelation, relationKey } from '../widgetRelationDrafts'
@@ -23,6 +24,10 @@ export function createWidgetCreationSlice({ set, get, pushHistory, markSpawned }
   },
 
   createWidget: (title, position, type) => {
+    if (!isWidgetTypePublic(type)) {
+      useToastStore.getState().addToast(widgetDefinition(type).unavailableReason ?? 'This widget is not available')
+      return ''
+    }
     pushHistory()
     const id = crypto.randomUUID()
     const state = get()
@@ -86,6 +91,7 @@ export function createWidgetCreationSlice({ set, get, pushHistory, markSpawned }
     const treeWidth = layoutWidth(treePositions, nodeSizes)
 
     plan.nodes.forEach((node) => {
+      if (!isWidgetTypePublic(node.widgetType)) return
       if (node.existingWidgetId && widgets[node.existingWidgetId]) {
         ids.set(node.temporaryId, node.existingWidgetId)
         return

@@ -26,7 +26,8 @@ export interface CanvasState {
   setView: (pan: Vector2D, zoom: number) => void
   setViewportSize: (size: Size) => void
   setIsPanning: (isPanning: boolean) => void
-  fitRect: (rect: CanvasFitRect, padding?: number) => void
+  /** Fit immediately by default so framing is an atomic visibility guarantee. */
+  fitRect: (rect: CanvasFitRect, padding?: number, animated?: boolean) => void
   /**
    * Set the zoom level while keeping the world point currently under
    * `focalPoint` (viewport-relative screen coordinates) stationary.
@@ -223,20 +224,19 @@ export const useCanvasStore = create<CanvasState>()((set, get) => {
       set({ canGoBack: true, canGoForward: forwardStack.length > 0 })
     },
 
-    fitRect: (rect, padding = 120) => {
+    fitRect: (rect, padding = 120, animated = false) => {
       const { viewportSize } = get()
       const width = Math.max(1, rect.width)
       const height = Math.max(1, rect.height)
       const availableWidth = Math.max(1, viewportSize.width - padding * 2)
       const availableHeight = Math.max(1, viewportSize.height - padding * 2)
       const zoom = clampZoom(Math.min(1.45, availableWidth / width, availableHeight / height))
-      get().animateView(
-        {
-          x: viewportSize.width / 2 - (rect.x + width / 2) * zoom,
-          y: viewportSize.height / 2 - (rect.y + height / 2) * zoom,
-        },
-        zoom,
-      )
+      const pan = {
+        x: viewportSize.width / 2 - (rect.x + width / 2) * zoom,
+        y: viewportSize.height / 2 - (rect.y + height / 2) * zoom,
+      }
+      if (animated) get().animateView(pan, zoom)
+      else get().setView(pan, zoom)
     },
 
     fitAll: () => get().animateView({ x: 0, y: 0 }, 1),

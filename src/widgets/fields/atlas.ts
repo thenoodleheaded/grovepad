@@ -2,6 +2,7 @@ import type { AtlasWidgetData, ModuleData, ModuleType } from '../../types/spatia
 import type { FieldCommand, FieldValueType, SemanticUnit } from '../../types/fieldConnections'
 import type { CommandDescriptor, FieldDescriptor, FieldValue } from '../contracts/fields'
 import { ATLAS_CATALOG, ATLAS_TYPES, type AtlasFieldSpec, type AtlasType } from '../atlasCatalog'
+import { localDayKey } from '../../utils/localDate'
 
 const asData=(data:ModuleData)=>data as AtlasWidgetData
 const numberValue=(value:FieldValue)=>Array.isArray(value)?value.at(-1)?.v??0:typeof value==='number'?value:typeof value==='boolean'?Number(value):Number.parseFloat(value)||0
@@ -87,6 +88,12 @@ function inferUnit(key: string, valueType: FieldValueType): SemanticUnit | undef
 }
 
 function getValue(type:AtlasType,field:AtlasFieldSpec,data:AtlasWidgetData){
+  // Writable fields are round-trip contracts. Read the exact storage slot
+  // their setter writes before applying semantic inference to computed fields.
+  if(field.writable){
+    const value=data[field.writable]
+    if(typeof value==='string'||typeof value==='number'||typeof value==='boolean')return value
+  }
   if(field.valueType==='series')return data.history
   if(field.valueType==='boolean')return genericBoolean(type,field.key,data)
   if(field.valueType==='text')return genericText(type,field.key,data)
@@ -117,7 +124,7 @@ function runAtlasCommand(_type:AtlasType,key:string,data:AtlasWidgetData):AtlasW
   if(key==='add_glass')return {...data,primary:data.primary+250,actionCount:data.actionCount+1,lastActionAt:now,history:[...data.history,{t:now,v:data.primary+250}].slice(-120)}
   if(key.startsWith('add_')||key.startsWith('log_')||key==='deposit'||key==='lend_item'||key==='claim_dish'||key==='give_kudos'||key==='give_star'){
     const nextValue=key==='give_star'?data.primary+1:data.primary
-    return {...data,primary:nextValue,actionCount:data.actionCount+1,lastActionAt:now,items:[...data.items,{id:crypto.randomUUID(),label:data.text.trim()||`Entry ${data.items.length+1}`,value:data.secondary||1,done:false,date:new Date().toISOString().slice(0,10),status:'active',note:''}],history:[...data.history,{t:now,v:nextValue}].slice(-120)}
+    return {...data,primary:nextValue,actionCount:data.actionCount+1,lastActionAt:now,items:[...data.items,{id:crypto.randomUUID(),label:data.text.trim()||`Entry ${data.items.length+1}`,value:data.secondary||1,done:false,date:localDayKey(),status:'active',note:''}],history:[...data.history,{t:now,v:nextValue}].slice(-120)}
   }
   if(key.includes('mark_')||key==='water'||key==='pack_item'||key==='stamp'||key==='complete_node'||key==='record_result'||key==='redeem'||key==='deliver'){
     const index=data.items.findIndex(item=>!item.done)

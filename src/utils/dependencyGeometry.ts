@@ -9,6 +9,10 @@ export interface DependencyEndpointGeometry {
   halfH: number
 }
 
+export function dependencyStatusLabel(dependentTitle: string, prerequisiteTitles: string[]): string {
+  return `${dependentTitle} waiting on ${prerequisiteTitles.filter(Boolean).join(', ') || 'dependency'}`
+}
+
 function clamp(value: number, minimum: number, maximum: number): number {
   return Math.min(maximum, Math.max(minimum, value))
 }

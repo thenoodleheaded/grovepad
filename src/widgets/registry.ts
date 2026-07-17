@@ -62,6 +62,7 @@ import {
 } from 'lucide-react'
 import type { ModuleType } from '../types/spatial'
 import { GRID_SIZE, MODULE_PACK_REQUIREMENTS } from '../types/spatial'
+import { localDayKey, localDayKeyInDays } from '../utils/localDate'
 import type { WidgetCategory, WidgetDefinition, WidgetSizing } from './contracts/registry'
 export type { WidgetCategory, WidgetDefinition, WidgetSizing } from './contracts/registry'
 import { EXPANSION_WIDGET_DEFINITIONS } from './registry/expansion'
@@ -126,7 +127,7 @@ function uid(): string {
 }
 
 function todayISO(): string {
-  return new Date().toISOString().slice(0, 10)
+  return localDayKey()
 }
 
 export const WIDGET_REGISTRY: Record<ModuleType, WidgetDefinition> = {
@@ -302,7 +303,7 @@ export const WIDGET_REGISTRY: Record<ModuleType, WidgetDefinition> = {
     accent: '#a5b4fc',
     defaultSize: { width: 340, height: C * 6 },
     defaultData: () => ({
-      date: new Date().toISOString().slice(0, 10),
+      date: localDayKey(),
       attendees: '',
       notes: '',
       actions: [],
@@ -522,7 +523,7 @@ export const WIDGET_REGISTRY: Record<ModuleType, WidgetDefinition> = {
     defaultData: () => {
       const target = new Date()
       target.setDate(target.getDate() + 14)
-      return { label: 'Deadline', targetDate: target.toISOString().slice(0, 10) }
+      return { label: 'Deadline', targetDate: localDayKey(target.getTime()) }
     },
   },
   progress: {
@@ -595,6 +596,7 @@ export const WIDGET_REGISTRY: Record<ModuleType, WidgetDefinition> = {
     category: 'data',
     accent: '#94a3b8',
     defaultSize: { width: 360, height: C * 4 },
+    sizing: { minWidth: 320, maxWidth: 720 },
     defaultData: () => ({
       rows: [
         ['Item', 'Owner', 'Status'],
@@ -651,7 +653,8 @@ export const WIDGET_REGISTRY: Record<ModuleType, WidgetDefinition> = {
     icon: Smile,
     category: 'tracking',
     accent: '#fde047',
-    defaultSize: { width: 300, height: C * 3 },
+    defaultSize: { width: 300, height: C * 4 },
+    sizing: { minWidth: 260, minHeight: C * 4, maxWidth: 560, maxHeight: C * 4, autoHeight: true },
     defaultData: () => ({ days: [null, null, null, null, null, null, null] }),
   },
   counter: {
@@ -718,6 +721,8 @@ export const WIDGET_REGISTRY: Record<ModuleType, WidgetDefinition> = {
   },
   sketchpad: {
     type: 'sketchpad',
+    availability: 'existing-only',
+    unavailableReason: 'Drawing is not available in this beta. Existing Sketchpad cards are preserved.',
     label: 'Sketchpad',
     description: 'Rough drawing surface',
     icon: PenTool,
@@ -834,7 +839,7 @@ export const WIDGET_REGISTRY: Record<ModuleType, WidgetDefinition> = {
     category: 'planning',
     accent: '#fb923c',
     defaultSize: { width: 280, height: C * 4 },
-    defaultData: () => ({ label: 'Target date', date: todayISO(), time: '', includeTime: false }),
+    defaultData: () => ({ label: 'Target date', date: localDayKeyInDays(1), time: '', includeTime: false }),
   },
   outline: {
     type: 'outline',
@@ -899,8 +904,8 @@ export const WIDGET_REGISTRY: Record<ModuleType, WidgetDefinition> = {
         {
           id: uid(),
           risk: 'New risk',
-          likelihood: 3,
-          impact: 3,
+          likelihood: 2,
+          impact: 2,
           mitigation: '',
           status: 'open',
         },
@@ -1034,7 +1039,8 @@ export const WIDGET_REGISTRY: Record<ModuleType, WidgetDefinition> = {
     icon: AudioLines,
     category: 'specialist',
     accent: '#7dd3fc',
-    defaultSize: { width: 360, height: C * 5 },
+    defaultSize: { width: 360, height: C * 8 },
+    sizing: { minWidth: 320, minHeight: C * 8, maxWidth: 640, maxHeight: C * 8, autoHeight: true },
     defaultData: () => ({
       bpm: 120,
       key: 'C Minor',
@@ -1069,6 +1075,10 @@ for (const [type, sizing] of Object.entries(REVIEWED_WIDGET_SIZING) as Array<
 
 export function widgetDefinition(type: ModuleType): WidgetDefinition {
   return WIDGET_REGISTRY[type]
+}
+
+export function isWidgetTypePublic(type: ModuleType): boolean {
+  return WIDGET_REGISTRY[type].availability !== 'existing-only'
 }
 
 /** All definitions in stable picker order (category order, then label). */
@@ -1112,7 +1122,7 @@ const IMPORT_EXCLUDED_TYPES = new Set<ModuleType>(['canvas_node'])
 /** Every widget type the AI importer may choose, in stable picker order. */
 export const IMPORT_SELECTABLE_TYPES: readonly ModuleType[] = ORDERED_DEFINITIONS
   .map((def) => def.type)
-  .filter((type) => !IMPORT_EXCLUDED_TYPES.has(type))
+  .filter((type) => !IMPORT_EXCLUDED_TYPES.has(type) && isWidgetTypePublic(type))
 
 /**
  * Full catalog of selectable widget types as prompt text, grouped by category:
@@ -1123,7 +1133,7 @@ export const IMPORT_SELECTABLE_TYPES: readonly ModuleType[] = ORDERED_DEFINITION
 export function importTypeCatalog(): string {
   const byCategory = new Map<WidgetCategory, WidgetDefinition[]>()
   for (const def of ORDERED_DEFINITIONS) {
-    if (IMPORT_EXCLUDED_TYPES.has(def.type)) continue
+    if (IMPORT_EXCLUDED_TYPES.has(def.type) || !isWidgetTypePublic(def.type)) continue
     const list = byCategory.get(def.category)
     if (list) list.push(def)
     else byCategory.set(def.category, [def])

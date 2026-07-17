@@ -262,6 +262,7 @@ interface FocusModeLayerProps {
 
 export function FocusModeLayer({ widgetId, hostRef, active, layout, version }: FocusModeLayerProps) {
   const [islands, setIslands] = useState<IslandInfo[]>([])
+  const [announcement, setAnnouncement] = useState('')
   type ResizeGesture = {
     kind: 'resize'
     pointerId: number
@@ -667,12 +668,56 @@ export function FocusModeLayer({ widgetId, hostRef, active, layout, version }: F
     persistLayout(widgetId, { order: mergeReorderDomain(savedOrder, allIds, siblingOrder) })
   }
 
+  const reorderWithKeyboard = (island: IslandInfo, direction: -1 | 1) => {
+    const host = hostRef.current
+    const parent = island.element.parentElement
+    if (!host || !parent) return
+    const all = collectIslands(host)
+    const siblings = all.filter((element) => element.parentElement === parent)
+    const idOf = (element: HTMLElement) => islandId(element, all.indexOf(element))
+    const order = visualFlowOrder(siblings.map((element) => {
+      const rect = element.getBoundingClientRect()
+      return { id: idOf(element), left: rect.left, top: rect.top, width: rect.width, height: rect.height }
+    }))
+    const index = order.indexOf(island.id)
+    const nextIndex = clamp(index + direction, 0, order.length - 1)
+    if (index < 0 || nextIndex === index) return
+    const next = [...order]
+    ;[next[index], next[nextIndex]] = [next[nextIndex]!, next[index]!]
+    useWidgetStore.getState().snapshotHistory(`island:${widgetId}`)
+    const savedOrder = useWidgetStore.getState().widgets[widgetId]?.metadata.islandLayout?.order ?? []
+    persistLayout(widgetId, { order: mergeReorderDomain(savedOrder, all.map(idOf), next) })
+    setAnnouncement(`Panel ${island.id} moved to position ${nextIndex + 1} of ${order.length}.`)
+  }
+
+  const resizeWithKeyboard = (island: IslandInfo, dx: number, dy: number) => {
+    const containerW = island.element.parentElement?.clientWidth ?? island.width
+    const minW = Math.max(MIN_W, numberAttr(island.element, 'data-island-min-w', MIN_W))
+    const minH = Math.max(MIN_H, numberAttr(island.element, 'data-island-min-h', MIN_H))
+    const maxW = Math.max(minW, Math.min(containerW, numberAttr(island.element, 'data-island-max-w', containerW)))
+    const maxH = Math.max(minH, Math.min(MAX_H, numberAttr(island.element, 'data-island-max-h', MAX_H)))
+    let width = snap4(clamp(island.width + dx, minW, maxW))
+    let height = snap4(clamp(island.height + dy, minH, maxH))
+    if (island.sizing === 'width') height = island.height
+    if (island.sizing === 'aspect') {
+      const ratio = island.height > 0 ? island.width / island.height : 1
+      height = snap4(clamp(width / ratio, minH, maxH))
+      width = snap4(clamp(height * ratio, minW, maxW))
+    }
+    useWidgetStore.getState().snapshotHistory(`island:${widgetId}`)
+    const current = useWidgetStore.getState().widgets[widgetId]?.metadata.islandLayout
+    persistLayout(widgetId, { sizes: { ...current?.sizes, [island.id]: { width, ...(island.sizing === 'width' ? {} : { height }) } } })
+    setAnnouncement(`Panel ${island.id} resized to ${width} by ${height} pixels.`)
+  }
+
   return (
     <div role="group" aria-label="Focused panel layout controls" className="pointer-events-none absolute inset-0 z-30">
+      <span className="sr-only" aria-live="polite">{announcement}</span>
       {islands.map((island) => (
         <div
           key={island.id}
           role={island.reorderable ? 'button' : undefined}
+          tabIndex={island.reorderable ? 0 : undefined}
           aria-label={island.reorderable ? `Drag to rearrange panel ${island.id}` : undefined}
           title={island.reorderable ? 'Drag to rearrange' : undefined}
           className={`gp-focus-island absolute${island.reorderable ? ' gp-focus-island--drag pointer-events-auto' : ''}`}
@@ -681,6 +726,10 @@ export function FocusModeLayer({ widgetId, hostRef, active, layout, version }: F
           onPointerMove={island.reorderable ? moveReorder : undefined}
           onPointerUp={island.reorderable ? endReorder : undefined}
           onPointerCancel={island.reorderable ? endReorder : undefined}
+          onKeyDown={island.reorderable ? (event) => {
+            if (event.key === 'ArrowUp' || event.key === 'ArrowLeft') { event.preventDefault(); reorderWithKeyboard(island, -1) }
+            if (event.key === 'ArrowDown' || event.key === 'ArrowRight') { event.preventDefault(); reorderWithKeyboard(island, 1) }
+          } : undefined}
         >
           {island.sizing !== 'fixed' && (
             <button
@@ -699,6 +748,13 @@ export function FocusModeLayer({ widgetId, hostRef, active, layout, version }: F
               onPointerMove={moveResize}
               onPointerUp={endResize}
               onPointerCancel={endResize}
+              onKeyDown={(event) => {
+                const amount = event.shiftKey ? 16 : SUB_GRID
+                if (event.key === 'ArrowLeft') { event.preventDefault(); resizeWithKeyboard(island, -amount, 0) }
+                if (event.key === 'ArrowRight') { event.preventDefault(); resizeWithKeyboard(island, amount, 0) }
+                if (event.key === 'ArrowUp' && island.sizing !== 'width') { event.preventDefault(); resizeWithKeyboard(island, 0, -amount) }
+                if (event.key === 'ArrowDown' && island.sizing !== 'width') { event.preventDefault(); resizeWithKeyboard(island, 0, amount) }
+              }}
             />
           )}
         </div>

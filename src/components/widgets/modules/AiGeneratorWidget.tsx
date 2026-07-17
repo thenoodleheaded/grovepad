@@ -51,16 +51,16 @@ export function AiGeneratorWidget({ data, widgetId, onChange }: AiGeneratorWidge
     const controller = new AbortController()
     requestRef.current = controller
     setIsGenerating(true)
-    if (dataRef.current.status !== 'idle') {
-      onChange({ ...dataRef.current, status: 'idle' })
-    }
 
     try {
       const created = await generateWidgetOutput(widgetId, prompt, controller.signal)
       // The commit itself is the acceptance boundary. It may change layout
       // enough to remount this renderer; once cards exist, still clear the
       // persisted generating state through the store-backed onChange action.
-      onChange({ prompt, status: 'done' })
+      // Completion belongs to the same history transaction as the generated
+      // plan. This non-historic status write means one Undo removes every
+      // output and restores the generator's pre-run state.
+      useWidgetStore.getState().applyWireWrites(new Map([[widgetId, { prompt, status: 'done' as const }]]))
       useToastStore.getState().addToast(
         created.length === 1 ? 'Generated 1 card' : `Generated ${created.length} cards`,
         { action: { label: 'Undo', run: () => useWidgetStore.getState().undo() } },

@@ -1,5 +1,6 @@
 import { GitMerge } from 'lucide-react'
 import { memo, useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
+import { createPortal } from 'react-dom'
 import { useShallow } from 'zustand/react/shallow'
 import { useCanvasStore } from '../../store/useCanvasStore'
 import { useOverlayLifecycle } from '../../store/useOverlayStore'
@@ -12,6 +13,7 @@ import {
   shrinkWrapPath,
 } from '../../utils/groupGeometry'
 import { linkAnchorId, resolveLinkTargetAt } from '../../utils/linkTarget'
+import { clampPopover } from '../../utils/popoverPosition'
 import { PointerDragSession } from '../../utils/pointerDrag'
 
 interface LinkDragState {
@@ -126,6 +128,7 @@ export const GroupPlate = memo(function GroupPlate({ group }: { group: WidgetGro
     if (e.button !== 0) return
     e.preventDefault()
     e.stopPropagation()
+    useCanvasStore.getState().cancelViewAnimation()
     if (tryCompleteTargetedLink()) return
     e.currentTarget.setPointerCapture(e.pointerId)
     if (e.metaKey && anchorId) {
@@ -174,6 +177,23 @@ export const GroupPlate = memo(function GroupPlate({ group }: { group: WidgetGro
       linkDragRef.current = null
       const targetId = resolveLinkTargetAt(e.clientX, e.clientY)
       useWidgetStore.getState().endLinkDrag(targetId !== anchorId ? targetId : null)
+      return
+    }
+    const session = dragRef.current
+    if (!session || session.pointerId !== e.pointerId) return
+    dragRef.current = null
+    if (session.end()) {
+      const widgetIds = useWidgetStore.getState().groups[groupId]?.widgetIds ?? []
+      useWidgetStore.getState().settleWidgets(widgetIds)
+    }
+  }
+
+  const onPointerCancel = (e: ReactPointerEvent<Element>) => {
+    const link = linkDragRef.current
+    if (link && link.pointerId === e.pointerId) {
+      if (link.rafId !== 0) cancelAnimationFrame(link.rafId)
+      linkDragRef.current = null
+      useWidgetStore.getState().endLinkDrag(null)
       return
     }
     const session = dragRef.current
@@ -237,7 +257,8 @@ export const GroupPlate = memo(function GroupPlate({ group }: { group: WidgetGro
             onPointerDown={onPointerDown}
             onPointerMove={onPointerMove}
             onPointerUp={onPointerUp}
-            onPointerCancel={onPointerUp}
+            onPointerCancel={onPointerCancel}
+            onLostPointerCapture={onPointerCancel}
             onContextMenu={onContextMenu}
             onDoubleClick={(event) => { event.stopPropagation(); useCanvasStore.getState().fitRect({ x: geometry.x, y: geometry.y, width: geometry.width, height: geometry.height }, 120) }}
             className="gp-band-motion cursor-grab active:cursor-grabbing"
@@ -255,7 +276,8 @@ export const GroupPlate = memo(function GroupPlate({ group }: { group: WidgetGro
             onPointerDown={onPointerDown}
             onPointerMove={onPointerMove}
             onPointerUp={onPointerUp}
-            onPointerCancel={onPointerUp}
+            onPointerCancel={onPointerCancel}
+            onLostPointerCapture={onPointerCancel}
             onContextMenu={onContextMenu}
             onDoubleClick={(event) => { event.stopPropagation(); useCanvasStore.getState().fitRect({ x: geometry.x, y: geometry.y, width: geometry.width, height: geometry.height }, 120) }}
           >
@@ -338,13 +360,31 @@ function GroupContextMenu({
   onClose: () => void
   onRename: () => void
 }) {
-  return (
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [onClose])
+
+  const { x: left, y: top } = clampPopover(x, y, 176, 190)
+
+  return createPortal(
     <>
-      <div data-canvas-ui className="fixed inset-0 z-[195]" onPointerDown={onClose} />
+      <div
+        data-canvas-ui
+        className="fixed inset-0 z-[195]"
+        onPointerDown={onClose}
+        onContextMenu={(event) => {
+          event.preventDefault()
+          onClose()
+        }}
+      />
       <div
         data-canvas-ui
         className="gp-menu gp-pop gp-panel fixed z-[196] w-44 origin-top-left overflow-hidden rounded-2xl p-1.5 shadow-2xl"
-        style={{ left: x, top: y }}
+        style={{ left, top }}
       >
         <button
           type="button"
@@ -391,6 +431,7 @@ function GroupContextMenu({
           Dissolve group
         </button>
       </div>
-    </>
+    </>,
+    document.body,
   )
 }

@@ -18,8 +18,10 @@ import type {
   Workspace,
 } from '../types/spatial'
 import { clampZoom, DOMAIN_PACKS, GROUP_COLORS, MODULE_TYPES } from '../types/spatial'
+import { AUTOMATION_CORE_SET } from '../widgets/automationCoreCatalog'
 
 const MODULE_TYPE_SET = new Set<string>(MODULE_TYPES)
+const TRANSIENT_AUTOMATION_RUN_TYPES = new Set<string>(['http_request', 'webhook_sender', 'widget_creator'])
 const DOMAIN_PACK_SET = new Set<string>(DOMAIN_PACKS)
 const GROUP_COLOR_SET = new Set<string>(GROUP_COLORS)
 const RELATION_TYPES: readonly RelationType[] = [
@@ -160,6 +162,34 @@ function normalizeWidgetData(widget: Widget): Widget {
     const data = persistentWidget.data as unknown as Record<string, unknown>
     if (data.status === 'generating') {
       return { ...persistentWidget, data: { ...data, status: 'idle' } as Widget['data'] }
+    }
+  }
+  if (persistentWidget.type === 'secret_reference') {
+    const data = persistentWidget.data as unknown as Record<string, unknown>
+    return {
+      ...persistentWidget,
+      data: {
+        ...data,
+        input: '',
+        output: '',
+        config: '{}',
+        enabled: false,
+        running: false,
+        lastError: 'Secret material was removed. Protected secret storage is not available in this beta.',
+      } as Widget['data'],
+    }
+  }
+  if (AUTOMATION_CORE_SET.has(persistentWidget.type) && TRANSIENT_AUTOMATION_RUN_TYPES.has(persistentWidget.type)) {
+    const data = persistentWidget.data as unknown as Record<string, unknown>
+    if (data.running === true) {
+      return {
+        ...persistentWidget,
+        data: {
+          ...data,
+          running: false,
+          lastError: 'Previous run was interrupted. Review the input and run again.',
+        } as Widget['data'],
+      }
     }
   }
   if (persistentWidget.type !== 'bullets') return persistentWidget

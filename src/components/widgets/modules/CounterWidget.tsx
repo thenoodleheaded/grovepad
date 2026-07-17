@@ -1,19 +1,25 @@
 import { Minus, Plus, RotateCcw } from 'lucide-react'
 import type { CounterData } from '../../../types/spatial'
 import { useFieldAnchor } from '../../../hooks/useFieldAnchor'
+import { COUNTER_STEP_LIMIT, safeCounterStep } from '../../../utils/widgetValueValidation'
 
 interface CounterWidgetProps {
   data: CounterData
   onChange: (data: CounterData) => void
 }
 
+function safeCount(value: number): number {
+  if (!Number.isFinite(value)) return 0
+  return Math.min(Number.MAX_SAFE_INTEGER, Math.max(Number.MIN_SAFE_INTEGER, Math.round(value)))
+}
+
 /** A tally counter — one label, one number, step-adjustable ± buttons. */
 export function CounterWidget({ data, onChange }: CounterWidgetProps) {
-  const step = Number.isFinite(data.step) && data.step > 0 ? data.step : 1
+  const step = safeCounterStep(data.step)
   // Field wires for `count` anchor to the number row, not the card edge slot.
   const countRowRef = useFieldAnchor('count')
 
-  const nudge = (delta: number) => onChange({ ...data, count: data.count + delta })
+  const nudge = (delta: number) => onChange({ ...data, count: safeCount(data.count + delta) })
   const reset = () => onChange({ ...data, count: 0 })
 
   return (
@@ -57,10 +63,12 @@ export function CounterWidget({ data, onChange }: CounterWidgetProps) {
           <input
             type="number"
             min={1}
+            max={COUNTER_STEP_LIMIT}
+            step={1}
             value={data.step}
             aria-label="Step size"
-            onChange={(e) => onChange({ ...data, step: Math.max(1, Number(e.target.value) || 1) })}
-            className="gp-input--bare w-10 font-mono text-neutral-400 outline-none"
+            onChange={(e) => onChange({ ...data, step: safeCounterStep(Number(e.target.value)) })}
+            className="gp-input--bare w-24 font-mono text-neutral-300 outline-none"
           />
         </label>
         <button

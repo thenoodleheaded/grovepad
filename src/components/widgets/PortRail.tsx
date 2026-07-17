@@ -46,6 +46,51 @@ export const PortRail = memo(function PortRail({ widgetId }: { widgetId: string 
   const ins = inputPortsFor(widget.type)
   const showLabels = circuitMode || dragActive || hovered
 
+  const connectToPort = (targetId: string, port: PortSpec) => {
+    const circuit = useCircuitStore.getState()
+    const drag = circuit.wireDrag
+    if (!drag || drag.fromId === targetId) return
+    const state = useWidgetStore.getState()
+    const sourceType = state.widgets[drag.fromId]?.type
+    if (!sourceType) return
+    if (port.kind === 'field') {
+      const sourceUnit = outputPortsFor(sourceType).find((item) => item.key === drag.fromField)?.unit
+      state.addConnection({
+        fromId: drag.fromId,
+        fromField: drag.fromField,
+        toId: targetId,
+        kind: 'value',
+        toField: port.key,
+        transform: suggestTransform(sourceUnit, port.unit),
+      })
+    } else {
+      state.addConnection({
+        fromId: drag.fromId,
+        fromField: drag.fromField,
+        toId: targetId,
+        kind: 'trigger',
+        command: port.key as never,
+        edge: drag.valueType === 'boolean' ? 'rising' : 'change',
+      })
+    }
+    circuit.endWireDrag()
+  }
+
+  const beginKeyboardWire = (port: PortSpec) => {
+    const circuit = useCircuitStore.getState()
+    if (circuit.wireDrag?.fromId === widgetId && circuit.wireDrag.fromField === port.key) {
+      circuit.endWireDrag()
+      return
+    }
+    circuit.endWireDrag()
+    circuit.startWireDrag({
+      fromId: widgetId,
+      fromField: port.key,
+      valueType: port.valueType ?? 'text',
+      cursorWorld: { x: widget.position.x + widget.size.width, y: widget.position.y + widget.size.height / 2 },
+    })
+  }
+
   const beginWire = (event: ReactPointerEvent<HTMLButtonElement>, port: PortSpec) => {
     if (event.button !== 0) return
     event.preventDefault()
@@ -96,31 +141,9 @@ export const PortRail = memo(function PortRail({ widgetId }: { widgetId: string 
     const world = screenToWorld({ x: event.clientX, y: event.clientY }, { x: pan.x, y: pan.y, zoom })
     const state = useWidgetStore.getState()
     const hit = findWireTarget(world, state.widgets, state.activeCanvasId, widgetId)
-    circuit.endWireDrag()
-    if (!hit) return
+    if (!hit) { circuit.endWireDrag(); return }
     if (hit.port) {
-      const sourceType = state.widgets[drag.fromId]?.type
-      if (!sourceType) return
-      if (hit.port.kind === 'field') {
-        const sourceUnit = outputPortsFor(sourceType).find((port) => port.key === drag.fromField)?.unit
-        state.addConnection({
-          fromId: drag.fromId,
-          fromField: drag.fromField,
-          toId: hit.widgetId,
-          kind: 'value',
-          toField: hit.port.key,
-          transform: suggestTransform(sourceUnit, hit.port.unit),
-        })
-      } else {
-        state.addConnection({
-          fromId: drag.fromId,
-          fromField: drag.fromField,
-          toId: hit.widgetId,
-          kind: 'trigger',
-          command: hit.port.key as never,
-          edge: drag.valueType === 'boolean' ? 'rising' : 'change',
-        })
-      }
+      connectToPort(hit.widgetId, hit.port)
       return
     }
     // Dropped on a card body — the field picker resolves which input.
@@ -131,11 +154,13 @@ export const PortRail = memo(function PortRail({ widgetId }: { widgetId: string 
       toId: hit.widgetId,
       screen: { x: event.clientX, y: event.clientY },
     })
+    circuit.endWireDrag()
   }
 
   return (
     <div
-      aria-hidden
+      role="group"
+      aria-label={`Circuit ports for ${widget.title}`}
       data-expanded={!widget.collapsed && !widget.iconified || undefined}
       className="gp-port-rail pointer-events-none absolute inset-0 z-30"
     >
@@ -144,7 +169,8 @@ export const PortRail = memo(function PortRail({ widgetId }: { widgetId: string 
           <button
             key={`out-${port.key}`}
             type="button"
-            tabIndex={-1}
+            aria-label={`Start connection from ${port.label} output of ${widget.title}`}
+            aria-pressed={dragFromField === port.key}
             title={`${port.label} — drag to wire`}
             data-active={dragFromField === port.key || undefined}
             className="gp-port gp-port-out pointer-events-auto"
@@ -156,18 +182,29 @@ export const PortRail = memo(function PortRail({ widgetId }: { widgetId: string 
             onPointerMove={moveWire}
             onPointerUp={endWire}
             onPointerCancel={() => useCircuitStore.getState().endWireDrag()}
+            onKeyDown={(event) => {
+              if (event.key === 'Escape') { event.preventDefault(); useCircuitStore.getState().endWireDrag() }
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault()
+                event.stopPropagation()
+                beginKeyboardWire(port)
+              }
+            }}
           >
             {showLabels && <span className="gp-port-label gp-port-label-out">{port.label}</span>}
           </button>
         ))}
       {showInputs &&
         ins.map((port) => (
-          <span
+          <button
             key={`in-${port.kind}-${port.key}`}
+            type="button"
+            disabled={!dragActive || isDragSource}
+            aria-label={`Connect to ${port.label} ${port.kind === 'command' ? 'command' : 'input'} of ${widget.title}`}
             title={port.label}
             data-command={port.kind === 'command' || undefined}
             data-hot={hoverPortKey === port.key || undefined}
-            className="gp-port gp-port-in"
+            className="gp-port gp-port-in pointer-events-auto disabled:opacity-60"
             style={{
               top: portRailOffset(widget.size.height, port.index, ins.length),
               '--gp-port-color':
@@ -175,9 +212,18 @@ export const PortRail = memo(function PortRail({ widgetId }: { widgetId: string 
                   ? TRIGGER_WIRE_COLOR
                   : VALUE_TYPE_COLORS[port.valueType ?? 'text'],
             } as React.CSSProperties}
+            onClick={() => connectToPort(widgetId, port)}
+            onKeyDown={(event) => {
+              if (event.key === 'Escape') { event.preventDefault(); useCircuitStore.getState().endWireDrag() }
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault()
+                event.stopPropagation()
+                connectToPort(widgetId, port)
+              }
+            }}
           >
             {showLabels && <span className="gp-port-label gp-port-label-in">{port.label}</span>}
-          </span>
+          </button>
         ))}
     </div>
   )

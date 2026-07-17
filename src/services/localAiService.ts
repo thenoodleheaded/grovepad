@@ -128,6 +128,13 @@ function withStructuralPlan(deterministic:ThoughtInterpretation,source:string):T
  * its structure, and the scaffold alone is always committable.
  */
 function withScaffoldPlan(deterministic:ThoughtInterpretation,source:string):{interpretation:ThoughtInterpretation;skeleton:ThoughtPlan|null}{
+  const explicitPlan=deterministic.predictions[0]
+  // Compose is a rescue path for genuinely ambiguous notes, not permission
+  // to replace a usable literal plan. Lists and explicit widget requests keep
+  // their nouns, cardinality, Unicode, and requested widget type intact.
+  if(explicitPlan&&explicitPlan.kind!=='fallback'&&explicitPlan.confidence>=.56){
+    return {interpretation:deterministic,skeleton:explicitPlan.plan}
+  }
   const scaffold=buildScaffold(source,{clauses:deterministic.meaning.clauses})
   if(!scaffold)return {interpretation:deterministic,skeleton:null}
   const prediction:ThoughtPrediction={
@@ -283,6 +290,9 @@ export class LocalAiService {
       const scaffolded=withScaffoldPlan(deterministic,sourceText)
       deterministic=scaffolded.interpretation
       if(scaffolded.skeleton&&!options.skeleton)options={...options,skeleton:scaffolded.skeleton}
+    }
+    if(options.mode==='compose'&&(deterministic.predictions[0]?.confidence??0)>=.92){
+      return deterministic
     }
     if(!options.allowModel){
       const deterministicTrace=debug?.beginCall({

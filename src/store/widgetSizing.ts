@@ -191,13 +191,9 @@ export function computeDataWidth(type: ModuleType, data: ModuleData): number {
       const d = data as TableData
       const cols = d.rows.reduce((m, r) => Math.max(m, r.length), 0)
       if (cols === 0) return 0
-      const widestColumn = Math.max(...Array.from({ length: cols }, (_, column) => {
-        const longest = d.rows.reduce((max, row) => Math.max(max, row[column]?.length ?? 0), 0)
-        return clamp(longest * 7 + 32, 96, 320)
-      }))
-      // TableWidget uses equal tracks, so the widest complete value defines
-      // every column's safe share.
-      return clamp(snapToGrid(widestColumn * cols + 24), C * 5, C * 32)
+      // Columns create width; cell text scrolls inside its input. A pasted URL
+      // or identifier must never turn one table into a canvas-wide card.
+      return clamp(snapToGrid(cols * 112 + 24), C * 5, C * 18)
     }
     case 'budget': {
       const d = data as BudgetData

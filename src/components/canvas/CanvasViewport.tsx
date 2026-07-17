@@ -39,6 +39,9 @@ import { GuestBackupNudge } from '../ui/GuestBackupNudge'
 import { DeployUpdateBanner } from '../ui/DeployUpdateBanner'
 import { CanvasTreeDrawer } from '../ui/CanvasTreeDrawer'
 import { TimerTitleRuntime } from './TimerTitleRuntime'
+import { WidgetDeletionDialog } from '../ui/WidgetDeletionDialog'
+import { requestWidgetDeletion } from '../../store/useWidgetDeletionDialogStore'
+import { frameCanvas } from '../../utils/cameraFraming'
 
 const AddWidgetModal = lazy(() =>
   import('../ui/AddWidgetModal').then((module) => ({ default: module.AddWidgetModal })),
@@ -77,21 +80,6 @@ function isEditableTarget(target: EventTarget | null): boolean {
     target.tagName === 'TEXTAREA' ||
     target.tagName === 'SELECT'
   )
-}
-
-/** Frame the selection if there is one, otherwise the whole active canvas. */
-function frameSelectionOrBoard(): void {
-  const widgetState = useWidgetStore.getState()
-  const targets =
-    widgetState.selectedIds.size > 0
-      ? [...widgetState.selectedIds]
-          .map((id) => widgetState.widgets[id])
-          .filter((w): w is Widget => Boolean(w))
-      : Object.values(widgetState.widgets).filter(
-          (w) => w.canvasId === widgetState.activeCanvasId,
-        )
-  const rect = boundsForWidgets(targets)
-  if (rect) useCanvasStore.getState().fitRect(rect, 160)
 }
 
 function zoomFromKeyboard(factor: number): void {
@@ -312,7 +300,7 @@ export function CanvasViewport() {
         case 'Backspace':
           if (state.selectedIds.size > 0) {
             e.preventDefault()
-            state.deleteWidgets([...state.selectedIds])
+            requestWidgetDeletion(state.selectedIds)
           }
           return
         case 'ArrowLeft':
@@ -332,7 +320,7 @@ export function CanvasViewport() {
         case 'F':
           if (e.shiftKey) return
           e.preventDefault()
-          frameSelectionOrBoard()
+          frameCanvas('board')
           return
         case '?':
           e.preventDefault()
@@ -524,7 +512,7 @@ export function CanvasViewport() {
       ref={viewportRef}
       data-canvas-viewport
       tabIndex={0}
-      className="gp-canvas-shell relative h-dvh w-screen touch-none select-none overflow-hidden"
+      className="gp-canvas-shell relative h-dvh w-screen touch-none select-none overflow-clip"
       style={{ backgroundColor: `color-mix(in srgb, var(--gp-canvas-tint-base) 97%, ${workspaceTint})` }}
       onDoubleClick={handleDoubleClick}
       onPointerDown={handleCanvasPointerDown}
@@ -573,6 +561,7 @@ export function CanvasViewport() {
         </Suspense>
       )}
       <ToastContainer />
+      <WidgetDeletionDialog />
       <CloudConflictDialog />
       <DeployUpdateBanner />
       <GuestBackupNudge />

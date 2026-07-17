@@ -3,7 +3,7 @@ import { Maximize, Minus, Plus, Redo2, Undo2 } from 'lucide-react'
 import { useCanvasStore } from '../../store/useCanvasStore'
 import { useOverlayLifecycle } from '../../store/useOverlayStore'
 import { useWidgetStore } from '../../store/useWidgetStore'
-import { boundsForWidgets } from '../../utils/widgetBounds'
+import { frameCanvas } from '../../utils/cameraFraming'
 import { IconButton } from './IconButton'
 
 const ZOOM_STEP = 1.25
@@ -42,12 +42,7 @@ export function ZoomControls() {
   }
 
   const frameBoard = () => {
-    const state = useWidgetStore.getState()
-    const rect = boundsForWidgets(
-      Object.values(state.widgets).filter((w) => w.canvasId === state.activeCanvasId),
-    )
-    if (rect) useCanvasStore.getState().fitRect(rect, 160)
-    else useCanvasStore.getState().fitAll()
+    frameCanvas('board')
   }
 
   return (

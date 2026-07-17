@@ -267,12 +267,14 @@ export const useWidgetStore = create<WidgetStoreState>()((set, get) => {
   canRedo: false,
 
   undo: () => {
+    useCanvasStore.getState().cancelViewAnimation()
     const snapshot = history.undo(currentSnapshot())
     if (!snapshot) return
     applySnapshot(snapshot)
   },
 
   redo: () => {
+    useCanvasStore.getState().cancelViewAnimation()
     const snapshot = history.redo(currentSnapshot())
     if (!snapshot) return
     applySnapshot(snapshot)

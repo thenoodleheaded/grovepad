@@ -12,8 +12,10 @@ import { buildBoardSnapshot, parsePersistedBoard, requestCloudSync } from '../..
 import { buildGrovepadPackage } from '../../utils/grovepadPackage'
 import { parseImportedBoardFile } from '../../utils/boardImport'
 import { useBoardImportStore } from '../../store/useBoardImportStore'
-import { listRollingSnapshots, writeMediaBlob, type LocalSnapshot } from '../../utils/boardDatabase'
+import { listRollingSnapshots, saveRollingSnapshot, writeMediaBlob, type LocalSnapshot } from '../../utils/boardDatabase'
 import { ConfirmDialog } from './ConfirmDialog'
+import { restoreWithProtectedSnapshot } from '../../utils/snapshotRestore'
+import { localDayKey } from '../../utils/localDate'
 
 /** Top-bar account presence: avatar + menu when signed in, sign-in when not. */
 export function AccountChip() {
@@ -64,7 +66,7 @@ export function AccountChip() {
     URL.revokeObjectURL(url)
   }
 
-  const today = () => new Date().toISOString().slice(0, 10)
+  const today = () => localDayKey()
 
   const exportPackage = async () => {
     try {
@@ -212,7 +214,7 @@ export function AccountChip() {
                   className="mx-1.5 flex h-8 w-[calc(100%-12px)] items-center gap-2 rounded-lg px-2 text-xs text-neutral-400 transition-colors hover:bg-neutral-800 hover:text-neutral-200"
                 >
                   <History size={12} aria-hidden />
-                  Restore {new Date(snapshots[0].createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} snapshot
+                  Restore {snapshots[0].label ? `${snapshots[0].label} · ` : ''}{new Date(snapshots[0].createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </button>
               )}
               <label className="mx-1.5 flex h-8 cursor-pointer items-center justify-between rounded-lg px-2 text-xs text-neutral-400 hover:bg-neutral-800 hover:text-neutral-200">
@@ -303,7 +305,7 @@ export function AccountChip() {
       <ConfirmDialog
         open={Boolean(restoreSnapshot)}
         title="Restore the latest local snapshot?"
-        description={restoreSnapshot ? `Return the board to its state from ${new Date(restoreSnapshot.createdAt).toLocaleString()}.` : ''}
+        description={restoreSnapshot ? `This replaces every current workspace, canvas, widget, group, and connection with the board from ${new Date(restoreSnapshot.createdAt).toLocaleString()}. Grovepad will first save the board you have now as “Pre-restore recovery” with the current time, and the confirmation message can restore it immediately.` : ''}
         confirmLabel="Restore snapshot"
         destructive
         onClose={() => setRestoreSnapshot(null)}
@@ -311,8 +313,31 @@ export function AccountChip() {
           if (restoreSnapshot) {
             const board = parsePersistedBoard(restoreSnapshot.board)
             if (board) {
-              useWidgetStore.getState().loadBoard(board)
-              useToastStore.getState().addToast('Local snapshot restored')
+              const currentBoard = buildBoardSnapshot(useWidgetStore.getState())
+              const recoverableCurrentBoard = parsePersistedBoard(currentBoard)
+              void (async () => {
+                if (!recoverableCurrentBoard) {
+                  useToastStore.getState().addToast('Restore stopped because the current board could not be protected')
+                  return
+                }
+                let rollback: (() => void) | null = null
+                try {
+                  rollback = await restoreWithProtectedSnapshot({
+                    currentBoard,
+                    currentRecovery: recoverableCurrentBoard,
+                    target: board,
+                    protect: (current) => saveRollingSnapshot(current, 'Pre-restore recovery'),
+                    load: (next) => useWidgetStore.getState().loadBoard(next),
+                  })
+                } catch {
+                  useToastStore.getState().addToast('Restore stopped because the current board could not be protected')
+                  return
+                }
+                useToastStore.getState().addToast('Local snapshot restored; your previous board is protected', {
+                  duration: 12_000,
+                  action: { label: 'Restore previous board', run: rollback },
+                })
+              })()
             } else {
               useToastStore.getState().addToast('That local snapshot is no longer readable')
             }

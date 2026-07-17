@@ -20,16 +20,22 @@ const commonFields:FieldDescriptor[]=[
 
 export const AUTOMATION_CORE_FIELDS:Partial<Record<ModuleType,FieldDescriptor[]>>=Object.fromEntries(AUTOMATION_CORE_TYPES.map(type=>[type,commonFields]))
 
-function run(key:FieldCommand,value:ModuleData):AutomationCoreData{
+export function runAutomationCommand(type:ModuleType,key:FieldCommand,value:ModuleData):AutomationCoreData{
   const data=d(value),now=Date.now()
   if(key==='clear'||key==='reset')return {...data,output:'',lastError:'',count:0,items:[],running:false}
   if(key==='approve')return {...data,enabled:true,running:false,output:'approved',count:data.count+1,lastRunAt:now}
   if(key==='reject')return {...data,enabled:false,running:false,output:'rejected',count:data.count+1,lastRunAt:now}
   if(key==='acquire')return {...data,running:true,output:'locked',count:data.count+1,lastRunAt:now}
   if(key==='release')return {...data,running:false,output:'released',lastRunAt:now}
-  if(key==='enqueue')return {...data,count:data.count+1,lastRunAt:now,items:[...data.items,{id:crypto.randomUUID(),key:String(data.items.length+1),value:data.input,status:'waiting',at:now}]}
-  if(key==='dequeue'){const [head,...items]=data.items;return {...data,items,count:Math.max(0,data.count-1),output:head?.value??'',lastRunAt:now}}
+  if(key==='enqueue'){
+    if(type==='set_store'&&data.items.some(item=>item.value===data.input))return {...data,output:data.input,lastRunAt:now,lastError:''}
+    return {...data,count:data.count+1,lastRunAt:now,items:[...data.items,{id:crypto.randomUUID(),key:String(data.items.length+1),value:data.input,status:'waiting',at:now}]}
+  }
+  if(key==='dequeue'){
+    const selected=type==='stack_store'?data.items.at(-1):data.items[0]
+    const items=selected?data.items.filter(item=>item.id!==selected.id):data.items
+    return {...data,items,count:items.length,output:selected?.value??'',lastRunAt:now}
+  }
   return {...data,running:false,output:data.input,count:data.count+1,lastRunAt:now,lastError:''}
 }
-const commands:CommandDescriptor[]=['execute','enqueue','dequeue','approve','reject','acquire','release','clear'].map(key=>({key:key as FieldCommand,label:key.replace(/^./,letter=>letter.toUpperCase()),run:value=>run(key as FieldCommand,value)}))
-export const AUTOMATION_CORE_COMMANDS:Partial<Record<ModuleType,CommandDescriptor[]>>=Object.fromEntries(AUTOMATION_CORE_TYPES.map(type=>[type,commands]))
+export const AUTOMATION_CORE_COMMANDS:Partial<Record<ModuleType,CommandDescriptor[]>>=Object.fromEntries(AUTOMATION_CORE_TYPES.map(type=>[type,['execute','enqueue','dequeue','approve','reject','acquire','release','clear'].map(key=>({key:key as FieldCommand,label:key.replace(/^./,letter=>letter.toUpperCase()),run:value=>runAutomationCommand(type,key as FieldCommand,value)} satisfies CommandDescriptor))]))

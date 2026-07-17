@@ -40,6 +40,25 @@ describe('LocalAiService hybrid planning',()=>{
     expect(result.predictions[0]?.primaryTypes[0]).toBe('checklist')
   })
 
+  it('preserves the explicit launch topic and list items instead of substituting a music project',async()=>{
+    const service=new LocalAiService({runtime,storage:null,enabled:false})
+    const result=await service.predictThoughtCandidates('Project launch\n- Write brief\n- Design assets\n- QA 🧪',{}, {allowModel:false})
+    const top=result.predictions[0]!
+    const text=top.plan.nodes.map(node=>`${node.title} ${JSON.stringify(node.data)}`).join(' ')
+    expect(text.toLowerCase()).toContain('launch')
+    expect(text).toContain('Write brief')
+    expect(text).toContain('Design assets')
+    expect(text).toContain('QA 🧪')
+    expect(text.toLowerCase()).not.toContain('music')
+  })
+
+  it('keeps a singular checklist request singular',async()=>{
+    const service=new LocalAiService({runtime,storage:null,enabled:false})
+    const result=await service.predictThoughtCandidates('Make one checklist for launch QA',{}, {allowModel:false})
+    expect(result.predictions[0]?.plan.nodes).toHaveLength(1)
+    expect(result.predictions[0]?.plan.nodes[0]?.widgetType).toBe('checklist')
+  })
+
   it('accepts and ranks a validated 40-node connected workspace',async()=>{
     const nodes=Array.from({length:40},(_,index)=>({id:`n${index}`,t:index%3===0?'checklist':'notes',title:`Branch ${index}`}))
     const relations=nodes.slice(1).map((_,index)=>({from:`n${Math.floor(index/3)}`,to:`n${index+1}`,type:'parent'}))
@@ -150,7 +169,7 @@ describe('LocalAiService hybrid planning',()=>{
 
   it('accepts a deep plan with a valid group and drops groups pointing at missing nodes',async()=>{
     const payload=JSON.stringify({v:1,c:.9,
-      n:[{id:'n0',t:'notes',title:'Root'},{id:'n1',t:'sketchpad',title:'Board'},{id:'n2',t:'flashcards',title:'Drills'}],
+      n:[{id:'n0',t:'notes',title:'Root'},{id:'n1',t:'notes',title:'Board'},{id:'n2',t:'flashcards',title:'Drills'}],
       r:[{from:'n0',to:'n1',type:'parent'},{from:'n0',to:'n2',type:'parent'}],
       g:[{id:'g0',members:['n1','n2'],label:'Study pair'},{id:'g1',members:['n2','ghost']}]})
     const service=new LocalAiService({runtime,storage:null,enabled:true,adapterFactory:()=>fakeAdapter(payload)})
@@ -205,7 +224,7 @@ describe('LocalAiService hybrid planning',()=>{
 
   it('commits plan groups as real widget groups in one undo step',async()=>{
     const payload=JSON.stringify({v:1,c:.9,
-      n:[{id:'n0',t:'notes',title:'Root'},{id:'n1',t:'sketchpad',title:'Board'},{id:'n2',t:'flashcards',title:'Drills'}],
+      n:[{id:'n0',t:'notes',title:'Root'},{id:'n1',t:'notes',title:'Board'},{id:'n2',t:'flashcards',title:'Drills'}],
       r:[{from:'n0',to:'n1',type:'parent'},{from:'n0',to:'n2',type:'parent'}],
       g:[{id:'g0',members:['n1','n2'],label:'Study pair'}]})
     const service=new LocalAiService({runtime,storage:null,enabled:true,adapterFactory:()=>fakeAdapter(payload)})

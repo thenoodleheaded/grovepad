@@ -4,14 +4,16 @@ interface IconButtonProps {
   label: string
   onClick: () => void
   disabled?: boolean
+  pressed?: boolean
   children: ReactNode
 }
 
-export function IconButton({ label, onClick, disabled = false, children }: IconButtonProps) {
+export function IconButton({ label, onClick, disabled = false, pressed, children }: IconButtonProps) {
   return (
     <button
       type="button"
       aria-label={label}
+      aria-pressed={pressed}
       title={label}
       disabled={disabled}
       onClick={onClick}

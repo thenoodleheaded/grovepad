@@ -2,6 +2,9 @@ import type { AutomationCoreData, ModuleData, RelationType } from '../types/spat
 import { AUTOMATION_CORE_SET, type AutomationCoreType } from '../widgets/automationCoreCatalog'
 import { commandsFor } from '../widgets/fields'
 import { useWidgetStore } from '../store/useWidgetStore'
+import { MODULE_TYPES } from '../types/spatial'
+import type { ThoughtPlan } from '../utils/thoughtInterpreter'
+import { isWidgetTypePublic, widgetDefinition } from '../widgets/registry'
 
 // ---------------------------------------------------------------------------
 // Automation executor — the async half of the automation-core widgets.
@@ -17,47 +20,45 @@ import { useWidgetStore } from '../store/useWidgetStore'
 // ---------------------------------------------------------------------------
 
 const inFlight = new Set<string>()
+const requestControllers = new Map<string, AbortController>()
+const MODULE_TYPE_SET = new Set<string>(MODULE_TYPES)
 
-function parseConfig(raw: string): Record<string, unknown> {
+export function parseAutomationConfig(raw: string): Record<string, unknown> {
   try {
-    return JSON.parse(raw || '{}') as Record<string, unknown>
+    const parsed = JSON.parse(raw || '{}') as unknown
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error('Configuration must be a JSON object')
+    return parsed as Record<string, unknown>
   } catch {
-    return {}
+    throw new Error('Configuration JSON is invalid. Fix it before running this automation.')
   }
+}
+
+export function resolveHttpRequestConfig(
+  type: 'http_request' | 'webhook_sender',
+  data: Pick<AutomationCoreData, 'config' | 'input'>,
+): { url: string; method: string; headers: Record<string, string>; body?: string; timeoutMs: number } {
+  const config = parseAutomationConfig(data.config)
+  const rawUrl = String(config.url ?? data.input).trim()
+  let parsedUrl: URL
+  try { parsedUrl = new URL(rawUrl) } catch { throw new Error('Enter a valid HTTP or HTTPS URL before running this automation.') }
+  if (parsedUrl.protocol !== 'http:' && parsedUrl.protocol !== 'https:') throw new Error('Only HTTP and HTTPS endpoints are allowed.')
+  const method = String(config.method ?? (type === 'webhook_sender' ? 'POST' : 'GET')).toUpperCase()
+  if (!['GET', 'POST', 'PUT', 'PATCH', 'DELETE'].includes(method)) throw new Error(`Unsupported HTTP method: ${method}`)
+  const headers: Record<string, string> = { 'content-type': 'application/json' }
+  if (config.headers !== undefined) {
+    if (!config.headers || typeof config.headers !== 'object' || Array.isArray(config.headers)) throw new Error('HTTP headers must be a JSON object.')
+    for (const [key, value] of Object.entries(config.headers)) {
+      if (typeof value !== 'string') throw new Error(`HTTP header “${key}” must be text.`)
+      headers[key] = value
+    }
+  }
+  const configuredTimeout = Number(config.timeoutMs)
+  const timeoutMs = Number.isFinite(configuredTimeout) ? Math.min(120_000, Math.max(1_000, configuredTimeout)) : 15_000
+  return { url: parsedUrl.toString(), method, headers, timeoutMs, ...(method === 'GET' ? {} : { body: String(config.body ?? data.input) }) }
 }
 
 function lines(value: string): string[] {
   return value.split(/\r?\n|,/).map((item) => item.trim()).filter(Boolean)
-}
-
-async function runWorker(code: string, input: string, timeout = 3000): Promise<string> {
-  const workerSource = `self.onmessage=async(e)=>{try{const fn=new Function('input','"use strict";'+e.data.code);const value=await fn(e.data.input);self.postMessage({ok:true,value})}catch(error){self.postMessage({ok:false,error:String(error&&error.message||error)})}}`
-  const url = URL.createObjectURL(new Blob([workerSource], { type: 'text/javascript' }))
-  const worker = new Worker(url)
-  try {
-    return await new Promise<string>((resolve, reject) => {
-      const timer = setTimeout(() => {
-        worker.terminate()
-        reject(new Error('Script timed out'))
-      }, timeout)
-      worker.onmessage = (event) => {
-        clearTimeout(timer)
-        if (event.data.ok) {
-          resolve(typeof event.data.value === 'string' ? event.data.value : JSON.stringify(event.data.value))
-        } else {
-          reject(new Error(event.data.error))
-        }
-      }
-      worker.onerror = (event) => {
-        clearTimeout(timer)
-        reject(new Error(event.message))
-      }
-      worker.postMessage({ code, input })
-    })
-  } finally {
-    worker.terminate()
-    URL.revokeObjectURL(url)
-  }
 }
 
 /** Patch an automation widget's data from its LIVE state, without history. */
@@ -76,11 +77,15 @@ function runPureCommand(widgetId: string, key: string): void {
   if (!widget) return
   const command = commandsFor(widget.type).find((entry) => entry.key === key)
   if (!command) return
-  store.applyWireWrites(new Map<string, ModuleData>([[widgetId, command.run(widget.data)]]))
+  store.updateWidgetData(widgetId, command.run(widget.data))
 }
 
 export function isAutomationRunning(widgetId: string): boolean {
   return inFlight.has(widgetId)
+}
+
+export function cancelAutomationWidget(widgetId: string): void {
+  requestControllers.get(widgetId)?.abort()
 }
 
 /**
@@ -94,11 +99,44 @@ export async function executeAutomationWidget(widgetId: string): Promise<void> {
   if (!self || !AUTOMATION_CORE_SET.has(self.type)) return
   const type = self.type as AutomationCoreType
   const data = self.data as AutomationCoreData
+  const definition = widgetDefinition(type)
+  if (definition.availability === 'existing-only') {
+    write(widgetId, {
+      running: false,
+      enabled: false,
+      input: type === 'secret_reference' ? '' : data.input,
+      output: '',
+      lastError: definition.unavailableReason ?? 'This automation is unavailable.',
+    })
+    return
+  }
   if (!data.enabled) return
 
   // Stateful types map Execute onto their pure command — no async work.
   if (type === 'queue' || type === 'stack_store' || type === 'set_store') {
     runPureCommand(widgetId, 'enqueue')
+    return
+  }
+  if (type === 'idempotency_store') {
+    const duplicate = data.items.some((item) => item.key === data.input || item.value === data.input)
+    store.updateWidgetData(widgetId, duplicate
+      ? { ...data, output: 'Duplicate ignored', lastError: '', lastRunAt: Date.now() }
+      : { ...data, output: data.input, count: data.count + 1, lastError: '', lastRunAt: Date.now(), items: [...data.items, { id: crypto.randomUUID(), key: data.input, value: data.input, status: 'done', at: Date.now() }] })
+    return
+  }
+  if (type === 'state_machine') {
+    try {
+      const config = parseAutomationConfig(data.config)
+      const transitions = config.transitions
+      if (!transitions || typeof transitions !== 'object' || Array.isArray(transitions)) throw new Error('Define transitions in Configuration JSON before running the state machine.')
+      const current = data.output || String(config.initial ?? '')
+      const next = data.input.trim()
+      const allowed = (transitions as Record<string, unknown>)[current]
+      if (!next || !Array.isArray(allowed) || !allowed.map(String).includes(next)) throw new Error(`Transition ${current || '(unset)'} → ${next || '(empty)'} is not allowed.`)
+      store.updateWidgetData(widgetId, { ...data, output: next, count: data.count + 1, lastRunAt: Date.now(), lastError: '' })
+    } catch (error) {
+      store.updateWidgetData(widgetId, { ...data, lastError: error instanceof Error ? error.message : String(error), lastRunAt: Date.now() })
+    }
     return
   }
   if (type === 'mutex' || type === 'workflow_lock') {
@@ -110,32 +148,47 @@ export async function executeAutomationWidget(widgetId: string): Promise<void> {
     return
   }
 
+  if (type === 'widget_creator') {
+    try {
+      const config = parseAutomationConfig(data.config)
+      const requestedType = String(config.type ?? 'notes')
+      if (!MODULE_TYPE_SET.has(requestedType)) throw new Error(`Unknown widget type: ${requestedType}`)
+      if (!isWidgetTypePublic(requestedType as never)) throw new Error(`${widgetDefinition(requestedType as never).label} is not available for creation in this beta.`)
+      const titles = lines(data.input)
+      if (titles.length === 0) throw new Error('Enter at least one widget title')
+      const plan: ThoughtPlan = {
+        sourceText: data.input,
+        confidence: 1,
+        nodes: titles.map((title, index) => ({ temporaryId: `created-${index}`, widgetType: requestedType as never, title, data: widgetDefinition(requestedType as never).defaultData(), sourceText: title, confidence: 1, depth: 0, metadata: { badges: [] } })),
+        relations: [], groups: [], warnings: [],
+      }
+      const created = store.commitThoughtPlan(plan, { x: self.position.x + self.size.width + 80, y: self.position.y })
+      write(widgetId, { output: created.join(','), running: false, count: data.count + 1, lastRunAt: Date.now(), lastError: '' })
+    } catch (error) {
+      write(widgetId, { running: false, lastError: error instanceof Error ? error.message : String(error), lastRunAt: Date.now() })
+    }
+    return
+  }
+
   inFlight.add(widgetId)
   write(widgetId, { running: true, lastError: '' })
-  const config = parseConfig(data.config)
+  let requestTimer: ReturnType<typeof setTimeout> | null = null
   try {
+    const config = parseAutomationConfig(data.config)
     let output = data.input
-    if (type === 'script_block' || type === 'local_function') {
-      output = await runWorker(data.config || 'return input', data.input, Number(config.timeoutMs) || 3000)
-    } else if (type === 'http_request' || type === 'webhook_sender') {
-      const url = String(config.url ?? data.input)
-      const method = String(config.method ?? (type === 'webhook_sender' ? 'POST' : 'GET')).toUpperCase()
-      const response = await fetch(url, {
-        method,
-        headers: { 'content-type': 'application/json', ...(config.headers as Record<string, string> | undefined) },
-        ...(method === 'GET' ? {} : { body: String(config.body ?? data.input) }),
+    if (type === 'http_request' || type === 'webhook_sender') {
+      const request = resolveHttpRequestConfig(type, data)
+      const controller = new AbortController()
+      requestControllers.set(widgetId, controller)
+      requestTimer = setTimeout(() => controller.abort(), request.timeoutMs)
+      const response = await fetch(request.url, {
+        method: request.method,
+        signal: controller.signal,
+        headers: request.headers,
+        ...(request.body === undefined ? {} : { body: request.body }),
       })
       output = await response.text()
       if (!response.ok) throw new Error(`${response.status} ${response.statusText}`)
-    } else if (type === 'widget_creator') {
-      const created = lines(data.input).map((title, index) =>
-        store.createWidget(
-          title,
-          { x: self.position.x + self.size.width + 80, y: self.position.y + index * 120 },
-          String(config.type ?? 'notes') as never,
-        ),
-      )
-      output = created.join(',')
     } else if (type === 'branch_builder') {
       const titles = lines(data.input)
       const created = titles.map((title, index) => {
@@ -183,10 +236,14 @@ export async function executeAutomationWidget(widgetId: string): Promise<void> {
   } catch (error) {
     write(widgetId, {
       running: false,
-      lastError: error instanceof Error ? error.message : String(error),
+      lastError: error instanceof DOMException && error.name === 'AbortError'
+        ? 'Request cancelled or timed out. Review the endpoint and try again.'
+        : error instanceof Error ? error.message : String(error),
       lastRunAt: Date.now(),
     })
   } finally {
+    if (requestTimer) clearTimeout(requestTimer)
+    requestControllers.delete(widgetId)
     inFlight.delete(widgetId)
   }
 }

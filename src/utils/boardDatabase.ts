@@ -11,6 +11,7 @@ export interface LocalSnapshot {
   id: string
   createdAt: number
   kind?: 'board'
+  label?: string
   board: PersistedBoard
 }
 
@@ -90,13 +91,13 @@ export async function writeBoardDatabase(board: PersistedBoard): Promise<void> {
   }
 }
 
-export async function saveRollingSnapshot(board: PersistedBoard): Promise<void> {
+export async function saveRollingSnapshot(board: PersistedBoard, label?: string): Promise<void> {
   const db = await openDatabase()
   try {
     const tx = db.transaction(SNAPSHOT_STORE, 'readwrite')
     const store = tx.objectStore(SNAPSHOT_STORE)
     const createdAt = Date.now()
-    store.put({ id: String(createdAt), createdAt, kind: 'board', board } satisfies LocalSnapshot)
+    store.put({ id: String(createdAt), createdAt, kind: 'board', board, ...(label ? { label } : {}) } satisfies LocalSnapshot)
     const all = await requestResult(store.getAll() as IDBRequest<StoredSnapshot[]>)
     all.sort((a, b) => b.createdAt - a.createdAt)
     for (const stale of all.slice(20)) store.delete(stale.id)

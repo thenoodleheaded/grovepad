@@ -15,12 +15,14 @@ import {
   Trash2,
   Unlink,
 } from 'lucide-react'
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { useShallow } from 'zustand/react/shallow'
 import { useOverlayLifecycle } from '../../store/useOverlayStore'
 import { useWidgetStore } from '../../store/useWidgetStore'
+import { requestWidgetDeletion } from '../../store/useWidgetDeletionDialogStore'
 import { clampPopover } from '../../utils/popoverPosition'
+import { menuNavigationIndex } from '../../utils/menuNavigation'
 
 function MenuButton({
   label,
@@ -38,6 +40,7 @@ function MenuButton({
   return (
     <button
       type="button"
+      role="menuitem"
       disabled={disabled}
       onClick={onClick}
       className={`gp-menu-item flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs transition-colors disabled:pointer-events-none disabled:opacity-40 ${
@@ -53,6 +56,7 @@ function MenuButton({
 }
 
 export function WidgetContextMenu() {
+  const menuRef = useRef<HTMLDivElement>(null)
   const contextMenu = useWidgetStore((state) => state.contextMenu)
   const widget = useWidgetStore((state) =>
     contextMenu ? state.widgets[contextMenu.widgetId] : undefined,
@@ -66,11 +70,30 @@ export function WidgetContextMenu() {
 
   useEffect(() => {
     if (!contextMenu) return
+    const invoker = document.querySelector<HTMLElement>(`[data-widget-id="${CSS.escape(contextMenu.widgetId)}"] article`)
+    const itemSelector = '[role="menuitem"]:not(:disabled),[role="menuitemradio"]:not(:disabled)'
+    const focusFirst = requestAnimationFrame(() => menuRef.current?.querySelector<HTMLButtonElement>(itemSelector)?.focus())
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') useWidgetStore.getState().closeContextMenu()
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        useWidgetStore.getState().closeContextMenu()
+        return
+      }
+      if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) return
+      const items = [...(menuRef.current?.querySelectorAll<HTMLButtonElement>(itemSelector) ?? [])]
+      if (items.length === 0) return
+      event.preventDefault()
+      const current = items.indexOf(document.activeElement as HTMLButtonElement)
+      const next = menuNavigationIndex(current, items.length, event.key as 'ArrowDown' | 'ArrowUp' | 'Home' | 'End')
+      items[next]?.focus()
     }
     window.addEventListener('keydown', onKeyDown)
-    return () => window.removeEventListener('keydown', onKeyDown)
+    return () => {
+      cancelAnimationFrame(focusFirst)
+      window.removeEventListener('keydown', onKeyDown)
+      if (invoker?.isConnected) invoker.focus()
+      else document.querySelector<HTMLElement>('[data-canvas-viewport]')?.focus()
+    }
   }, [contextMenu])
 
   if (!contextMenu || !widget) return null
@@ -89,6 +112,7 @@ export function WidgetContextMenu() {
     <>
       <div
         data-canvas-ui
+        role="presentation"
         className="fixed inset-0 z-[210]"
         onPointerDown={close}
         onContextMenu={(event) => {
@@ -97,7 +121,10 @@ export function WidgetContextMenu() {
         }}
       />
       <div
+        ref={menuRef}
         data-canvas-ui
+        role="menu"
+        aria-label={`Actions for ${widget.title}`}
         className="gp-menu gp-pop gp-panel fixed z-[211] w-52 origin-top-left overflow-hidden rounded-2xl p-1.5 shadow-2xl"
         style={{ left, top }}
       >
@@ -142,11 +169,13 @@ export function WidgetContextMenu() {
         >
           {widget.metadata.locked ? <UnlockKeyhole size={13} aria-hidden /> : <LockKeyhole size={13} aria-hidden />}
         </MenuButton>
-        <div className="flex items-center gap-1.5 px-3 py-2" aria-label="Widget accent color">
+        <div role="group" className="flex items-center gap-1.5 px-3 py-2" aria-label="Widget accent color">
           {['#a78bfa', '#22d3ee', '#84cc16', '#f59e0b', '#f472b6', '#60a5fa'].map((accent) => (
             <button
               key={accent}
               type="button"
+              role="menuitemradio"
+              aria-checked={widget.metadata.accent === accent}
               aria-label={`Use ${accent} accent`}
               onClick={() => run(() => useWidgetStore.getState().setWidgetAccent(widget.id, accent))}
               className="h-4 w-4 rounded-full border border-white/20 transition-transform hover:scale-125"
@@ -232,7 +261,7 @@ export function WidgetContextMenu() {
         <MenuButton
           label={actionIds.length > 1 ? `Delete ${actionIds.length}` : 'Delete'}
           danger
-          onClick={() => run(() => useWidgetStore.getState().deleteWidgets(actionIds))}
+          onClick={() => run(() => requestWidgetDeletion(actionIds))}
         >
           <Trash2 size={13} aria-hidden />
         </MenuButton>

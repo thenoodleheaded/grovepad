@@ -74,6 +74,7 @@ import type {
   WeeklyPlannerData,
   WorldClockData,
 } from '../types/spatial'
+import { localDayKey } from '../utils/localDate'
 import type { CommandDescriptor, FieldDescriptor, FieldValue } from './contracts/fields'
 export type { CommandDescriptor, FieldDescriptor, FieldValue } from './contracts/fields'
 import { EXPANSION_COMMANDS, EXPANSION_FIELDS } from './fields/expansion'
@@ -548,7 +549,7 @@ const WIDGET_FIELDS: Partial<Record<ModuleType, FieldDescriptor[]>> = {
       label: 'Today',
       valueType: 'text',
       unit: 'date_iso',
-      get: () => new Date().toISOString().slice(0, 10),
+      get: () => localDayKey(),
       timeSensitive: true,
     },
   ],

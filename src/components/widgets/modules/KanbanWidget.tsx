@@ -114,7 +114,7 @@ export function KanbanWidget({ data, onChange }: KanbanWidgetProps) {
                     type="button"
                     aria-label="Move left"
                     onClick={() => moveCard(columnIndex, card.id, -1)}
-                    className="hidden h-4 w-4 shrink-0 items-center justify-center rounded-full border border-neutral-600 bg-neutral-950 text-neutral-400 hover:text-white group-hover/kcard:flex"
+                    className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-neutral-600 bg-neutral-950 text-neutral-400 opacity-70 hover:text-white focus-visible:opacity-100 group-hover/kcard:opacity-100"
                   >
                     <ChevronLeft size={9} aria-hidden />
                   </button>
@@ -129,7 +129,7 @@ export function KanbanWidget({ data, onChange }: KanbanWidgetProps) {
                   type="button"
                   aria-label="Remove card"
                   onClick={() => removeCard(column.id, card.id)}
-                  className="hidden shrink-0 text-neutral-700 hover:text-red-400 group-hover/kcard:block"
+                  className="shrink-0 text-neutral-500 opacity-70 hover:text-red-400 focus-visible:opacity-100 group-hover/kcard:opacity-100"
                 >
                   <X size={10} aria-hidden />
                 </button>
@@ -138,7 +138,7 @@ export function KanbanWidget({ data, onChange }: KanbanWidgetProps) {
                     type="button"
                     aria-label="Move right"
                     onClick={() => moveCard(columnIndex, card.id, 1)}
-                    className="hidden h-4 w-4 shrink-0 items-center justify-center rounded-full border border-neutral-600 bg-neutral-950 text-neutral-400 hover:text-white group-hover/kcard:flex"
+                    className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-neutral-600 bg-neutral-950 text-neutral-400 opacity-70 hover:text-white focus-visible:opacity-100 group-hover/kcard:opacity-100"
                   >
                     <ChevronRight size={9} aria-hidden />
                   </button>

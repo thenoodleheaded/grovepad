@@ -2,19 +2,22 @@ import { AlertTriangle, Check, CirclePlay, LoaderCircle, Plus, Trash2, X } from 
 import type { AutomationCoreData, ModuleData } from '../../../types/spatial'
 import { AUTOMATION_CORE_CATALOG, type AutomationCoreType } from '../../../widgets/automationCoreCatalog'
 import { commandsFor } from '../../../widgets/fields'
-import { executeAutomationWidget } from '../../../engine/automationExecutor'
+import { cancelAutomationWidget, executeAutomationWidget } from '../../../engine/automationExecutor'
+import { widgetDefinition } from '../../../widgets/registry'
 
 const inputClass='gp-input w-full px-3 py-2 outline-none'
 
 export function AutomationCoreWidget({widgetId,type,data,onChange}:{widgetId:string;type:AutomationCoreType;data:AutomationCoreData;onChange:(data:ModuleData)=>void}){
   const spec=AUTOMATION_CORE_CATALOG[type]
+  const unavailableReason=widgetDefinition(type).unavailableReason
   const update=(patch:Partial<AutomationCoreData>)=>onChange({...data,...patch})
   const pure=(key:string)=>{const command=commandsFor(type).find(item=>item.key===key);if(command)onChange(command.run(data))}
   // Execution lives in the engine-level executor so trigger wires can run
   // this widget offscreen; the button is just another way to call it.
   const execute=()=>{void executeAutomationWidget(widgetId)}
 
-  const showConfig=['script_block','local_function','http_request','webhook_sender','widget_creator','branch_builder','relation_builder','focus_action','test_data_generator'].includes(type)
+  const showConfig=['local_function','http_request','webhook_sender','widget_creator','branch_builder','relation_builder','focus_action','test_data_generator'].includes(type)
+  if(unavailableReason)return <div role="status" className="rounded-xl border border-amber-400/30 bg-amber-300/5 p-4 text-sm leading-5 text-amber-100"><strong className="block text-amber-300">Unavailable in this beta</strong><span>{unavailableReason}</span></div>
   return <div className="space-y-3">
     <div data-island="status" data-island-size="fixed" className="gp-island relative overflow-hidden p-3">
       <div className="absolute inset-y-0 left-0 w-1" style={{background:spec.accent}}/>
@@ -25,6 +28,7 @@ export function AutomationCoreWidget({widgetId,type,data,onChange}:{widgetId:str
     {(data.output||data.lastError)&&<div className={`gp-subdivision rounded-xl border p-3 ${data.lastError?'border-red-500/25 bg-red-500/5':'gp-hairline bg-white/[.025]'}`}><div className="flex items-center gap-1.5 text-[8px] uppercase tracking-widest text-neutral-600">{data.lastError?<AlertTriangle size={9}/>:<Check size={9}/>} {data.lastError?'Error':'Output'}</div><div className={`mt-1 max-h-16 overflow-auto whitespace-pre-wrap break-all font-mono text-[9px] ${data.lastError?'text-red-300':'text-neutral-300'}`}>{data.lastError||data.output}</div></div>}
     <div className="gp-subdivision flex gap-1.5 rounded-xl border gp-hairline p-2">
       <button type="button" disabled={data.running||!data.enabled} onClick={execute} className="flex h-9 flex-1 items-center justify-center gap-1.5 rounded-xl border px-3 text-[10px] font-semibold disabled:opacity-40" style={{borderColor:`${spec.accent}55`,background:`${spec.accent}16`,color:spec.accent}}>{data.running?<LoaderCircle size={11} className="animate-spin"/>:<CirclePlay size={11}/>} Execute</button>
+      {data.running&&<button type="button" onClick={()=>cancelAutomationWidget(widgetId)} aria-label="Cancel running automation" className="h-9 rounded-xl border border-red-500/30 px-3 text-red-300"><X size={11} aria-hidden/></button>}
       {(type==='queue'||type==='stack_store')&&<button type="button" onClick={()=>pure('dequeue')} aria-label="Release next" className="h-9 rounded-xl border gp-hairline px-3 text-neutral-400"><Trash2 size={11}/></button>}
       {type==='approval_gate'&&<><button type="button" onClick={()=>pure('approve')} aria-label="Approve" className="h-9 rounded-xl border border-emerald-500/25 px-3 text-emerald-400"><Check size={11}/></button><button type="button" onClick={()=>pure('reject')} aria-label="Reject" className="h-9 rounded-xl border border-red-500/25 px-3 text-red-400"><X size={11}/></button></>}
       {(type==='mutex'||type==='workflow_lock')&&data.running&&<button type="button" onClick={()=>pure('release')} aria-label="Release lock" className="h-9 rounded-xl border gp-hairline px-3 text-neutral-400"><X size={11}/></button>}

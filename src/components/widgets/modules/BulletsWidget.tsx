@@ -86,6 +86,7 @@ export function BulletsWidget({ data, onChange, onHeightChange }: BulletsWidgetP
             ◆
           </span>
           <input
+            data-floor-overflow="scroll"
             ref={(el) => {
               if (el) inputRefs.current.set(item.id, el)
               else inputRefs.current.delete(item.id)

@@ -6,6 +6,11 @@ import { describe, expect, it } from 'vitest'
 const css = readFileSync(new URL('./product.css', import.meta.url), 'utf8')
 
 describe('shared text-field surface contract', () => {
+  it('enforces readable widget microcopy contrast in both themes', () => {
+    expect(css).toContain('--gp-widget-muted-text: #a3a3a3')
+    expect(css).toContain('--gp-widget-muted-text: #525252')
+    expect(css).toContain('.gp-widget-card :where(.text-neutral-600, .text-neutral-700)')
+  })
   it('keeps text controls visually transparent and borderless', () => {
     const controls = css.slice(
       css.indexOf('/* Text controls are only the editable contents'),

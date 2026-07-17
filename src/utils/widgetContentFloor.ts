@@ -18,6 +18,22 @@ const finite = (value: number): number => Number.isFinite(value) ? value : 0
 const px = (value: string): number => finite(Number.parseFloat(value))
 const ceilSubgrid = (value: number): number => Math.ceil(value / SUBGRID) * SUBGRID
 
+export function hasSignificantVerticalOverflow(value: number): boolean {
+  return Number.isFinite(value) && value > SUBGRID
+}
+
+export function verticalContentFloor(
+  scrollHeight: number,
+  overflow: number,
+  fallbackMinHeight = 0,
+  inset = CARD_INSET,
+): number {
+  const contentHeight = hasSignificantVerticalOverflow(overflow)
+    ? finite(scrollHeight) + inset
+    : 0
+  return ceilSubgrid(Math.max(fallbackMinHeight, contentHeight))
+}
+
 /** Compose panel floors the same way their parent lays them out. */
 export function composePanelFloors(
   panels: readonly PanelFloor[],
@@ -165,14 +181,11 @@ function intrinsicElementWidth(element: HTMLElement): number {
 }
 
 function largestHiddenVerticalOverflow(root: HTMLElement): number {
-  let overflow = Math.max(0, root.scrollHeight - root.clientHeight)
-  for (const element of root.querySelectorAll<HTMLElement>('*')) {
-    if (element.dataset.floorOverflow === 'scroll') continue
-    const style = getComputedStyle(element)
-    if (!['auto', 'scroll', 'hidden', 'clip'].includes(style.overflowY)) continue
-    overflow = Math.max(overflow, element.scrollHeight - element.clientHeight)
-  }
-  return Math.max(0, overflow)
+  // Only overflow of the composed renderer can be repaired by growing the
+  // card. A fixed-height child can have a persistent one-pixel text overflow;
+  // adding that child delta to the outer height on every ResizeObserver pass
+  // creates an endless grow loop without making the child any taller.
+  return Math.max(0, root.scrollHeight - root.clientHeight)
 }
 
 export interface ContentFloorMeasurement {
@@ -194,7 +207,7 @@ export function measureWidgetContentFloor(
   const overflowY = largestHiddenVerticalOverflow(root)
   const minHeight = Math.min(
     maxHeight,
-    ceilSubgrid(Math.max(fallback.minHeight ?? 0, overflowY > 1 ? current.height + overflowY + 4 : 0)),
+    verticalContentFloor(root.scrollHeight, overflowY, fallback.minHeight),
   )
   return {
     sizing: { minWidth, minHeight },

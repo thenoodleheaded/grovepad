@@ -1,6 +1,8 @@
+import { useEffect, useState } from 'react'
 import { Plus, X } from 'lucide-react'
 import type { BudgetData } from '../../../types/spatial'
 import { useFieldAnchor } from '../../../hooks/useFieldAnchor'
+import { parseBudgetAmount } from '../../../utils/widgetValueValidation'
 
 interface BudgetWidgetProps {
   data: BudgetData
@@ -9,9 +11,46 @@ interface BudgetWidgetProps {
 
 // A budget line can't sensibly exceed a trillion; clamping keeps totals
 // readable and stops `toFixed`/inputs from spilling into scientific notation.
-const AMOUNT_LIMIT = 1e12
 const formatMoney = (value: number) =>
   value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+
+function BudgetAmountInput({ id, label, value, onCommit }: { id: string; label: string; value: number; onCommit: (value: number) => void }) {
+  const [draft, setDraft] = useState(String(value))
+  const [error, setError] = useState<string | null>(null)
+  useEffect(() => {
+    setDraft(String(value))
+  }, [value])
+  const commit = () => {
+    const parsed = parseBudgetAmount(draft)
+    if (parsed.error || parsed.value === undefined) {
+      setError(parsed.error ?? 'Invalid amount')
+      return
+    }
+    setError(null)
+    setDraft(String(parsed.value))
+    onCommit(parsed.value)
+  }
+  return (
+    <div className="relative">
+      <input
+        type="text"
+        inputMode="decimal"
+        value={draft}
+        aria-label={`Amount for ${label || 'line item'}`}
+        aria-invalid={Boolean(error)}
+        aria-describedby={error ? `budget-error-${id}` : undefined}
+        onChange={(event) => { setDraft(event.target.value); setError(null) }}
+        onBlur={commit}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter') { event.preventDefault(); commit() }
+          if (event.key === 'Escape') { setDraft(String(value)); setError(null) }
+        }}
+        className={`gp-input gp-input--compact w-[104px] text-right font-mono text-xs outline-none tabular-nums ${error ? 'border-red-400/70 text-red-200' : 'text-neutral-300'}`}
+      />
+      {error && <span id={`budget-error-${id}`} role="alert" className="absolute right-0 top-full z-10 mt-1 w-52 rounded bg-neutral-950 px-2 py-1 text-[11px] text-red-300 shadow-lg">{error}</span>}
+    </div>
+  )
+}
 
 export function BudgetWidget({ data, onChange }: BudgetWidgetProps) {
   const total = data.items.reduce((sum, item) => sum + item.amount, 0)
@@ -21,11 +60,7 @@ export function BudgetWidget({ data, onChange }: BudgetWidgetProps) {
   const setLabel = (id: string, label: string) =>
     onChange({ ...data, items: data.items.map((item) => (item.id === id ? { ...item, label } : item)) })
 
-  const setAmount = (id: string, raw: string) => {
-    const parsed = Number.parseFloat(raw)
-    const amount = Number.isFinite(parsed)
-      ? Math.max(-AMOUNT_LIMIT, Math.min(AMOUNT_LIMIT, parsed))
-      : 0
+  const setAmount = (id: string, amount: number) => {
     onChange({ ...data, items: data.items.map((item) => (item.id === id ? { ...item, amount } : item)) })
   }
 
@@ -66,14 +101,7 @@ export function BudgetWidget({ data, onChange }: BudgetWidgetProps) {
                 <span className="font-mono text-[11px] text-neutral-600 select-none">
                   {data.currency}
                 </span>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={item.amount}
-                  aria-label={`Amount for ${item.label || 'line item'}`}
-                  onChange={(e) => setAmount(item.id, e.target.value)}
-                  className="gp-input gp-input--compact w-[72px] text-right font-mono text-xs text-neutral-300 outline-none tabular-nums [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-                />
+                <BudgetAmountInput id={item.id} label={item.label} value={item.amount} onCommit={(amount) => setAmount(item.id, amount)} />
               </div>
 
               <button
@@ -112,8 +140,7 @@ export function BudgetWidget({ data, onChange }: BudgetWidgetProps) {
             total < 0 ? 'text-red-400' : 'text-teal-400'
           }`}
         >
-          {data.currency}
-          {formatMoney(total)}
+          {total < 0 ? `-${data.currency}${formatMoney(Math.abs(total))}` : `${data.currency}${formatMoney(total)}`}
         </span>
       </div>
     </div>

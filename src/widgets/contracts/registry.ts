@@ -34,4 +34,7 @@ export interface WidgetDefinition {
   sizing?: WidgetSizing
   /** Present when the type is gated behind a domain pack. */
   pack?: DomainPack
+  /** Existing-only types hydrate safely but are not offered for new work. */
+  availability?: 'public' | 'existing-only'
+  unavailableReason?: string
 }

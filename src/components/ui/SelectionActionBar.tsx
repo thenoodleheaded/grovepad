@@ -1,15 +1,14 @@
 import type { ReactNode } from 'react'
 import { Copy, Layers, Maximize2, Trash2, Unlink, X } from 'lucide-react'
-import { useCanvasStore } from '../../store/useCanvasStore'
 import { useWidgetStore } from '../../store/useWidgetStore'
-import type { Widget } from '../../types/spatial'
-import { boundsForWidgets } from '../../utils/widgetBounds'
+import { requestWidgetDeletion } from '../../store/useWidgetDeletionDialogStore'
+import { frameCanvas } from '../../utils/cameraFraming'
 
 function ActionButton({
   label,
   danger = false,
   disabled = false,
-  showLabel = true,
+  showLabel = false,
   onClick,
   children,
 }: {
@@ -64,7 +63,7 @@ export function SelectionActionBar() {
   return (
     <div
       data-canvas-ui
-      className="gp-selection-bar gp-toolbar gp-pop gp-panel absolute bottom-16 left-1/2 z-20 flex max-w-[calc(100vw-1.5rem)] -translate-x-1/2 select-none items-center gap-0.5 rounded-2xl p-1.5 shadow-2xl sm:bottom-4 sm:gap-1"
+      className="gp-selection-bar gp-toolbar gp-pop gp-panel absolute bottom-16 left-1/2 z-20 flex max-w-[calc(100vw-1.5rem)] -translate-x-1/2 select-none items-center gap-0.5 rounded-t-2xl rounded-b-none p-1 shadow-2xl sm:bottom-0 sm:gap-1"
       style={{ transformOrigin: '50% 100%' }}
     >
       <div className="min-w-16 px-1.5 text-center text-[11px] font-semibold text-neutral-200 sm:min-w-20 sm:px-2 sm:text-xs">
@@ -74,13 +73,7 @@ export function SelectionActionBar() {
       <ActionButton
         label="Frame"
         showLabel={false}
-        onClick={() => {
-          const widgets = useWidgetStore.getState().widgets
-          const rect = boundsForWidgets(
-            selectedIds.map((id) => widgets[id]).filter((widget): widget is Widget => Boolean(widget)),
-          )
-          if (rect) useCanvasStore.getState().fitRect(rect)
-        }}
+        onClick={() => frameCanvas('selection', 120)}
       >
         <Maximize2 size={13} aria-hidden />
       </ActionButton>
@@ -106,8 +99,13 @@ export function SelectionActionBar() {
         label="Tighten"
         disabled={!canTighten}
         onClick={() => {
-          const { compactGroup } = useWidgetStore.getState()
-          for (const groupId of groupIds) compactGroup(groupId)
+          let historyCaptured = false
+          for (const groupId of groupIds) {
+            const changed = useWidgetStore.getState().compactGroup(groupId, {
+              skipHistory: historyCaptured,
+            })
+            if (changed) historyCaptured = true
+          }
         }}
       >
         <Layers size={13} aria-hidden />
@@ -116,10 +114,15 @@ export function SelectionActionBar() {
         label="Detach"
         disabled={!canDetach}
         onClick={() => {
-          const state = useWidgetStore.getState()
+          let historyCaptured = false
           for (const widgetId of groupedSelectedIds) {
+            const state = useWidgetStore.getState()
             const groupId = state.widgetGroupIndex[widgetId]
-            if (groupId) state.removeFromGroup(groupId, widgetId)
+            if (!groupId) continue
+            const changed = state.removeFromGroup(groupId, widgetId, {
+              skipHistory: historyCaptured,
+            })
+            if (changed) historyCaptured = true
           }
         }}
       >
@@ -129,7 +132,7 @@ export function SelectionActionBar() {
         label="Delete"
         danger
         showLabel={false}
-        onClick={() => useWidgetStore.getState().deleteWidgets(selectedIds)}
+        onClick={() => requestWidgetDeletion(selectedIds)}
       >
         <Trash2 size={13} aria-hidden />
       </ActionButton>

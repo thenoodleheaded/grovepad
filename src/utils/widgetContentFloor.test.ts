@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { composePanelFloors, panelClassForIsland } from './widgetContentFloor'
+import { composePanelFloors, hasSignificantVerticalOverflow, panelClassForIsland, verticalContentFloor } from './widgetContentFloor'
 
 describe('widget content floors', () => {
   it('adds side-by-side panels and stacks vertical panels', () => {
@@ -14,5 +14,16 @@ describe('widget content floors', () => {
     expect(panelClassForIsland('aspect')).toBe('rigid')
     expect(panelClassForIsland('fixed')).toBe('rigid')
   })
-})
 
+  it('ignores sub-grid overflow noise that would otherwise cause grow loops', () => {
+    expect(hasSignificantVerticalOverflow(4)).toBe(false)
+    expect(hasSignificantVerticalOverflow(4.01)).toBe(true)
+  })
+
+  it('derives an idempotent height from content instead of repeatedly adding overflow', () => {
+    expect(verticalContentFloor(450, 190)).toBe(476)
+    expect(verticalContentFloor(450, 190)).toBe(476)
+    expect(verticalContentFloor(470, 190, 120, 0)).toBe(472)
+    expect(verticalContentFloor(260, 4, 280)).toBe(280)
+  })
+})

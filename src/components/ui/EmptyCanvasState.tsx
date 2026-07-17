@@ -30,8 +30,9 @@ function createLiveDemo(): void {
 
 export function EmptyCanvasState() {
   const isEmpty = useCanvasWidgetCount() === 0
+  const shaping = useWidgetStore((state) => state.ghostConfig !== null)
 
-  if (!isEmpty) return null
+  if (!isEmpty || shaping) return null
 
   return (
     <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center p-5">

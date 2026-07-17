@@ -8,6 +8,7 @@ import {
   ShieldCheck, Sparkles, Sprout, Star, Stethoscope, Sun, Tags, TentTree, Users, WalletCards,
 } from 'lucide-react'
 import type { AtlasWidgetData, DomainPack, ModuleType } from '../types/spatial'
+import { localDayKey, localDayKeyInDays } from '../utils/localDate'
 import type { WidgetCategory } from './contracts/registry'
 
 export const ATLAS_TYPES = [
@@ -86,13 +87,13 @@ export const ATLAS_CATALOG: Record<AtlasType,AtlasSpec> = {
   pet_care:A('Pet Card','Unify feeding, walks, vet dates, and weight',PawPrint,'life','#84cc16','pet','overdue',[t('next_due','Next due',true),b('overdue','Overdue',true),s('weight_series','Weight series'),w('pet_name','Pet name','text','text')],['log_feed','log_walk','log_weight'],['pet care','new pet','feeding walks vet'],life,{text:'Milo'}),
   visa_runway:A('Visa Runway','Calculate rolling visa-day allowance',ScrollText,'life','#ef4444','passport','days_left',[n('days_left','Days left',true),t('must_exit_by','Must exit by',true),n('window_days_used','Window days used',true),b('overstay_risk','Overstay risk',true),w('allowed_days','Allowed days','target')],['log_entry','log_exit'],['schengen days','visa days left','90 in 180'],life,{primary:42,target:90}),
   packing_matrix:A('Packing','Balance item weights across bags',Luggage,'life','#38bdf8','suitcase','overweight',[n('kg_remaining','Kg remaining'),b('overweight','Overweight'),n('unpacked_count','Unpacked'),w('bag_limit_kg','Bag limit','target'),w('packed_kg','Packed weight','primary')],['pack_item'],['packing list weight','overweight suitcase','bag allowance'],life,{primary:17,target:23}),
-  jet_lag_shifter:A('Jet Lag Plan','Converge sleep toward destination time',Plane,'life','#818cf8','clocks','shift_remaining_hours',[t('tonight_bedtime','Tonight bedtime',true),n('days_to_aligned','Days to aligned',true),n('shift_remaining_hours','Shift remaining',true),w('departure_date','Departure','date','text'),w('tz_delta','Timezone delta','secondary')],['advance_night'],['jet lag plan','shift sleep before flight'],life,{secondary:6,date:new Date(Date.now()+5*86400000).toISOString().slice(0,10)}),
+  jet_lag_shifter:A('Jet Lag Plan','Converge sleep toward destination time',Plane,'life','#818cf8','clocks','shift_remaining_hours',[t('tonight_bedtime','Tonight bedtime',true),n('days_to_aligned','Days to aligned',true),n('shift_remaining_hours','Shift remaining',true),w('departure_date','Departure','date','text'),w('tz_delta','Timezone delta','secondary')],['advance_night'],['jet lag plan','shift sleep before flight'],life,{secondary:6,date:localDayKeyInDays(5)}),
   currency_pocket:A('Cash Pockets','Aggregate cash held across currencies',WalletCards,'life','#2dd4bf','wallet','total_home_value',[n('total_home_value','Home value'),b('pocket_low','Pocket low'),w('amount','Amount','primary'),w('rates','Rates','secondary')],['spend','add_cash'],['travel cash','multiple currencies','currency wallet'],life,{primary:240,secondary:1}),
   commission_queue:A('Commission Queue','Manage capped creative slots and stages',LampDesk,'specialist','#f472b6','easels','slots_open',[n('slots_open','Slots open'),n('queue_revenue','Queue revenue'),t('current_piece','Current piece'),w('slot_cap','Slot cap','target')],['advance_stage','deliver'],['art commissions','commission slots','artist queue'],'creative_writing',{primary:2,target:4}),
   content_pipeline:A('Content Pipeline','Protect publishing cadence across platforms',Film,'planning','#ef4444','film','cadence_health_pct',[t('next_post','Next post',true),n('overdue_slots','Overdue slots',true),n('cadence_health_pct','Cadence health',true),n('ideas_count','Ideas'),w('new_idea','New idea','text','text')],['advance','mark_posted'],['content calendar','video channel','posting pipeline'],undefined,{primary:76,target:100}),
 }
 
-const today=()=>new Date().toISOString().slice(0,10)
+const today=()=>localDayKey()
 export function defaultAtlasData(type:AtlasType):AtlasWidgetData {
   const spec=ATLAS_CATALOG[type]
   const base:AtlasWidgetData={

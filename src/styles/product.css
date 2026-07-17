@@ -18,6 +18,7 @@
   --gp-focus: oklch(88% 0.31 136 / 0.72);
   --gp-grid-coarse: rgb(137 165 148 / 0.075);
   --gp-grid-fine: rgb(163 230 53 / 0.13);
+  --gp-widget-muted-text: #a3a3a3;
 }
 
 [data-theme='light'] {
@@ -28,6 +29,13 @@
   --gp-focus: oklch(48% 0.22 137 / 0.72);
   --gp-grid-coarse: rgb(30 58 40 / 0.07);
   --gp-grid-fine: rgb(36 126 56 / 0.12);
+  --gp-widget-muted-text: #525252;
+}
+
+/* Widget text is operational content, even when visually secondary. Keep the
+   shared muted utilities above AA contrast in both themes. */
+.gp-widget-card :where(.text-neutral-600, .text-neutral-700) {
+  color: var(--gp-widget-muted-text);
 }
 
 /* Keyboard focus remains visible on actions, while text-entry surfaces stay
@@ -1452,7 +1460,7 @@ body[data-theme='light'][data-canvas-lod='far'] .gp-widget-card {
 }
 
 .gp-widget-ui .gp-input--bare {
-  min-height: 24px;
+  min-height: 28px;
   padding-inline: 8px;
   border-color: transparent !important;
   background: transparent !important;
@@ -1464,7 +1472,7 @@ body[data-theme='light'][data-canvas-lod='far'] .gp-widget-card {
    becoming wells. Preserve a compact text inset so values never touch the
    edge of the containing row. */
 .gp-widget-ui :where(input.bg-transparent, textarea.bg-transparent, select.bg-transparent) {
-  min-height: 0;
+  min-height: 28px;
   padding-inline: 8px;
   border-color: transparent !important;
   background: transparent !important;
@@ -1473,6 +1481,25 @@ body[data-theme='light'][data-canvas-lod='far'] .gp-widget-card {
 
 .gp-widget-ui :where(textarea) {
   padding-block: 8px;
+}
+
+/* Keep compact native controls visually light while giving their pointer and
+   keyboard interaction box the same practical floor as custom controls. */
+.gp-widget-ui :where(input[type='range'], input[type='color']) {
+  min-width: 28px;
+  min-height: 28px;
+}
+
+.gp-widget-ui :where(label:has(> input[type='checkbox']), label:has(> input[type='radio'])) {
+  min-height: 28px;
+}
+
+.gp-widget-ui :where(a[href]) {
+  display: inline-flex;
+  min-width: 28px;
+  min-height: 28px;
+  align-items: center;
+  justify-content: center;
 }
 
 .gp-widget-ui :where(
@@ -1496,6 +1523,8 @@ body[data-theme='light'][data-canvas-lod='far'] .gp-widget-card {
 /* Raised controls get one quiet catch-light. Accent is spent only on hover,
    focus, and explicit active/checked state supplied by the module. */
 .gp-widget-ui :where(button:not(.gp-check-free)) {
+  min-width: 28px;
+  min-height: 28px;
   border-radius: var(--gp-r2) !important;
   background-image: none !important;
   box-shadow: inset 0 1px 0 rgb(255 255 255 / .055), 0 2px 4px rgb(0 0 0 / .18);
@@ -1532,11 +1561,14 @@ body[data-theme='light'][data-canvas-lod='far'] .gp-widget-card {
   font-variant-numeric: tabular-nums;
 }
 
-/* Functional values must change representation or reflow, never be silently
-   ellipsized. Automation vitals provide an explicit compact representation. */
+/* Functional values change representation or reflow, never silently
+   ellipsize. Numeric vitals use a compact display string while text vitals
+   wrap inside their well; the complete raw value remains available as a
+   title for pointer users. */
 .gp-vital-value {
-  overflow: visible;
-  white-space: nowrap;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  white-space: normal;
 }
 
 [data-theme='light'] .gp-value {

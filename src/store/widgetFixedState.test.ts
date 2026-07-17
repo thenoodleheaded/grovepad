@@ -35,6 +35,7 @@ describe('widget scale states', () => {
     expect(scaled.expandedSize).toBeUndefined()
     expect(scaled.size.width).toBeGreaterThanOrEqual(widget.size.width)
     expect(scaled.size.height).toBeGreaterThanOrEqual(widget.size.height)
+    expect(scaled.position).toEqual(widget.position)
   })
 
   it('keeps pill geometry inert during ordinary resize attempts', () => {
@@ -51,7 +52,7 @@ describe('widget scale states', () => {
     expect(useWidgetStore.getState().widgets[id]!.collapsed).toBe(true)
   })
 
-  it('grows the dormant full size when collapsed table content grows', () => {
+  it('grows collapsed table height for rows without widening for long cell text', () => {
     const id = useWidgetStore.getState().createWidget('Table', { x: 0, y: 0 }, 'table')
     useWidgetStore.getState().setWidgetScaleState(id, 'pill')
     const before = useWidgetStore.getState().widgets[id]!.expandedSize!
@@ -65,7 +66,7 @@ describe('widget scale states', () => {
       ],
     })
     const after = useWidgetStore.getState().widgets[id]!.expandedSize!
-    expect(after.width).toBeGreaterThan(before.width)
+    expect(after.width).toBe(before.width)
     expect(after.height).toBeGreaterThan(before.height)
     expect(useWidgetStore.getState().widgets[id]!.size.height).toBe(40)
   })

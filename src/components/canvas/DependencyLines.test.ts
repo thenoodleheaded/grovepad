@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { dependencyAnchors } from '../../utils/dependencyGeometry'
+import { dependencyAnchors, dependencyStatusLabel } from '../../utils/dependencyGeometry'
 
 describe('dependencyAnchors', () => {
+  it('names both the blocked card and its true prerequisite', () => {
+    expect(dependencyStatusLabel('Root', ['Research notes'])).toBe('Root waiting on Research notes')
+  })
   it('always leaves the prerequisite on the right and enters the dependent on the left', () => {
     const prerequisite = { center: { x: 100, y: 100 }, halfW: 60, halfH: 50 }
     const dependent = { center: { x: 340, y: 180 }, halfW: 80, halfH: 60 }

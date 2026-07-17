@@ -41,6 +41,7 @@ import type {
 } from '../../../types/spatial'
 import { useFieldAnchor } from '../../../hooks/useFieldAnchor'
 import { useTransientValue } from '../../../hooks/useTransientValue'
+import { localDayKey } from '../../../utils/localDate'
 import { WidgetPanel } from '../WidgetPanel'
 
 const inputClass =
@@ -58,7 +59,7 @@ function clamp(value: number, min: number, max: number): number {
 }
 
 function todayISO(): string {
-  return new Date().toISOString().slice(0, 10)
+  return localDayKey()
 }
 
 function SmallAction({
@@ -210,6 +211,7 @@ export function NumberInputWidget({
   return (
     <div className="flex h-full flex-col gap-2">
       <input
+        aria-label="Number label"
         value={data.label}
         placeholder="Value label"
         onChange={(event) => onChange({ ...data, label: event.target.value })}
@@ -221,6 +223,7 @@ export function NumberInputWidget({
           <Minus size={12} />
         </SmallAction>
         <input
+          aria-label="Number value"
           type="number"
           value={finite(data.value)}
           min={low}
@@ -235,6 +238,7 @@ export function NumberInputWidget({
         </SmallAction>
       </div>
       <input
+        aria-label="Number value slider"
         type="range"
         min={low}
         max={high}
@@ -249,6 +253,7 @@ export function NumberInputWidget({
           <label key={key} className="flex items-center gap-1">
             <span className="font-mono text-[8px] uppercase text-neutral-700">{key}</span>
             <input
+              aria-label={`${key[0]?.toUpperCase()}${key.slice(1)} value`}
               type="number"
               value={data[key]}
               onChange={(event) => onChange({ ...data, [key]: Number(event.target.value) })}
@@ -272,6 +277,7 @@ export function ToggleWidget({
   return (
     <div className="flex h-full flex-col justify-between gap-3">
       <input
+        aria-label="Toggle label"
         value={data.label}
         placeholder="Condition"
         onChange={(event) => onChange({ ...data, label: event.target.value })}
@@ -282,6 +288,7 @@ export function ToggleWidget({
         ref={valueRef}
         type="button"
         role="switch"
+        aria-label={data.label || 'Toggle value'}
         aria-checked={data.value}
         onClick={() => onChange({ ...data, value: !data.value })}
         className={`mx-auto flex h-10 w-20 items-center !rounded-full border p-1 transition-all duration-200 ${
@@ -427,6 +434,7 @@ export function FormulaWidget({
   return (
     <div className="flex h-full flex-col gap-3">
       <input
+        aria-label="Formula label"
         value={data.label}
         onChange={(event) => onChange({ ...data, label: event.target.value })}
         className="bg-transparent text-center text-[11px] font-medium text-neutral-500 outline-none"
@@ -497,6 +505,7 @@ export function StatusWidget({
     <div className="flex h-full flex-col gap-3">
       <div className="flex items-center gap-2">
         <input
+          aria-label="Status label"
           value={data.label}
           onChange={(event) => onChange({ ...data, label: event.target.value })}
           className={`${inputClass} flex-1 font-medium`}
@@ -562,6 +571,7 @@ export function DatePickerWidget({
         />
         <button
           type="button"
+          aria-label={data.includeTime ? 'Hide time field' : 'Show time field'}
           onClick={() => onChange({ ...data, includeTime: !data.includeTime })}
           className={`rounded-md border px-2 py-1 font-mono text-[8px] uppercase ${data.includeTime ? 'border-orange-400/40 text-orange-300' : 'gp-hairline text-neutral-600'}`}
         >
@@ -570,6 +580,7 @@ export function DatePickerWidget({
       </div>
       <div ref={dateRef} data-island="date" data-island-size="width" className={`${panelClass} gp-date-row flex items-center gap-2 px-3 py-2`}>
         <input
+          aria-label="Target date"
           type="date"
           value={data.date}
           onChange={(event) => onChange({ ...data, date: event.target.value })}
@@ -577,6 +588,7 @@ export function DatePickerWidget({
         />
         {data.includeTime && (
           <input
+            aria-label="Target time"
             type="time"
             value={data.time}
             onChange={(event) => onChange({ ...data, time: event.target.value })}
@@ -817,16 +829,16 @@ export function DailyAgendaWidget({
   return (
     <div className="flex h-full flex-col gap-2">
       <div className="flex items-center justify-between">
-        <input type="date" value={data.date} onChange={(event) => onChange({ ...data, date: event.target.value })} className="bg-transparent font-mono text-[11px] text-sky-300 outline-none [color-scheme:dark]" />
+        <input aria-label="Agenda date" type="date" value={data.date} onChange={(event) => onChange({ ...data, date: event.target.value })} className="bg-transparent font-mono text-[11px] text-sky-300 outline-none [color-scheme:dark]" />
         <span className="font-mono text-[9px] text-neutral-600">{done}/{data.items.length} complete</span>
       </div>
       <ProgressBar value={data.items.length ? (done / data.items.length) * 100 : 0} color="#38bdf8" />
       <div data-island="agenda" data-island-size="free" data-island-min-h="96" className="min-h-0 flex-1 overflow-y-auto rounded-xl border gp-hairline bg-neutral-900/25 px-2 py-1">
         {[...data.items].sort((a, b) => a.time.localeCompare(b.time)).map((item) => (
           <div key={item.id} className="group/agenda flex h-8 items-center gap-2 border-b gp-hairline last:border-0">
-            <button type="button" role="checkbox" aria-checked={item.done} onClick={() => setItem(item.id, { done: !item.done })} className={`flex h-4 w-4 items-center justify-center rounded-full border ${item.done ? 'border-sky-400 bg-sky-400 text-neutral-950' : 'border-neutral-700 text-transparent'}`}><Check size={9} /></button>
-            <input type="time" value={item.time} onChange={(event) => setItem(item.id, { time: event.target.value })} className="w-[62px] bg-transparent font-mono text-[9px] text-neutral-500 outline-none [color-scheme:dark]" />
-            <input value={item.title} placeholder="Agenda item…" onChange={(event) => setItem(item.id, { title: event.target.value })} className={`${inputClass} flex-1 ${item.done ? 'text-neutral-600 line-through' : ''}`} />
+            <button type="button" role="checkbox" aria-label={item.title ? `Mark ${item.title} ${item.done ? 'not done' : 'done'}` : 'Toggle agenda item'} aria-checked={item.done} onClick={() => setItem(item.id, { done: !item.done })} className={`flex h-4 w-4 items-center justify-center rounded-full border ${item.done ? 'border-sky-400 bg-sky-400 text-neutral-950' : 'border-neutral-700 text-transparent'}`}><Check size={9} /></button>
+            <input aria-label="Agenda item time" type="time" value={item.time} onChange={(event) => setItem(item.id, { time: event.target.value })} className="w-[62px] bg-transparent font-mono text-[9px] text-neutral-500 outline-none [color-scheme:dark]" />
+            <input aria-label="Agenda item title" value={item.title} placeholder="Agenda item…" onChange={(event) => setItem(item.id, { title: event.target.value })} className={`${inputClass} flex-1 ${item.done ? 'text-neutral-600 line-through' : ''}`} />
             <SmallAction label="Remove item" danger onClick={() => remove(item.id)}><X size={9} /></SmallAction>
           </div>
         ))}
@@ -1002,10 +1014,10 @@ export function DecisionMatrixWidget({
               {data.criteria.map((criterion, index) => (
                 <th key={criterion.id} className="group/criterion min-w-20 border-b border-r gp-hairline px-1 py-1">
                   <div className="flex items-center gap-1">
-                    <input value={criterion.label} onChange={(event) => setCriterion(index, { label: event.target.value })} className="min-w-0 flex-1 bg-transparent text-center text-[9px] text-neutral-400 outline-none" />
+                    <input aria-label={`Criterion ${index + 1} label`} value={criterion.label} onChange={(event) => setCriterion(index, { label: event.target.value })} className="min-w-0 flex-1 bg-transparent text-center text-[9px] text-neutral-400 outline-none" />
                     <SmallAction label="Remove criterion" danger onClick={() => removeCriterion(index)}><X size={8} /></SmallAction>
                   </div>
-                  <label className="font-mono text-[8px] text-neutral-700">w <input type="number" min={0} step={0.1} value={criterion.weight} onChange={(event) => setCriterion(index, { weight: Number(event.target.value) })} className={`${numericClass} w-8 text-center text-[8px] text-neutral-600`} /></label>
+                  <label className="font-mono text-[8px] text-neutral-700">w <input aria-label={`${criterion.label} weight`} type="number" min={0} step={0.1} value={criterion.weight} onChange={(event) => setCriterion(index, { weight: Number(event.target.value) })} className={`${numericClass} w-8 text-center text-[8px] text-neutral-600`} /></label>
                 </th>
               ))}
               <th className="border-b gp-hairline px-2 text-violet-400/70">Score</th>
@@ -1014,10 +1026,10 @@ export function DecisionMatrixWidget({
           <tbody>
             {data.options.map((option, optionIndex) => (
               <tr key={option.id} className={winnerIndex === optionIndex ? 'bg-violet-400/[0.06]' : ''}>
-                <td className="border-b border-r gp-hairline px-2 py-1.5"><input value={option.label} onChange={(event) => setOption(optionIndex, { label: event.target.value })} className={`${inputClass} font-medium ${winnerIndex === optionIndex ? 'text-violet-300' : ''}`} /></td>
+                <td className="border-b border-r gp-hairline px-2 py-1.5"><input aria-label={`Option ${optionIndex + 1} label`} value={option.label} onChange={(event) => setOption(optionIndex, { label: event.target.value })} className={`${inputClass} font-medium ${winnerIndex === optionIndex ? 'text-violet-300' : ''}`} /></td>
                 {data.criteria.map((criterion, criterionIndex) => (
                   <td key={criterion.id} className="border-b border-r gp-hairline text-center">
-                    <input type="number" min={0} max={5} step={1} value={option.scores[criterionIndex] ?? 0} onChange={(event) => setOption(optionIndex, { scores: option.scores.map((score, i) => i === criterionIndex ? clamp(Number(event.target.value), 0, 5) : score) })} className={`${numericClass} w-10 text-center text-[10px]`} />
+                    <input aria-label={`${option.label} score for ${criterion.label}`} type="number" min={0} max={5} step={1} value={option.scores[criterionIndex] ?? 0} onChange={(event) => setOption(optionIndex, { scores: option.scores.map((score, i) => i === criterionIndex ? clamp(Number(event.target.value), 0, 5) : score) })} className={`${numericClass} w-10 text-center text-[10px]`} />
                   </td>
                 ))}
                 <td className="border-b gp-hairline px-2 text-center font-mono font-bold text-violet-300">{Math.round(scores[optionIndex]! * 10) / 10}</td>
@@ -1165,8 +1177,8 @@ export function InventoryWidget({
           return (
             <div key={item.id} className={`group/inventory grid min-h-[62px] grid-cols-[minmax(0,1fr)_88px_64px_24px] items-center gap-2 border-b gp-hairline py-1 last:border-0 ${isLow ? 'bg-amber-400/[0.035]' : ''}`}>
               <div className="gp-well min-w-0 px-1 py-0.5"><input value={item.name} placeholder="Item…" onChange={(event) => setItem(item.id, { name: event.target.value })} className="gp-input--bare w-full min-w-0 font-medium text-neutral-200 outline-none" /><input value={item.unit} placeholder="unit" onChange={(event) => setItem(item.id, { unit: event.target.value })} className="gp-input--bare w-full min-w-0 font-mono text-[9px] text-neutral-600 outline-none" /></div>
-              <div className="gp-well flex items-center justify-between px-1"><button type="button" onClick={() => setItem(item.id, { quantity: Math.max(0, item.quantity - 1) })} className="text-neutral-700 hover:text-neutral-300"><Minus size={9} /></button><input type="number" min={0} value={item.quantity} onChange={(event) => setItem(item.id, { quantity: Math.max(0, Number(event.target.value)) })} className={`gp-input--bare ${numericClass} w-10 text-center text-[11px] ${isLow ? 'text-amber-300' : ''}`} /><button type="button" onClick={() => setItem(item.id, { quantity: item.quantity + 1 })} className="text-neutral-700 hover:text-neutral-300"><Plus size={9} /></button></div>
-              <input type="number" min={0} value={item.minimum} onChange={(event) => setItem(item.id, { minimum: Math.max(0, Number(event.target.value)) })} className={`gp-input--compact ${numericClass} w-full text-center text-[10px] text-neutral-500`} />
+              <div className="gp-well flex items-center justify-between px-1"><button type="button" aria-label={`Decrease ${item.name || 'item'} quantity`} onClick={() => setItem(item.id, { quantity: Math.max(0, item.quantity - 1) })} className="text-neutral-500 hover:text-neutral-300"><Minus size={9} aria-hidden /></button><input type="number" min={0} aria-label={`${item.name || 'Item'} quantity`} value={item.quantity} onChange={(event) => setItem(item.id, { quantity: Math.max(0, Number(event.target.value)) })} className={`gp-input--bare ${numericClass} w-10 text-center text-[11px] ${isLow ? 'text-amber-300' : ''}`} /><button type="button" aria-label={`Increase ${item.name || 'item'} quantity`} onClick={() => setItem(item.id, { quantity: item.quantity + 1 })} className="text-neutral-500 hover:text-neutral-300"><Plus size={9} aria-hidden /></button></div>
+              <input type="number" min={0} aria-label={`${item.name || 'Item'} minimum quantity`} value={item.minimum} onChange={(event) => setItem(item.id, { minimum: Math.max(0, Number(event.target.value)) })} className={`gp-input--compact ${numericClass} w-full text-center text-[10px] text-neutral-500`} />
               <SmallAction label="Remove item" danger onClick={() => onChange({ items: data.items.filter((entry) => entry.id !== item.id) })}><X size={9} /></SmallAction>
             </div>
           )
@@ -1298,9 +1310,9 @@ export function PieChartWidget({
         <div data-island="segments" data-island-size="free" data-island-min-w="120" data-island-min-h="96" data-island-max-h="260" className="min-h-0 overflow-y-auto">
           {data.segments.map((segment) => (
             <div key={segment.id} className="group/segment flex h-8 items-center gap-1.5 border-b gp-hairline last:border-0">
-              <input type="color" value={segment.color} onChange={(event) => setSegment(segment.id, { color: event.target.value })} className="h-4 w-4 cursor-pointer rounded border-0 bg-transparent p-0" />
-              <input value={segment.label} onChange={(event) => setSegment(segment.id, { label: event.target.value })} className={`${inputClass} flex-1 text-[10px]`} />
-              <input type="number" min={0} value={segment.value} onChange={(event) => setSegment(segment.id, { value: Math.max(0, Number(event.target.value)) })} className={`${numericClass} w-12 text-right text-[10px]`} />
+              <input aria-label={`${segment.label} color`} type="color" value={segment.color} onChange={(event) => setSegment(segment.id, { color: event.target.value })} className="h-4 w-4 cursor-pointer rounded border-0 bg-transparent p-0" />
+              <input aria-label="Segment label" value={segment.label} onChange={(event) => setSegment(segment.id, { label: event.target.value })} className={`${inputClass} flex-1 text-[10px]`} />
+              <input aria-label={`${segment.label} value`} type="number" min={0} value={segment.value} onChange={(event) => setSegment(segment.id, { value: Math.max(0, Number(event.target.value)) })} className={`${numericClass} w-12 text-right text-[10px]`} />
               <SmallAction label="Remove segment" danger onClick={() => onChange({ ...data, segments: data.segments.filter((item) => item.id !== segment.id) })}><X size={8} /></SmallAction>
             </div>
           ))}
@@ -1367,13 +1379,13 @@ export function UnitConverterWidget({
 
   return (
     <div className="flex h-full flex-col gap-3">
-      <select value={data.category} onChange={(event) => setCategory(event.target.value as UnitConverterCategory)} className="mx-auto rounded-full border gp-hairline bg-neutral-900 px-3 py-1 font-mono text-[9px] uppercase tracking-wider text-emerald-300 outline-none">
+      <select aria-label="Unit category" value={data.category} onChange={(event) => setCategory(event.target.value as UnitConverterCategory)} className="mx-auto rounded-full border gp-hairline bg-neutral-900 px-3 py-1 font-mono text-[9px] uppercase tracking-wider text-emerald-300 outline-none">
         <option value="length">Length</option><option value="mass">Mass</option><option value="temperature">Temperature</option><option value="time">Time</option>
       </select>
       <div data-island="conversion" data-island-size="fixed" className="gp-unit-conversion grid grid-cols-[1fr_34px_1fr] items-stretch gap-2">
-        <div ref={inputRef} className={`${panelClass} px-3 py-2`}><span className="font-mono text-[8px] uppercase text-neutral-700">Input</span><input type="number" value={data.value} onChange={(event) => onChange({ ...data, value: Number(event.target.value) })} className={`${numericClass} mt-1 w-full text-xl font-bold`} /><select value={data.from} onChange={(event) => onChange({ ...data, from: event.target.value })} className="mt-1 w-full bg-transparent font-mono text-[9px] text-neutral-500 outline-none">{units.map((unit) => <option key={unit}>{unit}</option>)}</select></div>
+        <div ref={inputRef} className={`${panelClass} px-3 py-2`}><span className="font-mono text-[8px] uppercase text-neutral-700">Input</span><input aria-label="Value to convert" type="number" value={data.value} onChange={(event) => onChange({ ...data, value: Number(event.target.value) })} className={`${numericClass} mt-1 w-full text-xl font-bold`} /><select aria-label="Source unit" value={data.from} onChange={(event) => onChange({ ...data, from: event.target.value })} className="mt-1 w-full bg-transparent font-mono text-[9px] text-neutral-500 outline-none">{units.map((unit) => <option key={unit}>{unit}</option>)}</select></div>
         <button type="button" aria-label="Swap units" onClick={() => onChange({ ...data, from: data.to, to: data.from })} className="flex items-center justify-center text-neutral-600 transition-transform hover:rotate-180 hover:text-emerald-300"><ArrowLeftRight size={14} /></button>
-        <div ref={outputRef} className="rounded-xl border border-emerald-400/20 bg-emerald-400/[0.055] px-3 py-2"><span className="font-mono text-[8px] uppercase text-emerald-500/50">Output</span><div className="mt-1 flex items-center"><strong className="min-w-0 flex-1 truncate font-mono text-xl text-emerald-200">{formatted}</strong><button type="button" aria-label="Copy output" onClick={copy} className="text-emerald-500/50 hover:text-emerald-300">{copied ? <Check size={11} /> : <Copy size={11} />}</button></div><select value={data.to} onChange={(event) => onChange({ ...data, to: event.target.value })} className="mt-1 w-full bg-transparent font-mono text-[9px] text-emerald-500/60 outline-none">{units.map((unit) => <option key={unit}>{unit}</option>)}</select></div>
+        <div ref={outputRef} className="rounded-xl border border-emerald-400/20 bg-emerald-400/[0.055] px-3 py-2"><span className="font-mono text-[8px] uppercase text-emerald-500/50">Output</span><div className="mt-1 flex items-center"><strong className="min-w-0 flex-1 truncate font-mono text-xl text-emerald-200">{formatted}</strong><button type="button" aria-label="Copy output" onClick={copy} className="text-emerald-500/50 hover:text-emerald-300">{copied ? <Check size={11} /> : <Copy size={11} />}</button></div><select aria-label="Target unit" value={data.to} onChange={(event) => onChange({ ...data, to: event.target.value })} className="mt-1 w-full bg-transparent font-mono text-[9px] text-emerald-500/60 outline-none">{units.map((unit) => <option key={unit}>{unit}</option>)}</select></div>
       </div>
       <div data-island="precision" data-island-size="width" className="gp-unit-precision mt-auto flex items-center justify-between gap-2 border-t gp-hairline pt-2">
         <span className="font-mono text-[9px] text-neutral-700">1 {data.from} = {Number(convertUnit({ ...data, value: 1 }).toFixed(6))} {data.to}</span>

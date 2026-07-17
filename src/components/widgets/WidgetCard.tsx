@@ -10,12 +10,13 @@ import { GRID_SIZE } from '../../types/spatial'
 import { convexHull, paddedMemberCorners } from '../../utils/groupGeometry'
 import { linkAnchorId, resolveLinkTargetAt } from '../../utils/linkTarget'
 import { PointerDragSession } from '../../utils/pointerDrag'
-import { measureWidgetContentFloor } from '../../utils/widgetContentFloor'
+import { hasSignificantVerticalOverflow, measureWidgetContentFloor, verticalContentFloor } from '../../utils/widgetContentFloor'
 import { crossedBothScaleAxes, fullWidgetResizeBounds, type WidgetScaleState } from '../../utils/widgetScale'
 import { DEFAULT_SIZING, widgetDefinition } from '../../widgets/registry'
 import { FloatingBadges } from './FloatingBadges'
 import { FocusModeLayer } from './FocusModeLayer'
 import { PortRail } from './PortRail'
+import { dependencyStatusLabel } from '../../utils/dependencyGeometry'
 import { WidgetRenderer } from './WidgetRenderer'
 
 const PANELIZED_TYPES = new Set([
@@ -121,9 +122,16 @@ function isInteractiveTarget(target: EventTarget | null): boolean {
 export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps) {
   const widget = useWidgetStore((state) => state.widgets[widgetId])
   const isBlocked = useWidgetStore((state) => state.blockedWidgetIds.has(widgetId))
+  const blockerNames = useWidgetStore((state) => Object.values(state.relations)
+    .filter((relation) => relation.type === 'blocker' && !relation.isResolved && relation.toId === widgetId)
+    .map((relation) => state.widgets[relation.fromId]?.title)
+    .filter((title): title is string => Boolean(title))
+    .join(', '))
   const isLinkDragSource = useWidgetStore((state) => state.linkDrag?.sourceId === widgetId)
   const isSelected = useWidgetStore((state) => state.selectedIds.has(widgetId))
   const isFocused = useFocusStore((state) => state.focusedWidgetId === widgetId)
+  const focusedWidgetId = useFocusStore((state) => state.focusedWidgetId)
+  const isFocusBackground = focusedWidgetId !== null && focusedWidgetId !== widgetId
   const isFlashing = useWidgetStore((state) => state.flashWidgetId === widgetId)
   const groupId = useWidgetStore((state) => state.widgetGroupIndex[widgetId])
   const groupColor = useWidgetStore((state) => {
@@ -215,12 +223,12 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
       const live = useWidgetStore.getState().widgets[widgetId]
       if (!live || live.collapsed || live.iconified) return
       const overflow = Math.ceil(content.scrollHeight - content.clientHeight)
-      if (overflow <= 1) return
+      if (!hasSignificantVerticalOverflow(overflow)) return
 
       const maxHeight = widgetDefinition(live.type).sizing?.maxHeight ?? Infinity
       const height = Math.min(
         maxHeight,
-        Math.ceil((live.size.height + overflow + 4) / GRID_SIZE) * GRID_SIZE,
+        verticalContentFloor(content.scrollHeight, overflow, DEFAULT_SIZING.minHeight, 0),
       )
       if (height > live.size.height) {
         useWidgetStore.getState().resizeWidget(widgetId, { ...live.size, height })
@@ -248,6 +256,10 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
   // ── Unified pointer handling on the card body (and capsule for drag) ──────
 
   const startDrag = (e: ReactPointerEvent<HTMLElement>, isLink: boolean, dragWidgetId = widgetId, snapshotOnMove = true) => {
+    // Direct manipulation owns the camera from this point forward. Stop any
+    // earlier fit/navigation tween so history cannot appear to move the board
+    // while a widget gesture is being committed or reversed.
+    useCanvasStore.getState().cancelViewAnimation()
     e.currentTarget.setPointerCapture(e.pointerId)
     if (isLink) {
       const { pan, zoom } = useCanvasStore.getState()
@@ -504,6 +516,7 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
     if (isFocused) return
     e.preventDefault()
     e.stopPropagation()
+    useCanvasStore.getState().cancelViewAnimation()
     e.currentTarget.setPointerCapture(e.pointerId)
     document.body.setAttribute(
       'data-widget-resizing',
@@ -667,7 +680,9 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
         data-auto-height={def.sizing?.autoHeight || undefined}
         data-link-source={isLinkDragSource || undefined}
         data-panels={panelized || undefined}
-        tabIndex={isSelected ? 0 : -1}
+        tabIndex={isSelected || isFocused ? 0 : -1}
+        inert={isFocusBackground ? true : undefined}
+        aria-hidden={isFocusBackground || undefined}
         aria-label={`${widget.title}, ${def.label} widget`}
         title={iconified ? widget.title : undefined}
         onClickCapture={(e) => {
@@ -732,6 +747,8 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
           just to the title's right — subtle, revealed on hover, and staying
           visible once toggled on. */}
       <div
+        inert={collapsed || iconified ? true : undefined}
+        aria-hidden={collapsed || iconified || undefined}
         className={`gp-card-chrome pointer-events-none absolute inset-x-0 -top-9 z-20 flex items-center gap-1.5 pl-3 transition-opacity duration-300 ${
           capsuleHidden ? 'opacity-0' : 'opacity-100'
         }`}
@@ -765,6 +782,7 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
           </span>
           {titleEditing ? (
             <input
+              aria-label="Widget title"
               defaultValue={widget.title}
               onBlur={(e) => commitTitle(e.currentTarget.value)}
               onKeyDown={(e) => {
@@ -772,7 +790,7 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
                 if (e.key === 'Escape') setTitleEditing(false)
               }}
               onClick={(e) => e.stopPropagation()}
-              className="ml-1.5 w-full bg-transparent text-center text-xs font-medium text-neutral-200 outline-none"
+              className="ml-1.5 h-7 w-full bg-transparent text-center text-xs font-medium text-neutral-200 outline-none"
               autoFocus
             />
           ) : (
@@ -803,7 +821,7 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
               e.stopPropagation()
               useWidgetStore.getState().toggleWidgetFavorite(widgetId)
             }}
-            className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border bg-neutral-950/90 transition-colors ${
+            className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border bg-neutral-950/90 transition-colors ${
               widget.metadata.favorite
                 ? 'border-amber-400/50 text-amber-300'
                 : 'border-neutral-700/70 text-neutral-500 hover:text-amber-200'
@@ -819,7 +837,7 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
               e.stopPropagation()
               useWidgetStore.getState().toggleWidgetLocked(widgetId)
             }}
-            className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border bg-neutral-950/90 transition-colors ${
+            className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border bg-neutral-950/90 transition-colors ${
               widget.metadata.locked
                 ? 'border-neutral-500 text-neutral-300'
                 : 'border-neutral-700/70 text-neutral-500 hover:text-neutral-300'
@@ -844,7 +862,7 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
                 e.stopPropagation()
                 useWidgetStore.getState().removeFromGroup(groupId, widgetId)
               }}
-              className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border bg-neutral-950/90 text-neutral-400 transition-colors hover:text-neutral-200"
+              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border bg-neutral-950/90 text-neutral-400 transition-colors hover:text-neutral-200"
               style={{ borderColor: `${groupColor}80` }}
             >
               <Unlink size={10} aria-hidden />
@@ -880,10 +898,10 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
 
       {/* Dependency explainer — dimming alone doesn't say why a card is muted */}
       {isBlocked && (
-        <div className="pointer-events-none absolute -bottom-2.5 left-1/2 z-20 flex -translate-x-1/2 items-center gap-1 rounded-full border border-amber-500/40 bg-neutral-950/95 px-2 py-0.5 shadow-md">
+        <div aria-label={`${widget.title} is blocked by ${blockerNames || 'an unresolved dependency'}`} className="pointer-events-none absolute -bottom-2.5 left-1/2 z-20 flex max-w-[90%] -translate-x-1/2 items-center gap-1 rounded-full border border-amber-500/40 bg-neutral-950/95 px-2 py-0.5 shadow-md">
           <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-amber-400" />
-          <span className="font-mono text-[9px] font-medium uppercase tracking-wide text-amber-300">
-            Waiting on dependency
+          <span className="truncate font-mono text-[9px] font-medium uppercase tracking-wide text-amber-300">
+            {dependencyStatusLabel(widget.title, blockerNames ? blockerNames.split(', ') : [])}
           </span>
         </div>
       )}
@@ -892,6 +910,8 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
           Panelized widgets carry their own glass subpanels, so the shell padding tightens. */}
       <div
         ref={contentRef}
+        inert={collapsed || iconified ? true : undefined}
+        aria-hidden={collapsed || iconified || undefined}
         className={`gp-widget-content flex-1 overflow-hidden rounded-[20px] p-2.5 transition-opacity duration-300 ${
           collapsed || iconified ? 'pointer-events-none opacity-0' : 'opacity-100'
         }`}
@@ -927,7 +947,7 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
         className="gp-card-chrome gp-resize-handle absolute bottom-2 right-2 z-20 h-3 w-3 cursor-nwse-resize"
       />
 
-      {!groupId && (
+      {!groupId && !collapsed && !iconified && (
         <button
           type="button"
           title="Drag to connect"
@@ -942,9 +962,9 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
           onPointerUp={onPointerUp}
           onPointerCancel={onPointerCancel}
           onLostPointerCapture={onPointerCancel}
-          className="gp-card-chrome pointer-events-none absolute -right-2 top-1/2 z-30 flex h-4 w-4 -translate-y-1/2 scale-75 items-center justify-center rounded-full border border-violet-300/55 bg-neutral-950 text-violet-200 opacity-0 shadow-[0_0_14px_rgba(167,139,250,.45)] transition group-hover/widget:pointer-events-auto group-hover/widget:scale-100 group-hover/widget:opacity-100 focus:pointer-events-auto focus:scale-100 focus:opacity-100"
+          className="gp-card-chrome pointer-events-none absolute -right-3.5 top-1/2 z-30 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-violet-200 opacity-0 transition group-hover/widget:pointer-events-auto group-hover/widget:opacity-100 focus:pointer-events-auto focus:opacity-100"
         >
-          <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-violet-300" />
+          <span aria-hidden className="relative h-3 w-3 rounded-full border border-violet-300/55 bg-neutral-950 shadow-[0_0_14px_rgba(167,139,250,.45)] after:absolute after:inset-1/2 after:h-1.5 after:w-1.5 after:-translate-x-1/2 after:-translate-y-1/2 after:rounded-full after:bg-violet-300" />
         </button>
       )}
 

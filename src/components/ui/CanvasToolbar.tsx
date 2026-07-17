@@ -502,7 +502,11 @@ export function CanvasToolbar() {
         </button>
         <div className="hidden h-5 w-px bg-neutral-700/70 lg:block" aria-hidden />
         <span className="hidden lg:inline-flex">
-          <IconButton label="Circuit mode (W)" onClick={toggleCircuitMode}>
+          <IconButton
+            label={circuitMode ? 'Exit Circuit mode (W)' : 'Enter Circuit mode (W)'}
+            pressed={circuitMode}
+            onClick={toggleCircuitMode}
+          >
             <CircuitBoard size={14} className={circuitMode ? 'text-sky-400' : undefined} />
           </IconButton>
         </span>

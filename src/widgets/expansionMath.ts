@@ -1,11 +1,9 @@
 import type { DebtPayoffData, ExpenseSplitData, SeriesPoint } from '../types/spatial'
+import { localDayKey, localDayKeyInDays } from '../utils/localDate'
+
+export { localDayKey, localDayKeyInDays }
 
 export const DAY_MS = 86_400_000
-
-export function localDayKey(at = Date.now()): string {
-  const date = new Date(at)
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
-}
 
 export function daysUntilDate(value: string, now = Date.now()): number {
   if (!value) return 0
@@ -55,7 +53,7 @@ export function projectDebtPayoff(data: DebtPayoffData, now = new Date()): DebtP
     }
   }
   const date = new Date(now.getFullYear(), now.getMonth() + months, 1)
-  return { months, interest, debtFreeDate: date.toISOString().slice(0, 10), viable: months < 1200 }
+  return { months, interest, debtFreeDate: localDayKey(date.getTime()), viable: months < 1200 }
 }
 
 export interface SettlementTransfer { from: string; to: string; amount: number }
