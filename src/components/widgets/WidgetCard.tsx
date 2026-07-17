@@ -10,7 +10,7 @@ import { GRID_SIZE } from '../../types/spatial'
 import { convexHull, paddedMemberCorners } from '../../utils/groupGeometry'
 import { linkAnchorId, resolveLinkTargetAt } from '../../utils/linkTarget'
 import { PointerDragSession } from '../../utils/pointerDrag'
-import { hasSignificantVerticalOverflow, measureWidgetContentFloor, verticalContentFloor } from '../../utils/widgetContentFloor'
+import { CARD_INSET as CONTENT_FLOOR_INSET, SUBGRID, contentFitHeight, hasSignificantVerticalOverflow, measureWidgetContentFloor, naturalContentHeight, verticalContentFloor } from '../../utils/widgetContentFloor'
 import { crossedBothScaleAxes, fullWidgetResizeBounds, type WidgetScaleState } from '../../utils/widgetScale'
 import { DEFAULT_SIZING, widgetDefinition } from '../../widgets/registry'
 import { FloatingBadges } from './FloatingBadges'
@@ -171,6 +171,22 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
     }
     let raf = 0
     let ready = false
+    // Grow-only can grow a card to fit overflow but never reclaim empty space,
+    // because a stretched .gp-widget-ui reports scrollHeight === clientHeight.
+    // A card inflated once by a transient measurement (or carried in from a
+    // prior session) would keep its bottom void forever. This one-shot fit,
+    // run on the first settle pass after mount, reclaims that void so a canvas
+    // opens with every card sized to its real content; grow-only owns it after.
+    // The load-time fit must wait for a STABLE reading: a renderer's visual
+    // (an SVG hero, a lazy panel) can measure tall for a frame before it lays
+    // out, and fitting on that transient would either miss the void or clip
+    // real content. We re-measure until the natural height repeats, then fit
+    // exactly once. A widget whose layout never settles (a live animation that
+    // reflows) simply keeps grow-only — no worse than before.
+    let initialFitDone = false
+    let lastNatural = -1
+    let fitAttempts = 0
+    let retryTimer = 0
     const readyTimer = window.setTimeout(() => {
       ready = true
       measure()
@@ -183,14 +199,61 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
         if (!ui) return
         const live = useWidgetStore.getState().widgets[widgetId]
         if (!live || live.collapsed || live.iconified) return
+        const declaredSizing = widgetDefinition(live.type).sizing
         const fallback = {
           ...DEFAULT_SIZING,
-          ...widgetDefinition(live.type).sizing,
+          ...declaredSizing,
         }
         const result = measureWidgetContentFloor(ui, live.size, fallback)
         setLiveWidgetSizing(widgetId, result.sizing)
-        if (result.growTo.width > live.size.width || result.growTo.height > live.size.height) {
-          useWidgetStore.getState().resizeWidget(widgetId, result.growTo)
+        const autoHeight = declaredSizing?.autoHeight === true
+
+        // autoHeight already fits every pass; only fixed-height cards can
+        // strand a void. naturalContentHeight sees a compact stack's true
+        // height while a flex-1 region (an internal scroll panel) still
+        // measures full, so content-filled cards are never shrunk.
+        if (!initialFitDone && !autoHeight) {
+          const natural = naturalContentHeight(ui)
+          if (natural > 0 && natural === lastNatural) {
+            initialFitDone = true
+            const minHeight = Math.max(result.sizing.minHeight ?? 0, fallback.minHeight ?? 0)
+            const fitted = contentFitHeight(
+              natural,
+              minHeight,
+              fallback.maxHeight ?? Infinity,
+              CONTENT_FLOOR_INSET,
+              SUBGRID,
+            )
+            // Only shrink, and only when the void is real (over one grid cell),
+            // so a correctly sized card never twitches on load.
+            if (fitted + GRID_SIZE <= live.size.height) {
+              useWidgetStore.getState().resizeWidget(widgetId, {
+                width: result.growTo.width,
+                height: fitted,
+              })
+              return
+            }
+          } else {
+            lastNatural = natural
+            if (fitAttempts++ < 6) retryTimer = window.setTimeout(measure, 180)
+          }
+        }
+
+        const fittedHeight = autoHeight
+          ? contentFitHeight(
+              ui.scrollHeight,
+              declaredSizing.minHeight ?? DEFAULT_SIZING.minHeight,
+              declaredSizing.maxHeight ?? Infinity,
+            )
+          : result.growTo.height
+        if (
+          result.growTo.width > live.size.width ||
+          (autoHeight ? fittedHeight !== live.size.height : fittedHeight > live.size.height)
+        ) {
+          useWidgetStore.getState().resizeWidget(widgetId, {
+            width: result.growTo.width,
+            height: fittedHeight,
+          })
         }
       })
     }
@@ -204,6 +267,7 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
     return () => {
       cancelAnimationFrame(raf)
       window.clearTimeout(readyTimer)
+      window.clearTimeout(retryTimer)
       resizeObserver.disconnect()
       mutationObserver.disconnect()
       content.removeEventListener('input', measure, true)
@@ -628,14 +692,18 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
   const handleHeightChange = (contentHeight: number) => {
     if (widget.collapsed || widget.iconified) return
     const sizing = widgetDefinition(widget.type).sizing
-    const snapped = Math.min(
-      sizing?.maxHeight ?? Infinity,
-      Math.max(GRID_SIZE * 2, Math.ceil((contentHeight + 24) / GRID_SIZE) * GRID_SIZE),
+    const fittedHeight = contentFitHeight(
+      contentHeight,
+      sizing?.minHeight ?? DEFAULT_SIZING.minHeight,
+      sizing?.autoHeight ? sizing.maxHeight ?? Infinity : sizing?.maxHeight ?? DEFAULT_SIZING.maxHeight,
+      24,
+      GRID_SIZE,
     )
-    // Content is allowed to grow a large card, never to make it jitter back
-    // and forth as controls mount, animate, or temporarily disappear.
-    if (snapped > widget.size.height) {
-      useWidgetStore.getState().resizeWidget(widgetId, { ...widget.size, height: snapped })
+    // A content-owned axis converges to its natural height in either direction.
+    // Other widgets retain the grow-only rule so transient controls cannot
+    // make a manually sized card jitter smaller.
+    if (sizing?.autoHeight ? fittedHeight !== widget.size.height : fittedHeight > widget.size.height) {
+      useWidgetStore.getState().resizeWidget(widgetId, { ...widget.size, height: fittedHeight })
     }
   }
 

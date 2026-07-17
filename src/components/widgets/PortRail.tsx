@@ -15,17 +15,16 @@ import {
 // ---------------------------------------------------------------------------
 // Port rails — the quiet circuit affordance on every card.
 //
-// Invisible at rest. The rails fade in when the card is hovered, when a wire
-// drag is in flight (input rail only — you're looking for a destination), or
-// when Circuit Mode is on. Output ports (readable fields) sit on the right
-// rail, input ports (settable fields + commands) on the left. Geometry comes
-// from portGeometry.ts, the same pure math the wire layer uses, so a wire
-// always lands exactly on its dot.
+// Circuit Mode owns the rails: outside that mode they do not mount at all.
+// Output ports (readable fields) sit on the right rail, input ports (settable
+// fields + commands) on the left. Labels stay quiet until their widget is
+// hovered, then extend away from the card edge. Geometry comes from
+// portGeometry.ts, the same pure math the wire layer uses, so a wire always
+// lands exactly on its dot.
 // ---------------------------------------------------------------------------
 
 export const PortRail = memo(function PortRail({ widgetId }: { widgetId: string }) {
   const widget = useWidgetStore((state) => state.widgets[widgetId])
-  const hovered = useWidgetStore((state) => state.hoveredWidgetId === widgetId)
   const circuitMode = useCircuitStore((state) => state.circuitMode)
   const dragActive = useCircuitStore((state) => state.wireDrag !== null)
   const isDragSource = useCircuitStore((state) => state.wireDrag?.fromId === widgetId)
@@ -37,14 +36,11 @@ export const PortRail = memo(function PortRail({ widgetId }: { widgetId: string 
   )
   const rafRef = useRef(0)
 
-  if (!widget) return null
-  const showOutputs = (hovered || circuitMode || isDragSource) && !dragActive || isDragSource
-  const showInputs = hovered || circuitMode || (dragActive && !isDragSource)
-  if (!showOutputs && !showInputs) return null
+  if (!widget || !circuitMode) return null
+  const showOutputs = !dragActive || isDragSource
 
   const outs = outputPortsFor(widget.type)
   const ins = inputPortsFor(widget.type)
-  const showLabels = circuitMode || dragActive || hovered
 
   const connectToPort = (targetId: string, port: PortSpec) => {
     const circuit = useCircuitStore.getState()
@@ -191,40 +187,39 @@ export const PortRail = memo(function PortRail({ widgetId }: { widgetId: string 
               }
             }}
           >
-            {showLabels && <span className="gp-port-label gp-port-label-out">{port.label}</span>}
+            <span className="gp-port-label gp-port-label-out">{port.label}</span>
           </button>
         ))}
-      {showInputs &&
-        ins.map((port) => (
-          <button
-            key={`in-${port.kind}-${port.key}`}
-            type="button"
-            disabled={!dragActive || isDragSource}
-            aria-label={`Connect to ${port.label} ${port.kind === 'command' ? 'command' : 'input'} of ${widget.title}`}
-            title={port.label}
-            data-command={port.kind === 'command' || undefined}
-            data-hot={hoverPortKey === port.key || undefined}
-            className="gp-port gp-port-in pointer-events-auto disabled:opacity-60"
-            style={{
-              top: portRailOffset(widget.size.height, port.index, ins.length),
-              '--gp-port-color':
-                port.kind === 'command'
-                  ? TRIGGER_WIRE_COLOR
-                  : VALUE_TYPE_COLORS[port.valueType ?? 'text'],
-            } as React.CSSProperties}
-            onClick={() => connectToPort(widgetId, port)}
-            onKeyDown={(event) => {
-              if (event.key === 'Escape') { event.preventDefault(); useCircuitStore.getState().endWireDrag() }
-              if (event.key === 'Enter' || event.key === ' ') {
-                event.preventDefault()
-                event.stopPropagation()
-                connectToPort(widgetId, port)
-              }
-            }}
-          >
-            {showLabels && <span className="gp-port-label gp-port-label-in">{port.label}</span>}
-          </button>
-        ))}
+      {ins.map((port) => (
+        <button
+          key={`in-${port.kind}-${port.key}`}
+          type="button"
+          disabled={!dragActive || isDragSource}
+          aria-label={`Connect to ${port.label} ${port.kind === 'command' ? 'command' : 'input'} of ${widget.title}`}
+          title={port.label}
+          data-command={port.kind === 'command' || undefined}
+          data-hot={hoverPortKey === port.key || undefined}
+          className="gp-port gp-port-in pointer-events-auto disabled:opacity-60"
+          style={{
+            top: portRailOffset(widget.size.height, port.index, ins.length),
+            '--gp-port-color':
+              port.kind === 'command'
+                ? TRIGGER_WIRE_COLOR
+                : VALUE_TYPE_COLORS[port.valueType ?? 'text'],
+          } as React.CSSProperties}
+          onClick={() => connectToPort(widgetId, port)}
+          onKeyDown={(event) => {
+            if (event.key === 'Escape') { event.preventDefault(); useCircuitStore.getState().endWireDrag() }
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault()
+              event.stopPropagation()
+              connectToPort(widgetId, port)
+            }
+          }}
+        >
+          <span className="gp-port-label gp-port-label-in">{port.label}</span>
+        </button>
+      ))}
     </div>
   )
 })

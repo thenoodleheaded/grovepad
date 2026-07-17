@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest'
 const card = readFileSync(new URL('./WidgetCard.tsx', import.meta.url), 'utf8')
 const ports = readFileSync(new URL('./PortRail.tsx', import.meta.url), 'utf8')
 const focus = readFileSync(new URL('./FocusModeLayer.tsx', import.meta.url), 'utf8')
+const styles = readFileSync(new URL('../../index.css', import.meta.url), 'utf8')
 
 describe('shared widget accessibility source contracts', () => {
   it('hides dormant full-state chrome and content in compact states', () => {
@@ -27,5 +28,13 @@ describe('shared widget accessibility source contracts', () => {
     expect(ports).toContain('Start connection from ${port.label} output')
     expect(ports).toContain('Connect to ${port.label}')
     expect(ports).toContain("event.key === 'Escape'")
+  })
+
+  it('keeps Circuit ports mode-gated and reveals their labels outward on widget hover', () => {
+    expect(ports).toContain('if (!widget || !circuitMode) return null')
+    expect(styles).toContain('.gp-widget-card:hover .gp-port-label')
+    expect(styles).toMatch(/\.gp-port-label-out\s*\{[^}]*left: 14px;[^}]*text-align: left;/s)
+    expect(styles).toMatch(/\.gp-port-label-in\s*\{[^}]*right: 14px;[^}]*text-align: right;/s)
+    expect(styles).not.toContain('body[data-circuit-mode] .gp-port-label')
   })
 })

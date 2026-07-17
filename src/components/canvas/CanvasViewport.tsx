@@ -35,6 +35,7 @@ import { ToastContainer } from '../ui/ToastContainer'
 import { EmptyCanvasState } from '../ui/EmptyCanvasState'
 import { CloudConflictDialog } from '../ui/CloudConflictDialog'
 import { CanvasNavigator } from '../ui/CanvasNavigator'
+import { CanvasAmbient } from './CanvasAmbient'
 import { GuestBackupNudge } from '../ui/GuestBackupNudge'
 import { DeployUpdateBanner } from '../ui/DeployUpdateBanner'
 import { CanvasTreeDrawer } from '../ui/CanvasTreeDrawer'
@@ -517,10 +518,11 @@ export function CanvasViewport() {
       onDoubleClick={handleDoubleClick}
       onPointerDown={handleCanvasPointerDown}
     >
+      <CanvasAmbient />
       <div
         ref={worldRef}
         data-world-layer
-        className="absolute left-0 top-0 origin-top-left will-change-transform"
+        className="absolute left-0 top-0 z-10 origin-top-left will-change-transform"
       >
         <AutomationRuntime />
         <TimerTitleRuntime />

@@ -33,4 +33,16 @@ describe('shared text-field surface contract', () => {
     expect(css).toContain('.gp-widget-ui :where(.gp-island, [data-island], .gp-subpanel, .gp-subdivision)')
     expect(css).toContain('background: transparent;')
   })
+
+  it('keeps compound rows and icon/text buttons from manufacturing nested islands', () => {
+    expect(css).toContain(':has(> button):has(> :where(')
+    expect(css).toContain(':has(> button:only-child)')
+    expect(css).toContain("button:not(.gp-check-free):not([role='checkbox']):not(:empty)")
+    expect(css).toContain('background-color: transparent !important;')
+    expect(css).toContain('box-shadow: none !important;')
+  })
+
+  it('retains the shared inset when legacy rows become nested wells', () => {
+    expect(css).toContain('padding-inline: var(--gp-p1);')
+  })
 })

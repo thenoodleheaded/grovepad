@@ -177,18 +177,47 @@ body[data-widget-resizing='width'] * {
     var(--gp-surface-canvas);
 }
 
-/* Four static aurora blobs — green crown, cyan+violet flanks, amber ember.
-   Painted once; pan/zoom never repaints this fixed shell layer. */
+/* A dark, quiet base under the viewport-fixed palette blooms. The ambient
+   layer reads the visible widgets' accents; pan/zoom never moves this shell. */
 .gp-canvas-shell {
   isolation: isolate;
   background:
-    radial-gradient(75% 58% at 52% -8%, oklch(70% 0.1 145 / 0.09), transparent 72%),
-    radial-gradient(46% 42% at -6% 34%, oklch(65% 0.1 244 / 0.05), transparent 74%),
-    radial-gradient(48% 45% at 104% 20%, oklch(60% 0.12 300 / 0.045), transparent 74%),
-    radial-gradient(52% 45% at 82% 106%, oklch(70% 0.12 60 / 0.035), transparent 74%),
+    radial-gradient(80% 64% at 50% -12%, oklch(70% 0.06 145 / 0.055), transparent 74%),
+    radial-gradient(62% 56% at 86% 112%, oklch(60% 0.05 260 / 0.04), transparent 76%),
     var(--gp-surface-canvas);
   box-shadow: inset 0 0 160px rgb(0 0 0 / 0.24);
 }
+
+.gp-canvas-ambient {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  contain: strict;
+}
+
+/* The inactive layer is painted once while invisible, then the two cached
+   surfaces crossfade. There is deliberately no perpetual animation: camera
+   movement composites a completely static backdrop and gradients never
+   recalculate on pan or zoom frames. */
+.gp-canvas-ambient-layer {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(42% 50% at 18% 18%, color-mix(in oklab, var(--gp-canvas-accent-1) 25%, transparent), transparent 70%),
+    radial-gradient(38% 46% at 82% 14%, color-mix(in oklab, var(--gp-canvas-accent-2) 22%, transparent), transparent 72%),
+    radial-gradient(44% 48% at 76% 84%, color-mix(in oklab, var(--gp-canvas-accent-3) 20%, transparent), transparent 74%),
+    radial-gradient(38% 42% at 14% 78%, color-mix(in oklab, var(--gp-canvas-accent-4) 18%, transparent), transparent 74%),
+    radial-gradient(34% 38% at 52% 48%, color-mix(in oklab, var(--gp-canvas-accent-5) 16%, transparent), transparent 76%);
+  opacity: 0;
+  transition: opacity 1400ms linear;
+}
+
+.gp-canvas-ambient-layer[data-active][data-accent-count='1'] { opacity: 0.42; }
+.gp-canvas-ambient-layer[data-active][data-accent-count='2'] { opacity: 0.5; }
+.gp-canvas-ambient-layer[data-active][data-accent-count='3'] { opacity: 0.58; }
+.gp-canvas-ambient-layer[data-active][data-accent-count='4'],
+.gp-canvas-ambient-layer[data-active][data-accent-count='5'] { opacity: 0.66; }
 
 [data-theme='light'] .gp-canvas-shell {
   background:
@@ -198,6 +227,16 @@ body[data-widget-resizing='width'] * {
     radial-gradient(52% 45% at 82% 106%, oklch(66% 0.11 60 / 0.04), transparent 74%),
     var(--gp-surface-canvas);
   box-shadow: inset 0 0 140px rgb(46 70 52 / 0.06);
+}
+
+[data-theme='light'] .gp-canvas-ambient-layer[data-active] {
+  opacity: 0.28;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gp-canvas-ambient-layer {
+    transition: none;
+  }
 }
 
 .gp-boot-mark {
@@ -1001,7 +1040,7 @@ body[data-theme='light'][data-canvas-lod='far'] .gp-widget-card {
   overflow: auto;
   border: 0;
   border-radius: var(--gp-r1);
-  padding-inline: 6px;
+  padding-inline: var(--gp-p1);
   background-image: linear-gradient(180deg, oklch(100% 0 0 / 0.10) 0%, oklch(100% 0 0 / 0.05) 100%);
   box-shadow:
     inset 0 1px 0 oklch(100% 0 0 / 0.14),
@@ -1071,7 +1110,10 @@ body[data-theme='light'][data-canvas-lod='far'] .gp-widget-card {
   min-height: 0;
   border: 0;
   border-radius: var(--gp-r2);
-  padding-inline: 0;
+  /* These legacy rows were promoted to nested wells after their renderers had
+     already chosen spacing. Zeroing the inset put dots, text, and icons on the
+     rounded edge; retain the constitution's shared island inset instead. */
+  padding-inline: var(--gp-p1);
   background-image: none;
   background-color: rgb(0 0 0 / 0.42);
   box-shadow:
@@ -1374,6 +1416,33 @@ body[data-theme='light'][data-canvas-lod='far'] .gp-widget-card {
   box-shadow: none;
 }
 
+/* Compound input/action rows (language + Copy, label + trend, and similar)
+   are one line of content, not a new field island containing a button island. */
+.gp-widget-ui :where(div, section, article, li, fieldset, label, td):has(> button):has(> :where(
+    input:not([type='checkbox'], [type='radio'], [type='range'], [type='color']),
+    textarea,
+    select
+  )),
+.gp-widget-ui .gp-flat-visual :where(div, section, article, li, fieldset, label, td):has(> :where(
+  input:not([type='checkbox'], [type='radio'], [type='range'], [type='color']),
+  textarea,
+  select
+)) {
+  outline: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* An island whose only child is an action is redundant construction chrome.
+   Keep the semantic wrapper for focus-mode layout, but make it visually flat. */
+.gp-widget-ui :where(.gp-island, .gp-subpanel, .gp-subdivision):has(> button:only-child) {
+  min-height: 0;
+  padding: 0;
+  background: transparent !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+}
+
 .gp-widget-ui :where(
   .gp-island,
   .gp-subpanel,
@@ -1390,6 +1459,105 @@ body[data-theme='light'][data-canvas-lod='far'] .gp-widget-card {
   outline: 1px solid rgb(255 255 255 / .10);
   outline-offset: -1px;
   transition: outline-color var(--gp-duration-snap) var(--gp-ease-snap);
+}
+
+/* ---------------------------------------------------------------------
+ * Article XIV enforcement — a manufactured surface owns its insets.
+ *
+ * The auto-promotion above paints glass onto legacy markup (field
+ * islands around bare inputs, wells inside rows), but historically left
+ * every inset to whatever the renderer happened to author. The result
+ * was spacing-by-accident: chips and unit suffixes glued to the glass
+ * edge of their own field island (the pomodoro phase tag, a "%" beside
+ * a weight input), stacked invisible indents where a flatten rule
+ * removed paint but kept forced padding, and footers out of column with
+ * the rows above them. These rules give each manufactured surface the
+ * constitution's inset exactly once, and remove the control's private
+ * inset in exchange, so text sits at the same content line either way.
+ *
+ * Exclusions mirror the paint rules: compound input+button rows are
+ * flattened (their control keeps its own inset), table cells are
+ * regions of one surface, .gp-bare-field sits on the backplate.
+ * ------------------------------------------------------------------- */
+
+/* The card's content box uses the constitutional backplate inset. */
+.gp-widget-content {
+  padding: var(--gp-p0);
+}
+
+/* A pure manufactured field island carries the inline inset itself… */
+.gp-widget-ui :where(div, section, article, li, fieldset, label):not(.gp-bare-field):not(td):not(:has(> button)):has(> :where(
+  input:not([type='checkbox'], [type='radio'], [type='range'], [type='color']),
+  textarea,
+  select
+)) {
+  padding-inline: var(--gp-p1);
+}
+
+/* …so its control no longer needs a private one. Text lands on the same
+   12px content line as before; siblings (chips, suffixes, trend tags)
+   now clear the glass edge instead of touching the corner radius. */
+.gp-widget-ui :where(div, section, article, li, fieldset, label):not(.gp-bare-field):not(td):not(:has(> button)):has(> :where(
+  input:not([type='checkbox'], [type='radio'], [type='range'], [type='color']),
+  textarea,
+  select
+)) > :where(
+  input:not([type='checkbox'], [type='radio'], [type='range'], [type='color']),
+  textarea,
+  select
+) {
+  padding-inline: 0;
+}
+
+/* A stacked multi-field island (a Term over a Definition) also gets a
+   block inset, so the first field's paint edge is not the island's own
+   top edge. Single-field rows with author-fixed heights are untouched. */
+.gp-widget-ui :where(div, section, article, li, fieldset, label):not(.gp-bare-field):not(td):not(:has(> button)):has(> :where(input, textarea, select) ~ :where(input, textarea, select)) {
+  padding-block: 4px;
+}
+
+/* Hairline-separated footers and headers join the same content column
+   as the island rows above them instead of hugging the card edge. */
+.gp-widget-content :where(div, footer, header).border-t,
+.gp-widget-content :where(div, footer, header).border-b {
+  padding-inline: var(--gp-p1);
+}
+
+/* ---------------------------------------------------------------------
+ * The nesting law, enforced for AUTO-DETECTED field wrappers (XIII/XIV).
+ *
+ * The "borrow the parent surface" rule above only recognized the four
+ * EXPLICIT island classes (.gp-island / [data-island] / .gp-subpanel /
+ * .gp-subdivision) as containers. But most legacy widgets are islands by
+ * PROMOTION — a `group/row`, a `.border.rounded` box — and a plain
+ * wrapper holding an <input> nested inside one of those was never told to
+ * borrow. It painted its own raised field-island: an island inside an
+ * island, radius-on-radius, corners touching (the Term/Definition box in
+ * Vocab, and its cousins across the app).
+ *
+ * This single rule closes the gap: an auto-detected field wrapper nested
+ * inside ANY surface — explicit or promoted, island or well — fully
+ * borrows that surface. No second radius, no manufactured inset (the
+ * parent already supplies the 12px inline inset), no paint. Its input
+ * simply sits on the one surface that contains it.
+ *
+ * Deliberate primitives are exempt: an explicit .gp-well / .gp-island /
+ * .gp-field-island the renderer chose keeps its own material, and a
+ * compound input+button row keeps its single-line treatment.
+ * ------------------------------------------------------------------- */
+.gp-widget-ui :where(
+  .gp-island, [data-island], .gp-subpanel, .gp-subdivision,
+  .gp-well, .gp-display-well,
+  [class*='group/'],
+  :is(div, section, article, li, fieldset, label):is(.border, .gp-hairline):is(.rounded-lg, .rounded-xl, .rounded-2xl)
+) :where(div, section, article, li, fieldset, label):not(.gp-well):not(.gp-display-well):not(.gp-field-island):not(.gp-island):not(.gp-subpanel):not(.gp-subdivision):not(.gp-bare-field):not(:has(> button)):has(> :where(input:not([type='checkbox'], [type='radio'], [type='range'], [type='color']), textarea, select)) {
+  border-radius: 0 !important;
+  padding-inline: 0 !important;
+  padding-block: 0 !important;
+  outline: 0 !important;
+  background: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
 }
 
 /* A table is one island (its own .rounded-lg.border wrapper); a cell is a
@@ -1520,18 +1688,23 @@ body[data-theme='light'][data-canvas-lod='far'] .gp-widget-card {
   box-shadow: none !important;
 }
 
-/* Raised controls get one quiet catch-light. Accent is spent only on hover,
-   focus, and explicit active/checked state supplied by the module. */
-.gp-widget-ui :where(button:not(.gp-check-free)) {
+/* Icon/text actions are ghost controls: their hit area remains practical, but
+   they never manufacture another island inside widget content. Empty visual
+   controls (colour swatches, chart marks) and semantic checkboxes retain the
+   visual object that carries their meaning. */
+.gp-widget-ui :where(button:not(.gp-check-free):not([role='checkbox']):not(:empty)) {
   min-width: 28px;
   min-height: 28px;
   border-radius: var(--gp-r2) !important;
+  border-color: transparent !important;
+  background-color: transparent !important;
   background-image: none !important;
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / .055), 0 2px 4px rgb(0 0 0 / .18);
+  box-shadow: none !important;
 }
 
-.gp-widget-ui :where(button:not(.gp-check-free)):hover:not(:disabled) {
-  border-color: color-mix(in oklab, var(--gp-widget-accent), transparent 72%);
+.gp-widget-ui :where(button:not(.gp-check-free):not([role='checkbox']):not(:empty)):hover:not(:disabled) {
+  border-color: transparent !important;
+  filter: brightness(1.16);
 }
 
 /* One label voice across the entire catalog. Inputs explicitly reset case and

@@ -11,8 +11,11 @@ export interface PanelFloor {
 
 const READABLE_REFLOW_WIDTH = 112
 const CONTROL_MIN_HEIGHT = 28
-const CARD_INSET = 24
-const SUBGRID = 4
+/** Content box inset (padding + chrome) added when converting a content
+ * height to a card height. Shared by the grow floor and the load-time fit. */
+export const CARD_INSET = 24
+/** Card heights are aligned to this sub-grid, finer than the 40px board grid. */
+export const SUBGRID = 4
 
 const finite = (value: number): number => Number.isFinite(value) ? value : 0
 const px = (value: string): number => finite(Number.parseFloat(value))
@@ -32,6 +35,44 @@ export function verticalContentFloor(
     ? finite(scrollHeight) + inset
     : 0
   return ceilSubgrid(Math.max(fallbackMinHeight, contentHeight))
+}
+
+/**
+ * Layout-pixel height of a widget's composed content, independent of a
+ * stretched container. `scrollHeight` cannot detect a card taller than its
+ * content: once the `.gp-widget-ui` fills an oversized card, its scrollHeight
+ * equals its clientHeight and the emptiness is invisible. Summing the flow
+ * children's own `offsetHeight` (plus their vertical margins) sees through
+ * that — a compact stack reports its true short height, while a `flex-1`
+ * region reports its stretched allocation, so genuinely content-filled cards
+ * (including internal scroll panels) measure equal to the card and are left
+ * alone. `offsetHeight` is unscaled layout px, so the reading is correct at
+ * any canvas zoom (unlike getBoundingClientRect). Absolutely-positioned
+ * children (the drag grip, port rails) never contribute.
+ */
+export function naturalContentHeight(ui: HTMLElement): number {
+  let height = 0
+  for (const child of Array.from(ui.children)) {
+    const style = getComputedStyle(child)
+    if (style.position === 'absolute' || style.position === 'fixed') continue
+    height += (child as HTMLElement).offsetHeight + px(style.marginTop) + px(style.marginBottom)
+  }
+  return height
+}
+
+/** Snap a content-owned card height to the board grid in one idempotent step.
+ * Unlike overflow repair, auto-height fitting is allowed to shrink a stale
+ * default/saved height back to the renderer's natural content height. */
+export function contentFitHeight(
+  contentHeight: number,
+  minHeight: number,
+  maxHeight = Infinity,
+  inset = CARD_INSET,
+  grid = 40,
+): number {
+  const safeGrid = Math.max(1, finite(grid))
+  const natural = Math.ceil((finite(contentHeight) + Math.max(0, finite(inset))) / safeGrid) * safeGrid
+  return Math.min(maxHeight, Math.max(minHeight, natural))
 }
 
 /** Compose panel floors the same way their parent lays them out. */
