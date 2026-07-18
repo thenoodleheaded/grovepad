@@ -269,11 +269,11 @@ function ResultPreview({ result }: { result: SearchResult | null }) {
   )
 }
 
-function Row({ label, value, mono = false }: { label: string; value: string; mono?: boolean }) {
+function Row({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center justify-between gap-2">
       <span className="text-[10px] uppercase tracking-wider text-neutral-600">{label}</span>
-      <span className={`text-[11px] text-neutral-300 ${mono ? 'font-mono' : ''}`}>{value}</span>
+      <span className="text-[11px] text-neutral-300">{value}</span>
     </div>
   )
 }
@@ -520,7 +520,7 @@ export function CommandPalette() {
               {tab.label}
             </button>
           ))}
-          <span className="ml-auto font-mono text-[10px] text-neutral-700">
+          <span className="ml-auto  text-[10px] text-neutral-700">
             ↑↓ navigate · Enter to select
           </span>
         </div>

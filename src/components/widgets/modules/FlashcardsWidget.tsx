@@ -147,7 +147,7 @@ export function FlashcardsWidget({ data, onChange }: FlashcardsWidgetProps) {
           </button>
           <span
             ref={cardCountRef}
-            className="min-w-9 text-center font-mono text-[10px] tabular-nums text-neutral-500"
+            className="min-w-9 text-center  text-[10px] tabular-nums text-neutral-500"
           >
             {index + 1}/{count}
           </span>

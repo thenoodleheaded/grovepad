@@ -35,7 +35,7 @@ function Column({
         <span className={`text-[10px] font-semibold uppercase tracking-widest ${headerClass}`}>
           {title}
         </span>
-        <span ref={countRef} className="font-mono text-[10px] tabular-nums text-neutral-600">
+        <span ref={countRef} className=" text-[10px] tabular-nums text-neutral-600">
           {items.length}
         </span>
       </div>

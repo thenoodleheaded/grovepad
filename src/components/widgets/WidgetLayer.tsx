@@ -122,7 +122,7 @@ export function WidgetLayer() {
       />
       <div aria-hidden className="absolute h-px w-6 -translate-x-1/2 bg-emerald-400/40" />
       <div aria-hidden className="absolute h-6 w-px -translate-y-1/2 bg-emerald-400/40" />
-      <span className="absolute left-3 top-2 font-mono text-[10px] text-neutral-500">0, 0</span>
+      <span className="absolute left-3 top-2  text-[10px] text-neutral-500">0, 0</span>
 
       {rendered.map(({ widget, mode }) =>
         mode === 'detail' ? (

@@ -42,7 +42,7 @@ export function SketchpadWidget({ data: _data }: SketchpadWidgetProps) {
             {label}
           </button>
         ))}
-        <span aria-live="polite" aria-atomic="true" className="ml-auto font-mono text-[9px] text-neutral-700 select-none">
+        <span aria-live="polite" aria-atomic="true" className="ml-auto  text-[9px] text-neutral-700 select-none">
           {pointer ? `${pointer.x}, ${pointer.y}` : '—'}
         </span>
       </div>

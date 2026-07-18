@@ -161,7 +161,7 @@ export function ChecklistWidget({ data, onChange, onHeightChange }: ChecklistWid
               allDoneRef.current = el
             }}
             aria-label={`${doneCount} of ${totalCount} done`}
-            className={`ml-1 font-mono text-[10px] tabular-nums transition-colors duration-300 ${
+            className={`ml-1  text-[10px] tabular-nums transition-colors duration-300 ${
               doneCount === totalCount ? '' : 'text-neutral-600'
             }`}
             style={doneCount === totalCount ? { color: 'var(--gp-widget-accent)' } : undefined}

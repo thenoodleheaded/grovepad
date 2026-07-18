@@ -1,0 +1,259 @@
+/* Glass chrome: dialogs, menus, library, picker tiles. Split from product.css; load order is fixed by product.css @imports. */
+
+/* Glass chrome (toolbars, dialogs, menus, toasts, widget cards) reads as
+   elevation through shadow alone — no structural stroke. */
+.gp-panel {
+  border: none;
+}
+
+.gp-picker-row {
+  border: none;
+}
+
+.gp-selection-bar {
+  border-color: color-mix(in oklab, var(--color-emerald-400), transparent 72%);
+  box-shadow:
+    0 14px 38px rgb(0 0 0 / 0.3),
+    0 0 0 1px var(--gp-accent-soft),
+    inset 0 1px 0 rgb(255 255 255 / 0.05);
+}
+
+.gp-toast {
+  border-color: color-mix(in oklab, var(--color-emerald-400), transparent 78%);
+  box-shadow: var(--gp-shadow-float);
+}
+
+.gp-toast::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--color-emerald-400);
+  box-shadow: 0 0 12px color-mix(in oklab, var(--color-emerald-400), transparent 45%);
+}
+
+/* The widget library used a full-viewport live blur. A layered opaque wash
+   gives the same separation without resampling the moving canvas. */
+.gp-picker-scrim {
+  background:
+    radial-gradient(70% 55% at 50% 12%, oklch(62% 0.08 145 / 0.09), transparent 70%),
+    oklch(9% 0.004 250 / 0.97);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+[data-theme='light'] .gp-picker-scrim {
+  background:
+    radial-gradient(70% 58% at 18% 2%, oklch(76% 0.11 142 / 0.16), transparent 68%),
+    radial-gradient(62% 48% at 92% 18%, oklch(78% 0.07 225 / 0.1), transparent 72%),
+    oklch(96.5% 0.008 150 / 0.985);
+}
+
+/* Library search pill — quiet glass that stays still while typing. */
+.gp-picker-search {
+  border: none;
+  background: var(--gp-surface-control);
+  transition:
+    border-color var(--gp-duration-snap) var(--gp-ease-snap),
+    box-shadow var(--gp-duration-snap) var(--gp-ease-snap);
+}
+
+[data-theme='light'] .gp-picker-title {
+  background-image: linear-gradient(90deg, oklch(22% 0.015 250), oklch(42% 0.12 145), oklch(22% 0.015 250));
+}
+
+[data-theme='light'] .gp-picker-subtitle,
+[data-theme='light'] .gp-picker-category-label,
+[data-theme='light'] .gp-picker-footer {
+  color: oklch(42% 0.018 250);
+}
+
+[data-theme='light'] .gp-picker-search {
+  background: rgb(255 255 255 / 0.82);
+  box-shadow:
+    0 14px 34px rgb(30 41 59 / 0.1),
+    inset 0 1px 0 rgb(255 255 255 / 0.92);
+}
+
+[data-theme='light'] .gp-picker-search-input {
+  color: oklch(20% 0.014 250);
+}
+
+[data-theme='light'] .gp-picker-search-input::placeholder {
+  color: oklch(54% 0.018 250);
+}
+
+[data-theme='light'] .gp-picker-pack-button {
+  border-color: rgb(15 23 42 / 0.1);
+  background: rgb(255 255 255 / 0.74);
+  color: oklch(29% 0.018 250);
+  box-shadow: 0 8px 22px rgb(30 41 59 / 0.08);
+}
+
+[data-theme='light'] .gp-picker-close {
+  color: oklch(40% 0.018 250);
+}
+
+/* Widget choices are dark pieces of accent-tinted glass. Depth and colour
+   replace structural outlines; the bright icon island is embedded at left. */
+.gp-picker-row {
+  isolation: isolate;
+  background:
+    radial-gradient(
+      78% 150% at -4% 50%,
+      color-mix(in oklab, var(--gp-tile-accent) 15%, transparent),
+      transparent 66%
+    ),
+    linear-gradient(
+      145deg,
+      color-mix(in oklab, var(--gp-tile-accent) 7%, oklch(18% 0.009 250)),
+      color-mix(in oklab, var(--gp-tile-accent) 2%, oklch(12.5% 0.006 250))
+    );
+  box-shadow:
+    0 14px 30px rgb(0 0 0 / 0.27),
+    0 5px 18px color-mix(in oklab, var(--gp-tile-accent) 7%, transparent);
+  transition:
+    translate 280ms var(--gp-ease-out),
+    box-shadow 280ms var(--gp-ease-out);
+}
+
+.gp-picker-row::after {
+  content: '';
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(85% 150% at -4% 50%, color-mix(in oklab, var(--gp-tile-accent) 12%, transparent), transparent 68%);
+  opacity: 0;
+  transition: opacity 280ms var(--gp-ease-out);
+}
+
+.gp-picker-icon {
+  z-index: 2;
+  background:
+    radial-gradient(circle at 30% 18%, rgb(255 255 255 / 0.2), transparent 42%),
+    linear-gradient(
+      145deg,
+      color-mix(in oklab, var(--gp-tile-accent) 46%, oklch(24% 0.012 250)),
+      color-mix(in oklab, var(--gp-tile-accent) 22%, oklch(13% 0.008 250))
+    );
+  box-shadow:
+    0 10px 22px rgb(0 0 0 / 0.4),
+    0 4px 22px color-mix(in oklab, var(--gp-tile-accent) 38%, transparent),
+    inset 0 1px 0 rgb(255 255 255 / 0.14);
+  filter: saturate(1.14) brightness(1.16);
+}
+
+.gp-picker-row[data-active] {
+  translate: 0 -3px;
+  box-shadow:
+    0 20px 40px rgb(0 0 0 / 0.29),
+    0 8px 28px color-mix(in oklab, var(--gp-tile-accent) 21%, transparent);
+}
+
+.gp-picker-row[data-active]::after {
+  opacity: 1;
+}
+
+@media (hover: hover) {
+  .gp-picker-row:hover {
+    translate: 0 -3px;
+    box-shadow:
+      0 20px 40px rgb(0 0 0 / 0.29),
+      0 8px 28px color-mix(in oklab, var(--gp-tile-accent) 21%, transparent);
+  }
+
+  .gp-picker-row:hover::after {
+    opacity: 1;
+  }
+}
+
+[data-theme='light'] .gp-picker-row {
+  background:
+    radial-gradient(
+      78% 150% at -4% 50%,
+      color-mix(in oklab, var(--gp-tile-accent) 17%, transparent),
+      transparent 66%
+    ),
+    linear-gradient(
+      145deg,
+      color-mix(in oklab, var(--gp-tile-accent) 5%, oklch(31% 0.009 250)),
+      color-mix(in oklab, var(--gp-tile-accent) 1%, oklch(23% 0.006 250))
+    );
+  box-shadow:
+    0 16px 34px rgb(30 41 59 / 0.18),
+    0 5px 20px color-mix(in oklab, var(--gp-tile-accent) 12%, transparent);
+}
+
+[data-theme='light'] .gp-picker-tile-title {
+  color: oklch(96% 0.004 250);
+}
+
+[data-theme='light'] .gp-picker-tile-description {
+  color: oklch(74% 0.012 250 / 0.82);
+}
+
+[data-theme='light'] .gp-picker-icon {
+  background:
+    radial-gradient(circle at 30% 18%, rgb(255 255 255 / 0.2), transparent 42%),
+    linear-gradient(
+      145deg,
+      color-mix(in oklab, var(--gp-tile-accent) 48%, oklch(25% 0.012 250)),
+      color-mix(in oklab, var(--gp-tile-accent) 24%, oklch(14% 0.008 250))
+    );
+  box-shadow:
+    0 11px 24px rgb(15 23 42 / 0.3),
+    0 5px 22px color-mix(in oklab, var(--gp-tile-accent) 34%, transparent),
+    inset 0 1px 0 rgb(255 255 255 / 0.14);
+  filter: saturate(1.12) brightness(1.12);
+}
+
+[data-theme='light'] .gp-picker-row[data-active] {
+  box-shadow:
+    0 20px 40px rgb(30 41 59 / 0.23),
+    0 8px 28px color-mix(in oklab, var(--gp-tile-accent) 23%, transparent);
+}
+
+@media (max-width: 639px) {
+  .gp-dialog {
+    max-height: calc(100dvh - 24px);
+    border-radius: 24px;
+  }
+
+  .gp-toolbar {
+    border-radius: 15px;
+  }
+}
+
+body[data-canvas-lod='far'] .gp-widget-card::before {
+  display: none;
+}
+
+body[data-canvas-lod='far'] .gp-widget-card {
+  background: oklch(14% 0.004 250 / 0.98);
+}
+
+[data-theme='light'] body[data-canvas-lod='far'] .gp-widget-card,
+body[data-theme='light'][data-canvas-lod='far'] .gp-widget-card {
+  background: oklch(33% 0.005 250 / 0.99);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gp-toolbar-action::after,
+  .gp-menu-item,
+  .gp-picker-row {
+    transition: none;
+  }
+}
+
+/* -------------------------------------------------------------------------
+ * Widget-content interaction physics + accent infusion
+ *
+ * One global layer that re-themes the interior of every widget through its
+ * own --gp-widget-accent: checkboxes, progress fills, carets, text
+ * selection, and native controls all pick up the card's hue, and every
+ * control gains tactile press/hover physics. All effects are interaction-
+ * triggered transitions or one-shot keyframes — nothing runs at idle.
+ * ----------------------------------------------------------------------- */

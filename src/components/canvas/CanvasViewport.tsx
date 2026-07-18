@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect, useRef } from 'react'
 import { useShallow } from 'zustand/react/shallow'
 import { useCanvasStore, type CanvasState } from '../../store/useCanvasStore'
 import { useAiDebugStore } from '../../store/useAiDebugStore'
+import { useScaleDebugStore } from '../../store/useScaleDebugStore'
 import { isOverlayOpen } from '../../store/useOverlayStore'
 import { useWidgetStore } from '../../store/useWidgetStore'
 import { useToastStore } from '../../store/useToastStore'
@@ -11,9 +12,12 @@ import type { Widget } from '../../types/spatial'
 import { boundsForWidgets } from '../../utils/widgetBounds'
 import { stagePendingImport } from '../../utils/pendingImport'
 import { writeMediaBlob } from '../../utils/boardDatabase'
+import { parseImportedBoardFile } from '../../utils/boardImport'
+import { importBoardFileOntoCanvas } from '../../utils/boardCanvasImport'
 import { startAppRuntime } from '../../runtime/appRuntime'
 import { GhostTreeShaper } from './GhostTreeShaper'
 import { QuickAddPreviewLayer } from './QuickAddPreviewLayer'
+import { CanvasAuraLayer } from './CanvasAuraLayer'
 import { GridLayer } from './GridLayer'
 import { PerformanceMonitor } from './PerformanceMonitor'
 import { RelationLines } from './RelationLines'
@@ -35,7 +39,6 @@ import { ToastContainer } from '../ui/ToastContainer'
 import { EmptyCanvasState } from '../ui/EmptyCanvasState'
 import { CloudConflictDialog } from '../ui/CloudConflictDialog'
 import { CanvasNavigator } from '../ui/CanvasNavigator'
-import { CanvasAmbient } from './CanvasAmbient'
 import { GuestBackupNudge } from '../ui/GuestBackupNudge'
 import { DeployUpdateBanner } from '../ui/DeployUpdateBanner'
 import { CanvasTreeDrawer } from '../ui/CanvasTreeDrawer'
@@ -65,9 +68,15 @@ const AiDebugPanel = AI_DEBUG_ENABLED
       import('./AiDebugPanel').then((module) => ({ default: module.AiDebugPanel })),
     )
   : null
+const SCALE_DEBUG_ENABLED = import.meta.env.DEV
+const ScaleDebugPanel = SCALE_DEBUG_ENABLED
+  ? lazy(() =>
+      import('./ScaleDebugPanel').then((module) => ({ default: module.ScaleDebugPanel })),
+    )
+  : null
 
 if (import.meta.env.DEV) {
-  Object.assign(window, { __grovepad: { useWidgetStore, useCanvasStore, useAiDebugStore, useCircuitStore } })
+  Object.assign(window, { __grovepad: { useWidgetStore, useCanvasStore, useAiDebugStore, useCircuitStore, useScaleDebugStore } })
 }
 
 /** In-memory clipboard — persists across interactions but not page reloads. */
@@ -130,6 +139,7 @@ export function CanvasViewport() {
     })),
   )
   const aiDebugOpen = useAiDebugStore((state) => AI_DEBUG_ENABLED && state.isOpen)
+  const scaleDebugOpen = useScaleDebugStore((state) => SCALE_DEBUG_ENABLED && state.isOpen)
 
   useEffect(() => {
     const world = worldRef.current
@@ -195,6 +205,18 @@ export function CanvasViewport() {
         !e.altKey
       ) {
         useAiDebugStore.getState().toggleOpen()
+        return
+      }
+      // Same shortcut pattern for the whole-card scaling tracer: stays
+      // unloaded and non-recording until the first toggle.
+      if (
+        SCALE_DEBUG_ENABLED &&
+        e.key.toLowerCase() === 's' &&
+        !e.ctrlKey &&
+        !e.metaKey &&
+        !e.altKey
+      ) {
+        useScaleDebugStore.getState().toggleOpen()
         return
       }
       // A modal, menu, or dropdown is open — its own listener owns Escape
@@ -418,9 +440,26 @@ export function CanvasViewport() {
       state.updateWidgetData(id, { url: '', caption: '', altText: '', localBlobKey: id })
     }
 
+    const importGrovepadFile = async (file: File, position: { x: number; y: number }) => {
+      try {
+        const bytes = new Uint8Array(await file.arrayBuffer())
+        const { board, media } = await parseImportedBoardFile(bytes, file.name)
+        await importBoardFileOntoCanvas({ board, media, filename: file.name, position })
+      } catch {
+        useToastStore.getState().addToast(`Could not import ${file.name}`)
+      }
+    }
+
     const handleFiles = (files: File[], position: { x: number; y: number }) => {
+      const packages = files.filter((file) => file.name.toLowerCase().endsWith('.grovepad'))
       const images = files.filter((file) => file.type.startsWith('image/'))
-      const documents = files.filter((file) => !file.type.startsWith('image/'))
+      const documents = files.filter(
+        (file) => !file.type.startsWith('image/') && !file.name.toLowerCase().endsWith('.grovepad'),
+      )
+      packages.forEach((file, index) => void importGrovepadFile(file, {
+        x: position.x + index * GRID_SIZE,
+        y: position.y + index * GRID_SIZE,
+      }))
       images.forEach((file, index) => void readImage(file, { x: position.x + index * GRID_SIZE, y: position.y + index * GRID_SIZE }))
       if (documents.length > 0) {
         stagePendingImport(documents)
@@ -518,7 +557,7 @@ export function CanvasViewport() {
       onDoubleClick={handleDoubleClick}
       onPointerDown={handleCanvasPointerDown}
     >
-      <CanvasAmbient />
+      <CanvasAuraLayer />
       <div
         ref={worldRef}
         data-world-layer
@@ -551,6 +590,11 @@ export function CanvasViewport() {
       {AiDebugPanel && aiDebugOpen && (
         <Suspense fallback={null}>
           <AiDebugPanel />
+        </Suspense>
+      )}
+      {ScaleDebugPanel && scaleDebugOpen && (
+        <Suspense fallback={null}>
+          <ScaleDebugPanel />
         </Suspense>
       )}
       <ZoomControls />

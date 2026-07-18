@@ -51,7 +51,7 @@ export function BarChartWidget({ data, onChange }: BarChartWidgetProps) {
               value={bar.value}
               aria-label="Bar value"
               onChange={(e) => setBar(bar.id, { value: Number(e.target.value) })}
-              className="w-10 shrink-0 bg-transparent text-right font-mono text-[11px] text-neutral-300 outline-none"
+              className="w-10 shrink-0 bg-transparent text-right  text-[11px] text-neutral-300 outline-none"
             />
             <button
               type="button"
@@ -74,7 +74,7 @@ export function BarChartWidget({ data, onChange }: BarChartWidgetProps) {
           <Plus size={11} aria-hidden />
           Add bar
         </button>
-        <span ref={totalRowRef} className="font-mono text-[11px] tabular-nums text-neutral-500">
+        <span ref={totalRowRef} className=" text-[11px] tabular-nums text-neutral-500">
           Σ {total}
         </span>
       </div>

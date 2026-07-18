@@ -46,7 +46,7 @@ export function ProgressWidget({ data, onChange }: ProgressWidgetProps) {
           className="gp-input--bare flex-1 text-[13px] text-neutral-200 outline-none placeholder:text-neutral-700"
         />
         <span
-          className={`gp-hero shrink-0 font-mono transition-colors duration-300 ${percent === 100 ? accentClass : ''}`}
+          className={`gp-hero shrink-0  transition-colors duration-300 ${percent === 100 ? accentClass : ''}`}
         >
           {percent}%
         </span>

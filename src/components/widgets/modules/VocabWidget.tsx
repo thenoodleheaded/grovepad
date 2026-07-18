@@ -81,7 +81,7 @@ export function VocabWidget({ data, onChange }: VocabWidgetProps) {
         </button>
         <span
           ref={knownCountRef}
-          className={`font-mono text-[10px] tabular-nums transition-colors ${
+          className={` text-[10px] tabular-nums transition-colors ${
             data.terms.length > 0 && knownCount === data.terms.length ? 'text-emerald-400' : 'text-neutral-600'
           }`}
         >

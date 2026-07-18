@@ -32,7 +32,7 @@ export function HabitWidget({ data, onChange }: HabitWidgetProps) {
         />
         <span
           ref={streakRef}
-          className={`flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 font-mono text-[10px] tabular-nums transition-colors duration-300 ${
+          className={`flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5  text-[10px] tabular-nums transition-colors duration-300 ${
             doneCount >= 5
               ? 'border-amber-400/40 bg-amber-400/10 text-amber-300'
               : 'gp-hairline text-neutral-500'
@@ -58,7 +58,7 @@ export function HabitWidget({ data, onChange }: HabitWidgetProps) {
             <span className={`relative grid h-7 w-7 place-items-center rounded-full border border-white/[.08] bg-neutral-900/80 shadow-[inset_0_2px_5px_rgba(0,0,0,.5)] ${done?'border-[color-mix(in_oklab,var(--gp-widget-accent),transparent_60%)]':''}`}>
               {done&&<span aria-hidden className="h-[18px] w-[18px] rounded-full bg-[var(--gp-widget-accent)] opacity-85 shadow-[0_0_10px_color-mix(in_oklab,var(--gp-widget-accent),transparent_55%)]" style={{animation:'gp-check-pop 260ms cubic-bezier(0.16, 1, 0.3, 1)'}}/>}
             </span>
-            <span className="font-mono text-[9px] text-neutral-600">{DAY_LABELS[index]}</span>
+            <span className=" text-[9px] text-neutral-600">{DAY_LABELS[index]}</span>
           </button>
         ))}
       </div>

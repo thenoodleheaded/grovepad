@@ -1,17 +1,12 @@
 import { GitMerge } from 'lucide-react'
-import { memo, useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
+import { memo, useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react'
 import { createPortal } from 'react-dom'
 import { useShallow } from 'zustand/react/shallow'
 import { useCanvasStore } from '../../store/useCanvasStore'
 import { useOverlayLifecycle } from '../../store/useOverlayStore'
 import { useWidgetStore } from '../../store/useWidgetStore'
-import type { Widget, WidgetGroup } from '../../types/spatial'
-import {
-  GROUP_PAD,
-  convexHull,
-  paddedMemberCorners,
-  shrinkWrapPath,
-} from '../../utils/groupGeometry'
+import { GRID_SIZE, type Widget, type WidgetGroup } from '../../types/spatial'
+import { GROUP_PAD } from '../../utils/groupGeometry'
 import { linkAnchorId, resolveLinkTargetAt } from '../../utils/linkTarget'
 import { clampPopover } from '../../utils/popoverPosition'
 import { PointerDragSession } from '../../utils/pointerDrag'
@@ -25,16 +20,7 @@ interface LinkDragState {
 
 const EMPTY_MEMBERS: Widget[] = []
 
-/**
- * Group visual: a single taut elastic band shrink-wrapped around the member
- * widgets. The band is the convex hull of the members' padded corners —
- * rounded where it bends around a widget, sagging slightly inward across
- * empty spans like stretched rubber. Tightness depicts the grouping itself.
- * When a widget is dragged over the group, the band relaxes open to accept
- * it (CSS `d` transition morphs taut → relaxed; both paths share structure).
- *
- * One SVG path, recomputed only when members move — no per-frame cost.
- */
+/** One shared E0 glass backplate beneath every member widget in the group. */
 export const GroupPlate = memo(function GroupPlate({ group }: { group: WidgetGroup }) {
   const groupId = group.id
   // Subscribe to member widgets only — dragging unrelated widgets elsewhere
@@ -52,20 +38,6 @@ export const GroupPlate = memo(function GroupPlate({ group }: { group: WidgetGro
     }),
   )
   const isDropTarget = useWidgetStore((state) => state.dragOverGroupId === groupId)
-
-  // Holds [data-drop-morph] on the band for one transition-length after the
-  // drop-target state ends, so the relax→taut morph still animates on the way
-  // out (the `d` transition is otherwise suppressed while a drag is live).
-  const [dropMorphHold, setDropMorphHold] = useState(false)
-  useEffect(() => {
-    if (isDropTarget) {
-      setDropMorphHold(true)
-      return
-    }
-    if (!dropMorphHold) return
-    const timer = window.setTimeout(() => setDropMorphHold(false), 260)
-    return () => window.clearTimeout(timer)
-  }, [isDropTarget, dropMorphHold])
 
   const [labelEditing, setLabelEditing] = useState(false)
   const [showMenu, setShowMenu] = useState<{ x: number; y: number } | null>(null)
@@ -90,14 +62,11 @@ export const GroupPlate = memo(function GroupPlate({ group }: { group: WidgetGro
       maxY = Math.max(maxY, w.position.y + w.size.height)
     }
     if (!Number.isFinite(minX)) return null
-    const hull = convexHull(paddedMemberCorners(members))
     return {
       x: minX - GROUP_PAD,
       y: minY - GROUP_PAD,
       width: maxX - minX + GROUP_PAD * 2,
       height: maxY - minY + GROUP_PAD * 2,
-      taut: shrinkWrapPath(hull, 1),
-      relaxed: shrinkWrapPath(hull, 0),
     }
   }, [members])
 
@@ -124,7 +93,7 @@ export const GroupPlate = memo(function GroupPlate({ group }: { group: WidgetGro
     return true
   }
 
-  const onPointerDown = (e: ReactPointerEvent<Element>) => {
+  const onPointerDown = (e: ReactPointerEvent<HTMLElement>) => {
     if (e.button !== 0) return
     e.preventDefault()
     e.stopPropagation()
@@ -150,7 +119,7 @@ export const GroupPlate = memo(function GroupPlate({ group }: { group: WidgetGro
     })
   }
 
-  const onPointerMove = (e: ReactPointerEvent<Element>) => {
+  const onPointerMove = (e: ReactPointerEvent<HTMLElement>) => {
     const link = linkDragRef.current
     if (link && link.pointerId === e.pointerId) {
       link.clientX = e.clientX
@@ -170,7 +139,7 @@ export const GroupPlate = memo(function GroupPlate({ group }: { group: WidgetGro
     dragRef.current?.move(e)
   }
 
-  const onPointerUp = (e: ReactPointerEvent<Element>) => {
+  const onPointerUp = (e: ReactPointerEvent<HTMLElement>) => {
     const link = linkDragRef.current
     if (link && link.pointerId === e.pointerId) {
       if (link.rafId !== 0) cancelAnimationFrame(link.rafId)
@@ -188,7 +157,7 @@ export const GroupPlate = memo(function GroupPlate({ group }: { group: WidgetGro
     }
   }
 
-  const onPointerCancel = (e: ReactPointerEvent<Element>) => {
+  const onPointerCancel = (e: ReactPointerEvent<HTMLElement>) => {
     const link = linkDragRef.current
     if (link && link.pointerId === e.pointerId) {
       if (link.rafId !== 0) cancelAnimationFrame(link.rafId)
@@ -216,70 +185,45 @@ export const GroupPlate = memo(function GroupPlate({ group }: { group: WidgetGro
   return (
     <>
       <div
-        className="gp-widget-motion absolute left-0 top-0"
+        role="group"
+        aria-label={`${group.label} group`}
+        data-group-id={groupId}
+        data-drop-target={isDropTarget || undefined}
+        className="gp-widget-motion gp-group-backplate absolute left-0 top-0 cursor-grab active:cursor-grabbing"
         style={{
           transform: `translate3d(${geometry.x}px, ${geometry.y}px, 0)`,
           width: geometry.width,
           height: geometry.height,
-          // Hit-testing lives on the band path below, not this box — empty
-          // bounding-box corners outside the band stay click-through.
-          pointerEvents: 'none',
-          // No paint containment: the name pill floats above the band and
-          // the band itself can exceed the box — same invariant as WidgetCard.
+          '--gp-widget-accent': color,
           contain: 'layout style',
+        } as CSSProperties}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerCancel={onPointerCancel}
+        onLostPointerCapture={onPointerCancel}
+        onContextMenu={onContextMenu}
+        onDoubleClick={(event) => {
+          event.stopPropagation()
+          useCanvasStore.getState().fitRect(geometry, 120)
         }}
       >
-        <svg
-          className="absolute inset-0 overflow-visible"
-          width={geometry.width}
-          height={geometry.height}
-          viewBox={`${geometry.x} ${geometry.y} ${geometry.width} ${geometry.height}`}
-          style={{ pointerEvents: 'none' }}
-        >
-          <defs>
-            {/* Glass fill: white sheen at the top-left melting into a faint
-                color tint — same trick as .gp-glass, one static paint. */}
-            <linearGradient id={`gp-band-${groupId}`} x1="0" y1="0" x2="0.7" y2="1">
-              <stop offset="0" stopColor="#ffffff" stopOpacity={isDropTarget ? 0.14 : 0.09} />
-              <stop offset="0.45" stopColor={color} stopOpacity={isDropTarget ? 0.10 : 0.06} />
-              <stop offset="1" stopColor={color} stopOpacity={isDropTarget ? 0.05 : 0.02} />
-            </linearGradient>
-          </defs>
-          <path
-            data-group-id={groupId}
-            data-drop-morph={isDropTarget || dropMorphHold ? true : undefined}
-            d={isDropTarget ? geometry.relaxed : geometry.taut}
-            fill={`url(#gp-band-${groupId})`}
-            stroke={isDropTarget ? `${color}cc` : `${color}77`}
-            strokeWidth={isDropTarget ? 2.5 : 2}
-            vectorEffect="non-scaling-stroke"
-            strokeLinejoin="round"
-            onPointerDown={onPointerDown}
-            onPointerMove={onPointerMove}
-            onPointerUp={onPointerUp}
-            onPointerCancel={onPointerCancel}
-            onLostPointerCapture={onPointerCancel}
-            onContextMenu={onContextMenu}
-            onDoubleClick={(event) => { event.stopPropagation(); useCanvasStore.getState().fitRect({ x: geometry.x, y: geometry.y, width: geometry.width, height: geometry.height }, 120) }}
-            className="gp-band-motion cursor-grab active:cursor-grabbing"
-            style={{ pointerEvents: 'all' }}
-          />
-        </svg>
-
-        {/* Group name pill — floats above the band like a widget's title
-            capsule. Offset clears the topmost member's own -top-9 capsule,
-            which sits only GROUP_PAD below the band's top edge. */}
+        <div
+          aria-hidden
+          className="gp-glass gp-backplate gp-group-backplate-visual pointer-events-none absolute"
+          style={{ inset: GRID_SIZE / 2 }}
+        />
+        {/* Group name pill floats above the shared backplate. */}
         <div className="absolute inset-x-0 z-20 flex justify-center" style={{ top: -60 }}>
           <div
             className="gp-title-capsule pointer-events-auto flex h-8 max-w-[80%] cursor-grab items-center gap-1.5 rounded-full px-3 shadow-md active:cursor-grabbing"
-            style={{ background: `${color}22` }}
             onPointerDown={onPointerDown}
             onPointerMove={onPointerMove}
             onPointerUp={onPointerUp}
             onPointerCancel={onPointerCancel}
             onLostPointerCapture={onPointerCancel}
             onContextMenu={onContextMenu}
-            onDoubleClick={(event) => { event.stopPropagation(); useCanvasStore.getState().fitRect({ x: geometry.x, y: geometry.y, width: geometry.width, height: geometry.height }, 120) }}
+            onDoubleClick={(event) => { event.stopPropagation(); useCanvasStore.getState().fitRect(geometry, 120) }}
           >
             <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: color }} />
             {labelEditing ? (
@@ -319,8 +263,8 @@ export const GroupPlate = memo(function GroupPlate({ group }: { group: WidgetGro
         {isDropTarget && (
           <div className="absolute inset-x-0 bottom-3 flex justify-center" aria-hidden>
             <span
-              className="rounded-full px-2 py-0.5 text-[10px] font-semibold"
-              style={{ color, background: `${color}20`, border: `1px solid ${color}50` }}
+              className="gp-title-capsule rounded-full px-2 py-0.5 text-[10px] font-semibold"
+              style={{ color }}
             >
               drop to join
             </span>

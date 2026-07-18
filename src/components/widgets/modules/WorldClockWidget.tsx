@@ -74,9 +74,9 @@ export function WorldClockWidget({ data, onChange }: WorldClockWidgetProps) {
                 {labelFor(tz)}
               </span>
               {dayDelta && (
-                <span className="shrink-0 font-mono text-[9px] text-neutral-600">{dayDelta}d</span>
+                <span className="shrink-0  text-[9px] text-neutral-600">{dayDelta}d</span>
               )}
-              <span className="shrink-0 font-mono text-[14px] font-semibold tabular-nums text-neutral-100">
+              <span className="shrink-0  text-[14px] font-semibold tabular-nums text-neutral-100">
                 {time}
               </span>
               <button

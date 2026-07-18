@@ -63,7 +63,7 @@ export async function exportCanvasImage(copyToClipboard = true): Promise<void> {
     roundedRect(context, widget.position.x, widget.position.y, widget.size.width, widget.size.height, 22)
     context.fill(); context.stroke()
     context.fillStyle = '#f5f5f5'
-    context.font = '600 14px system-ui, sans-serif'
+    context.font = '600 14px "Clash Display"'
     context.fillText(widget.title, widget.position.x + 18, widget.position.y + 30, widget.size.width - 36)
   }
   const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png'))

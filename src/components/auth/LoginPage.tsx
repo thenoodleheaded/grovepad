@@ -178,7 +178,7 @@ export function LoginPage() {
       {/* Ambient background bloom — two static radial glows, zero per-frame cost */}
       <div aria-hidden className="gp-login-glow pointer-events-none absolute inset-0" />
 
-      <div className="gp-pop gp-panel relative z-10 w-full max-w-sm rounded-3xl p-8 shadow-2xl">
+      <div className="gp-pop gp-panel relative z-10 w-full max-w-md rounded-3xl p-9 shadow-2xl">
         <div className="mb-7 flex flex-col items-center gap-2 text-center">
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-emerald-400/25 bg-emerald-400/10 shadow-[0_0_28px_rgba(163,230,53,0.18)]">
             <Sparkles size={20} className="text-emerald-300" aria-hidden />
@@ -186,16 +186,13 @@ export function LoginPage() {
           <h1 className="text-lg font-bold tracking-tight text-neutral-100">
             grove<span className="text-emerald-400">pad</span>
           </h1>
-          <p className="text-xs leading-relaxed text-neutral-500">
-            Your infinite thinking canvas. Sign in to sync across devices — or stay local.
-          </p>
         </div>
 
         {!supabaseConfigured && (
           <div className="mb-4 rounded-xl border border-amber-400/25 bg-amber-400/[0.06] px-3 py-2.5 text-[11px] leading-relaxed text-amber-200/90">
-            Supabase isn't configured yet. Add <code className="font-mono">VITE_SUPABASE_URL</code>{' '}
-            and <code className="font-mono">VITE_SUPABASE_ANON_KEY</code> to{' '}
-            <code className="font-mono">.env.local</code>, then restart the dev server. Guest mode
+            Supabase isn't configured yet. Add <code className="">VITE_SUPABASE_URL</code>{' '}
+            and <code className="">VITE_SUPABASE_ANON_KEY</code> to{' '}
+            <code className="">.env.local</code>, then restart the dev server. Guest mode
             works in the meantime.
           </div>
         )}
@@ -269,10 +266,6 @@ export function LoginPage() {
             <ArrowRight size={13} aria-hidden />
           </button>
         </div>
-        <p className="mt-2 text-center text-[10px] leading-relaxed text-neutral-600">
-          Guest work saves to this browser only — sign in any time to sync.
-        </p>
-
         <div className="mt-3 flex justify-center">
           <button
             type="button"

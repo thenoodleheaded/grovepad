@@ -28,6 +28,8 @@ export const MODULE_LABELS: Record<ModuleType, string> = {
   sticky_note: 'Sticky Note',
   calendar: 'Calendar',
   timer: 'Timer',
+  timekeeper: 'Timer',
+  tracker: 'Tracker',
   rating: 'Rating',
   color_palette: 'Color Palette',
   mood_tracker: 'Mood Tracker',
@@ -120,4 +122,3 @@ export const MODULE_LABELS: Record<ModuleType, string> = {
   script_block:'Script Block', local_function:'Local Function', http_request:'HTTP Request', webhook_sender:'Webhook Sender', secret_reference:'Secret Reference', environment_config:'Environment Config',
   automation_console:'Automation Console', test_data_generator:'Test Data Generator', automation_recorder:'Automation Recorder', workflow_test_suite:'Workflow Test Suite', failure_inbox:'Failure Inbox', run_ledger:'Run Ledger',
 }
-

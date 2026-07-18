@@ -50,7 +50,7 @@ export function LinksWidget({ data, onChange }: LinksWidgetProps) {
                 placeholder="https://…"
                 aria-label="Link URL"
                 onChange={(e) => setItem(item.id, { url: e.target.value })}
-                className="gp-input--bare min-w-0 flex-1 font-mono text-[10px] text-neutral-500 outline-none placeholder:text-neutral-700"
+                className="gp-input--bare min-w-0 flex-1  text-[10px] text-neutral-500 outline-none placeholder:text-neutral-700"
               />
               {host && (
                 <a

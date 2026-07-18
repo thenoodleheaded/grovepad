@@ -4,7 +4,7 @@
 
 ## Article XIII — One backplate, three elevations
 
-A widget is exactly **one piece of glass** — the backplate — in the finalized shape of its panel arrangement, tinted with a whisper of the widget's accent. Everything else is either raised on it or cut into it. Three elevations exist; there is no fourth.
+A standalone widget is exactly **one piece of glass** — the backplate — in the finalized shape of its panel arrangement, tinted with a whisper of the widget's accent. A group is the deliberate composition exception: the group owns one shared E0 backplate and each member widget becomes an E1 island without its private E0 glass. Flat full-card content is thereby wrapped by the member's E1 surface; existing member islands step down to wells. Everything else is either raised on the active backplate or cut into it. Three elevations exist; there is no fourth.
 
 | Elevation | Name | Role | Material |
 |:---|:---|:---|:---|
@@ -216,7 +216,7 @@ XII.1 of the widget constitution.
 
 **A table is one island.** Its cells are divider-separated regions of that single surface — hairlines between them, never independent glass panes per cell or per row.
 
-**A lone full-card text control has no second island.** A widget whose entire body is one textarea (Notes, Quote, a single-field composer) sits directly on the card's own backplate. The auto-detected "field island" treatment is for a control embedded among other content, not for a control that *is* the content.
+**A lone full-card text control has no second island.** A standalone widget whose entire body is one textarea (Notes, Quote, a single-field composer) sits directly on the card's own backplate. When grouped, the widget shell itself becomes the one E1 island around that flat content; it never manufactures a nested E1 surface. The auto-detected "field island" treatment is for a control embedded among other content, not for a control that *is* the content.
 
 **Charts and other visual/graph info panels stay flat.** Bar tracks, pie discs, plot lines, and their summary readouts never carry the standard glass elevation — no gradient fill, no lift shadow, no auto-radius. A hairline divider or the chart's own deliberate paint (a grid, an axis) is not glass and stays.
 
@@ -224,4 +224,4 @@ XII.1 of the widget constitution.
 
 ## Implementation notes
 
-`WidgetPanel.tsx` is the Island component (E1 material, declared `data-island` id, reflow container). Focus mode operates on `.gp-island` elements annotated with `data-island` + `data-island-size`. Performance contract: zero `backdrop-filter`, all static paint; the hull path recomputes only during focus-mode drags, then freezes.
+`WidgetPanel.tsx` is the Island component (E1 material, declared `data-island` id, reflow container). Focus mode operates on `.gp-island` elements annotated with `data-island` + `data-island-size`. GroupPlate is a rectangular `.gp-glass.gp-backplate`; it has no SVG hull or elastic path. Performance contract: zero `backdrop-filter` and all static paint.

@@ -35,7 +35,7 @@ export function MoodTrackerWidget({ data, onChange }: MoodTrackerWidgetProps) {
         <span className="text-[12px] text-neutral-300">How’s the weather inside?</span>
         <span
           ref={loggedCountRef}
-          className="shrink-0 rounded-full border gp-hairline px-2 py-0.5 font-mono text-[10px] tabular-nums text-neutral-500"
+          className="shrink-0 rounded-full border gp-hairline px-2 py-0.5  text-[10px] tabular-nums text-neutral-500"
         >
           {loggedCount}/7 logged
         </span>

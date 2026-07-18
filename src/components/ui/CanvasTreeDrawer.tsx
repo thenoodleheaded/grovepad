@@ -48,7 +48,7 @@ export function CanvasTreeDrawer() {
         ) : (
           <button type="button" onClick={() => useWidgetStore.getState().navigateToCanvas(canvas.id)} className="min-w-0 flex-1 truncate text-left">{canvas.name}</button>
         )}
-        <span className="font-mono text-[9px] text-neutral-600">{Object.values(widgets).filter((widget) => widget.canvasId === canvas.id).length}</span>
+        <span className=" text-[9px] text-neutral-600">{Object.values(widgets).filter((widget) => widget.canvasId === canvas.id).length}</span>
         <button type="button" aria-label={`Rename ${canvas.name}`} onClick={() => setRenaming(canvas.id)} className="pointer-events-none opacity-0 group-hover/tree:opacity-100 group-hover/tree:pointer-events-auto"><Pencil size={10} /></button>
         {canvas.parentCanvasId !== null && (
           <button

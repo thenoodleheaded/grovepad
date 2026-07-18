@@ -80,6 +80,8 @@ interface AtlasItem {
  * type gives these slots domain meaning through its registry/field spec. */
 export interface AtlasWidgetData {
   label: string
+  /** The preset rendered by the consolidated Tracker widget. */
+  trackerMode: string
   mode: string
   primary: number
   secondary: number
@@ -95,6 +97,16 @@ export interface AtlasWidgetData {
   items: AtlasItem[]
   history: Array<{ t: number; v: number }>
   times: Record<string, string>
+}
+
+export type TimekeeperMode = 'countdown' | 'pomodoro' | 'stopwatch'
+
+/** One card with independent saved state for each timekeeping mode. */
+export interface TimekeeperData {
+  mode: TimekeeperMode
+  countdown: TimerData
+  pomodoro: PomodoroData
+  stopwatch: StopwatchData
 }
 
 interface AutomationCoreItem {
@@ -120,4 +132,6 @@ export interface AutomationCoreData {
   lastError: string
   items: AutomationCoreItem[]
 }
+import type { StopwatchData, TimerData } from './widgetDataCore'
+import type { PomodoroData } from './widgetDataEducation'
 

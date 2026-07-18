@@ -54,11 +54,22 @@ export interface WidgetStoreState {
   navigateToCanvas: (canvasId: string) => void
   renameCanvas: (canvasId: string, name: string) => void
   reparentCanvas: (canvasId: string, parentCanvasId: string) => void
+  /** Embed an imported board behind one Canvas card without replacing local work. */
+  importBoardAsCanvas: (
+    board: HydratedPersistedBoard,
+    title: string,
+    position: Vector2D,
+  ) => string
 
   createWidget: (title: string, position: Vector2D, type: ModuleType) => string
   /** Commit an interpreted thought as one reversible, collision-safe operation. */
   commitThoughtPlan: (plan: ThoughtPlan, origin: Vector2D, parentId?: string) => string[]
-  moveWidget: (id: string, screenDelta: Vector2D, zoom: number) => void
+  moveWidget: (
+    id: string,
+    screenDelta: Vector2D,
+    zoom: number,
+    options?: { moveSelection?: boolean },
+  ) => void
   snapWidgetToGrid: (id: string) => void
   settleWidgets: (ids: string[]) => void
   /** Spread active-canvas nodes apart without resizing them. */

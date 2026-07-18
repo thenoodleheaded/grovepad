@@ -69,7 +69,7 @@ export function AiDebugPanel() {
       data-canvas-ui
       className="gp-dialog gp-panel absolute right-4 top-28 z-10 flex w-[400px] max-w-[calc(100vw-2rem)] select-none flex-col overflow-hidden rounded-2xl shadow-xl"
     >
-      <div className="flex items-center gap-2 border-b gp-hairline px-3 py-2 font-mono text-xs text-neutral-400">
+      <div className="flex items-center gap-2 border-b gp-hairline px-3 py-2  text-xs text-neutral-400">
         <BrainCircuit size={13} className={pending > 0 ? 'text-amber-400' : 'text-emerald-400'} aria-hidden />
         <span className="font-semibold text-neutral-300">AI calls</span>
         <span className="tabular-nums">{entries.length}</span>
@@ -93,7 +93,7 @@ export function AiDebugPanel() {
         </button>
       </div>
 
-      <div className="space-y-1.5 border-b gp-hairline bg-neutral-950/30 px-3 py-2 font-mono text-[10px] text-neutral-500">
+      <div className="space-y-1.5 border-b gp-hairline bg-neutral-950/30 px-3 py-2  text-[10px] text-neutral-500">
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
           <span>Quick Add runtime</span>
           <span className="text-neutral-300">{runtime.profile.label}</span>
@@ -129,7 +129,7 @@ export function AiDebugPanel() {
             ['Deterministic', deterministic],
             ['Local model', localModel],
           ] as const).map(([label, entry]) => (
-            <div key={label} className="min-w-0 bg-neutral-950/50 px-3 py-2 font-mono text-[10px]">
+            <div key={label} className="min-w-0 bg-neutral-950/50 px-3 py-2  text-[10px]">
               <div className="flex items-center gap-1.5 text-neutral-500">
                 <span className={`h-1.5 w-1.5 rounded-full ${entry ? statusTone(entry.status) : 'bg-neutral-700'}`} />
                 <span>{label}</span>
@@ -157,7 +157,7 @@ export function AiDebugPanel() {
                 <button
                   type="button"
                   onClick={() => setExpandedId(expanded ? null : entry.id)}
-                  className="flex w-full items-center gap-2 px-3 py-1.5 text-left font-mono text-[11px] text-neutral-400 transition-colors hover:bg-neutral-800/50"
+                  className="flex w-full items-center gap-2 px-3 py-1.5 text-left  text-[11px] text-neutral-400 transition-colors hover:bg-neutral-800/50"
                 >
                   <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${statusTone(entry.status)}`} aria-hidden />
                   <span className="shrink-0 text-neutral-500">{formatClock(entry.startedAt)}</span>
@@ -170,7 +170,7 @@ export function AiDebugPanel() {
                 </button>
 
                 {expanded && (
-                  <div className="space-y-2 border-t gp-hairline bg-neutral-900/40 px-3 py-2 font-mono text-[10px]">
+                  <div className="space-y-2 border-t gp-hairline bg-neutral-900/40 px-3 py-2  text-[10px]">
                     <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-neutral-500">
                       <span>status: <span className="text-neutral-300">{entry.status}</span></span>
                       {(entry.promptTokens > 0 || entry.completionTokens > 0) && (

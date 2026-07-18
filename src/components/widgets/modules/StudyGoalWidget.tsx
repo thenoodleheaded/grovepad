@@ -40,15 +40,15 @@ export function StudyGoalWidget({ data, onChange }: StudyGoalWidgetProps) {
               style={{ transition: 'stroke-dashoffset 300ms' }}
             />
           </svg>
-          <span className="absolute inset-0 flex items-center justify-center font-mono text-[11px] font-semibold tabular-nums text-neutral-200">
+          <span className="absolute inset-0 flex items-center justify-center  text-[11px] font-semibold tabular-nums text-neutral-200">
             {percent}%
           </span>
         </div>
 
         <div className="min-w-0 flex-1">
           <div className="flex items-baseline gap-1">
-            <span className="font-mono text-2xl font-bold tabular-nums text-neutral-100">{logged}</span>
-            <span className="font-mono text-sm text-neutral-600">/ {target}h</span>
+            <span className=" text-2xl font-bold tabular-nums text-neutral-100">{logged}</span>
+            <span className=" text-sm text-neutral-600">/ {target}h</span>
           </div>
           <div className="mt-2 flex items-center gap-1.5">
             <button
@@ -80,7 +80,7 @@ export function StudyGoalWidget({ data, onChange }: StudyGoalWidgetProps) {
           value={data.targetHours}
           aria-label="Target hours"
           onChange={(e) => onChange({ ...data, targetHours: Math.max(0, Number(e.target.value) || 0) })}
-          className="w-14 bg-transparent text-right font-mono text-neutral-400 outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none"
+          className="w-14 bg-transparent text-right  text-neutral-400 outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none"
         />
       </label>
     </div>

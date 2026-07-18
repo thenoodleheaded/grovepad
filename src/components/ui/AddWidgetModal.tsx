@@ -15,7 +15,7 @@ import {
 } from '../../widgets/registry'
 import { DOMAIN_PACKS, DOMAIN_PACK_LABELS, snapToGrid } from '../../types/spatial'
 import type { DomainPack, ModuleType, Vector2D } from '../../types/spatial'
-import { ATLAS_CATALOG, ATLAS_TYPE_SET, type AtlasType } from '../../widgets/atlasCatalog'
+import { ATLAS_CATALOG, ATLAS_TYPES, ATLAS_TYPE_SET, type AtlasType } from '../../widgets/atlasCatalog'
 import { AUTOMATION_CORE_CATALOG, AUTOMATION_CORE_SET, type AutomationCoreType } from '../../widgets/automationCoreCatalog'
 
 interface AddWidgetModalProps {
@@ -56,6 +56,7 @@ function WidgetTile({
   favorited,
   onSpawn,
   onHover,
+  onUnhover,
   onToggleFavorite,
 }: {
   def: WidgetDefinition
@@ -63,6 +64,7 @@ function WidgetTile({
   favorited: boolean
   onSpawn: () => void
   onHover: () => void
+  onUnhover: () => void
   onToggleFavorite: () => void
 }) {
   const Icon = def.icon
@@ -82,15 +84,16 @@ function WidgetTile({
         data-active={active || undefined}
         onClick={onSpawn}
         onPointerEnter={onHover}
-        className="gp-picker-row relative flex min-h-[112px] w-full items-center rounded-[22px] py-3 pr-5 pl-[108px] text-left"
+        onPointerLeave={onUnhover}
+        className="gp-picker-row relative grid min-h-[104px] w-full grid-cols-[80px_minmax(0,1fr)] items-start gap-4 rounded-[22px] p-3 pr-5 text-left"
       >
         <span
-          className="gp-picker-icon absolute top-1/2 left-3 flex h-20 w-20 -translate-y-1/2 shrink-0 items-center justify-center rounded-[18px]"
+          className="gp-picker-icon relative flex h-20 w-20 shrink-0 items-center justify-center rounded-[18px]"
           style={{ color: def.accent }}
         >
-          <Icon size={38} strokeWidth={1.8} aria-hidden />
+          <Icon size={42} strokeWidth={1.8} aria-hidden />
         </span>
-        <span className="relative z-[1] flex min-w-0 flex-1 flex-col justify-between gap-1 self-stretch pr-7">
+        <span className="relative z-[1] flex min-w-0 flex-col gap-1.5 self-stretch pr-7">
           <span className="gp-picker-tile-title block truncate text-[19px] font-semibold tracking-[-0.02em] text-neutral-100">
             {def.label}
           </span>
@@ -129,7 +132,7 @@ function PacksView({ onBack }: { onBack: () => void }) {
   const hiddenPackWidgetTypes = useWidgetPickerPrefsStore((state) => state.hiddenPackWidgetTypes)
   const toggleHiddenPackWidgetType = useWidgetPickerPrefsStore((state) => state.toggleHiddenPackWidgetType)
   const [expandedPack, setExpandedPack] = useState<DomainPack | null>(null)
-  const allDefs = orderedDefinitions()
+  const allDefs = orderedDefinitions().filter((def) => isWidgetTypePublic(def.type))
   // Only show packs that actually ship widgets — toggling an empty pack
   // would be a no-op, so don't advertise it as a choice yet.
   const availablePacks = DOMAIN_PACKS.filter((pack) => allDefs.some((d) => d.pack === pack))
@@ -280,6 +283,8 @@ export function AddWidgetModal({ worldPos, onClose }: AddWidgetModalProps) {
   const [view, setView] = useState<'widgets' | 'packs'>(initialView)
   const [query, setQuery] = useState('')
   const [activeIndex, setActiveIndex] = useState(0)
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
+  const [keyboardActive, setKeyboardActive] = useState(false)
   const dialogRef = useRef<HTMLDivElement>(null)
   const searchRef = useRef<HTMLInputElement>(null)
 
@@ -305,6 +310,10 @@ export function AddWidgetModal({ worldPos, onClose }: AddWidgetModalProps) {
         def.label.toLowerCase().includes(q) ||
         def.description.toLowerCase().includes(q) ||
         CATEGORY_LABELS[def.category].toLowerCase().includes(q) ||
+        (def.type === 'tracker' && ATLAS_TYPES.some((type) => {
+          const spec=ATLAS_CATALOG[type]
+          return spec.label.toLowerCase().includes(q)||spec.aliases.some(alias=>alias.toLowerCase().includes(q))
+        })) ||
         (ATLAS_TYPE_SET.has(def.type) && ATLAS_CATALOG[def.type as AtlasType].aliases.some((alias) => alias.toLowerCase().includes(q))) ||
         (AUTOMATION_CORE_SET.has(def.type) && AUTOMATION_CORE_CATALOG[def.type as AutomationCoreType].aliases.some((alias) => alias.toLowerCase().includes(q)))
       )
@@ -359,6 +368,8 @@ export function AddWidgetModal({ worldPos, onClose }: AddWidgetModalProps) {
       const cols = columnsForViewport()
       const move = (delta: number) => {
         e.preventDefault()
+        setHoveredIndex(null)
+        setKeyboardActive(true)
         setActiveIndex((i) => {
           const next = Math.min(Math.max(0, i + delta), Math.max(0, flat.length - 1))
           return next
@@ -422,7 +433,7 @@ export function AddWidgetModal({ worldPos, onClose }: AddWidgetModalProps) {
       <div
         ref={dialogRef}
         tabIndex={-1}
-        className="relative z-10 mx-auto flex h-full w-full max-w-none flex-col px-4 outline-none sm:px-6 lg:px-8 2xl:px-10"
+        className="relative z-10 mx-auto flex h-full w-full max-w-7xl flex-col px-4 outline-none sm:px-6 lg:px-8 2xl:px-10"
       >
         {view === 'packs' ? (
           <div className="flex min-h-0 flex-1 flex-col pt-10">
@@ -471,6 +482,8 @@ export function AddWidgetModal({ worldPos, onClose }: AddWidgetModalProps) {
                 onChange={(e) => {
                   setQuery(e.target.value)
                   setActiveIndex(0)
+                  setHoveredIndex(null)
+                  setKeyboardActive(false)
                 }}
                 className="gp-picker-search-input w-full bg-transparent text-[16px] text-neutral-100 outline-none placeholder:text-neutral-600"
               />
@@ -481,6 +494,8 @@ export function AddWidgetModal({ worldPos, onClose }: AddWidgetModalProps) {
                   onClick={() => {
                     setQuery('')
                     setActiveIndex(0)
+                    setHoveredIndex(null)
+                    setKeyboardActive(false)
                     searchRef.current?.focus()
                   }}
                   className="shrink-0 text-neutral-600 transition-colors hover:text-neutral-300"
@@ -516,7 +531,7 @@ export function AddWidgetModal({ worldPos, onClose }: AddWidgetModalProps) {
                             boxShadow: `0 0 8px ${dotAccent}90`,
                           }}
                         />
-                        <h3 className="gp-picker-category-label font-mono text-[10px] uppercase tracking-[0.18em] text-neutral-500">
+                        <h3 className="gp-picker-category-label  text-[10px] uppercase tracking-[0.18em] text-neutral-500">
                           {isFavorites ? 'Favorites' : CATEGORY_LABELS[category]}
                         </h3>
                         <span
@@ -534,10 +549,17 @@ export function AddWidgetModal({ worldPos, onClose }: AddWidgetModalProps) {
                             <WidgetTile
                               key={def.type}
                               def={def}
-                              active={flatIndex === clampedActive}
+                              active={
+                                flatIndex === hoveredIndex ||
+                                (hoveredIndex === null && keyboardActive && flatIndex === clampedActive)
+                              }
                               favorited={favoriteWidgetTypes.includes(def.type)}
                               onSpawn={() => spawn(def.type)}
-                              onHover={() => setActiveIndex(flatIndex)}
+                              onHover={() => {
+                                setHoveredIndex(flatIndex)
+                                setKeyboardActive(false)
+                              }}
+                              onUnhover={() => setHoveredIndex(null)}
                               onToggleFavorite={() => toggleFavoriteWidgetType(def.type)}
                             />
                           )
@@ -552,14 +574,14 @@ export function AddWidgetModal({ worldPos, onClose }: AddWidgetModalProps) {
             {/* Foot hints */}
             <div className="gp-picker-footer flex h-11 shrink-0 items-center justify-between border-t gp-hairline text-[11px] text-neutral-600">
               <span>
-                <kbd className="rounded bg-neutral-800/80 px-1.5 py-0.5 font-mono text-[10px] text-neutral-400">↑↓←→</kbd>{' '}
+                <kbd className="rounded bg-neutral-800/80 px-1.5 py-0.5  text-[10px] text-neutral-400">↑↓←→</kbd>{' '}
                 navigate ·{' '}
-                <kbd className="rounded bg-neutral-800/80 px-1.5 py-0.5 font-mono text-[10px] text-neutral-400">↵</kbd>{' '}
+                <kbd className="rounded bg-neutral-800/80 px-1.5 py-0.5  text-[10px] text-neutral-400">↵</kbd>{' '}
                 place ·{' '}
-                <kbd className="rounded bg-neutral-800/80 px-1.5 py-0.5 font-mono text-[10px] text-neutral-400">esc</kbd>{' '}
+                <kbd className="rounded bg-neutral-800/80 px-1.5 py-0.5  text-[10px] text-neutral-400">esc</kbd>{' '}
                 close
               </span>
-              <span className="font-mono tabular-nums">
+              <span className=" tabular-nums">
                 {flat.length} {flat.length === 1 ? 'widget' : 'widgets'}
               </span>
             </div>

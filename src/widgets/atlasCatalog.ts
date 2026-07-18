@@ -97,7 +97,7 @@ const today=()=>localDayKey()
 export function defaultAtlasData(type:AtlasType):AtlasWidgetData {
   const spec=ATLAS_CATALOG[type]
   const base:AtlasWidgetData={
-    label:spec.label,mode:'standard',primary:0,secondary:0,target:100,text:'',date:today(),
+    label:spec.label,trackerMode:type,mode:'standard',primary:0,secondary:0,target:100,text:'',date:today(),
     timeStart:'09:00',timeEnd:'17:00',enabled:true,privateMode:false,actionCount:0,lastActionAt:null,
     items:[
       {id:crypto.randomUUID(),label:'First item',value:1,done:false,date:today(),status:'active',note:''},
@@ -109,3 +109,13 @@ export function defaultAtlasData(type:AtlasType):AtlasWidgetData {
 }
 
 export const ATLAS_TYPE_SET:ReadonlySet<ModuleType>=new Set(ATLAS_TYPES)
+
+export function atlasModeFor(data: Pick<AtlasWidgetData, 'trackerMode'>, fallback: AtlasType='price_book'): AtlasType {
+  return ATLAS_TYPE_SET.has(data.trackerMode as ModuleType) ? data.trackerMode as AtlasType : fallback
+}
+
+export function atlasTypeForPhrase(phrase:string):AtlasType|null {
+  const normalized=phrase.toLowerCase().replaceAll('_',' ')
+  const candidates=ATLAS_TYPES.flatMap(type=>[ATLAS_CATALOG[type].label,type.replaceAll('_',' '),...ATLAS_CATALOG[type].aliases].map(term=>({type,term:term.toLowerCase()}))).sort((a,b)=>b.term.length-a.term.length)
+  return candidates.find(candidate=>normalized.includes(candidate.term))?.type??null
+}

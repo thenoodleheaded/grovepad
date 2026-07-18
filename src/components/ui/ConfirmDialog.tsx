@@ -10,8 +10,10 @@ interface ConfirmDialogProps {
   description: string
   confirmLabel?: string
   cancelLabel?: string
+  secondaryLabel?: string
   destructive?: boolean
   onConfirm: () => void
+  onSecondary?: () => void
   onClose: () => void
 }
 
@@ -21,8 +23,10 @@ export function ConfirmDialog({
   description,
   confirmLabel = 'Confirm',
   cancelLabel = 'Cancel',
+  secondaryLabel,
   destructive = false,
   onConfirm,
+  onSecondary,
   onClose,
 }: ConfirmDialogProps) {
   const panelRef = useRef<HTMLDivElement>(null)
@@ -92,6 +96,18 @@ export function ConfirmDialog({
           >
             {cancelLabel}
           </button>
+          {secondaryLabel && onSecondary && (
+            <button
+              type="button"
+              onClick={() => {
+                onSecondary()
+                onClose()
+              }}
+              className="h-9 rounded-xl border border-emerald-400/30 bg-emerald-400/10 px-3.5 text-xs font-medium text-emerald-300 transition-[background-color,transform] hover:bg-emerald-400/15 active:scale-[0.97]"
+            >
+              {secondaryLabel}
+            </button>
+          )}
           <button
             type="button"
             onClick={() => {

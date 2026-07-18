@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { AtlasWidgetData } from '../types/spatial'
 import { resolveWidgetMention } from '../utils/thoughtInterpreter'
-import { ATLAS_CATALOG, ATLAS_TYPES } from './atlasCatalog'
+import { ATLAS_CATALOG, ATLAS_TYPES, atlasTypeForPhrase } from './atlasCatalog'
 import { commandsFor, fieldsFor } from './fields'
 import { WIDGET_REGISTRY } from './registry'
 
@@ -55,7 +55,8 @@ describe('50-widget atlas contracts', () => {
     ['braai', 'potluck_matrix'],
     ['90 in 180', 'visa_runway'],
     ['artist queue', 'commission_queue'],
-  ] as const)('discovers %s as %s without cloud inference', (phrase, type) => {
-    expect(resolveWidgetMention(phrase)).toBe(type)
+  ] as const)('discovers %s as the %s Tracker mode without cloud inference', (phrase, type) => {
+    expect(resolveWidgetMention(phrase)).toBe('tracker')
+    expect(atlasTypeForPhrase(phrase)).toBe(type)
   })
 })

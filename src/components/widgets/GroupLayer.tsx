@@ -8,7 +8,7 @@ import { GroupPlate } from './GroupPlate'
 
 const GROUP_OVERSCAN_SCREEN = 520
 
-/** World-space layer that renders visible GroupPlate bands below widgets. */
+/** World-space layer that renders visible shared group backplates below widgets. */
 export function GroupLayer() {
   const { groups, widgets, activeCanvasId } = useWidgetStore(
     useShallow((state) => ({

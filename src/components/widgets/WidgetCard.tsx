@@ -1,23 +1,23 @@
-import { memo, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react'
+import { memo, useEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react'
 import { LockKeyhole, Sparkles, Star, TriangleAlert, Unlink, UnlockKeyhole } from 'lucide-react'
 import { ErrorBoundary } from '../ErrorBoundary'
 import { useCanvasStore } from '../../store/useCanvasStore'
 import { isRecentlySpawned, useWidgetStore } from '../../store/useWidgetStore'
 import { useFocusStore } from '../../store/useFocusStore'
-import { clearLiveWidgetSizing, getLiveWidgetSizing, mergeWidgetSizing, setLiveWidgetSizing } from '../../store/liveWidgetSizing'
-import type { ModuleData, Size, Widget, WidgetGroup } from '../../types/spatial'
+import type { ModuleData } from '../../types/spatial'
 import { GRID_SIZE } from '../../types/spatial'
-import { convexHull, paddedMemberCorners } from '../../utils/groupGeometry'
+import { groupAtWorldPoint } from '../../utils/groupGeometry'
 import { linkAnchorId, resolveLinkTargetAt } from '../../utils/linkTarget'
 import { PointerDragSession } from '../../utils/pointerDrag'
-import { CARD_INSET as CONTENT_FLOOR_INSET, SUBGRID, contentFitHeight, hasSignificantVerticalOverflow, measureWidgetContentFloor, naturalContentHeight, verticalContentFloor } from '../../utils/widgetContentFloor'
-import { crossedBothScaleAxes, fullWidgetResizeBounds, type WidgetScaleState } from '../../utils/widgetScale'
+import { contentFitHeight } from '../../utils/widgetContentFloor'
 import { DEFAULT_SIZING, widgetDefinition } from '../../widgets/registry'
 import { FloatingBadges } from './FloatingBadges'
 import { FocusModeLayer } from './FocusModeLayer'
 import { PortRail } from './PortRail'
 import { dependencyStatusLabel } from '../../utils/dependencyGeometry'
 import { WidgetRenderer } from './WidgetRenderer'
+import { useContentFloor } from './useContentFloor'
+import { useWidgetResize } from './useWidgetResize'
 
 const PANELIZED_TYPES = new Set([
   'checklist',
@@ -40,71 +40,6 @@ interface LinkDragState {
   rafId: number
   clientX: number
   clientY: number
-}
-
-interface ResizeState {
-  pointerId: number
-  startX: number
-  startY: number
-  startWidth: number
-  startHeight: number
-  state: WidgetScaleState
-  committed: boolean
-  historyCaptured: boolean
-  moved: boolean
-  rafId: number
-  pending: Size | null
-  disposeWindowListeners: () => void
-}
-
-interface ResizePointerSample {
-  pointerId: number
-  clientX: number
-  clientY: number
-}
-
-const GROUP_DROP_DWELL_MS = 350
-
-interface GroupDropIntent {
-  groupId: string | null
-  since: number
-}
-
-function pointInConvexPolygon(x: number, y: number, polygon: Array<{ x: number; y: number }>): boolean {
-  if (polygon.length < 3) return false
-  let sign = 0
-  for (let index = 0; index < polygon.length; index++) {
-    const a = polygon[index]!
-    const b = polygon[(index + 1) % polygon.length]!
-    const cross = (b.x - a.x) * (y - a.y) - (b.y - a.y) * (x - a.x)
-    if (Math.abs(cross) < 0.001) continue
-    const nextSign = Math.sign(cross)
-    if (sign !== 0 && nextSign !== sign) return false
-    sign = nextSign
-  }
-  return true
-}
-
-function findDropGroup(
-  widget: Widget,
-  groups: Record<string, WidgetGroup>,
-  widgets: Record<string, Widget>,
-  widgetGroupIndex: Record<string, string>,
-): string | null {
-  const cx = widget.position.x + widget.size.width / 2
-  const cy = widget.position.y + widget.size.height / 2
-  const currentGroupId = widgetGroupIndex[widget.id]
-  for (const [gid, group] of Object.entries(groups)) {
-    if (gid === currentGroupId) continue
-    const members = group.widgetIds
-      .map((id) => widgets[id])
-      .filter((member): member is Widget => Boolean(member))
-    const hull = convexHull(paddedMemberCorners(members))
-    if (pointInConvexPolygon(cx, cy, hull)) {
-      return gid
-    }
-  }
-  return null
 }
 
 function isInteractiveTarget(target: EventTarget | null): boolean {
@@ -143,169 +78,14 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
   const [titleEditing, setTitleEditing] = useState(false)
   const dragRef = useRef<PointerDragSession | null>(null)
   const linkDragRef = useRef<LinkDragState | null>(null)
-  const groupDropRef = useRef<GroupDropIntent>({ groupId: null, since: 0 })
-  const resizeRef = useRef<ResizeState | null>(null)
   const activeDragWidgetId = useRef(widgetId)
   const articleRef = useRef<HTMLElement | null>(null)
   const contentRef = useRef<HTMLDivElement | null>(null)
   const shouldFitContent = Boolean(widget && !widget.collapsed && !widget.iconified)
   const fitContentType = widget?.type
 
-  useEffect(() => () => {
-    const resize = resizeRef.current
-    if (!resize) return
-    if (resize.rafId !== 0) cancelAnimationFrame(resize.rafId)
-    resize.disposeWindowListeners()
-    document.body.removeAttribute('data-widget-dragging')
-    document.body.removeAttribute('data-widget-resizing')
-  }, [])
-
-  // The mounted renderer declares its real floor. Unlike an outer overflow
-  // check, this reads complete input/ellipsis text and recursively composes
-  // rows, grids, and stacked panels, so visually chopped text is detectable.
-  useLayoutEffect(() => {
-    const content = contentRef.current
-    if (!content || !fitContentType || !shouldFitContent) {
-      clearLiveWidgetSizing(widgetId)
-      return
-    }
-    let raf = 0
-    let ready = false
-    // Grow-only can grow a card to fit overflow but never reclaim empty space,
-    // because a stretched .gp-widget-ui reports scrollHeight === clientHeight.
-    // A card inflated once by a transient measurement (or carried in from a
-    // prior session) would keep its bottom void forever. This one-shot fit,
-    // run on the first settle pass after mount, reclaims that void so a canvas
-    // opens with every card sized to its real content; grow-only owns it after.
-    // The load-time fit must wait for a STABLE reading: a renderer's visual
-    // (an SVG hero, a lazy panel) can measure tall for a frame before it lays
-    // out, and fitting on that transient would either miss the void or clip
-    // real content. We re-measure until the natural height repeats, then fit
-    // exactly once. A widget whose layout never settles (a live animation that
-    // reflows) simply keeps grow-only — no worse than before.
-    let initialFitDone = false
-    let lastNatural = -1
-    let fitAttempts = 0
-    let retryTimer = 0
-    const readyTimer = window.setTimeout(() => {
-      ready = true
-      measure()
-    }, 360)
-    const measure = () => {
-      if (!ready) return
-      cancelAnimationFrame(raf)
-      raf = requestAnimationFrame(() => {
-        const ui = content.querySelector<HTMLElement>('.gp-widget-ui')
-        if (!ui) return
-        const live = useWidgetStore.getState().widgets[widgetId]
-        if (!live || live.collapsed || live.iconified) return
-        const declaredSizing = widgetDefinition(live.type).sizing
-        const fallback = {
-          ...DEFAULT_SIZING,
-          ...declaredSizing,
-        }
-        const result = measureWidgetContentFloor(ui, live.size, fallback)
-        setLiveWidgetSizing(widgetId, result.sizing)
-        const autoHeight = declaredSizing?.autoHeight === true
-
-        // autoHeight already fits every pass; only fixed-height cards can
-        // strand a void. naturalContentHeight sees a compact stack's true
-        // height while a flex-1 region (an internal scroll panel) still
-        // measures full, so content-filled cards are never shrunk.
-        if (!initialFitDone && !autoHeight) {
-          const natural = naturalContentHeight(ui)
-          if (natural > 0 && natural === lastNatural) {
-            initialFitDone = true
-            const minHeight = Math.max(result.sizing.minHeight ?? 0, fallback.minHeight ?? 0)
-            const fitted = contentFitHeight(
-              natural,
-              minHeight,
-              fallback.maxHeight ?? Infinity,
-              CONTENT_FLOOR_INSET,
-              SUBGRID,
-            )
-            // Only shrink, and only when the void is real (over one grid cell),
-            // so a correctly sized card never twitches on load.
-            if (fitted + GRID_SIZE <= live.size.height) {
-              useWidgetStore.getState().resizeWidget(widgetId, {
-                width: result.growTo.width,
-                height: fitted,
-              })
-              return
-            }
-          } else {
-            lastNatural = natural
-            if (fitAttempts++ < 6) retryTimer = window.setTimeout(measure, 180)
-          }
-        }
-
-        const fittedHeight = autoHeight
-          ? contentFitHeight(
-              ui.scrollHeight,
-              declaredSizing.minHeight ?? DEFAULT_SIZING.minHeight,
-              declaredSizing.maxHeight ?? Infinity,
-            )
-          : result.growTo.height
-        if (
-          result.growTo.width > live.size.width ||
-          (autoHeight ? fittedHeight !== live.size.height : fittedHeight > live.size.height)
-        ) {
-          useWidgetStore.getState().resizeWidget(widgetId, {
-            width: result.growTo.width,
-            height: fittedHeight,
-          })
-        }
-      })
-    }
-    const resizeObserver = new ResizeObserver(measure)
-    resizeObserver.observe(content)
-    const mutationObserver = new MutationObserver(measure)
-    mutationObserver.observe(content, { childList: true, subtree: true, characterData: true })
-    content.addEventListener('input', measure, true)
-    content.addEventListener('change', measure, true)
-
-    return () => {
-      cancelAnimationFrame(raf)
-      window.clearTimeout(readyTimer)
-      window.clearTimeout(retryTimer)
-      resizeObserver.disconnect()
-      mutationObserver.disconnect()
-      content.removeEventListener('input', measure, true)
-      content.removeEventListener('change', measure, true)
-      clearLiveWidgetSizing(widgetId)
-    }
-  }, [fitContentType, shouldFitContent, widgetId])
-
-  // Lazy modules can first appear one frame after the shell. This outer probe
-  // is retained as a backstop for a renderer that has not yet declared enough
-  // information for the intrinsic floor composer.
-  useLayoutEffect(() => {
-    const content = contentRef.current
-    if (!content || !shouldFitContent) return
-    let raf = 0
-    const fitOverflow = () => {
-      const live = useWidgetStore.getState().widgets[widgetId]
-      if (!live || live.collapsed || live.iconified) return
-      const overflow = Math.ceil(content.scrollHeight - content.clientHeight)
-      if (!hasSignificantVerticalOverflow(overflow)) return
-
-      const maxHeight = widgetDefinition(live.type).sizing?.maxHeight ?? Infinity
-      const height = Math.min(
-        maxHeight,
-        verticalContentFloor(content.scrollHeight, overflow, DEFAULT_SIZING.minHeight, 0),
-      )
-      if (height > live.size.height) {
-        useWidgetStore.getState().resizeWidget(widgetId, { ...live.size, height })
-      }
-    }
-    const readyTimer = window.setTimeout(() => {
-      raf = requestAnimationFrame(fitOverflow)
-    }, 360)
-    return () => {
-      cancelAnimationFrame(raf)
-      window.clearTimeout(readyTimer)
-    }
-  }, [shouldFitContent, widgetId])
+  const { onResizePointerDown } = useWidgetResize(widgetId, widget, isFocused)
+  useContentFloor(widgetId, contentRef, fitContentType, shouldFitContent)
 
   // Trigger title editing when renamed via F2 or external action.
   useEffect(() => {
@@ -341,27 +121,14 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
       return
     }
     activeDragWidgetId.current = dragWidgetId
-    groupDropRef.current = { groupId: null, since: 0 }
     dragRef.current = new PointerDragSession(e, {
       onFirstMove: () => { if (snapshotOnMove) useWidgetStore.getState().snapshotHistory() },
       onDelta: (dx, dy) => {
         const st = useWidgetStore.getState()
         const zoom = useCanvasStore.getState().zoom
-        st.moveWidget(dragWidgetId, { x: dx, y: dy }, zoom)
-        const widget = st.widgets[dragWidgetId]
-        if (widget) {
-          const gid = findDropGroup(widget, st.groups, st.widgets, st.widgetGroupIndex)
-          const now = performance.now()
-          const intent = groupDropRef.current
-          if (gid !== intent.groupId) {
-            groupDropRef.current = { groupId: gid, since: now }
-            if (st.dragOverGroupId !== null) st.setDragOverGroupId(null)
-          } else if (gid && now - intent.since >= GROUP_DROP_DWELL_MS) {
-            if (st.dragOverGroupId !== gid) st.setDragOverGroupId(gid)
-          } else if (!gid && st.dragOverGroupId !== null) {
-            st.setDragOverGroupId(null)
-          }
-        }
+        st.moveWidget(dragWidgetId, { x: dx, y: dy }, zoom, {
+          moveSelection: !st.widgetGroupIndex[dragWidgetId],
+        })
       },
     })
   }
@@ -437,7 +204,22 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
       }
       return
     }
-    dragRef.current?.move(e)
+    const session = dragRef.current
+    session?.move(e)
+    if (session?.moved) {
+      const state = useWidgetStore.getState()
+      const dragged = state.widgets[activeDragWidgetId.current]
+      if (dragged) {
+        const { pan, zoom } = useCanvasStore.getState()
+        const dropGroupId = groupAtWorldPoint(
+          { x: (e.clientX - pan.x) / zoom, y: (e.clientY - pan.y) / zoom },
+          state.groups,
+          state.widgets,
+          { canvasId: dragged.canvasId, excludeGroupId: state.widgetGroupIndex[dragged.id] },
+        )
+        state.setDragOverGroupId(dropGroupId)
+      }
+    }
   }
 
   const onPointerUp = (e: ReactPointerEvent<HTMLElement>) => {
@@ -457,30 +239,35 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
     const draggedId = activeDragWidgetId.current
 
     if (!session.end()) {
-      groupDropRef.current = { groupId: null, since: 0 }
       useWidgetStore.getState().setDragOverGroupId(null)
       useWidgetStore.getState().selectWidget(draggedId, e.shiftKey)
     } else {
       const state = useWidgetStore.getState()
-      const intent = groupDropRef.current
       const liveWidget = state.widgets[draggedId]
-      const dropGroupId =
-        liveWidget &&
-        intent.groupId &&
-        state.dragOverGroupId === intent.groupId &&
-        performance.now() - intent.since >= GROUP_DROP_DWELL_MS &&
-        findDropGroup(liveWidget, state.groups, state.widgets, state.widgetGroupIndex) === intent.groupId
-          ? intent.groupId
-          : null
-      groupDropRef.current = { groupId: null, since: 0 }
-      const ids =
-        state.selectedIds.has(draggedId) && state.selectedIds.size > 1
-          ? [...state.selectedIds]
-          : [draggedId]
-      state.settleWidgets(ids)
-      // Drop into group if hovering over one
+      const { pan, zoom } = useCanvasStore.getState()
+      const dropGroupId = liveWidget
+        ? groupAtWorldPoint(
+            { x: (e.clientX - pan.x) / zoom, y: (e.clientY - pan.y) / zoom },
+            state.groups,
+            state.widgets,
+            { canvasId: liveWidget.canvasId, excludeGroupId: state.widgetGroupIndex[draggedId] },
+          )
+        : null
       state.setDragOverGroupId(null)
-      if (dropGroupId) state.joinGroup(dropGroupId, draggedId)
+      if (dropGroupId) {
+        // Joining keeps the cursor-selected position and never repacks or
+        // collision-shifts the group's existing members.
+        state.snapWidgetToGrid(draggedId)
+        state.joinGroup(dropGroupId, draggedId)
+      } else {
+        const ids =
+          state.widgetGroupIndex[draggedId]
+            ? [draggedId]
+            : state.selectedIds.has(draggedId) && state.selectedIds.size > 1
+            ? [...state.selectedIds]
+            : [draggedId]
+        state.settleWidgets(ids)
+      }
     }
   }
 
@@ -497,12 +284,13 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
     if (!session || session.pointerId !== e.pointerId) return
     dragRef.current = null
     const draggedId = activeDragWidgetId.current
-    groupDropRef.current = { groupId: null, since: 0 }
     const state = useWidgetStore.getState()
     state.setDragOverGroupId(null)
     if (!session.end()) return
     const ids =
-      state.selectedIds.has(draggedId) && state.selectedIds.size > 1
+      state.widgetGroupIndex[draggedId]
+        ? [draggedId]
+        : state.selectedIds.has(draggedId) && state.selectedIds.size > 1
         ? [...state.selectedIds]
         : [draggedId]
     state.settleWidgets(ids)
@@ -556,134 +344,6 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
     }
   }
 
-  // ── Resize handle ────────────────────────────────────────────────────────
-
-  const commitScaleState = (resize: ResizeState, target: WidgetScaleState) => {
-    if (resize.rafId !== 0) {
-      cancelAnimationFrame(resize.rafId)
-      resize.rafId = 0
-    }
-    resize.pending = null
-    resize.committed = true
-    if (!resize.historyCaptured) {
-      useWidgetStore.getState().snapshotHistory()
-      resize.historyCaptured = true
-    }
-    // A state change is a single terminal decision for this drag. Releasing
-    // and starting a new gesture is required before another state can change.
-    document.body.removeAttribute('data-widget-dragging')
-    useWidgetStore.getState().setWidgetScaleState(widgetId, target, true)
-  }
-
-  const onResizePointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
-    if (e.button !== 0) return
-    if (isFocused) return
-    e.preventDefault()
-    e.stopPropagation()
-    useCanvasStore.getState().cancelViewAnimation()
-    e.currentTarget.setPointerCapture(e.pointerId)
-    document.body.setAttribute(
-      'data-widget-resizing',
-      widgetDefinition(widget.type).sizing?.autoHeight ? 'width' : 'both',
-    )
-    const move = (event: PointerEvent) => onResizePointerMove(event)
-    const end = (event: PointerEvent) => onResizePointerEnd(event)
-    window.addEventListener('pointermove', move)
-    window.addEventListener('pointerup', end)
-    window.addEventListener('pointercancel', end)
-    resizeRef.current = {
-      pointerId: e.pointerId,
-      startX: e.clientX,
-      startY: e.clientY,
-      startWidth: widget.size.width,
-      startHeight: widget.size.height,
-      state: widget.collapsed ? 'pill' : widget.iconified ? 'icon' : 'full',
-      committed: false,
-      historyCaptured: false,
-      moved: false,
-      rafId: 0,
-      pending: null,
-      disposeWindowListeners: () => {
-        window.removeEventListener('pointermove', move)
-        window.removeEventListener('pointerup', end)
-        window.removeEventListener('pointercancel', end)
-      },
-    }
-  }
-
-  const onResizePointerMove = (e: ResizePointerSample) => {
-    const resize = resizeRef.current
-    if (!resize || resize.pointerId !== e.pointerId || resize.committed) return
-    if (!resize.moved) {
-      resize.moved = true
-      if (resize.state === 'full') {
-        useWidgetStore.getState().snapshotHistory()
-        resize.historyCaptured = true
-      }
-      // Suppress the size transition while the handle is held so per-frame
-      // resize updates track the pointer exactly (same trick as drags).
-      document.body.setAttribute('data-widget-dragging', 'true')
-    }
-    const zoom = useCanvasStore.getState().zoom
-    const dx = (e.clientX - resize.startX) / zoom
-    const dy = (e.clientY - resize.startY) / zoom
-
-    if (resize.state === 'pill' || resize.state === 'icon') {
-      if (crossedBothScaleAxes(dx, dy)) {
-        commitScaleState(resize, resize.state === 'pill' ? 'full' : 'pill')
-        return
-      }
-      if (resize.state === 'pill' && crossedBothScaleAxes(-dx, -dy)) {
-        commitScaleState(resize, 'icon')
-        return
-      }
-      return
-    }
-
-    const sizing = mergeWidgetSizing(widgetDefinition(widget.type).sizing, getLiveWidgetSizing(widgetId))
-    const { minWidth, minHeight, maxWidth, maxHeight } = fullWidgetResizeBounds(sizing, DEFAULT_SIZING)
-    // Content-fit widgets: height always follows the content reporter, so the
-    // handle only drives width.
-    const lockHeight = sizing?.autoHeight === true
-    const rawWidth = resize.startWidth + dx
-    const rawHeightIntent = resize.startHeight + dy
-    const rawHeight = lockHeight ? resize.startHeight : rawHeightIntent
-
-    // Collapsing requires deliberate diagonal shrink intent beyond both live
-    // minima. A single-axis shrink or any maximum-bound overscale only clamps.
-    if (crossedBothScaleAxes(minWidth - rawWidth, minHeight - rawHeightIntent)) {
-      commitScaleState(resize, 'pill')
-      return
-    }
-
-    resize.pending = {
-      width: Math.min(maxWidth, Math.max(minWidth, rawWidth)),
-      height: Math.min(maxHeight, Math.max(minHeight, rawHeight)),
-    }
-
-    if (resize.rafId === 0) {
-      resize.rafId = requestAnimationFrame(() => {
-        resize.rafId = 0
-        // Free-form while dragging — no grid stepping.
-        if (resize.pending) useWidgetStore.getState().resizeWidget(widgetId, resize.pending, false)
-      })
-    }
-  }
-
-  const onResizePointerEnd = (e: Pick<ResizePointerSample, 'pointerId'>) => {
-    const resize = resizeRef.current
-    if (!resize || resize.pointerId !== e.pointerId) return
-    resizeRef.current = null
-    if (resize.rafId !== 0) cancelAnimationFrame(resize.rafId)
-    resize.disposeWindowListeners()
-    document.body.removeAttribute('data-widget-dragging')
-    document.body.removeAttribute('data-widget-resizing')
-    if (resize.moved && !resize.committed && resize.state === 'full') {
-      if (resize.pending) useWidgetStore.getState().resizeWidget(widgetId, resize.pending)
-      useWidgetStore.getState().settleWidgets([widgetId])
-    }
-  }
-
   // ── Data + height ─────────────────────────────────────────────────────────
 
   const handleDataUpdate = (data: ModuleData) =>
@@ -732,7 +392,7 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
     // its own local coordinate space.
     <div
       data-widget-id={widgetId}
-      className="gp-widget-layout-motion absolute left-0 top-0"
+      className="gp-widget-layout-motion group/widget-shell absolute left-0 top-0"
       style={{
         transform: `translate3d(${widget.position.x}px, ${widget.position.y}px, 0)`,
         width: widget.size.width,
@@ -748,6 +408,7 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
         data-auto-height={def.sizing?.autoHeight || undefined}
         data-link-source={isLinkDragSource || undefined}
         data-panels={panelized || undefined}
+        data-grouped={groupId || undefined}
         tabIndex={isSelected || isFocused ? 0 : -1}
         inert={isFocusBackground ? true : undefined}
         aria-hidden={isFocusBackground || undefined}
@@ -782,7 +443,9 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
         onPointerCancel={onPointerCancel}
         onLostPointerCapture={onPointerCancel}
         onContextMenu={onContextMenu}
-        className={`gp-widget-card gp-card-motion gp-glass group/widget absolute inset-0 flex flex-col ${
+        className={`gp-widget-card gp-card-motion group/widget absolute inset-0 flex flex-col ${
+          groupId ? 'gp-island gp-grouped-widget' : 'gp-glass gp-backplate'
+        } ${
           isRecentlySpawned(widgetId) ? 'gp-spawn' : ''
         } ${isFlashing ? 'gp-flash' : ''} ${isBlocked ? 'opacity-60' : 'opacity-100'}`}
         style={{
@@ -817,7 +480,7 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
       <div
         inert={collapsed || iconified ? true : undefined}
         aria-hidden={collapsed || iconified || undefined}
-        className={`gp-card-chrome pointer-events-none absolute inset-x-0 -top-9 z-20 flex items-center gap-1.5 pl-3 transition-opacity duration-300 ${
+        className={`gp-card-chrome pointer-events-auto absolute inset-x-0 -top-9 z-20 flex h-9 items-start gap-1.5 pl-3 transition-opacity duration-300 ${
           capsuleHidden ? 'opacity-0' : 'opacity-100'
         }`}
       >
@@ -878,7 +541,7 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
           className={`flex items-center gap-1 transition-opacity duration-200 ${
             widget.metadata.locked || widget.metadata.favorite
               ? 'pointer-events-auto opacity-100'
-              : 'pointer-events-none opacity-0 group-hover/widget:pointer-events-auto group-hover/widget:opacity-100 focus-within:pointer-events-auto focus-within:opacity-100'
+              : 'pointer-events-none opacity-0 group-hover/widget-shell:pointer-events-auto group-hover/widget-shell:opacity-100 focus-within:pointer-events-auto focus-within:opacity-100'
           }`}
         >
           <button
@@ -968,7 +631,7 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
       {isBlocked && (
         <div aria-label={`${widget.title} is blocked by ${blockerNames || 'an unresolved dependency'}`} className="pointer-events-none absolute -bottom-2.5 left-1/2 z-20 flex max-w-[90%] -translate-x-1/2 items-center gap-1 rounded-full border border-amber-500/40 bg-neutral-950/95 px-2 py-0.5 shadow-md">
           <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-amber-400" />
-          <span className="truncate font-mono text-[9px] font-medium uppercase tracking-wide text-amber-300">
+          <span className="truncate  text-[9px] font-medium uppercase tracking-wide text-amber-300">
             {dependencyStatusLabel(widget.title, blockerNames ? blockerNames.split(', ') : [])}
           </span>
         </div>

@@ -36,7 +36,7 @@ export function MeetingNotesWidget({ data, onChange }: MeetingNotesWidgetProps) 
             value={data.date}
             aria-label="Meeting date"
             onChange={(e) => onChange({ ...data, date: e.target.value })}
-            className="bg-transparent font-mono text-[11px] text-neutral-400 outline-none [color-scheme:dark]"
+            className="bg-transparent  text-[11px] text-neutral-400 outline-none [color-scheme:dark]"
           />
         </label>
         <label className="flex min-w-0 flex-1 items-center gap-1.5 text-neutral-500">

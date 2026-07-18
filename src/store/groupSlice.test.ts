@@ -137,6 +137,30 @@ describe('widget groups', () => {
     expect(useWidgetStore.getState().groups[groupId]?.widgetIds).toEqual([a, b, c])
   })
 
+  it('settles one dragged member without moving or repacking its siblings', () => {
+    const [a, b, c] = createNotes(3)
+    useWidgetStore.getState().createGroup([a!, b!, c!], 'Free arrangement')
+    useWidgetStore.setState((state) => ({
+      widgets: {
+        ...state.widgets,
+        [a!]: { ...state.widgets[a!]!, position: { x: 20_013, y: 20_027 } },
+        [b!]: { ...state.widgets[b!]!, position: { x: 23_200, y: 20_000 } },
+        [c!]: { ...state.widgets[c!]!, position: { x: 26_400, y: 20_000 } },
+      },
+    }))
+    const beforeB = useWidgetStore.getState().widgets[b!]!.position
+    const beforeC = useWidgetStore.getState().widgets[c!]!.position
+
+    useWidgetStore.getState().selectWidget(a!, false)
+    useWidgetStore.getState().selectWidget(b!, true)
+    useWidgetStore.getState().moveWidget(a!, { x: 40, y: 0 }, 1, { moveSelection: false })
+    useWidgetStore.getState().settleWidgets([a!])
+
+    expect(useWidgetStore.getState().widgets[a!]!.position).toEqual({ x: 20_040, y: 20_040 })
+    expect(useWidgetStore.getState().widgets[b!]!.position).toEqual(beforeB)
+    expect(useWidgetStore.getState().widgets[c!]!.position).toEqual(beforeC)
+  })
+
   it('ignores missing widgets in every membership path', () => {
     const [a, b] = createNotes(2)
     const groupId = useWidgetStore.getState().createGroup([a!, b!])

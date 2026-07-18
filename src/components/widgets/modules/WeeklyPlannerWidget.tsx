@@ -37,7 +37,7 @@ export function WeeklyPlannerWidget({ data, onChange }: WeeklyPlannerWidgetProps
   return (
     <div className="flex h-full flex-col">
       <div className="flex shrink-0 items-center justify-end pb-1">
-        <span ref={doneCountRef} className="font-mono text-[10px] tabular-nums text-neutral-600">
+        <span ref={doneCountRef} className=" text-[10px] tabular-nums text-neutral-600">
           {doneCount} done this week
         </span>
       </div>

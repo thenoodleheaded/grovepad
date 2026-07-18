@@ -114,7 +114,7 @@ export function PerformanceMonitor() {
   return (
     <div
       data-canvas-ui
-      className="gp-toolbar gp-panel absolute right-4 top-16 z-10 flex select-none items-center gap-3 rounded-xl px-3 py-2 font-mono text-xs text-neutral-400 shadow-xl"
+      className="gp-toolbar gp-panel absolute right-4 top-16 z-10 flex select-none items-center gap-3 rounded-xl px-3 py-2  text-xs text-neutral-400 shadow-xl"
     >
       <Activity size={13} className={fpsTone(fps)} aria-hidden />
 

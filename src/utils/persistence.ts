@@ -30,6 +30,7 @@ import {
   serializePersistedDeviceState,
 } from './persistedDeviceState'
 import { canonicalJson } from './cloudDocuments'
+import { mergePersistedBoardWorkspaces } from './boardWorkspaceMerge'
 
 export type { PersistedBoard } from '../types/persistence'
 export { parsePersistedBoard } from './persistedBoardSchema'
@@ -264,11 +265,13 @@ export function buildBoardSnapshot(state: PersistedBoardState): PersistedBoard {
   return serializePersistedBoard(state)
 }
 
-let conflictResolver: ((choice: 'local' | 'cloud') => void) | null = null
+type CloudConflictChoice = 'local' | 'cloud' | 'merge'
+
+let conflictResolver: ((choice: CloudConflictChoice) => void) | null = null
 let activePersistenceDispose: (() => void) | null = null
 let runtimeSyncTrigger: ((force: boolean) => void) | null = null
 
-export function resolveCloudConflict(choice: 'local' | 'cloud'): void {
+export function resolveCloudConflict(choice: CloudConflictChoice): void {
   conflictResolver?.(choice)
   conflictResolver = null
   usePersistenceStatusStore.getState().setConflict(null)
@@ -294,7 +297,7 @@ export function initPersistence<
   let unsubscribeSyncPref: (() => void) | null = null
   let syncWhenActive: (() => void) | null = null
   let localWritesBlocked = futureVersionWriteLock
-  let runtimeConflictResolver: ((choice: 'local' | 'cloud') => void) | null = null
+  let runtimeConflictResolver: ((choice: CloudConflictChoice) => void) | null = null
   const view = loadPersistedView()
   if (view) canvasStore.getState().setView(view.pan, view.zoom)
   try {
@@ -421,8 +424,8 @@ export function initPersistence<
               cloud,
               cloudUpdatedAt: cloudResult.updatedAt,
             })
-            let resolveThisConflict: (choice: 'local' | 'cloud') => void = () => {}
-            const choice = await new Promise<'local' | 'cloud'>((resolve) => {
+            let resolveThisConflict: (choice: CloudConflictChoice) => void = () => {}
+            const choice = await new Promise<CloudConflictChoice>((resolve) => {
               resolveThisConflict = resolve
               runtimeConflictResolver = resolveThisConflict
               conflictResolver = resolveThisConflict
@@ -435,6 +438,20 @@ export function initPersistence<
               if (cloudResult.source === 'legacy') {
                 await pushCloudBoard(userId, cloudSnapshot)
               }
+            } else if (choice === 'merge') {
+              const current = widgetStore.getState()
+              const mergedSnapshot = mergePersistedBoardWorkspaces(cloudSnapshot, local, {
+                incomingLabel: 'Local',
+              })
+              const merged = parsePersistedBoard({
+                ...mergedSnapshot,
+                activeWorkspaceId: current.activeWorkspaceId,
+                activeCanvasId: current.activeCanvasId,
+                canvasViews: current.canvasViews,
+              })
+              if (!merged) throw new Error('Merged board failed validation')
+              widgetStore.getState().loadBoard(merged)
+              await pushCloudBoard(userId, mergedSnapshot)
             } else {
               await pushCloudBoard(userId, local)
             }

@@ -116,7 +116,7 @@ describe('structural planner building', () => {
     const plan = planStructuralRequest(
       'a physics course tree, 2 topics, 2 subtopics each. attach a timer to every subtopic, also attach a sketchpad in a group to every subtopic',
     )
-    const timers = plan!.nodes.filter((node) => node.widgetType === 'timer')
+    const timers = plan!.nodes.filter((node) => node.widgetType === 'timekeeper')
     const sketchpads = plan!.nodes.filter((node) => node.widgetType === 'sketchpad')
     expect(timers).toHaveLength(4)
     expect(sketchpads).toHaveLength(4)

@@ -118,7 +118,7 @@ export function PomodoroWidget({ data, onChange }: PomodoroWidgetProps) {
               style={{ transition: 'stroke-dashoffset 300ms linear' }}
             />
           </svg>
-          <GlassKey onClick={toggle} aria-label={isRunning?'Pause focus timer':'Start focus timer'} className={`absolute grid h-14 w-14 place-items-center rounded-full font-mono text-[11px] font-bold tabular-nums ${
+          <GlassKey onClick={toggle} aria-label={isRunning?'Pause focus timer':'Start focus timer'} className={`absolute grid h-14 w-14 place-items-center rounded-full  text-[11px] font-bold tabular-nums ${
               isRunning ? (isWork ? 'text-rose-300' : 'text-emerald-300') : 'text-neutral-200'
             }`}
           >
@@ -130,7 +130,7 @@ export function PomodoroWidget({ data, onChange }: PomodoroWidgetProps) {
           aria-label={`${data.completed} session${data.completed === 1 ? '' : 's'} done`}
         >
           {data.completed === 0 ? (
-            <span className="font-mono text-[10px] text-neutral-600">no sessions yet</span>
+            <span className=" text-[10px] text-neutral-600">no sessions yet</span>
           ) : (
             <>
               {Array.from({ length: Math.min(data.completed, 8) }).map((_, i) => (
@@ -141,7 +141,7 @@ export function PomodoroWidget({ data, onChange }: PomodoroWidgetProps) {
                 />
               ))}
               {data.completed > 8 && (
-                <span className="font-mono text-[9px] tabular-nums text-neutral-500">
+                <span className=" text-[9px] tabular-nums text-neutral-500">
                   +{data.completed - 8}
                 </span>
               )}

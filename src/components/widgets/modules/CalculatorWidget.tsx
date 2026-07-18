@@ -119,11 +119,11 @@ export function CalculatorWidget({ data, onChange }: CalculatorWidgetProps) {
           onKeyDown={(e) => {
             if (e.key === 'Enter') equals()
           }}
-          className="gp-input--bare w-full text-right font-mono text-[13px] text-neutral-400 outline-none placeholder:text-neutral-700"
+          className="gp-input--bare w-full text-right  text-[13px] text-neutral-400 outline-none placeholder:text-neutral-700"
         />
         <span
           ref={resultRef}
-          className="gp-hero w-full truncate text-right font-mono"
+          className="gp-hero w-full truncate text-right "
         >
           {data.result || '0'}
         </span>

@@ -100,7 +100,7 @@ export function CitationWidget({ data, onChange }: CitationWidgetProps) {
                 placeholder="Year"
                 aria-label="Year"
                 onChange={(e) => setSource(s.id, { year: e.target.value })}
-                className="w-12 bg-transparent text-right font-mono text-[10px] text-neutral-500 outline-none placeholder:text-neutral-700"
+                className="w-12 bg-transparent text-right  text-[10px] text-neutral-500 outline-none placeholder:text-neutral-700"
               />
             </div>
           </div>
@@ -116,7 +116,7 @@ export function CitationWidget({ data, onChange }: CitationWidgetProps) {
           <Plus size={11} aria-hidden />
           Add source
         </button>
-        <span ref={countRef} className="font-mono text-[10px] tabular-nums text-neutral-600">
+        <span ref={countRef} className=" text-[10px] tabular-nums text-neutral-600">
           {data.sources.length} source{data.sources.length === 1 ? '' : 's'}
         </span>
       </div>

@@ -1,0 +1,180 @@
+/* Design tokens, themes, text selection, cursor and pointer-capture law. Split from product.css; load order is fixed by product.css @imports. */
+
+:root {
+  /* Widget Glass constitution (docs/widget-glass-constitution.md) — concentric
+     geometry: r_child = max(r_parent − gap, 8). Nobody picks a radius by hand. */
+  --gp-r0: 22px; /* backplate */
+  --gp-p0: 12px; /* backplate padding */
+  --gp-r1: 10px; /* island = r0 − p0 */
+  --gp-p1: 12px; /* island padding */
+  --gp-r2: 8px;  /* wells, inputs, chips, keys (hard floor) */
+  --gp-duration-instant: 90ms;
+  --gp-duration-snap: 150ms;
+  --gp-ease-snap: cubic-bezier(0.2, 0.82, 0.2, 1);
+  --gp-ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
+  --gp-surface-canvas: #0d100e;
+  /* Base the workspace-tint mix starts from — dark in dark mode, light in
+     light mode. The canvas element mixes 3% of the workspace accent into it. */
+  --gp-canvas-tint-base: #0a0d0b;
+  --gp-surface-panel: oklch(15% 0.008 148 / 0.96);
+  --gp-focus: oklch(88% 0.31 136 / 0.72);
+  --gp-grid-coarse: rgb(137 165 148 / 0.075);
+  --gp-grid-fine: rgb(163 230 53 / 0.13);
+  --gp-widget-muted-text: #a3a3a3;
+}
+
+[data-theme='light'] {
+  /* A soft, warm off-white canvas — never a pure #fff sheet of paper. */
+  --gp-surface-canvas: #ecefea;
+  --gp-canvas-tint-base: #e4e7e2;
+  --gp-surface-panel: oklch(95.5% 0.004 148 / 0.97);
+  --gp-focus: oklch(48% 0.22 137 / 0.72);
+  --gp-grid-coarse: rgb(30 58 40 / 0.07);
+  --gp-grid-fine: rgb(36 126 56 / 0.12);
+  --gp-widget-muted-text: #525252;
+}
+
+/* Widget text is operational content, even when visually secondary. Keep the
+   shared muted utilities above AA contrast in both themes. */
+.gp-widget-card :where(.text-neutral-600, .text-neutral-700) {
+  color: var(--gp-widget-muted-text);
+}
+
+/* Keyboard focus remains visible on actions, while text-entry surfaces stay
+   visually still when the caret enters them. */
+:where(button, a, [tabindex]):not(input, textarea, select, [contenteditable='true']):focus-visible {
+  outline: 2px solid var(--gp-focus);
+  outline-offset: 2px;
+}
+
+:where(input, textarea, select, [contenteditable='true']):is(:focus, :focus-visible) {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+:where(
+  a[href],
+  button:not(:disabled),
+  summary,
+  select:not(:disabled),
+  input:is([type='button'], [type='submit'], [type='reset'], [type='checkbox'], [type='radio'], [type='range'], [type='color']):not(:disabled),
+  [role='button']:not([aria-disabled='true']),
+  [role='link']:not([aria-disabled='true']),
+  [role='menuitem']:not([aria-disabled='true']),
+  [role='option']:not([aria-disabled='true']),
+  [role='checkbox']:not([aria-disabled='true']),
+  [role='switch']:not([aria-disabled='true'])
+) {
+  cursor: pointer;
+}
+
+/* Icons and labels inside an action inherit one cursor from their owner. This
+   avoids pointer/default flicker while crossing SVG paths and nested spans. */
+:where(
+  a[href],
+  button:not(:disabled),
+  summary,
+  [role='button']:not([aria-disabled='true']),
+  [role='link']:not([aria-disabled='true']),
+  [role='menuitem']:not([aria-disabled='true']),
+  [role='option']:not([aria-disabled='true']),
+  [role='checkbox']:not([aria-disabled='true']),
+  [role='switch']:not([aria-disabled='true'])
+) * {
+  cursor: inherit;
+}
+
+:where(button, input, select, [role='button'], [role='link'], [role='menuitem'], [role='option']):is(
+  :disabled,
+  [aria-disabled='true']
+) {
+  cursor: default;
+}
+
+:where(
+  input:not([type='button'], [type='submit'], [type='reset'], [type='checkbox'], [type='radio'], [type='range'], [type='color']),
+  textarea,
+  [contenteditable='true']
+) {
+  cursor: text;
+}
+
+/* Pointer capture can move across many nested surfaces. Lock the active
+   gesture cursor at the document level until release so it never oscillates. */
+body[data-widget-dragging]:not([data-widget-resizing]),
+body[data-widget-dragging]:not([data-widget-resizing]) * {
+  cursor: grabbing !important;
+}
+
+body[data-widget-resizing='both'],
+body[data-widget-resizing='both'] * {
+  cursor: nwse-resize !important;
+}
+
+body[data-widget-resizing='width'],
+body[data-widget-resizing='width'] * {
+  cursor: ew-resize !important;
+}
+
+:where(.transition, .transition-all, .transition-colors, .transition-opacity, .transition-transform) {
+  transition-timing-function: var(--gp-ease-snap);
+}
+
+.transition-all {
+  transition-duration: var(--gp-duration-snap);
+}
+
+::selection {
+  color: #071008;
+  background: oklch(88% 0.31 136 / 0.86);
+}
+
+/* Permanent chrome uses layered opaque paint instead of sampling the moving
+   canvas through a backdrop filter. It reads as premium glass while keeping
+   pan/zoom off expensive live-blur compositor paths. */
+.gp-panel {
+  background:
+    linear-gradient(180deg, oklch(100% 0 0 / 0.055), transparent 42%),
+    radial-gradient(100% 90% at 0% 0%, oklch(88% 0.08 142 / 0.035), transparent 62%),
+    var(--gp-surface-panel);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow:
+    inset 0 1px 0 oklch(100% 0 0 / 0.055),
+    0 18px 48px rgb(0 0 0 / 0.28),
+    0 2px 8px rgb(0 0 0 / 0.18);
+}
+
+[data-theme='light'] .gp-panel {
+  background:
+    linear-gradient(180deg, rgb(255 255 255 / 0.5), transparent 48%),
+    radial-gradient(100% 90% at 0% 0%, oklch(48% 0.08 142 / 0.035), transparent 62%),
+    var(--gp-surface-panel);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.6),
+    0 18px 48px rgb(28 43 31 / 0.12),
+    0 2px 8px rgb(28 43 31 / 0.09);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in oklab, var(--gp-hairline-strong), transparent 15%) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--gp-hairline-strong), transparent 10%);
+  background-clip: padding-box;
+}
+
+.gp-app-boot {
+  background:
+    radial-gradient(42% 36% at 50% 46%, oklch(82% 0.2 136 / 0.08), transparent 72%),
+    var(--gp-surface-canvas);
+}

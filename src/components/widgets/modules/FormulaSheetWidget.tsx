@@ -38,7 +38,7 @@ export function FormulaSheetWidget({ data, onChange }: FormulaSheetWidgetProps) 
                 placeholder="a² + b² = c²"
                 aria-label="Expression"
                 onChange={(e) => setFormula(f.id, { expression: e.target.value })}
-                className="w-full bg-transparent font-mono text-[12px] text-neutral-200 outline-none placeholder:text-neutral-700"
+                className="w-full bg-transparent  text-[12px] text-neutral-200 outline-none placeholder:text-neutral-700"
               />
             </div>
             <button
@@ -62,7 +62,7 @@ export function FormulaSheetWidget({ data, onChange }: FormulaSheetWidgetProps) 
           <Plus size={11} aria-hidden />
           Add formula
         </button>
-        <span ref={countRef} className="font-mono text-[10px] tabular-nums text-neutral-600">
+        <span ref={countRef} className=" text-[10px] tabular-nums text-neutral-600">
           {data.formulas.length}
         </span>
       </div>

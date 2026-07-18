@@ -62,7 +62,7 @@ export function GradeCalcWidget({ data, onChange }: GradeCalcWidgetProps) {
               value={c.score}
               aria-label={`${c.name || 'Component'} score`}
               onChange={(e) => setComponent(c.id, { score: num(e.target.value) })}
-              className="w-12 bg-transparent text-right font-mono text-[11px] text-neutral-300 outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none"
+              className="w-12 bg-transparent text-right  text-[11px] text-neutral-300 outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none"
             />
             <div className="flex w-12 items-center justify-end gap-0.5">
               <input
@@ -70,7 +70,7 @@ export function GradeCalcWidget({ data, onChange }: GradeCalcWidgetProps) {
                 value={c.weight}
                 aria-label={`${c.name || 'Component'} weight`}
                 onChange={(e) => setComponent(c.id, { weight: num(e.target.value) })}
-                className="w-9 bg-transparent text-right font-mono text-[11px] text-neutral-400 outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none"
+                className="w-9 bg-transparent text-right  text-[11px] text-neutral-400 outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none"
               />
               <span className="text-[10px] text-neutral-700">%</span>
             </div>
@@ -99,7 +99,7 @@ export function GradeCalcWidget({ data, onChange }: GradeCalcWidgetProps) {
 
       <div ref={gradeRowRef} className="flex h-9 shrink-0 items-center justify-between border-t gp-hairline">
         <span className="text-[11px] font-medium uppercase tracking-wider text-neutral-600">Grade</span>
-        <span className={`font-mono text-lg font-bold tabular-nums ${gradeColor}`}>
+        <span className={` text-lg font-bold tabular-nums ${gradeColor}`}>
           {grade.toFixed(1)}%
         </span>
       </div>

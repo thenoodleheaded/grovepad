@@ -33,7 +33,7 @@ export function CodeWidget({ data, onChange }: CodeWidgetProps) {
             placeholder="lang"
             aria-label="Language"
             onChange={(e) => onChange({ ...data, language: e.target.value })}
-            className="w-14 bg-transparent text-right font-mono text-[10px] text-neutral-500 outline-none placeholder:text-neutral-700"
+            className="w-14 bg-transparent text-right  text-[10px] text-neutral-500 outline-none placeholder:text-neutral-700"
           />
           <button
             type="button"
@@ -52,7 +52,7 @@ export function CodeWidget({ data, onChange }: CodeWidgetProps) {
         aria-label="Code"
         spellCheck={false}
         onChange={(e) => onChange({ ...data, code: e.target.value })}
-        className="w-full flex-1 resize-none bg-transparent p-2.5 font-mono text-[11px] leading-[18px] text-neutral-300 outline-none placeholder:text-neutral-700"
+        className="w-full flex-1 resize-none bg-transparent p-2.5  text-[11px] leading-[18px] text-neutral-300 outline-none placeholder:text-neutral-700"
       />
     </div>
   )

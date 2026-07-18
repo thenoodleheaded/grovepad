@@ -158,7 +158,7 @@ function DependencyContextMenu({
         className="gp-menu gp-pop gp-panel fixed z-50 max-h-[calc(100dvh-16px)] w-52 origin-top-left overflow-y-auto rounded-2xl p-1.5 shadow-2xl"
         style={{ left, top }}
       >
-        <p className="px-3 py-1.5 font-mono text-[10px] uppercase tracking-widest text-amber-400">
+        <p className="px-3 py-1.5  text-[10px] uppercase tracking-widest text-amber-400">
           Dependency
         </p>
         <p className="px-3 pb-2 text-[10px] leading-4 text-neutral-500">

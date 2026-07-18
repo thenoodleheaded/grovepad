@@ -53,7 +53,7 @@ export function ContactWidget({ data, onChange }: ContactWidgetProps) {
             placeholder="email@…"
             aria-label="Email"
             onChange={(e) => onChange({ ...data, email: e.target.value })}
-            className="w-full bg-transparent font-mono text-[11px] text-neutral-400 outline-none placeholder:text-neutral-700"
+            className="w-full bg-transparent  text-[11px] text-neutral-400 outline-none placeholder:text-neutral-700"
           />
         </label>
         <label className="flex h-7 items-center gap-2 rounded-lg border gp-hairline px-2">
@@ -63,7 +63,7 @@ export function ContactWidget({ data, onChange }: ContactWidgetProps) {
             placeholder="+1 …"
             aria-label="Phone"
             onChange={(e) => onChange({ ...data, phone: e.target.value })}
-            className="w-full bg-transparent font-mono text-[11px] text-neutral-400 outline-none placeholder:text-neutral-700"
+            className="w-full bg-transparent  text-[11px] text-neutral-400 outline-none placeholder:text-neutral-700"
           />
         </label>
       </div>

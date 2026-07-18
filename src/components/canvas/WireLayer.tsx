@@ -150,7 +150,7 @@ const Wire = memo(function Wire({
             strokeWidth={1}
             vectorEffect="non-scaling-stroke"
           />
-          <text x={0} y={0.5} textAnchor="middle" dominantBaseline="central" fontSize={10} fontFamily="ui-monospace, monospace" fill={stroke}>
+          <text x={0} y={0.5} textAnchor="middle" dominantBaseline="central" fontSize={10} fontFamily="var(--font-sans)" fill={stroke}>
             {wire.valueLabel}
           </text>
         </g>
@@ -250,7 +250,7 @@ function WireInspector({
         className="gp-menu gp-pop gp-panel fixed z-50 max-h-[calc(100dvh-16px)] w-64 origin-top-left overflow-y-auto rounded-2xl p-2 shadow-2xl"
         style={{ left, top }}
       >
-        <p className="px-2 pt-1 font-mono text-[10px] uppercase tracking-widest" style={{ color: accent }}>
+        <p className="px-2 pt-1  text-[10px] uppercase tracking-widest" style={{ color: accent }}>
           {connection.kind === 'trigger' ? 'Trigger wire' : 'Value wire'}
         </p>
         <p className="flex items-center gap-1 px-2 pb-2 pt-0.5 text-[10px] leading-4 text-neutral-400">
@@ -433,7 +433,7 @@ function FieldPicker() {
           Wire into <span className="font-medium text-neutral-300">{target.title}</span>
         </p>
         {fields.length > 0 && (
-          <p className="px-3 pb-0.5 pt-1 font-mono text-[9px] uppercase tracking-widest text-neutral-600">Set a value</p>
+          <p className="px-3 pb-0.5 pt-1  text-[9px] uppercase tracking-widest text-neutral-600">Set a value</p>
         )}
         {fields.map((port) => (
           <button
@@ -451,7 +451,7 @@ function FieldPicker() {
           </button>
         ))}
         {commands.length > 0 && (
-          <p className="px-3 pb-0.5 pt-1.5 font-mono text-[9px] uppercase tracking-widest text-neutral-600">Trigger an action</p>
+          <p className="px-3 pb-0.5 pt-1.5  text-[9px] uppercase tracking-widest text-neutral-600">Trigger an action</p>
         )}
         {commands.map((port) => (
           <button

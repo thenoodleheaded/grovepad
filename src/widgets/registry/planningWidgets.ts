@@ -1,0 +1,120 @@
+import {
+  CalendarRange,
+  ClipboardList,
+  Columns3,
+  Dices,
+  GalleryHorizontalEnd,
+  Grid2x2,
+  ListChecks,
+  Scale,
+} from 'lucide-react'
+import type { WidgetDefinition } from '../contracts/registry'
+import { localDayKey } from '../../utils/localDate'
+import { C, uid } from './definitionHelpers'
+
+/** Planning widgets (checklist … meeting_notes). Extracted verbatim from registry.ts; key order preserved. */
+export const PLANNING_WIDGET_DEFINITIONS = {
+  checklist: {
+    type: 'checklist',
+    label: 'Checklist',
+    description: 'Tasks with done states — Enter adds the next',
+    icon: ListChecks,
+    category: 'planning',
+    accent: '#86efac',
+    defaultSize: { width: 280, height: C * 4 },
+    sizing: { minWidth: C * 4, autoHeight: true },
+    defaultData: () => ({ items: [{ id: uid(), label: 'New task', done: false }] }),
+  },
+  kanban: {
+    type: 'kanban',
+    label: 'Kanban',
+    description: 'Lightweight three-column board',
+    icon: Columns3,
+    category: 'planning',
+    accent: '#c4b5fd',
+    defaultSize: { width: 440, height: C * 6 },
+    defaultData: () => ({
+      columns: [
+        { id: uid(), label: 'To do', cards: [{ id: uid(), label: 'First card' }] },
+        { id: uid(), label: 'Doing', cards: [] },
+        { id: uid(), label: 'Done', cards: [] },
+      ],
+    }),
+  },
+  timeline: {
+    type: 'timeline',
+    label: 'Timeline',
+    description: 'Phases laid out across a time span',
+    icon: GalleryHorizontalEnd,
+    category: 'planning',
+    accent: '#fca5a5',
+    defaultSize: { width: 400, height: C * 3 },
+    defaultData: () => ({
+      totalUnits: 12,
+      phases: [
+        { id: uid(), label: 'Research', start: 0, span: 4 },
+        { id: uid(), label: 'Build', start: 3, span: 6 },
+        { id: uid(), label: 'Polish', start: 8, span: 4 },
+      ],
+    }),
+  },
+  pros_cons: {
+    type: 'pros_cons',
+    label: 'Pros & Cons',
+    description: 'Two-column argument sheet for weighing a decision',
+    icon: Scale,
+    category: 'planning',
+    accent: '#fbbf24',
+    defaultSize: { width: 340, height: C * 4 },
+    defaultData: () => ({
+      topic: '',
+      pros: [{ id: uid(), text: '' }],
+      cons: [{ id: uid(), text: '' }],
+    }),
+  },
+  weekly_planner: {
+    type: 'weekly_planner',
+    label: 'Week Planner',
+    description: 'Seven days, a light task slot for each',
+    icon: CalendarRange,
+    category: 'planning',
+    accent: '#93c5fd',
+    defaultSize: { width: 320, height: C * 7 },
+    defaultData: () => ({ days: [[], [], [], [], [], [], []] }),
+  },
+  priority_matrix: {
+    type: 'priority_matrix',
+    label: 'Priority Matrix',
+    description: 'Eisenhower 2×2 — do, schedule, delegate, drop',
+    icon: Grid2x2,
+    category: 'planning',
+    accent: '#fca5a5',
+    defaultSize: { width: 380, height: C * 6 },
+    defaultData: () => ({ items: [] }),
+  },
+  decision: {
+    type: 'decision',
+    label: 'Decision Picker',
+    description: "List options and let the dice pick — when you truly can't",
+    icon: Dices,
+    category: 'planning',
+    accent: '#f0abfc',
+    defaultSize: { width: 300, height: C * 5 },
+    defaultData: () => ({ question: '', options: ['', ''], pickedIndex: null }),
+  },
+  meeting_notes: {
+    type: 'meeting_notes',
+    label: 'Meeting Notes',
+    description: 'Date, attendees, notes, and action items',
+    icon: ClipboardList,
+    category: 'notes',
+    accent: '#a5b4fc',
+    defaultSize: { width: 340, height: C * 6 },
+    defaultData: () => ({
+      date: localDayKey(),
+      attendees: '',
+      notes: '',
+      actions: [],
+    }),
+  },
+} satisfies Record<string, WidgetDefinition>

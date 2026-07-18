@@ -54,7 +54,7 @@ export function GoalTrackerWidget({ data, onChange }: GoalTrackerWidgetProps) {
             />
           </svg>
           <span
-            className="absolute inset-0 flex items-center justify-center font-mono text-[9px] font-semibold tabular-nums"
+            className="absolute inset-0 flex items-center justify-center  text-[9px] font-semibold tabular-nums"
             style={{ color: 'var(--gp-widget-accent)' }}
           >
             {percent}%

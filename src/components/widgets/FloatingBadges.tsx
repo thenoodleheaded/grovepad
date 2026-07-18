@@ -65,7 +65,7 @@ function BadgePill({ badge }: { badge: WidgetBadge }) {
     case 'priority_flag':
       return (
         <span
-          className={`rounded border px-1.5 py-px font-mono text-[9px] font-bold uppercase tracking-wide ${priorityClass(badge.level)}`}
+          className={`rounded border px-1.5 py-px  text-[9px] font-bold uppercase tracking-wide ${priorityClass(badge.level)}`}
         >
           {priorityLabel(badge.level)}
         </span>
@@ -79,13 +79,13 @@ function BadgePill({ badge }: { badge: WidgetBadge }) {
               key={i}
               title={initial}
               style={{ backgroundColor: avatarColor(initial) }}
-              className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-neutral-900 font-mono text-[8px] font-bold text-white"
+              className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-neutral-900  text-[8px] font-bold text-white"
             >
               {initial.charAt(0).toUpperCase()}
             </span>
           ))}
           {badge.initials.length > 3 && (
-            <span className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-neutral-900 bg-neutral-700 font-mono text-[8px] text-neutral-400">
+            <span className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-neutral-900 bg-neutral-700  text-[8px] text-neutral-400">
               +{badge.initials.length - 3}
             </span>
           )}
@@ -97,7 +97,7 @@ function BadgePill({ badge }: { badge: WidgetBadge }) {
       const isOverdue = days < 0
       return (
         <span
-          className={`rounded px-1.5 py-px font-mono text-[9px] font-medium ${
+          className={`rounded px-1.5 py-px  text-[9px] font-medium ${
             isOverdue
               ? 'bg-red-500/15 text-red-400'
               : days <= 3

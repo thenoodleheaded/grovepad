@@ -53,7 +53,7 @@ export function NotesWidget({ data, onChange, onHeightChange }: NotesWidgetProps
       {wordCount > 0 && (
         <span
           aria-hidden
-          className="mt-1 shrink-0 select-none self-end font-mono text-[9px] text-neutral-700"
+          className="mt-1 shrink-0 select-none self-end  text-[9px] text-neutral-700"
         >
           {wordCount}w
         </span>

@@ -41,5 +41,6 @@ export const StopwatchWidget = lazy(async () => ({ default: (await import('../mo
 export const TableWidget = lazy(async () => ({ default: (await import('../modules/TableWidget')).TableWidget }))
 export const TimelineWidget = lazy(async () => ({ default: (await import('../modules/TimelineWidget')).TimelineWidget }))
 export const TimerWidget = lazy(async () => ({ default: (await import('../modules/TimerWidget')).TimerWidget }))
+export const TimekeeperWidget = lazy(async () => ({ default: (await import('../modules/TimekeeperWidget')).TimekeeperWidget }))
 export const WeeklyPlannerWidget = lazy(async () => ({ default: (await import('../modules/WeeklyPlannerWidget')).WeeklyPlannerWidget }))
 export const WorldClockWidget = lazy(async () => ({ default: (await import('../modules/WorldClockWidget')).WorldClockWidget }))

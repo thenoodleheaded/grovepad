@@ -43,7 +43,7 @@ export function CountdownWidget({ data, onChange }: CountdownWidgetProps) {
             value={data.targetDate}
             aria-label="Target date"
             onChange={(e) => onChange({ ...data, targetDate: e.target.value })}
-            className="w-full bg-transparent font-mono text-[11px] text-neutral-400 outline-none [color-scheme:dark]"
+            className="w-full bg-transparent  text-[11px] text-neutral-400 outline-none [color-scheme:dark]"
           />
         </label>
       </div>

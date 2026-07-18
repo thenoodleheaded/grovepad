@@ -11,6 +11,7 @@ import { useToastStore } from '../../store/useToastStore'
 import { buildBoardSnapshot, parsePersistedBoard, requestCloudSync } from '../../utils/persistence'
 import { buildGrovepadPackage } from '../../utils/grovepadPackage'
 import { parseImportedBoardFile } from '../../utils/boardImport'
+import { importBoardFileOntoCanvas } from '../../utils/boardCanvasImport'
 import { useBoardImportStore } from '../../store/useBoardImportStore'
 import { listRollingSnapshots, saveRollingSnapshot, writeMediaBlob, type LocalSnapshot } from '../../utils/boardDatabase'
 import { ConfirmDialog } from './ConfirmDialog'
@@ -91,7 +92,11 @@ export function AccountChip() {
     try {
       const bytes = new Uint8Array(await file.arrayBuffer())
       const { board, media } = await parseImportedBoardFile(bytes, file.name)
-      useBoardImportStore.getState().requestImport({ board, media, source: 'file-picker' })
+      if (file.name.toLowerCase().endsWith('.grovepad')) {
+        await importBoardFileOntoCanvas({ board, media, filename: file.name })
+      } else {
+        useBoardImportStore.getState().requestImport({ board, media })
+      }
       setOpen(false)
     } catch {
       useToastStore.getState().addToast('That file is not a valid Grovepad backup')
@@ -279,11 +284,7 @@ export function AccountChip() {
       <ConfirmDialog
         open={Boolean(pendingBoardImport)}
         title="Replace the current board?"
-        description={
-          pendingBoardImport?.source === 'native-open'
-            ? 'Opening this .grovepad file will replace every workspace, canvas, widget, group, and connection currently open. A new local snapshot will be kept automatically after the change.'
-            : 'The imported backup will replace every workspace, canvas, widget, group, and connection currently open. A new local snapshot will be kept automatically after the change.'
-        }
+        description="The imported JSON backup will replace every workspace, canvas, widget, group, and connection currently open. A new local snapshot will be kept automatically after the change. .grovepad packages are added as Canvas cards instead."
         confirmLabel="Restore backup"
         destructive
         onClose={() => useBoardImportStore.getState().clear()}

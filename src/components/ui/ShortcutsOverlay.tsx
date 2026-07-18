@@ -86,7 +86,7 @@ const SECTIONS: ShortcutSection[] = [
 
 function Key({ children }: { children: string }) {
   return (
-    <kbd className="rounded border border-neutral-700/80 bg-neutral-800/80 px-1.5 py-0.5 font-mono text-[10px] text-neutral-300 whitespace-nowrap">
+    <kbd className="rounded border border-neutral-700/80 bg-neutral-800/80 px-1.5 py-0.5  text-[10px] text-neutral-300 whitespace-nowrap">
       {children}
     </kbd>
   )
@@ -153,7 +153,7 @@ export function ShortcutsOverlay() {
         <div className="grid max-h-[70vh] grid-cols-1 gap-x-8 gap-y-5 overflow-y-auto p-5 sm:grid-cols-2">
           {SECTIONS.map((section) => (
             <section key={section.title}>
-              <h3 className="pb-2 font-mono text-[10px] uppercase tracking-wider text-neutral-600">
+              <h3 className="pb-2  text-[10px] uppercase tracking-wider text-neutral-600">
                 {section.title}
               </h3>
               <ul className="space-y-1.5">

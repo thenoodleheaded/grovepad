@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import type { ModuleType } from '../../../types/moduleTypes'
 import type { AtlasWidgetData, AutomationCoreData } from '../../../types/widgetDataExpansion'
-import { ATLAS_TYPES, type AtlasType } from '../../../widgets/atlasCatalog'
+import { ATLAS_TYPES, atlasModeFor, type AtlasType } from '../../../widgets/atlasCatalog'
 import { AUTOMATION_CORE_TYPES, type AutomationCoreType } from '../../../widgets/automationCoreCatalog'
 import type { WidgetContentRenderer, WidgetRendererFamily } from './contracts'
 import { AtlasWidget, AutomationCoreWidget, ExpansionWidget } from './lazyCatalogWidgets'
@@ -31,9 +31,15 @@ function renderersForTypes<T extends ModuleType>(
 
 export const atlasWidgetRendererFamily: WidgetRendererFamily = {
   id: 'atlas',
-  renderers: renderersForTypes(ATLAS_TYPES, (type: AtlasType, { widget, onUpdate }) => (
-    <AtlasWidget type={type} data={widget.data as AtlasWidgetData} onChange={onUpdate} />
-  )),
+  renderers: {
+    ...renderersForTypes(ATLAS_TYPES, (type: AtlasType, { widget, onUpdate }) => (
+      <AtlasWidget type={type} data={widget.data as AtlasWidgetData} onChange={onUpdate} />
+    )),
+    tracker: ({ widget, onUpdate }) => {
+      const data = widget.data as AtlasWidgetData
+      return <AtlasWidget type={atlasModeFor(data)} data={data} onChange={onUpdate} showModePicker />
+    },
+  },
 }
 
 export const automationWidgetRendererFamily: WidgetRendererFamily = {

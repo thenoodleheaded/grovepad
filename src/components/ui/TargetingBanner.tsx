@@ -34,7 +34,7 @@ export function TargetingBanner() {
           <Cable size={13} className="text-amber-400" aria-hidden />
           <span>
             Click the widget that depends on this prerequisite ·{' '}
-            <kbd className="rounded border border-neutral-600 bg-neutral-800 px-1 font-mono text-[10px]">
+            <kbd className="rounded border border-neutral-600 bg-neutral-800 px-1  text-[10px]">
               Esc
             </kbd>{' '}
             to cancel
@@ -45,7 +45,7 @@ export function TargetingBanner() {
           <Network size={13} className="text-indigo-400" aria-hidden />
           <span>
             Click a widget to set it as parent ·{' '}
-            <kbd className="rounded border border-neutral-600 bg-neutral-800 px-1 font-mono text-[10px]">
+            <kbd className="rounded border border-neutral-600 bg-neutral-800 px-1  text-[10px]">
               Esc
             </kbd>{' '}
             to cancel
@@ -56,7 +56,7 @@ export function TargetingBanner() {
           <Link2 size={13} className="text-indigo-400" aria-hidden />
           <span>
             Linking — release on a widget to connect ·{' '}
-            <kbd className="rounded border border-neutral-600 bg-neutral-800 px-1 font-mono text-[10px]">
+            <kbd className="rounded border border-neutral-600 bg-neutral-800 px-1  text-[10px]">
               Esc
             </kbd>{' '}
             to cancel

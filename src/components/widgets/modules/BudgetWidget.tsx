@@ -45,7 +45,7 @@ function BudgetAmountInput({ id, label, value, onCommit }: { id: string; label: 
           if (event.key === 'Enter') { event.preventDefault(); commit() }
           if (event.key === 'Escape') { setDraft(String(value)); setError(null) }
         }}
-        className={`gp-input gp-input--compact w-[104px] text-right font-mono text-xs outline-none tabular-nums ${error ? 'border-red-400/70 text-red-200' : 'text-neutral-300'}`}
+        className={`gp-input gp-input--compact w-[104px] text-right  text-xs outline-none tabular-nums ${error ? 'border-red-400/70 text-red-200' : 'text-neutral-300'}`}
       />
       {error && <span id={`budget-error-${id}`} role="alert" className="absolute right-0 top-full z-10 mt-1 w-52 rounded bg-neutral-950 px-2 py-1 text-[11px] text-red-300 shadow-lg">{error}</span>}
     </div>
@@ -98,7 +98,7 @@ export function BudgetWidget({ data, onChange }: BudgetWidgetProps) {
               />
 
               <div className="flex shrink-0 items-center gap-0.5">
-                <span className="font-mono text-[11px] text-neutral-600 select-none">
+                <span className=" text-[11px] text-neutral-600 select-none">
                   {data.currency}
                 </span>
                 <BudgetAmountInput id={item.id} label={item.label} value={item.amount} onCommit={(amount) => setAmount(item.id, amount)} />
@@ -136,7 +136,7 @@ export function BudgetWidget({ data, onChange }: BudgetWidgetProps) {
           Total
         </span>
         <span
-          className={`font-mono text-sm font-semibold tabular-nums ${
+          className={` text-sm font-semibold tabular-nums ${
             total < 0 ? 'text-red-400' : 'text-teal-400'
           }`}
         >

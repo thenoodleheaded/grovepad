@@ -64,14 +64,14 @@ export function MetricsWidget({ data, onChange }: MetricsWidgetProps) {
                 value={tile.value}
                 aria-label="Metric value"
                 onChange={(e) => setTile(tile.id, { value: e.target.value })}
-                className="w-full min-w-0 bg-transparent font-mono text-lg font-bold tabular-nums text-neutral-100 outline-none"
+                className="w-full min-w-0 bg-transparent  text-lg font-bold tabular-nums text-neutral-100 outline-none"
               />
               <input
                 value={tile.unit}
                 placeholder=""
                 aria-label="Unit"
                 onChange={(e) => setTile(tile.id, { unit: e.target.value })}
-                className="w-7 shrink-0 bg-transparent font-mono text-[10px] text-neutral-500 outline-none"
+                className="w-7 shrink-0 bg-transparent  text-[10px] text-neutral-500 outline-none"
               />
             </div>
             <div className="flex items-center justify-between gap-1">

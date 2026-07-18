@@ -1,0 +1,233 @@
+/* Tactile controls: buttons, checkboxes, progress fills, resize affordance, text editing. Split from product.css; load order is fixed by product.css @imports. */
+
+/* Tactile buttons: squish on press, settle on release. :where() keeps
+   specificity at zero so widget-specific utilities still win styling —
+   only the scale physics layer on top. */
+.gp-widget-content :where(button:not(:disabled)) {
+  transition-property: color, background-color, border-color, opacity, box-shadow, scale;
+  transition-duration: var(--gp-duration-snap);
+  transition-timing-function: var(--gp-ease-snap);
+}
+
+.gp-widget-content :where(button:not(:disabled)):active {
+  scale: 0.94;
+}
+
+/* Custom checkboxes: grow on hover, pop the check in, glow in the card's
+   accent when checked. Plain selectors (not :where) so the accent state
+   outranks each widget's hardcoded emerald utilities. */
+@keyframes gp-check-pop {
+  0% {
+    scale: 0.3;
+  }
+  55% {
+    scale: 1.35;
+  }
+  100% {
+    scale: 1;
+  }
+}
+
+/* Widgets whose role="checkbox" button is a transparent wrapper around an
+   inner glyph (e.g. Habit's day dots) opt out with .gp-check-free and style
+   the inner element themselves. */
+.gp-widget-content [role='checkbox']:not(.gp-check-free) {
+  transition:
+    border-color var(--gp-duration-snap) var(--gp-ease-snap),
+    background-color var(--gp-duration-snap) var(--gp-ease-snap),
+    box-shadow var(--gp-duration-snap) var(--gp-ease-snap),
+    scale var(--gp-duration-snap) var(--gp-ease-spring);
+}
+
+/* Grow-on-hover only for compact square/round checks — full-width row
+   toggles (class contains w-full) must not scale out of their rows. */
+@media (hover: hover) {
+  .gp-widget-content [role='checkbox']:not(.gp-check-free):not([class*='w-full']):hover {
+    scale: 1.12;
+  }
+}
+
+.gp-widget-content [role='checkbox']:not(.gp-check-free)[aria-checked='true'] {
+  border-color: color-mix(in oklab, var(--gp-widget-accent), transparent 25%);
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 80%);
+  box-shadow: 0 0 10px color-mix(in oklab, var(--gp-widget-accent), transparent 72%);
+}
+
+.gp-widget-content [role='checkbox']:not(.gp-check-free)[aria-checked='true'] svg {
+  animation: gp-check-pop 260ms var(--gp-ease-spring);
+}
+
+.gp-widget-content [role='checkbox']:not(.gp-check-free)[aria-checked='true'] svg * {
+  color: var(--gp-widget-accent);
+}
+
+[data-theme='light'] .gp-widget-content [role='checkbox']:not(.gp-check-free)[aria-checked='true'] {
+  filter: saturate(1.1);
+}
+
+/* Progress fills (the shared bg-emerald bar idiom) become a glowing
+   gradient in the card's own hue. */
+.gp-widget-content :is([class*='bg-emerald-500/7'], [class*='bg-emerald-400/7']) {
+  background: linear-gradient(
+    90deg,
+    color-mix(in oklab, var(--gp-widget-accent), white 30%),
+    var(--gp-widget-accent)
+  );
+  box-shadow: 0 0 12px color-mix(in oklab, var(--gp-widget-accent), transparent 62%);
+}
+
+[data-theme='light'] .gp-widget-content :is([class*='bg-emerald-500/7'], [class*='bg-emerald-400/7']) {
+  filter: saturate(1.05);
+}
+
+/* Resize affordance: a rounded corner bracket that mirrors the card's own
+   corner, brightens with the card, and lights up in the accent on grab. */
+.gp-resize-handle {
+  border-right: 2px solid color-mix(in oklab, var(--gp-relation-outline), transparent 30%);
+  border-bottom: 2px solid color-mix(in oklab, var(--gp-relation-outline), transparent 30%);
+  border-bottom-right-radius: 11px;
+  opacity: 0;
+  transition:
+    opacity var(--gp-duration-snap) var(--gp-ease-snap),
+    border-color var(--gp-duration-snap) var(--gp-ease-snap),
+    scale var(--gp-duration-snap) var(--gp-ease-spring);
+}
+
+.gp-widget-card:hover .gp-resize-handle {
+  opacity: 0.85;
+}
+
+.gp-widget-card[data-selected='true'] .gp-resize-handle {
+  opacity: 0.85;
+}
+
+.gp-resize-handle:hover,
+.gp-resize-handle:active {
+  border-color: var(--gp-widget-accent);
+  opacity: 1;
+  scale: 1.18;
+}
+
+/* Text editing inside a card belongs to that card's hue: caret, focus ring,
+   selection, and native form controls (range, radio, native checkbox). */
+.gp-widget-content {
+  accent-color: var(--gp-widget-accent);
+}
+
+.gp-widget-content :is(input, textarea, select) {
+  caret-color: var(--gp-widget-accent);
+}
+
+.gp-widget-content ::selection {
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 22%);
+  color: oklch(12% 0 0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gp-widget-content :where(button:not(:disabled)),
+  .gp-widget-content [role='checkbox'] {
+    transition: none;
+  }
+  .gp-widget-content [role='checkbox'][aria-checked='true'] svg {
+    animation: none;
+  }
+}
+
+/* -------------------------------------------------------------------------
+ * The Widget Glass — one backplate, three elevations
+ * (docs/widget-glass-constitution.md, Articles XIII–XV)
+ *
+ * E0 backplate: one gp-glass/gp-backplate surface. An ordinary widget owns
+ *               it; grouped widgets share the GroupPlate's single backplate.
+ * E1 island:    a content group raised on the backplate — lighter fill, 1px
+ *               top catch-light, soft contact shadow, NO full border.
+ * E−1 well:     a surface cut into an island — inverted light. Any island
+ *               selector nested inside another island match renders as a
+ *               well automatically; a third level flattens away entirely.
+ * Islands are never shorter than 32px (0.8 cells); seams between them are 8px.
+ * ------------------------------------------------------------------------- */
+
+.gp-backplate {
+  isolation: isolate;
+  border: 1px solid rgb(255 255 255 / .085);
+  border-radius: var(--gp-r0);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / .08),
+    0 30px 70px rgb(0 0 0 / .5),
+    0 4px 14px rgb(0 0 0 / .3);
+}
+
+.gp-backplate.gp-glass {
+  background:
+    radial-gradient(120% 85% at 12% -4%, color-mix(in oklab, var(--gp-widget-accent, #84cc16), transparent 91%), transparent 56%),
+    radial-gradient(130% 100% at 14% 0%, rgb(255 255 255 / .10), transparent 52%),
+    linear-gradient(to bottom, rgb(255 255 255 / .06), transparent 9%),
+    radial-gradient(95% 65% at 90% 104%, color-mix(in oklab, var(--gp-widget-accent, #84cc16), transparent 94%), transparent 62%),
+    linear-gradient(160deg, oklch(23.5% .006 250 / .97), oklch(11% .005 250 / .985));
+}
+
+.gp-group-backplate {
+  transition: transform var(--gp-motion-layout) var(--gp-ease-layout);
+}
+
+.gp-group-backplate-visual {
+  transition: box-shadow var(--gp-duration-snap) var(--gp-ease-snap);
+}
+
+.gp-group-backplate[data-drop-target] > .gp-group-backplate-visual {
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / .10),
+    0 0 0 2px color-mix(in oklab, var(--gp-widget-accent), transparent 54%),
+    0 24px 58px rgb(0 0 0 / .42),
+    0 0 30px color-mix(in oklab, var(--gp-widget-accent), transparent 76%);
+}
+
+[data-theme='light'] .gp-backplate {
+  border-color: rgb(255 255 255 / .10);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / .14),
+    0 24px 58px rgb(26 36 29 / .22),
+    0 4px 14px rgb(26 36 29 / .12);
+}
+
+[data-theme='light'] .gp-backplate.gp-glass {
+  background:
+    radial-gradient(120% 85% at 12% -4%, color-mix(in oklab, var(--gp-widget-accent, #84cc16), transparent 88%), transparent 56%),
+    radial-gradient(130% 100% at 14% 0%, rgb(255 255 255 / .12), transparent 52%),
+    linear-gradient(to bottom, rgb(255 255 255 / .07), transparent 9%),
+    radial-gradient(95% 65% at 90% 104%, color-mix(in oklab, var(--gp-widget-accent, #84cc16), transparent 92%), transparent 62%),
+    linear-gradient(160deg, oklch(37% .006 250 / .985), oklch(29% .006 250 / .99));
+}
+
+.gp-subpanel,
+.gp-subdivision,
+.gp-widget-content :is(div, section, article, li, fieldset, label).border:is(.rounded-lg, .rounded-xl, .rounded-2xl),
+.gp-widget-content :is(div, section, article, li, fieldset, label).gp-hairline:is(.rounded-lg, .rounded-xl, .rounded-2xl) {
+  position: relative;
+  min-height: 32px; /* 0.8 grid cells — hard island floor */
+  max-width: 100%;
+  max-height: 100%;
+  overflow: auto;
+  border: 0;
+  border-radius: var(--gp-r1);
+  background-image: linear-gradient(180deg, oklch(100% 0 0 / 0.10) 0%, oklch(100% 0 0 / 0.05) 100%);
+  box-shadow:
+    inset 0 1px 0 oklch(100% 0 0 / 0.14),
+    inset 0 0 0 1px oklch(100% 0 0 / 0.07),
+    0 2px 4px rgb(0 0 0 / 0.34),
+    0 10px 22px rgb(0 0 0 / 0.22);
+}
+
+[data-theme='light'] :is(
+  .gp-subpanel,
+  .gp-subdivision,
+  .gp-widget-content :is(div, section, article, li, fieldset, label).border:is(.rounded-lg, .rounded-xl, .rounded-2xl),
+  .gp-widget-content :is(div, section, article, li, fieldset, label).gp-hairline:is(.rounded-lg, .rounded-xl, .rounded-2xl)
+) {
+  background-image: linear-gradient(180deg, oklch(100% 0 0 / 0.11) 0%, oklch(100% 0 0 / 0.06) 100%);
+  box-shadow:
+    inset 0 1px 0 oklch(100% 0 0 / 0.15),
+    inset 0 0 0 1px oklch(100% 0 0 / 0.08),
+    0 2px 4px rgb(0 0 0 / 0.32),
+    0 10px 22px rgb(0 0 0 / 0.20);
+}

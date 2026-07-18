@@ -144,7 +144,7 @@ export function TableWidget({ data, onChange }: TableWidgetProps) {
             <Minus size={10} /> Col
           </button>
         )}
-        <span className="ml-auto font-mono text-[9px] text-emerald-200/70">{summarizeNumericColumn(data.rows, selected.col) ?? `R${selected.row+1} C${selected.col+1} · no numeric data`}</span>
+        <span className="ml-auto  text-[9px] text-emerald-200/70">{summarizeNumericColumn(data.rows, selected.col) ?? `R${selected.row+1} C${selected.col+1} · no numeric data`}</span>
       </div>
     </div>
   )

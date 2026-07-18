@@ -93,7 +93,7 @@ export function KanbanWidget({ data, onChange }: KanbanWidgetProps) {
             />
             <span
               ref={columnIndex === data.columns.length - 1 ? doneCountRef : undefined}
-              className="flex h-4 min-w-4 shrink-0 items-center justify-center rounded-full px-1 font-mono text-[9px] tabular-nums"
+              className="flex h-4 min-w-4 shrink-0 items-center justify-center rounded-full px-1  text-[9px] tabular-nums"
               style={{ color: hue, background: `${hue}1a` }}
             >
               {column.cards.length}

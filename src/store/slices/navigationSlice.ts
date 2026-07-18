@@ -1,10 +1,13 @@
 import type { Connection } from '../../types/circuit'
+import type { HydratedPersistedBoard } from '../../types/persistence'
 import type { CanvasMeta, CanvasNodeData, Relation, Widget, WidgetGroup } from '../../types/spatial'
 import { useCanvasStore } from '../useCanvasStore'
 import { useToastStore } from '../useToastStore'
+import { planBoardCanvasEmbedding } from '../../utils/boardCanvasEmbedding'
 import { buildGroupIndex, computeBlockedWidgetIds } from '../widgetGraph'
+import { settleWidgetLayout } from '../widgetSettling'
 import type { WidgetStoreSlice, WidgetStoreSliceContext } from '../widgetStoreSliceContext'
-export function createNavigationSlice({ set, get, pushHistory, navigateToCanvas }: WidgetStoreSliceContext): WidgetStoreSlice {
+export function createNavigationSlice({ set, get, pushHistory, navigateToCanvas, markSpawned }: WidgetStoreSliceContext): WidgetStoreSlice {
   return {
   createWorkspace: (name) => {
     const trimmed = name.trim() || 'Untitled'
@@ -182,6 +185,35 @@ export function createNavigationSlice({ set, get, pushHistory, navigateToCanvas 
     }
     pushHistory()
     set((current) => ({ canvases: { ...current.canvases, [canvasId]: { ...canvas, parentCanvasId } } }))
+  },
+
+  importBoardAsCanvas: (board: HydratedPersistedBoard, title, position) => {
+    const state = get()
+    if (!state.canvases[state.activeCanvasId] || !state.workspaces[state.activeWorkspaceId]) return ''
+    const embedding = planBoardCanvasEmbedding(state, board, { title, position })
+    pushHistory('board-canvas-import')
+    set((current) => {
+      const widgets = settleWidgetLayout(
+        { ...current.widgets, ...embedding.widgets },
+        [embedding.rootWidgetId],
+      )
+      const relations = { ...current.relations, ...embedding.relations }
+      const groups = { ...current.groups, ...embedding.groups }
+      return {
+        canvases: { ...current.canvases, ...embedding.canvases },
+        widgets,
+        widgetStructureVersion: current.widgetStructureVersion + 1,
+        relations,
+        connections: { ...current.connections, ...embedding.connections },
+        groups,
+        widgetGroupIndex: buildGroupIndex(groups),
+        blockedWidgetIds: computeBlockedWidgetIds(relations),
+        activePacks: [...new Set([...current.activePacks, ...board.activePacks])],
+        selectedIds: new Set([embedding.rootWidgetId]),
+      }
+    })
+    markSpawned(embedding.rootWidgetId)
+    return embedding.rootWidgetId
   },
   }
 }

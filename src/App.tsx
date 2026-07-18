@@ -19,7 +19,7 @@ function AppBootScreen() {
           <span />
           <span />
         </div>
-        <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-neutral-600">
+        <p className=" text-[10px] uppercase tracking-[0.22em] text-neutral-600">
           Preparing your canvas
         </p>
       </div>

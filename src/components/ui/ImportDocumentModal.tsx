@@ -1179,7 +1179,7 @@ Return ONLY a JSON object that adheres strictly to the response schema for this 
                   >
                     <FileText size={11} className="shrink-0 text-neutral-500" aria-hidden />
                     <span className="min-w-0 flex-1 truncate text-[11px] text-neutral-300">{file.name}</span>
-                    <span className="shrink-0 font-mono text-[9px] text-neutral-600">{formatSize(file.size)}</span>
+                    <span className="shrink-0  text-[9px] text-neutral-600">{formatSize(file.size)}</span>
                     <button
                       type="button"
                       aria-label={`Remove ${file.name}`}

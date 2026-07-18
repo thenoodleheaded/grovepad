@@ -30,6 +30,8 @@ export type ModuleType =
   | 'sticky_note'
   | 'calendar'
   | 'timer'
+  | 'timekeeper'
+  | 'tracker'
   | 'rating'
   | 'color_palette'
   | 'mood_tracker'
@@ -154,6 +156,8 @@ export const MODULE_TYPES: readonly ModuleType[] = [
   'sticky_note',
   'calendar',
   'timer',
+  'timekeeper',
+  'tracker',
   'rating',
   'color_palette',
   'mood_tracker',
@@ -223,4 +227,3 @@ export const MODULE_TYPES: readonly ModuleType[] = [
   'script_block','local_function','http_request','webhook_sender','secret_reference','environment_config',
   'automation_console','test_data_generator','automation_recorder','workflow_test_suite','failure_inbox','run_ledger',
 ]
-

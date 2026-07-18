@@ -1,9 +1,13 @@
 /// <reference types="node" />
 
-import { readFileSync } from 'node:fs'
+import { readFileSync, readdirSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 
-const css = readFileSync(new URL('./product.css', import.meta.url), 'utf8')
+const cssDir = new URL('./product/', import.meta.url)
+const css = readdirSync(cssDir)
+  .sort()
+  .map((file) => readFileSync(new URL(file, cssDir), 'utf8'))
+  .join('\n')
 
 describe('shared text-field surface contract', () => {
   it('enforces readable widget microcopy contrast in both themes', () => {

@@ -64,7 +64,7 @@ export function ColorPaletteWidget({ data, onChange }: ColorPaletteWidgetProps) 
               type="button"
               aria-label={`Copy ${color}`}
               onClick={() => copyColor(index, color)}
-              className="flex items-center gap-0.5 font-mono text-[9px] text-neutral-500 transition-colors hover:text-neutral-200"
+              className="flex items-center gap-0.5  text-[9px] text-neutral-500 transition-colors hover:text-neutral-200"
             >
               {copiedIndex === index ? (
                 <Check size={8} className="text-emerald-400" aria-hidden />

@@ -383,7 +383,7 @@ function LineContextMenu({
         onContextMenu={(e) => { e.preventDefault(); onClose() }} />
       <div className="gp-menu gp-pop gp-panel fixed z-50 max-h-[calc(100dvh-16px)] w-52 origin-top-left overflow-y-auto rounded-2xl p-1.5 shadow-2xl"
         style={{ left, top }}>
-        <p className="px-3 py-1.5 font-mono text-[10px] uppercase tracking-widest text-neutral-500">
+        <p className="px-3 py-1.5  text-[10px] uppercase tracking-widest text-neutral-500">
           {RELATION_LABELS[relation.type]} link
         </p>
         {resolvable && (

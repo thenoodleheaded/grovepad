@@ -113,7 +113,7 @@ function WorkspaceDropdown() {
               className="gp-menu gp-pop gp-panel fixed z-[130] max-h-[min(70vh,420px)] w-64 origin-top-left overflow-y-auto rounded-2xl p-1.5 shadow-2xl"
               style={{ left: anchor.x, top: anchor.y }}
             >
-              <p className="px-3 pb-1 pt-1 font-mono text-[10px] uppercase tracking-widest text-neutral-500">
+              <p className="px-3 pb-1 pt-1  text-[10px] uppercase tracking-widest text-neutral-500">
                 Workspaces
               </p>
               {list.map((ws) => {
@@ -170,7 +170,7 @@ function WorkspaceDropdown() {
                         {isActive ? <Check size={12} aria-hidden /> : <span className="block h-2 w-2 rounded-full" style={{ background: ws.tint ?? '#64748b' }} />}
                       </span>
                       <span className="truncate">{ws.name}</span>
-                      <span className="ml-auto shrink-0 font-mono text-[9px] text-neutral-600">{widgetCount}</span>
+                      <span className="ml-auto shrink-0  text-[9px] text-neutral-600">{widgetCount}</span>
                     </button>
                     <button
                       type="button"

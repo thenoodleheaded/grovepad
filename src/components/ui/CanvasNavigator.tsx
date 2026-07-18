@@ -1,5 +1,5 @@
 import { useMemo, useState, type PointerEvent as ReactPointerEvent } from 'react'
-import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Map, X } from 'lucide-react'
+import { Map, X } from 'lucide-react'
 import { useShallow } from 'zustand/react/shallow'
 import { useCanvasStore } from '../../store/useCanvasStore'
 import { useWidgetStore } from '../../store/useWidgetStore'
@@ -73,39 +73,8 @@ export function CanvasNavigator() {
     window.addEventListener('pointerup', onUp, { once: true })
   }
 
-  const offscreen = active.filter((widget) => {
-    const cx = widget.position.x + widget.size.width / 2
-    const cy = widget.position.y + widget.size.height / 2
-    return cx < viewportWorld.x || cx > viewportWorld.x + viewportWorld.width || cy < viewportWorld.y || cy > viewportWorld.y + viewportWorld.height
-  })
-  const directions = [
-    { key: 'left', icon: ChevronLeft, items: offscreen.filter((w) => w.position.x + w.size.width < viewportWorld.x), className: 'left-3 top-1/2 -translate-y-1/2' },
-    { key: 'right', icon: ChevronRight, items: offscreen.filter((w) => w.position.x > viewportWorld.x + viewportWorld.width), className: 'right-3 top-1/2 -translate-y-1/2' },
-    { key: 'up', icon: ChevronUp, items: offscreen.filter((w) => w.position.y + w.size.height < viewportWorld.y), className: 'left-1/2 top-16 -translate-x-1/2' },
-    { key: 'down', icon: ChevronDown, items: offscreen.filter((w) => w.position.y > viewportWorld.y + viewportWorld.height), className: 'bottom-16 left-1/2 -translate-x-1/2' },
-  ]
-
   return (
-    <>
-      {directions.map(({ key, icon: Icon, items, className }) => {
-        if (items.length === 0) return null
-        return (
-          <button
-            key={key}
-            data-canvas-ui
-            type="button"
-            aria-label={`${items.length} off-screen ${key}`}
-            onClick={() => {
-              const rect = boundsForWidgets(items)
-              if (rect) useCanvasStore.getState().fitRect(rect, 180)
-            }}
-            className={`gp-panel fixed z-30 flex h-8 min-w-8 items-center justify-center gap-1 rounded-full border border-violet-400/25 px-2 text-[10px] text-violet-200 shadow-[0_0_24px_rgba(139,92,246,.2)] transition-transform hover:scale-110 ${className}`}
-          >
-            <Icon size={13} aria-hidden />{items.length}
-          </button>
-        )
-      })}
-      <div data-canvas-ui className="gp-panel fixed bottom-16 left-4 z-30 overflow-hidden rounded-2xl border gp-hairline shadow-2xl">
+    <div data-canvas-ui className="gp-panel fixed bottom-16 left-4 z-30 overflow-hidden rounded-2xl border gp-hairline shadow-2xl">
         {collapsed ? (
           <button
             type="button"
@@ -152,7 +121,6 @@ export function CanvasNavigator() {
             </svg>
           </>
         )}
-      </div>
-    </>
+    </div>
   )
 }

@@ -1,6 +1,6 @@
-import { useBoardImportStore } from '../store/useBoardImportStore'
 import { useToastStore } from '../store/useToastStore'
 import { parseImportedBoardFile } from '../utils/boardImport'
+import { importBoardFileOntoCanvas } from '../utils/boardCanvasImport'
 
 interface NativeOpenFilePayload {
   name: string
@@ -33,7 +33,7 @@ export function initNativeFileOpen(): () => void {
     try {
       const bytes = decodeBase64(payload.base64)
       const { board, media } = await parseImportedBoardFile(bytes, payload.name)
-      useBoardImportStore.getState().requestImport({ board, media, source: 'native-open' })
+      await importBoardFileOntoCanvas({ board, media, filename: payload.name })
     } catch {
       useToastStore.getState().addToast(`Could not open ${payload.name}`)
     }

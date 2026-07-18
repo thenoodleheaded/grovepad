@@ -71,10 +71,10 @@ export function AssignmentWidget({ data, onChange }: AssignmentWidgetProps) {
                   value={item.due}
                   aria-label="Due date"
                   onChange={(e) => setItem(item.id, { due: e.target.value })}
-                  className="w-[18px] bg-transparent font-mono text-[10px] text-transparent outline-none [color-scheme:dark]"
+                  className="w-[18px] bg-transparent  text-[10px] text-transparent outline-none [color-scheme:dark]"
                 />
                 {due && (
-                  <span className={`font-mono text-[9px] tabular-nums ${due.urgent ? 'text-red-400' : 'text-neutral-500'}`}>
+                  <span className={` text-[9px] tabular-nums ${due.urgent ? 'text-red-400' : 'text-neutral-500'}`}>
                     {due.text}
                   </span>
                 )}
@@ -111,7 +111,7 @@ export function AssignmentWidget({ data, onChange }: AssignmentWidgetProps) {
         </button>
         <span
           ref={doneCountRef}
-          className={`font-mono text-[10px] tabular-nums transition-colors ${
+          className={` text-[10px] tabular-nums transition-colors ${
             data.items.length > 0 && doneCount === data.items.length ? 'text-emerald-400' : 'text-neutral-600'
           }`}
         >

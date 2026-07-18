@@ -41,7 +41,7 @@ export function CounterWidget({ data, onChange }: CounterWidgetProps) {
         >
           <Minus size={15} aria-hidden />
         </button>
-        <span key={data.count} className="gp-pop gp-hero min-w-[3ch] text-center font-mono">{data.count}</span>
+        <span key={data.count} className="gp-pop gp-hero min-w-[3ch] text-center ">{data.count}</span>
         <button
           type="button"
           aria-label={`Increase by ${step}`}
@@ -68,7 +68,7 @@ export function CounterWidget({ data, onChange }: CounterWidgetProps) {
             value={data.step}
             aria-label="Step size"
             onChange={(e) => onChange({ ...data, step: safeCounterStep(Number(e.target.value)) })}
-            className="gp-input--bare w-24 font-mono text-neutral-300 outline-none"
+            className="gp-input--bare w-24  text-neutral-300 outline-none"
           />
         </label>
         <button

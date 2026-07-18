@@ -52,7 +52,7 @@ import {
   HabitWidget, KanbanWidget, LinksWidget, MediaWidget, MeetingNotesWidget, MetricsWidget,
   MoodTrackerWidget, NotesWidget, PollWidget, PriorityMatrixWidget, ProgressWidget,
   ProsConsWidget, QuoteWidget, RatingWidget, ReadingListWidget, SketchpadWidget,
-  StickyNoteWidget, StopwatchWidget, TableWidget, TimelineWidget, TimerWidget,
+  StickyNoteWidget, StopwatchWidget, TableWidget, TimekeeperWidget, TimelineWidget, TimerWidget,
   WeeklyPlannerWidget, WorldClockWidget,
 } from './lazyCoreWidgets'
 
@@ -86,6 +86,7 @@ export const coreWidgetRendererFamily: WidgetRendererFamily = {
     sticky_note: ({ widget, onUpdate, onHeightChange }) => <StickyNoteWidget data={widget.data as StickyNoteData} onChange={onUpdate} onHeightChange={onHeightChange} />,
     calendar: ({ widget, onUpdate }) => <CalendarWidget data={widget.data as CalendarData} onChange={onUpdate} />,
     timer: ({ widget, onUpdate }) => <TimerWidget data={widget.data as TimerData} onChange={onUpdate} />,
+    timekeeper: ({ widget, onUpdate }) => <TimekeeperWidget data={widget.data as import('../../../types/widgetDataExpansion').TimekeeperData} onChange={onUpdate} />,
     rating: ({ widget, onUpdate }) => <RatingWidget data={widget.data as RatingData} onChange={onUpdate} />,
     color_palette: ({ widget, onUpdate }) => <ColorPaletteWidget data={widget.data as ColorPaletteData} onChange={onUpdate} />,
     mood_tracker: ({ widget, onUpdate }) => <MoodTrackerWidget data={widget.data as MoodTrackerData} onChange={onUpdate} />,

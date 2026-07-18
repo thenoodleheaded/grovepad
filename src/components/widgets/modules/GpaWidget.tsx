@@ -62,7 +62,7 @@ export function GpaWidget({ data, onChange }: GpaWidgetProps) {
               value={c.credits}
               aria-label={`${c.name || 'Course'} credits`}
               onChange={(e) => setCourse(c.id, { credits: num(e.target.value) })}
-              className="w-12 bg-transparent text-right font-mono text-[11px] text-neutral-300 outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none"
+              className="w-12 bg-transparent text-right  text-[11px] text-neutral-300 outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none"
             />
             <input
               type="number"
@@ -70,7 +70,7 @@ export function GpaWidget({ data, onChange }: GpaWidgetProps) {
               value={c.points}
               aria-label={`${c.name || 'Course'} grade points`}
               onChange={(e) => setCourse(c.id, { points: num(e.target.value) })}
-              className="w-12 bg-transparent text-right font-mono text-[11px] text-neutral-400 outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none"
+              className="w-12 bg-transparent text-right  text-[11px] text-neutral-400 outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none"
             />
             <button
               type="button"
@@ -97,7 +97,7 @@ export function GpaWidget({ data, onChange }: GpaWidgetProps) {
 
       <div ref={gpaRowRef} className="flex h-9 shrink-0 items-center justify-between border-t gp-hairline">
         <span className="text-[11px] font-medium uppercase tracking-wider text-neutral-600">GPA</span>
-        <span className={`font-mono text-lg font-bold tabular-nums ${gpaColor}`}>
+        <span className={` text-lg font-bold tabular-nums ${gpaColor}`}>
           {gpa.toFixed(2)}
         </span>
       </div>

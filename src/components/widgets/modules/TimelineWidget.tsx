@@ -58,9 +58,9 @@ export function TimelineWidget({ data }: TimelineWidgetProps) {
 
       {/* Scale footer — 24px */}
       <div ref={totalUnitsRef} className="mt-auto flex items-center pl-[4.5rem] pt-1">
-        <span className="font-mono text-[9px] text-neutral-700 select-none">0</span>
+        <span className=" text-[9px] text-neutral-700 select-none">0</span>
         <div className="mx-1.5 flex-1 border-t border-dashed gp-hairline" />
-        <span className="font-mono text-[9px] text-neutral-600 select-none">{total}u</span>
+        <span className=" text-[9px] text-neutral-600 select-none">{total}u</span>
       </div>
     </div>
   )

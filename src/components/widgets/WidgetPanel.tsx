@@ -34,10 +34,10 @@ interface WidgetPanelProps {
 }
 
 /**
- * One glass subdivision of a multi-panel widget. Each panel is its own
- * squircle plate with its own backing; panels keep an 8px seam so they read
- * as separate, calm glass surfaces inside one widget. A panel is never
- * shorter than 32px (0.8 cells).
+ * One glass subdivision of a multi-panel widget. On a standalone card it is
+ * an E1 island; when the whole card is grouped and becomes E1, CSS steps the
+ * panel down to a well so elevations never nest. Panels keep an 8px seam and
+ * are never shorter than 32px (0.8 cells).
  *
  * The grip is intentionally NOT a button: WidgetCard treats non-interactive
  * targets as drag surface, so grabbing any panel's grip moves the entire

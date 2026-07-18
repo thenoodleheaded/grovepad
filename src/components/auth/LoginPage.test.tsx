@@ -19,4 +19,12 @@ describe('LoginPage field surfaces', () => {
     expect(markup).toContain('gp-island gp-login-action gp-login-action--secondary')
     expect(markup).toContain('gp-island gp-login-action gp-login-action--guest')
   })
+
+  it('keeps the login card roomy and removes non-actionable marketing copy', () => {
+    const markup = renderToStaticMarkup(<LoginPage />)
+
+    expect(markup).toContain('max-w-md')
+    expect(markup).not.toContain('Your infinite thinking canvas')
+    expect(markup).not.toContain('Guest work saves')
+  })
 })

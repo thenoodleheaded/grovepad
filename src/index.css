@@ -44,7 +44,7 @@
 }
 
 @theme {
-  --font-sans: 'Clash Display', system-ui, -apple-system, sans-serif;
+  --font-sans: 'Clash Display';
 }
 
 html,
@@ -62,6 +62,18 @@ body {
   color: #e5e5e5;
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
+}
+
+/* One typeface everywhere, including controls, pseudo-elements, and SVG
+   labels that do not consistently inherit the document font by default. */
+*,
+*::before,
+*::after {
+  font-family: inherit;
+}
+
+:where(input, textarea, select, button, code, kbd, samp, pre, svg text) {
+  font-family: var(--font-sans);
 }
 
 /* ── Grid line colors ──────────────────────────────────────────────────────── */
@@ -152,29 +164,6 @@ body {
 
 .gp-route-chip-motion {
   transition: transform var(--gp-motion-layout) var(--gp-ease-layout);
-}
-
-/* Group band path. Color/width shifts always glide, and the shrink-wrap
-   shape (`d`) morphs on discrete changes: drop-target relax/tighten, settle,
-   undo. While a live drag reshapes the hull every frame the `d` transition
-   must collapse — otherwise each frame's new path becomes a fresh 220ms ease
-   target and the band corners trail the dragged widget. [data-drop-morph]
-   (set while the plate is a drop target, plus a short tail) keeps the
-   taut↔relaxed morph animated: the dragged widget isn't a member then, so
-   the hull is static and the transition is safe. */
-.gp-band-motion {
-  transition:
-    stroke 180ms ease,
-    fill 180ms ease,
-    stroke-width 180ms ease,
-    d 220ms ease;
-}
-
-body[data-widget-dragging] .gp-band-motion:not([data-drop-morph]) {
-  transition:
-    stroke 180ms ease,
-    fill 180ms ease,
-    stroke-width 180ms ease;
 }
 
 body[data-widget-dragging] .gp-widget-motion,
@@ -295,7 +284,6 @@ body[data-widget-dragging] .gp-card-motion {
   .gp-widget-layout-motion,
   .gp-route-motion,
   .gp-route-chip-motion,
-  .gp-band-motion,
   .gp-card-motion {
     transition: none;
   }
@@ -405,7 +393,7 @@ body[data-widget-dragging] .gp-card-motion {
 .gp-glass-key{border:1px solid transparent;border-radius:var(--gp-r2, 8px);background:rgba(255,255,255,.045);box-shadow:inset 0 1px 0 rgba(255,255,255,.065),0 2px 4px rgb(0 0 0/.2);transition:transform var(--gp-motion-instant),background-color var(--gp-motion-instant),border-color var(--gp-motion-instant)}
 .gp-glass-key:hover{border-color:color-mix(in oklab,var(--gp-widget-accent),transparent 72%);background:rgba(255,255,255,.07)}
 .gp-glass-key:active{transform:translateY(1px) scale(.98);box-shadow:inset 0 1px 3px rgb(0 0 0/.35)}
-.gp-led-colon{color:var(--gp-widget-accent);font:700 24px ui-monospace;line-height:1}
+.gp-led-colon{color:var(--gp-widget-accent);font-family:var(--font-sans);font-size:24px;font-weight:700;line-height:1}
 [data-running='true'] .gp-led-colon{animation:gp-led-colon 1s steps(1,end) infinite}
 @keyframes gp-led-colon{50%{opacity:.2}}
 @media(prefers-reduced-motion:reduce){[data-running='true'] .gp-led-colon{animation:none}}
@@ -536,7 +524,7 @@ body[data-widget-dragging] .gp-card-motion {
 
 .gp-picker-icon {
   scale: 1;
-  transition: scale 180ms cubic-bezier(0.2, 0.9, 0.3, 1);
+  transition: scale 280ms var(--gp-ease-out);
 }
 
 /* Accent hexes are tuned for dark glass; on the light scrim the palest ones

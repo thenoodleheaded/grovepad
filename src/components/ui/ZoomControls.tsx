@@ -72,7 +72,7 @@ export function ZoomControls() {
             useCanvasStore.getState().zoomToAnimated(1, viewportCenter())
             setPresetsOpen(false)
           }}
-          className="h-9 w-12 rounded-xl text-center font-mono text-xs tabular-nums text-neutral-300 transition-colors hover:bg-neutral-700/60 hover:text-white"
+          className="h-9 w-12 rounded-xl text-center  text-xs tabular-nums text-neutral-300 transition-colors hover:bg-neutral-700/60 hover:text-white"
         >
           {zoomPercent}%
         </button>
@@ -87,7 +87,7 @@ export function ZoomControls() {
                   useCanvasStore.getState().zoomToAnimated(p / 100, viewportCenter())
                   setPresetsOpen(false)
                 }}
-                className={`block w-full px-4 py-1.5 text-center font-mono text-xs tabular-nums transition-colors hover:bg-neutral-700/50 ${
+                className={`block w-full px-4 py-1.5 text-center  text-xs tabular-nums transition-colors hover:bg-neutral-700/50 ${
                   zoomPercent === p ? 'text-emerald-400' : 'text-neutral-300'
                 }`}
               >

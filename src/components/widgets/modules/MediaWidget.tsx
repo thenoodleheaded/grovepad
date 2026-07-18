@@ -54,7 +54,7 @@ export function MediaWidget({ data, onChange }: MediaWidgetProps) {
           setFailed(false)
           onChange({ ...data, url: e.target.value })
         }}
-        className="w-full shrink-0 bg-transparent font-mono text-[10px] text-neutral-500 outline-none placeholder:text-neutral-700"
+        className="w-full shrink-0 bg-transparent  text-[10px] text-neutral-500 outline-none placeholder:text-neutral-700"
       />
       <input
         value={data.altText ?? ''}

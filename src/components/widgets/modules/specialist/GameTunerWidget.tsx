@@ -27,7 +27,7 @@ export function GameTunerWidget({ data, onChange }: GameTunerWidgetProps) {
         <div ref={gripRef} className="space-y-1">
           <div className="flex justify-between text-[11px]">
             <span className="text-neutral-400 font-medium">Grip Coefficient</span>
-            <span className="font-mono text-emerald-400">{data.grip}%</span>
+            <span className=" text-emerald-400">{data.grip}%</span>
           </div>
           <input
             type="range"
@@ -44,7 +44,7 @@ export function GameTunerWidget({ data, onChange }: GameTunerWidgetProps) {
         <div ref={driftRef} className="space-y-1">
           <div className="flex justify-between text-[11px]">
             <span className="text-neutral-400 font-medium">Drift Yaw Angle</span>
-            <span className="font-mono text-amber-400">{data.drift}°</span>
+            <span className=" text-amber-400">{data.drift}°</span>
           </div>
           <input
             type="range"
@@ -61,7 +61,7 @@ export function GameTunerWidget({ data, onChange }: GameTunerWidgetProps) {
         <div ref={stabilityRef} className="space-y-1">
           <div className="flex justify-between text-[11px]">
             <span className="text-neutral-400 font-medium">Suspension Stability</span>
-            <span className="font-mono text-sky-400">{data.stability}%</span>
+            <span className=" text-sky-400">{data.stability}%</span>
           </div>
           <input
             type="range"

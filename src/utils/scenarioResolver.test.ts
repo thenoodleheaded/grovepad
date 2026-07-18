@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { WIDGET_REGISTRY } from '../widgets/registry'
+import { isWidgetTypePublic, WIDGET_REGISTRY } from '../widgets/registry'
 import { interpretThoughtCandidates } from './thoughtInterpreter'
 import { ARCHETYPES, resolveArchetypeById, resolveScenario, shortlistArchetypes, validateScenarioCatalogue } from './scenarioResolver'
 
@@ -100,6 +100,7 @@ describe('scenario catalogue', () => {
   })
 
   const widgetTypoFixtures = Object.values(WIDGET_REGISTRY).flatMap((definition) => {
+    if (!isWidgetTypePublic(definition.type)) return []
     const words = definition.label.toLowerCase().split(/\s+/)
     const longest = words.reduce((best, word) => word.length > best.length ? word : best, '')
     if (longest.length < 5) return []

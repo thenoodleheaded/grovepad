@@ -4,7 +4,7 @@ import { COLLAPSED_SIZE, GRID_SIZE } from '../types/spatial'
 const PILL_PADDING_X = 16
 const PILL_ICON = 12
 const PILL_GAP = 6
-const PILL_FONT = '500 12px ui-sans-serif, system-ui, sans-serif'
+const PILL_FONT = '500 12px "Clash Display"'
 
 let measureCtx: CanvasRenderingContext2D | null = null
 

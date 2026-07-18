@@ -63,7 +63,7 @@ export function PollWidget({ data, onChange }: PollWidgetProps) {
                 onChange={(e) => setOptionLabel(option.id, e.target.value)}
                 className="relative min-w-0 flex-1 bg-transparent text-[12px] text-neutral-300 outline-none placeholder:text-neutral-700"
               />
-              <span className="relative shrink-0 font-mono text-[10px] tabular-nums text-neutral-500">
+              <span className="relative shrink-0  text-[10px] tabular-nums text-neutral-500">
                 {option.votes}
               </span>
               <button
@@ -96,7 +96,7 @@ export function PollWidget({ data, onChange }: PollWidgetProps) {
           <Plus size={11} aria-hidden />
           Add option
         </button>
-        <span ref={votesRowRef} className="font-mono text-[10px] tabular-nums text-neutral-600">
+        <span ref={votesRowRef} className=" text-[10px] tabular-nums text-neutral-600">
           {totalVotes} vote{totalVotes === 1 ? '' : 's'}
         </span>
       </div>

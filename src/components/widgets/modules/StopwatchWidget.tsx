@@ -38,7 +38,7 @@ export function StopwatchWidget({ data, onChange }: StopwatchWidgetProps) {
     <div className="flex h-full flex-col gap-2">
       <div ref={runningRef} className="flex shrink-0 flex-1 items-center justify-center">
         <span
-          className={`gp-hero font-mono transition-[color,opacity] duration-300 ${
+          className={`gp-hero  transition-[color,opacity] duration-300 ${
             isRunning ? '' : 'opacity-80'
           }`}
         >
@@ -51,7 +51,7 @@ export function StopwatchWidget({ data, onChange }: StopwatchWidgetProps) {
           {data.laps.map((lapMs, i) => {
             const prev = i === 0 ? 0 : data.laps[i - 1]!
             return (
-              <div key={i} className="flex h-5 items-center justify-between font-mono text-[10px] tabular-nums">
+              <div key={i} className="flex h-5 items-center justify-between  text-[10px] tabular-nums">
                 <span className="text-neutral-600">Lap {i + 1}</span>
                 <span className="text-neutral-500">+{formatMs(lapMs - prev)}</span>
                 <span className="text-neutral-300">{formatMs(lapMs)}</span>

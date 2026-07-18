@@ -13,7 +13,7 @@ export function QuoteWidget({ data, onChange }: QuoteWidgetProps) {
     <div className="gp-bare-field relative flex h-full flex-col justify-between gap-2 pl-5">
       <span
         aria-hidden
-        className="pointer-events-none absolute -left-0.5 -top-2 select-none font-serif text-5xl leading-none text-emerald-400/25"
+        className="pointer-events-none absolute -left-0.5 -top-2 select-none  text-5xl leading-none text-emerald-400/25"
       >
         “
       </span>

@@ -1,0 +1,269 @@
+/* Widget glass constitution enforcement: islands, nesting law, panels. Split from product.css; load order is fixed by product.css @imports. */
+
+/* Legacy widgets already describe repeated semantic units with Tailwind's
+   named group convention. Those rows/cards are islands too, so the policy
+   reaches the entire pre-registry widget set without type allowlists. */
+.gp-widget-content div:is(
+  [class*='group/row'],
+  [class*='group/tile'],
+  [class*='group/task'],
+  [class*='group/day'],
+  [class*='group/segment'],
+  [class*='group/criterion'],
+  [class*='group/agenda'],
+  [class*='group/process'],
+  [class*='group/outline'],
+  [class*='group/form'],
+  [class*='group/risk'],
+  [class*='group/log'],
+  [class*='group/inventory'],
+  [class*='group/kcard']
+) {
+  position: relative;
+  max-width: 100%;
+  max-height: 100%;
+  overflow: auto;
+  border: 0;
+  border-radius: var(--gp-r1);
+  padding-inline: var(--gp-p1);
+  background-image: linear-gradient(180deg, oklch(100% 0 0 / 0.10) 0%, oklch(100% 0 0 / 0.05) 100%);
+  box-shadow:
+    inset 0 1px 0 oklch(100% 0 0 / 0.14),
+    inset 0 0 0 1px oklch(100% 0 0 / 0.07),
+    0 2px 4px rgb(0 0 0 / 0.34),
+    0 10px 22px rgb(0 0 0 / 0.22);
+}
+
+.gp-widget-content div:is(
+  [class*='group/row'],
+  [class*='group/tile'],
+  [class*='group/task'],
+  [class*='group/day'],
+  [class*='group/segment'],
+  [class*='group/criterion'],
+  [class*='group/agenda'],
+  [class*='group/process'],
+  [class*='group/outline'],
+  [class*='group/form'],
+  [class*='group/risk'],
+  [class*='group/log'],
+  [class*='group/inventory'],
+  [class*='group/kcard']
+) + div[class*='group/'] {
+  margin-top: 4px;
+}
+
+[data-theme='light'] .gp-widget-content div:is(
+  [class*='group/row'],
+  [class*='group/tile'],
+  [class*='group/task'],
+  [class*='group/day'],
+  [class*='group/segment'],
+  [class*='group/criterion'],
+  [class*='group/agenda'],
+  [class*='group/process'],
+  [class*='group/outline'],
+  [class*='group/form'],
+  [class*='group/risk'],
+  [class*='group/log'],
+  [class*='group/inventory'],
+  [class*='group/kcard']
+) {
+  background-image: linear-gradient(180deg, oklch(100% 0 0 / 0.11) 0%, oklch(100% 0 0 / 0.06) 100%);
+  box-shadow:
+    inset 0 1px 0 oklch(100% 0 0 / 0.15),
+    inset 0 0 0 1px oklch(100% 0 0 / 0.08),
+    0 2px 4px rgb(0 0 0 / 0.32),
+    0 10px 22px rgb(0 0 0 / 0.20);
+}
+
+/* E−1 — the nesting law (Article XIII). An island match nested inside another
+   island match renders as a WELL: sunken shallow fill, inverted light, radius
+   floor. This is what turns a bordered field box inside a bordered row into a
+   screen instead of a second slab of glass. */
+.gp-widget-content :is(
+  .gp-subpanel,
+  .gp-subdivision,
+  :is(div, section, article, li, fieldset, label):is(.border, .gp-hairline):is(.rounded-lg, .rounded-xl, .rounded-2xl),
+  div:is([class*='group/row'], [class*='group/tile'], [class*='group/task'], [class*='group/day'], [class*='group/segment'], [class*='group/criterion'], [class*='group/agenda'], [class*='group/process'], [class*='group/outline'], [class*='group/form'], [class*='group/risk'], [class*='group/log'], [class*='group/inventory'], [class*='group/kcard'])
+) :is(
+  .gp-subpanel,
+  .gp-subdivision,
+  :is(div, section, article, li, fieldset, label):is(.border, .gp-hairline):is(.rounded-lg, .rounded-xl, .rounded-2xl),
+  div:is([class*='group/row'], [class*='group/tile'], [class*='group/task'], [class*='group/day'], [class*='group/segment'], [class*='group/criterion'], [class*='group/agenda'], [class*='group/process'], [class*='group/outline'], [class*='group/form'], [class*='group/risk'], [class*='group/log'], [class*='group/inventory'], [class*='group/kcard'])
+) {
+  min-height: 0;
+  border: 0;
+  border-radius: var(--gp-r2);
+  /* These legacy rows were promoted to nested wells after their renderers had
+     already chosen spacing. Zeroing the inset put dots, text, and icons on the
+     rounded edge; retain the constitution's shared island inset instead. */
+  padding-inline: var(--gp-p1);
+  background-image: none;
+  background-color: rgb(0 0 0 / 0.42);
+  box-shadow:
+    inset 0 1px 2px rgb(0 0 0 / 0.46),
+    inset 0 -1px 0 oklch(100% 0 0 / 0.06);
+}
+
+[data-theme='light'] .gp-widget-content :is(
+  .gp-subpanel,
+  .gp-subdivision,
+  :is(div, section, article, li, fieldset, label):is(.border, .gp-hairline):is(.rounded-lg, .rounded-xl, .rounded-2xl),
+  div:is([class*='group/row'], [class*='group/tile'], [class*='group/task'], [class*='group/day'], [class*='group/segment'], [class*='group/criterion'], [class*='group/agenda'], [class*='group/process'], [class*='group/outline'], [class*='group/form'], [class*='group/risk'], [class*='group/log'], [class*='group/inventory'], [class*='group/kcard'])
+) :is(
+  .gp-subpanel,
+  .gp-subdivision,
+  :is(div, section, article, li, fieldset, label):is(.border, .gp-hairline):is(.rounded-lg, .rounded-xl, .rounded-2xl),
+  div:is([class*='group/row'], [class*='group/tile'], [class*='group/task'], [class*='group/day'], [class*='group/segment'], [class*='group/criterion'], [class*='group/agenda'], [class*='group/process'], [class*='group/outline'], [class*='group/form'], [class*='group/risk'], [class*='group/log'], [class*='group/inventory'], [class*='group/kcard'])
+) {
+  background-color: rgb(0 0 0 / 0.09);
+  box-shadow:
+    inset 0 1px 2px rgb(0 0 0 / 0.14),
+    inset 0 -1px 0 oklch(100% 0 0 / 0.75);
+}
+
+/* Third nesting level (Article XV): if you cannot say whether a surface is
+   raised or sunken, it is neither — flatten it into its parent. */
+.gp-widget-content :is(
+  .gp-subpanel,
+  .gp-subdivision,
+  :is(div, section, article, li, fieldset, label):is(.border, .gp-hairline):is(.rounded-lg, .rounded-xl, .rounded-2xl),
+  div:is([class*='group/row'], [class*='group/tile'], [class*='group/task'], [class*='group/day'], [class*='group/segment'], [class*='group/criterion'], [class*='group/agenda'], [class*='group/process'], [class*='group/outline'], [class*='group/form'], [class*='group/risk'], [class*='group/log'], [class*='group/inventory'], [class*='group/kcard'])
+) :is(
+  .gp-subpanel,
+  .gp-subdivision,
+  :is(div, section, article, li, fieldset, label):is(.border, .gp-hairline):is(.rounded-lg, .rounded-xl, .rounded-2xl),
+  div:is([class*='group/row'], [class*='group/tile'], [class*='group/task'], [class*='group/day'], [class*='group/segment'], [class*='group/criterion'], [class*='group/agenda'], [class*='group/process'], [class*='group/outline'], [class*='group/form'], [class*='group/risk'], [class*='group/log'], [class*='group/inventory'], [class*='group/kcard'])
+) :is(
+  .gp-subpanel,
+  .gp-subdivision,
+  :is(div, section, article, li, fieldset, label):is(.border, .gp-hairline):is(.rounded-lg, .rounded-xl, .rounded-2xl),
+  div:is([class*='group/row'], [class*='group/tile'], [class*='group/task'], [class*='group/day'], [class*='group/segment'], [class*='group/criterion'], [class*='group/agenda'], [class*='group/process'], [class*='group/outline'], [class*='group/form'], [class*='group/risk'], [class*='group/log'], [class*='group/inventory'], [class*='group/kcard'])
+) {
+  background-color: transparent;
+  background-image: none;
+  box-shadow: none;
+  border: 0;
+  border-radius: var(--gp-r2);
+}
+
+/* Text controls borrow their visible surface from the island that contains
+   them. The control itself never paints a second well inside that island. */
+.gp-widget-content :where(input:not([type='checkbox'], [type='radio'], [type='range'], [type='color']), textarea, select) {
+  background-color: transparent;
+  box-shadow: none;
+}
+
+[data-theme='light'] .gp-widget-content :where(input:not([type='checkbox'], [type='radio'], [type='range'], [type='color']), textarea, select) {
+  background-color: transparent;
+  box-shadow: none;
+}
+
+/* Type hierarchy (Article XVII) lives in the Widget Constitution enforcement
+   layer further down (.gp-label / .gp-value / .gp-hero). */
+
+/* One grid cell is 40px, so 8px is the hard 0.2-cell gap ceiling. */
+.gp-widget-content :is(.flex, .grid):has(> :is(.gp-subpanel, .gp-subdivision)) {
+  gap: 8px;
+}
+
+.gp-widget-content {
+  position: relative;
+  z-index: 1;
+}
+
+/* Per-panel drag button — a passive grip; the card underneath owns the drag. */
+.gp-subpanel-grip {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  border-radius: 5px;
+  color: var(--gp-relation-outline);
+  cursor: grab;
+  opacity: 0;
+  transition: opacity var(--gp-duration-snap) var(--gp-ease-snap);
+}
+
+.gp-widget-card[data-selected='true'] .gp-subpanel:hover > .gp-subpanel-grip {
+  opacity: 0.75;
+}
+
+.gp-subpanel-grip:active {
+  cursor: grabbing;
+}
+
+/* Smooth panel entry/exit — new subdivisions pop in, removed ones shrink out. */
+@keyframes gp-subpanel-in {
+  from {
+    opacity: 0;
+    scale: 0.88;
+  }
+  to {
+    opacity: 1;
+    scale: 1;
+  }
+}
+
+.gp-subpanel-enter {
+  animation: gp-subpanel-in 170ms cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+
+.gp-subpanel-exit {
+  opacity: 0;
+  scale: 0.82;
+  transition:
+    opacity 130ms var(--gp-ease-snap),
+    scale 130ms var(--gp-ease-snap);
+  pointer-events: none;
+}
+
+/* Canvas-node link affordances — the icon and name ARE the navigation. */
+.gp-canvas-link {
+  cursor: pointer;
+  transition:
+    color var(--gp-duration-snap) var(--gp-ease-snap),
+    border-color var(--gp-duration-snap) var(--gp-ease-snap),
+    background-color var(--gp-duration-snap) var(--gp-ease-snap);
+}
+
+.gp-canvas-link-name:hover {
+  color: #a3e635;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, #a3e635 60%, transparent);
+  text-underline-offset: 4px;
+}
+
+/* Chip inputs inside wrap-panel widgets size to their own content. */
+.gp-chip-input {
+  field-sizing: content;
+  min-width: 56px;
+  max-width: 100%;
+}
+
+/* Auto-growing description areas inside gate panels. */
+.gp-note-area {
+  field-sizing: content;
+  min-height: 28px;
+}
+
+/* -------------------------------------------------------------------------
+ * Widget Constitution enforcement layer
+ *
+ * WidgetRenderer places every module under .gp-widget-ui. These rules are
+ * intentionally semantic and family-agnostic: legacy Tailwind recipes may
+ * still describe layout and state, but they can no longer invent a fourth
+ * elevation, an arbitrary radius, or a competing light source.
+ * ----------------------------------------------------------------------- */
+
+.gp-widget-ui {
+  --gp-label-ink: color-mix(in oklab, var(--gp-widget-ink, #f5f5f5), transparent 58%);
+  color: color-mix(in oklab, var(--gp-widget-ink, #f5f5f5), transparent 10%);
+  font-feature-settings: 'kern' 1, 'liga' 1, 'tnum' 1;
+}

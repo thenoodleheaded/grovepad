@@ -1,6 +1,6 @@
 import type { ModuleData, ModuleType, RelationType, WidgetMetadata } from '../types/spatial'
 import { WIDGET_REGISTRY, widgetDefinition } from '../widgets/registry'
-import { ATLAS_CATALOG, ATLAS_TYPES } from '../widgets/atlasCatalog'
+import { ATLAS_CATALOG, ATLAS_TYPES, ATLAS_TYPE_SET, atlasTypeForPhrase, defaultAtlasData } from '../widgets/atlasCatalog'
 import { AUTOMATION_CORE_CATALOG, AUTOMATION_CORE_TYPES } from '../widgets/automationCoreCatalog'
 import { localDayKey } from './localDate'
 import { buildVocabulary, fuzzyPhraseMatch, normalizeLanguage, tokenCoverage, type NormalizedLanguage } from './languageNormalization'
@@ -131,6 +131,8 @@ const INTENT_PATTERNS: Partial<Record<ModuleType, RegExp>> = {
   sticky_note: /\b(sticky(?: note)?|post-?it)\b/i,
   calendar: /\b(monthly calendar|calendar month)\b/i,
   timer: /\b(timer|time for \d+)\b/i,
+  timekeeper: /\b(timer|countdown timer|pomodoro|focus session|work break timer|stopwatch|lap time)\b/i,
+  tracker: new RegExp(`\\b(?:tracker|${ATLAS_TYPES.flatMap(type=>[ATLAS_CATALOG[type].label,type.replaceAll('_',' '),...ATLAS_CATALOG[type].aliases]).map(escapeRegex).join('|')})\\b`,'i'),
   rating: /\b(rating|stars?|score out of)\b/i,
   color_palette: /\b(colou?r palette|swatches?|hex colou?rs?)\b/i,
   mood_tracker: /\b(mood(?: tracker)?|feeling today)\b/i,
@@ -248,6 +250,10 @@ const WIDGET_LANGUAGE_VOCABULARY = buildVocabulary(
 
 function uid(): string { return crypto.randomUUID() }
 
+function isConsolidatedLegacyType(type:ModuleType):boolean {
+  return ATLAS_TYPE_SET.has(type)||type==='timer'||type==='pomodoro'||type==='stopwatch'
+}
+
 function cleanTitle(text: string): string {
   return text
     .replace(CHECKBOX, '')
@@ -330,6 +336,7 @@ function scoreIntents(source: string, lines: ParsedLine[], normalized: Normalize
   // Every registry entry is supported automatically. An explicit command such
   // as "make a Risk Register" wins; natural aliases remain slightly softer.
   for (const definition of Object.values(WIDGET_REGISTRY)) {
+    if (isConsolidatedLegacyType(definition.type)) continue
     const label = definition.label.toLowerCase()
     const typeWords = definition.type.replaceAll('_', ' ')
     const explicit = lower.startsWith(`${label}:`) || lower.startsWith(`${typeWords}:`) ||
@@ -359,7 +366,10 @@ function escapeRegex(value: string): string {
 export function resolveWidgetMention(phrase: string): ModuleType | null {
   const cleaned = phrase.trim().toLowerCase().replace(/\s+widgets?$/, '').trim()
   if (cleaned.length < 3) return null
+  if (atlasTypeForPhrase(cleaned)) return 'tracker'
+  if (/^(?:timer|countdown timer|pomodoro(?: timer)?|focus timer|stopwatch)$/.test(cleaned)) return 'timekeeper'
   for (const definition of Object.values(WIDGET_REGISTRY)) {
+    if (isConsolidatedLegacyType(definition.type)) continue
     const label = definition.label.toLowerCase()
     const typeWords = definition.type.replaceAll('_', ' ')
     if (cleaned === label || cleaned === typeWords || cleaned === `${label}s` || cleaned === `${typeWords}s`) {
@@ -367,6 +377,7 @@ export function resolveWidgetMention(phrase: string): ModuleType | null {
     }
   }
   for (const definition of Object.values(WIDGET_REGISTRY)) {
+    if (isConsolidatedLegacyType(definition.type)) continue
     if (INTENT_PATTERNS[definition.type]?.test(cleaned)) return definition.type
   }
   return null
@@ -379,6 +390,12 @@ function dataFor(type: ModuleType, source: string, lines: ParsedLine[]): ModuleD
   const numbers = [...source.matchAll(/-?\d+(?:\.\d+)?/g)].map((match) => Number(match[0]))
   const percent = source.match(/(\d+(?:\.\d+)?)\s*%/)
   switch (type) {
+    case 'tracker': return defaultAtlasData(atlasTypeForPhrase(source)??'price_book')
+    case 'timekeeper': {
+      const current=defaults as import('../types/widgetDataExpansion').TimekeeperData
+      const mode=/pomodoro|focus session|work break/i.test(source)?'pomodoro':/stopwatch|lap time/i.test(source)?'stopwatch':'countdown'
+      return {...current,mode}
+    }
     case 'checklist': return { items: lines.map((line) => ({ id: uid(), label: line.text, done: line.checked ?? false })) }
     case 'bullets': return { items: titleLines.map((text) => ({ id: uid(), text })) }
     case 'links': return { items: (source.match(URL) ?? []).map((url) => ({ id: uid(), label: url.replace(/^https?:\/\//, '').split('/')[0]!, url })) }

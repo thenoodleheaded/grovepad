@@ -261,7 +261,7 @@ export function useCanvasEvents(viewportRef: RefObject<HTMLDivElement | null>): 
           'pointer-events-none absolute left-0 top-0 z-30 rounded-xl border border-emerald-300/70 bg-emerald-400/[0.08] shadow-[0_0_0_1px_rgba(163,230,53,0.14),0_10px_36px_rgba(0,0,0,0.12)] will-change-transform'
         applySelectionBox(selectionBox, gestureStart, gestureStart)
         selectionBadge = document.createElement('span')
-        selectionBadge.className = 'absolute -right-2 -top-7 rounded-full bg-emerald-300 px-2 py-0.5 font-mono text-[10px] font-bold text-neutral-950 shadow-lg'
+        selectionBadge.className = 'absolute -right-2 -top-7 rounded-full bg-emerald-300 px-2 py-0.5  text-[10px] font-bold text-neutral-950 shadow-lg'
         selectionBadge.textContent = '0'
         selectionBox.appendChild(selectionBadge)
         el.appendChild(selectionBox)
