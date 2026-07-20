@@ -236,6 +236,295 @@ body[data-widget-dragging] .gp-widget-layout-motion[data-settle-pending] > .gp-c
     background-color, scale;
 }
 
+/* Primitive passive widgets -------------------------------------------------
+   The canvas keeps hundreds of these asleep at once. All recurring visual
+   work is expressed with ordinary paint and pseudo-elements: no filters,
+   backdrop sampling, animation loops, or per-card compositor promotion. */
+.gp-widget-card[data-passive-widget] {
+  isolation: isolate;
+}
+
+.gp-primitive-title {
+  width: min(100%, 240px);
+  gap: 0.45rem;
+  filter: drop-shadow(0 2px 5px rgb(0 0 0 / 0.7));
+}
+
+.gp-primitive-content {
+  padding: 0.7rem;
+  color: rgb(212 212 216 / 0.9);
+  pointer-events: none;
+}
+
+.gp-primitive-text-wrap,
+.gp-primitive-stack {
+  display: flex;
+  min-height: 0;
+  height: 100%;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.gp-primitive-kicker {
+  flex: none;
+  font-size: 9px;
+  line-height: 1.2;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgb(161 161 170 / 0.78);
+}
+
+.gp-primitive-text {
+  min-height: 0;
+  overflow: hidden;
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 13px;
+  line-height: 1.65;
+  color: rgb(244 244 245 / 0.92);
+}
+
+.gp-primitive-summary {
+  display: flex;
+  min-width: 0;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.gp-primitive-summary > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  font-weight: 600;
+  color: rgb(228 228 231 / 0.9);
+}
+
+.gp-primitive-summary > strong {
+  flex: none;
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+  color: var(--gp-widget-accent);
+}
+
+.gp-primitive-progress {
+  height: 5px;
+  overflow: hidden;
+  flex: none;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.07);
+}
+
+.gp-primitive-progress > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--gp-widget-accent);
+}
+
+.gp-primitive-rows {
+  display: flex;
+  min-height: 0;
+  overflow: hidden;
+  flex: 1;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.gp-primitive-row {
+  position: relative;
+  display: grid;
+  min-height: 22px;
+  flex: none;
+  grid-template-columns: 10px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 7px;
+  overflow: hidden;
+  border-radius: 7px;
+  padding: 2px 7px;
+  background: rgb(255 255 255 / 0.035);
+  font-size: 10px;
+  line-height: 1.2;
+}
+
+.gp-primitive-row-mark {
+  width: 7px;
+  height: 7px;
+  border: 1px solid color-mix(in srgb, var(--gp-widget-accent) 55%, transparent);
+  border-radius: 2px;
+}
+
+.gp-primitive-row-done .gp-primitive-row-mark {
+  background: var(--gp-widget-accent);
+}
+
+.gp-primitive-row-done .gp-primitive-row-label {
+  opacity: 0.55;
+  text-decoration: line-through;
+}
+
+.gp-primitive-row-label,
+.gp-primitive-row-value {
+  position: relative;
+  z-index: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gp-primitive-row-value {
+  color: rgb(161 161 170 / 0.82);
+  font-variant-numeric: tabular-nums;
+}
+
+.gp-primitive-row-bar {
+  position: absolute;
+  z-index: 0;
+  inset: 0 auto 0 0;
+  border-radius: inherit;
+  background: color-mix(in srgb, var(--gp-widget-accent) 22%, transparent);
+  opacity: 0.5;
+}
+
+.gp-primitive-table {
+  display: flex;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  flex-direction: column;
+  border: 1px solid rgb(255 255 255 / 0.07);
+  border-radius: 9px;
+}
+
+.gp-primitive-table > div {
+  min-height: 23px;
+  overflow: hidden;
+  flex: none;
+  border-bottom: 1px solid rgb(255 255 255 / 0.055);
+  padding: 4px 7px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 10px;
+}
+
+.gp-primitive-table-head {
+  font-weight: 650;
+  color: rgb(244 244 245 / 0.88);
+  background: rgb(255 255 255 / 0.055);
+}
+
+.gp-primitive-palette {
+  display: grid;
+  height: 100%;
+  min-height: 0;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.gp-primitive-palette > span {
+  min-height: 22px;
+  border-radius: 8px;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.12);
+}
+
+.gp-primitive-media {
+  display: flex;
+  height: 100%;
+  min-height: 0;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.gp-primitive-media img {
+  min-height: 0;
+  width: 100%;
+  flex: 1;
+  object-fit: cover;
+  border-radius: 10px;
+}
+
+.gp-primitive-media span {
+  overflow: hidden;
+  flex: none;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 10px;
+  color: rgb(161 161 170 / 0.86);
+}
+
+.gp-primitive-badges {
+  position: absolute;
+  z-index: 12;
+  top: -12px;
+  right: 8px;
+  display: flex;
+  max-width: 60%;
+  align-items: center;
+  gap: 3px;
+  pointer-events: none;
+}
+
+.gp-primitive-badge {
+  overflow: hidden;
+  border: 1px solid rgb(255 255 255 / 0.1);
+  border-radius: 999px;
+  padding: 1px 6px;
+  background: rgb(9 9 11 / 0.9);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 8px;
+  color: rgb(212 212 216 / 0.82);
+}
+
+.gp-primitive-badge-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+}
+
+.gp-primitive-badge-dot-red { background: #ef4444; }
+.gp-primitive-badge-dot-yellow { background: #eab308; }
+.gp-primitive-badge-dot-green { background: #22c55e; }
+
+.gp-primitive-blocked {
+  position: absolute;
+  z-index: 15;
+  bottom: -10px;
+  left: 50%;
+  display: flex;
+  max-width: 90%;
+  translate: -50% 0;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid rgb(245 158 11 / 0.4);
+  border-radius: 999px;
+  padding: 1px 7px;
+  background: rgb(9 9 11 / 0.94);
+  font-size: 8px;
+  font-weight: 650;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: rgb(252 211 77 / 0.9);
+}
+
+.gp-primitive-blocked > span {
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: #fbbf24;
+}
+
+.gp-primitive-hydrating {
+  position: absolute;
+  z-index: 20;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(110deg, transparent 15%, rgb(52 211 153 / 0.1) 45%, transparent 75%);
+}
+
 body[data-widget-dragging] .gp-card-motion {
   transition: none;
 }
