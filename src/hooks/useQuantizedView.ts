@@ -1,11 +1,8 @@
 import { useEffect, useState } from 'react'
-import { useCanvasStore, type CanvasState } from '../store/useCanvasStore'
+import { useCanvasStore } from '../store/useCanvasStore'
 import type { Size } from '../types/spatial'
 import { viewportToWorldRect, type WorldRect } from '../utils/canvasView'
-import {
-  isCameraMotionActive,
-  subscribeCameraMotion,
-} from '../runtime/cameraMotionRuntime'
+import { cameraEngine } from '../engine/camera/cameraEngine'
 
 /**
  * World-space chunk the visible rect snaps to. Culling only recomputes when
@@ -25,16 +22,18 @@ export interface QuantizedView {
   viewportSize: Size
 }
 
-function computeView(state: CanvasState, overscanScreen: number): QuantizedView {
-  const raw = viewportToWorldRect(state.pan, state.zoom, state.viewportSize, overscanScreen)
+function computeView(overscanScreen: number): QuantizedView {
+  const { pan, zoom } = cameraEngine.getFrame()
+  const viewportSize = cameraEngine.getViewportSize()
+  const raw = viewportToWorldRect(pan, zoom, viewportSize, overscanScreen)
   const x = Math.floor(raw.x / VIEW_CHUNK) * VIEW_CHUNK
   const y = Math.floor(raw.y / VIEW_CHUNK) * VIEW_CHUNK
   const right = Math.ceil((raw.x + raw.width) / VIEW_CHUNK) * VIEW_CHUNK
   const bottom = Math.ceil((raw.y + raw.height) / VIEW_CHUNK) * VIEW_CHUNK
   return {
     rect: { x, y, width: right - x, height: bottom - y },
-    zoom: Math.round(state.zoom / ZOOM_BUCKET) * ZOOM_BUCKET,
-    viewportSize: state.viewportSize,
+    zoom: Math.round(zoom / ZOOM_BUCKET) * ZOOM_BUCKET,
+    viewportSize,
   }
 }
 
@@ -45,66 +44,49 @@ function sameView(a: QuantizedView, b: QuantizedView): boolean {
     a.rect.width === b.rect.width &&
     a.rect.height === b.rect.height &&
     a.zoom === b.zoom &&
-    a.viewportSize === b.viewportSize
+    a.viewportSize.width === b.viewportSize.width &&
+    a.viewportSize.height === b.viewportSize.height
   )
 }
 
 /**
  * rAF-coalesced, chunk-quantized camera snapshot for world-space layers.
  *
- * High-frequency pan/zoom updates are folded to at most one state check per
- * frame, and the returned snapshot only changes identity when the quantized
- * rect, zoom bucket, or viewport actually change — so subscribing components
- * do not re-render at all during in-chunk panning.
+ * Engine frames are folded to at most one recompute per animation frame, and
+ * the snapshot only changes identity when the quantized rect, zoom bucket, or
+ * viewport actually change — so subscribers never re-render during in-chunk
+ * panning, and culling keeps up continuously during motion (the old pipeline
+ * paused culling mid-gesture and paid for it with a giant settle reveal).
  */
 export function useQuantizedView(overscanScreen: number): QuantizedView {
-  const [view, setView] = useState(() =>
-    computeView(useCanvasStore.getState(), overscanScreen),
-  )
+  const [view, setView] = useState(() => computeView(overscanScreen))
 
   useEffect(() => {
-    let latest = useCanvasStore.getState()
     let rafId = 0
 
     const flush = () => {
       rafId = 0
-      const next = computeView(latest, overscanScreen)
+      const next = computeView(overscanScreen)
       setView((prev) => (sameView(prev, next) ? prev : next))
     }
 
     // Catch changes that landed between render and effect setup.
     flush()
 
-    const unsubscribe = useCanvasStore.subscribe((state) => {
-      if (
-        state.pan === latest.pan &&
-        state.zoom === latest.zoom &&
-        state.viewportSize === latest.viewportSize
-      ) {
-        return
-      }
-      latest = state
-      // The live SVG/group layers are hidden behind the detailed motion
-      // surface. Re-rendering all four culling consumers for every zoom bucket
-      // would spend React work on pixels the user cannot see; reconcile them
-      // once with the final view during the two-frame reveal handoff instead.
-      if (isCameraMotionActive()) return
+    const unsubscribeFrames = cameraEngine.onFrame(() => {
       if (rafId === 0) rafId = requestAnimationFrame(flush)
     })
-    const unsubscribeMotion = subscribeCameraMotion((active) => {
-      latest = useCanvasStore.getState()
-      if (active) {
-        if (rafId !== 0) cancelAnimationFrame(rafId)
-        rafId = 0
-        return
+    // Viewport size arrives through the store, not engine frames.
+    const unsubscribeStore = useCanvasStore.subscribe((state, previous) => {
+      if (state.viewportSize !== previous.viewportSize && rafId === 0) {
+        rafId = requestAnimationFrame(flush)
       }
-      if (rafId === 0) rafId = requestAnimationFrame(flush)
     })
 
     return () => {
       if (rafId !== 0) cancelAnimationFrame(rafId)
-      unsubscribe()
-      unsubscribeMotion()
+      unsubscribeFrames()
+      unsubscribeStore()
     }
   }, [overscanScreen])
 

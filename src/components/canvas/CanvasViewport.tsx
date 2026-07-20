@@ -1,12 +1,13 @@
 import { lazy, Suspense, useEffect, useRef } from 'react'
 import { useShallow } from 'zustand/react/shallow'
-import { useCanvasStore, type CanvasState } from '../../store/useCanvasStore'
+import { useCanvasStore } from '../../store/useCanvasStore'
+import { cameraEngine } from '../../engine/camera/cameraEngine'
+import { attachCanvasGestures } from '../../engine/camera/gestureEngine'
 import { useAiDebugStore } from '../../store/useAiDebugStore'
 import { useScaleDebugStore } from '../../store/useScaleDebugStore'
 import { isOverlayOpen } from '../../store/useOverlayStore'
 import { useWidgetStore } from '../../store/useWidgetStore'
 import { useToastStore } from '../../store/useToastStore'
-import { useCanvasEvents } from '../../hooks/useCanvasEvents'
 import { GRID_SIZE, screenToWorld } from '../../types/spatial'
 import type { Widget } from '../../types/spatial'
 import { isStrictCanvasSurface } from '../../utils/canvasEventTarget'
@@ -19,9 +20,7 @@ import { startAppRuntime } from '../../runtime/appRuntime'
 import { GhostTreeShaper } from './GhostTreeShaper'
 import { QuickAddPreviewLayer } from './QuickAddPreviewLayer'
 import { CanvasAuraLayer } from './CanvasAuraLayer'
-import { CameraMotionLayer } from './CameraMotionLayer'
 import { GridLayer } from './GridLayer'
-import { PerformanceMonitor } from './PerformanceMonitor'
 import { RelationLines } from './RelationLines'
 import { DependencyLines } from './DependencyLines'
 import { WireLayer } from './WireLayer'
@@ -55,12 +54,6 @@ import { useSettingsStore } from '../../store/useSettingsStore'
 import { FocusSessionBar } from '../ui/FocusSessionBar'
 import { canEditCollaborativeCanvas, useCollaborationStore } from '../../store/useCollaborationStore'
 import { useAuthStore } from '../../store/useAuthStore'
-import {
-  cameraWorldClipPath,
-  hideCameraMotionPreview,
-  isCameraMotionActive,
-  subscribeCameraMotion,
-} from '../../runtime/cameraMotionRuntime'
 
 const AddWidgetModal = lazy(() =>
   import('../ui/AddWidgetModal').then((module) => ({ default: module.AddWidgetModal })),
@@ -137,7 +130,17 @@ export function CanvasViewport() {
   const viewportRef = useRef<HTMLDivElement>(null)
   const worldRef = useRef<HTMLDivElement>(null)
 
-  useCanvasEvents(viewportRef)
+  // Camera core wiring: the engine writes this element's transform
+  // imperatively — React never re-renders for camera motion.
+  useEffect(() => {
+    cameraEngine.registerWorld(worldRef.current)
+    const viewport = viewportRef.current
+    const detachGestures = viewport ? attachCanvasGestures(viewport) : undefined
+    return () => {
+      detachGestures?.()
+      cameraEngine.registerWorld(null)
+    }
+  }, [])
 
   const {
     addWidgetPos,
@@ -159,81 +162,6 @@ export function CanvasViewport() {
   const aiDebugOpen = useAiDebugStore((state) => AI_DEBUG_ENABLED && state.isOpen)
   const scaleDebugOpen = useScaleDebugStore((state) => SCALE_DEBUG_ENABLED && state.isOpen)
   const showMinimap = useSettingsStore((state) => state.showMinimap)
-
-  useEffect(() => {
-    const world = worldRef.current
-    if (!world) return
-    world.style.willChange = 'transform, clip-path'
-    world.style.clipPath = cameraWorldClipPath(false)
-    let appliedPanX = Number.NaN
-    let appliedPanY = Number.NaN
-    let appliedZoom = Number.NaN
-    let revealFrame = 0
-    let revealSecondFrame = 0
-    let revealTimer: number | null = null
-    let motionActive = isCameraMotionActive()
-    const isAppliedView = (pan: CanvasState['pan'], zoom: number) =>
-      Math.abs(pan.x - appliedPanX) < 0.001 &&
-      Math.abs(pan.y - appliedPanY) < 0.001 &&
-      Math.abs(zoom - appliedZoom) < 0.000001
-
-    const cancelReveal = () => {
-      if (revealFrame !== 0) cancelAnimationFrame(revealFrame)
-      if (revealSecondFrame !== 0) cancelAnimationFrame(revealSecondFrame)
-      if (revealTimer !== null) window.clearTimeout(revealTimer)
-      revealFrame = 0
-      revealSecondFrame = 0
-      revealTimer = null
-    }
-
-    const apply = ({ pan, zoom }: CanvasState, force = false) => {
-      if (motionActive && !force) return
-      if (isAppliedView(pan, zoom)) return
-      world.style.transform = `translate3d(${pan.x}px, ${pan.y}px, 0) scale(${zoom})`
-      appliedPanX = pan.x
-      appliedPanY = pan.y
-      appliedZoom = zoom
-    }
-    apply(useCanvasStore.getState())
-    const unsubscribe = useCanvasStore.subscribe((state) => apply(state))
-    const unsubscribeMotion = subscribeCameraMotion((active) => {
-      motionActive = active
-      cancelReveal()
-      if (active) {
-        // The detailed motion surface is painted before this listener runs.
-        // Its clip node already exists while idle, so collapsing the parent to
-        // zero area avoids inherited style, layout, blending, or relocation
-        // across the 300-card live subtree.
-        world.style.clipPath = cameraWorldClipPath(true)
-        return
-      }
-
-      // Apply the final camera once behind the already-painted preview, then
-      // give Chromium two frames to prepare the real card layers before the
-      // interactive DOM is revealed. The fallback timer bounds the handoff if
-      // the tab is briefly unable to produce animation frames.
-      apply(useCanvasStore.getState(), true)
-      world.style.clipPath = cameraWorldClipPath(false)
-      const reveal = () => {
-        if (motionActive) return
-        hideCameraMotionPreview()
-        cancelReveal()
-      }
-      revealFrame = requestAnimationFrame(() => {
-        revealFrame = 0
-        revealSecondFrame = requestAnimationFrame(() => {
-          revealSecondFrame = 0
-          reveal()
-        })
-      })
-      revealTimer = window.setTimeout(reveal, 120)
-    })
-    return () => {
-      cancelReveal()
-      unsubscribe()
-      unsubscribeMotion()
-    }
-  }, [])
 
   useEffect(() => {
     const viewport = viewportRef.current
@@ -702,7 +630,6 @@ export function CanvasViewport() {
       onPointerDown={handleCanvasPointerDown}
     >
       <CanvasAuraLayer />
-      <CameraMotionLayer />
       <div
         ref={worldRef}
         data-world-layer
@@ -735,7 +662,6 @@ export function CanvasViewport() {
       <ShaperHUD />
       <CanvasContextMenu viewportRef={viewportRef} />
       <WidgetContextMenu />
-      <PerformanceMonitor />
       {AiDebugPanel && aiDebugOpen && (
         <Suspense fallback={null}>
           <AiDebugPanel />

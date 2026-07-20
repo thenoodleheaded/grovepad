@@ -6,7 +6,7 @@ import { useThemeStore } from '../../store/useThemeStore'
 import { useCanvasWidgetIds } from '../../hooks/useCanvasWidgets'
 import { widgetDefinition } from '../../widgets/registry'
 import { useSettingsStore } from '../../store/useSettingsStore'
-import { isCameraMotionActive, subscribeCameraMotion } from '../../runtime/cameraMotionRuntime'
+import { isCameraMotionActive, subscribeCameraMotion } from '../../engine/camera/cameraEngine'
 
 const AURA_MAX_WIDGETS = 8
 const CANVAS_RESOLUTION = 128

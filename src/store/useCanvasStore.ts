@@ -1,7 +1,17 @@
 import { create } from 'zustand'
 import type { Size, Vector2D } from '../types/spatial'
 import { clampZoom } from '../types/spatial'
-import { beginCameraMotion, endCameraMotion } from '../runtime/cameraMotionRuntime'
+import { cameraEngine, type CameraFrame } from '../engine/camera/cameraEngine'
+
+// ---------------------------------------------------------------------------
+// Public camera seam. The engine (src/engine/camera/cameraEngine.ts) owns the
+// hot path — it writes the world transform imperatively before this store
+// hears about a frame. The store exists so React chrome, tools, and tests
+// keep one stable, selector-friendly surface: every action here delegates,
+// and pan/zoom mirror the engine frame-accurately (Zustand notify over the
+// handful of guarded subscribers is micro-cheap; nothing hook-subscribes
+// pan/zoom per frame).
+// ---------------------------------------------------------------------------
 
 interface CanvasFitRect {
   x: number
@@ -17,7 +27,7 @@ export interface CanvasState {
   zoom: number
   /** Current viewport size in screen pixels, used for world-space culling. */
   viewportSize: Size
-  /** True while a middle-click or Space+drag pan gesture is active. */
+  /** True while a pan/pinch gesture is active. */
   isPanning: boolean
   canGoBack: boolean
   canGoForward: boolean
@@ -29,21 +39,11 @@ export interface CanvasState {
   setIsPanning: (isPanning: boolean) => void
   /** Fit immediately by default so framing is an atomic visibility guarantee. */
   fitRect: (rect: CanvasFitRect, padding?: number, animated?: boolean) => void
-  /**
-   * Set the zoom level while keeping the world point currently under
-   * `focalPoint` (viewport-relative screen coordinates) stationary.
-   *
-   * world = (focal - pan) / zoom must be invariant, so
-   * pan' = focal - (focal - pan) * (zoom' / zoom)
-   */
+  /** Zoom keeping the world point under `focalPoint` (viewport px) fixed. */
   zoomTo: (zoom: number, focalPoint: Vector2D) => void
   /** Like zoomTo, but glides to the target over a short eased tween. */
   zoomToAnimated: (zoom: number, focalPoint: Vector2D) => void
-  /**
-   * Ease the camera to a target pan/zoom. The tween is a finite rAF loop
-   * (~300ms) that any user gesture cancels; it never runs while idle.
-   * Falls back to an instant jump when the user prefers reduced motion.
-   */
+  /** Ease to a target view; reduced motion jumps instantly. */
   animateView: (pan: Vector2D, zoom: number, duration?: number) => void
   cancelViewAnimation: () => void
   goBack: () => void
@@ -51,40 +51,11 @@ export interface CanvasState {
   fitAll: () => void
 }
 
-const reducedMotion =
-  typeof window !== 'undefined' && 'matchMedia' in window
-    ? window.matchMedia('(prefers-reduced-motion: reduce)')
-    : null
-
-let animationFrame = 0
-
-function easeOutQuint(t: number): number {
-  const inv = 1 - t
-  return 1 - inv * inv * inv * inv * inv
-}
-
 export const useCanvasStore = create<CanvasState>()((set, get) => {
-  const backStack: Array<{ pan: Vector2D; zoom: number }> = []
-  const forwardStack: Array<{ pan: Vector2D; zoom: number }> = []
-  let applyingHistory = false
-  const recordView = () => {
-    if (applyingHistory) return
-    const { pan, zoom } = get()
-    const last = backStack.at(-1)
-    if (!last || last.pan.x !== pan.x || last.pan.y !== pan.y || last.zoom !== zoom) {
-      backStack.push({ pan: { ...pan }, zoom })
-      if (backStack.length > 30) backStack.shift()
-    }
-    forwardStack.length = 0
-    set({ canGoBack: backStack.length > 0, canGoForward: false })
-  }
-  const cancelAnimation = () => {
-    if (animationFrame !== 0) {
-      cancelAnimationFrame(animationFrame)
-      animationFrame = 0
-      endCameraMotion('animation')
-    }
-  }
+  cameraEngine.connectStore(
+    (frame: CameraFrame) => set({ pan: frame.pan, zoom: frame.zoom }),
+    (canGoBack, canGoForward) => set({ canGoBack, canGoForward }),
+  )
 
   return {
     pan: { x: 0, y: 0 },
@@ -94,67 +65,34 @@ export const useCanvasStore = create<CanvasState>()((set, get) => {
     canGoBack: false,
     canGoForward: false,
 
-    panBy: (delta) => {
-      cancelAnimation()
-      if (delta.x === 0 && delta.y === 0) return
-      set((state) => ({
-        pan: { x: state.pan.x + delta.x, y: state.pan.y + delta.y },
-      }))
-    },
+    panBy: (delta) => cameraEngine.panBy(delta),
 
-    setPan: (pan) => {
-      cancelAnimation()
-      set((state) =>
-        state.pan.x === pan.x && state.pan.y === pan.y ? state : { pan },
-      )
-    },
+    setPan: (pan) => cameraEngine.setView(pan, cameraEngine.getFrame().zoom),
 
-    setView: (pan, zoom) => {
-      cancelAnimation()
-      const nextZoom = clampZoom(zoom)
-      set((state) =>
-        state.pan.x === pan.x &&
-        state.pan.y === pan.y &&
-        state.zoom === nextZoom
-          ? state
-          : { pan, zoom: nextZoom },
-      )
-    },
+    setView: (pan, zoom) => cameraEngine.setView(pan, zoom),
 
-    setViewportSize: (viewportSize) =>
+    setViewportSize: (viewportSize) => {
+      cameraEngine.setViewportSize(viewportSize)
       set((state) =>
         state.viewportSize.width === viewportSize.width &&
         state.viewportSize.height === viewportSize.height
           ? state
           : { viewportSize },
-      ),
+      )
+    },
 
     setIsPanning: (isPanning) => {
-      if (isPanning) cancelAnimation()
       set((state) => (state.isPanning === isPanning ? state : { isPanning }))
     },
 
-    zoomTo: (zoom, focalPoint) => {
-      cancelAnimation()
-      const next = clampZoom(zoom)
-      const { pan, zoom: prev } = get()
-      if (next === prev) return
-      const scale = next / prev
-      set({
-        zoom: next,
-        pan: {
-          x: focalPoint.x - (focalPoint.x - pan.x) * scale,
-          y: focalPoint.y - (focalPoint.y - pan.y) * scale,
-        },
-      })
-    },
+    zoomTo: (zoom, focalPoint) => cameraEngine.zoomAtPoint(zoom, focalPoint),
 
     zoomToAnimated: (zoom, focalPoint) => {
       const next = clampZoom(zoom)
-      const { pan, zoom: prev } = get()
+      const { pan, zoom: prev } = cameraEngine.getFrame()
       if (next === prev) return
       const scale = next / prev
-      get().animateView(
+      cameraEngine.animateTo(
         {
           x: focalPoint.x - (focalPoint.x - pan.x) * scale,
           y: focalPoint.y - (focalPoint.y - pan.y) * scale,
@@ -164,76 +102,16 @@ export const useCanvasStore = create<CanvasState>()((set, get) => {
       )
     },
 
-    animateView: (targetPan, targetZoom, duration = 300) => {
-      cancelAnimation()
-      const endZoom = clampZoom(targetZoom)
-      const { pan: startPan, zoom: startZoom } = get()
-      if (
-        startPan.x === targetPan.x &&
-        startPan.y === targetPan.y &&
-        startZoom === endZoom
-      ) {
-        return
-      }
-      recordView()
-      if (reducedMotion?.matches || duration <= 0) {
-        set({ pan: targetPan, zoom: endZoom })
-        return
-      }
+    animateView: (pan, zoom, duration = 300) => cameraEngine.animateTo(pan, zoom, duration),
 
-      // Interpolate zoom in log space so the scale change feels uniform.
-      const startLogZoom = Math.log(startZoom)
-      const logZoomSpan = Math.log(endZoom) - startLogZoom
-      const startTime = performance.now()
-      beginCameraMotion('animation')
+    cancelViewAnimation: () => cameraEngine.interrupt(),
 
-      const step = (now: number) => {
-        const t = Math.min(1, (now - startTime) / duration)
-        const eased = easeOutQuint(t)
-        set({
-          pan: {
-            x: startPan.x + (targetPan.x - startPan.x) * eased,
-            y: startPan.y + (targetPan.y - startPan.y) * eased,
-          },
-          zoom: Math.exp(startLogZoom + logZoomSpan * eased),
-        })
-        if (t < 1) {
-          animationFrame = requestAnimationFrame(step)
-        } else {
-          animationFrame = 0
-          endCameraMotion('animation')
-        }
-      }
+    goBack: () => cameraEngine.goBack(),
 
-      animationFrame = requestAnimationFrame(step)
-    },
-
-    cancelViewAnimation: cancelAnimation,
-
-    goBack: () => {
-      const previous = backStack.pop()
-      if (!previous) return
-      const current = get()
-      forwardStack.push({ pan: { ...current.pan }, zoom: current.zoom })
-      applyingHistory = true
-      get().animateView(previous.pan, previous.zoom, 220)
-      applyingHistory = false
-      set({ canGoBack: backStack.length > 0, canGoForward: true })
-    },
-
-    goForward: () => {
-      const next = forwardStack.pop()
-      if (!next) return
-      const current = get()
-      backStack.push({ pan: { ...current.pan }, zoom: current.zoom })
-      applyingHistory = true
-      get().animateView(next.pan, next.zoom, 220)
-      applyingHistory = false
-      set({ canGoBack: true, canGoForward: forwardStack.length > 0 })
-    },
+    goForward: () => cameraEngine.goForward(),
 
     fitRect: (rect, padding = 120, animated = false) => {
-      const { viewportSize } = get()
+      const viewportSize = get().viewportSize
       const width = Math.max(1, rect.width)
       const height = Math.max(1, rect.height)
       const availableWidth = Math.max(1, viewportSize.width - padding * 2)
@@ -243,10 +121,10 @@ export const useCanvasStore = create<CanvasState>()((set, get) => {
         x: viewportSize.width / 2 - (rect.x + width / 2) * zoom,
         y: viewportSize.height / 2 - (rect.y + height / 2) * zoom,
       }
-      if (animated) get().animateView(pan, zoom)
-      else get().setView(pan, zoom)
+      if (animated) cameraEngine.animateTo(pan, zoom)
+      else cameraEngine.setView(pan, zoom)
     },
 
-    fitAll: () => get().animateView({ x: 0, y: 0 }, 1),
+    fitAll: () => cameraEngine.animateTo({ x: 0, y: 0 }, 1),
   }
 })

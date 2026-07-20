@@ -9,7 +9,7 @@ import { boundsForWidgets } from '../../utils/widgetBounds'
 import {
   isCameraMotionActive,
   subscribeCameraMotion,
-} from '../../runtime/cameraMotionRuntime'
+} from '../../engine/camera/cameraEngine'
 
 const MAP_WIDTH = 184
 const MAP_HEIGHT = 116

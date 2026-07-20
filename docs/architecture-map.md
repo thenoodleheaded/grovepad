@@ -12,7 +12,7 @@ flowchart TD
 
   Canvas --> Layers["Canvas layers\ngrid, groups, widgets, relations, dependencies, wires"]
   Canvas --> UI["UI overlays\ntoolbar, quick add, picker, search, import"]
-  Canvas --> Events["useCanvasEvents\npan, zoom, select, touch"]
+  Canvas --> Events["gestureEngine\npan, zoom, select, touch"]
   Canvas --> Runtime["appRuntime boundary\npersistence + collaboration + circuit engine"]
 
   Layers --> WidgetCard["WidgetCard\ninteraction shell"]
@@ -62,7 +62,7 @@ flowchart TD
 | Subsystem | Primary files | Owns | Must not own |
 |---|---|---|---|
 | Authentication | `useAuthStore.ts`, `LoginPage.tsx`, `lib/supabase.ts` | Session/guest route state | Board mutations |
-| Camera | `useCanvasStore.ts`, `useCanvasEvents.ts`, `canvasView.ts` | Pan, zoom, viewport size, camera history | Widget geometry persistence |
+| Camera | `cameraEngine.ts`, `gestureEngine.ts`, `useCanvasStore.ts`, `canvasView.ts` | Pan, zoom, viewport size, camera history | Widget geometry persistence |
 | Canonical board | `useWidgetStore.ts`, `store/slices/*Slice.ts` | Widgets, relations, connections, groups, hierarchy, selection, undo | Render-only animation state |
 | Circuit runtime | `circuitEngine.ts`, `useCircuitStore.ts`, `transforms.ts` | Deterministic propagation, delivery memory, wire-drag/runtime feedback | Widget renderer details |
 | Application runtime | `runtime/appRuntime.ts`, `runtime/deployVersionMonitor.ts` | Idempotent start/stop ownership for persistence, stale-deploy checks, and circuit services | Domain behavior or visual rendering |
