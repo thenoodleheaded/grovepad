@@ -19,11 +19,11 @@ import type { SpritePaintRequest, SpritePaintResponse, SpriteWidgetsMessage } fr
 /** The painted region covers this many viewports beyond the visible rect. */
 const REGION_MARGIN_VIEWPORTS = 1.5
 /** Repaint when the camera has consumed this fraction of the margin. */
-const REANCHOR_FRACTION = 0.45
+const REANCHOR_FRACTION = 0.3
 /** Bitmap cap per axis (device px) — bounds worker cost and memory. */
 const MAX_BITMAP_AXIS = 4096
 /** Coalescing delay for repaint requests — never on a gesture frame. */
-const REPAINT_SLICE_MS = 120
+const REPAINT_SLICE_MS = 80
 
 interface SpriteUnderlayProps {
   /** Projections of every widget WITHOUT live DOM (index minus mounted). */
@@ -40,14 +40,28 @@ function computeRegion(): SpriteRegion {
   const view = viewportToWorldRect(pan, zoom, viewportSize, 0)
   const marginX = view.width * REGION_MARGIN_VIEWPORTS
   const marginY = view.height * REGION_MARGIN_VIEWPORTS
-  const width = view.width + marginX * 2
-  const height = view.height + marginY * 2
+  // Stretch toward camera travel (world direction = −panVelocity/zoom) so a
+  // sustained fling paints ahead of arrival — same trick as the mount ring.
+  const { panVelocity } = cameraEngine.getVelocity()
+  const speed = Math.hypot(panVelocity.x, panVelocity.y)
+  const stretch = Math.min(1, speed / 2000)
+  const forwardX = speed > 0 ? (-panVelocity.x / speed) * stretch * view.width * 2 : 0
+  const forwardY = speed > 0 ? (-panVelocity.y / speed) * stretch * view.height * 2 : 0
+  const width = view.width + marginX * 2 + Math.abs(forwardX)
+  const height = view.height + marginY * 2 + Math.abs(forwardY)
   const dpr = Math.min(2, typeof devicePixelRatio === 'number' ? devicePixelRatio : 1)
   // Paint at the live zoom unless the bitmap cap forces a coarser scale —
   // exactly the "scale down only when needed" rule.
   const capScale = Math.min(MAX_BITMAP_AXIS / (width * dpr), MAX_BITMAP_AXIS / (height * dpr))
   const paintZoom = Math.min(zoom, capScale)
-  return { x: view.x - marginX, y: view.y - marginY, width, height, paintZoom, devicePixelRatio: dpr }
+  return {
+    x: view.x - marginX + Math.min(0, forwardX),
+    y: view.y - marginY + Math.min(0, forwardY),
+    width,
+    height,
+    paintZoom,
+    devicePixelRatio: dpr,
+  }
 }
 
 /** True once the camera nears the edge of what the bitmap covers. */
