@@ -125,8 +125,10 @@ export const SpriteUnderlay = memo(function SpriteUnderlay({ unmountedWidgets }:
       }
       const canvasEl = canvasRef.current
       if (!canvasEl) return
-      canvasEl.width = response.bitmap.width
-      canvasEl.height = response.bitmap.height
+      // Only reallocate the backing store when dimensions actually changed —
+      // transferFromImageBitmap replaces the contents either way.
+      if (canvasEl.width !== response.bitmap.width) canvasEl.width = response.bitmap.width
+      if (canvasEl.height !== response.bitmap.height) canvasEl.height = response.bitmap.height
       blitCtx.transferFromImageBitmap(response.bitmap)
       const region = response.region
       canvasEl.style.transform = `translate3d(${region.x}px, ${region.y}px, 0)`

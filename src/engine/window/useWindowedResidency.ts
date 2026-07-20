@@ -15,11 +15,13 @@ const MOUNTED_BUDGET = 320
 const FULL_BUDGET = 32
 /** New mounts allowed per slice at idle (settle backfill). Mid-motion the
  * batch is ZERO: the sprite underlay covers everything unmounted, so gesture
- * time pays no React commits at all — only pins may still mount. */
-const IDLE_MOUNT_BATCH = 64
-/** Full-card promotions per idle slice — glass mounts are staggered so the
- * settle re-crisp never builds dozens of editors in one commit. */
-const IDLE_PROMOTE_BATCH = 4
+ * time pays no React commits at all — only pins may still mount. Sized so a
+ * single backfill commit stays affordable even at 4x CPU throttle. */
+const IDLE_MOUNT_BATCH = 48
+/** Full-card promotions per idle slice, and only on slices where primitive
+ * backfill has gone quiet — glass mounts never share a commit with a mount
+ * batch, so no settle slice combines the two most expensive operations. */
+const IDLE_PROMOTE_BATCH = 2
 const RECOMPUTE_INTERVAL_MS = 90
 
 function sameResidency(a: ResidencyResult, b: ResidencyResult): boolean {
@@ -70,14 +72,20 @@ export function useWindowedResidency(
 
   useEffect(() => {
     let timer: number | null = null
+    // Two-phase settle: primitive backfill first; glass promotions begin only
+    // once a slice produced zero new mounts, so the two most expensive commit
+    // kinds never land in the same frame.
+    let lastSliceGrew = true
 
     /** Recompute once; report whether a batch cap was hit (needs more slices). */
     const apply = (): boolean => {
       const idle = cameraEngine.getVelocity().tier === 'idle'
+      const enteredWithGrowth = lastSliceGrew
       const batch = idle ? IDLE_MOUNT_BATCH : 0
+      const promoteBatch = idle && !enteredWithGrowth ? IDLE_PROMOTE_BATCH : 0
       const before = previousMounted.current
       const beforeFull = previousFull.current
-      const next = compute(idle, batch, idle ? IDLE_PROMOTE_BATCH : 0)
+      const next = compute(idle, batch, promoteBatch)
       let grew = 0
       for (const id of next.mountedIds) {
         if (!before.has(id)) grew++
@@ -86,8 +94,17 @@ export function useWindowedResidency(
       for (const id of next.fullIds) {
         if (!beforeFull.has(id)) promoted++
       }
+      // Motion slices count as "growth pending" so the first settle slice is
+      // always mounts-only; promotions start from the second slice onward.
+      lastSliceGrew = idle ? grew > 0 : true
       setResidency((current) => (sameResidency(current, next) ? current : next))
-      return (batch > 0 && grew >= batch) || (idle && promoted >= IDLE_PROMOTE_BATCH)
+      // More slices while mounts flow, while promotions hit their cap, or for
+      // the one bridge slice between the mount phase and the promotion phase.
+      return (
+        (idle && grew > 0) ||
+        (idle && promoted >= IDLE_PROMOTE_BATCH) ||
+        (idle && grew === 0 && promoteBatch === 0)
+      )
     }
 
     const schedule = (): void => {

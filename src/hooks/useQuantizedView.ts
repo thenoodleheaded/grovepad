@@ -70,6 +70,12 @@ export interface QuantizedViewOptions {
   freezeWhileMoving?: boolean
 }
 
+/** Settle stagger: each frozen consumer reconciles in its own slot a few
+ * frames apart, so four heavy layers never share one settle frame (the
+ * convoy that produced multi-hundred-ms commits at CPU throttle). */
+const SETTLE_STAGGER_MS = 45
+let nextStaggerSlot = 0
+
 export function useQuantizedView(
   overscanScreen: number,
   { freezeWhileMoving = false }: QuantizedViewOptions = {},
@@ -80,6 +86,7 @@ export function useQuantizedView(
     let rafId = 0
     let holdTimer: ReturnType<typeof setTimeout> | null = null
     let lastFlushAt = 0
+    const staggerSlot = freezeWhileMoving ? nextStaggerSlot++ % 4 : 0
 
     const flush = () => {
       rafId = 0
@@ -112,14 +119,23 @@ export function useQuantizedView(
     flush()
 
     const unsubscribeFrames = cameraEngine.onFrame(request)
-    // Settle: cancel any hold and reconcile immediately at full precision.
+    // Settle: cancel any hold and reconcile at full precision — frozen
+    // consumers each in their own stagger slot so they never share a frame.
     const unsubscribeMotion = subscribeCameraMotion((active) => {
       if (active) return
       if (holdTimer !== null) {
         clearTimeout(holdTimer)
         holdTimer = null
       }
-      if (rafId === 0) rafId = requestAnimationFrame(flush)
+      if (rafId !== 0) return
+      if (staggerSlot === 0) {
+        rafId = requestAnimationFrame(flush)
+        return
+      }
+      holdTimer = setTimeout(() => {
+        holdTimer = null
+        if (rafId === 0) rafId = requestAnimationFrame(flush)
+      }, staggerSlot * SETTLE_STAGGER_MS)
     })
     // Viewport size arrives through the store, not engine frames.
     const unsubscribeStore = useCanvasStore.subscribe((state, previous) => {
@@ -133,7 +149,7 @@ export function useQuantizedView(
       unsubscribeMotion()
       unsubscribeStore()
     }
-  }, [overscanScreen])
+  }, [overscanScreen, freezeWhileMoving])
 
   return view
 }
