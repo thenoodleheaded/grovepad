@@ -24,7 +24,9 @@ function residency(overrides: Partial<ResidencyInput>): ReturnType<typeof comput
     previousMounted: new Set(),
     previousFull: new Set(),
     allowUnmount: true,
+    allowTierChange: true,
     mountBatch: 100,
+    promoteBatch: 100,
     fullBudget: 100,
     mountedBudget: 100,
     ...overrides,
@@ -128,5 +130,53 @@ describe('windowed residency', () => {
     })
     expect(result.mountedIds).toEqual(['kept'])
     expect(result.fullIds.size).toBe(0)
+  })
+
+  it('freezes tier membership mid-motion: no promotions, no demotions', () => {
+    const entries = [entry('was-full', 700), entry('closer', 400)]
+    const result = residency({
+      entries,
+      allowTierChange: false,
+      previousMounted: new Set(['was-full', 'closer']),
+      previousFull: new Set(['was-full']),
+      fullBudget: 1,
+    })
+    // 'closer' would win the budget at idle; mid-motion the incumbent holds.
+    expect([...result.fullIds]).toEqual(['was-full'])
+  })
+
+  it('still promotes pins while the tier is frozen', () => {
+    const result = residency({
+      entries: [entry('pinned', 400)],
+      allowTierChange: false,
+      pinnedIds: new Set(['pinned']),
+    })
+    expect(result.fullIds.has('pinned')).toBe(true)
+  })
+
+  it('staggers full-tier promotions across passes, incumbents unaffected', () => {
+    const entries = [entry('inc', 400), entry('n1', 500), entry('n2', 600), entry('n3', 700)]
+    const result = residency({
+      entries,
+      previousMounted: new Set(['inc', 'n1', 'n2', 'n3']),
+      previousFull: new Set(['inc']),
+      promoteBatch: 2,
+    })
+    // Incumbent stays; only two of the three newcomers promote this pass.
+    expect(result.fullIds.has('inc')).toBe(true)
+    expect(result.fullIds.size).toBe(3)
+  })
+
+  it('drops a frozen full card only if it unmounts entirely', () => {
+    const result = residency({
+      entries: [entry('gone-full', 2300)],
+      allowTierChange: false,
+      allowUnmount: false,
+      previousMounted: new Set(['gone-full']),
+      previousFull: new Set(['gone-full']),
+    })
+    // Not unmounted (mid-gesture) → stays mounted AND stays full.
+    expect(result.mountedIds).toEqual(['gone-full'])
+    expect(result.fullIds.has('gone-full')).toBe(true)
   })
 })

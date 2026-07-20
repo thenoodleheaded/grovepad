@@ -39,8 +39,16 @@ export interface ResidencyInput {
   previousFull: ReadonlySet<string>
   /** True only when the camera is idle — the only time teardown may happen. */
   allowUnmount: boolean
+  /** True only when the camera is idle: promoting a primitive to a full glass
+   * card (or demoting one) is the single most expensive mount event, so tier
+   * membership is frozen mid-motion — only pins may still promote. */
+  allowTierChange: boolean
   /** Max NEW mounts this pass (keeps a single flush bounded mid-gesture). */
   mountBatch: number
+  /** Max NEW full-tier promotions this pass. A full glass card is the most
+   * expensive thing this layer can mount; even the settle backfill staggers
+   * them so no single commit builds dozens of editors at once. */
+  promoteBatch: number
   fullBudget: number
   mountedBudget: number
 }
@@ -133,10 +141,20 @@ export function computeResidency(input: ResidencyInput): ResidencyResult {
     mounted.push(candidate.entry.id)
     mountedSet.add(candidate.entry.id)
   }
+  mounted.sort()
 
   // Full tier: pins first, then nearest readable cards up to the budget.
   const fullIds = new Set<string>()
   for (const id of input.pinnedIds) if (mountedSet.has(id)) fullIds.add(id)
+
+  // Mid-motion the tier is frozen: existing full cards stay full (their mount
+  // cost is already paid), nothing else promotes, and the readability sort is
+  // skipped entirely. Promotions and demotions land on the settle slice.
+  if (!input.allowTierChange) {
+    for (const id of input.previousFull) if (mountedSet.has(id)) fullIds.add(id)
+    return { mountedIds: mounted, fullIds }
+  }
+
   const readable = candidates
     .filter((candidate) => {
       if (fullIds.has(candidate.entry.id) || !mountedSet.has(candidate.entry.id)) return false
@@ -149,11 +167,15 @@ export function computeResidency(input: ResidencyInput): ResidencyResult {
         Number(input.previousFull.has(b.entry.id)) - Number(input.previousFull.has(a.entry.id)) ||
         a.distance - b.distance,
     )
+  let promotions = 0
   for (const candidate of readable) {
     if (fullIds.size >= input.fullBudget) break
+    if (!input.previousFull.has(candidate.entry.id)) {
+      if (promotions >= input.promoteBatch) continue
+      promotions++
+    }
     fullIds.add(candidate.entry.id)
   }
 
-  mounted.sort()
   return { mountedIds: mounted, fullIds }
 }
