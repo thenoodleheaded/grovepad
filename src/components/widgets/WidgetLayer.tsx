@@ -6,17 +6,20 @@ import { useWidgetStore } from '../../store/useWidgetStore'
 import { useDragDisplacementStore } from '../../store/dragDisplacement'
 import { useCanvasWidgetIds } from '../../hooks/useCanvasWidgets'
 import { getOpaqueWidgetType } from '../../utils/persistedBoardSchema'
+import { interactiveResidentWidgetIds } from '../../utils/widgetResidency'
+import { useWindowedResidency } from '../../engine/window/useWindowedResidency'
+import type { ResidencyEntry } from '../../engine/window/windowedResidency'
 import { primitiveWidget } from '../../widgets/primitiveWidget'
 import { WidgetCard } from './WidgetCard'
 import { PrimitiveWidgetCard } from './PrimitiveWidgetCard'
 
-const STABLE_WIDGET_RENDER_BUDGET = 320
-
 /**
- * World-space layer for widgets. Its mounted membership depends only on board
- * state, never camera state. Keeping the same cards alive through zoom avoids
- * React reconciliation, layout effects, and forced textarea measurements in
- * the middle of a gesture; the parent world transform does all camera work.
+ * World-space layer for widgets. Mounted membership comes from the windowed
+ * residency driver: camera-window driven, but recomputed only in coalesced
+ * off-gesture slices — mid-motion the set can only grow (pre-mount ahead of
+ * travel), teardown waits for idle, and the id-sorted order plus explicit
+ * per-card zIndex keep reconciliation free of reorder churn. The parent world
+ * transform does all per-frame camera work.
  */
 export function WidgetLayer() {
   const {
@@ -74,49 +77,46 @@ export function WidgetLayer() {
     return ids
   }, [focusedWidgetId, interaction])
 
-  const renderedIds = useMemo(() => {
-    // The base order never changes with selection or hover. Reordering 300
-    // keyed cards solely to pin one interaction target caused whole-layer
-    // layout work and triple-digit frame stalls.
-    const ids: string[] = []
-    const included = new Set<string>()
-    for (const widgetId of canvasWidgetIds) {
-      if (ids.length >= STABLE_WIDGET_RENDER_BUDGET) break
-      if (!widgets[widgetId]) continue
-      ids.push(widgetId)
-      included.add(widgetId)
+  const entries = useMemo(() => {
+    const out: ResidencyEntry[] = []
+    for (const id of canvasWidgetIds) {
+      const widget = widgets[id]
+      if (!widget) continue
+      out.push({
+        id,
+        x: widget.position.x,
+        y: widget.position.y,
+        width: widget.size.width,
+        height: widget.size.height,
+      })
     }
-    // A pinned widget outside the stable budget remains operable, but is
-    // appended instead of changing the order of existing cards.
-    for (const widgetId of pinnedIds) {
-      const widget = widgets[widgetId]
-      if (!widget || widget.canvasId !== activeCanvasId || included.has(widgetId)) continue
-      ids.push(widgetId)
-      included.add(widgetId)
-    }
-    return ids
-  }, [activeCanvasId, canvasWidgetIds, pinnedIds, widgets])
+    return out
+  }, [canvasWidgetIds, widgets])
 
-  const interactiveIds = useMemo(() => {
-    if (circuitMode) return new Set(renderedIds)
+  const residencyPins = useMemo(() => {
+    // Interaction subjects and settling drags must never dehydrate. Displaced
+    // ghost neighbors are deliberately excluded: their offsets churn every
+    // drag frame and they are by construction already near the viewport.
     const ids = new Set(pinnedIds)
-    // A single explicit selection represents an editing subject. A marquee
-    // selection remains entirely passive and uses the shared action bar.
     if (interaction.selectedIds.size === 1) {
       const selectedId = interaction.selectedIds.values().next().value
       if (selectedId) ids.add(selectedId)
     }
-    for (const id of renderedIds) {
-      const widget = widgets[id]
-      if (widget && getOpaqueWidgetType(widget)) ids.add(id)
-    }
+    for (const id of displacement.pendingSettleIds) ids.add(id)
     return ids
-  }, [circuitMode, interaction.selectedIds, pinnedIds, renderedIds, widgets])
+  }, [displacement.pendingSettleIds, interaction.selectedIds, pinnedIds])
 
-  const primitiveWidgets = useMemo(
-    () => renderedIds.map((id) => primitiveWidget(widgets[id]!)),
-    [renderedIds, widgets],
-  )
+  const { mountedIds, fullIds } = useWindowedResidency(entries, residencyPins)
+
+  const interactiveIds = useMemo(() => {
+    return interactiveResidentWidgetIds({
+      renderedIds: mountedIds,
+      pinnedIds,
+      selectedIds: interaction.selectedIds,
+      circuitMode,
+      forceInteractive: (id) => Boolean(widgets[id] && getOpaqueWidgetType(widgets[id]!)),
+    })
+  }, [circuitMode, interaction.selectedIds, mountedIds, pinnedIds, widgets])
 
   const primitiveId = (target: EventTarget | null): string | null => {
     if (!(target instanceof Element)) return null
@@ -172,22 +172,24 @@ export function WidgetLayer() {
       <div aria-hidden className="absolute h-6 w-px -translate-y-1/2 bg-emerald-400/40" />
       <span className="absolute left-3 top-2  text-[10px] text-neutral-500">0, 0</span>
 
-      {primitiveWidgets.map((widget) => {
-        if (interactiveIds.has(widget.id)) {
-          return <WidgetCard key={widget.id} widgetId={widget.id} />
+      {mountedIds.map((widgetId) => {
+        const widget = widgets[widgetId]
+        if (!widget) return null
+        if (fullIds.has(widgetId) || interactiveIds.has(widgetId)) {
+          return <WidgetCard key={widgetId} widgetId={widgetId} />
         }
-        const groupId = widgetGroupIndex[widget.id]
+        const groupId = widgetGroupIndex[widgetId]
         return (
           <PrimitiveWidgetCard
-            key={widget.id}
-            widget={widget}
-            selected={interaction.selectedIds.has(widget.id)}
-            blocked={blockedWidgetIds.has(widget.id)}
+            key={widgetId}
+            widget={primitiveWidget(widget)}
+            selected={interaction.selectedIds.has(widgetId)}
+            blocked={blockedWidgetIds.has(widgetId)}
             grouped={Boolean(groupId)}
             groupColor={groupId ? groups[groupId]?.color : undefined}
-            ghostOffset={displacement.offsets[widget.id]}
-            settlePending={displacement.pendingSettleIds.has(widget.id)}
-            focusBackground={focusedWidgetId !== null && focusedWidgetId !== widget.id}
+            ghostOffset={displacement.offsets[widgetId]}
+            settlePending={displacement.pendingSettleIds.has(widgetId)}
+            focusBackground={focusedWidgetId !== null && focusedWidgetId !== widgetId}
           />
         )
       })}

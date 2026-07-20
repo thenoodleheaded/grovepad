@@ -71,7 +71,10 @@ export interface PrimitiveWidget {
 }
 
 const projectionCache = new WeakMap<Widget, PrimitiveWidget>()
-const MAX_ROWS = 10
+// A full card cannot visibly accommodate more than seven quiet rows at the
+// released minimum height. Bounding here prevents hidden payload entries from
+// creating DOM that the clipped passive surface could never display.
+const MAX_ROWS = 7
 const MAX_TEXT = 900
 
 function isRecord(value: unknown): value is Record<string, unknown> {

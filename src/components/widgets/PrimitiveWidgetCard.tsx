@@ -45,19 +45,13 @@ function PrimitiveRows({ rows, bars = false }: { rows: readonly PrimitivePreview
         return (
           <div
             className={`gp-primitive-row ${row.done ? 'gp-primitive-row-done' : ''}`}
+            data-bar={bars || undefined}
             key={`${row.label}-${index}`}
+            style={bars ? {
+              '--gp-primitive-row-ratio': `${Math.max(3, Math.min(100, (ratio / max) * 100))}%`,
+              '--gp-primitive-row-color': row.color ?? 'var(--gp-widget-accent)',
+            } as CSSProperties : undefined}
           >
-            {bars && (
-              <span
-                aria-hidden
-                className="gp-primitive-row-bar"
-                style={{
-                  width: `${Math.max(3, Math.min(100, (ratio / max) * 100))}%`,
-                  backgroundColor: row.color,
-                }}
-              />
-            )}
-            {!bars && <span aria-hidden className="gp-primitive-row-mark" />}
             <span className="gp-primitive-row-label">{row.label}</span>
             {row.value && <span className="gp-primitive-row-value">{row.value}</span>}
           </div>

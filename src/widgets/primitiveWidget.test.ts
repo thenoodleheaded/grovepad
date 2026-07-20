@@ -68,6 +68,6 @@ describe('primitive widget projection', () => {
         })),
       },
     })
-    expect(primitiveWidget(source).visual.rows).toHaveLength(10)
+    expect(primitiveWidget(source).visual.rows).toHaveLength(7)
   })
 })

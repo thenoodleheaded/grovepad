@@ -28,6 +28,9 @@ export type CameraMotionTier = 'idle' | 'moving' | 'fast'
 export interface CameraVelocitySample {
   /** Combined screen-space speed in px/s (pan plus zoom-induced flow). */
   speed: number
+  /** Smoothed screen-space pan velocity in px/s. The camera travels through
+   * the WORLD opposite to this: worldDirection = -panVelocity / zoom. */
+  panVelocity: Vector2D
   tier: CameraMotionTier
 }
 
@@ -50,6 +53,7 @@ const frameListeners = new Set<(frame: CameraFrame) => void>()
 const motionListeners = new Set<(active: boolean) => void>()
 
 let emaSpeed = 0
+let emaPanVelocity: Vector2D = { x: 0, y: 0 }
 let lastFrameAt = 0
 let tier: CameraMotionTier = 'idle'
 let settleTimer: ReturnType<typeof setTimeout> | null = null
@@ -109,12 +113,17 @@ function trackVelocity(previous: CameraFrame, next: CameraFrame): void {
     Math.hypot(viewportSize.width, viewportSize.height) * 0.5
   const instant = ((panDist + zoomFlow) / dt) * 1000
   emaSpeed = emaSpeed + (instant - emaSpeed) * VELOCITY_ALPHA
+  emaPanVelocity = {
+    x: emaPanVelocity.x + (((next.pan.x - previous.pan.x) / dt) * 1000 - emaPanVelocity.x) * VELOCITY_ALPHA,
+    y: emaPanVelocity.y + (((next.pan.y - previous.pan.y) / dt) * 1000 - emaPanVelocity.y) * VELOCITY_ALPHA,
+  }
   setTier(classifyTier(tier, emaSpeed))
 
   if (settleTimer !== null) clearTimeout(settleTimer)
   settleTimer = setTimeout(() => {
     settleTimer = null
     emaSpeed = 0
+    emaPanVelocity = { x: 0, y: 0 }
     setTier('idle')
   }, SETTLE_MS)
 }
@@ -158,7 +167,7 @@ function pushHistoryEntry(): void {
 export const cameraEngine = {
   getFrame: (): CameraFrame => frame,
   getViewportSize: (): Size => viewportSize,
-  getVelocity: (): CameraVelocitySample => ({ speed: emaSpeed, tier }),
+  getVelocity: (): CameraVelocitySample => ({ speed: emaSpeed, panVelocity: emaPanVelocity, tier }),
 
   registerWorld(el: HTMLElement | null): void {
     worldEl = el

@@ -338,26 +338,43 @@ body[data-widget-dragging] .gp-widget-layout-motion[data-settle-pending] > .gp-c
   display: grid;
   min-height: 22px;
   flex: none;
-  grid-template-columns: 10px minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 7px;
   overflow: hidden;
   border-radius: 7px;
-  padding: 2px 7px;
+  padding: 2px 7px 2px 24px;
   background: rgb(255 255 255 / 0.035);
   font-size: 10px;
   line-height: 1.2;
 }
 
-.gp-primitive-row-mark {
+.gp-primitive-row::before {
+  content: '';
+  position: absolute;
+  z-index: 0;
+  left: 8px;
+  top: 50%;
+  translate: 0 -50%;
   width: 7px;
   height: 7px;
   border: 1px solid color-mix(in srgb, var(--gp-widget-accent) 55%, transparent);
   border-radius: 2px;
 }
 
-.gp-primitive-row-done .gp-primitive-row-mark {
+.gp-primitive-row-done::before {
   background: var(--gp-widget-accent);
+}
+
+.gp-primitive-row[data-bar]::before {
+  inset: 0 auto 0 0;
+  width: var(--gp-primitive-row-ratio);
+  height: auto;
+  translate: none;
+  border: 0;
+  border-radius: inherit;
+  background: var(--gp-primitive-row-color);
+  opacity: 0.18;
 }
 
 .gp-primitive-row-done .gp-primitive-row-label {
@@ -377,15 +394,6 @@ body[data-widget-dragging] .gp-widget-layout-motion[data-settle-pending] > .gp-c
 .gp-primitive-row-value {
   color: rgb(161 161 170 / 0.82);
   font-variant-numeric: tabular-nums;
-}
-
-.gp-primitive-row-bar {
-  position: absolute;
-  z-index: 0;
-  inset: 0 auto 0 0;
-  border-radius: inherit;
-  background: color-mix(in srgb, var(--gp-widget-accent) 22%, transparent);
-  opacity: 0.5;
 }
 
 .gp-primitive-table {
