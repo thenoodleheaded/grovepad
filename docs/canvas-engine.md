@@ -62,13 +62,23 @@ change may only toggle compositor-only properties (`opacity`, `visibility`,
   a gesture frame.
 
 ### 3. Dual representation (`src/engine/raster/`)
-- Every hydrated card owns two stacked representations: live DOM, and a bitmap
-  snapshot captured off-gesture (SVG foreignObject rasterization in a worker
-  where possible; capture cost is budgeted per idle slice).
-- Snapshots invalidate on content/size change and recapture lazily.
-- Widgets whose content cannot rasterize faithfully (media, external images)
-  declare `raster: false` in the registry and stay live DOM at every tier —
-  the governor compensates by shedding their effects earlier.
+*(Amended 2026-07-21 during implementation; owner-authorized "change whatever
+the other AI did" covered folding the primitive-card work into this design.
+Original prescription — per-card foreignObject bitmap snapshots — was
+superseded: DOM serialization is brittle (fonts, external content) and
+per-card bitmaps still require per-card DOM. What shipped is stronger.)*
+- Three representations, cheapest first: a **sprite** (painted portrait of a
+  card inside one world-anchored canvas), a **primitive card** (cheap passive
+  DOM, `PrimitiveWidgetCard`), and the **full live card**.
+- The sprite underlay is painted by a worker (OffscreenCanvas) from pure
+  `PrimitiveWidget` projections and covers every widget the mount ring has
+  not reached; mounted DOM covers its own sprite. Repaints are
+  generation-guarded, off-gesture, and land as one transferFromImageBitmap.
+- During motion the compositor scales the sprite bitmap (softness at speed is
+  the ratified trade; below ~26 painted px a card is an accent chip —
+  matching what the eye resolves at that scale, not a quality cut).
+- Settle re-anchors and repaints at exact zoom; deep zoom-in beyond 2× the
+  painted resolution triggers a sharper repaint.
 
 ### 4. Quality governor (`src/engine/governor/`)
 - Inputs: camera velocity, measured frame times (rolling p95), hydrated count.
