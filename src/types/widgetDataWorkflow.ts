@@ -51,6 +51,7 @@ export interface DatePickerData {
   /** Local 24-hour time (HH:mm), or empty when unused. */
   time: string
   includeTime: boolean
+  mode?: 'date_time' | 'countdown'
 }
 
 interface OutlineItem {
@@ -207,4 +208,3 @@ export interface PieChartData {
   segments: PieChartSegment[]
   mode: 'donut' | 'pie'
 }
-

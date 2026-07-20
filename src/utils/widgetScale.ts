@@ -23,8 +23,10 @@ export function fullWidgetResizeBounds(
   }
 }
 
-/** World pixels beyond both axes before one scale-state change commits. */
-export const SNAP_OVERSHOOT_PX = 36
+/** World pixels beyond both axes before one scale-state change commits.
+ * High enough that overshooting the minimum while merely making a card small
+ * never collapses it — a state change requires a deliberate, long pull. */
+export const SNAP_OVERSHOOT_PX = 90
 
 export function crossedBothScaleAxes(
   xDistance: number,

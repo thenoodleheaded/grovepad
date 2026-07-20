@@ -12,26 +12,170 @@
   --gp-duration-snap: 150ms;
   --gp-ease-snap: cubic-bezier(0.2, 0.82, 0.2, 1);
   --gp-ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
-  --gp-surface-canvas: #0d100e;
+  --gp-surface-canvas: #1b1f1c;
   /* Base the workspace-tint mix starts from — dark in dark mode, light in
      light mode. The canvas element mixes 3% of the workspace accent into it. */
-  --gp-canvas-tint-base: #0a0d0b;
+  --gp-canvas-tint-base: #141815;
   --gp-surface-panel: oklch(15% 0.008 148 / 0.96);
   --gp-focus: oklch(88% 0.31 136 / 0.72);
+  /* Customizer Defaults */
+  --gp-light-widget-bg: linear-gradient(160deg, oklch(72% 0.006 250 / 0.985) 0%, oklch(62% 0.006 250 / 0.99) 100%);
+  --gp-light-panel-bg: linear-gradient(160deg, oklch(84% 0.006 250 / 0.985) 0%, oklch(74% 0.006 250 / 0.99) 100%);
+  --gp-light-aura-alpha: 0.55;
+  --gp-dark-aura-alpha: 0.04;
+  --gp-grid-coarse: rgb(137 165 148 / 0.075);
+  --gp-grid-fine: rgb(163 230 53 / 0.13);
+  --gp-widget-muted-text: #a3a3a3;
+  --gp-safe-top: env(safe-area-inset-top, 0px);
+  --gp-safe-right: env(safe-area-inset-right, 0px);
+  --gp-safe-bottom: env(safe-area-inset-bottom, 0px);
+  --gp-safe-left: env(safe-area-inset-left, 0px);
+  --gp-touch-target: 44px;
+  --gp-ui-scale: 1.3;
+  --gp-grid-intensity: 1;
+  --gp-aura-intensity: 1;
+}
+
+[data-theme='light'] {
+  /* A dark-ish slate canvas — subtly brighter than dark mode. */
+  --gp-surface-canvas: #2f3531;
+  --gp-canvas-tint-base: #282e2a;
+  /* Same colors as widgets in light mode (oklch lightness 33% like widget cards) */
+  --gp-surface-panel: oklch(95% 0.006 250 / 0.97);
+  --gp-focus: oklch(48% 0.22 137 / 0.72);
   --gp-grid-coarse: rgb(137 165 148 / 0.075);
   --gp-grid-fine: rgb(163 230 53 / 0.13);
   --gp-widget-muted-text: #a3a3a3;
 }
 
-[data-theme='light'] {
-  /* A soft, warm off-white canvas — never a pure #fff sheet of paper. */
-  --gp-surface-canvas: #ecefea;
-  --gp-canvas-tint-base: #e4e7e2;
-  --gp-surface-panel: oklch(95.5% 0.004 148 / 0.97);
-  --gp-focus: oklch(48% 0.22 137 / 0.72);
-  --gp-grid-coarse: rgb(30 58 40 / 0.07);
-  --gp-grid-fine: rgb(36 126 56 / 0.12);
-  --gp-widget-muted-text: #525252;
+/* Fixed chrome uses these shared offsets so notches, rounded display corners,
+   the home indicator, Stage Manager, and standalone mode never cover an
+   action. Desktop values remain the original visual spacing. */
+.gp-safe-canvas-top {
+  top: calc(var(--gp-safe-top) + 12px);
+  left: calc(var(--gp-safe-left) + 12px);
+  right: calc(var(--gp-safe-right) + 12px);
+}
+
+/* Shared offsets for chrome that must dock below CanvasToolbar's top row
+ * instead of sharing its corner. The row's own height scales with
+ * --gp-ui-scale (see .gp-toolbar below), so these track it instead of a
+ * value measured once at one scale setting — a flat px offset drifts out of
+ * sync the moment a user changes Settings → Interface scale, recreating the
+ * same overlap. Defined once so every consumer (right-anchored or centered)
+ * lands on the same row instead of guessing independently. */
+:root {
+  --gp-toolbar-row2-top: calc(var(--gp-safe-top) + 12px + (44px * var(--gp-ui-scale)) + 12px);
+  --gp-toolbar-row3-top: calc(var(--gp-toolbar-row2-top) + 36px + 12px);
+}
+
+.gp-safe-canvas-top-right-row2 {
+  top: var(--gp-toolbar-row2-top);
+  right: calc(var(--gp-safe-right) + 12px);
+}
+
+.gp-safe-canvas-top-right-row3 {
+  top: var(--gp-toolbar-row3-top);
+  right: calc(var(--gp-safe-right) + 12px);
+}
+
+.gp-safe-canvas-bottom-right {
+  right: calc(var(--gp-safe-right) + 12px);
+  bottom: calc(var(--gp-safe-bottom) + 12px);
+}
+
+.gp-safe-canvas-bottom-left {
+  left: calc(var(--gp-safe-left) + 12px);
+  bottom: calc(var(--gp-safe-bottom) + 64px);
+}
+
+html[data-viewport-class='phone'] .gp-safe-canvas-bottom-left {
+  bottom: calc(var(--gp-safe-bottom) + 12px);
+}
+
+html[data-viewport-class='phone'] .gp-desktop-zoom-step {
+  display: none;
+}
+
+.gp-safe-canvas-bottom-center {
+  bottom: var(--gp-safe-bottom);
+}
+
+.gp-canvas-mode-dock {
+  display: none;
+  bottom: calc(var(--gp-safe-bottom) + 12px);
+}
+
+html:is([data-viewport-class='phone'], [data-viewport-class='tablet']) .gp-canvas-mode-dock,
+html:is([data-active-input='touch'], [data-active-input='pen']) .gp-canvas-mode-dock {
+  display: flex;
+}
+
+html:is([data-viewport-class='phone'], [data-viewport-class='tablet']) .gp-selection-bar,
+html:is([data-active-input='touch'], [data-active-input='pen']) .gp-selection-bar {
+  /* Must clear the mode dock + zoom row entirely (their own 44-57px height
+     plus their 12px bottom margin), with a real gap on top — 64px let the
+     selection bar's bottom edge overlap those docks by several pixels. */
+  bottom: calc(var(--gp-safe-bottom) + 84px);
+}
+
+/* Desktop retains its compact density. Coarse-pointer and explicit touch/pen
+   sessions receive an honest interaction floor on shared chrome; widget-local
+   controls are migrated through the same class as their family is adapted. */
+@media (any-pointer: coarse) {
+  .gp-touch-target,
+  .gp-toolbar button,
+  .gp-menu button,
+  .gp-dialog button {
+    min-width: var(--gp-touch-target);
+    min-height: var(--gp-touch-target);
+  }
+}
+
+html[data-active-input='touch'] .gp-touch-target,
+html[data-active-input='pen'] .gp-touch-target {
+  min-width: var(--gp-touch-target);
+  min-height: var(--gp-touch-target);
+}
+
+html:is([data-viewport-class='phone'], [data-viewport-class='tablet']) :is(
+  .gp-touch-target,
+  .gp-toolbar button,
+  .gp-menu button,
+  .gp-dialog button
+) {
+  min-width: var(--gp-touch-target);
+  min-height: var(--gp-touch-target);
+}
+
+html:is([data-viewport-class='phone'], [data-viewport-class='tablet']) .gp-workspace-reorder,
+html:is([data-active-input='touch'], [data-active-input='pen']) .gp-workspace-reorder {
+  display: flex;
+}
+
+html:is([data-viewport-class='phone'], [data-viewport-class='tablet']) .gp-tree-row-action,
+html:is([data-active-input='touch'], [data-active-input='pen']) .gp-tree-row-action {
+  pointer-events: auto;
+  opacity: 1;
+}
+
+html:is([data-viewport-class='phone'], [data-viewport-class='tablet']) .gp-canvas-tree-scrim {
+  display: block;
+}
+
+html[data-viewport-class='phone'] .gp-canvas-tree {
+  top: calc(var(--gp-safe-top) + 8px);
+  right: calc(var(--gp-safe-right) + 8px);
+  bottom: calc(var(--gp-safe-bottom) + 8px);
+  left: calc(var(--gp-safe-left) + 8px);
+  width: auto;
+}
+
+html[data-viewport-class='tablet'] .gp-canvas-tree {
+  top: calc(var(--gp-safe-top) + 12px);
+  bottom: calc(var(--gp-safe-bottom) + 12px);
+  left: calc(var(--gp-safe-left) + 12px);
+  width: min(360px, calc(100vw - var(--gp-safe-left) - var(--gp-safe-right) - 24px));
 }
 
 /* Widget text is operational content, even when visually secondary. Keep the

@@ -140,7 +140,19 @@ Labels move **out of the boxes** and onto the island surface, above what they de
 
 Focus mode is where islands become modular: enter it on a single widget and its islands unlock for rearranging and per-island scaling.
 
+The focused session has two explicit purposes. **Edit** leaves the renderer's
+real controls interactive while the camera and the rest of the board lock;
+**Arrange** exposes the island reorder and resize chrome described below. A
+touch or Pencil press on a widget control enters Edit automatically. A flat
+widget with no material islands also opens Edit from its focus gesture because
+it has nothing legal to arrange. The session toolbar can switch purposes and
+always offers an explicit Done action.
+
 0. **The camera is pinned.** Entering focus glides the camera to frame the subject (96px margin) and locks it — no pan, no zoom, no card drags, no card resize — until exit. Escape or a single click anywhere outside the card exits, restoring the exact camera the user left. Everything that is not the subject dims to ~32% and goes inert.
+   During Edit on a phone or tablet, framing uses the live `visualViewport`,
+   follows the finite software-keyboard animation, and keeps the whole subject
+   inside the unobscured region. Editable controls use a 16px floor there so
+   iOS never performs an independent page zoom.
 1. **Islands are the atoms.** Only islands move and scale. Wells, inputs, and labels reflow inside their island; text never scales — layout does.
 2. **The 4px sub-grid governs.** Island size snaps to a 4px lattice. Gaps between islands are exactly 8px, always.
 3. **Reordering is a flow operation, not free placement.** An island drags to a new slot among its siblings; the flow re-packs around it. Each parent is its own flow domain: rows may reorder with rows, and summary plates with summary plates, but an island never jumps across a semantic wrapper or tears a grid apart. A lone island has no reorder affordance. (Free-form XY placement with hull re-forming remains the v2 ambition; slot reordering is the shipped v1 because it can never produce an illegal arrangement.)
@@ -224,4 +236,4 @@ XII.1 of the widget constitution.
 
 ## Implementation notes
 
-`WidgetPanel.tsx` is the Island component (E1 material, declared `data-island` id, reflow container). Focus mode operates on `.gp-island` elements annotated with `data-island` + `data-island-size`. GroupPlate is a rectangular `.gp-glass.gp-backplate`; it has no SVG hull or elastic path. Performance contract: zero `backdrop-filter` and all static paint.
+`WidgetPanel.tsx` is the Island component (E1 material, declared `data-island` id, reflow container). Focus mode operates on `.gp-island` elements annotated with `data-island` + `data-island-size`. GroupPlate is one `.gp-glass.gp-backplate` surface carved by `clip-path` to the **union silhouette** of member hover footprints (each card contributes half a cell above for its title row, always, and half a cell right for its button cluster *only when that cluster overflows the title row* — the same margins and the same overflow test (`widgetHasButtonOverflow`) as WidgetCard's own hover catch-all; geometry in `groupGeometry.ts`/`groupOutline.ts`). Corners round per Article XIV; interior holes fill solid; disjoint members render as separate glass islands of the same single plate. The repealed elastic convex hull stays repealed — the silhouette is the exact rectilinear union, never a stretchy wrap. Depth comes from silhouette-following `drop-shadow` filters and a stroke-only SVG hairline; glass paint itself remains CSS. The grab surface is clipped to the same silhouette, so concave notches hit-test as canvas. The group name pill carries the same action-button cluster as a widget's title row (favorite/duplicate/markdown/delete), scoped to every member at once. Performance contract: zero `backdrop-filter` and all static paint.

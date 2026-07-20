@@ -5,10 +5,12 @@ import {
   CalendarDays,
   ChartNoAxesColumn,
   CircleDollarSign,
+  Coffee,
   Contact,
   Flame,
   Gauge,
   Hash,
+  Hourglass,
   Link2,
   Palette,
   Smile,
@@ -16,6 +18,8 @@ import {
   Table2,
   Timer,
   Vote,
+  ChartLine,
+  ChartPie,
 } from 'lucide-react'
 import type { WidgetDefinition } from '../contracts/registry'
 import { localDayKey } from '../../utils/localDate'
@@ -98,19 +102,27 @@ export const DATA_TRACKING_WIDGET_DEFINITIONS = {
   },
   bar_chart: {
     type: 'bar_chart',
-    label: 'Bar Chart',
-    description: 'Labeled values as horizontal bars',
+    label: 'Chart',
+    description: 'Bar, line, donut, and pie views over one shared series',
     icon: BarChart3,
     category: 'data',
     accent: '#7dd3fc',
-    defaultSize: { width: 320, height: C * 4 },
+    defaultSize: { width: 400, height: C * 7 },
     defaultData: () => ({
       title: 'Chart',
+      mode: 'bar',
+      unit: '',
       bars: [
-        { id: uid(), label: 'A', value: 3 },
-        { id: uid(), label: 'B', value: 5 },
+        { id: uid(), label: 'A', value: 3, color: '#38bdf8' },
+        { id: uid(), label: 'B', value: 5, color: '#a3e635' },
       ],
     }),
+    modes: [
+      { value: 'bar', label: 'Bar', icon: BarChart3 },
+      { value: 'line', label: 'Line', icon: ChartLine },
+      { value: 'donut', label: 'Donut', icon: ChartPie },
+      { value: 'pie', label: 'Pie', icon: ChartPie },
+    ],
   },
   table: {
     type: 'table',
@@ -186,6 +198,11 @@ export const DATA_TRACKING_WIDGET_DEFINITIONS = {
       pomodoro: { label: 'Focus', workMinutes: 25, breakMinutes: 5, phase: 'work', endAt: null, remainingSeconds: 25 * 60, completed: 0 },
       stopwatch: { elapsedMs: 0, startedAt: null, laps: [] },
     }),
+    modes: [
+      { value: 'countdown', label: 'Countdown', icon: Timer },
+      { value: 'pomodoro', label: 'Pomodoro', icon: Coffee },
+      { value: 'stopwatch', label: 'Stopwatch', icon: Hourglass },
+    ],
   },
   mood_tracker: {
     type: 'mood_tracker',

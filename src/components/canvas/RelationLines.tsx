@@ -10,6 +10,7 @@ import { anchoredCurveMidpoint, anchoredCurvePath, curvedPath } from '../../util
 import { groupWorldBounds } from '../../utils/groupGeometry'
 import { useQuantizedView } from '../../hooks/useQuantizedView'
 import { widgetDefinition } from '../../widgets/registry'
+import { treeRevealDelay } from '../../store/treeReveal'
 import {
   CanvasEdge,
   CanvasEdgeLayer,
@@ -279,6 +280,7 @@ interface MergedEdge {
   hoverAccent: string | null
   /** Only set if this edge represents exactly one relation (for context menu). */
   singleRelationId: string | null
+  revealDelay: number | null
 }
 
 // ---------------------------------------------------------------------------
@@ -303,6 +305,7 @@ const RelationEdge = memo(function RelationEdge({ edge, detail, onOpenMenu }: Re
       ? muted ? 'url(#rel-arrow-muted)' : 'url(#rel-arrow-conflict)'
       : undefined
   const endMarker = conflictMarker
+  const revealing = edge.revealDelay !== null
 
   return (
     <CanvasEdge
@@ -311,15 +314,20 @@ const RelationEdge = memo(function RelationEdge({ edge, detail, onOpenMenu }: Re
       detail={detail}
       connected={Boolean(edge.hoverAccent)}
       resolved={muted}
-      style={edge.hoverAccent ? ({ '--gp-edge-accent': edge.hoverAccent } as CSSProperties) : undefined}
+      groupClassName={revealing ? 'gp-tree-relation-reveal' : ''}
+      style={{
+        ...(edge.hoverAccent ? { '--gp-edge-accent': edge.hoverAccent } : {}),
+        '--gp-tree-reveal-delay': `${edge.revealDelay ?? 0}ms`,
+      } as CSSProperties}
       highlight={edge.highlighted ? { stroke: '#34d399', width: 6, opacity: 0.35 } : undefined}
-      halo={{ stroke, width: 7 }}
+      halo={{ stroke, width: 7, pathLength: revealing ? 1 : undefined }}
       main={{
         stroke,
         width: style.width,
         dash: style.dash,
         markerStart: conflictMarker,
         markerEnd: endMarker,
+        pathLength: revealing ? 1 : undefined,
       }}
       flow={{ stroke: edge.hoverAccent ?? '#4ade80', width: 2, dash: '2 6' }}
       hitArea={{
@@ -562,6 +570,7 @@ export function RelationLines() {
       hoverAccent: string | null
       singleRelationId: string | null
       priority: number
+      revealDelay: number | null
     }>()
     const edgeBudget = criticalPathVisible ? CRITICAL_EDGE_RENDER_LIMIT : EDGE_RENDER_LIMIT
     let activeRelationCount = 0
@@ -679,6 +688,12 @@ export function RelationLines() {
         }
         if (highlighted) existing.highlighted = true
         if (relationHovered) existing.hoverAccent = hoveredAccent
+        const revealDelay = treeRevealDelay('relation', relId)
+        if (revealDelay !== null) {
+          existing.revealDelay = existing.revealDelay === null
+            ? revealDelay
+            : Math.min(existing.revealDelay, revealDelay)
+        }
         continue
       }
       if (edgeMap.size >= edgeBudget && !important) continue
@@ -695,6 +710,7 @@ export function RelationLines() {
         hoverAccent: relationHovered ? hoveredAccent : null,
         singleRelationId: relId,
         priority,
+        revealDelay: treeRevealDelay('relation', relId),
       })
     }
 
@@ -714,6 +730,7 @@ export function RelationLines() {
           highlighted: edge.highlighted,
           hoverAccent: edge.hoverAccent,
           singleRelationId: edge.singleRelationId,
+          revealDelay: edge.revealDelay,
         }
       }
       const { start, end } = pickAnchors(edge.fromGeo, edge.toGeo)
@@ -726,6 +743,7 @@ export function RelationLines() {
         highlighted: edge.highlighted,
         hoverAccent: edge.hoverAccent,
         singleRelationId: edge.singleRelationId,
+        revealDelay: edge.revealDelay,
       }
     })
   }, [
@@ -747,7 +765,7 @@ export function RelationLines() {
     [],
   )
   const closeMenu = useCallback(() => setMenu(null), [])
-  const edgeDetail = edgeDetailFor(view.zoom, edges.length)
+  const edgeDetail = edgeDetailFor(edges.length)
 
   return (
     <>

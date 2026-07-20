@@ -12,5 +12,9 @@ Run this checklist after every implementation phase, against a production build 
 - [ ] Open a nested canvas and return to its parent; confirm breadcrumbs/navigation and canvas contents are correct.
 - [ ] Double-click a widget to enter focus mode, rearrange and resize an allowed panel, then exit and re-enter to confirm the layout persists.
 - [ ] Open Quick Add, create a deterministic suggestion, cancel another suggestion, and confirm no disconnected preview state remains.
+- [ ] In two signed-in browser profiles, open the same invited canvas and confirm create/move/delete, note typing, cursors, selections, edit indicators, and participant departure appear on both sides.
+- [ ] Disconnect one editor, make changes on both sides, reconnect, and confirm both clients converge without duplicate widgets or lost note characters; reload both clients to prove cold-start durability.
+- [ ] Exercise Owner, Editor, Commenter, and Viewer accounts: only Owner manages access; Owner/Editor mutate; Commenter posts and replies only; Viewer remains read-only. Confirm prohibited direct API writes are rejected by RLS.
+- [ ] Follow a collaborator while they pan and zoom; confirm local camera controls lock until follow is stopped and reduced-motion mode does not add cursor animation.
 
 The phase gate is complete only when build, lint, automated tests, and all applicable checklist items pass. Items blocked by unavailable credentials or browser capabilities must be recorded explicitly in the phase handoff.

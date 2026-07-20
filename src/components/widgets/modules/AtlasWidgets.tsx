@@ -2,7 +2,7 @@ import type { CSSProperties } from 'react'
 import { Eye, EyeOff, Plus } from 'lucide-react'
 import { useSharedClock } from '../../../hooks/useSharedClock'
 import type { AtlasWidgetData, ModuleData } from '../../../types/spatial'
-import { ATLAS_CATALOG, ATLAS_TYPES, defaultAtlasData, type AtlasType } from '../../../widgets/atlasCatalog'
+import { ATLAS_CATALOG, ATLAS_TYPES, switchAtlasMode, type AtlasType } from '../../../widgets/atlasCatalog'
 import { commandsFor, fieldsFor } from '../../../widgets/fields'
 import { CATEGORY_LABELS } from '../../../widgets/registry'
 
@@ -39,8 +39,11 @@ export function AtlasWidget({type,data,onChange,showModePicker=false}:{type:Atla
   const readouts=fields.filter(field=>!field.set&&field.valueType!=='series').slice(0,3)
   const writable=fields.filter(field=>field.set).slice(0,2)
   const run=(key:string)=>{const command=commandsFor(type).find(item=>item.key===key);if(command)onChange(command.run(data))}
+  const switchMode=(nextType:AtlasType)=>{
+    onChange(switchAtlasMode(data,nextType))
+  }
   return <div className="space-y-3" style={{'--gp-atlas-accent':spec.accent} as CSSProperties}>
-    {showModePicker&&<label className="gp-subdivision flex items-center gap-2 rounded-xl border gp-hairline px-2 py-1.5"><span className="gp-label shrink-0">Mode</span><select aria-label="Tracker mode" value={type} onChange={event=>onChange(defaultAtlasData(event.target.value as AtlasType))} className="min-w-0 flex-1 bg-transparent text-right text-[10px] font-semibold text-neutral-300 outline-none">{(['life','tracking','study','planning','specialist'] as const).map(category=>{const modes=ATLAS_TYPES.filter(mode=>ATLAS_CATALOG[mode].category===category);return modes.length?<optgroup key={category} label={CATEGORY_LABELS[category]}>{modes.map(mode=><option key={mode} value={mode}>{ATLAS_CATALOG[mode].label}</option>)}</optgroup>:null})}</select></label>}
+    {showModePicker&&<label className="gp-subdivision flex items-center gap-2 rounded-xl border gp-hairline px-2 py-1.5"><span className="gp-label shrink-0">Mode</span><select aria-label="Tracker mode" value={type} onChange={event=>switchMode(event.target.value as AtlasType)} className="min-w-0 flex-1 bg-transparent text-right text-[10px] font-semibold text-neutral-300 outline-none">{(['life','tracking','study','planning','specialist'] as const).map(category=>{const modes=ATLAS_TYPES.filter(mode=>ATLAS_CATALOG[mode].category===category);return modes.length?<optgroup key={category} label={CATEGORY_LABELS[category]}>{modes.map(mode=><option key={mode} value={mode}>{ATLAS_CATALOG[mode].label}</option>)}</optgroup>:null})}</select></label>}
     <div className="relative rounded-2xl"><ObjectHero type={type} data={data}/>{type==='cycle_tracker'&&<button type="button" aria-label="Toggle discretion mode" onClick={()=>onChange({...data,privateMode:!data.privateMode})} className="absolute right-2 top-2 rounded-full border gp-hairline bg-neutral-950/70 p-1.5 text-neutral-400">{data.privateMode?<Eye size={11}/>:<EyeOff size={11}/>}</button>}</div>
     <div className="grid grid-cols-3 gap-2">{readouts.map(field=><div key={field.key} data-field-key={field.key} className="gp-well min-w-0 px-2 py-2"><div className="gp-label truncate">{field.label}</div><div className="gp-value truncate">{display(field.get(data))}</div></div>)}</div>
     {writable.length>0&&<div className="grid grid-cols-2 gap-1.5">{writable.map(field=>{const current=field.get(data);const inputType=field.key.includes('time')?'time':field.key.includes('date')?'date':field.valueType==='number'?'number':'text';return <label key={field.key} data-field-key={field.key} className="gp-subdivision min-w-0 rounded-xl border gp-hairline p-2 text-[8px] uppercase tracking-wide text-neutral-600">{field.label}<input aria-label={field.label} type={inputType} value={String(current)} onChange={event=>field.set&&onChange(field.set(data,field.valueType==='number'?Number(event.target.value):event.target.value))} className={`${inputClass} mt-1 w-full normal-case`}/></label>})}</div>}

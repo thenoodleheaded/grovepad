@@ -2,8 +2,13 @@
 // Per-module data schemas
 // ---------------------------------------------------------------------------
 
+import type { ExcalidrawElement } from '@excalidraw/excalidraw/element/types'
+
 export interface NotesData {
   text: string
+  mode?: 'plain' | 'sticky' | 'quote'
+  color?: StickyNoteColor
+  attribution?: string
 }
 
 interface BulletItem {
@@ -19,10 +24,19 @@ interface ChecklistItem {
   id: string
   label: string
   done: boolean
+  status?: 'todo' | 'doing' | 'done'
+  due?: string
+  day?: number
+  time?: string
+  start?: number
+  span?: number
+  quadrant?: 0 | 1 | 2 | 3
 }
 
 export interface ChecklistData {
   items: ChecklistItem[]
+  /** Alternate views over the same task collection. Missing on legacy cards. */
+  mode?: 'list' | 'board' | 'assignments' | 'day' | 'week' | 'timeline' | 'matrix'
 }
 
 /** Row-major cell matrix; the first row renders as the header. */
@@ -30,8 +44,49 @@ export interface TableData {
   rows: string[][]
 }
 
+export interface SketchpadPoint {
+  /** Normalized coordinates keep ink aligned when the widget is resized. */
+  x: number
+  y: number
+  /** Pointer pressure normalized to 0…1. */
+  pressure: number
+}
+
+export interface SketchpadStroke {
+  id: string
+  color: string
+  /** Nominal CSS-pixel width before pressure is applied. */
+  size: number
+  points: readonly SketchpadPoint[]
+}
+
 export interface SketchpadData {
   height: number
+  /** Optional for backwards compatibility with pre-drawing Sketchpad cards. */
+  strokes?: readonly SketchpadStroke[]
+  /** Quick ink and diagram scenes are saved independently in one Drawing card. */
+  mode?: 'ink' | 'diagram'
+  diagram?: ExcalidrawData
+}
+
+/** Metadata for one embedded image; the actual bytes live in the local blob store, never inline. */
+export interface ExcalidrawFileRef {
+  id: string
+  mimeType: string
+  createdAt: number
+}
+
+/**
+ * A free-form Excalidraw scene: shapes, freehand drawing, text, arrows,
+ * frames, and embedded images. `appState` is a curated subset of drawing
+ * preferences and camera position, not the full Excalidraw AppState (most of
+ * which is transient UI state that shouldn't round-trip through storage).
+ */
+export interface ExcalidrawData {
+  elements: readonly ExcalidrawElement[]
+  appState: Record<string, unknown>
+  files: readonly ExcalidrawFileRef[]
+  updatedAt: string
 }
 
 interface BudgetItem {
@@ -240,11 +295,15 @@ interface BarChartItem {
   id: string
   label: string
   value: number
+  color?: string
 }
 
 export interface BarChartData {
   title: string
   bars: BarChartItem[]
+  /** All chart modes render this same series instead of maintaining copies. */
+  mode?: 'bar' | 'line' | 'donut' | 'pie'
+  unit?: string
 }
 
 export interface CounterData {
@@ -284,6 +343,10 @@ interface GoalMilestone {
 export interface GoalTrackerData {
   goal: string
   milestones: GoalMilestone[]
+  mode?: 'simple' | 'milestones' | 'hours' | 'okr'
+  simple?: ProgressData
+  hours?: import('./widgetDataEducation').StudyGoalData
+  okr?: import('./widgetDataExpansion').OkrData
 }
 
 export interface StopwatchData {
@@ -317,6 +380,9 @@ export interface FlashcardsData {
   cards: Flashcard[]
   /** Index of the card currently shown. */
   current: number
+  mode?: 'flashcards' | 'vocabulary' | 'quiz'
+  vocabulary?: import('./widgetDataEducation').VocabData
+  quiz?: import('./widgetDataEducation').QuizData
 }
 
 interface MeetingActionItem {
@@ -349,6 +415,11 @@ export interface DecisionData {
   options: string[]
   /** Index of the picked option; null before the first spin. */
   pickedIndex: number | null
+  mode?: 'simple' | 'weighted'
+  weights?: number[]
+  history?: string[]
+  lastRolledAt?: number | null
+  noRepeatWindow?: number
 }
 
 export interface WorldClockData {

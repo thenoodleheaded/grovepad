@@ -3,9 +3,10 @@ import type { WorldRect } from '../../utils/canvasView'
 
 export type EdgeDetail = 'rich' | 'standard' | 'minimal'
 
-export function edgeDetailFor(zoom: number, edgeCount: number): EdgeDetail {
-  if (zoom < 0.32 || edgeCount > 700) return 'minimal'
-  if (zoom < 0.58 || edgeCount > 320) return 'standard'
+/** Edge density is stable during camera motion; only board complexity changes it. */
+export function edgeDetailFor(edgeCount: number): EdgeDetail {
+  if (edgeCount > 700) return 'minimal'
+  if (edgeCount > 320) return 'standard'
   return 'rich'
 }
 

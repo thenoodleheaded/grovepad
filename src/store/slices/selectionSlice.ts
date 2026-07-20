@@ -342,6 +342,17 @@ export function createSelectionSlice({ set, get, pushHistory, markSpawned }: Wid
     }))
   },
 
+  updateWidgetMetadata: (widgetId, metadata) => {
+    if (!get().widgets[widgetId]) return
+    pushHistory()
+    set((state) => ({
+      widgets: withWidget(state.widgets, widgetId, (widget) => ({
+        ...widget,
+        metadata: { ...widget.metadata, ...metadata },
+      })),
+    }))
+  },
+
   bringWidgetToFront: (widgetId) => {
     set((state) => {
       if (!state.widgets[widgetId]) return state

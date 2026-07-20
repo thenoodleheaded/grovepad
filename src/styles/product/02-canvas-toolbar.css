@@ -111,11 +111,11 @@
 }
 
 [data-theme='light'] {
-  --gp-surface-control: oklch(91% 0.006 148 / 0.92);
-  --gp-surface-control-hover: oklch(87% 0.01 148 / 0.98);
-  --gp-surface-menu: oklch(96.5% 0.003 148 / 0.99);
+  --gp-surface-control: oklch(91% 0.006 250 / 0.92);
+  --gp-surface-control-hover: oklch(87% 0.01 250 / 0.98);
+  --gp-surface-menu: oklch(96.5% 0.003 250 / 0.99);
   --gp-border-medium: rgb(0 0 0 / 0.12);
-  --gp-text-muted: oklch(46% 0.014 148);
+  --gp-text-muted: oklch(46% 0.014 250);
   --gp-accent-soft: oklch(55% 0.22 136 / 0.08);
   --gp-shadow-float: 0 16px 44px rgb(24 49 31 / 0.12), 0 3px 10px rgb(24 49 31 / 0.08);
 }
@@ -308,4 +308,33 @@ body {
   box-shadow: 0 5px 15px rgb(0 0 0 / 0.22), inset 0 1px 0 rgb(255 255 255 / 0.055);
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
+}
+
+/* Mode pill / plate (WidgetModePill) — the plate is always mounted at full
+ * height and `clip-path` grows its visible region from just the top pill to
+ * the whole card, so pressing it reads as one surface unfurling rather than
+ * a menu popping up beside a static button. clip-path clips a box's own
+ * shadow along with its content, so the "thrown at the widget" shadow lives
+ * on this unclipped sibling layer instead of on `.gp-mode-plate` itself.
+ */
+.gp-mode-plate {
+  border-radius: var(--gp-r0);
+  transition: clip-path var(--gp-motion-fast) var(--gp-ease-out);
+}
+
+.gp-mode-plate-shadow {
+  border-radius: var(--gp-r0);
+  box-shadow: 10px 14px 34px rgb(0 0 0 / 0.48), 4px 5px 12px rgb(0 0 0 / 0.32);
+  transition: opacity var(--gp-duration-snap) var(--gp-ease-snap);
+  pointer-events: none;
+}
+
+[data-theme='light'] .gp-mode-plate-shadow {
+  box-shadow: 10px 14px 34px rgb(26 36 29 / 0.22), 4px 5px 12px rgb(26 36 29 / 0.14);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gp-mode-plate {
+    transition: none;
+  }
 }

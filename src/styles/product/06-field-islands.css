@@ -551,12 +551,111 @@ body[data-focus-mode] .gp-widget-card:not([data-focused]) {
   transition: opacity 200ms var(--gp-ease-standard), filter 200ms var(--gp-ease-standard);
 }
 
+body[data-focus-mode] .gp-group-backplate:not([data-focus-group]) {
+  opacity: 0.32;
+  filter: saturate(0.55);
+  pointer-events: none;
+  transition: opacity 200ms var(--gp-ease-standard), filter 200ms var(--gp-ease-standard);
+}
+
 body[data-focus-mode] .gp-widget-card[data-focused] {
   cursor: default;
   box-shadow:
     0 0 0 1px color-mix(in oklab, var(--gp-widget-accent), transparent 55%),
     0 0 44px color-mix(in oklab, var(--gp-widget-accent), transparent 82%),
     0 30px 70px rgb(0 0 0 / 0.5);
+}
+
+.gp-focus-session-bar {
+  top: calc(var(--gp-safe-top) + 64px);
+  background: color-mix(in oklab, var(--gp-surface-panel), transparent 4%);
+  box-shadow: var(--gp-shadow-float);
+}
+
+body[data-focus-mode] [data-canvas-ui]:not([data-focus-session-ui]) {
+  opacity: 0.18;
+  pointer-events: none;
+  transition: opacity 160ms var(--gp-ease-standard);
+}
+
+body[data-focus-purpose='edit'] .gp-widget-card[data-focused] .gp-widget-content {
+  overflow: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+  user-select: text;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Apple Pencil Scribble is owned by the operating system. Text-entry controls
+   must remain selectable and must never inherit canvas drag suppression. */
+.gp-widget-card :is(input:not([type='range']), textarea, [contenteditable='true']) {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+body[data-pencil-drawing],
+body[data-pencil-drawing] * {
+  cursor: crosshair !important;
+}
+
+.gp-sketch-surface canvas {
+  overscroll-behavior: contain;
+}
+
+html:is(
+  [data-viewport-class='phone'],
+  [data-viewport-class='tablet'],
+  [data-active-input='touch'],
+  [data-active-input='pen'],
+  [data-virtual-keyboard='open']
+)
+  body[data-focus-purpose='edit']
+  .gp-widget-card[data-focused]
+  :is(input:not([type='range']), textarea, select, [contenteditable='true']) {
+  /* iOS zooms the whole page when a focused control is smaller than 16px. */
+  font-size: 16px !important;
+}
+
+html:is(
+  [data-viewport-class='phone'],
+  [data-viewport-class='tablet'],
+  [data-active-input='touch'],
+  [data-active-input='pen'],
+  [data-virtual-keyboard='open']
+)
+  body[data-focus-purpose='edit']
+  .gp-widget-card[data-focused]
+  :is(button, input:not([type='checkbox'], [type='radio']), select) {
+  min-height: var(--gp-touch-target);
+}
+
+html:is(
+  [data-viewport-class='phone'],
+  [data-viewport-class='tablet'],
+  [data-active-input='touch'],
+  [data-active-input='pen']
+)
+  body[data-focus-purpose='edit']
+  .gp-widget-card[data-focused]
+  button {
+  min-width: var(--gp-touch-target);
+}
+
+html:is(
+  [data-viewport-class='phone'],
+  [data-viewport-class='tablet'],
+  [data-active-input='touch'],
+  [data-active-input='pen']
+)
+  body[data-focus-purpose='edit']
+  .gp-widget-card[data-focused]
+  :is(input[type='checkbox'], input[type='radio']) {
+  width: 24px;
+  height: 24px;
+}
+
+html[data-virtual-keyboard='open'] .gp-focus-session-bar {
+  top: calc(var(--gp-safe-top) + 8px);
 }
 
 /* The subject's islands lift slightly — they read as loose, movable tiles. */
@@ -583,6 +682,7 @@ body[data-focus-mode] .gp-widget-card[data-focused] .gp-island {
 /* The whole reorderable island body is the drag surface — no handle. */
 .gp-focus-island--drag {
   cursor: grab;
+  touch-action: none;
   border-radius: 12px;
   transition: box-shadow 140ms ease, background-color 140ms ease;
 }
@@ -618,16 +718,27 @@ body[data-focus-mode] .gp-widget-card[data-focused] .gp-island {
 /* Resize handle — bottom-right corner bracket. */
 .gp-focus-resize {
   position: absolute;
-  right: -4px;
-  bottom: -4px;
+  right: -10px;
+  bottom: -10px;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  background: transparent;
+  cursor: nwse-resize;
+  opacity: 0.75;
+  touch-action: none;
+}
+
+.gp-focus-resize-mark {
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
   width: 14px;
   height: 14px;
   border-right: 2px solid color-mix(in oklab, var(--gp-widget-accent), white 20%);
   border-bottom: 2px solid color-mix(in oklab, var(--gp-widget-accent), white 20%);
   border-bottom-right-radius: 7px;
   background: rgba(9, 12, 18, 0.7);
-  cursor: nwse-resize;
-  opacity: 0.75;
 }
 
 .gp-focus-resize[data-sizing='width'] {
@@ -637,12 +748,30 @@ body[data-focus-mode] .gp-widget-card[data-focused] .gp-island {
 .gp-focus-resize:hover,
 .gp-focus-resize:active {
   opacity: 1;
+}
+
+.gp-focus-resize:hover .gp-focus-resize-mark,
+.gp-focus-resize:active .gp-focus-resize-mark {
   scale: 1.15;
 }
 
-[data-theme='light'] .gp-focus-resize {
+[data-theme='light'] .gp-focus-resize-mark {
   background: rgba(255, 255, 255, 0.95);
   color: color-mix(in oklab, var(--gp-widget-accent), black 25%);
+}
+
+@media (any-pointer: coarse) {
+  .gp-focus-resize {
+    right: -16px;
+    bottom: -16px;
+    width: var(--gp-touch-target);
+    height: var(--gp-touch-target);
+  }
+
+  .gp-focus-resize-mark {
+    right: 15px;
+    bottom: 15px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

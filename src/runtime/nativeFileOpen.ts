@@ -1,5 +1,5 @@
 import { useToastStore } from '../store/useToastStore'
-import { parseImportedBoardFile } from '../utils/boardImport'
+import { readGrovepadPackage } from '../utils/grovepadPackage'
 import { importBoardFileOntoCanvas } from '../utils/boardCanvasImport'
 
 interface NativeOpenFilePayload {
@@ -32,7 +32,7 @@ export function initNativeFileOpen(): () => void {
   const openPayload = async (payload: NativeOpenFilePayload) => {
     try {
       const bytes = decodeBase64(payload.base64)
-      const { board, media } = await parseImportedBoardFile(bytes, payload.name)
+      const { board, media } = await readGrovepadPackage(bytes)
       await importBoardFileOntoCanvas({ board, media, filename: payload.name })
     } catch {
       useToastStore.getState().addToast(`Could not open ${payload.name}`)

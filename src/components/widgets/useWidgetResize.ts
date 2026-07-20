@@ -62,10 +62,10 @@ export function useWidgetResize(widgetId: string, widget: Widget | undefined, is
     useWidgetStore.getState().setWidgetScaleState(widgetId, target, true)
   }
 
-  const onResizePointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
+  const onResizePointerDown = (e: ReactPointerEvent<HTMLElement>) => {
     if (!widget) return
     if (e.button !== 0) return
-    if (isFocused) return
+    if (isFocused || widget.metadata.locked) return
     e.preventDefault()
     e.stopPropagation()
     useCanvasStore.getState().cancelViewAnimation()
@@ -183,6 +183,9 @@ export function useWidgetResize(widgetId: string, widget: Widget | undefined, is
               }),
             })
           }
+          // No live neighbor displacement during resize: the card grows over
+          // its neighbors and the release settle resolves any overlap once,
+          // minimally. Pushing mid-gesture rearranged boards permanently.
           useWidgetStore.getState().resizeWidget(widgetId, resize.pending, false)
         }
       })

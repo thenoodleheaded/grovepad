@@ -4,10 +4,13 @@ import {
   Check,
   ArrowLeft,
   ArrowRight,
+  ArrowDown,
+  ArrowUp,
   ChevronRight,
   ChevronsUpDown,
   CircuitBoard,
   Ellipsis,
+  FileUp,
   Keyboard,
   Moon,
   Maximize2,
@@ -34,6 +37,9 @@ import { AccountChip } from './AccountChip'
 import { ConfirmDialog } from './ConfirmDialog'
 import { belowAnchor, clampPopover } from '../../utils/popoverPosition'
 import { useCanvasTreeStore } from '../../store/useCanvasTreeStore'
+import { useAdaptiveInputStore } from '../../store/useAdaptiveInputStore'
+import { useSettingsStore } from '../../store/useSettingsStore'
+import { canEditCollaborativeCanvas, useCollaborationStore } from '../../store/useCollaborationStore'
 
 /** World point at the view center — spawn target for toolbar creation. */
 function viewCenterWorld() {
@@ -94,7 +100,7 @@ function WorkspaceDropdown() {
         aria-expanded={open}
         onClick={() => (open ? setOpen(false) : openMenu())}
         onDoubleClick={() => { if (active) { setRenamingId(active.id); openMenu() } }}
-        className="flex h-7 max-w-44 items-center gap-1.5 rounded-lg px-2 text-xs font-medium text-neutral-200 transition-colors hover:bg-neutral-700/50"
+        className="gp-touch-target flex h-7 min-w-0 max-w-24 items-center gap-1.5 rounded-lg px-2 text-xs font-medium text-neutral-200 transition-colors hover:bg-neutral-700/50 sm:max-w-44"
       >
         <span className="truncate">{active?.name ?? 'Workspace'}</span>
         <ChevronsUpDown size={12} className="shrink-0 text-neutral-500" aria-hidden />
@@ -110,7 +116,7 @@ function WorkspaceDropdown() {
             />
             <div
               role="menu"
-              className="gp-menu gp-pop gp-panel fixed z-[130] max-h-[min(70vh,420px)] w-64 origin-top-left overflow-y-auto rounded-2xl p-1.5 shadow-2xl"
+              className="gp-workspace-menu gp-menu gp-pop gp-panel fixed z-[130] max-h-[min(70vh,420px)] w-64 origin-top-left overflow-y-auto rounded-2xl p-1.5 shadow-2xl"
               style={{ left: anchor.x, top: anchor.y }}
             >
               <p className="px-3 pb-1 pt-1  text-[10px] uppercase tracking-widest text-neutral-500">
@@ -120,6 +126,7 @@ function WorkspaceDropdown() {
                 const isActive = ws.id === activeWorkspaceId
                 const canvasIds = new Set(Object.values(canvases).filter((canvas) => canvas.workspaceId === ws.id).map((canvas) => canvas.id))
                 const widgetCount = Object.values(widgets).filter((widget) => canvasIds.has(widget.canvasId)).length
+                const workspaceIndex = list.findIndex((candidate) => candidate.id === ws.id)
                 if (renamingId === ws.id) {
                   return (
                     <div key={ws.id} className="px-2 py-1">
@@ -160,7 +167,7 @@ function WorkspaceDropdown() {
                         useWidgetStore.getState().switchWorkspace(ws.id)
                         setOpen(false)
                       }}
-                      className={`flex h-8 min-w-0 flex-1 items-center gap-2 rounded-lg px-2 text-left text-xs transition-colors ${
+                      className={`gp-touch-target flex h-8 min-w-0 flex-1 items-center gap-2 rounded-lg px-2 text-left text-xs transition-colors ${
                         isActive
                           ? 'bg-emerald-500/10 text-emerald-300'
                           : 'text-neutral-300 hover:bg-neutral-800'
@@ -172,11 +179,37 @@ function WorkspaceDropdown() {
                       <span className="truncate">{ws.name}</span>
                       <span className="ml-auto shrink-0  text-[9px] text-neutral-600">{widgetCount}</span>
                     </button>
+                    <span className="gp-workspace-reorder hidden shrink-0 items-center">
+                      <button
+                        type="button"
+                        aria-label={`Move ${ws.name} up`}
+                        disabled={workspaceIndex === 0}
+                        onClick={() => {
+                          const previous = list[workspaceIndex - 1]
+                          if (previous) useWidgetStore.getState().reorderWorkspace(ws.id, previous.id)
+                        }}
+                        className="gp-touch-target flex h-7 w-7 items-center justify-center rounded-md text-neutral-600 hover:text-neutral-200 disabled:opacity-25"
+                      >
+                        <ArrowUp size={11} aria-hidden />
+                      </button>
+                      <button
+                        type="button"
+                        aria-label={`Move ${ws.name} down`}
+                        disabled={workspaceIndex === list.length - 1}
+                        onClick={() => {
+                          const next = list[workspaceIndex + 1]
+                          if (next) useWidgetStore.getState().reorderWorkspace(next.id, ws.id)
+                        }}
+                        className="gp-touch-target flex h-7 w-7 items-center justify-center rounded-md text-neutral-600 hover:text-neutral-200 disabled:opacity-25"
+                      >
+                        <ArrowDown size={11} aria-hidden />
+                      </button>
+                    </span>
                     <button
                       type="button"
                       aria-label={`Rename ${ws.name}`}
                       onClick={() => setRenamingId(ws.id)}
-                      className="shrink-0 rounded-md p-1 text-neutral-600 opacity-100 transition-opacity hover:text-neutral-300 focus-visible:opacity-100 focus-visible:pointer-events-auto sm:pointer-events-none sm:opacity-0 sm:group-hover/ws:opacity-100 sm:group-hover/ws:pointer-events-auto"
+                      className="gp-touch-target shrink-0 rounded-md p-1 text-neutral-600 opacity-100 transition-opacity hover:text-neutral-300 focus-visible:opacity-100 focus-visible:pointer-events-auto sm:pointer-events-none sm:opacity-0 sm:group-hover/ws:opacity-100 sm:group-hover/ws:pointer-events-auto"
                     >
                       <Pencil size={11} aria-hidden />
                     </button>
@@ -188,7 +221,7 @@ function WorkspaceDropdown() {
                           setDeleteTarget({ id: ws.id, name: ws.name })
                           setOpen(false)
                         }}
-                        className="shrink-0 rounded-md p-1 text-neutral-600 opacity-100 transition-opacity hover:text-red-400 focus-visible:opacity-100 focus-visible:pointer-events-auto sm:pointer-events-none sm:opacity-0 sm:group-hover/ws:opacity-100 sm:group-hover/ws:pointer-events-auto"
+                        className="gp-touch-target shrink-0 rounded-md p-1 text-neutral-600 opacity-100 transition-opacity hover:text-red-400 focus-visible:opacity-100 focus-visible:pointer-events-auto sm:pointer-events-none sm:opacity-0 sm:group-hover/ws:opacity-100 sm:group-hover/ws:pointer-events-auto"
                       >
                         <Trash2 size={11} aria-hidden />
                       </button>
@@ -220,7 +253,7 @@ function WorkspaceDropdown() {
                   type="button"
                   role="menuitem"
                   onClick={() => setCreating(true)}
-                  className="mx-1.5 flex h-8 w-[calc(100%-12px)] items-center gap-2 rounded-lg px-2 text-xs text-neutral-400 transition-colors hover:bg-neutral-800 hover:text-neutral-200"
+                  className="gp-touch-target mx-1.5 flex h-8 w-[calc(100%-12px)] items-center gap-2 rounded-lg px-2 text-xs text-neutral-400 transition-colors hover:bg-neutral-800 hover:text-neutral-200"
                 >
                   <Plus size={12} aria-hidden />
                   New workspace
@@ -322,7 +355,7 @@ function ToolbarOverflow() {
   const show = () => {
     const rect = anchorRef.current?.getBoundingClientRect()
     if (rect) {
-      setAnchor(clampPopover(rect.right - 208, rect.bottom + 8, 208, 292))
+      setAnchor(clampPopover(rect.right - 208, rect.bottom + 8, 208, 432))
     }
     setOpen(true)
   }
@@ -357,7 +390,39 @@ function ToolbarOverflow() {
               <button
                 type="button"
                 role="menuitem"
-                onClick={() => action(() => useCircuitStore.getState().toggleCircuitMode())}
+                onClick={() => action(() => useCanvasTreeStore.getState().setOpen(true))}
+                className="flex h-9 w-full items-center gap-2.5 rounded-xl px-2.5 text-xs text-neutral-300 transition-colors hover:bg-neutral-800 sm:hidden"
+              >
+                <PanelLeft size={13} className="text-violet-300" aria-hidden />
+                Canvas tree
+              </button>
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => action(() => useWidgetStore.getState().setPaletteOpen(true))}
+                className="flex h-9 w-full items-center gap-2.5 rounded-xl px-2.5 text-xs text-neutral-300 transition-colors hover:bg-neutral-800 sm:hidden"
+              >
+                <Search size={13} className="text-emerald-300" aria-hidden />
+                Search
+              </button>
+              <div className="my-1 border-t gp-hairline sm:hidden" />
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => action(() => useWidgetStore.getState().setImportOpen(true))}
+                className="flex h-9 w-full items-center gap-2.5 rounded-xl px-2.5 text-xs text-neutral-300 transition-colors hover:bg-neutral-800"
+              >
+                <FileUp size={13} className="text-emerald-300" aria-hidden />
+                Import document
+              </button>
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => action(() => {
+                  const next = !useCircuitStore.getState().circuitMode
+                  useCircuitStore.getState().setCircuitMode(next)
+                  useAdaptiveInputStore.getState().setInteractionMode(next ? 'connect' : 'navigate')
+                })}
                 className="flex h-9 w-full items-center gap-2.5 rounded-xl px-2.5 text-xs text-neutral-300 transition-colors hover:bg-neutral-800"
               >
                 <CircuitBoard size={13} className="text-sky-400" aria-hidden />
@@ -404,13 +469,11 @@ function ToolbarOverflow() {
               <button
                 type="button"
                 role="menuitem"
-                onClick={() =>
-                  action(() => useWidgetStore.getState().openAddWidget(viewCenterWorld(), 'packs'))
-                }
+                onClick={() => action(() => useSettingsStore.getState().setOpen(true))}
                 className="flex h-9 w-full items-center gap-2.5 rounded-xl px-2.5 text-xs text-neutral-300 transition-colors hover:bg-neutral-800"
               >
                 <Settings size={13} aria-hidden />
-                Domain packs
+                Settings
               </button>
             </div>
           </>,
@@ -424,15 +487,20 @@ function ToolbarOverflow() {
 export function CanvasToolbar() {
   const circuitMode = useCircuitStore((state) => state.circuitMode)
   const toggleCircuitMode = useCircuitStore((state) => state.toggleCircuitMode)
-  const theme = useThemeStore((state) => state.theme)
-  const toggleTheme = useThemeStore((state) => state.toggle)
   const canGoBack = useCanvasStore((state) => state.canGoBack)
   const canGoForward = useCanvasStore((state) => state.canGoForward)
+  const collaborationRole = useCollaborationStore((state) => state.role)
+  const canEdit = collaborationRole === null || canEditCollaborativeCanvas(collaborationRole)
+  const toggleCircuitExperience = () => {
+    const next = !useCircuitStore.getState().circuitMode
+    toggleCircuitMode()
+    useAdaptiveInputStore.getState().setInteractionMode(next ? 'connect' : 'navigate')
+  }
 
   return (
     <div
       data-canvas-ui
-      className="pointer-events-none absolute inset-x-3 top-3 z-30 flex items-start justify-between gap-2 sm:inset-x-4 sm:top-4 sm:gap-3"
+      className="gp-safe-canvas-top pointer-events-none absolute z-30 flex items-start justify-between gap-2 sm:gap-3"
     >
       {/* Left: account + identity + the one dropdown + breadcrumb trail */}
       <div className="gp-toolbar gp-panel pointer-events-auto flex h-11 min-w-0 max-w-[calc(100vw-8.5rem)] select-none items-center gap-1 rounded-2xl px-1.5 shadow-xl sm:max-w-[calc(100vw-13rem)] sm:px-2 lg:max-w-[56vw]">
@@ -466,36 +534,41 @@ export function CanvasToolbar() {
 
       {/* Right: actions */}
       <div className="gp-toolbar gp-panel pointer-events-auto flex h-11 shrink-0 select-none items-center gap-0.5 rounded-2xl px-1 shadow-xl sm:gap-1 sm:px-1.5">
-        <IconButton label="Open canvas tree" onClick={() => useCanvasTreeStore.getState().setOpen(true)}>
-          <PanelLeft size={13} aria-hidden />
-        </IconButton>
+        <span className="hidden sm:inline-flex">
+          <IconButton label="Open canvas tree" onClick={() => useCanvasTreeStore.getState().setOpen(true)}>
+            <PanelLeft size={13} aria-hidden />
+          </IconButton>
+        </span>
         <button
           type="button"
+          disabled={!canEdit}
           onClick={() => useWidgetStore.getState().openAddWidget(viewCenterWorld())}
-          title="Browse the widget library (or double-click the canvas)"
-          className="flex h-9 items-center gap-1.5 rounded-xl bg-gradient-to-br from-emerald-500/25 to-emerald-500/10 px-2.5 text-xs font-semibold text-emerald-300 shadow-[inset_0_0_0_1px_oklch(88%_0.31_136_/_0.28),0_0_16px_oklch(88%_0.31_136_/_0.10)] transition-[background-color,color,transform,box-shadow,scale] hover:from-emerald-500/35 hover:to-emerald-500/15 hover:text-emerald-200 hover:shadow-[inset_0_0_0_1px_oklch(88%_0.31_136_/_0.45),0_0_22px_oklch(88%_0.31_136_/_0.22)] active:scale-[0.96]"
+          title="Browse the widget library"
+          className="flex h-9 items-center gap-1.5 rounded-xl bg-gradient-to-br from-emerald-500/25 to-emerald-500/10 px-2.5 text-xs font-semibold text-emerald-300 shadow-[inset_0_0_0_1px_oklch(88%_0.31_136_/_0.28),0_0_16px_oklch(88%_0.31_136_/_0.10)] transition-[background-color,color,transform,box-shadow,scale] hover:from-emerald-500/35 hover:to-emerald-500/15 hover:text-emerald-200 hover:shadow-[inset_0_0_0_1px_oklch(88%_0.31_136_/_0.45),0_0_22px_oklch(88%_0.31_136_/_0.22)] active:scale-[0.96] disabled:cursor-not-allowed disabled:opacity-35"
         >
           <SquarePlus size={13} aria-hidden />
           <span className="hidden sm:inline">Widget</span>
         </button>
         <button
           type="button"
+          disabled={!canEdit}
           onClick={() => useWidgetStore.getState().setQuickAddOpen(true)}
           title="Capture and interpret a thought (N)"
           aria-label="Quick capture (N)"
-          className="gp-toolbar-action flex h-9 items-center gap-1.5 rounded-xl px-2 text-xs font-medium text-neutral-400 transition-[background-color,color,transform,scale] hover:bg-neutral-700/60 hover:text-white active:scale-[0.96]"
+          className="gp-toolbar-action flex h-9 items-center gap-1.5 rounded-xl px-2 text-xs font-medium text-neutral-400 transition-[background-color,color,transform,scale] hover:bg-neutral-700/60 hover:text-white active:scale-[0.96] disabled:cursor-not-allowed disabled:opacity-35"
         >
           <Zap size={13} aria-hidden />
           <span className="hidden xl:inline">Capture</span>
         </button>
         <button
           type="button"
+          disabled={!canEdit}
           onClick={() => {
             const point = viewCenterWorld()
             useWidgetStore.getState().startGhostShaper(point.x, point.y)
           }}
           title="Shape a tree directly on the canvas"
-          className="gp-toolbar-action hidden h-9 items-center gap-1.5 rounded-xl px-2 text-xs font-medium text-neutral-400 transition-[background-color,color,transform,scale] hover:bg-neutral-700/60 hover:text-white active:scale-[0.96] md:flex"
+          className="gp-toolbar-action hidden h-9 items-center gap-1.5 rounded-xl px-2 text-xs font-medium text-neutral-400 transition-[background-color,color,transform,scale] hover:bg-neutral-700/60 hover:text-white active:scale-[0.96] disabled:cursor-not-allowed disabled:opacity-35 md:flex"
         >
           <Network size={13} aria-hidden />
           <span className="hidden xl:inline">Shape</span>
@@ -505,25 +578,22 @@ export function CanvasToolbar() {
           <IconButton
             label={circuitMode ? 'Exit Circuit mode (W)' : 'Enter Circuit mode (W)'}
             pressed={circuitMode}
-            onClick={toggleCircuitMode}
+            disabled={!canEdit}
+            onClick={toggleCircuitExperience}
           >
             <CircuitBoard size={14} className={circuitMode ? 'text-sky-400' : undefined} />
           </IconButton>
         </span>
-        <IconButton
-          label="Search (⌘K)"
-          onClick={() => useWidgetStore.getState().setPaletteOpen(true)}
-        >
-          <Search size={14} />
-        </IconButton>
+        <span className="hidden sm:inline-flex">
+          <IconButton
+            label="Search (⌘K)"
+            onClick={() => useWidgetStore.getState().setPaletteOpen(true)}
+          >
+            <Search size={14} />
+          </IconButton>
+        </span>
         <div className="hidden h-5 w-px bg-neutral-700/70 lg:block" aria-hidden />
         <span className="hidden lg:inline-flex">
-          <IconButton
-            label={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
-            onClick={toggleTheme}
-          >
-            {theme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
-          </IconButton>
           <IconButton
             label="Keyboard shortcuts (?)"
             onClick={() => useWidgetStore.getState().setShortcutsOpen(true)}
@@ -531,8 +601,8 @@ export function CanvasToolbar() {
             <Keyboard size={14} />
           </IconButton>
           <IconButton
-            label="Domain packs"
-            onClick={() => useWidgetStore.getState().openAddWidget(viewCenterWorld(), 'packs')}
+            label="Settings"
+            onClick={() => useSettingsStore.getState().setOpen(true)}
           >
             <Settings size={14} />
           </IconButton>

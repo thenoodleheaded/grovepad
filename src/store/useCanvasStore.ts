@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import type { Size, Vector2D } from '../types/spatial'
 import { clampZoom } from '../types/spatial'
+import { beginCameraMotion, endCameraMotion } from '../runtime/cameraMotionRuntime'
 
 interface CanvasFitRect {
   x: number
@@ -81,6 +82,7 @@ export const useCanvasStore = create<CanvasState>()((set, get) => {
     if (animationFrame !== 0) {
       cancelAnimationFrame(animationFrame)
       animationFrame = 0
+      endCameraMotion('animation')
     }
   }
 
@@ -183,6 +185,7 @@ export const useCanvasStore = create<CanvasState>()((set, get) => {
       const startLogZoom = Math.log(startZoom)
       const logZoomSpan = Math.log(endZoom) - startLogZoom
       const startTime = performance.now()
+      beginCameraMotion('animation')
 
       const step = (now: number) => {
         const t = Math.min(1, (now - startTime) / duration)
@@ -194,7 +197,12 @@ export const useCanvasStore = create<CanvasState>()((set, get) => {
           },
           zoom: Math.exp(startLogZoom + logZoomSpan * eased),
         })
-        animationFrame = t < 1 ? requestAnimationFrame(step) : 0
+        if (t < 1) {
+          animationFrame = requestAnimationFrame(step)
+        } else {
+          animationFrame = 0
+          endCameraMotion('animation')
+        }
       }
 
       animationFrame = requestAnimationFrame(step)

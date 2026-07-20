@@ -17,6 +17,14 @@ export default defineConfig({
       },
     },
   ],
+  server: {
+    watch: {
+      // Tauri writes build artifacts (including .html reports) under
+      // src-tauri/ while `tauri dev`/`tauri build` runs; without this the
+      // web dev server full-page-reloads every time those files change.
+      ignored: ['**/src-tauri/**'],
+    },
+  },
   build: {
     rolldownOptions: {
       output: {

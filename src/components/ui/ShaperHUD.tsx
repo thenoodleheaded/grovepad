@@ -1,7 +1,8 @@
 import { useEffect } from 'react'
 import { Network } from 'lucide-react'
 import { useWidgetStore } from '../../store/useWidgetStore'
-import { ghostTreeWidgetCount } from '../../types/spatial'
+import { ghostTreeUnconfiguredCount, ghostTreeWidgetCount } from '../../types/spatial'
+import { isOverlayOpen } from '../../store/useOverlayStore'
 
 /**
  * Fixed bottom-center banner shown while the Ghost Tree Shaper is active.
@@ -13,7 +14,7 @@ export function ShaperHUD() {
   useEffect(() => {
     if (!config) return
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') useWidgetStore.getState().cancelGhostShaper()
+      if (event.key === 'Escape' && !isOverlayOpen()) useWidgetStore.getState().cancelGhostShaper()
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
@@ -22,6 +23,7 @@ export function ShaperHUD() {
   if (!config) return null
 
   const count = ghostTreeWidgetCount(config.nodes)
+  const unconfigured = ghostTreeUnconfiguredCount(config.nodes)
 
   return (
     <div
@@ -37,7 +39,9 @@ export function ShaperHUD() {
           · recursive tree shaping
         </p>
         <p className="text-neutral-500">
-          {count} {count === 1 ? 'widget' : 'widgets'} will be created · pull nodes directly to sculpt
+          {unconfigured > 0
+            ? `${unconfigured} ${unconfigured === 1 ? 'point needs' : 'points need'} widgets · press a dotted + to choose`
+            : `${count} ${count === 1 ? 'widget' : 'widgets'} will be created · pull nodes directly to sculpt`}
         </p>
       </div>
       <div className="flex items-center gap-2">
@@ -50,8 +54,9 @@ export function ShaperHUD() {
         </button>
         <button
           type="button"
+          disabled={unconfigured > 0}
           onClick={() => useWidgetStore.getState().commitGhostTree()}
-          className="rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-emerald-500"
+          className="rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-35"
         >
           Create Tree
         </button>

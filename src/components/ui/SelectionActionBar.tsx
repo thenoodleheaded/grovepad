@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { Copy, Layers, Maximize2, Trash2, Unlink, X } from 'lucide-react'
+import { Cable, Copy, Layers, Link2, Maximize2, Trash2, Unlink, X } from 'lucide-react'
 import { useWidgetStore } from '../../store/useWidgetStore'
 import { requestWidgetDeletion } from '../../store/useWidgetDeletionDialogStore'
 import { frameCanvas } from '../../utils/cameraFraming'
@@ -26,7 +26,7 @@ function ActionButton({
       aria-label={label}
       disabled={disabled}
       onClick={onClick}
-      className={`flex h-9 items-center justify-center gap-1.5 rounded-xl text-xs font-medium transition-[background-color,color,transform,scale] active:scale-[0.96] disabled:pointer-events-none disabled:opacity-40 ${
+      className={`gp-touch-target flex h-9 items-center justify-center gap-1.5 rounded-xl text-xs font-medium transition-[background-color,color,transform,scale] active:scale-[0.96] disabled:pointer-events-none disabled:opacity-40 ${
         showLabel ? 'w-9 px-0 md:w-auto md:px-2.5' : 'w-9'
       } ${
         danger
@@ -59,11 +59,12 @@ export function SelectionActionBar() {
   const canGroup = selectedIds.length >= 2
   const canDetach = groupedSelectedIds.length > 0
   const canTighten = groupIds.length > 0
+  const singleSelectedId = selectedIds.length === 1 ? selectedIds[0] : null
 
   return (
     <div
       data-canvas-ui
-      className="gp-selection-bar gp-toolbar gp-pop gp-panel absolute bottom-16 left-1/2 z-20 flex max-w-[calc(100vw-1.5rem)] -translate-x-1/2 select-none items-center gap-0.5 rounded-t-2xl rounded-b-none p-1 shadow-2xl sm:bottom-0 sm:gap-1"
+      className="gp-safe-canvas-bottom-center gp-selection-bar gp-toolbar gp-pop gp-panel absolute left-1/2 z-20 flex max-w-[calc(100vw-1.5rem)] -translate-x-1/2 select-none items-center gap-0.5 overflow-x-auto overscroll-x-contain rounded-t-2xl rounded-b-none p-1 shadow-2xl sm:gap-1"
       style={{ transformOrigin: '50% 100%' }}
     >
       <div className="min-w-16 px-1.5 text-center text-[11px] font-semibold text-neutral-200 sm:min-w-20 sm:px-2 sm:text-xs">
@@ -83,6 +84,24 @@ export function SelectionActionBar() {
         onClick={() => useWidgetStore.getState().duplicateWidgets(selectedIds)}
       >
         <Copy size={13} aria-hidden />
+      </ActionButton>
+      <ActionButton
+        label="Link as child"
+        disabled={!singleSelectedId}
+        onClick={() => {
+          if (singleSelectedId) useWidgetStore.getState().startChildLink(singleSelectedId)
+        }}
+      >
+        <Link2 size={13} aria-hidden />
+      </ActionButton>
+      <ActionButton
+        label="Add dependency"
+        disabled={!singleSelectedId}
+        onClick={() => {
+          if (singleSelectedId) useWidgetStore.getState().startDependencyLink(singleSelectedId)
+        }}
+      >
+        <Cable size={13} aria-hidden />
       </ActionButton>
       <ActionButton
         label="Group"
@@ -141,7 +160,7 @@ export function SelectionActionBar() {
         title="Clear selection"
         aria-label="Clear selection"
         onClick={() => useWidgetStore.getState().clearSelection()}
-        className="ml-0.5 flex h-8 w-8 items-center justify-center rounded-md text-neutral-500 transition-colors hover:bg-neutral-800 hover:text-white"
+        className="gp-touch-target ml-0.5 flex h-8 w-8 items-center justify-center rounded-md text-neutral-500 transition-colors hover:bg-neutral-800 hover:text-white"
       >
         <X size={14} aria-hidden />
       </button>

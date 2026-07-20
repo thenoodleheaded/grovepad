@@ -105,6 +105,16 @@ export function createGroupSlice({ set, get, pushHistory }: WidgetStoreSliceCont
     })
   },
 
+  toggleGroupFavorite: (groupId) => {
+    if (!get().groups[groupId]) return
+    pushHistory(`favorite-group:${groupId}`)
+    set((state) => {
+      const g = state.groups[groupId]
+      if (!g) return state
+      return { groups: { ...state.groups, [groupId]: { ...g, favorite: !g.favorite } } }
+    })
+  },
+
   compactGroup: (groupId, options) => {
     const state = get()
     const group = state.groups[groupId]
@@ -201,7 +211,9 @@ export function createGroupSlice({ set, get, pushHistory }: WidgetStoreSliceCont
       if (remaining.length < 2) delete groups[groupId]
       else groups[groupId] = { ...g, widgetIds: remaining }
 
-      const peeledPosition = detachPosition(state.widgets, g.widgetIds, widgetId)
+      const peeledPosition = options?.preservePosition
+        ? null
+        : detachPosition(state.widgets, g.widgetIds, widgetId)
       const widgets = peeledPosition
         ? settleWidgetLayout(
             applyWidgetPositions(state.widgets, { [widgetId]: peeledPosition }),

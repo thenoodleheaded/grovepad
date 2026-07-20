@@ -343,7 +343,7 @@ export function DependencyLines() {
     [],
   )
   const closeMenu = useCallback(() => setMenu(null), [])
-  const detail = edgeDetailFor(view.zoom, edges.length)
+  const detail = edgeDetailFor(edges.length)
 
   return (
     <>

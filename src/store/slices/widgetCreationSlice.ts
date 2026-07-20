@@ -1,7 +1,8 @@
 import type { CanvasMeta } from '../../types/spatial'
 import { snapToGrid } from '../../types/spatial'
 import { layoutThoughtPlan, layoutWidth } from '../../utils/planLayout'
-import { isWidgetTypePublic, widgetDefinition } from '../../widgets/registry'
+import { consolidateWidgetData } from '../../utils/consolidatedWidgetData'
+import { isWidgetTypePublic, publicWidgetTypeFor, widgetDefinition } from '../../widgets/registry'
 import { useToastStore } from '../useToastStore'
 import { applyWidgetPositions, compactGroupPositions } from '../widgetCollection'
 import { buildGroupIndex, computeBlockedWidgetIds, nextGroupColor } from '../widgetGraph'
@@ -24,7 +25,8 @@ export function createWidgetCreationSlice({ set, get, pushHistory, markSpawned }
   },
 
   createWidget: (title, position, type) => {
-    if (!isWidgetTypePublic(type)) {
+    const publicType = publicWidgetTypeFor(type)
+    if (!isWidgetTypePublic(publicType)) {
       useToastStore.getState().addToast(widgetDefinition(type).unavailableReason ?? 'This widget is not available')
       return ''
     }
@@ -37,7 +39,7 @@ export function createWidgetCreationSlice({ set, get, pushHistory, markSpawned }
     })
     // A canvas node is backed by a real canvas — create it alongside.
     let newCanvas: CanvasMeta | null = null
-    if (type === 'canvas_node') {
+    if (widget.type === 'canvas_node') {
       const subCanvasId = crypto.randomUUID()
       newCanvas = {
         id: subCanvasId,
@@ -78,10 +80,11 @@ export function createWidgetCreationSlice({ set, get, pushHistory, markSpawned }
     // is looking instead of sprawling rightward off-screen.
     const nodeSizes: Record<string, { width: number; height: number }> = {}
     for (const node of plan.nodes) {
-      const defaultSize = widgetDefinition(node.widgetType).defaultSize
-      const dataHeight = node.widgetType === 'canvas_node'
+      const consolidated = consolidateWidgetData(node.widgetType, node.data)
+      const defaultSize = widgetDefinition(consolidated.type).defaultSize
+      const dataHeight = consolidated.type === 'canvas_node'
         ? 0
-        : computeDataHeight(node.widgetType, node.data)
+        : computeDataHeight(consolidated.type, consolidated.data)
       nodeSizes[node.temporaryId] = {
         width: defaultSize.width,
         height: dataHeight > 0 ? dataHeight : defaultSize.height,
@@ -91,7 +94,8 @@ export function createWidgetCreationSlice({ set, get, pushHistory, markSpawned }
     const treeWidth = layoutWidth(treePositions, nodeSizes)
 
     plan.nodes.forEach((node) => {
-      if (!isWidgetTypePublic(node.widgetType)) return
+      const consolidated = consolidateWidgetData(node.widgetType, node.data)
+      if (!isWidgetTypePublic(consolidated.type)) return
       if (node.existingWidgetId && widgets[node.existingWidgetId]) {
         ids.set(node.temporaryId, node.existingWidgetId)
         return
@@ -104,7 +108,7 @@ export function createWidgetCreationSlice({ set, get, pushHistory, markSpawned }
         y: snapToGrid(origin.y + treePosition.y),
       })
 
-      if (node.widgetType === 'canvas_node') {
+      if (widget.type === 'canvas_node') {
         const subCanvasId = crypto.randomUUID()
         canvases = {
           ...canvases,
@@ -117,8 +121,8 @@ export function createWidgetCreationSlice({ set, get, pushHistory, markSpawned }
         }
         widget.data = { canvasId: subCanvasId }
       } else {
-        const height = computeDataHeight(node.widgetType, node.data)
-        widget.data = node.data
+        const height = computeDataHeight(consolidated.type, consolidated.data)
+        widget.data = consolidated.data
         if (height > 0 && height !== widget.size.height) {
           widget.size = { ...widget.size, height }
         }

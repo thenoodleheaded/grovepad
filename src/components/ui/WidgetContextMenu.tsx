@@ -2,16 +2,14 @@ import type { ReactNode } from 'react'
 import {
   Cable,
   CheckSquare,
-  ChevronsDownUp,
-  ChevronsUpDown,
   Copy,
   FolderOpen,
   GitMerge,
   LockKeyhole,
   UnlockKeyhole,
   Layers,
+  MonitorSmartphone,
   MousePointer2,
-  Shrink,
   Trash2,
   Unlink,
 } from 'lucide-react'
@@ -19,10 +17,13 @@ import { useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { useShallow } from 'zustand/react/shallow'
 import { useOverlayLifecycle } from '../../store/useOverlayStore'
+import { useToastStore } from '../../store/useToastStore'
 import { useWidgetStore } from '../../store/useWidgetStore'
+import { useNativeWidgetStore } from '../../store/useNativeWidgetStore'
 import { requestWidgetDeletion } from '../../store/useWidgetDeletionDialogStore'
 import { clampPopover } from '../../utils/popoverPosition'
 import { menuNavigationIndex } from '../../utils/menuNavigation'
+import { isNativeWidgetHost } from '../../runtime/nativeNoteWidgetSync'
 
 function MenuButton({
   label,
@@ -65,6 +66,10 @@ export function WidgetContextMenu() {
   const groupId = useWidgetStore((state) =>
     contextMenu ? state.widgetGroupIndex[contextMenu.widgetId] : undefined,
   )
+  const { nativeWidgetId, nativeWidgetSyncStatus } = useNativeWidgetStore(useShallow((state) => ({
+    nativeWidgetId: state.selectedWidgetId,
+    nativeWidgetSyncStatus: state.syncStatus,
+  })))
 
   useOverlayLifecycle(contextMenu !== null)
 
@@ -151,6 +156,22 @@ export function WidgetContextMenu() {
         >
           <MousePointer2 size={13} aria-hidden />
         </MenuButton>
+        {widget.type === 'notes' && isNativeWidgetHost() && nativeWidgetSyncStatus !== 'unsupported' && (
+          <MenuButton
+            label={nativeWidgetId === widget.id ? 'Remove from home-screen widget' : 'Use in home-screen widget'}
+            onClick={() => run(() => {
+              const nextId = nativeWidgetId === widget.id ? null : widget.id
+              useNativeWidgetStore.getState().setSelectedWidgetId(nextId)
+              useToastStore.getState().addToast(
+                nextId
+                  ? 'Selected for Grovepad Note in your device widget gallery'
+                  : 'Removed from the home-screen widget',
+              )
+            })}
+          >
+            <MonitorSmartphone size={13} aria-hidden />
+          </MenuButton>
+        )}
         <MenuButton
           label={isSelected ? 'Remove from selection' : 'Add to selection'}
           onClick={() => run(() => useWidgetStore.getState().selectWidget(widget.id, true))}
@@ -168,38 +189,6 @@ export function WidgetContextMenu() {
           onClick={() => run(() => useWidgetStore.getState().toggleWidgetLocked(widget.id))}
         >
           {widget.metadata.locked ? <UnlockKeyhole size={13} aria-hidden /> : <LockKeyhole size={13} aria-hidden />}
-        </MenuButton>
-        <div role="group" className="flex items-center gap-1.5 px-3 py-2" aria-label="Widget accent color">
-          {['#a78bfa', '#22d3ee', '#84cc16', '#f59e0b', '#f472b6', '#60a5fa'].map((accent) => (
-            <button
-              key={accent}
-              type="button"
-              role="menuitemradio"
-              aria-checked={widget.metadata.accent === accent}
-              aria-label={`Use ${accent} accent`}
-              onClick={() => run(() => useWidgetStore.getState().setWidgetAccent(widget.id, accent))}
-              className="h-4 w-4 rounded-full border border-white/20 transition-transform hover:scale-125"
-              style={{ background: accent, boxShadow: widget.metadata.accent === accent ? `0 0 0 2px #0a0a0a, 0 0 0 3px ${accent}` : undefined }}
-            />
-          ))}
-        </div>
-        <MenuButton
-          label={
-            widget.collapsed
-              ? actionIds.length > 1 ? `Expand ${actionIds.length}` : 'Expand widget'
-              : actionIds.length > 1 ? `Collapse ${actionIds.length} to pills` : 'Collapse to pill'
-          }
-          onClick={() => run(() => useWidgetStore.getState().setWidgetsCollapsed(actionIds, !widget.collapsed))}
-        >
-          {widget.collapsed ? <ChevronsUpDown size={13} aria-hidden /> : <ChevronsDownUp size={13} aria-hidden />}
-        </MenuButton>
-        <MenuButton
-          label={widget.iconified ? 'Expand from icon' : 'Shrink to icon'}
-          onClick={() => run(() => actionIds.forEach((id) => {
-            useWidgetStore.getState().setWidgetScaleState(id, widget.iconified ? 'full' : 'icon')
-          }))}
-        >
-          {widget.iconified ? <ChevronsUpDown size={13} aria-hidden /> : <Shrink size={13} aria-hidden />}
         </MenuButton>
         <MenuButton
           label="Group selected"

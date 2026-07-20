@@ -1,12 +1,14 @@
-import type { GhostTreeNode, SearchResult, Vector2D } from '../../types/spatial'
+import type { GhostTreeNode, ModuleType, SearchResult, Vector2D, WidgetGroup } from '../../types/spatial'
 import { GHOST_PITCH_Y, GHOST_SIBLINGS_PER_SIDE_MAX, MODULE_LABELS, snapToGrid } from '../../types/spatial'
 import { ghostGestureIds, ghostGestureState, gestureGhostId, layoutGhostTree } from '../widgetGhostLayout'
-import { computeBlockedWidgetIds } from '../widgetGraph'
+import { buildGroupIndex, computeBlockedWidgetIds, nextGroupColor } from '../widgetGraph'
 import { appendDraftRelation, relationKey } from '../widgetRelationDrafts'
 import { buildWidget, fuzzyScore } from '../widgetSizing'
 import { settleWidgetsByCanvas } from '../widgetSettling'
+import { applyWidgetPositions, compactGroupPositions } from '../widgetCollection'
+import { buildTreeRevealSchedule, registerTreeReveal } from '../treeReveal'
 import type { WidgetStoreSlice, WidgetStoreSliceContext } from '../widgetStoreSliceContext'
-export function createUiLinkingSlice({ set, get, pushHistory, markSpawned, initialPacks }: WidgetStoreSliceContext): WidgetStoreSlice {
+export function createUiLinkingSlice({ set, get, pushHistory, initialPacks }: WidgetStoreSliceContext): WidgetStoreSlice {
   return {
   contextMenu: null,
   openContextMenu: (widgetId, x, y) => {
@@ -167,14 +169,14 @@ export function createUiLinkingSlice({ set, get, pushHistory, markSpawned, initi
         isActive: true,
         originX,
         originY,
-        nodes: [{ id: crypto.randomUUID(), parentId: null, order: 0, x: originX, y: originY }],
+        nodes: [{ id: crypto.randomUUID(), parentId: null, order: 0, x: originX, y: originY, widgetTypes: [] }],
       },
     })
   },
 
   beginGhostGesture: () => {
     const config = get().ghostConfig
-    ghostGestureState.base = config?.nodes.map((node) => ({ ...node })) ?? null
+    ghostGestureState.base = config?.nodes.map((node) => ({ ...node, widgetTypes: [...node.widgetTypes] })) ?? null
     ghostGestureIds.clear()
   },
 
@@ -210,6 +212,7 @@ export function createUiLinkingSlice({ set, get, pushHistory, markSpawned, initi
           order: 0,
           x: parent.x,
           y: parent.y + GHOST_PITCH_Y,
+          widgetTypes: [],
         }
         nodes.push(child)
         parent = child
@@ -230,17 +233,14 @@ export function createUiLinkingSlice({ set, get, pushHistory, markSpawned, initi
     } else {
       const reference = nodes.find((candidate) => candidate.id === nodeId)
       if (!reference) return
-      const parent = reference.parentId
-        ? nodes.find((candidate) => candidate.id === reference.parentId)
-        : reference
-      if (!parent) return
       const gestureSide = direction === 'left' ? -1 : 1
-      const outward = reference.parentId === null || reference.order === 0 || Math.sign(reference.order) === gestureSide
+      const outward = reference.order === 0 || Math.sign(reference.order) === gestureSide
       // Inward motion edits the side the grabbed node actually belongs to;
       // using cursor direction here would delete the opposite sibling set.
       const side = outward ? gestureSide : Math.sign(reference.order)
+      const siblingParentId = reference.parentId
       for (let step = 0; step < steps; step++) {
-        const siblings = nodes.filter((candidate) => candidate.parentId === parent.id)
+        const siblings = nodes.filter((candidate) => candidate.parentId === siblingParentId)
         const onSide = siblings.filter((candidate) => Math.sign(candidate.order) === side)
         if (outward) {
           if (onSide.length >= GHOST_SIBLINGS_PER_SIDE_MAX) break
@@ -248,11 +248,12 @@ export function createUiLinkingSlice({ set, get, pushHistory, markSpawned, initi
             ? Math.min(0, ...onSide.map((candidate) => candidate.order)) - 1
             : Math.max(0, ...onSide.map((candidate) => candidate.order)) + 1
           nodes.push({
-            id: gestureGhostId(`side:${parent.id}:${order}`),
-            parentId: parent.id,
+            id: gestureGhostId(`side:${siblingParentId ?? 'root'}:${order}`),
+            parentId: siblingParentId,
             order,
-            x: parent.x,
-            y: parent.y + GHOST_PITCH_Y,
+            x: reference.x,
+            y: reference.parentId ? reference.y : config.originY,
+            widgetTypes: [],
           })
         } else {
           const outermost = onSide.sort((a, b) => Math.abs(b.order) - Math.abs(a.order))[0]
@@ -271,6 +272,29 @@ export function createUiLinkingSlice({ set, get, pushHistory, markSpawned, initi
     ghostGestureIds.clear()
   },
 
+  setGhostNodeWidgetTypes: (nodeId, widgetTypes) => {
+    const uniqueTypes = [...new Set(widgetTypes)] as ModuleType[]
+    set((state) => {
+      const config = state.ghostConfig
+      if (!config) return state
+      const node = config.nodes.find((candidate) => candidate.id === nodeId)
+      if (!node) return state
+      if (
+        node.widgetTypes.length === uniqueTypes.length &&
+        node.widgetTypes.every((type, index) => type === uniqueTypes[index])
+      ) return state
+      const nodes = config.nodes.map((candidate) =>
+        candidate.id === nodeId ? { ...candidate, widgetTypes: uniqueTypes } : candidate,
+      )
+      return {
+        ghostConfig: {
+          ...config,
+          nodes: layoutGhostTree(nodes, config.originX, config.originY),
+        },
+      }
+    })
+  },
+
   cancelGhostShaper: () =>
     set((state) => {
       ghostGestureState.base = null
@@ -283,10 +307,12 @@ export function createUiLinkingSlice({ set, get, pushHistory, markSpawned, initi
     const config = state.ghostConfig
     if (!config) return
     const { originX, originY, nodes } = config
+    if (nodes.some((node) => node.widgetTypes.length === 0)) return
     pushHistory()
 
-    const widgets = { ...state.widgets }
+    let widgets = { ...state.widgets }
     const relations = { ...state.relations }
+    const groups: Record<string, WidgetGroup> = { ...state.groups }
     const created: string[] = []
     const settleIds = new Set<string>()
     const relationKeys = new Set(
@@ -294,47 +320,76 @@ export function createUiLinkingSlice({ set, get, pushHistory, markSpawned, initi
         relationKey(relation.fromId, relation.toId, relation.type),
       ),
     )
-    const createNote = (title: string, position: Vector2D) => {
+    const createWidgetForNode = (type: ModuleType, position: Vector2D) => {
       const id = crypto.randomUUID()
-      widgets[id] = buildWidget(id, 'notes', title, state.activeCanvasId, position)
+      widgets[id] = buildWidget(id, type, MODULE_LABELS[type], state.activeCanvasId, position)
       created.push(id)
       settleIds.add(id)
       return id
     }
 
-    const ids = new Map<string, string>()
+    const ids = new Map<string, string[]>()
+    const groupIds = new Map<string, string>()
+    const relationIds = new Map<string, string>()
     for (const node of nodes) {
-        const childId = createNote(node.parentId === null ? 'Root' : 'Branch', {
-          x: originX + (node.x - originX) * 3,
-          y: originY + (node.y - originY) * 2.5,
-        })
-        ids.set(node.id, childId)
+      const position = {
+        x: originX + (node.x - originX) * 3,
+        y: originY + (node.y - originY) * 2.5,
+      }
+      const nodeIds = node.widgetTypes.map((type) => createWidgetForNode(type, position))
+      ids.set(node.id, nodeIds)
+      if (nodeIds.length > 1) {
+        widgets = applyWidgetPositions(widgets, compactGroupPositions(widgets, nodeIds))
+        const groupId = crypto.randomUUID()
+        groups[groupId] = {
+          id: groupId,
+          label: 'Tree bundle',
+          widgetIds: nodeIds,
+          color: nextGroupColor(),
+        }
+        groupIds.set(node.id, groupId)
+      }
     }
     for (const node of nodes) {
       if (node.parentId) {
-        const parentId = ids.get(node.parentId)
-        const childId = ids.get(node.id)
+        const parentId = ids.get(node.parentId)?.[0]
+        const childId = ids.get(node.id)?.[0]
         if (parentId && childId) {
-        appendDraftRelation(
-          widgets,
-          relations,
-          relationKeys,
-          settleIds,
-          parentId,
-          childId,
-          'parent',
-        )
+          const relationId = appendDraftRelation(
+            widgets,
+            relations,
+            relationKeys,
+            settleIds,
+            parentId,
+            childId,
+            'parent',
+          )
+          if (relationId) relationIds.set(node.id, relationId)
         }
       }
     }
 
+    const widgetGroupIndex = buildGroupIndex(groups)
+    registerTreeReveal(buildTreeRevealSchedule(
+      [...nodes]
+        .sort((a, b) => a.y - b.y || a.x - b.x)
+        .map((node) => ({
+          widgetIds: ids.get(node.id) ?? [],
+          groupId: groupIds.get(node.id),
+          relationId: relationIds.get(node.id),
+        })),
+    ))
+
     set({
-      widgets: settleWidgetsByCanvas(widgets, settleIds),
+      widgets: settleWidgetsByCanvas(widgets, settleIds, widgetGroupIndex),
       widgetStructureVersion: state.widgetStructureVersion + 1,
       relations,
+      groups,
+      widgetGroupIndex,
       blockedWidgetIds: computeBlockedWidgetIds(relations),
+      selectedIds: new Set(created),
       ghostConfig: null,
     })
-    for (const id of created) markSpawned(id)
-  },  }
+  },
+  }
 }

@@ -8,6 +8,7 @@ export type ModuleType =
   | 'checklist'
   | 'table'
   | 'sketchpad'
+  | 'excalidraw'
   | 'budget'
   | 'progress'
   | 'ai_generator'
@@ -135,6 +136,7 @@ export const MODULE_TYPES: readonly ModuleType[] = [
   'checklist',
   'table',
   'sketchpad',
+  'excalidraw',
   'budget',
   'progress',
   'ai_generator',

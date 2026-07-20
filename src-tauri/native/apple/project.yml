@@ -1,0 +1,29 @@
+name: GrovepadNoteWidget
+options:
+  deploymentTarget:
+    macOS: "11.0"
+targets:
+  GrovepadNoteWidget:
+    type: app-extension
+    platform: macOS
+    sources:
+      - path: GrovepadNoteWidget.swift
+    info:
+      path: build/Info.plist
+      properties:
+        CFBundleDisplayName: Grovepad Note
+        CFBundleShortVersionString: 0.1.0
+        CFBundleVersion: "0.1.0"
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    entitlements:
+      path: GrovepadNoteWidget.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.grovepad.widgets
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.grovepad.desktop.GrovepadNoteWidget
+        PRODUCT_NAME: GrovepadNoteWidget
+        SKIP_INSTALL: true
+        APPLICATION_EXTENSION_API_ONLY: true

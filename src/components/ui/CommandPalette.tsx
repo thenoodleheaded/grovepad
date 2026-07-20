@@ -121,6 +121,15 @@ const PALETTE_ACTIONS: ActionItem[] = [
     },
   },
   {
+    id: 'action-import-document',
+    title: 'Import Document',
+    subtitle: 'Turn files or pasted text into a connected widget map',
+    run: () => {
+      useWidgetStore.getState().setPaletteOpen(false)
+      useWidgetStore.getState().setImportOpen(true)
+    },
+  },
+  {
     id: 'action-domain-packs',
     title: 'Open Domain Packs',
     subtitle: 'Enable specialist widget libraries',
@@ -467,7 +476,7 @@ export function CommandPalette() {
       role="dialog"
       aria-modal="true"
       aria-label="Command palette"
-      className="fixed inset-0 z-[200] flex items-start justify-center pt-[15vh]"
+      className="gp-command-palette fixed inset-0 z-[200] flex items-start justify-center pt-[15vh]"
       onKeyDown={onModalKeyDown}
     >
       {/* Backdrop */}
@@ -481,7 +490,7 @@ export function CommandPalette() {
       <div
         ref={panelRef}
         tabIndex={-1}
-        className="gp-dialog gp-pop gp-panel relative z-10 flex w-full max-w-2xl flex-col overflow-hidden rounded-3xl shadow-2xl outline-none"
+        className="gp-command-panel gp-dialog gp-pop gp-panel relative z-10 flex w-full max-w-2xl flex-col overflow-hidden rounded-3xl shadow-2xl outline-none"
       >
         {/* Search input */}
         <div className="flex items-center gap-3 border-b border-neutral-800 px-4 py-3">
@@ -491,6 +500,9 @@ export function CommandPalette() {
             type="text"
             value={query}
             placeholder="Search widgets or actions…"
+            autoComplete="off"
+            enterKeyHint="search"
+            spellCheck={false}
             onChange={(e) => setQuery(e.target.value)}
             className="flex-1 bg-transparent text-sm text-neutral-100 outline-none placeholder:text-neutral-600"
           />
@@ -498,7 +510,7 @@ export function CommandPalette() {
             type="button"
             aria-label="Close palette"
             onClick={() => useWidgetStore.getState().setPaletteOpen(false)}
-            className="flex h-6 w-6 items-center justify-center rounded text-neutral-500 hover:bg-neutral-800 hover:text-white"
+            className="gp-touch-target flex h-6 w-6 items-center justify-center rounded text-neutral-500 hover:bg-neutral-800 hover:text-white"
           >
             <X size={13} />
           </button>
@@ -511,7 +523,7 @@ export function CommandPalette() {
               key={tab.id}
               type="button"
               onClick={() => setCategory(tab.id)}
-              className={`rounded px-2.5 py-1 text-xs font-medium transition-colors ${
+              className={`gp-touch-target rounded px-2.5 py-1 text-xs font-medium transition-colors ${
                 category === tab.id
                   ? 'bg-neutral-800 text-neutral-100'
                   : 'text-neutral-500 hover:text-neutral-300'
@@ -520,15 +532,15 @@ export function CommandPalette() {
               {tab.label}
             </button>
           ))}
-          <span className="ml-auto  text-[10px] text-neutral-700">
+          <span className="gp-command-key-hint ml-auto text-[10px] text-neutral-700">
             ↑↓ navigate · Enter to select
           </span>
         </div>
 
         {/* Split pane body */}
-        <div className="flex" style={{ height: '340px' }}>
+        <div className="gp-command-body flex">
           {/* Left: results list */}
-          <div className="flex w-2/5 flex-col border-r border-neutral-800">
+          <div className="gp-command-results flex w-2/5 flex-col border-r border-neutral-800">
             {results.length === 0 ? (
               <div className="flex flex-1 items-center justify-center">
                 <p className="text-xs text-neutral-600">No results</p>
@@ -542,7 +554,7 @@ export function CommandPalette() {
                     aria-selected={i === focusedIndex}
                     onClick={() => { setFocusedIndex(i); execute(result) }}
                     onMouseEnter={() => setFocusedIndex(i)}
-                    className={`flex cursor-pointer items-start gap-2.5 px-3 py-2 transition-colors ${
+                    className={`flex min-h-14 cursor-pointer items-start gap-2.5 px-3 py-2 transition-colors ${
                       i === focusedIndex
                         ? 'bg-neutral-800 text-neutral-100'
                         : 'text-neutral-400 hover:bg-neutral-800/50'
@@ -576,7 +588,7 @@ export function CommandPalette() {
           </div>
 
           {/* Right: preview */}
-          <div className="w-3/5 overflow-y-auto">
+          <div className="gp-command-preview w-3/5 overflow-y-auto">
             <ResultPreview result={focusedResult} />
           </div>
         </div>

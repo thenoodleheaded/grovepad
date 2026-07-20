@@ -79,6 +79,16 @@ export const STUDY_FIELDS = {
         return sum / w >= 60
       },
     },
+    {
+      key: 'gpa',
+      label: 'GPA',
+      valueType: 'number',
+      get: (d) => {
+        const courses = (d as GradeCalcData).gpa?.courses ?? []
+        const credits = courses.reduce((sum, course) => sum + course.credits, 0)
+        return credits > 0 ? courses.reduce((sum, course) => sum + course.credits * course.points, 0) / credits : 0
+      },
+    },
   ],
   gpa: [
     {

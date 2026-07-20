@@ -1,15 +1,26 @@
-import { GitMerge } from 'lucide-react'
+import { Copy, FileText, GitMerge, Star, Trash2 } from 'lucide-react'
 import { memo, useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react'
 import { createPortal } from 'react-dom'
 import { useShallow } from 'zustand/react/shallow'
 import { useCanvasStore } from '../../store/useCanvasStore'
 import { useOverlayLifecycle } from '../../store/useOverlayStore'
 import { useWidgetStore } from '../../store/useWidgetStore'
-import { GRID_SIZE, type Widget, type WidgetGroup } from '../../types/spatial'
-import { GROUP_PAD } from '../../utils/groupGeometry'
+import { requestWidgetDeletion } from '../../store/useWidgetDeletionDialogStore'
+import { useFocusStore } from '../../store/useFocusStore'
+import type { Widget, WidgetGroup } from '../../types/spatial'
+import { groupPlateGeometry } from '../../utils/groupOutline'
 import { linkAnchorId, resolveLinkTargetAt } from '../../utils/linkTarget'
 import { clampPopover } from '../../utils/popoverPosition'
 import { PointerDragSession } from '../../utils/pointerDrag'
+import {
+  beginDragDisplacement,
+  cancelDragDisplacement,
+  endDragDisplacement,
+  updateDragDisplacement,
+  useDragDisplacementStore,
+} from '../../store/dragDisplacement'
+import { widgetsToMarkdown } from '../../utils/widgetMarkdown'
+import { treeRevealDelay } from '../../store/treeReveal'
 
 interface LinkDragState {
   pointerId: number
@@ -23,6 +34,7 @@ const EMPTY_MEMBERS: Widget[] = []
 /** One shared E0 glass backplate beneath every member widget in the group. */
 export const GroupPlate = memo(function GroupPlate({ group }: { group: WidgetGroup }) {
   const groupId = group.id
+  const treeRevealMs = treeRevealDelay('group', groupId)
   // Subscribe to member widgets only — dragging unrelated widgets elsewhere
   // on the board must not re-render every visible plate.
   const members = useWidgetStore(
@@ -38,6 +50,10 @@ export const GroupPlate = memo(function GroupPlate({ group }: { group: WidgetGro
     }),
   )
   const isDropTarget = useWidgetStore((state) => state.dragOverGroupId === groupId)
+  const focusedWidgetId = useFocusStore((state) => state.focusedWidgetId)
+  const isFocusGroup = Boolean(
+    focusedWidgetId && members.some((member) => member.id === focusedWidgetId),
+  )
 
   const [labelEditing, setLabelEditing] = useState(false)
   const [showMenu, setShowMenu] = useState<{ x: number; y: number } | null>(null)
@@ -49,28 +65,19 @@ export const GroupPlate = memo(function GroupPlate({ group }: { group: WidgetGro
   // group's bounding box, so any member works as the anchor.
   const anchorId = members[0]?.id ?? null
 
-  const geometry = useMemo(() => {
-    if (members.length === 0) return null
-    let minX = Infinity
-    let minY = Infinity
-    let maxX = -Infinity
-    let maxY = -Infinity
-    for (const w of members) {
-      minX = Math.min(minX, w.position.x)
-      minY = Math.min(minY, w.position.y)
-      maxX = Math.max(maxX, w.position.x + w.size.width)
-      maxY = Math.max(maxY, w.position.y + w.size.height)
-    }
-    if (!Number.isFinite(minX)) return null
-    return {
-      x: minX - GROUP_PAD,
-      y: minY - GROUP_PAD,
-      width: maxX - minX + GROUP_PAD * 2,
-      height: maxY - minY + GROUP_PAD * 2,
-    }
-  }, [members])
+  // A displaced group is one rigid cluster, so every member carries the same
+  // ghost offset — reading the anchor's is reading the whole plate's.
+  const ghostOffset = useDragDisplacementStore((state) =>
+    anchorId ? state.offsets[anchorId] : undefined,
+  )
 
-  if (!geometry) return null
+  // Union silhouette of member hover footprints (title row + button chrome
+  // included) — the plate wraps the widgets' real interactive shape, not a
+  // bounding rectangle.
+  const plate = useMemo(() => groupPlateGeometry(members), [members])
+
+  if (!plate) return null
+  const geometry = plate.bounds
 
   // Resolves an active "Link as child of…" gesture immediately on click —
   // waiting for a zero-movement pointerup misses ordinary pointer jitter
@@ -110,12 +117,19 @@ export const GroupPlate = memo(function GroupPlate({ group }: { group: WidgetGro
       )
       return
     }
+    beginDragDisplacement()
     dragRef.current = new PointerDragSession(e, {
       onFirstMove: () => useWidgetStore.getState().snapshotHistory(),
-      onDelta: (dx, dy) =>
-        useWidgetStore
-          .getState()
-          .moveGroup(groupId, { x: dx, y: dy }, useCanvasStore.getState().zoom),
+      onDelta: (dx, dy) => {
+        const zoom = useCanvasStore.getState().zoom
+        useWidgetStore.getState().moveGroup(groupId, { x: dx, y: dy }, zoom)
+        const fresh = useWidgetStore.getState()
+        const movingIds = (fresh.groups[groupId]?.widgetIds ?? []).filter(
+          (id) => !fresh.widgets[id]?.metadata.locked,
+        )
+        const safeZoom = zoom > 0 ? zoom : 1
+        updateDragDisplacement(movingIds, { x: dx / safeZoom, y: dy / safeZoom })
+      },
     })
   }
 
@@ -152,8 +166,13 @@ export const GroupPlate = memo(function GroupPlate({ group }: { group: WidgetGro
     if (!session || session.pointerId !== e.pointerId) return
     dragRef.current = null
     if (session.end()) {
-      const widgetIds = useWidgetStore.getState().groups[groupId]?.widgetIds ?? []
-      useWidgetStore.getState().settleWidgets(widgetIds)
+      const state = useWidgetStore.getState()
+      const ghostOffsets = endDragDisplacement()
+      if (Object.keys(ghostOffsets).length > 0) state.applyGhostDisplacement(ghostOffsets)
+      const widgetIds = state.groups[groupId]?.widgetIds ?? []
+      state.settleWidgets(widgetIds)
+    } else {
+      cancelDragDisplacement()
     }
   }
 
@@ -168,6 +187,7 @@ export const GroupPlate = memo(function GroupPlate({ group }: { group: WidgetGro
     const session = dragRef.current
     if (!session || session.pointerId !== e.pointerId) return
     dragRef.current = null
+    cancelDragDisplacement()
     if (session.end()) {
       const widgetIds = useWidgetStore.getState().groups[groupId]?.widgetIds ?? []
       useWidgetStore.getState().settleWidgets(widgetIds)
@@ -180,6 +200,28 @@ export const GroupPlate = memo(function GroupPlate({ group }: { group: WidgetGro
     setShowMenu({ x: e.clientX, y: e.clientY })
   }
 
+  // Group-wide equivalents of the widget title row's action buttons: same
+  // affordances, scoped to every member at once instead of one card.
+  const toggleFavorite = () => useWidgetStore.getState().toggleGroupFavorite(groupId)
+
+  const duplicateGroup = () => {
+    const state = useWidgetStore.getState()
+    const newIds = state.duplicateWidgets(group.widgetIds)
+    // duplicateWidgets carries wires but not group membership — reassemble it
+    // so the clone keeps acting as one group, not a loose pile of copies.
+    if (newIds.length >= 2) state.createGroup(newIds, group.label)
+  }
+
+  const copyGroupAsMarkdown = () => {
+    navigator.clipboard.writeText(widgetsToMarkdown(members))
+  }
+
+  const deleteGroup = () => {
+    // deleteWidgets already drops any group left with fewer than 2 members,
+    // so removing every member dissolves the group as a side effect.
+    requestWidgetDeletion(group.widgetIds)
+  }
+
   const color = group.color
 
   return (
@@ -188,35 +230,66 @@ export const GroupPlate = memo(function GroupPlate({ group }: { group: WidgetGro
         role="group"
         aria-label={`${group.label} group`}
         data-group-id={groupId}
+        data-focus-group={isFocusGroup || undefined}
         data-drop-target={isDropTarget || undefined}
-        className="gp-widget-motion gp-group-backplate absolute left-0 top-0 cursor-grab active:cursor-grabbing"
+        data-ghost-displaced={ghostOffset ? true : undefined}
+        className={`gp-widget-motion gp-group-backplate pointer-events-none absolute left-0 top-0 ${
+          treeRevealMs !== null ? 'gp-tree-group-reveal' : ''
+        }`}
         style={{
-          transform: `translate3d(${geometry.x}px, ${geometry.y}px, 0)`,
+          transform: `translate3d(${geometry.x + (ghostOffset?.x ?? 0)}px, ${
+            geometry.y + (ghostOffset?.y ?? 0)
+          }px, 0)`,
           width: geometry.width,
           height: geometry.height,
           '--gp-widget-accent': color,
+          '--gp-tree-reveal-delay': `${treeRevealMs ?? 0}ms`,
           contain: 'layout style',
         } as CSSProperties}
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp}
-        onPointerCancel={onPointerCancel}
-        onLostPointerCapture={onPointerCancel}
-        onContextMenu={onContextMenu}
-        onDoubleClick={(event) => {
-          event.stopPropagation()
-          useCanvasStore.getState().fitRect(geometry, 120)
-        }}
       >
+        {/* Grab surface. clip-path clips hit-testing too, so a concave notch
+            between members stays plain canvas instead of grabbing the group. */}
+        <div
+          className="pointer-events-auto absolute inset-0 cursor-grab active:cursor-grabbing"
+          style={{ clipPath: `path("${plate.hitPath}")` }}
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerUp={onPointerUp}
+          onPointerCancel={onPointerCancel}
+          onLostPointerCapture={onPointerCancel}
+          onContextMenu={onContextMenu}
+          onDoubleClick={(event) => {
+            event.stopPropagation()
+            useCanvasStore.getState().fitRect(geometry, 120)
+          }}
+        />
+        {/* Shared glass carved to the union silhouette. clip-path removes the
+            box's own border and shadow, so gp-group-plate-shape swaps in
+            silhouette-following drop-shadows and the SVG below draws the
+            hairline along the same path. */}
         <div
           aria-hidden
-          className="gp-glass gp-backplate gp-group-backplate-visual pointer-events-none absolute"
-          style={{ inset: GRID_SIZE / 2 }}
+          className="gp-glass gp-backplate gp-group-plate-shape gp-group-backplate-visual pointer-events-none absolute inset-0"
+          style={{ clipPath: `path("${plate.glassPath}")` }}
         />
-        {/* Group name pill floats above the shared backplate. */}
-        <div className="absolute inset-x-0 z-20 flex justify-center" style={{ top: -60 }}>
+        <svg
+          aria-hidden
+          className="gp-group-plate-outline pointer-events-none absolute inset-0"
+          width={geometry.width}
+          height={geometry.height}
+          viewBox={`0 0 ${geometry.width} ${geometry.height}`}
+        >
+          <path d={plate.glassPath} />
+        </svg>
+        {/* Group name pill straddles the plate's top-left edge like a tab:
+            low enough that the settle gap band keeps foreign cards off it,
+            high enough to clear the topmost member's own floating title row
+            (which occupies the lower half of the plate's pad band). Floating
+            it fully above the plate let neighboring cards cover it; sitting
+            fully inside put it under member title chrome. */}
+        <div className="absolute z-20 flex items-center gap-1.5" style={{ top: -14, left: 14 }}>
           <div
-            className="gp-title-capsule pointer-events-auto flex h-8 max-w-[80%] cursor-grab items-center gap-1.5 rounded-full px-3 shadow-md active:cursor-grabbing"
+            className="gp-title-capsule pointer-events-auto flex h-8 max-w-[50%] cursor-grab items-center gap-1.5 rounded-full px-3 shadow-md active:cursor-grabbing"
             onPointerDown={onPointerDown}
             onPointerMove={onPointerMove}
             onPointerUp={onPointerUp}
@@ -256,6 +329,51 @@ export const GroupPlate = memo(function GroupPlate({ group }: { group: WidgetGro
                 {group.label}
               </span>
             )}
+          </div>
+
+          <div className="gp-plate-action pointer-events-auto flex items-center gap-1">
+            <button
+              type="button"
+              title="Favorite group"
+              aria-label={group.favorite ? 'Remove group from favorites' : 'Favorite group'}
+              aria-pressed={Boolean(group.favorite)}
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={(e) => { e.stopPropagation(); toggleFavorite() }}
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-neutral-400 filter drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] transition-colors hover:text-neutral-200"
+              style={group.favorite ? { color } : undefined}
+            >
+              <Star size={13} aria-hidden fill={group.favorite ? 'currentColor' : 'none'} />
+            </button>
+            <button
+              type="button"
+              title="Duplicate group"
+              aria-label="Duplicate group"
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={(e) => { e.stopPropagation(); duplicateGroup() }}
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-neutral-400 filter drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] transition-colors hover:text-neutral-200"
+            >
+              <Copy size={13} aria-hidden />
+            </button>
+            <button
+              type="button"
+              title="Copy group as Markdown"
+              aria-label="Copy group as Markdown"
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={(e) => { e.stopPropagation(); copyGroupAsMarkdown() }}
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-neutral-400 filter drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] transition-colors hover:text-neutral-200"
+            >
+              <FileText size={13} aria-hidden />
+            </button>
+            <button
+              type="button"
+              title="Delete group"
+              aria-label="Delete group and its widgets"
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={(e) => { e.stopPropagation(); deleteGroup() }}
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-neutral-400 filter drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] transition-colors hover:text-red-300"
+            >
+              <Trash2 size={13} aria-hidden />
+            </button>
           </div>
         </div>
 

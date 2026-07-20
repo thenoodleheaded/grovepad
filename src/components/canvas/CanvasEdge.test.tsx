@@ -55,11 +55,9 @@ describe('CanvasEdge', () => {
 
 describe('shared edge policies', () => {
   it('quantizes detail consistently', () => {
-    expect(edgeDetailFor(1, 10)).toBe('rich')
-    expect(edgeDetailFor(0.5, 10)).toBe('standard')
-    expect(edgeDetailFor(1, 500)).toBe('standard')
-    expect(edgeDetailFor(0.2, 10)).toBe('minimal')
-    expect(edgeDetailFor(1, 800)).toBe('minimal')
+    expect(edgeDetailFor(10)).toBe('rich')
+    expect(edgeDetailFor(500)).toBe('standard')
+    expect(edgeDetailFor(800)).toBe('minimal')
   })
 
   it('keeps crossing edges when both endpoints are offscreen', () => {

@@ -1,4 +1,4 @@
-import type { CanvasNodeData, ChecklistData, Size, Widget } from '../../types/spatial'
+import type { CanvasNodeData, Size, Vector2D, Widget } from '../../types/spatial'
 import { ICONIFIED_SIZE, snapToGrid } from '../../types/spatial'
 import { DEFAULT_SIZING, widgetDefinition } from '../../widgets/registry'
 import { pillSizeForTitle } from '../../utils/collapsedWidget'
@@ -104,6 +104,19 @@ export function createWidgetLayoutSlice({ set, get, pushHistory }: WidgetStoreSl
           ? settleWidgetLayout(snapped, layoutIds, state.widgetGroupIndex)
           : snapped,
       }
+    })
+  },
+
+  applyGhostDisplacement: (offsets) => {
+    set((state) => {
+      const positions: Record<string, Vector2D> = {}
+      for (const [id, offset] of Object.entries(offsets)) {
+        const w = state.widgets[id]
+        if (!w || w.metadata.locked || (offset.x === 0 && offset.y === 0)) continue
+        positions[id] = { x: w.position.x + offset.x, y: w.position.y + offset.y }
+      }
+      if (Object.keys(positions).length === 0) return state
+      return { widgets: applyWidgetPositions(state.widgets, positions) }
     })
   },
 
@@ -369,15 +382,10 @@ export function createWidgetLayoutSlice({ set, get, pushHistory }: WidgetStoreSl
     })
   },
 
-  updateWidgetData: (widgetId, data) => {
+  updateWidgetData: (widgetId, data, options) => {
     const previous = get().widgets[widgetId]
     if (!previous) return
-    if (previous.type === 'checklist') {
-      const before = (previous.data as ChecklistData).items.filter((item) => item.done).length
-      const after = (data as ChecklistData).items.filter((item) => item.done).length
-      if (after > before) void import('../../utils/feedbackSound').then(({ playCompletionTick }) => playCompletionTick())
-    }
-    pushHistory(`data:${widgetId}`)
+    pushHistory(options?.coalesceHistory === false ? undefined : `data:${widgetId}`)
     set((state) => {
       const w = state.widgets[widgetId]
       if (!w) return state

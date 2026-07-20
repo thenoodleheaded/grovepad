@@ -10,11 +10,14 @@ const migrations = readdirSync(migrationDir)
 if (migrations.length === 0) throw new Error('No Supabase migrations found')
 await loadModule()
 
+let migrationCorpus = ''
 for (const name of migrations) {
   const sql = readFileSync(resolve(migrationDir, name), 'utf8')
   parseSync(sql)
+  migrationCorpus += `\n${sql.toLowerCase()}`
+}
 
-  const requiredClauses = [
+const requiredClauses = [
     'alter table public.boards enable row level security',
     'alter table public.board_indexes enable row level security',
     'alter table public.canvas_docs enable row level security',
@@ -23,11 +26,15 @@ for (const name of migrations) {
     'with check ((select auth.uid()) = user_id)',
     'security definer',
     'offset 30',
+    'alter table public.canvas_crdt_updates enable row level security',
+    'create policy canvas_crdt_updates_editor_insert',
+    'create policy grovepad_canvas_member_receive on realtime.messages',
+    'public.canvas_role(canvas_id) in (\'owner\', \'editor\')',
+    'perform pg_advisory_xact_lock',
   ]
-  for (const clause of requiredClauses) {
-    if (!sql.toLowerCase().includes(clause)) {
-      throw new Error(`${name} is missing required database invariant: ${clause}`)
-    }
+for (const clause of requiredClauses) {
+  if (!migrationCorpus.includes(clause)) {
+    throw new Error(`Supabase migrations are missing required database invariant: ${clause}`)
   }
 }
 

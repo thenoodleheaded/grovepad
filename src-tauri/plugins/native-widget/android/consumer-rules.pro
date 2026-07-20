@@ -1,0 +1,1 @@
+-keep class com.grovepad.nativewidget.GrovepadNoteWidgetReceiver { *; }

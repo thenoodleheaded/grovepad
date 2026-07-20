@@ -32,6 +32,7 @@ export interface PendingWireDrop {
 interface CircuitState {
   /** Circuit Mode — the whole live graph is illuminated. */
   circuitMode: boolean
+  setCircuitMode: (active: boolean) => void
   toggleCircuitMode: () => void
 
   wireDrag: WireDrag | null
@@ -59,11 +60,11 @@ interface CircuitState {
 
 export const useCircuitStore = create<CircuitState>()((set, get) => ({
   circuitMode: false,
-  toggleCircuitMode: () => {
-    const next = !get().circuitMode
-    document.body.toggleAttribute('data-circuit-mode', next)
-    set({ circuitMode: next })
+  setCircuitMode: (circuitMode) => {
+    document.body.toggleAttribute('data-circuit-mode', circuitMode)
+    set((state) => (state.circuitMode === circuitMode ? state : { circuitMode }))
   },
+  toggleCircuitMode: () => get().setCircuitMode(!get().circuitMode),
 
   wireDrag: null,
   startWireDrag: (drag) => set({ wireDrag: { ...drag, hover: null }, pendingDrop: null }),

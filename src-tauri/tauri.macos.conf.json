@@ -1,0 +1,14 @@
+{
+  "build": {
+    "beforeBundleCommand": "bash scripts/embed-macos-widget.sh"
+  },
+  "bundle": {
+    "macOS": {
+      "entitlements": "Entitlements.plist",
+      "minimumSystemVersion": "11.0",
+      "files": {
+        "PlugIns/GrovepadNoteWidget.appex": "native/apple/build/DerivedData/Build/Products/Release/GrovepadNoteWidget.appex"
+      }
+    }
+  }
+}

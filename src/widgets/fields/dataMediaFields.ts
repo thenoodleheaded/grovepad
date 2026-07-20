@@ -35,10 +35,40 @@ export const DATA_MEDIA_FIELDS = {
   bar_chart: [
     {
       key: 'total',
-      label: 'Bar total',
+      label: 'Total',
       valueType: 'number',
       unit: 'count',
       get: (d) => (d as BarChartData).bars.reduce((s, b) => s + (Number.isFinite(b.value) ? b.value : 0), 0),
+    },
+    {
+      key: 'series',
+      label: 'Series',
+      valueType: 'series',
+      get: (d) => (d as BarChartData).bars.map((point, index) => ({ t: index, v: point.value })),
+      set: (d, v) => Array.isArray(v) ? ({
+        ...(d as BarChartData),
+        bars: v.slice(-400).map((point, index) => ({
+          id: (d as BarChartData).bars[index]?.id ?? crypto.randomUUID(),
+          label: (d as BarChartData).bars[index]?.label ?? String(index + 1),
+          color: (d as BarChartData).bars[index]?.color,
+          value: point.v,
+        })),
+      }) : d,
+    },
+    {
+      key: 'latest',
+      label: 'Latest value',
+      valueType: 'number',
+      get: (d) => (d as BarChartData).bars.at(-1)?.value ?? 0,
+    },
+    {
+      key: 'average',
+      label: 'Average',
+      valueType: 'number',
+      get: (d) => {
+        const points = (d as BarChartData).bars
+        return points.length ? points.reduce((sum, point) => sum + point.value, 0) / points.length : 0
+      },
     },
   ],
   calculator: [
@@ -271,7 +301,12 @@ export const DATA_MEDIA_FIELDS = {
       label: 'Cards',
       valueType: 'number',
       unit: 'count',
-      get: (d) => (d as FlashcardsData).cards.length,
+      get: (d) => {
+        const deck = d as FlashcardsData
+        if (deck.mode === 'vocabulary') return deck.vocabulary?.terms.length ?? 0
+        if (deck.mode === 'quiz') return deck.quiz?.options.length ?? 0
+        return deck.cards.length
+      },
     },
   ],
   priority_matrix: [

@@ -1,5 +1,6 @@
 use base64::Engine;
 use tauri::{Emitter, Manager};
+use tauri_plugin_native_widget::{NativeWidgetExt, SyncResult};
 
 /// Payload sent to the frontend: raw file bytes, base64-encoded for IPC. Only
 /// the Rust side ever touches the filesystem — the webview never gets an fs
@@ -58,18 +59,74 @@ fn take_pending_open_file(state: tauri::State<AppState>) -> Option<OpenFilePaylo
     read_open_file_payload(&path)
 }
 
+const NOTE_WIDGET_PAYLOAD_MAX_BYTES: usize = 24 * 1024;
+
+#[derive(serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct NoteWidgetEnvelope {
+    schema_version: u8,
+    note: Option<NoteWidgetData>,
+}
+
+#[derive(serde::Deserialize)]
+struct NoteWidgetData {
+    id: String,
+    title: String,
+    text: String,
+    color: String,
+    mode: String,
+    attribution: String,
+}
+
+fn validate_note_widget_payload(payload: &str) -> Result<(), String> {
+    if payload.len() > NOTE_WIDGET_PAYLOAD_MAX_BYTES {
+        return Err("Note widget payload is too large".into());
+    }
+    let envelope: NoteWidgetEnvelope =
+        serde_json::from_str(payload).map_err(|_| "Invalid Note widget payload".to_string())?;
+    if envelope.schema_version != 1 {
+        return Err("Unsupported Note widget payload version".into());
+    }
+    let Some(note) = envelope.note else {
+        return Ok(());
+    };
+    if note.id.is_empty()
+        || note.id.chars().count() > 120
+        || note.title.chars().count() > 120
+        || note.text.chars().count() > 4_096
+        || note.attribution.chars().count() > 120
+        || !matches!(
+            note.color.as_str(),
+            "yellow" | "pink" | "blue" | "green" | "purple"
+        )
+        || !matches!(note.mode.as_str(), "plain" | "sticky" | "quote")
+    {
+        return Err("Invalid Note widget fields".into());
+    }
+    Ok(())
+}
+
+/// Persist a pre-rendered Note snapshot for the native widget extension.
+/// The Rust boundary validates size and schema before any platform bridge sees it.
+#[tauri::command]
+async fn sync_note_widget(app: tauri::AppHandle, payload: String) -> Result<SyncResult, String> {
+    validate_note_widget_payload(&payload)?;
+    app.native_widget()
+        .sync(payload)
+        .await
+        .map_err(|error| error.to_string())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    let mut builder = tauri::Builder::default();
-
     // Windows/Linux: a second launch (double-clicking another .grovepad file
     // while the app is already running) forwards its argv here instead of
     // opening a duplicate window. macOS reuses the running instance directly
     // via `RunEvent::Opened` and does not need this plugin, but registering
     // it is harmless there.
     #[cfg(not(any(target_os = "android", target_os = "ios")))]
-    {
-        builder = builder.plugin(tauri_plugin_single_instance::init(|app, argv, _cwd| {
+    let builder =
+        tauri::Builder::default().plugin(tauri_plugin_single_instance::init(|app, argv, _cwd| {
             if let Some(path) = extract_grovepad_arg(&argv) {
                 emit_open_file(app, &path);
             }
@@ -77,9 +134,11 @@ pub fn run() {
                 let _ = window.set_focus();
             }
         }));
-    }
+    #[cfg(any(target_os = "android", target_os = "ios"))]
+    let builder = tauri::Builder::default();
 
     builder
+        .plugin(tauri_plugin_native_widget::init())
         .setup(|app| {
             if cfg!(debug_assertions) {
                 app.handle().plugin(
@@ -94,7 +153,10 @@ pub fn run() {
             });
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![take_pending_open_file])
+        .invoke_handler(tauri::generate_handler![
+            take_pending_open_file,
+            sync_note_widget
+        ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")
         .run(|app_handle, event| {
@@ -108,4 +170,22 @@ pub fn run() {
                 }
             }
         });
+}
+
+#[cfg(test)]
+mod tests {
+    use super::validate_note_widget_payload;
+
+    #[test]
+    fn validates_note_widget_contract_and_clear_payload() {
+        assert!(validate_note_widget_payload(r#"{"schemaVersion":1,"note":null}"#).is_ok());
+        assert!(validate_note_widget_payload(
+            r#"{"schemaVersion":1,"note":{"id":"n","title":"Title","text":"Body","color":"yellow","mode":"plain","attribution":""}}"#,
+        )
+        .is_ok());
+        assert!(validate_note_widget_payload(
+            r#"{"schemaVersion":1,"note":{"id":"n","title":"Title","text":"Body","color":"orange","mode":"plain","attribution":""}}"#,
+        )
+        .is_err());
+    }
 }

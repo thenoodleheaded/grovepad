@@ -43,7 +43,7 @@ function isEditableTarget(target: EventTarget | null): boolean {
 }
 
 /**
- * FPS / frame-time / heap overlay, toggled with `P`.
+ * FPS / frame-time / heap overlay, toggled with `Shift+P` or Settings.
  *
  * Frame time (avg + worst) is the best browser-accessible proxy for combined
  * CPU + GPU load — it captures JS work, layout, paint, and compositor time.
@@ -58,13 +58,18 @@ export function PerformanceMonitor() {
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key.toLowerCase() !== 'p') return
+      if (event.key.toLowerCase() !== 'p' || !event.shiftKey) return
       if (event.ctrlKey || event.metaKey || event.altKey) return
       if (isEditableTarget(event.target)) return
       setVisible((v) => !v)
     }
     window.addEventListener('keydown', onKeyDown)
-    return () => window.removeEventListener('keydown', onKeyDown)
+    const onSettingsToggle = () => setVisible((value) => !value)
+    window.addEventListener('gp-toggle-performance-monitor', onSettingsToggle)
+    return () => {
+      window.removeEventListener('keydown', onKeyDown)
+      window.removeEventListener('gp-toggle-performance-monitor', onSettingsToggle)
+    }
   }, [])
 
   useEffect(() => {
@@ -147,7 +152,7 @@ export function PerformanceMonitor() {
 
       <span className="h-3 w-px bg-neutral-600" aria-hidden />
       <span className="tabular-nums">{frames.toLocaleString()} fr</span>
-      <span className="text-neutral-600">P to hide</span>
+      <span className="text-neutral-600">⇧P to hide</span>
     </div>
   )
 }

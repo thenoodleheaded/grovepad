@@ -97,6 +97,8 @@ export interface AtlasWidgetData {
   items: AtlasItem[]
   history: Array<{ t: number; v: number }>
   times: Record<string, string>
+  /** Lazily populated snapshots let Tracker modes round-trip without resets. */
+  modeStates?: Record<string, Omit<AtlasWidgetData, 'modeStates'>>
 }
 
 export type TimekeeperMode = 'countdown' | 'pomodoro' | 'stopwatch'
@@ -134,4 +136,3 @@ export interface AutomationCoreData {
 }
 import type { StopwatchData, TimerData } from './widgetDataCore'
 import type { PomodoroData } from './widgetDataEducation'
-

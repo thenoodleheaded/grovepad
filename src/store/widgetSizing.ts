@@ -9,7 +9,7 @@ import type {
   Vector2D, WeeklyPlannerData, Widget, WorldClockData,
 } from '../types/spatial'
 import { GRID_SIZE, snapToGrid } from '../types/spatial'
-import { widgetDefinition } from '../widgets/registry'
+import { CONSOLIDATED_WIDGET_MODES, publicWidgetTypeFor, widgetDefinition } from '../widgets/registry'
 import { MIN_WIDGET_HEIGHT, MIN_WIDGET_WIDTH } from './widgetLayoutConstants'
 
 export function computeDataHeight(type: ModuleType, data: ModuleData): number {
@@ -258,16 +258,19 @@ export function buildWidget(
   position: Vector2D,
   size?: Size,
 ): Widget {
-  const def = widgetDefinition(type)
-  const data = def.defaultData()
-  const dataHeight = computeDataHeight(type, data)
+  const publicType = publicWidgetTypeFor(type)
+  const def = widgetDefinition(publicType)
+  const mode = CONSOLIDATED_WIDGET_MODES[type]
+  const defaults = def.defaultData()
+  const data = mode ? ({ ...defaults, mode } as ModuleData) : defaults
+  const dataHeight = computeDataHeight(publicType, data)
   const initialSize = size ?? {
     ...def.defaultSize,
     height: Math.max(def.defaultSize.height, dataHeight),
   }
   return {
     id,
-    type,
+    type: publicType,
     title,
     canvasId,
     position,

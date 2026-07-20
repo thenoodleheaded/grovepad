@@ -34,6 +34,9 @@ interface GradeComponent {
 
 export interface GradeCalcData {
   components: GradeComponent[]
+  mode?: 'weighted' | 'gpa'
+  /** GPA state is retained while the weighted-grade view is active. */
+  gpa?: GpaData
 }
 
 interface GpaCourse {
@@ -112,4 +115,3 @@ export interface QuizData {
 }
 
 // ── Essential branch-native module schemas ────────────────────────────────
-

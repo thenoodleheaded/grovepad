@@ -2,7 +2,6 @@ import type { UnitConverterData } from '../../../types/widgetDataExpansion'
 import type {
   BranchGateData,
   DailyAgendaData,
-  DatePickerData,
   DecisionMatrixData,
   FormWidgetData,
   FormulaData,
@@ -22,7 +21,7 @@ import type {
 } from '../../../types/widgetDataWorkflow'
 import type { WidgetRendererFamily } from './contracts'
 import {
-  BranchGateWidget, DailyAgendaWidget, DatePickerWidget, DecisionMatrixWidget,
+  BranchGateWidget, DailyAgendaWidget, DecisionMatrixWidget,
   FormWidget, FormulaWidget, InventoryWidget, LineChartWidget, LogbookWidget,
   NumberInputWidget, OutlineWidget, PieChartWidget, ProcessWidget, RiskRegisterWidget,
   StatusWidget, SwotWidget, TextInputWidget, TimesheetWidget, ToggleWidget,
@@ -38,7 +37,6 @@ export const workflowWidgetRendererFamily: WidgetRendererFamily = {
     branch_gate: ({ widget, onUpdate }) => <BranchGateWidget data={widget.data as BranchGateData} onChange={onUpdate} />,
     formula: ({ widget, onUpdate }) => <FormulaWidget data={widget.data as FormulaData} onChange={onUpdate} />,
     status: ({ widget, onUpdate }) => <StatusWidget data={widget.data as StatusData} onChange={onUpdate} />,
-    date_picker: ({ widget, onUpdate }) => <DatePickerWidget data={widget.data as DatePickerData} onChange={onUpdate} />,
     outline: ({ widget, onUpdate }) => <OutlineWidget data={widget.data as OutlineData} onChange={onUpdate} />,
     form: ({ widget, onUpdate }) => <FormWidget data={widget.data as FormWidgetData} onChange={onUpdate} />,
     daily_agenda: ({ widget, onUpdate }) => <DailyAgendaWidget data={widget.data as DailyAgendaData} onChange={onUpdate} />,

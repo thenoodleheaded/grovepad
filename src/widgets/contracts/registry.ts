@@ -21,6 +21,13 @@ export interface WidgetSizing {
   autoHeight?: boolean
 }
 
+/** One choice in a widget's mode switcher. `value` must match the widget data's `mode` field. */
+export interface WidgetModeOption {
+  value: string
+  label: string
+  icon: LucideIcon
+}
+
 export interface WidgetDefinition {
   type: ModuleType
   label: string
@@ -32,6 +39,8 @@ export interface WidgetDefinition {
   defaultSize: Size
   defaultData: () => ModuleData
   sizing?: WidgetSizing
+  /** Alternate data shapes the widget switches between, shown via the card's mode pill. */
+  modes?: readonly WidgetModeOption[]
   /** Present when the type is gated behind a domain pack. */
   pack?: DomainPack
   /** Existing-only types hydrate safely but are not offered for new work. */

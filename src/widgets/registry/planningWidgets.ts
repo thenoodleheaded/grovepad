@@ -16,14 +16,23 @@ import { C, uid } from './definitionHelpers'
 export const PLANNING_WIDGET_DEFINITIONS = {
   checklist: {
     type: 'checklist',
-    label: 'Checklist',
-    description: 'Tasks with done states — Enter adds the next',
+    label: 'Tasks',
+    description: 'One task collection with list, board, schedule, and priority views',
     icon: ListChecks,
     category: 'planning',
     accent: '#86efac',
-    defaultSize: { width: 280, height: C * 4 },
-    sizing: { minWidth: C * 4, autoHeight: true },
-    defaultData: () => ({ items: [{ id: uid(), label: 'New task', done: false }] }),
+    defaultSize: { width: 440, height: C * 7 },
+    sizing: { minWidth: C * 7, autoHeight: true },
+    defaultData: () => ({ mode: 'list', items: [{ id: uid(), label: 'New task', done: false, status: 'todo', due: '', day: 0, time: '09:00', start: 0, span: 1, quadrant: 0 }] }),
+    modes: [
+      { value: 'list', label: 'List', icon: ListChecks },
+      { value: 'board', label: 'Board', icon: Columns3 },
+      { value: 'assignments', label: 'Assignments', icon: ClipboardList },
+      { value: 'day', label: 'Day', icon: CalendarRange },
+      { value: 'week', label: 'Week', icon: CalendarRange },
+      { value: 'timeline', label: 'Timeline', icon: GalleryHorizontalEnd },
+      { value: 'matrix', label: 'Priority Matrix', icon: Grid2x2 },
+    ],
   },
   kanban: {
     type: 'kanban',
@@ -95,12 +104,16 @@ export const PLANNING_WIDGET_DEFINITIONS = {
   decision: {
     type: 'decision',
     label: 'Decision Picker',
-    description: "List options and let the dice pick — when you truly can't",
+    description: 'Choose simply or use weighted, no-repeat decisions',
     icon: Dices,
     category: 'planning',
     accent: '#f0abfc',
     defaultSize: { width: 300, height: C * 5 },
-    defaultData: () => ({ question: '', options: ['', ''], pickedIndex: null }),
+    defaultData: () => ({ question: '', options: ['', ''], pickedIndex: null, mode: 'simple', weights: [1, 1], history: [], lastRolledAt: null, noRepeatWindow: 1 }),
+    modes: [
+      { value: 'simple', label: 'Simple', icon: Dices },
+      { value: 'weighted', label: 'Weighted', icon: Scale },
+    ],
   },
   meeting_notes: {
     type: 'meeting_notes',

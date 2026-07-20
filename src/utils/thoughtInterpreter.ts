@@ -1,5 +1,5 @@
 import type { ModuleData, ModuleType, RelationType, WidgetMetadata } from '../types/spatial'
-import { WIDGET_REGISTRY, widgetDefinition } from '../widgets/registry'
+import { CONSOLIDATED_WIDGET_REPLACEMENTS, WIDGET_REGISTRY, widgetDefinition } from '../widgets/registry'
 import { ATLAS_CATALOG, ATLAS_TYPES, ATLAS_TYPE_SET, atlasTypeForPhrase, defaultAtlasData } from '../widgets/atlasCatalog'
 import { AUTOMATION_CORE_CATALOG, AUTOMATION_CORE_TYPES } from '../widgets/automationCoreCatalog'
 import { localDayKey } from './localDate'
@@ -251,7 +251,7 @@ const WIDGET_LANGUAGE_VOCABULARY = buildVocabulary(
 function uid(): string { return crypto.randomUUID() }
 
 function isConsolidatedLegacyType(type:ModuleType):boolean {
-  return ATLAS_TYPE_SET.has(type)||type==='timer'||type==='pomodoro'||type==='stopwatch'
+  return ATLAS_TYPE_SET.has(type)||type==='timer'||type==='pomodoro'||type==='stopwatch'||Boolean(CONSOLIDATED_WIDGET_REPLACEMENTS[type])
 }
 
 function cleanTitle(text: string): string {
@@ -333,6 +333,20 @@ function scoreIntents(source: string, lines: ParsedLine[], normalized: Normalize
     code: /```[\s\S]*```/.test(source) ? .96 : 0,
     bullets: listLike ? .58 : 0,
   }
+  for (const [legacyType, replacementType] of Object.entries(CONSOLIDATED_WIDGET_REPLACEMENTS) as Array<[ModuleType, ModuleType]>) {
+    const legacyScore = scores[legacyType] ?? 0
+    if (legacyScore > 0) scores[replacementType] = Math.max(scores[replacementType] ?? 0, legacyScore)
+    delete scores[legacyType]
+
+    const definition = WIDGET_REGISTRY[legacyType]
+    const label = definition.label.toLowerCase()
+    const typeWords = legacyType.replaceAll('_', ' ')
+    const explicit = new RegExp(`\\b(?:add|create|make|new|turn (?:this )?into|use)\\s+(?:an?\\s+)?(?:${escapeRegex(label)}|${escapeRegex(typeWords)})(?=\\s*(?:widget\\b|$|:))`, 'i').test(normalized.correctedText)
+    if (explicit) scores[replacementType] = Math.max(scores[replacementType] ?? 0, .98)
+    else if (['add', 'create', 'make', 'new', 'turn', 'use'].some((action) => normalized.tokens.has(action)) && (fuzzyPhraseMatch(source,label) || fuzzyPhraseMatch(source,typeWords))) {
+      scores[replacementType] = Math.max(scores[replacementType] ?? 0, .96)
+    }
+  }
   // Every registry entry is supported automatically. An explicit command such
   // as "make a Risk Register" wins; natural aliases remain slightly softer.
   for (const definition of Object.values(WIDGET_REGISTRY)) {
@@ -368,6 +382,12 @@ export function resolveWidgetMention(phrase: string): ModuleType | null {
   if (cleaned.length < 3) return null
   if (atlasTypeForPhrase(cleaned)) return 'tracker'
   if (/^(?:timer|countdown timer|pomodoro(?: timer)?|focus timer|stopwatch)$/.test(cleaned)) return 'timekeeper'
+  for (const [legacyType, replacementType] of Object.entries(CONSOLIDATED_WIDGET_REPLACEMENTS) as Array<[ModuleType, ModuleType]>) {
+    const definition = WIDGET_REGISTRY[legacyType]
+    const label = definition.label.toLowerCase()
+    const typeWords = legacyType.replaceAll('_', ' ')
+    if (cleaned === label || cleaned === typeWords || cleaned === `${label}s` || cleaned === `${typeWords}s`) return replacementType
+  }
   for (const definition of Object.values(WIDGET_REGISTRY)) {
     if (isConsolidatedLegacyType(definition.type)) continue
     const label = definition.label.toLowerCase()
@@ -396,7 +416,10 @@ function dataFor(type: ModuleType, source: string, lines: ParsedLine[]): ModuleD
       const mode=/pomodoro|focus session|work break/i.test(source)?'pomodoro':/stopwatch|lap time/i.test(source)?'stopwatch':'countdown'
       return {...current,mode}
     }
-    case 'checklist': return { items: lines.map((line) => ({ id: uid(), label: line.text, done: line.checked ?? false })) }
+    case 'checklist': {
+      const mode = /kanban|board/i.test(source) ? 'board' : /assignment|homework/i.test(source) ? 'assignments' : /daily agenda|day plan/i.test(source) ? 'day' : /week(?:ly)? plan/i.test(source) ? 'week' : /timeline|phase/i.test(source) ? 'timeline' : /priority|eisenhower|matrix/i.test(source) ? 'matrix' : 'list'
+      return { ...defaultRecord, mode, items: lines.map((line) => ({ id: uid(), label: line.text, done: line.checked ?? false, status: line.checked ? 'done' : 'todo', due: detectDate(line.text) ?? '', day: 0, time: '09:00', start: 0, span: 1, quadrant: 0 })) } as ModuleData
+    }
     case 'bullets': return { items: titleLines.map((text) => ({ id: uid(), text })) }
     case 'links': return { items: (source.match(URL) ?? []).map((url) => ({ id: uid(), label: url.replace(/^https?:\/\//, '').split('/')[0]!, url })) }
     case 'code': {
@@ -406,28 +429,32 @@ function dataFor(type: ModuleType, source: string, lines: ParsedLine[]): ModuleD
     case 'assignment': return { items: [{ id: uid(), title: cleanTitle(source).replace(/\b(?:by|on)\s+(?:today|tomorrow|next\s+)?\w+(?:\s+\d{1,2}(?:,?\s+20\d{2})?)?/i, '').trim(), due: detectDate(source) ?? '', status: 'todo' }] }
     case 'decision': {
       const parts = source.replace(/\?+$/, '').split(/\s+or\s+/i).map(cleanTitle)
-      return { question: source.trim(), options: parts.length > 1 ? parts : titleLines, pickedIndex: null }
+      const options = parts.length > 1 ? parts : titleLines
+      return { ...defaultRecord, question: source.trim(), options, weights: options.map(() => 1), pickedIndex: null, mode: /weighted|odds|probability/i.test(source) ? 'weighted' : 'simple' } as ModuleData
     }
     case 'pros_cons': return { topic: cleanTitle(lines[0]?.text ?? source), pros: [{ id: uid(), text: '' }], cons: [{ id: uid(), text: '' }] }
     case 'budget': return { currency: source.includes('€') ? 'EUR' : source.includes('£') ? 'GBP' : 'USD', items: (source.match(MONEY) ?? []).map((amount, index) => ({ id: uid(), label: titleLines[index] ?? `Item ${index + 1}`, amount: Number(amount.replace(/[^\d.-]/g, '')) || 0 })) }
     case 'metrics': return { tiles: titleLines.map((label) => ({ id: uid(), label, value: '', unit: '', trend: 'flat' as const })) }
     case 'timeline': return { totalUnits: Math.max(4, lines.length * 2), phases: lines.map((line, index) => ({ id: uid(), label: line.text, start: index * 2, span: 2 })) }
-    case 'notes': return { text: source }
+    case 'notes': return { ...defaultRecord, text: source, mode: /sticky/i.test(source) ? 'sticky' : /quote/i.test(source) ? 'quote' : 'plain' } as ModuleData
+    case 'bar_chart': return { ...defaultRecord, mode: /line|trend/i.test(source) ? 'line' : /donut/i.test(source) ? 'donut' : /pie/i.test(source) ? 'pie' : 'bar', bars: lines.slice(1).map((line, index) => ({ id: uid(), label: line.text.replace(/[:=]\s*-?\d+(?:\.\d+)?\s*$/, ''), value: numbers[index] ?? 0, color: ['#38bdf8', '#a3e635', '#f472b6', '#fbbf24'][index % 4]! })) } as ModuleData
+    case 'grade_calc': return { ...defaultRecord, mode: /gpa/i.test(source) ? 'gpa' : 'weighted' } as ModuleData
+    case 'date_picker': return { ...defaultRecord, label: cleanTitle(lines[0]?.text ?? 'Target date'), date: detectDate(source) ?? defaultRecord.date, mode: /countdown|days until/i.test(source) ? 'countdown' : 'date_time' } as ModuleData
+    case 'sketchpad': return { ...defaultRecord, mode: /diagram|flowchart|excalidraw|whiteboard/i.test(source) ? 'diagram' : 'ink' } as ModuleData
+    case 'goal_tracker': return { ...defaultRecord, mode: /okr|key result/i.test(source) ? 'okr' : /study|hours/i.test(source) ? 'hours' : /milestone/i.test(source) ? 'milestones' : 'simple' } as ModuleData
+    case 'flashcards': return { ...defaultRecord, mode: /vocab|term|definition/i.test(source) ? 'vocabulary' : /quiz|question/i.test(source) ? 'quiz' : 'flashcards', cards: lines.map((line) => { const [front, ...back] = line.text.split(/\s*[:—-]\s*/); return { id: uid(), front: front || line.text, back: back.join(' ') || '' } }), current: 0 } as ModuleData
     case 'sticky_note': return { ...defaultRecord, text: source } as ModuleData
     case 'quote': return { ...defaultRecord, text: cleanTitle(source.replace(/^quote\s*:?/i, '')) } as ModuleData
     case 'progress': return { ...defaultRecord, label: cleanTitle(lines[0]?.text ?? source), percent: Math.min(100, Math.max(0, Number(percent?.[1] ?? numbers[0] ?? 0))) } as ModuleData
     case 'ai_generator': return { ...defaultRecord, prompt: source } as ModuleData
     case 'text_input': return { ...defaultRecord, label: cleanTitle(lines[0]?.text ?? 'Input'), value: lines.slice(1).map((line) => line.text).join('\n') } as ModuleData
     case 'number_input': return { ...defaultRecord, label: cleanTitle(lines[0]?.text ?? 'Value'), value: numbers[0] ?? 0 } as ModuleData
-    case 'date_picker': return { ...defaultRecord, label: cleanTitle(lines[0]?.text ?? 'Target date'), date: detectDate(source) ?? (defaults as { date: string }).date } as ModuleData
     case 'outline': return { items: lines.map((line) => ({ id: uid(), text: line.text, depth: line.depth, collapsed: false })) }
     case 'process': return { steps: lines.map((line, index) => ({ id: uid(), label: line.text, status: index === 0 ? 'active' as const : 'todo' as const })) } as ModuleData
     case 'reading_list': return { items: titleLines.map((title) => ({ id: uid(), title, status: 'queued' as const })) } as ModuleData
-    case 'flashcards': return { cards: lines.map((line) => { const [front, ...back] = line.text.split(/\s*[:—-]\s*/); return { id: uid(), front: front || line.text, back: back.join(' ') || '', flipped: false } }), current: 0 }
     case 'vocab': return { terms: lines.map((line) => { const [term, ...definition] = line.text.split(/\s*[:—-]\s*/); return { id: uid(), term: term || line.text, definition: definition.join(' '), known: false } }) }
     case 'poll': return { question: lines[0]?.text ?? source, options: lines.slice(1).map((line) => ({ id: uid(), label: line.text, votes: 0 })) }
     case 'form': return { title: lines[0]?.text ?? 'Quick form', fields: lines.slice(1).map((line) => ({ id: uid(), label: line.text, type: 'text' as const, value: '', required: false })) }
-    case 'bar_chart': return { ...defaultRecord, bars: lines.slice(1).map((line, index) => ({ id: uid(), label: line.text.replace(/[:=]\s*-?\d+(?:\.\d+)?\s*$/, ''), value: numbers[index] ?? 0 })) } as ModuleData
     case 'line_chart': return { ...defaultRecord, points: lines.slice(1).map((line, index) => ({ id: uid(), label: line.text.replace(/[:=]\s*-?\d+(?:\.\d+)?\s*$/, ''), value: numbers[index] ?? 0 })) } as ModuleData
     case 'pie_chart': return { ...defaultRecord, segments: lines.slice(1).map((line, index) => ({ id: uid(), label: line.text.replace(/[:=]\s*-?\d+(?:\.\d+)?\s*$/, ''), value: numbers[index] ?? 0, color: ['#38bdf8', '#a3e635', '#f472b6', '#fbbf24'][index % 4]! })) } as ModuleData
     case 'counter': return { ...defaultRecord, label: cleanTitle(lines[0]?.text ?? source), count: numbers[0] ?? 0 } as ModuleData

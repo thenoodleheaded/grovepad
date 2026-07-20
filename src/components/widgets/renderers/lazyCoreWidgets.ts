@@ -17,6 +17,7 @@ export const CountdownWidget = lazy(async () => ({ default: (await import('../mo
 export const DecisionWidget = lazy(async () => ({ default: (await import('../modules/DecisionWidget')).DecisionWidget }))
 export const DialogWidget = lazy(async () => ({ default: (await import('../modules/DialogWidget')).DialogWidget }))
 export const DividerWidget = lazy(async () => ({ default: (await import('../modules/DividerWidget')).DividerWidget }))
+export const ExcalidrawWidget = lazy(async () => ({ default: (await import('../modules/excalidraw/ExcalidrawWidget')).ExcalidrawWidget }))
 export const FlashcardsWidget = lazy(async () => ({ default: (await import('../modules/FlashcardsWidget')).FlashcardsWidget }))
 export const GameTunerWidget = lazy(async () => ({ default: (await import('../modules/specialist/GameTunerWidget')).GameTunerWidget }))
 export const GoalTrackerWidget = lazy(async () => ({ default: (await import('../modules/GoalTrackerWidget')).GoalTrackerWidget }))

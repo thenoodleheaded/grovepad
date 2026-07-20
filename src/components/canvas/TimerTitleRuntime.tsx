@@ -19,10 +19,15 @@ export function TimerTitleRuntime() {
   const canvasName = useWidgetStore(
     (state) => state.canvases[state.activeCanvasId]?.name ?? 'Canvas',
   )
+  const workspaceName = useWidgetStore(
+    (state) => state.workspaces[state.activeWorkspaceId]?.name ?? 'Workspace',
+  )
 
   useEffect(() => {
     const original = document.title
-    const baseTitle = `grovepad | ${canvasName}`
+    const isOrigin = canvasName.toLowerCase() === 'origin'
+    const displayTitle = isOrigin ? workspaceName : canvasName
+    const baseTitle = `grovepad | ${displayTitle}`
     const update = () => {
       const deadline = activeDeadline()
       if (!deadline) { document.title = baseTitle; return }
@@ -33,6 +38,6 @@ export function TimerTitleRuntime() {
     update()
     const timer = window.setInterval(update, 1000)
     return () => { window.clearInterval(timer); document.title = original }
-  }, [canvasName])
+  }, [canvasName, workspaceName])
   return null
 }

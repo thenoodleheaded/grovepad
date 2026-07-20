@@ -534,7 +534,7 @@ export function QuickAddSheet() {
         role="dialog"
         aria-modal="true"
         aria-label="Quick add"
-        className="pointer-events-none absolute inset-x-0 top-0 flex justify-center pt-4"
+        className="gp-quick-add-dialog pointer-events-none absolute inset-x-0 top-0 flex justify-center pt-4"
       >
         <div
           ref={panelRef}
@@ -544,7 +544,7 @@ export function QuickAddSheet() {
               cycleCandidates(e.deltaX > 0 ? 1 : -1)
             }
           }}
-          className="gp-dialog gp-pop gp-panel pointer-events-auto relative w-full max-w-xl overflow-hidden rounded-2xl shadow-2xl outline-none"
+          className="gp-quick-add-panel gp-dialog gp-pop gp-panel pointer-events-auto relative w-full max-w-xl overflow-hidden rounded-2xl shadow-2xl outline-none"
         >
           {/* Row 1 — input */}
           <div className="flex items-start gap-2.5 px-4 pt-3">
@@ -554,6 +554,9 @@ export function QuickAddSheet() {
               value={text}
               rows={singleLine ? 1 : Math.min(3, text.split('\n').length)}
               placeholder="What's on your mind?"
+              enterKeyHint={singleLine ? 'done' : 'enter'}
+              autoCapitalize="sentences"
+              spellCheck
               onChange={(e) => {
                 interactionLockedRef.current = false
                 selectedIdRef.current = null
@@ -575,7 +578,7 @@ export function QuickAddSheet() {
               }}
               className="max-h-24 w-full resize-none bg-transparent py-1.5 text-[14px] leading-relaxed text-neutral-100 outline-none placeholder:text-neutral-600"
             />
-            <div className="mt-1 flex shrink-0 items-center gap-1.5">
+            <div className="gp-quick-add-status mt-1 flex shrink-0 items-center gap-1.5">
               <span
                 className={`inline-flex items-center gap-1.5 rounded-full border border-white/[0.055] bg-white/[0.025] px-2 py-1 text-[9px] font-medium ${aiPresentation.tone}`}
                 title={aiStatus.message}
@@ -601,7 +604,7 @@ export function QuickAddSheet() {
                 type="button"
                 aria-label="Close quick add"
                 onClick={close}
-                className="rounded p-1 text-neutral-600 transition-colors hover:bg-white/[0.05] hover:text-neutral-300"
+                className="gp-touch-target rounded p-1 text-neutral-600 transition-colors hover:bg-white/[0.05] hover:text-neutral-300"
               >
                 <X size={13} aria-hidden />
               </button>
@@ -635,7 +638,7 @@ export function QuickAddSheet() {
             </div>
           ) : (
             <>
-              <div className="flex items-center gap-1.5 px-3 pb-2.5 pt-1.5">
+              <div className="gp-quick-add-candidate-row flex items-center gap-1.5 px-3 pb-2.5 pt-1.5">
                 {/* Candidate switcher */}
                 <button
                   type="button"

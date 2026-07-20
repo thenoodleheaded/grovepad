@@ -9,15 +9,17 @@ import { useToastStore } from '../../store/useToastStore'
 import { useCanvasEvents } from '../../hooks/useCanvasEvents'
 import { GRID_SIZE, screenToWorld } from '../../types/spatial'
 import type { Widget } from '../../types/spatial'
+import { isStrictCanvasSurface } from '../../utils/canvasEventTarget'
 import { boundsForWidgets } from '../../utils/widgetBounds'
 import { stagePendingImport } from '../../utils/pendingImport'
 import { writeMediaBlob } from '../../utils/boardDatabase'
-import { parseImportedBoardFile } from '../../utils/boardImport'
+import { readGrovepadPackage } from '../../utils/grovepadPackage'
 import { importBoardFileOntoCanvas } from '../../utils/boardCanvasImport'
 import { startAppRuntime } from '../../runtime/appRuntime'
 import { GhostTreeShaper } from './GhostTreeShaper'
 import { QuickAddPreviewLayer } from './QuickAddPreviewLayer'
 import { CanvasAuraLayer } from './CanvasAuraLayer'
+import { CameraMotionLayer } from './CameraMotionLayer'
 import { GridLayer } from './GridLayer'
 import { PerformanceMonitor } from './PerformanceMonitor'
 import { RelationLines } from './RelationLines'
@@ -31,6 +33,7 @@ import { WidgetLayer } from '../widgets/WidgetLayer'
 import { CanvasContextMenu } from '../ui/CanvasContextMenu'
 import { CanvasToolbar } from '../ui/CanvasToolbar'
 import { SelectionActionBar } from '../ui/SelectionActionBar'
+import { CanvasModeDock } from '../ui/CanvasModeDock'
 import { ShaperHUD } from '../ui/ShaperHUD'
 import { TargetingBanner } from '../ui/TargetingBanner'
 import { WidgetContextMenu } from '../ui/WidgetContextMenu'
@@ -46,6 +49,18 @@ import { TimerTitleRuntime } from './TimerTitleRuntime'
 import { WidgetDeletionDialog } from '../ui/WidgetDeletionDialog'
 import { requestWidgetDeletion } from '../../store/useWidgetDeletionDialogStore'
 import { frameCanvas } from '../../utils/cameraFraming'
+import { SettingsPanel } from '../ui/SettingsPanel'
+import { useAdaptiveInputStore } from '../../store/useAdaptiveInputStore'
+import { useSettingsStore } from '../../store/useSettingsStore'
+import { FocusSessionBar } from '../ui/FocusSessionBar'
+import { canEditCollaborativeCanvas, useCollaborationStore } from '../../store/useCollaborationStore'
+import { useAuthStore } from '../../store/useAuthStore'
+import {
+  cameraWorldClipPath,
+  hideCameraMotionPreview,
+  isCameraMotionActive,
+  subscribeCameraMotion,
+} from '../../runtime/cameraMotionRuntime'
 
 const AddWidgetModal = lazy(() =>
   import('../ui/AddWidgetModal').then((module) => ({ default: module.AddWidgetModal })),
@@ -61,6 +76,15 @@ const QuickAddSheet = lazy(() =>
 )
 const ShortcutsOverlay = lazy(() =>
   import('../ui/ShortcutsOverlay').then((module) => ({ default: module.ShortcutsOverlay })),
+)
+const CollaborationChrome = lazy(() =>
+  import('../collaboration/CollaborationOverlays').then((module) => ({ default: module.CollaborationChrome })),
+)
+const CollaborationWorldOverlay = lazy(() =>
+  import('../collaboration/CollaborationOverlays').then((module) => ({ default: module.CollaborationWorldOverlay })),
+)
+const RemoteCursorLayer = lazy(() =>
+  import('../collaboration/CollaborationOverlays').then((module) => ({ default: module.RemoteCursorLayer })),
 )
 const AI_DEBUG_ENABLED = import.meta.env.DEV
 const AiDebugPanel = AI_DEBUG_ENABLED
@@ -100,16 +124,10 @@ function zoomFromKeyboard(factor: number): void {
   })
 }
 
-// Far-zoom detail shedding: below ENTER, `data-canvas-lod="far"` goes on
-// <body> and index.css drops each card's backdrop-blur chrome and shadows —
-// they're sub-pixel at that scale but dominate compositing cost when hundreds
-// of cards are visible. Hysteresis (ENTER < EXIT) so pinch jitter at the
-// boundary can't flap the whole-tree restyle the toggle triggers.
-const LOD_FAR_ENTER = 0.4
-const LOD_FAR_EXIT = 0.45
-const RELATION_OUTLINE_SCREEN_PX = 2
-
 export function CanvasViewport() {
+  const collaborationRole = useCollaborationStore((state) => state.role)
+  const followingCollaborator = useCollaborationStore((state) => state.followingClientId !== null)
+  const collaborationEnabled = useAuthStore((state) => Boolean(state.session))
   useEffect(() => {
     // The canvas is a lazy route, so login never starts board persistence or
     // circuit listeners. StrictMode/HMR can tear this boundary down safely.
@@ -140,36 +158,80 @@ export function CanvasViewport() {
   )
   const aiDebugOpen = useAiDebugStore((state) => AI_DEBUG_ENABLED && state.isOpen)
   const scaleDebugOpen = useScaleDebugStore((state) => SCALE_DEBUG_ENABLED && state.isOpen)
+  const showMinimap = useSettingsStore((state) => state.showMinimap)
 
   useEffect(() => {
     const world = worldRef.current
     if (!world) return
+    world.style.willChange = 'transform, clip-path'
+    world.style.clipPath = cameraWorldClipPath(false)
     let appliedPanX = Number.NaN
     let appliedPanY = Number.NaN
     let appliedZoom = Number.NaN
-    const apply = ({ pan, zoom }: CanvasState) => {
-      if (pan.x === appliedPanX && pan.y === appliedPanY && zoom === appliedZoom) return
+    let revealFrame = 0
+    let revealSecondFrame = 0
+    let revealTimer: number | null = null
+    let motionActive = isCameraMotionActive()
+    const isAppliedView = (pan: CanvasState['pan'], zoom: number) =>
+      Math.abs(pan.x - appliedPanX) < 0.001 &&
+      Math.abs(pan.y - appliedPanY) < 0.001 &&
+      Math.abs(zoom - appliedZoom) < 0.000001
+
+    const cancelReveal = () => {
+      if (revealFrame !== 0) cancelAnimationFrame(revealFrame)
+      if (revealSecondFrame !== 0) cancelAnimationFrame(revealSecondFrame)
+      if (revealTimer !== null) window.clearTimeout(revealTimer)
+      revealFrame = 0
+      revealSecondFrame = 0
+      revealTimer = null
+    }
+
+    const apply = ({ pan, zoom }: CanvasState, force = false) => {
+      if (motionActive && !force) return
+      if (isAppliedView(pan, zoom)) return
       world.style.transform = `translate3d(${pan.x}px, ${pan.y}px, 0) scale(${zoom})`
       appliedPanX = pan.x
       appliedPanY = pan.y
-      if (zoom === appliedZoom) return
       appliedZoom = zoom
-      // Relation paths use non-scaling SVG strokes. Counter-scale widget-like
-      // CSS borders so their visible thickness remains exactly aligned at
-      // every zoom level rather than matching only at 100%.
-      world.style.setProperty('--gp-world-outline-width', `${RELATION_OUTLINE_SCREEN_PX / Math.max(zoom, 0.05)}px`)
-      const far = document.body.getAttribute('data-canvas-lod') === 'far'
-      if (!far && zoom < LOD_FAR_ENTER) {
-        document.body.setAttribute('data-canvas-lod', 'far')
-      } else if (far && zoom > LOD_FAR_EXIT) {
-        document.body.removeAttribute('data-canvas-lod')
-      }
     }
     apply(useCanvasStore.getState())
-    const unsubscribe = useCanvasStore.subscribe(apply)
+    const unsubscribe = useCanvasStore.subscribe((state) => apply(state))
+    const unsubscribeMotion = subscribeCameraMotion((active) => {
+      motionActive = active
+      cancelReveal()
+      if (active) {
+        // The detailed motion surface is painted before this listener runs.
+        // Its clip node already exists while idle, so collapsing the parent to
+        // zero area avoids inherited style, layout, blending, or relocation
+        // across the 300-card live subtree.
+        world.style.clipPath = cameraWorldClipPath(true)
+        return
+      }
+
+      // Apply the final camera once behind the already-painted preview, then
+      // give Chromium two frames to prepare the real card layers before the
+      // interactive DOM is revealed. The fallback timer bounds the handoff if
+      // the tab is briefly unable to produce animation frames.
+      apply(useCanvasStore.getState(), true)
+      world.style.clipPath = cameraWorldClipPath(false)
+      const reveal = () => {
+        if (motionActive) return
+        hideCameraMotionPreview()
+        cancelReveal()
+      }
+      revealFrame = requestAnimationFrame(() => {
+        revealFrame = 0
+        revealSecondFrame = requestAnimationFrame(() => {
+          revealSecondFrame = 0
+          reveal()
+        })
+      })
+      revealTimer = window.setTimeout(reveal, 120)
+    })
     return () => {
+      cancelReveal()
       unsubscribe()
-      document.body.removeAttribute('data-canvas-lod')
+      unsubscribeMotion()
     }
   }, [])
 
@@ -226,9 +288,13 @@ export function CanvasViewport() {
       if (useFocusStore.getState().focusedWidgetId) return
       const state = useWidgetStore.getState()
       const mod = e.metaKey || e.ctrlKey
+      const cameraLockedByFollow = useCollaborationStore.getState().followingClientId !== null
+      const liveCollaborationRole = useCollaborationStore.getState().role
+      const boardReadOnly = liveCollaborationRole !== null && !canEditCollaborativeCanvas(liveCollaborationRole)
 
       if (e.altKey && state.selectedIds.size === 0 && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
         e.preventDefault()
+        if (cameraLockedByFollow) return
         if (e.key === 'ArrowLeft') useCanvasStore.getState().goBack()
         else useCanvasStore.getState().goForward()
         return
@@ -242,6 +308,7 @@ export function CanvasViewport() {
           else state.undo()
         } else if (key === 'g' && !e.shiftKey) {
           e.preventDefault()
+          if (boardReadOnly) return
           const ids = [...state.selectedIds]
           if (ids.length >= 2) {
             state.createGroup(ids)
@@ -249,6 +316,7 @@ export function CanvasViewport() {
           }
         } else if (key === 'd') {
           e.preventDefault()
+          if (boardReadOnly) return
           if (state.selectedIds.size > 0) state.duplicateWidgets([...state.selectedIds])
         } else if (key === 'a') {
           e.preventDefault()
@@ -275,6 +343,7 @@ export function CanvasViewport() {
           state.setPaletteOpen(true)
         } else if (key === 'v' && clipboardWidgets.length > 0) {
           e.preventDefault()
+          if (boardReadOnly) return
           if (clipboardWidgets.length > 0) {
             state.pasteWidgets(clipboardWidgets)
           }
@@ -285,6 +354,7 @@ export function CanvasViewport() {
 
       switch (e.key) {
         case 'F2': {
+          if (boardReadOnly) return
           if (state.selectedIds.size === 1) {
             const [id] = [...state.selectedIds]
             if (id) {
@@ -295,6 +365,11 @@ export function CanvasViewport() {
           return
         }
         case 'Escape':
+          if (useCircuitStore.getState().wireDrag) {
+            e.preventDefault()
+            useCircuitStore.getState().endWireDrag()
+            return
+          }
           if (state.dependencyLinkSource) {
             e.preventDefault()
             state.clearDependencyLink()
@@ -308,6 +383,7 @@ export function CanvasViewport() {
         case 'x':
         case 'X':
           if (e.shiftKey) return
+          if (boardReadOnly) return
           if (state.dependencyLinkSource) {
             e.preventDefault()
             state.clearDependencyLink()
@@ -321,6 +397,7 @@ export function CanvasViewport() {
           return
         case 'Delete':
         case 'Backspace':
+          if (boardReadOnly) return
           if (state.selectedIds.size > 0) {
             e.preventDefault()
             requestWidgetDeletion(state.selectedIds)
@@ -332,6 +409,7 @@ export function CanvasViewport() {
         case 'ArrowDown': {
           if (state.selectedIds.size === 0) return
           e.preventDefault()
+          if (boardReadOnly) return
           const step = e.altKey ? 1 : e.shiftKey ? GRID_SIZE * 4 : GRID_SIZE
           state.nudgeSelection(
             e.key === 'ArrowLeft' ? -step : e.key === 'ArrowRight' ? step : 0,
@@ -343,6 +421,7 @@ export function CanvasViewport() {
         case 'F':
           if (e.shiftKey) return
           e.preventDefault()
+          if (cameraLockedByFollow) return
           frameCanvas('board')
           return
         case '?':
@@ -353,26 +432,49 @@ export function CanvasViewport() {
         case 'N':
           if (e.shiftKey) return
           e.preventDefault()
+          if (boardReadOnly) return
           state.setQuickAddOpen(true)
+          return
+        case 'h':
+        case 'H':
+          if (e.shiftKey) return
+          e.preventDefault()
+          useCircuitStore.getState().setCircuitMode(false)
+          useAdaptiveInputStore.getState().setInteractionMode('navigate')
+          return
+        case 'v':
+        case 'V':
+          if (e.shiftKey) return
+          e.preventDefault()
+          useCircuitStore.getState().setCircuitMode(false)
+          useAdaptiveInputStore.getState().setInteractionMode('select')
           return
         case 'w':
         case 'W':
           if (e.shiftKey) return
           e.preventDefault()
-          useCircuitStore.getState().toggleCircuitMode()
+          if (boardReadOnly) return
+          {
+            const next = !useCircuitStore.getState().circuitMode
+            useCircuitStore.getState().setCircuitMode(next)
+            useAdaptiveInputStore.getState().setInteractionMode(next ? 'connect' : 'navigate')
+          }
           return
         case '+':
         case '=':
           e.preventDefault()
+          if (cameraLockedByFollow) return
           zoomFromKeyboard(1.25)
           return
         case '-':
         case '_':
           e.preventDefault()
+          if (cameraLockedByFollow) return
           zoomFromKeyboard(1 / 1.25)
           return
         case '0': {
           e.preventDefault()
+          if (cameraLockedByFollow) return
           const canvas = useCanvasStore.getState()
           const selected = [...state.selectedIds].map((id) => state.widgets[id]).filter((widget): widget is Widget => Boolean(widget))
           const rect = boundsForWidgets(selected)
@@ -443,7 +545,7 @@ export function CanvasViewport() {
     const importGrovepadFile = async (file: File, position: { x: number; y: number }) => {
       try {
         const bytes = new Uint8Array(await file.arrayBuffer())
-        const { board, media } = await parseImportedBoardFile(bytes, file.name)
+        const { board, media } = await readGrovepadPackage(bytes)
         await importBoardFileOntoCanvas({ board, media, filename: file.name, position })
       } catch {
         useToastStore.getState().addToast(`Could not import ${file.name}`)
@@ -453,14 +555,20 @@ export function CanvasViewport() {
     const handleFiles = (files: File[], position: { x: number; y: number }) => {
       const packages = files.filter((file) => file.name.toLowerCase().endsWith('.grovepad'))
       const images = files.filter((file) => file.type.startsWith('image/'))
+      const jsonFiles = files.filter((file) => file.name.toLowerCase().endsWith('.json'))
       const documents = files.filter(
-        (file) => !file.type.startsWith('image/') && !file.name.toLowerCase().endsWith('.grovepad'),
+        (file) => !file.type.startsWith('image/')
+          && !file.name.toLowerCase().endsWith('.grovepad')
+          && !file.name.toLowerCase().endsWith('.json'),
       )
       packages.forEach((file, index) => void importGrovepadFile(file, {
         x: position.x + index * GRID_SIZE,
         y: position.y + index * GRID_SIZE,
       }))
       images.forEach((file, index) => void readImage(file, { x: position.x + index * GRID_SIZE, y: position.y + index * GRID_SIZE }))
+      if (jsonFiles.length > 0) {
+        useToastStore.getState().addToast('JSON files are no longer supported; use a .grovepad package')
+      }
       if (documents.length > 0) {
         stagePendingImport(documents)
         useWidgetStore.getState().setImportOpen(true)
@@ -475,6 +583,8 @@ export function CanvasViewport() {
     }
     const onDrop = (event: DragEvent) => {
       event.preventDefault()
+      const role = useCollaborationStore.getState().role
+      if (role !== null && !canEditCollaborativeCanvas(role)) return
       const position = worldAt(event.clientX, event.clientY)
       const files = [...(event.dataTransfer?.files ?? [])]
       if (files.length > 0) handleFiles(files, position)
@@ -482,6 +592,8 @@ export function CanvasViewport() {
     }
     const onPaste = (event: ClipboardEvent) => {
       if (isEditableTarget(event.target) || isOverlayOpen() || clipboardWidgets.length > 0) return
+      const role = useCollaborationStore.getState().role
+      if (role !== null && !canEditCollaborativeCanvas(role)) return
       const files = [...(event.clipboardData?.files ?? [])]
       const canvas = useCanvasStore.getState()
       const position = screenToWorld(
@@ -500,19 +612,49 @@ export function CanvasViewport() {
       }
     }
 
+    const handleKeys = (e: KeyboardEvent) => {
+      const focused = document.activeElement
+      const isEditing =
+        focused &&
+        (focused.tagName === 'INPUT' ||
+          focused.tagName === 'TEXTAREA' ||
+          focused.tagName === 'SELECT' ||
+          (focused instanceof HTMLElement && focused.isContentEditable))
+
+      if (isEditing) {
+        document.body.setAttribute('data-keys-modifier', 'false')
+        return
+      }
+
+      const isModifier = e.shiftKey || e.metaKey || e.ctrlKey || e.altKey
+      document.body.setAttribute('data-keys-modifier', isModifier ? 'true' : 'false')
+    }
+
+    const handleBlur = () => {
+      document.body.setAttribute('data-keys-modifier', 'false')
+    }
+
     viewport.addEventListener('dragover', onDragOver)
     viewport.addEventListener('drop', onDrop)
     window.addEventListener('paste', onPaste)
+    window.addEventListener('keydown', handleKeys)
+    window.addEventListener('keyup', handleKeys)
+    window.addEventListener('blur', handleBlur)
     return () => {
       viewport.removeEventListener('dragover', onDragOver)
       viewport.removeEventListener('drop', onDrop)
       window.removeEventListener('paste', onPaste)
+      window.removeEventListener('keydown', handleKeys)
+      window.removeEventListener('keyup', handleKeys)
+      window.removeEventListener('blur', handleBlur)
     }
   }, [])
 
   const handleDoubleClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (isOverlayOpen()) return
-    if (e.target instanceof Element && e.target.closest('article, svg, [data-widget-id], [data-group-id]')) return
+    const role = useCollaborationStore.getState().role
+    if (role !== null && !canEditCollaborativeCanvas(role)) return
+    if (!isStrictCanvasSurface(e.target, e.currentTarget)) return
     const rect = viewportRef.current?.getBoundingClientRect()
     if (!rect) return
     const { pan, zoom } = useCanvasStore.getState()
@@ -520,7 +662,7 @@ export function CanvasViewport() {
       { x: e.clientX - rect.left, y: e.clientY - rect.top },
       { x: pan.x, y: pan.y, zoom },
     )
-    useWidgetStore.getState().openAddWidget(world)
+    useWidgetStore.getState().startGhostShaper(world.x, world.y)
   }
 
   const handleCanvasPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
@@ -551,6 +693,8 @@ export function CanvasViewport() {
     <div
       ref={viewportRef}
       data-canvas-viewport
+      data-collaboration-readonly={collaborationRole !== null && !canEditCollaborativeCanvas(collaborationRole)}
+      data-collaboration-following={followingCollaborator}
       tabIndex={0}
       className="gp-canvas-shell relative h-dvh w-screen touch-none select-none overflow-clip"
       style={{ backgroundColor: `color-mix(in srgb, var(--gp-canvas-tint-base) 97%, ${workspaceTint})` }}
@@ -558,6 +702,7 @@ export function CanvasViewport() {
       onPointerDown={handleCanvasPointerDown}
     >
       <CanvasAuraLayer />
+      <CameraMotionLayer />
       <div
         ref={worldRef}
         data-world-layer
@@ -575,8 +720,12 @@ export function CanvasViewport() {
         <WireLayer />
         <GhostTreeShaper />
         <QuickAddPreviewLayer />
+        {collaborationEnabled && <Suspense fallback={null}><CollaborationWorldOverlay /></Suspense>}
       </div>
+      {collaborationEnabled && <Suspense fallback={null}><RemoteCursorLayer /></Suspense>}
+      {collaborationEnabled && <Suspense fallback={null}><CollaborationChrome /></Suspense>}
       <CanvasToolbar />
+      <FocusSessionBar />
       <TargetingBanner />
       {paletteOpen && (
         <Suspense fallback={null}>
@@ -598,9 +747,10 @@ export function CanvasViewport() {
         </Suspense>
       )}
       <ZoomControls />
-      <CanvasNavigator />
+      {showMinimap && <CanvasNavigator />}
       <CanvasTreeDrawer />
       <SelectionActionBar />
+      <CanvasModeDock />
       {shortcutsOpen && (
         <Suspense fallback={null}>
           <ShortcutsOverlay />
@@ -632,6 +782,7 @@ export function CanvasViewport() {
         </Suspense>
       )}
 
+      <SettingsPanel />
     </div>
   )
 }

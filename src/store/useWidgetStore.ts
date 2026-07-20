@@ -48,6 +48,17 @@ interface HistorySnapshot {
 // ---------------------------------------------------------------------------
 
 const recentlySpawnedIds = new Set<string>()
+let widgetHistorySuppressed = false
+let clearWidgetHistoryHandler: (() => void) | null = null
+
+/** Collaboration owns undo while active; domain slices keep using one history seam. */
+export function setWidgetHistorySuppressed(suppressed: boolean): void {
+  widgetHistorySuppressed = suppressed
+}
+
+export function clearWidgetHistory(): void {
+  clearWidgetHistoryHandler?.()
+}
 
 export function isRecentlySpawned(id: string): boolean {
   return recentlySpawnedIds.has(id)
@@ -135,9 +146,14 @@ export function getCanvasPath(
 
 export const useWidgetStore = create<WidgetStoreState>()((set, get) => {
   const history = createHistorySession<HistorySnapshot>()
+  clearWidgetHistoryHandler = () => {
+    history.clear()
+    set({ canUndo: false, canRedo: false })
+  }
 
   /** Push the current structural state onto the undo stack (pre-mutation). */
   const pushHistory = (tag?: string) => {
+    if (widgetHistorySuppressed) return
     const state = get()
     const captured = history.capture({
       widgets: state.widgets,

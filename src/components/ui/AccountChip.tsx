@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { CloudOff, Download, History, LogIn, LogOut, Package, RefreshCw, Upload, UserRound } from 'lucide-react'
+import { CloudOff, History, LogIn, LogOut, Package, RefreshCw, Upload, UserRound } from 'lucide-react'
 import { supabaseConfigured } from '../../lib/supabase'
 import { useAuthStore } from '../../store/useAuthStore'
 import { useOverlayLifecycle } from '../../store/useOverlayStore'
@@ -9,14 +9,13 @@ import { useWidgetStore } from '../../store/useWidgetStore'
 import { usePersistenceStatusStore } from '../../store/usePersistenceStatusStore'
 import { useToastStore } from '../../store/useToastStore'
 import { buildBoardSnapshot, parsePersistedBoard, requestCloudSync } from '../../utils/persistence'
-import { buildGrovepadPackage } from '../../utils/grovepadPackage'
-import { parseImportedBoardFile } from '../../utils/boardImport'
+import { buildGrovepadPackage, readGrovepadPackage } from '../../utils/grovepadPackage'
 import { importBoardFileOntoCanvas } from '../../utils/boardCanvasImport'
-import { useBoardImportStore } from '../../store/useBoardImportStore'
-import { listRollingSnapshots, saveRollingSnapshot, writeMediaBlob, type LocalSnapshot } from '../../utils/boardDatabase'
+import { listRollingSnapshots, saveRollingSnapshot, type LocalSnapshot } from '../../utils/boardDatabase'
 import { ConfirmDialog } from './ConfirmDialog'
 import { restoreWithProtectedSnapshot } from '../../utils/snapshotRestore'
 import { localDayKey } from '../../utils/localDate'
+import { persistenceStatusSummary } from '../../utils/persistenceStatus'
 
 /** Top-bar account presence: avatar + menu when signed in, sign-in when not. */
 export function AccountChip() {
@@ -26,13 +25,14 @@ export function AccountChip() {
   const anchorRef = useRef<HTMLButtonElement>(null)
   const [anchor, setAnchor] = useState({ x: 0, y: 0 })
   const fileRef = useRef<HTMLInputElement>(null)
-  const pendingBoardImport = useBoardImportStore((state) => state.pending)
   const [snapshots, setSnapshots] = useState<LocalSnapshot[]>([])
   const [restoreSnapshot, setRestoreSnapshot] = useState<LocalSnapshot | null>(null)
-  const [soundOn, setSoundOn] = useState(() => localStorage.getItem('grovepad:sound') === 'on')
   const localSave = usePersistenceStatusStore((state) => state.localSave)
   const cloudSync = usePersistenceStatusStore((state) => state.cloudSync)
   const syncEnabled = usePersistenceStatusStore((state) => state.syncEnabled)
+  const lastSyncedAt = usePersistenceStatusStore((state) => state.lastSyncedAt)
+  const networkOnline = usePersistenceStatusStore((state) => state.networkOnline)
+  const serviceWorkerReady = usePersistenceStatusStore((state) => state.serviceWorkerReady)
   const widgetCount = useWidgetStore((state) => Object.keys(state.widgets).length)
 
   useOverlayLifecycle(open)
@@ -80,49 +80,47 @@ export function AccountChip() {
     setOpen(false)
   }
 
-  const exportBoard = () => {
-    const board = buildBoardSnapshot(useWidgetStore.getState())
-    download(new Blob([JSON.stringify(board, null, 2)], { type: 'application/json' }), `grovepad-backup-${today()}.json`)
-    useToastStore.getState().addToast('Board backup downloaded')
-    setOpen(false)
-  }
-
   const importFile = async (file: File | undefined) => {
     if (!file) return
     try {
       const bytes = new Uint8Array(await file.arrayBuffer())
-      const { board, media } = await parseImportedBoardFile(bytes, file.name)
-      if (file.name.toLowerCase().endsWith('.grovepad')) {
-        await importBoardFileOntoCanvas({ board, media, filename: file.name })
-      } else {
-        useBoardImportStore.getState().requestImport({ board, media })
-      }
+      const { board, media } = await readGrovepadPackage(bytes)
+      await importBoardFileOntoCanvas({ board, media, filename: file.name })
       setOpen(false)
     } catch {
-      useToastStore.getState().addToast('That file is not a valid Grovepad backup')
+      useToastStore.getState().addToast('That file is not a valid .grovepad package')
     } finally {
       if (fileRef.current) fileRef.current.value = ''
     }
   }
 
-  const statusTone = localSave === 'error' || (syncEnabled && cloudSync === 'error')
-    ? 'bg-red-400'
-    : localSave === 'saving' || cloudSync === 'saving'
-      ? 'bg-amber-300 animate-pulse'
-      : session && syncEnabled && cloudSync === 'synced'
-        ? 'bg-emerald-400'
-        : 'bg-neutral-500'
+  const status = persistenceStatusSummary({
+    localSave,
+    cloudSync,
+    syncEnabled,
+    signedIn: Boolean(session),
+    networkOnline,
+    lastSyncedAt,
+  })
+  const statusTone = {
+    error: 'bg-red-400',
+    working: 'bg-amber-300 animate-pulse',
+    synced: 'bg-emerald-400',
+    offline: 'bg-amber-400',
+    local: 'bg-neutral-500',
+  }[status.tone]
 
   return (
     <>
       <button
         ref={anchorRef}
         type="button"
-        aria-label="Account"
+        aria-label={`Account — ${status.longLabel}`}
+        title={status.longLabel}
         aria-haspopup="menu"
         aria-expanded={open}
         onClick={() => (open ? setOpen(false) : openMenu())}
-        className={`relative flex h-7 w-7 items-center justify-center rounded-full border text-[11px] font-semibold transition-all hover:scale-105 active:scale-95 ${
+        className={`gp-touch-target relative flex h-7 w-7 items-center justify-center rounded-full border text-[11px] font-semibold transition-all hover:scale-105 active:scale-95 ${
           session
             ? 'border-emerald-400/40 bg-emerald-400/15 text-emerald-300'
             : 'border-neutral-600 bg-neutral-800/80 text-neutral-400 hover:text-neutral-200'
@@ -131,11 +129,13 @@ export function AccountChip() {
         {initial ?? <UserRound size={13} aria-hidden />}
         <span aria-hidden className={`absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full border border-neutral-950 ${statusTone}`} />
       </button>
-
+      <span className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+        Storage status: {status.longLabel}
+      </span>
       <input
         ref={fileRef}
         type="file"
-        accept="application/json,.json,.grovepad"
+        accept=".grovepad,application/vnd.grovepad.board+zip"
         className="hidden"
         onChange={(event) => void importFile(event.currentTarget.files?.[0])}
       />
@@ -150,33 +150,33 @@ export function AccountChip() {
             />
             <div
               role="menu"
-              className="gp-menu gp-pop gp-panel fixed z-[130] w-64 rounded-2xl p-1.5 shadow-2xl"
+              className="gp-account-menu gp-menu gp-pop gp-panel fixed z-[130] max-h-[80dvh] w-64 overflow-y-auto rounded-2xl p-1.5 shadow-2xl"
               style={{ left: anchor.x, top: anchor.y }}
             >
               <div className="px-3 py-2">
                 {session ? (
                   <>
                     <p className="truncate text-xs font-medium text-neutral-200">{email}</p>
-                    <p className={`mt-0.5 flex items-center gap-1 text-[10px] ${syncEnabled && cloudSync === 'error' ? 'text-amber-300' : syncEnabled ? 'text-emerald-400/90' : 'text-neutral-500'}`}>
+                    <p className={`mt-0.5 flex items-center gap-1 text-[10px] ${status.tone === 'error' ? 'text-red-300' : status.tone === 'offline' ? 'text-amber-300' : status.tone === 'synced' ? 'text-emerald-400/90' : 'text-neutral-500'}`}>
                       <span aria-hidden className={`h-1.5 w-1.5 rounded-full ${statusTone}`} />
-                      {!syncEnabled
-                        ? `Saving to this browser · ${widgetCount} cards`
-                        : cloudSync === 'saving'
-                          ? 'Syncing…'
-                          : cloudSync === 'error'
-                            ? 'Cloud offline · local copy safe'
-                            : `Cloud sync on · ${widgetCount} cards`}
+                      {status.longLabel} · {widgetCount} cards
                     </p>
+                    {serviceWorkerReady && (
+                      <p className="mt-0.5 text-[9px] text-neutral-600">Available offline after this visit</p>
+                    )}
                   </>
                 ) : (
                   <>
                     <p className="text-xs font-medium text-neutral-200">
                       {isGuest ? 'Guest mode' : 'Not signed in'}
                     </p>
-                    <p className="mt-0.5 flex items-center gap-1 text-[10px] text-neutral-500">
+                    <p className={`mt-0.5 flex items-center gap-1 text-[10px] ${status.tone === 'offline' ? 'text-amber-300' : 'text-neutral-500'}`}>
                       <CloudOff size={10} aria-hidden />
-                      Saving to this browser only
+                      {status.longLabel}
                     </p>
+                    {serviceWorkerReady && (
+                      <p className="mt-0.5 text-[9px] text-neutral-600">Available offline after this visit</p>
+                    )}
                   </>
                 )}
               </div>
@@ -188,7 +188,7 @@ export function AccountChip() {
                 className="mx-1.5 mt-1 flex h-8 w-[calc(100%-12px)] items-center gap-2 rounded-lg px-2 text-xs text-neutral-300 transition-colors hover:bg-neutral-800"
               >
                 <Package size={12} aria-hidden />
-                Export .grovepad package
+                Export
               </button>
               <button
                 type="button"
@@ -197,16 +197,7 @@ export function AccountChip() {
                 className="mx-1.5 flex h-8 w-[calc(100%-12px)] items-center gap-2 rounded-lg px-2 text-xs text-neutral-300 transition-colors hover:bg-neutral-800"
               >
                 <Upload size={12} aria-hidden />
-                Open package or backup
-              </button>
-              <button
-                type="button"
-                role="menuitem"
-                onClick={exportBoard}
-                className="mx-1.5 flex h-8 w-[calc(100%-12px)] items-center gap-2 rounded-lg px-2 text-xs text-neutral-400 transition-colors hover:bg-neutral-800 hover:text-neutral-200"
-              >
-                <Download size={12} aria-hidden />
-                Export JSON backup
+                Import
               </button>
               {snapshots[0] && (
                 <button
@@ -222,12 +213,8 @@ export function AccountChip() {
                   Restore {snapshots[0].label ? `${snapshots[0].label} · ` : ''}{new Date(snapshots[0].createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </button>
               )}
-              <label className="mx-1.5 flex h-8 cursor-pointer items-center justify-between rounded-lg px-2 text-xs text-neutral-400 hover:bg-neutral-800 hover:text-neutral-200">
-                Completion sounds
-                <input type="checkbox" checked={soundOn} onChange={(event) => { setSoundOn(event.target.checked); localStorage.setItem('grovepad:sound', event.target.checked ? 'on' : 'off') }} className="accent-emerald-400" />
-              </label>
               {session && supabaseConfigured && (
-                <label className="mx-1.5 flex h-8 cursor-pointer items-center justify-between rounded-lg px-2 text-xs text-neutral-400 hover:bg-neutral-800 hover:text-neutral-200">
+                <label className="gp-touch-target mx-1.5 flex h-8 cursor-pointer items-center justify-between rounded-lg px-2 text-xs text-neutral-400 hover:bg-neutral-800 hover:text-neutral-200">
                   Cloud sync
                   <input
                     type="checkbox"
@@ -241,7 +228,8 @@ export function AccountChip() {
                 <button
                   type="button"
                   role="menuitem"
-                  disabled={cloudSync === 'saving'}
+                  disabled={cloudSync === 'saving' || !networkOnline}
+                  title={!networkOnline ? 'Reconnect to sync with your account' : undefined}
                   onClick={() => requestCloudSync()}
                   className="mx-1.5 flex h-8 w-[calc(100%-12px)] items-center gap-2 rounded-lg px-2 text-xs text-neutral-300 transition-colors hover:bg-neutral-800 disabled:opacity-50"
                 >
@@ -281,28 +269,6 @@ export function AccountChip() {
           </>,
           document.body,
         )}
-      <ConfirmDialog
-        open={Boolean(pendingBoardImport)}
-        title="Replace the current board?"
-        description="The imported JSON backup will replace every workspace, canvas, widget, group, and connection currently open. A new local snapshot will be kept automatically after the change. .grovepad packages are added as Canvas cards instead."
-        confirmLabel="Restore backup"
-        destructive
-        onClose={() => useBoardImportStore.getState().clear()}
-        onConfirm={() => {
-          const pending = pendingBoardImport
-          if (!pending) return
-          void (async () => {
-            // Media must land in IndexedDB before the board renders so image
-            // cards can resolve their blobs on first paint.
-            for (const { key, blob } of pending.media) {
-              await writeMediaBlob(key, blob).catch(() => undefined)
-            }
-            useWidgetStore.getState().loadBoard(pending.board)
-            useBoardImportStore.getState().clear()
-            useToastStore.getState().addToast('Board restored from backup')
-          })()
-        }}
-      />
       <ConfirmDialog
         open={Boolean(restoreSnapshot)}
         title="Restore the latest local snapshot?"

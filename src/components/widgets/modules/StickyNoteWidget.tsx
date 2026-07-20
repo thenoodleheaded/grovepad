@@ -2,11 +2,14 @@ import { useLayoutEffect, useRef } from 'react'
 import type { StickyNoteColor, StickyNoteData } from '../../../types/spatial'
 import { useFieldAnchor } from '../../../hooks/useFieldAnchor'
 import { WidgetPanel } from '../WidgetPanel'
+import { setCollaborativeEditingWidget } from '../../../collaboration/collaborationController'
+import { useCollaborationStore } from '../../../store/useCollaborationStore'
 
 interface StickyNoteWidgetProps {
   data: StickyNoteData
   onChange: (data: StickyNoteData) => void
   onHeightChange?: (height: number) => void
+  widgetId?: string
 }
 
 /* Text stays on the theme-aware neutral scale (readable in dark AND light
@@ -46,11 +49,16 @@ const COLOR_ORDER: StickyNoteColor[] = ['yellow', 'pink', 'blue', 'green', 'purp
  * behavior — it grows with the text, never hiding or padding), and a color
  * chooser panel beneath it that decides the plate's tint.
  */
-export function StickyNoteWidget({ data, onChange, onHeightChange }: StickyNoteWidgetProps) {
+export function StickyNoteWidget({ data, onChange, onHeightChange, widgetId }: StickyNoteWidgetProps) {
   const style = COLOR_STYLES[data.color] ?? COLOR_STYLES.yellow
   const textRowRef = useFieldAnchor('text')
   const rootRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const remoteEditor = useCollaborationStore((state) =>
+    state.participants.find((participant) =>
+      participant.clientId !== state.localClientId && participant.editingWidgetId === widgetId,
+    ),
+  )
 
   useLayoutEffect(() => {
     const el = textareaRef.current
@@ -72,8 +80,16 @@ export function StickyNoteWidget({ data, onChange, onHeightChange }: StickyNoteW
             placeholder="Jot something down…"
             aria-label="Sticky note text"
             onChange={(e) => onChange({ ...data, text: e.target.value })}
+            onFocus={() => setCollaborativeEditingWidget(widgetId ?? null)}
+            onBlur={() => setCollaborativeEditingWidget(null)}
+            data-collaboration-editing={Boolean(remoteEditor)}
             className={`w-full resize-none bg-transparent text-[13px] leading-[1.6] text-neutral-100 outline-none placeholder:text-neutral-600 ${style.caret}`}
           />
+          {remoteEditor && (
+            <span className="text-[9px] font-medium" style={{ color: remoteEditor.color }}>
+              {remoteEditor.name} is editing
+            </span>
+          )}
         </WidgetPanel>
       </div>
       <WidgetPanel className="flex h-8 items-center gap-1.5 px-2.5 pr-5">

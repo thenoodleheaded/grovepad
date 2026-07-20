@@ -24,6 +24,8 @@ export interface GhostTreeNode {
   order: number
   x: number
   y: number
+  /** Widget types this tree point will materialize as one compact bundle. */
+  widgetTypes: ModuleType[]
 }
 
 /** Live configuration of the tree being sculpted in ghost mode. */
@@ -47,7 +49,11 @@ export const GHOST_PITCH_Y = 120
 
 /** Total ghost cells in a direct-manipulation tree. */
 export function ghostTreeWidgetCount(nodes: GhostTreeNode[]): number {
-  return nodes.length
+  return nodes.reduce((count, node) => count + node.widgetTypes.length, 0)
+}
+
+export function ghostTreeUnconfiguredCount(nodes: GhostTreeNode[]): number {
+  return nodes.reduce((count, node) => count + (node.widgetTypes.length === 0 ? 1 : 0), 0)
 }
 
 // ---------------------------------------------------------------------------
@@ -80,6 +86,14 @@ export interface WidgetMetadata {
   panelSizes?: Record<string, Size>
   /** Focus-mode island arrangement (glass constitution, Article XVIII). */
   islandLayout?: IslandLayout
+  completed?: boolean
+  showDoneCheckbox?: boolean
+  showDeleteButton?: boolean
+  showPinButton?: boolean
+  showFocusButton?: boolean
+  showFavoriteButton?: boolean
+  showDuplicateButton?: boolean
+  showMarkdownButton?: boolean
   /** Original local-interpreter input, retained for reversibility and future re-interpretation. */
   sourceText?: string
   interpretationConfidence?: number
@@ -140,6 +154,7 @@ export interface WidgetGroup {
   label: string
   widgetIds: string[]
   color: GroupColor
+  favorite?: boolean
 }
 
 // ---------------------------------------------------------------------------

@@ -35,11 +35,24 @@ interface ShortcutSection {
 
 const SECTIONS: ShortcutSection[] = [
   {
+    title: 'Touch & trackpad',
+    rows: [
+      { keys: ['1 finger'], label: 'Pan in Navigate mode' },
+      { keys: ['2 fingers'], label: 'Pan from any tool' },
+      { keys: ['Pinch'], label: 'Zoom around your fingers' },
+      { keys: ['Tap'], label: 'Select a card or clear selection' },
+      { keys: ['Select + Drag'], label: 'Move a selected card' },
+      { keys: ['Focus + Pencil'], label: 'Pressure-sensitive Sketchpad ink' },
+    ],
+  },
+  {
     title: 'Canvas',
     rows: [
       { keys: ['Scroll'], label: 'Pan the canvas' },
       { keys: ['⌘ Scroll', 'Pinch'], label: 'Zoom at cursor' },
       { keys: ['Space + Drag', 'Middle Drag'], label: 'Pan (grab)' },
+      { keys: ['H'], label: 'Navigate tool' },
+      { keys: ['V'], label: 'Select tool' },
       { keys: ['F'], label: 'Frame board' },
       { keys: ['+', '−'], label: 'Zoom in / out' },
       { keys: ['0'], label: 'Reset zoom to 100%' },
@@ -48,7 +61,7 @@ const SECTIONS: ShortcutSection[] = [
   {
     title: 'Create & edit',
     rows: [
-      { keys: ['Double-click'], label: 'Add widget at cursor' },
+      { keys: ['Double-click empty canvas'], label: 'Shape a tree at cursor' },
       { keys: ['N'], label: 'Quick add — one card per line' },
       { keys: ['Right-click'], label: 'Canvas / widget menu' },
       { keys: ['⌘ Drag card'], label: 'Draw a relation link' },
@@ -121,8 +134,8 @@ export function ShortcutsOverlay() {
     <div
       role="dialog"
       aria-modal="true"
-      aria-label="Keyboard shortcuts"
-      className="fixed inset-0 z-[220] flex items-center justify-center p-6"
+      aria-label="Controls and keyboard shortcuts"
+      className="gp-shortcuts-overlay fixed inset-0 z-[220] flex items-center justify-center p-6"
     >
       <div
         role="presentation"
@@ -132,25 +145,25 @@ export function ShortcutsOverlay() {
       <div
         ref={panelRef}
         tabIndex={-1}
-        className="gp-dialog gp-pop gp-panel relative z-10 w-full max-w-2xl overflow-hidden rounded-3xl shadow-2xl outline-none"
+        className="gp-shortcuts-panel gp-dialog gp-pop gp-panel relative z-10 flex w-full max-w-2xl flex-col overflow-hidden rounded-3xl shadow-2xl outline-none"
       >
         <div className="flex items-center justify-between border-b border-neutral-800 px-5 py-3.5">
           <div className="flex items-center gap-2">
             <Keyboard size={15} className="text-emerald-400" aria-hidden />
-            <h2 className="text-sm font-semibold text-neutral-200">Keyboard shortcuts</h2>
+            <h2 className="text-sm font-semibold text-neutral-200">Controls & shortcuts</h2>
           </div>
           <button
             ref={closeRef}
             type="button"
             aria-label="Close shortcuts"
             onClick={close}
-            className="flex h-6 w-6 items-center justify-center rounded text-neutral-500 transition-colors hover:bg-neutral-800 hover:text-white"
+            className="gp-touch-target flex h-6 w-6 items-center justify-center rounded text-neutral-500 transition-colors hover:bg-neutral-800 hover:text-white"
           >
             <X size={13} />
           </button>
         </div>
 
-        <div className="grid max-h-[70vh] grid-cols-1 gap-x-8 gap-y-5 overflow-y-auto p-5 sm:grid-cols-2">
+        <div className="gp-shortcuts-content grid max-h-[70vh] grid-cols-1 gap-x-8 gap-y-5 overflow-y-auto p-5 sm:grid-cols-2">
           {SECTIONS.map((section) => (
             <section key={section.title}>
               <h3 className="pb-2  text-[10px] uppercase tracking-wider text-neutral-600">

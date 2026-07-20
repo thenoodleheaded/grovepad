@@ -55,7 +55,7 @@ export function ConfirmDialog({
       aria-modal="true"
       aria-labelledby="gp-confirm-title"
       aria-describedby="gp-confirm-description"
-      className="fixed inset-0 z-[240] flex items-center justify-center p-5"
+      className="gp-confirm-overlay fixed inset-0 z-[240] flex items-center justify-center p-5"
     >
       <div
         role="presentation"
@@ -65,7 +65,7 @@ export function ConfirmDialog({
       <div
         ref={panelRef}
         tabIndex={-1}
-        className="gp-dialog gp-pop gp-panel relative z-10 w-full max-w-sm overflow-hidden rounded-3xl p-5 shadow-2xl outline-none"
+        className="gp-confirm-panel gp-dialog gp-pop gp-panel relative z-10 w-full max-w-sm overflow-hidden rounded-3xl p-5 shadow-2xl outline-none"
       >
         <div className="flex gap-3.5">
           <span
@@ -87,7 +87,7 @@ export function ConfirmDialog({
             </p>
           </div>
         </div>
-        <div className="mt-5 flex justify-end gap-2">
+        <div className="gp-confirm-actions mt-5 flex justify-end gap-2">
           <button
             ref={cancelRef}
             type="button"

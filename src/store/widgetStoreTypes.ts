@@ -14,6 +14,7 @@ import type {
   Vector2D,
   Widget,
   WidgetGroup,
+  WidgetMetadata,
   Workspace,
 } from '../types/spatial'
 import type { ThoughtPlan } from '../utils/thoughtInterpreter'
@@ -72,6 +73,9 @@ export interface WidgetStoreState {
   ) => void
   snapWidgetToGrid: (id: string) => void
   settleWidgets: (ids: string[]) => void
+  /** Commit ghost displacement offsets at drop time, before the release
+   *  settle. History was already snapshotted at the gesture's first move. */
+  applyGhostDisplacement: (offsets: Record<string, Vector2D>) => void
   /** Spread active-canvas nodes apart without resizing them. */
   untangleCanvas: () => void
   /** Fit widgets to content, tidy groups, and remove overlaps. */
@@ -81,13 +85,18 @@ export interface WidgetStoreState {
   toggleWidgetCollapsed: (id: string) => void
   setWidgetScaleState: (id: string, target: WidgetScaleState, skipHistory?: boolean) => void
   setWidgetsCollapsed: (ids: string[], collapsed: boolean) => void
-  updateWidgetData: (widgetId: string, data: ModuleData) => void
+  updateWidgetData: (
+    widgetId: string,
+    data: ModuleData,
+    options?: { coalesceHistory?: boolean },
+  ) => void
   updateWidgetTitle: (widgetId: string, title: string) => void
   toggleWidgetLocked: (widgetId: string) => void
   toggleWidgetFavorite: (widgetId: string) => void
   setWidgetAccent: (widgetId: string, accent?: string) => void
   bringWidgetToFront: (widgetId: string) => void
   setWidgetHydration: (widgetId: string, isHydrating: boolean) => void
+  updateWidgetMetadata: (widgetId: string, metadata: Partial<WidgetMetadata>) => void
   nudgeSelection: (dx: number, dy: number) => void
 
   canUndo: boolean
@@ -119,10 +128,11 @@ export interface WidgetStoreState {
   createGroup: (widgetIds: string[], label?: string) => string
   dissolveGroup: (groupId: string) => void
   renameGroup: (groupId: string, label: string) => void
+  toggleGroupFavorite: (groupId: string) => void
   compactGroup: (groupId: string, options?: { skipHistory?: boolean }) => boolean
   addToGroup: (groupId: string, widgetId: string) => void
   joinGroup: (groupId: string, widgetId: string) => void
-  removeFromGroup: (groupId: string, widgetId: string, options?: { skipHistory?: boolean }) => boolean
+  removeFromGroup: (groupId: string, widgetId: string, options?: { skipHistory?: boolean; preservePosition?: boolean }) => boolean
   moveGroup: (groupId: string, screenDelta: Vector2D, zoom: number) => void
 
   dragOverGroupId: string | null
@@ -189,6 +199,7 @@ export interface WidgetStoreState {
   beginGhostGesture: () => void
   shapeGhostTree: (nodeId: string, direction: GhostShapeDirection, steps: number) => void
   endGhostGesture: () => void
+  setGhostNodeWidgetTypes: (nodeId: string, widgetTypes: ModuleType[]) => void
   cancelGhostShaper: () => void
   commitGhostTree: () => void
 }

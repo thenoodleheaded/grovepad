@@ -114,6 +114,18 @@ export function atlasModeFor(data: Pick<AtlasWidgetData, 'trackerMode'>, fallbac
   return ATLAS_TYPE_SET.has(data.trackerMode as ModuleType) ? data.trackerMode as AtlasType : fallback
 }
 
+/** Save the current Tracker preset and restore the requested one. Snapshots
+ * are stored lazily, so a card only pays for modes the user has actually used. */
+export function switchAtlasMode(data:AtlasWidgetData,nextType:AtlasType):AtlasWidgetData {
+  const currentType=atlasModeFor(data)
+  if(nextType===currentType)return data
+  const {modeStates: _ignored,...currentSnapshot}=data
+  const states={...data.modeStates,[currentType]:currentSnapshot}
+  const restored=states[nextType]??defaultAtlasData(nextType)
+  const {modeStates: _nested,...nextSnapshot}=restored as AtlasWidgetData
+  return {...nextSnapshot,trackerMode:nextType,modeStates:states}
+}
+
 export function atlasTypeForPhrase(phrase:string):AtlasType|null {
   const normalized=phrase.toLowerCase().replaceAll('_',' ')
   const candidates=ATLAS_TYPES.flatMap(type=>[ATLAS_CATALOG[type].label,type.replaceAll('_',' '),...ATLAS_CATALOG[type].aliases].map(term=>({type,term:term.toLowerCase()}))).sort((a,b)=>b.term.length-a.term.length)

@@ -255,12 +255,14 @@ interface FocusModeLayerProps {
   hostRef: RefObject<HTMLElement | null>
   /** True while this widget is the focus-mode subject. */
   active: boolean
+  /** Layout chrome is hidden during focused content editing. */
+  layoutActive: boolean
   layout: IslandLayout | undefined
   /** Re-measure trigger — the widget's data object. */
   version: unknown
 }
 
-export function FocusModeLayer({ widgetId, hostRef, active, layout, version }: FocusModeLayerProps) {
+export function FocusModeLayer({ widgetId, hostRef, active, layoutActive, layout, version }: FocusModeLayerProps) {
   const [islands, setIslands] = useState<IslandInfo[]>([])
   const [announcement, setAnnouncement] = useState('')
   type ResizeGesture = {
@@ -346,7 +348,7 @@ export function FocusModeLayer({ widgetId, hostRef, active, layout, version }: F
   // Duty 2 — measure islands for the chrome overlay while focused.
   useLayoutEffect(() => {
     const host = hostRef.current
-    if (!active || !host) {
+    if (!active || !layoutActive || !host) {
       setIslands([])
       return
     }
@@ -365,7 +367,7 @@ export function FocusModeLayer({ widgetId, hostRef, active, layout, version }: F
       cancelAnimationFrame(raf)
       observer.disconnect()
     }
-  }, [active, hostRef, version, layout])
+  }, [active, layoutActive, hostRef, version, layout])
 
   // Exit paths: Escape anywhere, or any pointerdown outside the card.
   useEffect(() => {
@@ -379,6 +381,7 @@ export function FocusModeLayer({ widgetId, hostRef, active, layout, version }: F
     }
     const onPointerDown = (event: PointerEvent) => {
       if (host && event.target instanceof Node && host.contains(event.target)) return
+      if (event.target instanceof Element && event.target.closest('[data-focus-session-ui]')) return
       event.preventDefault()
       event.stopPropagation()
       useFocusStore.getState().exitFocus()
@@ -411,7 +414,7 @@ export function FocusModeLayer({ widgetId, hostRef, active, layout, version }: F
     liftedRef.current = null
   }, [])
 
-  if (!active || islands.length === 0) return null
+  if (!active || !layoutActive || islands.length === 0) return null
 
   const beginResize = (event: ReactPointerEvent<HTMLButtonElement>, island: IslandInfo) => {
     if (event.button !== 0) return
@@ -755,7 +758,9 @@ export function FocusModeLayer({ widgetId, hostRef, active, layout, version }: F
                 if (event.key === 'ArrowUp' && island.sizing !== 'width') { event.preventDefault(); resizeWithKeyboard(island, 0, -amount) }
                 if (event.key === 'ArrowDown' && island.sizing !== 'width') { event.preventDefault(); resizeWithKeyboard(island, 0, amount) }
               }}
-            />
+            >
+              <span className="gp-focus-resize-mark" aria-hidden />
+            </button>
           )}
         </div>
       ))}

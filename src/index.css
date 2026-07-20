@@ -152,6 +152,7 @@ body {
    timing identical to SVG route morphing prevents endpoints from detaching
    during settle, nudge, collapse, undo, and redo. */
 .gp-widget-layout-motion {
+  contain: layout style;
   transition:
     transform var(--gp-motion-layout) var(--gp-ease-layout),
     width var(--gp-motion-layout) var(--gp-ease-layout),
@@ -174,6 +175,26 @@ body[data-widget-dragging] .gp-route-chip-motion {
 }
 
 /*
+ * Displacement preview: cards and plates pushed aside by the drag's ghost
+ * negotiation keep their layout glide even while the body-level drag flag
+ * has collapsed everything else to zero. The dragged card itself never
+ * carries data-ghost-displaced, so pointer tracking stays exact. Under
+ * prefers-reduced-motion the global duration override still flattens this
+ * to an instant move.
+ */
+body[data-widget-dragging] .gp-widget-motion[data-ghost-displaced],
+body[data-widget-dragging] .gp-widget-layout-motion[data-ghost-displaced] {
+  transition: transform var(--gp-motion-layout) var(--gp-ease-layout);
+}
+
+/* Overlap the displacement budget declined to resolve: the covered card dims
+ * as a "will settle on drop" hint instead of moving. */
+body[data-widget-dragging] .gp-widget-layout-motion[data-settle-pending] > .gp-card-motion {
+  opacity: 0.7;
+  transition: opacity var(--gp-motion-fast) var(--gp-ease-standard);
+}
+
+/*
  * WidgetCard variant of the motion system: also transitions width/height/
  * border-radius so collapse-to-pill and the resize-release grid snap glide.
  * Only ever fires on discrete changes — live resize drags set
@@ -189,6 +210,30 @@ body[data-widget-dragging] .gp-route-chip-motion {
     background-color var(--gp-motion-fast) var(--gp-ease-standard),
     scale var(--gp-motion-fast) var(--gp-ease-out),
     translate var(--gp-motion-fast) var(--gp-ease-out);
+}
+
+/* iPad-style magnetic lift. The outer wrapper temporarily wins the canvas
+   stacking order while the card itself receives a tiny compositor-only
+   pointer bias. `will-change` exists only while a short rAF settle is live. */
+.gp-widget-layout-motion[data-magnetic-hover="true"] {
+  /* Wins over sibling cards (store zIndex counters) without pretending to be
+     an app-level overlay. The widget layer's transformed ancestor confines
+     this to the canvas stacking context either way. */
+  z-index: 100000 !important;
+}
+
+.gp-widget-layout-motion[data-magnetic-hover="true"] > .gp-card-motion {
+  scale: 1.010;
+}
+
+.gp-widget-layout-motion[data-magnetic-drag="true"] > .gp-card-motion {
+  will-change: translate, scale;
+}
+
+.gp-card-motion[data-magnetic-active="true"] {
+  will-change: translate, scale;
+  transition-property: border-radius, opacity, box-shadow, border-color,
+    background-color, scale;
 }
 
 body[data-widget-dragging] .gp-card-motion {
@@ -210,6 +255,96 @@ body[data-widget-dragging] .gp-card-motion {
 
 .gp-spawn {
   animation: gp-spawn var(--gp-motion-reveal) var(--gp-ease-out) backwards;
+}
+
+/* Tree materialization is one atomic board transaction with an intentionally
+ * asynchronous visual reveal: branch, cards, then the shared group plate. */
+@keyframes gp-tree-widget-reveal {
+  from {
+    visibility: hidden;
+    opacity: 0;
+    scale: 0.72;
+    filter: blur(9px) saturate(0.55);
+  }
+  62% {
+    visibility: visible;
+    opacity: 1;
+    scale: 1.035;
+    filter: blur(0) saturate(1.18);
+  }
+  to {
+    visibility: visible;
+    opacity: 1;
+    scale: 1;
+    filter: none;
+  }
+}
+
+.gp-tree-widget-reveal {
+  animation: gp-tree-widget-reveal 760ms cubic-bezier(0.16, 1, 0.3, 1) backwards;
+  animation-delay: var(--gp-tree-reveal-delay, 0ms);
+}
+
+@keyframes gp-tree-group-reveal {
+  from {
+    visibility: hidden;
+    opacity: 0;
+    scale: 0.94;
+    clip-path: inset(48% 46% round 28px);
+    filter: blur(8px) saturate(0.72);
+  }
+  68% {
+    visibility: visible;
+    opacity: 1;
+    scale: 1.012;
+    clip-path: inset(0 round 26px);
+    filter: blur(0) saturate(1.12);
+  }
+  to {
+    visibility: visible;
+    opacity: 1;
+    scale: 1;
+    clip-path: inset(0 round 26px);
+    filter: none;
+  }
+}
+
+.gp-tree-group-reveal {
+  transform-origin: center;
+  animation: gp-tree-group-reveal 920ms cubic-bezier(0.16, 1, 0.3, 1) backwards;
+  animation-delay: var(--gp-tree-reveal-delay, 0ms);
+}
+
+@keyframes gp-tree-relation-presence {
+  from { visibility: hidden; opacity: 0; }
+  18% { visibility: visible; opacity: 0.9; }
+  to { visibility: visible; opacity: 1; }
+}
+
+@keyframes gp-tree-relation-flow {
+  from {
+    stroke-dashoffset: 1;
+    filter: drop-shadow(0 0 0 transparent);
+  }
+  72% {
+    filter: drop-shadow(0 0 5px color-mix(in oklab, var(--gp-relation-outline), transparent 24%));
+  }
+  to {
+    stroke-dashoffset: 0;
+    filter: none;
+  }
+}
+
+.gp-tree-relation-reveal {
+  animation: gp-tree-relation-presence 980ms var(--gp-ease-out) backwards;
+  animation-delay: var(--gp-tree-reveal-delay, 0ms);
+}
+
+.gp-tree-relation-reveal :is(.gp-canvas-edge-main, .gp-canvas-edge-halo) {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: gp-tree-relation-flow 1.08s cubic-bezier(0.22, 0.72, 0.2, 1) both;
+  animation-delay: var(--gp-tree-reveal-delay, 0ms);
 }
 
 /* One-shot entrance for menus, pickers, and modals. */
@@ -288,6 +423,10 @@ body[data-widget-dragging] .gp-card-motion {
     transition: none;
   }
   .gp-spawn,
+  .gp-tree-widget-reveal,
+  .gp-tree-group-reveal,
+  .gp-tree-relation-reveal,
+  .gp-tree-relation-reveal :is(.gp-canvas-edge-main, .gp-canvas-edge-halo),
   .gp-pop,
   .gp-fade,
   .gp-flash::after {
@@ -328,9 +467,9 @@ body[data-widget-dragging] .gp-card-motion {
   --color-neutral-900: oklch(97% 0 0);
   --color-neutral-950: oklch(98.8% 0 0);
 
-  /* Grid lines — dark on light canvas. */
-  --gp-grid-coarse: rgba(0, 0, 0, 0.07);
-  --gp-grid-fine: rgba(0, 0, 0, 0.04);
+  /* Grid lines — keep them light since canvas is dark-ish #2f3531 */
+  --gp-grid-coarse: rgb(137 165 148 / 0.075);
+  --gp-grid-fine: rgb(163 230 53 / 0.13);
 
   /* Hairlines invert: pure black at the same subtlety. */
   --gp-hairline: rgba(0, 0, 0, 0.10);
@@ -348,7 +487,6 @@ body[data-widget-dragging] .gp-card-motion {
 }
 
 [data-theme="light"] body {
-  background-color: #f8f8f8;
   color: #1c1c1c;
 }
 
@@ -356,6 +494,33 @@ body[data-widget-dragging] .gp-card-motion {
    near-black so every button label stays legible on hover. */
 [data-theme="light"] .hover\:text-white:hover {
   color: oklch(14.5% 0 0);
+}
+
+[data-theme="light"] .gp-picker-icon {
+  filter: saturate(1.5) brightness(0.55);
+}
+
+[data-theme="light"] .gp-port {
+  background: #f8fafc;
+}
+
+[data-theme="light"] .gp-port-label {
+  background: rgba(255, 255, 255, 0.94);
+}
+
+[data-theme="light"] .gp-bp-chip {
+  background:
+    linear-gradient(160deg, oklch(70% 0.15 162 / 0.09), oklch(70% 0.15 162 / 0.025) 55%),
+    color-mix(in oklab, var(--color-neutral-950) 86%, transparent);
+  box-shadow: 0 6px 22px -12px rgb(15 40 30 / 0.35);
+}
+
+[data-theme="light"] input[type="date"] {
+  color-scheme: light;
+}
+
+[data-theme="light"] .gp-sketch-surface {
+  background-image: radial-gradient(circle, rgba(0, 0, 0, 0.12) 1px, transparent 1px);
 }
 
 /* ---------------------------------------------------------------------------
@@ -379,10 +544,11 @@ body[data-widget-dragging] .gp-card-motion {
 
 [data-theme="light"] .gp-glass {
   background:
-    radial-gradient(130% 100% at 14% 0%, oklch(100% 0 0 / 0.65) 0%, transparent 52%),
-    linear-gradient(to bottom, oklch(100% 0 0 / 0.5) 0%, transparent 9%),
-    radial-gradient(90% 60% at 88% 100%, oklch(76% 0.06 150 / 0.06) 0%, transparent 60%),
-    linear-gradient(160deg, oklch(100% 0 0 / 0.97) 0%, oklch(93.5% 0.002 250 / 0.98) 100%);
+    radial-gradient(120% 85% at 12% -4%, color-mix(in oklab, var(--gp-widget-accent), transparent 86%) 0%, transparent 56%),
+    radial-gradient(130% 100% at 14% 0%, oklch(100% 0 0 / 0.10) 0%, transparent 52%),
+    linear-gradient(to bottom, oklch(100% 0 0 / 0.06) 0%, transparent 9%),
+    radial-gradient(95% 65% at 90% 104%, color-mix(in oklab, var(--gp-widget-accent), transparent 90%) 0%, transparent 62%),
+    var(--gp-light-panel-bg);
 }
 
 /* Glass instrument primitives: the same material language as cards/panels,
@@ -405,9 +571,8 @@ body[data-widget-dragging] .gp-card-motion {
  * the hover bloom, and the selection ring are all mixed from that one hue,
  * so a canvas full of widgets reads as a colorful garden — each card glows
  * in its own color — while staying one design system. All of it is static
- * paint or hover/selection-triggered shadow transitions: nothing per-frame,
- * no backdrop-filter, and far-zoom LOD still strips shadows and flattens
- * the background exactly as before.
+ * paint or hover/selection-triggered shadow transitions: nothing per-frame
+ * while the canvas transform is moving.
  * ------------------------------------------------------------------------- */
 
 .gp-widget-card.gp-glass {
@@ -429,7 +594,7 @@ body[data-widget-dragging] .gp-card-motion {
     radial-gradient(130% 100% at 14% 0%, oklch(100% 0 0 / 0.10) 0%, transparent 52%),
     linear-gradient(to bottom, oklch(100% 0 0 / 0.06) 0%, transparent 9%),
     radial-gradient(95% 65% at 90% 104%, color-mix(in oklab, var(--gp-widget-accent), transparent 90%) 0%, transparent 62%),
-    linear-gradient(160deg, oklch(37% 0.006 250 / 0.985) 0%, oklch(29% 0.006 250 / 0.99) 100%);
+    var(--gp-light-widget-bg);
 }
 
 /* Resting, hover, selected, and link-source card shadows — previously
@@ -441,9 +606,9 @@ body[data-widget-dragging] .gp-card-motion {
     0 1px 2px rgba(0, 0, 0, 0.16);
 }
 
-@media (hover: hover) {
-  body:not([data-widget-dragging]):not([data-canvas-lod="far"])
-    .gp-widget-card:not([data-selected="true"]):not([data-link-source="true"]):hover {
+@media (any-hover: hover) and (any-pointer: fine) {
+  body:not([data-widget-dragging])
+    .gp-widget-card:not([data-selected="true"]):not([data-link-source="true"]):not([data-locked="true"]):hover {
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.1),
       0 10px 30px rgba(0, 0, 0, 0.42),
@@ -470,6 +635,68 @@ body[data-widget-dragging] .gp-card-motion {
 }
 
 
+/* Locked and Blocked Widget Card State & Overlays */
+.gp-widget-card[data-blocked="true"] .gp-widget-content {
+  pointer-events: none !important;
+  user-select: none !important;
+  opacity: 0.5;
+  filter: grayscale(40%) contrast(95%);
+  transition: opacity 0.25s ease, filter 0.25s ease;
+}
+
+/* Base overlay styling */
+.gp-widget-card[data-locked="true"]::after,
+.gp-widget-card[data-blocked="true"]::after {
+  content: "";
+  position: absolute;
+  inset: 3.5px;
+  border-radius: 18px;
+  pointer-events: none;
+  z-index: 10;
+  box-shadow: inset 0 0 16px rgba(0, 0, 0, 0.55);
+}
+
+.gp-widget-card[data-locked="true"]::after {
+  background: radial-gradient(circle at center, rgba(15, 23, 42, 0.05) 0%, rgba(15, 23, 42, 0.2) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.gp-widget-card[data-blocked="true"]::after {
+  background:
+    repeating-linear-gradient(
+      -45deg,
+      transparent,
+      transparent 8px,
+      rgba(245, 158, 11, 0.02) 8px,
+      rgba(245, 158, 11, 0.02) 16px
+    ),
+    radial-gradient(circle at center, rgba(15, 23, 42, 0.15) 0%, rgba(15, 23, 42, 0.45) 100%);
+  border: 1px dashed rgba(245, 158, 11, 0.25);
+}
+
+/* Custom dashed border style for blocked widgets to visually distinguish them */
+.gp-widget-card[data-blocked="true"] {
+  border-style: dashed !important;
+  border-color: rgba(245, 158, 11, 0.45) !important;
+  box-shadow:
+    0 10px 30px rgba(0, 0, 0, 0.35),
+    0 0 16px rgba(245, 158, 11, 0.1) !important;
+}
+
+.gp-widget-card[data-locked="true"] {
+  border-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+/* Keys modifier pointer-events override for Shift/Cmd selection */
+body[data-keys-modifier="true"] .gp-widget-content {
+  pointer-events: none !important;
+  user-select: none !important;
+}
+body[data-keys-modifier="true"] .gp-widget-content * {
+  cursor: default !important;
+}
+
+
 /* ---------------------------------------------------------------------------
  * Hover lift & bloom
  *
@@ -489,11 +716,11 @@ body[data-widget-dragging] .gp-card-motion {
     background-color, scale, translate;
 }
 
-@media (hover: hover) {
-  body:not([data-widget-dragging]):not([data-canvas-lod="far"])
-    [data-widget-id].gp-card-motion:hover {
-    scale: 1.015;
-    translate: 0 -2px;
+@media (any-hover: hover) and (any-pointer: fine) {
+  body:not([data-widget-dragging])
+    [data-widget-id].gp-card-motion:not([data-locked="true"]):hover {
+    scale: 1.010;
+    translate: 0 -1px;
     z-index: 5;
   }
 }
@@ -505,11 +732,26 @@ body[data-widget-dragging] .gp-card-motion {
   scale: 1.006;
 }
 
-@media (hover: hover) {
-  body:not([data-widget-dragging]):not([data-canvas-lod="far"])
+@media (any-hover: hover) and (any-pointer: fine) {
+  body:not([data-widget-dragging])
     [data-widget-id].gp-card-motion[data-selected="true"]:hover {
-    scale: 1.015;
+    scale: 1.010;
   }
+}
+
+/* Pinned card integration - flat look with a solid border, blending with the canvas. */
+[data-widget-id].gp-card-motion[data-locked="true"] {
+  scale: 1 !important;
+  translate: 0 0 !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05), inset 0 0 0 1px rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+}
+
+[data-theme='light'] [data-widget-id].gp-card-motion[data-locked="true"] {
+  scale: 1 !important;
+  translate: 0 0 !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05), inset 0 0 0 1px rgba(0, 0, 0, 0.02) !important;
+  border: 1px solid rgba(0, 0, 0, 0.16) !important;
 }
 
 /* Widget picker tiles — lift + accent wash on hover. */
@@ -529,9 +771,7 @@ body[data-widget-dragging] .gp-card-motion {
 
 /* Accent hexes are tuned for dark glass; on the light scrim the palest ones
    (slate, near-white) wash out. One static filter re-anchors them all. */
-[data-theme="light"] .gp-picker-icon {
-  filter: saturate(1.5) brightness(0.55);
-}
+
 
 .gp-picker-row:hover .gp-picker-icon,
 .gp-picker-row[data-active] .gp-picker-icon {
@@ -698,9 +938,7 @@ body[data-widget-dragging] .gp-card-motion {
   animation: gp-fade var(--gp-motion-fast) var(--gp-ease-out) backwards;
 }
 
-[data-theme="light"] .gp-port {
-  background: #f8fafc;
-}
+
 
 /* Invisible hit-area extension so a 10px dot never demands 10px aim. On an
    expanded (full) card the halo widens further — the rail is the card's
@@ -714,6 +952,11 @@ body[data-widget-dragging] .gp-card-motion {
 
 .gp-port-rail[data-expanded] .gp-port::after {
   inset: -13px;
+}
+
+html:is([data-active-input='touch'], [data-active-input='pen']) .gp-port::after,
+html[data-has-coarse-pointer='true'] .gp-port::after {
+  inset: -17px;
 }
 
 .gp-port-out {
@@ -761,9 +1004,7 @@ body[data-widget-dragging] .gp-card-motion {
   transition: opacity var(--gp-motion-fast) var(--gp-ease-standard);
 }
 
-[data-theme="light"] .gp-port-label {
-  background: rgba(255, 255, 255, 0.94);
-}
+
 
 .gp-port-label-out {
   left: 14px;
@@ -782,6 +1023,12 @@ body[data-widget-dragging] .gp-card-motion {
 }
 
 .gp-widget-card:hover .gp-port-label {
+  opacity: 1;
+}
+
+.gp-widget-card[data-selected='true'] .gp-port-label,
+.gp-port[data-active] .gp-port-label,
+.gp-port[data-hot] .gp-port-label {
   opacity: 1;
 }
 
@@ -951,9 +1198,9 @@ body[data-circuit-mode] .gp-widget-card {
 }
 
 @keyframes gp-ghost-rope-open {
-  from { stroke-dashoffset: 42; opacity: 0; }
+  from { opacity: 0; }
   40% { opacity: 0.95; }
-  to { stroke-dashoffset: 0; opacity: 0.7; }
+  to { opacity: 0.7; }
 }
 
 @keyframes gp-ghost-rope-close {
@@ -977,20 +1224,29 @@ body[data-circuit-mode] .gp-widget-card {
 .gp-ghost-rope {
   /* World-unit dashes stay identical on short vertical and long diagonal
      connectors. Never normalize these with SVG pathLength. */
-  stroke-dasharray: 6 8;
-  stroke-dashoffset: 0;
   stroke-linecap: round;
-  filter: drop-shadow(0 0 2px rgb(192 132 252 / 0.85));
+  opacity: 0.96;
+  filter: saturate(1.65) contrast(1.14) drop-shadow(0 1px 2px rgb(0 0 0 / 0.78));
   animation: gp-ghost-rope-open 520ms var(--gp-ease-out) both;
   transition: d var(--gp-motion-layout) var(--gp-ease-layout);
 }
 
 .gp-ghost-outline {
-  stroke-dasharray: 6 8;
-  stroke-dashoffset: 0;
   stroke-linecap: round;
-  filter: drop-shadow(0 0 2px rgb(192 132 252 / 0.6));
+  opacity: 0.98;
+  filter: saturate(1.65) contrast(1.14) drop-shadow(0 1px 2px rgb(0 0 0 / 0.78));
   animation: gp-ghost-rope-open 520ms var(--gp-ease-out) both;
+  transition: stroke-width var(--gp-motion-fast) var(--gp-ease-standard);
+}
+
+.gp-ghost-cell:focus-visible .gp-ghost-outline {
+  stroke-width: 3.15;
+}
+
+.gp-ghost-cell:focus-visible {
+  /* The contour itself is the keyboard focus affordance. A generic rectangular
+     outline would contradict the bundle's occupied-icon silhouette. */
+  outline: none !important;
 }
 
 .gp-ghost-rope--closing {
@@ -1163,12 +1419,7 @@ body[data-circuit-mode] .gp-widget-card {
   animation: gp-bp-spin 1.6s linear infinite;
 }
 
-[data-theme="light"] .gp-bp-chip {
-  background:
-    linear-gradient(160deg, oklch(70% 0.15 162 / 0.09), oklch(70% 0.15 162 / 0.025) 55%),
-    color-mix(in oklab, var(--color-neutral-950) 86%, transparent);
-  box-shadow: 0 6px 22px -12px rgb(15 40 30 / 0.35);
-}
+
 
 @media (prefers-reduced-motion: reduce) {
   .gp-bp-chip,
@@ -1185,32 +1436,6 @@ body[data-circuit-mode] .gp-widget-card {
   }
 }
 
-/* ---------------------------------------------------------------------------
- * Far-zoom detail shedding
- *
- * CanvasViewport puts data-canvas-lod="far" on <body> below ~0.4 zoom. At
- * that scale hundreds of cards can be on screen, and three per-card costs
- * dominate frame time while being visually sub-pixel:
- *   - backdrop-filter on each card's title capsule and hover buttons —
- *     every blur region makes the compositor resample the backdrop per
- *     frame; measured at ~77% of pan/zoom frame cost with ~400 cards
- *   - box-shadows on the card body
- *   - the floating chrome itself (capsule, corner buttons, resize handle
- *     are a few pixels tall at 0.4 zoom and unreadable well before that)
- * Card gradient, borders, badges, and inner content are untouched: 394
- * visible cards go from ~117ms/frame to ~11ms with no visible change.
- * :focus-within keeps a capsule alive while its title is being edited.
- */
-body[data-canvas-lod="far"] .gp-card-chrome:not(:focus-within) {
-  display: none;
-}
-body[data-canvas-lod="far"] [data-widget-id] {
-  box-shadow: none;
-}
-body[data-canvas-lod="far"] [data-world-layer] .backdrop-blur {
-  backdrop-filter: none;
-}
-
 /* Theme-aware hairline border color for widget-internal dividers, table
    grids, and input outlines — pure white in dark mode, pure black in light.
    Layered as a utility so hover:/focus: variants still win the cascade. */
@@ -1222,20 +1447,7 @@ body[data-canvas-lod="far"] [data-world-layer] .backdrop-blur {
 
 /* Native date pickers follow the app theme, not the fixed dark hint the
    widgets set for dark mode. */
-[data-theme="light"] input[type="date"] {
-  color-scheme: light;
-}
 
-/* Sketchpad dot-grid surface. Replaces the Tailwind arbitrary-value class
-   so the pattern can be inverted for light mode. */
-.gp-sketch-surface {
-  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.07) 1px, transparent 1px);
-  background-size: 12px 12px;
-}
-
-[data-theme="light"] .gp-sketch-surface {
-  background-image: radial-gradient(circle, rgba(0, 0, 0, 0.12) 1px, transparent 1px);
-}
 @media (prefers-contrast: more) {
   :root { --gp-hairline: rgba(255, 255, 255, 0.28); }
   .text-neutral-500 { color: rgb(212 212 212) !important; }
@@ -1258,4 +1470,20 @@ body[data-canvas-lod="far"] [data-world-layer] .backdrop-blur {
 @keyframes gp-atlas-breathe { 50% { transform:scale(1.22); opacity:.72; } }
 @media (prefers-reduced-motion: reduce) {
   .gp-atlas-breathe { animation:none; }
+}
+
+/* Accessibility fail-safe: component-specific rules preserve useful state
+   changes, while this final guard catches framework utilities and future
+   decorative motion. Direct manipulation remains immediate and scrolling
+   never animates against the operating-system preference. */
+@media (prefers-reduced-motion: reduce) {
+  html:focus-within { scroll-behavior: auto; }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
 }

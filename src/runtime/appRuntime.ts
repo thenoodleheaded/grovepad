@@ -4,6 +4,10 @@ import { useWidgetStore } from '../store/useWidgetStore'
 import { initPersistence } from '../utils/persistence'
 import { initDeployVersionMonitor } from './deployVersionMonitor'
 import { initNativeFileOpen } from './nativeFileOpen'
+import { initNativeNoteWidgetSync } from './nativeNoteWidgetSync'
+import { initNetworkStatusRuntime, registerProductionOfflineShell } from './networkStatusRuntime'
+import { useAuthStore } from '../store/useAuthStore'
+import { useCollaborationStore } from '../store/useCollaborationStore'
 
 /** Combine service disposers into one idempotent application boundary. */
 export function composeRuntimeDisposer(disposers: readonly (() => void)[]): () => void {
@@ -34,11 +38,38 @@ export function createRuntimeBoundary(startServices: () => readonly (() => void)
   }
 }
 
+function initSignedInCollaboration(): () => void {
+  if (!useAuthStore.getState().session) return () => {}
+  let cancelled = false
+  let dispose: (() => void) | null = null
+  void import('./collaborationRuntime')
+    .then(({ initCollaborationRuntime }) => {
+      if (!cancelled) dispose = initCollaborationRuntime()
+    })
+    .catch((error: unknown) => {
+      if (!cancelled) useCollaborationStore.setState({
+        status: 'error',
+        error: error instanceof Error ? error.message : String(error),
+      })
+    })
+  return () => {
+    cancelled = true
+    dispose?.()
+  }
+}
+
 const appRuntime = createRuntimeBoundary(() => [
   initPersistence(useWidgetStore, useCanvasStore),
   initDeployVersionMonitor(),
   initCircuitEngine(),
   initNativeFileOpen(),
+  initNativeNoteWidgetSync(),
+  initNetworkStatusRuntime({
+    registerServiceWorker: import.meta.env.PROD && 'serviceWorker' in navigator
+      ? registerProductionOfflineShell
+      : undefined,
+  }),
+  initSignedInCollaboration(),
 ])
 
 /** Start the canvas-owned services once and return their explicit teardown. */

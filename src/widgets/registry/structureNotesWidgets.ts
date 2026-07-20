@@ -36,14 +36,19 @@ export const STRUCTURE_NOTES_WIDGET_DEFINITIONS = {
   },
   notes: {
     type: 'notes',
-    label: 'Notes',
-    description: 'Free-form text that grows as you type',
+    label: 'Note',
+    description: 'Plain, sticky, and quote modes in one writing card',
     icon: FileText,
     category: 'notes',
     accent: '#e2e8f0',
     defaultSize: { width: 320, height: C * 5 },
     sizing: { minWidth: C * 4, autoHeight: true },
-    defaultData: () => ({ text: '' }),
+    defaultData: () => ({ text: '', mode: 'plain', color: 'yellow', attribution: '' }),
+    modes: [
+      { value: 'plain', label: 'Plain', icon: FileText },
+      { value: 'sticky', label: 'Sticky', icon: StickyNote },
+      { value: 'quote', label: 'Quote', icon: Quote },
+    ],
   },
   bullets: {
     type: 'bullets',

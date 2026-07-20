@@ -11,8 +11,9 @@ const css = readdirSync(cssDir)
 
 describe('shared text-field surface contract', () => {
   it('enforces readable widget microcopy contrast in both themes', () => {
-    expect(css).toContain('--gp-widget-muted-text: #a3a3a3')
-    expect(css).toContain('--gp-widget-muted-text: #525252')
+    // Widget cards remain charcoal in the light canvas theme, so both themes
+    // intentionally use the light muted ink rather than dark-on-dark #525252.
+    expect(css.match(/--gp-widget-muted-text: #a3a3a3/g)).toHaveLength(2)
     expect(css).toContain('.gp-widget-card :where(.text-neutral-600, .text-neutral-700)')
   })
   it('keeps text controls visually transparent and borderless', () => {

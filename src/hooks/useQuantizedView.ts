@@ -2,6 +2,10 @@ import { useEffect, useState } from 'react'
 import { useCanvasStore, type CanvasState } from '../store/useCanvasStore'
 import type { Size } from '../types/spatial'
 import { viewportToWorldRect, type WorldRect } from '../utils/canvasView'
+import {
+  isCameraMotionActive,
+  subscribeCameraMotion,
+} from '../runtime/cameraMotionRuntime'
 
 /**
  * World-space chunk the visible rect snaps to. Culling only recomputes when
@@ -10,13 +14,13 @@ import { viewportToWorldRect, type WorldRect } from '../utils/canvasView'
  */
 const VIEW_CHUNK = 256
 
-/** Zoom is bucketed so tiny pinch jitter doesn't invalidate render lists. */
+/** Zoom is bucketed so tiny pinch jitter doesn't invalidate camera culling. */
 const ZOOM_BUCKET = 0.02
 
 export interface QuantizedView {
   /** Visible world rect, expanded by overscan and snapped outward to chunks. */
   rect: WorldRect
-  /** Bucketed zoom — precise enough for LOD thresholds, stable under jitter. */
+  /** Bucketed zoom for stable world-rect culling during camera motion. */
   zoom: number
   viewportSize: Size
 }
@@ -80,12 +84,27 @@ export function useQuantizedView(overscanScreen: number): QuantizedView {
         return
       }
       latest = state
+      // The live SVG/group layers are hidden behind the detailed motion
+      // surface. Re-rendering all four culling consumers for every zoom bucket
+      // would spend React work on pixels the user cannot see; reconcile them
+      // once with the final view during the two-frame reveal handoff instead.
+      if (isCameraMotionActive()) return
+      if (rafId === 0) rafId = requestAnimationFrame(flush)
+    })
+    const unsubscribeMotion = subscribeCameraMotion((active) => {
+      latest = useCanvasStore.getState()
+      if (active) {
+        if (rafId !== 0) cancelAnimationFrame(rafId)
+        rafId = 0
+        return
+      }
       if (rafId === 0) rafId = requestAnimationFrame(flush)
     })
 
     return () => {
       if (rafId !== 0) cancelAnimationFrame(rafId)
       unsubscribe()
+      unsubscribeMotion()
     }
   }, [overscanScreen])
 

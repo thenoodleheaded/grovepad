@@ -161,6 +161,24 @@ describe('widget groups', () => {
     expect(useWidgetStore.getState().widgets[c!]!.position).toEqual(beforeC)
   })
 
+  it('preserves the cursor-selected position when a drag detaches a member', () => {
+    const [a, b, c] = createNotes(3)
+    const groupId = useWidgetStore.getState().createGroup([a!, b!, c!], 'Drag detach')
+    const dropPosition = { x: 31_120, y: 27_440 }
+    useWidgetStore.setState((state) => ({
+      widgets: {
+        ...state.widgets,
+        [a!]: { ...state.widgets[a!]!, position: dropPosition },
+      },
+    }))
+
+    useWidgetStore.getState().removeFromGroup(groupId, a!, { preservePosition: true })
+
+    expect(useWidgetStore.getState().widgetGroupIndex[a!]).toBeUndefined()
+    expect(useWidgetStore.getState().widgets[a!]!.position).toEqual(dropPosition)
+    expect(useWidgetStore.getState().groups[groupId]?.widgetIds).toEqual([b, c])
+  })
+
   it('ignores missing widgets in every membership path', () => {
     const [a, b] = createNotes(2)
     const groupId = useWidgetStore.getState().createGroup([a!, b!])

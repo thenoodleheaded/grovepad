@@ -17,10 +17,15 @@ import { DOMAIN_PACKS, DOMAIN_PACK_LABELS, snapToGrid } from '../../types/spatia
 import type { DomainPack, ModuleType, Vector2D } from '../../types/spatial'
 import { ATLAS_CATALOG, ATLAS_TYPES, ATLAS_TYPE_SET, type AtlasType } from '../../widgets/atlasCatalog'
 import { AUTOMATION_CORE_CATALOG, AUTOMATION_CORE_SET, type AutomationCoreType } from '../../widgets/automationCoreCatalog'
+import { useAdaptiveInputStore } from '../../store/useAdaptiveInputStore'
 
 interface AddWidgetModalProps {
   worldPos: Vector2D
   onClose: () => void
+  selection?: {
+    initialTypes: readonly ModuleType[]
+    onConfirm: (types: ModuleType[]) => void
+  }
 }
 
 /** Pack blurbs shown on the pack cards — what enabling each one unlocks. */
@@ -53,16 +58,20 @@ function columnsForViewport(): number {
 function WidgetTile({
   def,
   active,
+  selected,
+  selecting,
   favorited,
-  onSpawn,
+  onChoose,
   onHover,
   onUnhover,
   onToggleFavorite,
 }: {
   def: WidgetDefinition
   active: boolean
+  selected: boolean
+  selecting: boolean
   favorited: boolean
-  onSpawn: () => void
+  onChoose: () => void
   onHover: () => void
   onUnhover: () => void
   onToggleFavorite: () => void
@@ -80,9 +89,13 @@ function WidgetTile({
       <button
         ref={ref}
         type="button"
-        aria-label={`Add ${def.label}`}
+        aria-label={selecting
+          ? `${selected ? 'Deselect' : 'Select'} ${def.label}`
+          : `Add ${def.label}`}
+        aria-pressed={selecting ? selected : undefined}
         data-active={active || undefined}
-        onClick={onSpawn}
+        data-selected={selected || undefined}
+        onClick={onChoose}
         onPointerEnter={onHover}
         onPointerLeave={onUnhover}
         className="gp-picker-row relative grid min-h-[104px] w-full grid-cols-[80px_minmax(0,1fr)] items-start gap-4 rounded-[22px] p-3 pr-5 text-left"
@@ -93,7 +106,7 @@ function WidgetTile({
         >
           <Icon size={42} strokeWidth={1.8} aria-hidden />
         </span>
-        <span className="relative z-[1] flex min-w-0 flex-col gap-1.5 self-stretch pr-7">
+        <span className="relative z-[1] flex min-w-0 flex-col gap-1.5 self-stretch pr-12">
           <span className="gp-picker-tile-title block truncate text-[19px] font-semibold tracking-[-0.02em] text-neutral-100">
             {def.label}
           </span>
@@ -110,7 +123,7 @@ function WidgetTile({
           e.stopPropagation()
           onToggleFavorite()
         }}
-        className={`absolute top-3.5 right-3.5 z-[2] flex h-6 w-6 items-center justify-center rounded-full transition-opacity duration-150 ${
+        className={`gp-touch-target absolute top-3.5 right-3.5 z-[2] flex h-6 w-6 items-center justify-center rounded-full transition-opacity duration-150 ${
           favorited
             ? 'text-amber-300 opacity-100'
             : 'text-neutral-500 opacity-0 hover:text-amber-200 focus-visible:opacity-100 group-hover/tile:opacity-100'
@@ -144,7 +157,7 @@ function PacksView({ onBack }: { onBack: () => void }) {
           data-packs-back
           type="button"
           onClick={onBack}
-          className="flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-[12px] font-medium text-neutral-400 transition-colors hover:bg-neutral-800 hover:text-neutral-200"
+          className="gp-touch-target flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-[12px] font-medium text-neutral-400 transition-colors hover:bg-neutral-800 hover:text-neutral-200"
         >
           <ArrowLeft size={13} aria-hidden />
           Widgets
@@ -180,7 +193,7 @@ function PacksView({ onBack }: { onBack: () => void }) {
                     role="switch"
                     aria-checked={isActive}
                     onClick={() => togglePack(pack)}
-                    className="flex min-w-0 flex-1 items-center justify-between gap-3 rounded-xl py-1.5 text-left"
+                    className="gp-touch-target flex min-w-0 flex-1 items-center justify-between gap-3 rounded-xl py-1.5 text-left"
                   >
                     <span className="min-w-0">
                       <span
@@ -215,7 +228,7 @@ function PacksView({ onBack }: { onBack: () => void }) {
                       }
                       aria-expanded={isExpanded}
                       onClick={() => setExpandedPack(isExpanded ? null : pack)}
-                      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-neutral-500 transition-colors hover:bg-neutral-800 hover:text-neutral-300"
+                      className="gp-touch-target flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-neutral-500 transition-colors hover:bg-neutral-800 hover:text-neutral-300"
                     >
                       <ChevronDown
                         size={14}
@@ -236,7 +249,7 @@ function PacksView({ onBack }: { onBack: () => void }) {
                           role="switch"
                           aria-checked={!hidden}
                           onClick={() => toggleHiddenPackWidgetType(def.type)}
-                          className="flex items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-left text-[11.5px] transition-colors hover:bg-neutral-800/60"
+                          className="gp-touch-target flex items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-left text-[11.5px] transition-colors hover:bg-neutral-800/60"
                         >
                           <span className={hidden ? 'text-neutral-600 line-through' : 'text-neutral-300'}>
                             {def.label}
@@ -274,30 +287,42 @@ function PacksView({ onBack }: { onBack: () => void }) {
  * Arrow keys walk the grid, Enter places the highlighted widget, Esc closes.
  * The Packs button swaps in the domain-pack library in place.
  */
-export function AddWidgetModal({ worldPos, onClose }: AddWidgetModalProps) {
+export function AddWidgetModal({ worldPos, onClose, selection }: AddWidgetModalProps) {
   const activePacks = useWidgetStore((state) => state.activePacks)
   const favoriteWidgetTypes = useWidgetPickerPrefsStore((state) => state.favoriteWidgetTypes)
   const hiddenPackWidgetTypes = useWidgetPickerPrefsStore((state) => state.hiddenPackWidgetTypes)
   const toggleFavoriteWidgetType = useWidgetPickerPrefsStore((state) => state.toggleFavoriteWidgetType)
+  const shouldFocusSearchNow = useAdaptiveInputStore((state) =>
+    state.capabilities.viewportClass === 'desktop' &&
+    state.activeInput !== 'touch' &&
+    state.activeInput !== 'pen',
+  )
+  const shouldFocusSearch = useRef(shouldFocusSearchNow).current
   const initialView = useWidgetStore((state) => state.addWidgetView)
   const [view, setView] = useState<'widgets' | 'packs'>(initialView)
   const [query, setQuery] = useState('')
   const [activeIndex, setActiveIndex] = useState(0)
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
   const [keyboardActive, setKeyboardActive] = useState(false)
+  const [selectedTypes, setSelectedTypes] = useState<ModuleType[]>(
+    () => [...(selection?.initialTypes ?? [])],
+  )
   const dialogRef = useRef<HTMLDivElement>(null)
   const searchRef = useRef<HTMLInputElement>(null)
 
   useOverlayLifecycle(true)
-  useFocusTrap(true, dialogRef, searchRef)
+  useFocusTrap(true, dialogRef, shouldFocusSearch ? searchRef : dialogRef)
 
   useEffect(() => {
     const raf = requestAnimationFrame(() => {
-      if (view === 'widgets') searchRef.current?.focus()
+      if (view === 'widgets') {
+        if (shouldFocusSearch) searchRef.current?.focus()
+        else dialogRef.current?.focus({ preventScroll: true })
+      }
       else dialogRef.current?.querySelector<HTMLButtonElement>('[data-packs-back]')?.focus()
     })
     return () => cancelAnimationFrame(raf)
-  }, [view])
+  }, [view, shouldFocusSearch])
 
   const groups = useMemo(() => {
     const q = query.toLowerCase().trim()
@@ -342,14 +367,20 @@ export function AddWidgetModal({ worldPos, onClose }: AddWidgetModalProps) {
   const flat = useMemo(() => groups.flatMap((g) => g.defs), [groups])
   const clampedActive = Math.min(activeIndex, Math.max(0, flat.length - 1))
 
-  const spawn = useCallback((type: ModuleType) => {
+  const choose = useCallback((type: ModuleType) => {
+    if (selection) {
+      setSelectedTypes((current) => current.includes(type)
+        ? current.filter((candidate) => candidate !== type)
+        : [...current, type])
+      return
+    }
     const snapped = { x: snapToGrid(worldPos.x), y: snapToGrid(worldPos.y) }
     const def = orderedDefinitions().find((d) => d.type === type)
     const id = useWidgetStore.getState().createWidget(def?.label ?? 'Widget', snapped, type)
     useWidgetStore.getState().selectWidget(id, false)
     useWidgetStore.getState().startRenaming(id)
     onClose()
-  }, [worldPos.x, worldPos.y, onClose])
+  }, [selection, worldPos.x, worldPos.y, onClose])
 
   // One window-level key handler covers Esc everywhere plus grid navigation.
   useEffect(() => {
@@ -395,7 +426,7 @@ export function AddWidgetModal({ worldPos, onClose }: AddWidgetModalProps) {
           const def = flat[Math.min(activeIndex, flat.length - 1)]
           if (def) {
             e.preventDefault()
-            spawn(def.type)
+            choose(def.type)
           }
           break
         }
@@ -403,7 +434,7 @@ export function AddWidgetModal({ worldPos, onClose }: AddWidgetModalProps) {
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [view, flat, activeIndex, query, onClose, spawn])
+  }, [view, flat, activeIndex, query, onClose, choose])
 
   // Flat index offset of each group's first tile, for active-state mapping.
   const groupOffsets = useMemo(() => {
@@ -420,8 +451,8 @@ export function AddWidgetModal({ worldPos, onClose }: AddWidgetModalProps) {
     <div
       role="dialog"
       aria-modal="true"
-      aria-label="Add widget"
-      className="fixed inset-0 z-[200]"
+      aria-label={selection ? 'Choose widgets for this tree point' : 'Add widget'}
+      className={`gp-widget-picker-dialog fixed inset-0 ${selection ? 'z-[240]' : 'z-[200]'}`}
     >
       {/* Scrim — the canvas glows through a single cheap blur layer */}
       <div
@@ -433,7 +464,7 @@ export function AddWidgetModal({ worldPos, onClose }: AddWidgetModalProps) {
       <div
         ref={dialogRef}
         tabIndex={-1}
-        className="relative z-10 mx-auto flex h-full w-full max-w-7xl flex-col px-4 outline-none sm:px-6 lg:px-8 2xl:px-10"
+        className="gp-widget-picker-shell relative z-10 mx-auto flex h-full w-full max-w-7xl flex-col px-4 outline-none sm:px-6 lg:px-8 2xl:px-10"
       >
         {view === 'packs' ? (
           <div className="flex min-h-0 flex-1 flex-col pt-10">
@@ -445,17 +476,19 @@ export function AddWidgetModal({ worldPos, onClose }: AddWidgetModalProps) {
             <div className="gp-picker-header flex shrink-0 items-center justify-between gap-3 pt-10 pb-1">
               <div className="min-w-0">
                 <h2 className="gp-picker-title bg-gradient-to-r from-neutral-100 via-emerald-300 to-neutral-100 bg-clip-text text-2xl font-semibold tracking-tight text-transparent">
-                  Widget Library
+                  {selection ? 'Choose widgets for this tree point' : 'Widget Library'}
                 </h2>
                 <p className="gp-picker-subtitle mt-0.5 text-[12px] text-neutral-500">
-                  Pick a card — it lands right where you clicked.
+                  {selection
+                    ? 'Select one or several cards for this branch bundle.'
+                    : 'Pick a card — it lands right where you clicked.'}
                 </p>
               </div>
               <div className="flex items-center gap-1.5">
                 <button
                   type="button"
                   onClick={() => setView('packs')}
-                  className="gp-picker-pack-button flex h-8 items-center gap-1.5 rounded-lg border gp-hairline px-3 text-[12px] font-medium text-neutral-300 transition-colors hover:border-emerald-400/40 hover:text-emerald-300"
+                  className="gp-picker-pack-button gp-touch-target flex h-8 items-center gap-1.5 rounded-lg border gp-hairline px-3 text-[12px] font-medium text-neutral-300 transition-colors hover:border-emerald-400/40 hover:text-emerald-300"
                 >
                   <Blocks size={13} aria-hidden />
                   Packs
@@ -464,7 +497,7 @@ export function AddWidgetModal({ worldPos, onClose }: AddWidgetModalProps) {
                   type="button"
                   aria-label="Close"
                   onClick={onClose}
-                  className="gp-picker-close flex h-8 w-8 items-center justify-center rounded-lg text-neutral-500 transition-colors hover:bg-neutral-800 hover:text-neutral-200"
+                  className="gp-picker-close gp-touch-target flex h-8 w-8 items-center justify-center rounded-lg text-neutral-500 transition-colors hover:bg-neutral-800 hover:text-neutral-200"
                 >
                   <X size={15} aria-hidden />
                 </button>
@@ -479,6 +512,9 @@ export function AddWidgetModal({ worldPos, onClose }: AddWidgetModalProps) {
                 type="text"
                 value={query}
                 placeholder="Search widgets…"
+                autoComplete="off"
+                enterKeyHint="search"
+                spellCheck={false}
                 onChange={(e) => {
                   setQuery(e.target.value)
                   setActiveIndex(0)
@@ -498,7 +534,7 @@ export function AddWidgetModal({ worldPos, onClose }: AddWidgetModalProps) {
                     setKeyboardActive(false)
                     searchRef.current?.focus()
                   }}
-                  className="shrink-0 text-neutral-600 transition-colors hover:text-neutral-300"
+                  className="gp-touch-target shrink-0 text-neutral-600 transition-colors hover:text-neutral-300"
                 >
                   <X size={14} aria-hidden />
                 </button>
@@ -553,8 +589,10 @@ export function AddWidgetModal({ worldPos, onClose }: AddWidgetModalProps) {
                                 flatIndex === hoveredIndex ||
                                 (hoveredIndex === null && keyboardActive && flatIndex === clampedActive)
                               }
+                              selected={selectedTypes.includes(def.type)}
+                              selecting={Boolean(selection)}
                               favorited={favoriteWidgetTypes.includes(def.type)}
-                              onSpawn={() => spawn(def.type)}
+                              onChoose={() => choose(def.type)}
                               onHover={() => {
                                 setHoveredIndex(flatIndex)
                                 setKeyboardActive(false)
@@ -571,20 +609,54 @@ export function AddWidgetModal({ worldPos, onClose }: AddWidgetModalProps) {
               </div>
             </div>
 
-            {/* Foot hints */}
-            <div className="gp-picker-footer flex h-11 shrink-0 items-center justify-between border-t gp-hairline text-[11px] text-neutral-600">
-              <span>
-                <kbd className="rounded bg-neutral-800/80 px-1.5 py-0.5  text-[10px] text-neutral-400">↑↓←→</kbd>{' '}
-                navigate ·{' '}
-                <kbd className="rounded bg-neutral-800/80 px-1.5 py-0.5  text-[10px] text-neutral-400">↵</kbd>{' '}
-                place ·{' '}
-                <kbd className="rounded bg-neutral-800/80 px-1.5 py-0.5  text-[10px] text-neutral-400">esc</kbd>{' '}
-                close
-              </span>
-              <span className=" tabular-nums">
-                {flat.length} {flat.length === 1 ? 'widget' : 'widgets'}
-              </span>
-            </div>
+            {selection ? (
+              <div className="gp-picker-footer flex min-h-14 shrink-0 items-center justify-between gap-3 border-t gp-hairline pb-[var(--gp-safe-bottom)] text-[11px] text-neutral-500">
+                <span aria-live="polite">
+                  <strong className="text-neutral-100 tabular-nums">{selectedTypes.length}</strong>{' '}
+                  {selectedTypes.length === 1 ? 'widget selected' : 'widgets selected'}
+                </span>
+                <div className="flex items-center gap-2">
+                  {selection.initialTypes.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => selection.onConfirm([])}
+                      className="gp-touch-target rounded-xl px-3 text-xs text-neutral-400 transition-colors hover:bg-white/[0.06] hover:text-white"
+                    >
+                      Clear node
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    className="gp-touch-target rounded-xl px-3 text-xs text-neutral-300 transition-colors hover:bg-white/[0.06] hover:text-white"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    disabled={selectedTypes.length === 0}
+                    onClick={() => selection.onConfirm(selectedTypes)}
+                    className="gp-touch-target rounded-xl bg-emerald-500 px-4 text-xs font-semibold text-neutral-950 transition-colors hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-35"
+                  >
+                    OK
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="gp-picker-footer flex h-11 shrink-0 items-center justify-between border-t gp-hairline text-[11px] text-neutral-600">
+                <span className="gp-picker-key-hints">
+                  <kbd className="rounded bg-neutral-800/80 px-1.5 py-0.5  text-[10px] text-neutral-400">↑↓←→</kbd>{' '}
+                  navigate ·{' '}
+                  <kbd className="rounded bg-neutral-800/80 px-1.5 py-0.5  text-[10px] text-neutral-400">↵</kbd>{' '}
+                  place ·{' '}
+                  <kbd className="rounded bg-neutral-800/80 px-1.5 py-0.5  text-[10px] text-neutral-400">esc</kbd>{' '}
+                  close
+                </span>
+                <span className=" tabular-nums">
+                  {flat.length} {flat.length === 1 ? 'widget' : 'widgets'}
+                </span>
+              </div>
+            )}
           </>
         )}
       </div>

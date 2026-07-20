@@ -115,8 +115,19 @@ Five invariants are binding at every released size:
 
 **Dynamic re-flooring.** Content changes recalculate the floor immediately; a card below the new floor grows to it, a card above does not move. Shrinking is always a user action. Collapsed/iconified cards retain a dormant full size that data arrival may grow; expansion rechecks it against estimates immediately and the mounted floor once present.
 
-**One full-card composition.** Resizing within the full state changes room, not layout — no partial compact layouts. At the floor, resizing clamps without elastic deformation. A state change requires the same drag to continue ≥36 world px past both width and height minima, commits exactly one neighbouring state (full → pill → icon shrinking; reverse growing), then requires release. Single-axis movement and over-max growth never collapse a widget. Context-menu actions expose the same states without a precision gesture.
+**One full-card composition.** Resizing within the full state changes room, not layout — no partial compact layouts. At the floor, resizing clamps without elastic deformation. A state change requires the same drag to continue ≥90 world px past both width and height minima (raised from 36, which accidental overshoot crossed routinely), commits exactly one neighbouring state (full → pill → icon shrinking; reverse growing), then requires release. Single-axis movement and over-max growth never collapse a widget. Context-menu actions expose the same states without a precision gesture.
 
 **Charts and aspect-bound visuals.** Siblings claim minimum space first; the chart gets the remaining rectangle. Radial/square-lattice visuals use the smaller remaining axis and keep aspect — never size from the whole card and cover siblings.
 
 **Calibration gate.** For a new or materially changed renderer, test worst-case data (long functional labels, max digits, formatted dates, populated rows, one long user word). Shrink each axis until the first invariant would fail; place the fallback floor on the next 4px sub-grid step.
+
+## Article XIII — Pencil and ink interaction
+
+Sketchpad is the lightweight native-ink surface; Excalidraw remains the fullscreen diagram editor. Ink is available only while the Sketchpad itself is focused, so Pencil contact can never unexpectedly write on the bare board. Mouse and Pencil draw; fingers remain reserved for navigation and palm rejection.
+
+1. Pencil and mouse may ink; touch never creates a stroke. A touch landing inside an active ink surface is rejected as a palm. Canvas pinch/pan remains available outside that surface.
+2. Pointer samples use coalesced events when available, fall back when the browser returns an empty coalesced batch, and repaint at most once per animation frame. React/store state updates once per completed gesture, never per point.
+3. Pressure changes visible stroke width. Completed points are simplified in x/y/pressure space before persistence, and normalized coordinates keep ink aligned through widget resizing.
+4. Every draw, erase, or clear gesture owns one non-coalesced Undo step. Pointer cancel discards the entire in-progress gesture.
+5. Pencil hover may show a cursor preview or the shared magnetic card response, but hover must not write React state, run an idle animation, or activate while the Pencil is touching.
+6. Apple Scribble remains operating-system-owned: Pencil contact on a text entry must reach the input without first moving the card or relocating it into focus mode. Text controls retain text selection and the standard caret.

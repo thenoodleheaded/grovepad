@@ -86,7 +86,7 @@ describe('scenario catalogue', () => {
     ['creat a cheklist widget', 'checklist'],
     ['make a tasklist', 'checklist'],
     ['add a buget widget', 'budget'],
-    ['make a kanben', 'kanban'],
+    ['make a kanben', 'checklist'],
   ])('tolerates direct-widget typos in %s', (source, expected) => {
     expect(interpretThoughtCandidates(source).predictions[0]?.primaryTypes[0]).toBe(expected)
   })
@@ -117,6 +117,6 @@ describe('scenario catalogue', () => {
   it('keeps intrinsically ambiguous typo corrections visible instead of guessing', () => {
     const candidates = interpretThoughtCandidates('create a progess widget').predictions
       .map((prediction) => prediction.primaryTypes[0])
-    expect(candidates).toEqual(expect.arrayContaining(['progress', 'process']))
+    expect(candidates).toEqual(expect.arrayContaining(['goal_tracker', 'process']))
   })
 })

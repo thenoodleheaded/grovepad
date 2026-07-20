@@ -508,7 +508,7 @@ export function WireLayer() {
       }
     }
     const cullByViewport = relevant.length > WIRE_RENDER_LIMIT
-    const showValues = circuitMode && relevant.length <= 80 && view.zoom >= 0.5
+    const showValues = circuitMode && relevant.length <= 80
     const result: WireDescriptor[] = []
     for (const connection of relevant) {
       const source = widgets[connection.fromId]!
@@ -553,7 +553,7 @@ export function WireLayer() {
       })
     }
     return result
-  }, [activeCanvasId, circuitMode, connections, dampedIds, firePulses, view.zoom, visibleRect, widgets])
+  }, [activeCanvasId, circuitMode, connections, dampedIds, firePulses, visibleRect, widgets])
 
   const openInspector = useCircuitStore((state) => state.openInspector)
   const closeInspector = useCircuitStore((state) => state.closeInspector)

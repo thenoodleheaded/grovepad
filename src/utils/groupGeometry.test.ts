@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import type { Widget, WidgetGroup } from '../types/spatial'
-import { groupAtWorldPoint } from './groupGeometry'
+import {
+  groupAtWorldPoint,
+  groupWorldBoundsExcluding,
+  worldRectContainsPoint,
+} from './groupGeometry'
 
 function widget(id: string, canvasId: string, x: number, y: number): Widget {
   return {
@@ -44,5 +48,25 @@ describe('group cursor targeting', () => {
       excludeGroupId: 'group',
     })).toBeNull()
     expect(groupAtWorldPoint({ x: 120, y: 120 }, groups, widgets, { canvasId: 'canvas-b' })).toBeNull()
+  })
+
+  it('keeps a stable member-retention boundary while one widget is dragged', () => {
+    const group: WidgetGroup = {
+      id: 'group',
+      label: 'Group',
+      color: '#6366f1',
+      widgetIds: ['a', 'b'],
+    }
+    const widgets = {
+      a: widget('a', 'canvas-a', 0, 0),
+      b: widget('b', 'canvas-a', 400, 0),
+    }
+    const retention = groupWorldBoundsExcluding(group, widgets, 'b')
+    // Remaining member 'a' (240 wide, grouped -> detach button pushes it into
+    // overflow) contributes half a cell above and half a cell right, plus
+    // GROUP_PAD.
+    expect(retention).toEqual({ x: -38, y: -58, width: 336, height: 256 })
+    expect(worldRectContainsPoint(retention, { x: 20, y: 20 })).toBe(true)
+    expect(worldRectContainsPoint(retention, { x: 500, y: 20 })).toBe(false)
   })
 })

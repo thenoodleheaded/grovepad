@@ -1,54 +1,78 @@
 import { create } from 'zustand'
-import { useCanvasStore } from './useCanvasStore'
 import { useWidgetStore } from './useWidgetStore'
-import type { Vector2D } from '../types/spatial'
+import { useAdaptiveInputStore } from './useAdaptiveInputStore'
+import type { InteractionMode } from '../utils/adaptiveInput'
 
 // ---------------------------------------------------------------------------
 // Focus mode — one widget under the lens (glass constitution, Article XVIII).
 //
-// Entered by double-clicking an expanded card. The camera glides to frame the
-// widget and LOCKS (no pan, no zoom, no widget drags) while its islands
-// unlock for rearranging and rule-constrained scaling. Escape or any click
-// outside the card exits, restoring the exact camera the user left.
+// Entered by double-clicking an expanded card. The islands unlock for 
+// rearranging and rule-constrained scaling. Escape or any click
+// outside the card exits.
 // ---------------------------------------------------------------------------
+
+export type FocusPurpose = 'layout' | 'edit'
 
 interface FocusState {
   focusedWidgetId: string | null
-  /** Camera to restore on exit — captured at entry. */
-  savedView: { pan: Vector2D; zoom: number } | null
-  enterFocus: (widgetId: string) => void
+  focusPurpose: FocusPurpose | null
+  savedInteractionMode: InteractionMode | null
+  enterFocus: (widgetId: string, purpose?: FocusPurpose) => void
   exitFocus: () => void
 }
 
-/** Screen margin the focused card keeps from the viewport edges. */
-const FOCUS_FIT_MARGIN = 96
 let focusReturnTarget: HTMLElement | null = null
+let focusPurposeFrame = 0
+
+function publishFocusPurpose(purpose: FocusPurpose): void {
+  if (typeof document === 'undefined') return
+  if (focusPurposeFrame !== 0) cancelAnimationFrame(focusPurposeFrame)
+  if (purpose === 'layout') {
+    focusPurposeFrame = 0
+    document.body.setAttribute('data-focus-purpose', purpose)
+    return
+  }
+  focusPurposeFrame = requestAnimationFrame(() => {
+    focusPurposeFrame = 0
+    if (useFocusStore.getState().focusPurpose === purpose) {
+      document.body.setAttribute('data-focus-purpose', purpose)
+    }
+  })
+}
 
 export const useFocusStore = create<FocusState>()((set, get) => ({
   focusedWidgetId: null,
-  savedView: null,
+  focusPurpose: null,
+  savedInteractionMode: null,
 
-  enterFocus: (widgetId) => {
-    if (get().focusedWidgetId === widgetId) return
+  enterFocus: (widgetId, purpose = 'layout') => {
+    const currentFocus = get()
+    if (currentFocus.focusedWidgetId === widgetId) {
+      if (currentFocus.focusPurpose === purpose) return
+      publishFocusPurpose(purpose)
+      useAdaptiveInputStore.getState().setInteractionMode(
+        purpose === 'edit' ? 'edit' : currentFocus.savedInteractionMode ?? 'navigate',
+      )
+      set({ focusPurpose: purpose })
+      return
+    }
     const widget = useWidgetStore.getState().widgets[widgetId]
     if (!widget || widget.collapsed || widget.iconified) return
-    const camera = useCanvasStore.getState()
     focusReturnTarget = typeof document !== 'undefined' && document.activeElement instanceof HTMLElement ? document.activeElement : null
-    const savedView = get().savedView ?? { pan: camera.pan, zoom: camera.zoom }
-    camera.fitRect(
-      {
-        x: widget.position.x,
-        y: widget.position.y,
-        width: widget.size.width,
-        height: widget.size.height,
-      },
-      FOCUS_FIT_MARGIN,
-      true,
+    const currentMode = useAdaptiveInputStore.getState().interactionMode
+    const savedInteractionMode = currentMode === 'connect'
+      ? 'navigate'
+      : currentMode
+    if (typeof document !== 'undefined') {
+      document.body.setAttribute('data-focus-mode', 'true')
+    }
+    useAdaptiveInputStore.getState().setInteractionMode(
+      purpose === 'edit' ? 'edit' : savedInteractionMode,
     )
-    if (typeof document !== 'undefined') document.body.setAttribute('data-focus-mode', 'true')
-    set({ focusedWidgetId: widgetId, savedView })
+    set({ focusedWidgetId: widgetId, focusPurpose: purpose, savedInteractionMode })
+    publishFocusPurpose(purpose)
     queueMicrotask(() => {
-      if (typeof document === 'undefined') return
+      if (typeof document === 'undefined' || purpose === 'edit') return
       const subject = [...document.querySelectorAll<HTMLElement>('article[data-widget-id]')]
         .find((element) => element.dataset.widgetId === widgetId)
       subject?.focus({ preventScroll: true })
@@ -56,15 +80,28 @@ export const useFocusStore = create<FocusState>()((set, get) => ({
   },
 
   exitFocus: () => {
-    const { focusedWidgetId, savedView } = get()
+    const { focusedWidgetId, savedInteractionMode } = get()
     if (!focusedWidgetId) return
-    if (typeof document !== 'undefined') document.body.removeAttribute('data-focus-mode')
-    if (savedView) {
-      useCanvasStore.getState().animateView(savedView.pan, savedView.zoom, 240)
+    let subject: HTMLElement | undefined
+    if (typeof document !== 'undefined') {
+      if (focusPurposeFrame !== 0) cancelAnimationFrame(focusPurposeFrame)
+      focusPurposeFrame = 0
+      subject = [...document.querySelectorAll<HTMLElement>('article[data-widget-id]')]
+        .find((element) => element.dataset.widgetId === focusedWidgetId)
+      if (subject?.contains(document.activeElement) && document.activeElement instanceof HTMLElement) {
+        document.activeElement.blur()
+      }
+      document.body.removeAttribute('data-focus-mode')
+      document.body.removeAttribute('data-focus-purpose')
     }
-    set({ focusedWidgetId: null, savedView: null })
+    useAdaptiveInputStore.getState().setInteractionMode(savedInteractionMode ?? 'navigate')
+    set({ focusedWidgetId: null, focusPurpose: null, savedInteractionMode: null })
     const target = focusReturnTarget
     focusReturnTarget = null
+    // Never hand focus back into the card being exited: on non-desktop
+    // viewport classes, refocusing an editor there auto-re-enters edit focus
+    // (WidgetCard onFocusCapture) and Done becomes an inescapable loop.
+    if (target && subject?.contains(target)) return
     queueMicrotask(() => {
       if (target?.isConnected) target.focus({ preventScroll: true })
     })

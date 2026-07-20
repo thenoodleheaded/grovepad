@@ -14,10 +14,10 @@ export function appendDraftRelation(
   fromId: string,
   toId: string,
   type: RelationType,
-): void {
-  if (fromId === toId || !widgets[fromId] || !widgets[toId]) return
+): string | null {
+  if (fromId === toId || !widgets[fromId] || !widgets[toId]) return null
   const key = relationKey(fromId, toId, type)
-  if (relationKeys.has(key)) return
+  if (relationKeys.has(key)) return null
   relationKeys.add(key)
 
   const id = crypto.randomUUID()
@@ -29,17 +29,17 @@ export function appendDraftRelation(
     isResolved: type !== 'blocker' && type !== 'conflict',
   }
 
-  if (type !== 'parent') return
+  if (type !== 'parent') return id
   const parent = widgets[fromId]!
   const child = widgets[toId]!
   const minChildY = parent.position.y + parent.size.height + MIN_PARENT_CHILD_GAP
-  if (child.position.y >= minChildY) return
+  if (child.position.y >= minChildY) return id
   widgets[toId] = {
     ...child,
     position: { ...child.position, y: snapToGrid(minChildY) },
   }
   settleIds.add(toId)
+  return id
 }
 
 /** De-overlap clearance between separate nodes when untangling — 2×2 grid cells. */
-

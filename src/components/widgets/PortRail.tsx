@@ -11,6 +11,7 @@ import {
   portRailOffset,
   type PortSpec,
 } from '../../utils/portGeometry'
+import { pointerStayedWithinTapSlop } from '../../utils/pointerTap'
 
 // ---------------------------------------------------------------------------
 // Port rails — the quiet circuit affordance on every card.
@@ -35,6 +36,12 @@ export const PortRail = memo(function PortRail({ widgetId }: { widgetId: string 
     state.wireDrag?.hover?.widgetId === widgetId ? state.wireDrag.hover.portKey : null,
   )
   const rafRef = useRef(0)
+  const pointerStartRef = useRef<{
+    pointerId: number
+    x: number
+    y: number
+    moved: boolean
+  } | null>(null)
 
   if (!widget || !circuitMode) return null
   const showOutputs = !dragActive || isDragSource
@@ -91,6 +98,18 @@ export const PortRail = memo(function PortRail({ widgetId }: { widgetId: string 
     if (event.button !== 0) return
     event.preventDefault()
     event.stopPropagation()
+    const circuit = useCircuitStore.getState()
+    if (circuit.wireDrag?.fromId === widgetId && circuit.wireDrag.fromField === port.key) {
+      pointerStartRef.current = null
+      circuit.endWireDrag()
+      return
+    }
+    pointerStartRef.current = {
+      pointerId: event.pointerId,
+      x: event.clientX,
+      y: event.clientY,
+      moved: false,
+    }
     try {
       event.currentTarget.setPointerCapture(event.pointerId)
     } catch {
@@ -109,6 +128,17 @@ export const PortRail = memo(function PortRail({ widgetId }: { widgetId: string 
   const moveWire = (event: ReactPointerEvent<HTMLButtonElement>) => {
     if (!useCircuitStore.getState().wireDrag) return
     const { clientX, clientY } = event
+    const start = pointerStartRef.current
+    if (
+      start &&
+      start.pointerId === event.pointerId &&
+      !pointerStayedWithinTapSlop(
+        { clientX: start.x, clientY: start.y },
+        { clientX, clientY },
+      )
+    ) {
+      start.moved = true
+    }
     if (rafRef.current !== 0) return
     rafRef.current = requestAnimationFrame(() => {
       rafRef.current = 0
@@ -129,6 +159,11 @@ export const PortRail = memo(function PortRail({ widgetId }: { widgetId: string 
     const circuit = useCircuitStore.getState()
     const drag = circuit.wireDrag
     if (!drag) return
+    const start = pointerStartRef.current
+    pointerStartRef.current = null
+    // A tap chooses this output and leaves every valid input target active.
+    // A second tap on the same output is handled in beginWire and cancels it.
+    if (start?.pointerId === event.pointerId && !start.moved) return
     if (rafRef.current !== 0) {
       cancelAnimationFrame(rafRef.current)
       rafRef.current = 0
@@ -177,7 +212,10 @@ export const PortRail = memo(function PortRail({ widgetId }: { widgetId: string 
             onPointerDown={(event) => beginWire(event, port)}
             onPointerMove={moveWire}
             onPointerUp={endWire}
-            onPointerCancel={() => useCircuitStore.getState().endWireDrag()}
+            onPointerCancel={() => {
+              pointerStartRef.current = null
+              useCircuitStore.getState().endWireDrag()
+            }}
             onKeyDown={(event) => {
               if (event.key === 'Escape') { event.preventDefault(); useCircuitStore.getState().endWireDrag() }
               if (event.key === 'Enter' || event.key === ' ') {

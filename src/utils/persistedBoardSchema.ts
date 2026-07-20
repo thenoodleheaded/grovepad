@@ -604,7 +604,7 @@ function serializePacks(activePacks: DomainPack[], rawPacks: string[] | undefine
 
 /**
  * Canonical write boundary for every board transport. Runtime-only widget
- * state is normalized here so IndexedDB, cloud, and exported JSON cannot
+ * state is normalized here so IndexedDB, cloud, and packaged documents cannot
  * accidentally acquire it from the Zustand store.
  */
 export function serializePersistedBoard(state: PersistedBoardState): PersistedBoard {

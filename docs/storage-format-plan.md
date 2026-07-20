@@ -8,7 +8,7 @@ Compatibility rules for every persisted Grovepad board. The architecture describ
 - **Device state is not document state.** `canvasViews`, `activeWorkspaceId`, and `activeCanvasId` live in the versioned `grovepad:device:v1` local payload and never enter board snapshots, exports, or cloud writes.
 - **One canonical serializer** for every transport (IndexedDB, cloud, export). It embeds the format version, excludes runtime-only state, normalizes interrupted operations to a restart-safe state, and produces the same semantic document everywhere.
 - **Media never inlines** in board JSON. `data:` URLs in media fields are clamped/rejected; locally pasted images stay on the device until remote object storage exists.
-- **`.grovepad` package** is a ZIP: `manifest.json` (format, version, `minReader`, checksums), `index.json`, `canvases/<id>.json`, `media/<content-hash>.<ext>` (de-duplicated). Implemented by `grovepadPackage.ts` over the dependency-free `zipArchive.ts`; shares the same parser/serializer and fixture corpus as every other transport. JSON export remains as a diagnostic/legacy path.
+- **`.grovepad` package** is the only user-facing board file: a ZIP containing `manifest.json` (format, version, `minReader`, checksums), `index.json`, `canvases/<id>.json`, and de-duplicated `media/<content-hash>.<ext>` entries. Implemented by `grovepadPackage.ts` over the dependency-free `zipArchive.ts`; it shares the same parser/serializer and fixture corpus as every other transport. Raw JSON board export/import is intentionally unsupported.
 
 ## No-corruption laws
 

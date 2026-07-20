@@ -4,7 +4,6 @@ import type {
   CornellData,
   FormulaSheetData,
   GpaData,
-  GradeCalcData,
   PomodoroData,
   QuizData,
   StudyGoalData,
@@ -13,7 +12,7 @@ import type {
 import type { WidgetRendererFamily } from './contracts'
 import {
   AssignmentWidget, CitationWidget, CornellWidget, FormulaSheetWidget, GpaWidget,
-  GradeCalcWidget, PomodoroWidget, QuizWidget, StudyGoalWidget, VocabWidget,
+  PomodoroWidget, QuizWidget, StudyGoalWidget, VocabWidget,
 } from './lazyEducationWidgets'
 
 export const educationWidgetRendererFamily: WidgetRendererFamily = {
@@ -21,7 +20,6 @@ export const educationWidgetRendererFamily: WidgetRendererFamily = {
   renderers: {
     pomodoro: ({ widget, onUpdate }) => <PomodoroWidget data={widget.data as PomodoroData} onChange={onUpdate} />,
     vocab: ({ widget, onUpdate }) => <VocabWidget data={widget.data as VocabData} onChange={onUpdate} />,
-    grade_calc: ({ widget, onUpdate }) => <GradeCalcWidget data={widget.data as GradeCalcData} onChange={onUpdate} />,
     gpa: ({ widget, onUpdate }) => <GpaWidget data={widget.data as GpaData} onChange={onUpdate} />,
     assignment: ({ widget, onUpdate }) => <AssignmentWidget data={widget.data as AssignmentData} onChange={onUpdate} />,
     cornell: ({ widget, onUpdate }) => <CornellWidget data={widget.data as CornellData} onChange={onUpdate} />,

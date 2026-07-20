@@ -114,8 +114,28 @@ export const CORE_WIDGET_FIELDS = {
       valueType: 'number',
       unit: 'percent',
       get: (d) => {
-        const ms = (d as GoalTrackerData).milestones
+        const goal = d as GoalTrackerData
+        if (goal.mode === 'simple') return goal.simple?.percent ?? 0
+        if (goal.mode === 'hours') return goal.hours && goal.hours.targetHours > 0
+          ? Math.min(100, Math.round(goal.hours.loggedHours / goal.hours.targetHours * 100))
+          : 0
+        if (goal.mode === 'okr') {
+          const results = goal.okr?.keyResults ?? []
+          const weight = results.reduce((sum, item) => sum + Math.max(0, item.weight), 0) || 1
+          return results.reduce((sum, item) => sum + Math.min(1, Math.max(0, item.current / Math.max(1, item.target))) * Math.max(0, item.weight), 0) / weight * 100
+        }
+        const ms = goal.milestones
         return ms.length === 0 ? 0 : Math.round((ms.filter((m) => m.done).length / ms.length) * 100)
+      },
+      set: (d, v) => {
+        const goal = d as GoalTrackerData
+        return {
+          ...goal,
+          simple: {
+            label: (goal.simple?.label ?? goal.goal) || 'Progress',
+            percent: Math.min(100, Math.max(0, Math.round(num(v)))),
+          },
+        }
       },
     },
     {
@@ -123,8 +143,11 @@ export const CORE_WIDGET_FIELDS = {
       label: 'Complete',
       valueType: 'boolean',
       get: (d) => {
-        const ms = (d as GoalTrackerData).milestones
-        return ms.length > 0 && ms.every((m) => m.done)
+        const goal = d as GoalTrackerData
+        if (goal.mode === 'simple') return (goal.simple?.percent ?? 0) >= 100
+        if (goal.mode === 'hours') return Boolean(goal.hours && goal.hours.targetHours > 0 && goal.hours.loggedHours >= goal.hours.targetHours)
+        if (goal.mode === 'okr') return Boolean(goal.okr?.keyResults.length && goal.okr.keyResults.every((item) => item.current >= item.target))
+        return goal.milestones.length > 0 && goal.milestones.every((m) => m.done)
       },
     },
   ],

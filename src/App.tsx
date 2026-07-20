@@ -1,7 +1,8 @@
-import { lazy, Suspense } from 'react'
+import { lazy, Suspense, useEffect } from 'react'
 import { useAuthStore } from './store/useAuthStore'
 import { usePersistenceStatusStore } from './store/usePersistenceStatusStore'
 import { PersistenceCompatibilityBlock } from './components/ui/PersistenceCompatibilityBlock'
+import { initAdaptiveInputRuntime } from './runtime/adaptiveInputRuntime'
 
 const LoginPage = lazy(() =>
   import('./components/auth/LoginPage').then((module) => ({ default: module.LoginPage })),
@@ -28,6 +29,8 @@ function AppBootScreen() {
 }
 
 export default function App() {
+  useEffect(() => initAdaptiveInputRuntime(), [])
+
   const session = useAuthStore((state) => state.session)
   const isGuest = useAuthStore((state) => state.isGuest)
   const loading = useAuthStore((state) => state.loading)

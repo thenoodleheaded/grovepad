@@ -13,8 +13,14 @@ import { importTypeCatalog, IMPORT_SELECTABLE_TYPES } from '../../widgets/regist
 import { useFocusTrap } from '../../hooks/useFocusTrap'
 
 const MAX_FILES = 5
-const ACCEPTED = '.pdf,.md,.markdown,.txt,.csv,.json'
+const ACCEPTED = '.pdf,.md,.markdown,.txt,.csv'
+const ACCEPTED_EXTENSIONS = new Set(['pdf', 'md', 'markdown', 'txt', 'csv'])
 const HYDRATION_CONCURRENCY = 3
+
+function isAcceptedDocument(file: File): boolean {
+  const extension = file.name.split('.').pop()?.toLowerCase()
+  return extension !== undefined && ACCEPTED_EXTENSIONS.has(extension)
+}
 
 interface StagedFile {
   id: string
@@ -705,9 +711,10 @@ export function ImportDocumentModal() {
     void import('../../utils/pendingImport').then(({ takePendingImport }) => {
       const incoming = takePendingImport()
       if (incoming.length === 0) return
+      const accepted = incoming.filter(isAcceptedDocument)
       setFiles((current) => [
         ...current,
-        ...incoming.slice(0, Math.max(0, MAX_FILES - current.length)).map((file) => ({
+        ...accepted.slice(0, Math.max(0, MAX_FILES - current.length)).map((file) => ({
           id: crypto.randomUUID(),
           name: file.name,
           size: file.size,
@@ -725,9 +732,14 @@ export function ImportDocumentModal() {
   if (!open) return null
 
   const stageFiles = (incoming: FileList | File[]) => {
+    const selected = [...incoming]
+    const accepted = selected.filter(isAcceptedDocument)
+    if (accepted.length !== selected.length) {
+      useToastStore.getState().addToast('Choose a PDF, Markdown, TXT, or CSV document')
+    }
     setFiles((current) => {
       const room = MAX_FILES - current.length
-      const added = [...incoming].slice(0, Math.max(0, room)).map((f) => ({
+      const added = accepted.slice(0, Math.max(0, room)).map((f) => ({
         id: crypto.randomUUID(),
         name: f.name,
         size: f.size,
@@ -1049,7 +1061,7 @@ Return ONLY a JSON object that adheres strictly to the response schema for this 
       role="dialog"
       aria-modal="true"
       aria-label="Import document"
-      className="fixed inset-0 z-[200] flex items-center justify-center"
+      className="gp-import-dialog fixed inset-0 z-[200] flex items-center justify-center"
     >
       <div
         role="presentation"
@@ -1059,7 +1071,7 @@ Return ONLY a JSON object that adheres strictly to the response schema for this 
       <div
         ref={panelRef}
         tabIndex={-1}
-        className="gp-dialog gp-pop gp-panel relative z-10 flex max-h-[85vh] w-full max-w-lg flex-col overflow-hidden rounded-3xl shadow-2xl outline-none"
+        className="gp-import-panel gp-dialog gp-pop gp-panel relative z-10 flex max-h-[85vh] w-full max-w-lg flex-col overflow-hidden rounded-3xl shadow-2xl outline-none"
       >
         
         {/* Loading overlay */}
@@ -1086,7 +1098,7 @@ Return ONLY a JSON object that adheres strictly to the response schema for this 
             type="button"
             aria-label="Close"
             onClick={close}
-            className="rounded-lg p-1 text-neutral-500 transition-colors hover:bg-neutral-800 hover:text-neutral-200"
+            className="gp-touch-target rounded-lg p-1 text-neutral-500 transition-colors hover:bg-neutral-800 hover:text-neutral-200"
           >
             <X size={15} aria-hidden />
           </button>
@@ -1110,6 +1122,7 @@ Return ONLY a JSON object that adheres strictly to the response schema for this 
             </div>
             <input
               type={showApiKey ? 'text' : 'password'}
+              autoComplete="off"
               value={openaiApiKey}
               onChange={(e) => handleApiKeyChange(e.target.value)}
               placeholder={import.meta.env.VITE_OPENAI_API_KEY ? "Using Key from environment config" : "Paste your OpenAI API Key..."}
@@ -1154,9 +1167,9 @@ Return ONLY a JSON object that adheres strictly to the response schema for this 
             >
               <FileText size={18} className={dragOver ? 'text-emerald-300' : 'text-neutral-600'} aria-hidden />
               <span className="text-xs text-neutral-400">
-                Drop files here or <span className="text-emerald-300">browse</span>
+                <span className="text-emerald-300">Choose files</span> or drop them here
               </span>
-              <span className="text-[10px] text-neutral-600">PDF · Markdown · TXT · CSV · JSON</span>
+              <span className="text-[10px] text-neutral-600">PDF · Markdown · TXT · CSV</span>
             </button>
             <input
               ref={fileInputRef}
@@ -1184,7 +1197,7 @@ Return ONLY a JSON object that adheres strictly to the response schema for this 
                       type="button"
                       aria-label={`Remove ${file.name}`}
                       onClick={() => setFiles((c) => c.filter((f) => f.id !== file.id))}
-                      className="shrink-0 text-neutral-600 transition-colors hover:text-red-400"
+                      className="gp-touch-target shrink-0 text-neutral-600 transition-colors hover:text-red-400"
                     >
                       <X size={11} aria-hidden />
                     </button>
@@ -1238,7 +1251,7 @@ Return ONLY a JSON object that adheres strictly to the response schema for this 
           </button>
         </div>
 
-        <div className="border-t gp-hairline px-5 py-3.5">
+        <div className="gp-import-footer border-t gp-hairline px-5 py-3.5">
           <button
             type="button"
             onClick={handleImport}

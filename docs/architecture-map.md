@@ -13,7 +13,7 @@ flowchart TD
   Canvas --> Layers["Canvas layers\ngrid, groups, widgets, relations, dependencies, wires"]
   Canvas --> UI["UI overlays\ntoolbar, quick add, picker, search, import"]
   Canvas --> Events["useCanvasEvents\npan, zoom, select, touch"]
-  Canvas --> Runtime["appRuntime boundary\npersistence + deploy monitor + circuit engine"]
+  Canvas --> Runtime["appRuntime boundary\npersistence + collaboration + circuit engine"]
 
   Layers --> WidgetCard["WidgetCard\ninteraction shell"]
   WidgetCard --> Renderer["WidgetRenderer\nsuspense + responsive shell"]
@@ -25,6 +25,7 @@ flowchart TD
   Events --> CanvasStore["useCanvasStore\ncamera state"]
   Runtime --> WidgetStore
   Runtime --> CircuitStore["useCircuitStore\ntransient wire runtime"]
+  Runtime --> Collaboration["collaborationRuntime\nYjs + presence + reconnect"]
 
   WidgetStore --> Slices["domain slices\nnavigation, layout, circuit, groups, selection"]
   WidgetStore --> Registry["widget registry\nmetadata + defaults"]
@@ -37,6 +38,9 @@ flowchart TD
   Persistence --> IndexedDB["boardDatabase.ts\nIndexedDB + rolling snapshots"]
   Persistence --> Cloud["cloudSync.ts + cloudDocuments.ts\nindex/canvas sync + legacy recovery"]
   Persistence --> LocalStorage["localStorage\nview + legacy/fallback data"]
+  Collaboration --> Realtime["Supabase Realtime\nprivate broadcast + presence"]
+  Collaboration --> DurableLog["Supabase Postgres\nCRDT snapshot + update log"]
+  Collaboration --> OfflineQueue["IndexedDB\npending Yjs updates"]
 
   UI --> Thought["thoughtInterpreter + scenarioResolver"]
   Thought --> LocalAI["localAiService\ndeterministic first, optional local model"]
@@ -50,7 +54,7 @@ flowchart TD
 3. Mounting `CanvasViewport` starts `runtime/appRuntime.ts`; unmount, StrictMode replay, and HMR dispose persistence subscriptions, deploy checks, and circuit listeners explicitly.
 4. `useWidgetStore` constructs its initial state from `loadPersistedBoard()`; `initPersistence` can later replace it with IndexedDB/cloud state.
 5. `CanvasViewport` composes every canvas layer, global overlay, and runtime helper.
-6. `WidgetLayer` culls/LOD-selects cards; each `WidgetCard` owns drag, bounded resizing, focus-mode, title chrome, and ports.
+6. `WidgetLayer` culls by viewport while keeping card rendering stable across zoom; each `WidgetCard` owns drag, bounded resizing, focus-mode, title chrome, and ports.
 7. `WidgetRenderer` owns suspense and the responsive content shell. Family maps under `components/widgets/renderers/` own typed dispatch, while their lazy-component files keep concrete implementations out of the startup chunk.
 
 ## Subsystem contracts
@@ -66,8 +70,9 @@ flowchart TD
 | Widget sizing | `widgets/sizingProfiles.ts`, `utils/widgetContentFloor.ts`, `store/liveWidgetSizing.ts`, `store/slices/widgetLayoutSlice.ts` | Registry fallback windows, ephemeral mounted floors, grow-only adjustment, scale states, and resize clamping | Persisting browser-only measurements |
 | Field definition | `fields.ts`, `fields/*`, `widgets/contracts/fields.ts` | Read/write fields, commands, semantic units | Canvas drawing |
 | Widget rendering | `WidgetCard.tsx`, `WidgetRenderer.tsx`, `renderers/*`, `modules/*` | Card interaction shell, family-owned typed dispatch, and content | Persistence orchestration |
-| Spatial graph drawing | `RelationLines.tsx`, `DependencyLines.tsx`, `WireLayer.tsx` | SVG descriptors, LOD/culling, hit paths and menus | Graph mutation rules |
+| Spatial graph drawing | `RelationLines.tsx`, `DependencyLines.tsx`, `WireLayer.tsx` | SVG descriptors, stable density policy/culling, hit paths and menus | Graph mutation rules |
 | Persistence | `persistence.ts`, `persistedBoardSchema.ts`, `types/persistence.ts`, adapters | Validation, atomic migration snapshots, debounced saves, optional cloud reconciliation | UI component lifecycle |
+| Realtime collaboration | `runtime/collaborationRuntime.ts`, `collaboration/*`, `useCollaborationStore.ts` | Active-canvas CRDT transport, validated store projection, awareness, role guards, offline replay, compaction | Replacing the canonical board store or weakening server authorization |
 | Thought interpretation | `thoughtInterpreter.ts`, `scenarioResolver.ts`, `scenarios/catalogue.ts` | Deterministic parsing, scenario candidates, local preference learning | Direct board rendering |
 | Optional local AI | `localAiService.ts`, `services/local-ai/*` | Model lifecycle, request cancellation/deadlines, curated plan protocol | Unvalidated graph writes |
 | UI orchestration | `components/ui/*` | Pickers, command surfaces, dialogs, import, quick capture | Canonical domain logic |
@@ -84,6 +89,7 @@ flowchart TD
 | `useOverlayStore` | No | Dialogs, menus, canvas keyboard guards | Central overlay lifecycle counter |
 | `usePersistenceStatusStore` | No | App compatibility gate and account/conflict/save UI | Imports the persisted board type back from persistence |
 | `useAuthStore` | Session | App, persistence, account UI | Cloud sync observes it directly |
+| `useCollaborationStore` | No | Collaboration chrome, overlays, note edit indicators | Presentation state only; shared board data remains in `useWidgetStore` |
 | Toast/theme/debug/preview stores | No | Narrow UI/runtime consumers | Appropriate small stores |
 
 ## Shared edge rendering with three semantic systems
@@ -143,6 +149,28 @@ sequenceDiagram
 
 `PersistedBoard`, `PersistedDeviceState`, and their runtime state contracts live in `types/persistence.ts`. Board validation/migration lives in `persistedBoardSchema.ts`; local navigation validation lives in `persistedDeviceState.ts`; cloud index/canvas splitting, compression, and checksums live in `cloudDocuments.ts`. `cloudSync.ts` performs checksum-diffed dual writes and lazy legacy recovery. `initPersistence` owns and disposes every subscription, DOM listener, and pending saver it creates. The format rules live in the [storage contract](storage-format-plan.md).
 
+## Realtime collaboration flow
+
+```mermaid
+sequenceDiagram
+  participant UI as Widget store
+  participant Y as Active-canvas Y.Doc
+  participant Q as IndexedDB queue
+  participant R as Supabase Realtime
+  participant P as Postgres CRDT log
+
+  UI->>Y: Reconcile changed canvas entities
+  Y->>R: Broadcast update immediately
+  Y->>Q: Durably queue the same idempotent update
+  Q->>P: Batch append after auth/RLS checks
+  P-->>Q: Acknowledge, then remove queued ids
+  R-->>Y: Apply peer updates in any order
+  Y->>UI: Validate and replace only the active canvas
+  Note over Y,P: Cold start = compact snapshot + ordered tail; reconnect replays the queue and fetches missed tail rows
+```
+
+`useWidgetStore` remains the app's canonical model. The active canvas is projected into nested Yjs maps; note bodies live in `Y.Text`. Incoming state crosses the existing persisted-board validator before it can update Zustand. Yjs updates are commutative and idempotent, so Realtime duplication, offline replay, and out-of-order delivery converge. Presence carries encoded Yjs awareness through a private Supabase Presence channel and never enters board persistence. Collaborative undo uses a Yjs undo manager that tracks only local-origin transactions. Full operational and security details live in the [realtime collaboration runbook](realtime-collaboration.md).
+
 ## Architectural invariants worth protecting
 
 1. `useWidgetStore.widgets`, `relations`, `connections`, `groups`, and canvas hierarchy are the canonical board model.
@@ -155,3 +183,4 @@ sequenceDiagram
 8. Canvas camera state is separate from board content and is restored independently.
 9. Line semantics remain distinct even if their SVG renderer primitives are unified.
 10. Widget modules should not acquire direct persistence, auth, or canvas-global orchestration.
+11. Collaborative input is validated before Zustand, remote transactions never enter local undo, and non-edit roles are enforced by both client guards and database/Realtime RLS.

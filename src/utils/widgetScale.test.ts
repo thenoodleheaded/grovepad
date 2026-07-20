@@ -9,7 +9,9 @@ import {
 describe('widget scale gesture helpers', () => {
   it('uses stable pill/icon transition geometry', () => {
     expect(ICONIFIED_SIZE).toEqual({ width: 80, height: 80 })
-    expect(SNAP_OVERSHOOT_PX).toBe(36)
+    // Deliberate-intent threshold: overshooting a minimum while resizing
+    // small must not collapse the card (36 was routinely crossed by accident).
+    expect(SNAP_OVERSHOOT_PX).toBe(90)
   })
 
   it('never lets a ceiling sit below a content-derived floor', () => {
@@ -20,9 +22,9 @@ describe('widget scale gesture helpers', () => {
   })
 
   it('requires both axes to cross the state-change threshold', () => {
-    expect(crossedBothScaleAxes(36, 36)).toBe(true)
-    expect(crossedBothScaleAxes(36, 35)).toBe(false)
-    expect(crossedBothScaleAxes(35, 36)).toBe(false)
+    expect(crossedBothScaleAxes(SNAP_OVERSHOOT_PX, SNAP_OVERSHOOT_PX)).toBe(true)
+    expect(crossedBothScaleAxes(SNAP_OVERSHOOT_PX, SNAP_OVERSHOOT_PX - 1)).toBe(false)
+    expect(crossedBothScaleAxes(SNAP_OVERSHOOT_PX - 1, SNAP_OVERSHOOT_PX)).toBe(false)
     expect(crossedBothScaleAxes(400, -400)).toBe(false)
     expect(crossedBothScaleAxes(-400, 400)).toBe(false)
   })

@@ -1,8 +1,8 @@
 import { create } from 'zustand'
 import type { PersistedBoard } from '../types/persistence'
 
-type SaveState = 'idle' | 'saving' | 'saved' | 'error'
-type SyncState = 'off' | 'guest' | 'saving' | 'synced' | 'error'
+export type SaveState = 'idle' | 'saving' | 'saved' | 'error'
+export type SyncState = 'off' | 'guest' | 'saving' | 'synced' | 'error'
 
 interface CloudConflict {
   local: PersistedBoard
@@ -31,6 +31,10 @@ interface PersistenceStatusState {
   /** Account sync is opt-in: off by default, persisted per browser. */
   syncEnabled: boolean
   lastSyncedAt: number | null
+  /** Browser connectivity is advisory. Local saving remains available while false. */
+  networkOnline: boolean
+  /** True after the installable web shell has an active service worker. */
+  serviceWorkerReady: boolean
   conflict: CloudConflict | null
   compatibilityBlock: PersistenceCompatibilityBlock | null
   deployUpdateAvailable: boolean
@@ -38,6 +42,8 @@ interface PersistenceStatusState {
   setCloudSync: (state: SyncState) => void
   setSyncEnabled: (enabled: boolean) => void
   setLastSyncedAt: (at: number | null) => void
+  setNetworkOnline: (online: boolean) => void
+  setServiceWorkerReady: (ready: boolean) => void
   setConflict: (conflict: CloudConflict | null) => void
   setCompatibilityBlock: (block: PersistenceCompatibilityBlock | null) => void
   setDeployUpdateAvailable: (available: boolean) => void
@@ -48,6 +54,8 @@ export const usePersistenceStatusStore = create<PersistenceStatusState>()((set) 
   cloudSync: loadSyncEnabled() ? 'guest' : 'off',
   syncEnabled: loadSyncEnabled(),
   lastSyncedAt: null,
+  networkOnline: typeof navigator === 'undefined' ? true : navigator.onLine,
+  serviceWorkerReady: false,
   conflict: null,
   compatibilityBlock: null,
   deployUpdateAvailable: false,
@@ -62,6 +70,8 @@ export const usePersistenceStatusStore = create<PersistenceStatusState>()((set) 
     set({ syncEnabled })
   },
   setLastSyncedAt: (lastSyncedAt) => set({ lastSyncedAt }),
+  setNetworkOnline: (networkOnline) => set({ networkOnline }),
+  setServiceWorkerReady: (serviceWorkerReady) => set({ serviceWorkerReady }),
   setConflict: (conflict) => set({ conflict }),
   setCompatibilityBlock: (compatibilityBlock) => set({ compatibilityBlock }),
   setDeployUpdateAvailable: (deployUpdateAvailable) => set({ deployUpdateAvailable }),

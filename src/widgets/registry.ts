@@ -76,6 +76,48 @@ export const WIDGET_REGISTRY: Record<ModuleType, WidgetDefinition> = {
   ...AUTOMATION_CORE_DEFINITIONS,
 }
 
+/** Former standalone cards that are now modes of one canonical widget. They
+ * remain registered so old boards hydrate exactly as saved, but are omitted
+ * from every new-widget surface. */
+export const CONSOLIDATED_WIDGET_REPLACEMENTS: Partial<Record<ModuleType, ModuleType>> = {
+  sticky_note: 'notes',
+  quote: 'notes',
+  line_chart: 'bar_chart',
+  pie_chart: 'bar_chart',
+  random_picker: 'decision',
+  gpa: 'grade_calc',
+  countdown: 'date_picker',
+  excalidraw: 'sketchpad',
+  progress: 'goal_tracker',
+  study_goal: 'goal_tracker',
+  okr: 'goal_tracker',
+  vocab: 'flashcards',
+  quiz: 'flashcards',
+  kanban: 'checklist',
+  assignment: 'checklist',
+  daily_agenda: 'checklist',
+  weekly_planner: 'checklist',
+  timeline: 'checklist',
+  priority_matrix: 'checklist',
+}
+
+export const CONSOLIDATED_WIDGET_MODES: Partial<Record<ModuleType, string>> = {
+  sticky_note: 'sticky', quote: 'quote', line_chart: 'line', pie_chart: 'donut',
+  random_picker: 'weighted', gpa: 'gpa', countdown: 'countdown', excalidraw: 'diagram',
+  progress: 'simple', study_goal: 'hours', okr: 'okr', vocab: 'vocabulary', quiz: 'quiz',
+  kanban: 'board', assignment: 'assignments', daily_agenda: 'day', weekly_planner: 'week',
+  timeline: 'timeline', priority_matrix: 'matrix',
+}
+
+export function publicWidgetTypeFor(type:ModuleType):ModuleType {
+  return CONSOLIDATED_WIDGET_REPLACEMENTS[type] ?? type
+}
+
+for (const [legacyType, replacementType] of Object.entries(CONSOLIDATED_WIDGET_REPLACEMENTS) as Array<[ModuleType, ModuleType]>) {
+  WIDGET_REGISTRY[legacyType].availability = 'existing-only'
+  WIDGET_REGISTRY[legacyType].unavailableReason = `${WIDGET_REGISTRY[legacyType].label} now lives inside ${WIDGET_REGISTRY[replacementType].label}.`
+}
+
 // Apply the domain pack requirements from MODULE_PACK_REQUIREMENTS dynamically
 for (const type of Object.keys(WIDGET_REGISTRY) as ModuleType[]) {
   const pack = MODULE_PACK_REQUIREMENTS[type]
