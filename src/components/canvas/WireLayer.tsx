@@ -494,7 +494,7 @@ export function WireLayer() {
   const dampedIds = useCircuitStore((state) => state.dampedIds)
   const inspector = useCircuitStore((state) => state.inspector)
   const dragActive = useCircuitStore((state) => state.wireDrag !== null)
-  const view = useQuantizedView(EDGE_OVERSCAN_SCREEN)
+  const view = useQuantizedView(EDGE_OVERSCAN_SCREEN, { freezeWhileMoving: true })
   const visibleRect = view.rect
 
   const wires = useMemo(() => {

@@ -17,7 +17,7 @@ export function GroupLayer() {
       activeCanvasId: state.activeCanvasId,
     })),
   )
-  const view = useQuantizedView(GROUP_OVERSCAN_SCREEN)
+  const view = useQuantizedView(GROUP_OVERSCAN_SCREEN, { freezeWhileMoving: true })
 
   const visibleGroups = useMemo(() => {
     return Object.values(groups).filter((group) => {

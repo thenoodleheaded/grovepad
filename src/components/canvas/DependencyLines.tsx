@@ -230,7 +230,7 @@ export function DependencyLines() {
       hoveredWidgetId: state.hoveredWidgetId,
     })),
   )
-  const view = useQuantizedView(EDGE_OVERSCAN_SCREEN)
+  const view = useQuantizedView(EDGE_OVERSCAN_SCREEN, { freezeWhileMoving: true })
   const visibleRect = view.rect
   const [menu, setMenu] = useState<{ relationId: string; x: number; y: number } | null>(null)
   useOverlayLifecycle(menu !== null)

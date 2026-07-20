@@ -10,6 +10,7 @@ import { interactiveResidentWidgetIds } from '../../utils/widgetResidency'
 import { useWindowedResidency } from '../../engine/window/useWindowedResidency'
 import type { ResidencyEntry } from '../../engine/window/windowedResidency'
 import { primitiveWidget } from '../../widgets/primitiveWidget'
+import { SpriteUnderlay } from '../../engine/raster/SpriteUnderlay'
 import { WidgetCard } from './WidgetCard'
 import { PrimitiveWidgetCard } from './PrimitiveWidgetCard'
 
@@ -108,6 +109,19 @@ export function WidgetLayer() {
 
   const { mountedIds, fullIds } = useWindowedResidency(entries, residencyPins)
 
+  // Sprites for everything the mount ring has NOT reached: painted by the
+  // raster worker into the underlay, covered by real DOM wherever it exists.
+  const unmountedPrimitives = useMemo(() => {
+    const mounted = new Set(mountedIds)
+    const out = []
+    for (const id of canvasWidgetIds) {
+      if (mounted.has(id)) continue
+      const widget = widgets[id]
+      if (widget) out.push(primitiveWidget(widget))
+    }
+    return out
+  }, [canvasWidgetIds, mountedIds, widgets])
+
   const interactiveIds = useMemo(() => {
     return interactiveResidentWidgetIds({
       renderedIds: mountedIds,
@@ -171,6 +185,8 @@ export function WidgetLayer() {
       <div aria-hidden className="absolute h-px w-6 -translate-x-1/2 bg-emerald-400/40" />
       <div aria-hidden className="absolute h-6 w-px -translate-y-1/2 bg-emerald-400/40" />
       <span className="absolute left-3 top-2  text-[10px] text-neutral-500">0, 0</span>
+
+      <SpriteUnderlay unmountedWidgets={unmountedPrimitives} />
 
       {mountedIds.map((widgetId) => {
         const widget = widgets[widgetId]

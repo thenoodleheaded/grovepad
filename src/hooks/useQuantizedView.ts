@@ -64,7 +64,16 @@ function sameView(a: QuantizedView, b: QuantizedView): boolean {
  * panning, and culling keeps up continuously during motion (the old pipeline
  * paused culling mid-gesture and paid for it with a giant settle reveal).
  */
-export function useQuantizedView(overscanScreen: number): QuantizedView {
+export interface QuantizedViewOptions {
+  /** Layers whose pixels the sprite underlay carries during motion set this:
+   * no recomputes at all while the camera moves — one settle reconcile. */
+  freezeWhileMoving?: boolean
+}
+
+export function useQuantizedView(
+  overscanScreen: number,
+  { freezeWhileMoving = false }: QuantizedViewOptions = {},
+): QuantizedView {
   const [view, setView] = useState(() => computeView(overscanScreen))
 
   useEffect(() => {
@@ -82,9 +91,12 @@ export function useQuantizedView(overscanScreen: number): QuantizedView {
     // Flushes are rAF-aligned but also tier-throttled: mid-motion a flush may
     // fire at most once per the tier's min interval, so a fast zoom crosses
     // coarse buckets a few times instead of re-rendering per fine bucket.
+    // Frozen layers skip motion flushes entirely — settle reconciles them.
     const request = () => {
       if (rafId !== 0 || holdTimer !== null) return
-      const { minIntervalMs } = GRANULARITY[cameraEngine.getVelocity().tier]
+      const tier = cameraEngine.getVelocity().tier
+      if (freezeWhileMoving && tier !== 'idle') return
+      const { minIntervalMs } = GRANULARITY[tier]
       const wait = minIntervalMs - (performance.now() - lastFlushAt)
       if (wait > 0) {
         holdTimer = setTimeout(() => {
