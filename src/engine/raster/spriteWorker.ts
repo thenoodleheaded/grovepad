@@ -12,10 +12,17 @@ import { paintSprites, type SpriteRegion, type SpriteTheme } from './spritePaint
 // is discarded by the caller, so out-of-order worker completions are safe.
 // ---------------------------------------------------------------------------
 
+/** Membership sync — sent only when the unmounted set actually changes
+ * (settle slices, board edits). Re-anchors mid-flight reuse the cached set,
+ * so a fast pan never pays a 1,700-object structured clone on main. */
+export interface SpriteWidgetsMessage {
+  kind: 'widgets'
+  widgets: PrimitiveWidget[]
+}
+
 export interface SpritePaintRequest {
   kind: 'paint'
   generation: number
-  widgets: PrimitiveWidget[]
   region: SpriteRegion
   theme: SpriteTheme
   /** Device-pixel bitmap size, capped by the caller. */
@@ -32,14 +39,20 @@ export interface SpritePaintResponse {
   paintMs: number
 }
 
-self.onmessage = (event: MessageEvent<SpritePaintRequest>) => {
+let cachedWidgets: readonly PrimitiveWidget[] = []
+
+self.onmessage = (event: MessageEvent<SpritePaintRequest | SpriteWidgetsMessage>) => {
   const request = event.data
+  if (request.kind === 'widgets') {
+    cachedWidgets = request.widgets
+    return
+  }
   if (request.kind !== 'paint') return
   const started = performance.now()
   const canvas = new OffscreenCanvas(request.bitmapWidth, request.bitmapHeight)
   const ctx = canvas.getContext('2d')
   if (!ctx) return
-  const painted = paintSprites(ctx, request.widgets, request.region, request.theme)
+  const painted = paintSprites(ctx, cachedWidgets, request.region, request.theme)
   const bitmap = canvas.transferToImageBitmap()
   const response: SpritePaintResponse = {
     kind: 'painted',

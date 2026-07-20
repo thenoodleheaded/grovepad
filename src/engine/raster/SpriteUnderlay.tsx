@@ -4,7 +4,7 @@ import { viewportToWorldRect } from '../../utils/canvasView'
 import type { PrimitiveWidget } from '../../widgets/primitiveWidget'
 import type { SpriteRegion } from './spritePainter'
 import { DARK_SPRITE_THEME } from './spritePainter'
-import type { SpritePaintRequest, SpritePaintResponse } from './spriteWorker'
+import type { SpritePaintRequest, SpritePaintResponse, SpriteWidgetsMessage } from './spriteWorker'
 
 // ---------------------------------------------------------------------------
 // Sprite underlay (tier T2). A world-anchored <canvas> painted by the raster
@@ -86,16 +86,27 @@ export const SpriteUnderlay = memo(function SpriteUnderlay({ unmountedWidgets }:
     let repaintTimer: ReturnType<typeof setTimeout> | null = null
     let disposed = false
 
+    let lastSentWidgets: readonly PrimitiveWidget[] | null = null
+
     const requestPaint = () => {
       if (disposed || inFlight) return
       inFlight = true
       generation++
+      // Membership sync only when the set actually changed — mid-flight
+      // re-anchors reuse the worker's cache and cost one tiny message.
+      if (widgetsRef.current !== lastSentWidgets) {
+        lastSentWidgets = widgetsRef.current
+        const sync: SpriteWidgetsMessage = {
+          kind: 'widgets',
+          widgets: widgetsRef.current as PrimitiveWidget[],
+        }
+        worker.postMessage(sync)
+      }
       const region = computeRegion()
       const scale = region.paintZoom * region.devicePixelRatio
       const request: SpritePaintRequest = {
         kind: 'paint',
         generation,
-        widgets: widgetsRef.current as PrimitiveWidget[],
         region,
         theme: DARK_SPRITE_THEME,
         bitmapWidth: Math.max(1, Math.round(region.width * scale)),
@@ -135,6 +146,11 @@ export const SpriteUnderlay = memo(function SpriteUnderlay({ unmountedWidgets }:
       canvasEl.style.width = `${region.width}px`
       canvasEl.style.height = `${region.height}px`
       appliedRegion = region
+      // Coverage probe for the benchmark's pre-mount/no-pop-in gate.
+      canvasEl.dataset.regionX = String(Math.round(region.x))
+      canvasEl.dataset.regionY = String(Math.round(region.y))
+      canvasEl.dataset.regionW = String(Math.round(region.width))
+      canvasEl.dataset.regionH = String(Math.round(region.height))
     }
 
     schedulePaintRef.current = schedulePaint

@@ -28,6 +28,12 @@ export interface BenchRunReport {
   widgetCount: number
   edgeCount: number
   prepareMs: number
+  /** Board injection → two clean frames of the destination viewport. */
+  coldOpenMs: number
+  /** Share of tour samples where the sprite region fully covered the view. */
+  coverageShare: number
+  /** Peak simultaneously-mounted DOM cards during the tour. */
+  maxMountedDom: number
   frame: Omit<FrameReport, 'deltasMs'>
   gates: GateResult[]
   userAgent: string
@@ -46,6 +52,7 @@ declare global {
 }
 
 let loadedBoard: BenchmarkBoard | null = null
+let lastColdOpenMs = 0
 
 const nextFrame = () => new Promise<number>((resolve) => requestAnimationFrame(resolve))
 const wait = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms))
@@ -74,6 +81,13 @@ async function prepare(seed = DEFAULT_BENCHMARK_CONFIG.seed): Promise<BenchmarkB
   }))
   useWidgetStore.getState().navigateToCanvas(board.canvas.id)
 
+  // Cold-open gate: injection → two clean frames (first interactive paint of
+  // the destination viewport), measured before the stabilization waits below.
+  const coldOpenStart = performance.now()
+  await nextFrame()
+  await nextFrame()
+  lastColdOpenMs = performance.now() - coldOpenStart
+
   // Let lazy widget modules, fonts, and the first full paint settle before
   // anyone measures — prepare time is reported, never counted as frames.
   await Promise.race([
@@ -100,6 +114,34 @@ async function tour(): Promise<Omit<BenchRunReport, 'label' | 'prepareMs'>> {
 
   const start = await nextFrame()
   const meter = startFrameMeter()
+  // Coverage + residency sampler (gates 4 & 5): every ~400ms, is the visible
+  // rect fully inside the sprite region (⇒ nothing can pop in), and is the
+  // mounted DOM bounded independent of board size?
+  let coverageSamples = 0
+  let coverageHits = 0
+  let maxMountedDom = 0
+  const sampler = setInterval(() => {
+    const { pan, zoom } = useCanvasStore.getState()
+    const sprite = document.querySelector<HTMLElement>('[data-sprite-underlay]')
+    coverageSamples++
+    if (sprite?.dataset.regionX !== undefined) {
+      const rx = Number(sprite.dataset.regionX)
+      const ry = Number(sprite.dataset.regionY)
+      const rw = Number(sprite.dataset.regionW)
+      const rh = Number(sprite.dataset.regionH)
+      const viewX = -pan.x / zoom
+      const viewY = -pan.y / zoom
+      const viewW = window.innerWidth / zoom
+      const viewH = window.innerHeight / zoom
+      if (viewX >= rx && viewY >= ry && viewX + viewW <= rx + rw && viewY + viewH <= ry + rh) {
+        coverageHits++
+      }
+    }
+    maxMountedDom = Math.max(
+      maxMountedDom,
+      document.querySelectorAll('article[data-widget-id], [data-primitive-widget-id]').length,
+    )
+  }, 400)
   await new Promise<void>((resolve) => {
     const step = (now: number) => {
       const t = now - start
@@ -110,16 +152,39 @@ async function tour(): Promise<Omit<BenchRunReport, 'label' | 'prepareMs'>> {
     }
     requestAnimationFrame(step)
   })
+  clearInterval(sampler)
   const { deltasMs, longTasksMs } = meter.stop()
   const report = summarizeFrames(deltasMs, longTasksMs)
   const { deltasMs: _dropped, ...frame } = report
+  const coverageShare = coverageSamples > 0 ? coverageHits / coverageSamples : 0
+  const gates = [
+    ...evaluateFrameGates(report),
+    {
+      gate: 'no pop-in: sprite coverage ≥ 95%',
+      pass: coverageShare >= 0.95,
+      detail: `${coverageHits}/${coverageSamples} samples fully covered`,
+    },
+    {
+      gate: 'bounded residency (≤ 400 cards in DOM)',
+      pass: maxMountedDom <= 400,
+      detail: `peak ${maxMountedDom} mounted of ${Object.keys(board.widgets).length}`,
+    },
+    {
+      gate: 'cold open ≤ 1500ms',
+      pass: lastColdOpenMs <= 1500,
+      detail: `${Math.round(lastColdOpenMs)}ms injection → interactive paint`,
+    },
+  ]
   return {
     seed: DEFAULT_BENCHMARK_CONFIG.seed,
     widgetCount: Object.keys(board.widgets).length,
     edgeCount:
       Object.keys(board.relations).length + Object.keys(board.connections).length,
+    coldOpenMs: lastColdOpenMs,
+    coverageShare,
+    maxMountedDom,
     frame,
-    gates: evaluateFrameGates(report),
+    gates,
     userAgent: navigator.userAgent,
     devicePixelRatio: window.devicePixelRatio,
     viewport: { width: window.innerWidth, height: window.innerHeight },

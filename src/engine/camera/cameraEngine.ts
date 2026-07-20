@@ -103,7 +103,8 @@ export function classifyTier(previous: CameraMotionTier, speed: number): CameraM
 
 function trackVelocity(previous: CameraFrame, next: CameraFrame): void {
   const now = performance.now()
-  const dt = lastFrameAt === 0 ? 16.7 : Math.min(100, Math.max(1, now - lastFrameAt))
+  const rawGap = lastFrameAt === 0 ? 16.7 : now - lastFrameAt
+  const dt = Math.min(100, Math.max(1, rawGap))
   lastFrameAt = now
   const panDist = Math.hypot(next.pan.x - previous.pan.x, next.pan.y - previous.pan.y)
   // Zoom motion moves every on-screen pixel; approximate its flow as the
@@ -120,12 +121,18 @@ function trackVelocity(previous: CameraFrame, next: CameraFrame): void {
   setTier(classifyTier(tier, emaSpeed))
 
   if (settleTimer !== null) clearTimeout(settleTimer)
+  // A starved main thread produces SLOW frames, not stopped input. The settle
+  // window scales with the observed frame gap so a throttled machine never
+  // flips to idle between two frames of one continuous gesture — which would
+  // unleash idle-only work (backfill, promotions, prefetch) into a spiral of
+  // ever-slower frames and ever-more fake idles.
+  const settleWindow = Math.max(SETTLE_MS, Math.min(1200, rawGap * 3))
   settleTimer = setTimeout(() => {
     settleTimer = null
     emaSpeed = 0
     emaPanVelocity = { x: 0, y: 0 }
     setTier('idle')
-  }, SETTLE_MS)
+  }, settleWindow)
 }
 
 function commit(pan: Vector2D, zoom: number): void {
