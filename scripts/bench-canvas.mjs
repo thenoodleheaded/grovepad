@@ -81,10 +81,25 @@ async function main() {
 
   let server = null
   if (!process.env.BENCH_URL) {
-    server = spawn('npx', ['vite', '--port', String(PORT), '--strictPort'], {
-      stdio: 'ignore',
-      detached: false,
-    })
+    // BENCH_PROD=1: measure the production bundle (minified, no HMR client,
+    // no on-demand transforms) — the honest instrument for merge gates. Dev
+    // mode stays the default for fast iteration.
+    if (process.env.BENCH_PROD === '1') {
+      console.log('building production bundle…')
+      const build = spawn('npx', ['vite', 'build'], { stdio: 'inherit' })
+      await new Promise((resolve, reject) => {
+        build.on('exit', (code) => (code === 0 ? resolve() : reject(new Error(`build failed (${code})`))))
+      })
+      server = spawn('npx', ['vite', 'preview', '--port', String(PORT), '--strictPort'], {
+        stdio: 'ignore',
+        detached: false,
+      })
+    } else {
+      server = spawn('npx', ['vite', '--port', String(PORT), '--strictPort'], {
+        stdio: 'ignore',
+        detached: false,
+      })
+    }
   }
   try {
     await waitForServer(BASE_URL)

@@ -15,6 +15,8 @@ export interface FrameReport {
   longestMs: number
   /** Deltas exceeding the 60Hz dropped-frame threshold (25ms = 1.5 frames). */
   droppedAt60: number
+  /** Tour-relative times (ms) of each dropped frame — stall attribution. */
+  dropAtMs: number[]
   /** Deltas within the 120Hz budget, as a share (informational). */
   within120Share: number
   longTasks: number
@@ -31,6 +33,12 @@ export function summarizeFrames(
   const sorted = [...deltasMs].sort((a, b) => a - b)
   const at = (q: number) => sorted[Math.min(sorted.length - 1, Math.floor(q * sorted.length))] ?? 0
   const total = deltasMs.reduce((sum, d) => sum + d, 0)
+  const dropAtMs: number[] = []
+  let elapsed = 0
+  for (const delta of deltasMs) {
+    elapsed += delta
+    if (delta > DROPPED_60_THRESHOLD_MS) dropAtMs.push(Math.round(elapsed))
+  }
   return {
     frames: deltasMs.length,
     durationMs: total,
@@ -40,6 +48,7 @@ export function summarizeFrames(
     p99Ms: at(0.99),
     longestMs: sorted[sorted.length - 1] ?? 0,
     droppedAt60: deltasMs.filter((d) => d > DROPPED_60_THRESHOLD_MS).length,
+    dropAtMs,
     within120Share:
       deltasMs.length > 0 ? deltasMs.filter((d) => d <= BUDGET_120_MS).length / deltasMs.length : 1,
     longTasks: longTasks.length,

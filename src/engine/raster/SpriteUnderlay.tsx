@@ -34,10 +34,45 @@ function supported(): boolean {
   return typeof Worker !== 'undefined' && typeof OffscreenCanvas !== 'undefined'
 }
 
-function computeRegion(): SpriteRegion {
+function computeRegion(widgets: readonly PrimitiveWidget[]): SpriteRegion {
   const { pan, zoom } = cameraEngine.getFrame()
   const viewportSize = cameraEngine.getViewportSize()
   const view = viewportToWorldRect(pan, zoom, viewportSize, 0)
+
+  // Overview mode: when the visible rect already spans a large share of the
+  // board, paint the WHOLE board once — far-zoom traverses then never exit
+  // the region, so they trigger zero repaints (measured as the 4x drop
+  // cluster during the overview segment).
+  if (widgets.length > 0) {
+    let minX = Infinity
+    let minY = Infinity
+    let maxX = -Infinity
+    let maxY = -Infinity
+    for (const widget of widgets) {
+      if (widget.x < minX) minX = widget.x
+      if (widget.y < minY) minY = widget.y
+      if (widget.x + widget.width > maxX) maxX = widget.x + widget.width
+      if (widget.y + widget.height > maxY) maxY = widget.y + widget.height
+    }
+    const boardW = Math.max(1, maxX - minX)
+    const boardH = Math.max(1, maxY - minY)
+    if (view.width >= boardW * 0.35 || view.height >= boardH * 0.35) {
+      const pad = Math.max(view.width, view.height) * 0.5
+      const width = boardW + pad * 2
+      const height = boardH + pad * 2
+      const dpr = Math.min(2, typeof devicePixelRatio === 'number' ? devicePixelRatio : 1)
+      const capScale = Math.min(MAX_BITMAP_AXIS / (width * dpr), MAX_BITMAP_AXIS / (height * dpr))
+      return {
+        x: minX - pad,
+        y: minY - pad,
+        width,
+        height,
+        paintZoom: Math.min(zoom, capScale),
+        devicePixelRatio: dpr,
+      }
+    }
+  }
+
   const marginX = view.width * REGION_MARGIN_VIEWPORTS
   const marginY = view.height * REGION_MARGIN_VIEWPORTS
   // Stretch toward camera travel (world direction = −panVelocity/zoom) so a
@@ -75,8 +110,12 @@ function needsReanchor(region: SpriteRegion): boolean {
     view.y - slackY < region.y ||
     view.x + view.width + slackX > region.x + region.width ||
     view.y + view.height + slackY > region.y + region.height ||
-    // Zoomed in past the painted resolution by more than 2x — repaint sharper.
-    zoom > region.paintZoom * 2
+    // Zoomed in past the painted resolution by more than 2x — repaint
+    // sharper, but never during 'fast': each sharper repaint is a full
+    // texture upload, and a deep zoom-in fires them back to back (measured
+    // as the benchmark's only drop burst). Softness at speed is the
+    // ratified trade; the settle flush restores exact resolution.
+    (zoom > region.paintZoom * 2 && cameraEngine.getVelocity().tier === 'idle')
   )
 }
 
@@ -116,7 +155,7 @@ export const SpriteUnderlay = memo(function SpriteUnderlay({ unmountedWidgets }:
         }
         worker.postMessage(sync)
       }
-      const region = computeRegion()
+      const region = computeRegion(widgetsRef.current)
       const scale = region.paintZoom * region.devicePixelRatio
       const request: SpritePaintRequest = {
         kind: 'paint',

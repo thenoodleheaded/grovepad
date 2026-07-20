@@ -20,7 +20,9 @@ const FULL_BUDGET = 32
 const IDLE_MOUNT_BATCH = 48
 /** Full-card promotions per idle slice, and only on slices where primitive
  * backfill has gone quiet — glass mounts never share a commit with a mount
- * batch, so no settle slice combines the two most expensive operations. */
+ * batch. One per slice: a glass card's FIRST backdrop-filter paint is the
+ * most expensive raster event left, and it shows up as dropped frames with
+ * zero long tasks (paint cost, not JS cost). */
 const IDLE_PROMOTE_BATCH = 2
 const RECOMPUTE_INTERVAL_MS = 90
 
