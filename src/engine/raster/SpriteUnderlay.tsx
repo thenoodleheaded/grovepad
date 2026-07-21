@@ -26,8 +26,10 @@ const MAX_BITMAP_AXIS = 4096
 const REPAINT_SLICE_MS = 80
 
 interface SpriteUnderlayProps {
-  /** Projections of every widget WITHOUT live DOM (index minus mounted). */
-  unmountedWidgets: readonly PrimitiveWidget[]
+  /** Projections of EVERY widget on the canvas — a complete backdrop. The
+   * worker region-culls to the viewport; DOM cards overlay opaquely on top,
+   * so a card mounting or unmounting never uncovers a hole. */
+  widgets: readonly PrimitiveWidget[]
 }
 
 function supported(): boolean {
@@ -119,10 +121,10 @@ function needsReanchor(region: SpriteRegion): boolean {
   )
 }
 
-export const SpriteUnderlay = memo(function SpriteUnderlay({ unmountedWidgets }: SpriteUnderlayProps) {
+export const SpriteUnderlay = memo(function SpriteUnderlay({ widgets }: SpriteUnderlayProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const widgetsRef = useRef(unmountedWidgets)
-  widgetsRef.current = unmountedWidgets
+  const widgetsRef = useRef(widgets)
+  widgetsRef.current = widgets
   const schedulePaintRef = useRef<(() => void) | null>(null)
 
   useEffect(() => {
@@ -228,11 +230,12 @@ export const SpriteUnderlay = memo(function SpriteUnderlay({ unmountedWidgets }:
     }
   }, [])
 
-  // Membership changes (mount ring moved at settle, board edits): repaint
-  // with the fresh unmounted set. The worker effect owns the scheduler.
+  // Board edits (add/remove/move a widget, or entering a new canvas) change
+  // the backdrop's contents: repaint. Pure camera motion does not land here —
+  // the set is mount-independent now — so zoom/pan never invalidates it.
   useEffect(() => {
     schedulePaintRef.current?.()
-  }, [unmountedWidgets])
+  }, [widgets])
 
   if (!supported()) return null
   return (

@@ -109,18 +109,28 @@ export function WidgetLayer() {
 
   const { mountedIds, fullIds } = useWindowedResidency(entries, residencyPins)
 
-  // Sprites for everything the mount ring has NOT reached: painted by the
-  // raster worker into the underlay, covered by real DOM wherever it exists.
-  const unmountedPrimitives = useMemo(() => {
-    const mounted = new Set(mountedIds)
+  // The sprite underlay is a near-COMPLETE backdrop — every widget EXCEPT the
+  // ones that can be mid-move (selected, pinned/interacting, or ghost-
+  // displaced by a neighbor's drag). DOM cards render opaquely on top of their
+  // own sprite, so mounting or unmounting a card during zoom never uncovers a
+  // hole: the sprite is already painted underneath. (An "unmounted only"
+  // sprite raced the DOM unmount — the worker repaint lagged behind React
+  // pulling the card — flashing widgets invisible during zoom.) The exclusions
+  // exist only to avoid a drag-ghost: a moving card's stale sprite trailing
+  // behind it until the next repaint. None of the excluded sets change during
+  // pure zoom/pan, so camera motion never invalidates this backdrop.
+  const spritePrimitives = useMemo(() => {
+    const moving = new Set<string>(residencyPins)
+    for (const id of interaction.selectedIds) moving.add(id)
+    for (const id of Object.keys(displacement.offsets)) moving.add(id)
     const out = []
     for (const id of canvasWidgetIds) {
-      if (mounted.has(id)) continue
+      if (moving.has(id)) continue
       const widget = widgets[id]
       if (widget) out.push(primitiveWidget(widget))
     }
     return out
-  }, [canvasWidgetIds, mountedIds, widgets])
+  }, [canvasWidgetIds, widgets, residencyPins, interaction.selectedIds, displacement.offsets])
 
   const interactiveIds = useMemo(() => {
     return interactiveResidentWidgetIds({
@@ -186,7 +196,7 @@ export function WidgetLayer() {
       <div aria-hidden className="absolute h-6 w-px -translate-y-1/2 bg-emerald-400/40" />
       <span className="absolute left-3 top-2  text-[10px] text-neutral-500">0, 0</span>
 
-      <SpriteUnderlay unmountedWidgets={unmountedPrimitives} />
+      <SpriteUnderlay widgets={spritePrimitives} />
 
       {mountedIds.map((widgetId) => {
         const widget = widgets[widgetId]
