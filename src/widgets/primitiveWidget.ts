@@ -35,6 +35,13 @@ export interface PrimitivePreviewRow {
   readonly ratio?: number
 }
 
+/** Resting-furniture archetype for widgets whose DATA extraction is sparse.
+ * A real renderer is never blank — an empty notes card shows its writing
+ * well, an empty checklist its "+ Add task" rows, an empty table its header
+ * grid. Primitives replicate that texture with cheap archetypal shapes so a
+ * board of fresh widgets never reads as a wall of blank slabs. */
+export type PrimitiveFurniture = 'text' | 'list' | 'table' | 'metric' | 'media' | 'controls'
+
 /** Pure, renderer-independent visual data. No callbacks, elements, refs, or
  * runtime state are allowed here, so hundreds of these remain cheap to cache. */
 export interface PrimitiveWidgetVisual {
@@ -45,6 +52,8 @@ export interface PrimitiveWidgetVisual {
   readonly progress?: number
   readonly colors?: readonly string[]
   readonly mediaUrl?: string
+  /** Set when extracted content is too sparse to carry the face on its own. */
+  readonly furniture?: PrimitiveFurniture
 }
 
 /**
@@ -246,6 +255,41 @@ export function hasPrimitiveFlag(widget: PrimitiveWidget, flag: PrimitiveWidgetF
   return (widget.flags & flag) !== 0
 }
 
+/** Extraction produced too little to carry the face: at far zoom the card
+ * would read as a blank slab. One lonely row still counts as sparse — the
+ * furniture renders underneath it as backing texture. */
+function isSparseVisual(visual: PrimitiveWidgetVisual): boolean {
+  return (
+    !visual.primary &&
+    !visual.mediaUrl &&
+    (!visual.colors || visual.colors.length === 0) &&
+    visual.progress === undefined &&
+    visual.rows.length <= 1
+  )
+}
+
+const CATEGORY_FURNITURE: Record<string, PrimitiveFurniture> = {
+  structure: 'text',
+  notes: 'text',
+  planning: 'list',
+  study: 'list',
+  data: 'table',
+  media: 'media',
+  tracking: 'metric',
+  automation: 'controls',
+  life: 'list',
+  specialist: 'controls',
+}
+
+function furnitureFor(category: string, kind: PrimitivePreviewKind): PrimitiveFurniture {
+  // The extraction kind is more specific than the category when present.
+  if (kind === 'table') return 'table'
+  if (kind === 'bars' || kind === 'metric') return 'metric'
+  if (kind === 'media') return 'media'
+  if (kind === 'list') return 'list'
+  return CATEGORY_FURNITURE[category] ?? 'text'
+}
+
 /** One immutable primitive object per canonical Widget object. Zustand keeps
  * unchanged Widget objects by reference, so ordinary edits only regenerate
  * the projection for the widget that actually changed. */
@@ -262,6 +306,10 @@ export function primitiveWidget(widget: Widget): PrimitiveWidget {
   if (widget.isHydrating) flags |= PrimitiveWidgetFlag.Hydrating
 
   const definition = widgetDefinition(widget.type)
+  const extracted = previewFor(widget.type, widget.data)
+  const visual = isSparseVisual(extracted)
+    ? { ...extracted, furniture: furnitureFor(definition.category, extracted.kind) }
+    : extracted
   const projected: PrimitiveWidget = Object.freeze({
     id: widget.id,
     type: widget.type,
@@ -277,7 +325,7 @@ export function primitiveWidget(widget: Widget): PrimitiveWidget {
     zIndex: widget.metadata.zIndex ?? 0,
     accent: widget.metadata.accent ?? definition.accent,
     badges: widget.metadata.badges,
-    visual: previewFor(widget.type, widget.data),
+    visual,
   })
   projectionCache.set(widget, projected)
   return projected

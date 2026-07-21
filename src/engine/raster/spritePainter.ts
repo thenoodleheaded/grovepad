@@ -149,6 +149,117 @@ function paintCard(ctx: Ctx2D, widget: PrimitiveWidget, zoom: number, theme: Spr
         rowY += rowStep
       }
     }
+    // Sparse content: paint the resting furniture (same archetypes as the
+    // DOM primitive) so unmounted far cards are never blank slabs either.
+    if (widget.visual.furniture) {
+      paintFurniture(ctx, widget.visual.furniture, widget.x + pad, rowY, w - pad * 2, widget.y + h - pad - rowY, widget.accent)
+    }
+  }
+}
+
+function paintFurniture(
+  ctx: Ctx2D,
+  kind: NonNullable<PrimitiveWidget['visual']['furniture']>,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  accent: string,
+): void {
+  if (w < 24 || h < 14) return
+  const bar = 'rgba(255,255,255,0.07)'
+  const wellFill = 'rgba(6,8,7,0.72)'
+  if (kind === 'text') {
+    ctx.fillStyle = bar
+    const widths = [0.86, 0.72, 0.55]
+    for (let i = 0; i < 3; i++) {
+      const ly = y + i * 16
+      if (ly + 9 > y + h) break
+      ctx.beginPath()
+      ctx.roundRect(x, ly, w * widths[i]!, 9, 4)
+      ctx.fill()
+    }
+    return
+  }
+  if (kind === 'list') {
+    for (let i = 0; i < 3; i++) {
+      const ly = y + i * 18
+      if (ly + 12 > y + h) break
+      ctx.strokeStyle = 'rgba(255,255,255,0.16)'
+      ctx.lineWidth = 1.5
+      ctx.beginPath()
+      ctx.roundRect(x, ly, 12, 12, 6)
+      ctx.stroke()
+      ctx.fillStyle = bar
+      ctx.beginPath()
+      ctx.roundRect(x + 18, ly + 2, (w - 18) * (0.78 - i * 0.14), 8, 4)
+      ctx.fill()
+    }
+    return
+  }
+  if (kind === 'table') {
+    const th = Math.min(h, 52)
+    ctx.strokeStyle = 'rgba(255,255,255,0.08)'
+    ctx.lineWidth = 1
+    ctx.beginPath()
+    ctx.roundRect(x, y, w, th, 6)
+    ctx.stroke()
+    ctx.fillStyle = 'rgba(255,255,255,0.05)'
+    ctx.fillRect(x, y, w, th / 3)
+    ctx.fillStyle = 'rgba(255,255,255,0.07)'
+    ctx.fillRect(x, y + th / 3, w, 1)
+    ctx.fillRect(x, y + (2 * th) / 3, w, 1)
+    ctx.fillRect(x + w / 3, y, 1, th)
+    ctx.fillRect(x + (2 * w) / 3, y, 1, th)
+    return
+  }
+  if (kind === 'metric') {
+    ctx.fillStyle = wellFill
+    ctx.beginPath()
+    ctx.roundRect(x, y, w * 0.46, Math.min(22, h * 0.5), 6)
+    ctx.fill()
+    const by = y + Math.min(22, h * 0.5) + 8
+    if (by + 7 <= y + h) {
+      ctx.fillStyle = bar
+      ctx.beginPath()
+      ctx.roundRect(x, by, w, 7, 3.5)
+      ctx.fill()
+      ctx.globalAlpha = 0.55
+      ctx.fillStyle = accent
+      ctx.beginPath()
+      ctx.roundRect(x, by, w * 0.38, 7, 3.5)
+      ctx.fill()
+      ctx.globalAlpha = 1
+    }
+    return
+  }
+  if (kind === 'media') {
+    ctx.fillStyle = 'rgba(6,8,7,0.55)'
+    ctx.beginPath()
+    ctx.roundRect(x, y, w, h, 8)
+    ctx.fill()
+    ctx.strokeStyle = 'rgba(255,255,255,0.14)'
+    ctx.lineWidth = 1.5
+    ctx.beginPath()
+    ctx.roundRect(x + w / 2 - 13, y + h / 2 - 10, 26, 20, 4)
+    ctx.stroke()
+    return
+  }
+  // controls
+  ctx.fillStyle = wellFill
+  const wellH = Math.max(18, h - 22)
+  ctx.beginPath()
+  ctx.roundRect(x, y, w, wellH, 8)
+  ctx.fill()
+  const ky = y + wellH + 8
+  if (ky + 14 <= y + h + 6) {
+    ctx.fillStyle = 'rgba(255,255,255,0.045)'
+    const kw = (w - 8) / 3
+    for (let i = 0; i < 3; i++) {
+      ctx.beginPath()
+      ctx.roundRect(x + i * (kw + 4), ky, kw, 14, 6)
+      ctx.fill()
+    }
   }
 }
 

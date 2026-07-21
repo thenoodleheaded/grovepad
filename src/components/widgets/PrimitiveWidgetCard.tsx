@@ -61,8 +61,83 @@ function PrimitiveRows({ rows, bars = false }: { rows: readonly PrimitivePreview
   )
 }
 
+/** Resting furniture for sparse widgets — the archetypal shapes a real empty
+ * renderer shows (writing well, task rows, table grid, metric dial, media
+ * frame, control keys), so no card is ever a blank slab at any zoom. Pure
+ * static divs styled by `.gp-primitive-furn-*`; deterministic per type. */
+function PrimitiveFurniture({ kind }: { kind: NonNullable<PrimitiveWidget['visual']['furniture']> }) {
+  if (kind === 'text') {
+    return (
+      <div aria-hidden className="gp-primitive-furn gp-primitive-furn-text">
+        <span style={{ width: '86%' }} />
+        <span style={{ width: '72%' }} />
+        <span style={{ width: '55%' }} />
+      </div>
+    )
+  }
+  if (kind === 'list') {
+    return (
+      <div aria-hidden className="gp-primitive-furn gp-primitive-furn-list">
+        {[0, 1, 2].map((row) => (
+          <div key={row}>
+            <i />
+            <span style={{ width: `${78 - row * 14}%` }} />
+          </div>
+        ))}
+      </div>
+    )
+  }
+  if (kind === 'table') {
+    return (
+      <div aria-hidden className="gp-primitive-furn gp-primitive-furn-table">
+        {[0, 1, 2].map((row) => (
+          <div key={row} data-head={row === 0 || undefined}>
+            <span />
+            <span />
+            <span />
+          </div>
+        ))}
+      </div>
+    )
+  }
+  if (kind === 'metric') {
+    return (
+      <div aria-hidden className="gp-primitive-furn gp-primitive-furn-metric">
+        <span className="gp-primitive-furn-metric-value" />
+        <span className="gp-primitive-furn-metric-bar" />
+      </div>
+    )
+  }
+  if (kind === 'media') {
+    return (
+      <div aria-hidden className="gp-primitive-furn gp-primitive-furn-media">
+        <i />
+      </div>
+    )
+  }
+  return (
+    <div aria-hidden className="gp-primitive-furn gp-primitive-furn-controls">
+      <span className="gp-primitive-furn-well" />
+      <div>
+        <i />
+        <i />
+        <i />
+      </div>
+    </div>
+  )
+}
+
 function PrimitivePreview({ widget }: { widget: PrimitiveWidget }) {
   const visual = widget.visual
+  if (visual.furniture) {
+    return (
+      <div className="gp-primitive-stack">
+        {visual.rows.length > 0 && <PrimitiveRows rows={visual.rows} />}
+        {visual.secondary && <span className="gp-primitive-kicker">{visual.secondary}</span>}
+        <PrimitiveFurniture kind={visual.furniture} />
+      </div>
+    )
+  }
   if (visual.kind === 'text') {
     return (
       <div className="gp-primitive-text-wrap">

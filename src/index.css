@@ -533,6 +533,138 @@ body[data-widget-dragging] .gp-widget-layout-motion[data-settle-pending] > .gp-c
   background: linear-gradient(110deg, transparent 15%, rgb(52 211 153 / 0.1) 45%, transparent 75%);
 }
 
+/* Resting furniture — archetypal shapes for widgets whose extracted content
+   is too sparse to carry the face. Mirrors what real empty renderers show
+   (writing wells, task rows, table grids, metric dials, media frames,
+   control keys) so far-zoom boards read as textured cards, never blank
+   slabs. Same well/key tones as the glass instrument primitives. */
+.gp-primitive-furn {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.gp-primitive-furn-text > span {
+  height: 9px;
+  flex: none;
+  border-radius: 4px;
+  background: rgb(255 255 255 / 0.07);
+}
+
+.gp-primitive-furn-list > div {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.gp-primitive-furn-list i {
+  width: 12px;
+  height: 12px;
+  flex: none;
+  border-radius: 9999px;
+  border: 1.5px solid rgb(255 255 255 / 0.16);
+}
+
+.gp-primitive-furn-list span {
+  height: 8px;
+  border-radius: 4px;
+  background: rgb(255 255 255 / 0.07);
+}
+
+.gp-primitive-furn-table {
+  gap: 0;
+  border: 1px solid rgb(255 255 255 / 0.08);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.gp-primitive-furn-table > div {
+  display: flex;
+  flex: 1;
+  min-height: 16px;
+}
+
+.gp-primitive-furn-table > div[data-head] {
+  background: rgb(255 255 255 / 0.05);
+}
+
+.gp-primitive-furn-table > div + div {
+  border-top: 1px solid rgb(255 255 255 / 0.07);
+}
+
+.gp-primitive-furn-table span {
+  flex: 1;
+}
+
+.gp-primitive-furn-table span + span {
+  border-left: 1px solid rgb(255 255 255 / 0.07);
+}
+
+.gp-primitive-furn-metric {
+  justify-content: center;
+}
+
+.gp-primitive-furn-metric-value {
+  width: 46%;
+  height: 22px;
+  flex: none;
+  border-radius: 6px;
+  background: rgba(6, 8, 7, 0.72);
+  box-shadow: inset 0 1.5px 3px rgb(0 0 0 / 0.5), inset 0 -1px 0 rgb(255 255 255 / 0.04);
+}
+
+.gp-primitive-furn-metric-bar {
+  height: 7px;
+  flex: none;
+  border-radius: 9999px;
+  background:
+    linear-gradient(90deg, color-mix(in oklab, var(--gp-widget-accent), transparent 45%) 0 38%, rgb(255 255 255 / 0.06) 38%);
+}
+
+.gp-primitive-furn-media {
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: rgba(6, 8, 7, 0.55);
+  box-shadow: inset 0 1.5px 3px rgb(0 0 0 / 0.4);
+}
+
+.gp-primitive-furn-media i {
+  width: 26px;
+  height: 20px;
+  border-radius: 4px;
+  border: 1.5px solid rgb(255 255 255 / 0.14);
+  background:
+    linear-gradient(135deg, transparent 55%, rgb(255 255 255 / 0.1) 55% 70%, transparent 70%);
+}
+
+.gp-primitive-furn-well,
+.gp-primitive-furn-controls .gp-primitive-furn-well {
+  flex: 1;
+  min-height: 18px;
+  border-radius: 8px;
+  background: rgba(6, 8, 7, 0.72);
+  box-shadow: inset 0 1.5px 3px rgb(0 0 0 / 0.5), inset 0 -1px 0 rgb(255 255 255 / 0.04);
+}
+
+.gp-primitive-furn-controls > div {
+  display: flex;
+  flex: none;
+  gap: 0.4rem;
+}
+
+.gp-primitive-furn-controls i {
+  flex: 1;
+  height: 14px;
+  border-radius: 6px;
+  background: rgb(255 255 255 / 0.045);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.065), 0 2px 4px rgb(0 0 0 / 0.2);
+}
+
 body[data-widget-dragging] .gp-card-motion {
   transition: none;
 }

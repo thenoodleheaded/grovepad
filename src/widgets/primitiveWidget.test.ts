@@ -57,6 +57,25 @@ describe('primitive widget projection', () => {
     })
   })
 
+  it('guarantees a non-blank face: sparse extraction gains resting furniture', () => {
+    // An empty notes widget extracts nothing — the real renderer would still
+    // show its writing well, so the primitive must show furniture, not a
+    // blank slab (measured: 17 of 94 registry types extracted nothing and
+    // rendered as empty rectangles at far zoom).
+    const empty = primitiveWidget(note({ data: { text: '' } }))
+    expect(empty.visual.furniture).toBe('text')
+
+    // Rich extraction carries the face itself — no furniture.
+    const rich = primitiveWidget(note({ id: 'note-2', data: { text: 'Plenty of body text here' } }))
+    expect(rich.visual.furniture).toBeUndefined()
+
+    // Category steers the archetype: an empty tracking widget reads metric.
+    const tracker = primitiveWidget(
+      note({ id: 'note-3', type: 'goal_tracker', data: {} as Widget['data'] }),
+    )
+    expect(tracker.visual.furniture).toBe('metric')
+  })
+
   it('bounds list previews so large payloads cannot create unbounded DOM', () => {
     const source = note({
       type: 'checklist',
