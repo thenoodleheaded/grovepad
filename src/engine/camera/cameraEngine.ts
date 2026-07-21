@@ -204,6 +204,11 @@ export const cameraEngine = {
   },
 
   setViewportSize(size: Size): void {
+    // A hidden or not-yet-laid-out host measures 0×0; accepting it would
+    // collapse every viewport-derived ring (residency, sprites, culling) to
+    // nothing, and an untouched board would stay empty until some other
+    // event fired. Keep the last known real size instead.
+    if (size.width < 1 || size.height < 1) return
     viewportSize = size
   },
 

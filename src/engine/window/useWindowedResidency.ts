@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { cameraEngine, subscribeCameraMotion } from '../camera/cameraEngine'
+import { useCanvasStore } from '../../store/useCanvasStore'
 import { viewportToWorldRect } from '../../utils/canvasView'
 import { computeResidency, type ResidencyEntry, type ResidencyResult } from './windowedResidency'
 
@@ -43,15 +44,24 @@ export function useWindowedResidency(
 ): ResidencyResult {
   const previousMounted = useRef<ReadonlySet<string>>(new Set())
   const previousFull = useRef<ReadonlySet<string>>(new Set())
+  // Data plane lives in refs, not effect closures: hydration can land between
+  // this component's first render and its effects (or replace the board while
+  // a slice timer is pending), and a slice computed from a stale closure
+  // would mount against a dead board. Every slice reads the refs, so every
+  // wake-up path — camera frames, settle, entry changes — is self-healing.
+  const entriesRef = useRef(entries)
+  entriesRef.current = entries
+  const pinsRef = useRef(pinnedIds)
+  pinsRef.current = pinnedIds
 
   const compute = (idle: boolean, mountBatch: number, promoteBatch: number): ResidencyResult => {
     const frame = cameraEngine.getFrame()
     const result = computeResidency({
-      entries,
+      entries: entriesRef.current,
       view: viewportToWorldRect(frame.pan, frame.zoom, cameraEngine.getViewportSize()),
       zoom: frame.zoom,
       panVelocity: cameraEngine.getVelocity().panVelocity,
-      pinnedIds,
+      pinnedIds: pinsRef.current,
       previousMounted: previousMounted.current,
       previousFull: previousFull.current,
       allowUnmount: idle,
@@ -122,11 +132,17 @@ export function useWindowedResidency(
     const offMotion = subscribeCameraMotion((active) => {
       if (!active) schedule()
     })
+    // Viewport size can arrive late (hidden tab, minimized launch, pane
+    // boot): the ring math depends on it, so its arrival is a wake-up.
+    const offViewport = useCanvasStore.subscribe((state, previous) => {
+      if (state.viewportSize !== previous.viewportSize) schedule()
+    })
     // Entries or pins changed (board edit, drag settle): refresh membership.
     if (apply()) schedule()
     return () => {
       offFrame()
       offMotion()
+      offViewport()
       if (timer !== null) window.clearTimeout(timer)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- compute reads only entries/pinnedIds
