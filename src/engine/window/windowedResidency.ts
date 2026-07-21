@@ -155,12 +155,19 @@ export function computeResidency(input: ResidencyInput): ResidencyResult {
     return { mountedIds: mounted, fullIds }
   }
 
+  // The readability gate rations a SCARCE full-card budget toward cards big
+  // enough on screen to be worth a live editor. With no scarcity — the whole
+  // candidate set fits the budget — appearance wins: every card stays a full
+  // card at any zoom, exactly like a small board always rendered.
+  const scarce = candidates.length > input.fullBudget
   const readable = candidates
     .filter((candidate) => {
       if (fullIds.has(candidate.entry.id) || !mountedSet.has(candidate.entry.id)) return false
+      if (!intersects(candidate.entry, enterRing)) return false
+      if (!scarce) return true
       const wasFull = input.previousFull.has(candidate.entry.id)
       const minWidth = FULL_TIER_MIN_SCREEN_WIDTH * (wasFull ? FULL_TIER_EXIT_RATIO : 1)
-      return candidate.entry.width * input.zoom >= minWidth && intersects(candidate.entry, enterRing)
+      return candidate.entry.width * input.zoom >= minWidth
     })
     .sort(
       (a, b) =>

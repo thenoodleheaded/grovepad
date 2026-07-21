@@ -4,21 +4,24 @@
    compositor-only property changes, no layout, no React. Cards never lose
    their appearance here (that is T2's bitmap job); only effects pause. */
 
-/* Fast motion: glass blur is the single most expensive per-card effect
-   (77% of frame cost at scale) — drop it, along with shadows and glow. */
-html[data-canvas-motion='fast'] [data-world-layer] .gp-glass:not([data-passive-widget]) {
+/* Fast motion: shed the expensive paint — shadows, glow, any filters — from
+   every card tier alike. Passive cards wear the SAME resting skin as full
+   cards (identical glass classes and shadows; a visibly different cheap tier
+   would defeat the seamlessness the tiers exist to preserve), so they shed
+   and restore together with the rest. */
+html[data-canvas-motion='fast'] [data-world-layer] .gp-glass {
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
 }
 
-html[data-canvas-motion='fast'] [data-world-layer] :is(.gp-widget-card:not([data-passive-widget]), .gp-group-plate-shape) {
+html[data-canvas-motion='fast'] [data-world-layer] :is(.gp-widget-card, .gp-group-plate-shape) {
   box-shadow: none !important;
   filter: none !important;
 }
 
 /* Any camera motion: freeze card transitions so mid-gesture style
    recalculations never animate, and pause decorative pulses. */
-html:not([data-canvas-motion='idle'])[data-canvas-motion] [data-world-layer] .gp-card-motion:not([data-passive-widget]) {
+html:not([data-canvas-motion='idle'])[data-canvas-motion] [data-world-layer] .gp-card-motion {
   transition: none !important;
 }
 
@@ -26,16 +29,22 @@ html[data-canvas-motion='fast'] [data-world-layer] :is(.gp-spawn, .gp-flash, .gp
   animation-play-state: paused !important;
 }
 
-/* Primitive cards already use a fixed, paint-contained surface. Keeping that
-   surface identical across motion tiers avoids one tier-change style/paint
-   invalidation per passive card at the beginning and end of every gesture. */
+/* Passive cards: never animate (they have no interactions to ease between),
+   and filters stay off as a cost guard — their appearance otherwise comes
+   from the exact same .gp-widget-card/.gp-glass/.gp-backplate rules as full
+   cards, so AT REST the two tiers are visually indistinguishable. */
 [data-world-layer] .gp-widget-card[data-passive-widget] {
   filter: none;
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
-  box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 0.075),
-    0 5px 15px rgb(0 0 0 / 0.3),
-    0 1px 2px rgb(0 0 0 / 0.14);
   transition: none;
+}
+
+/* …but hundreds of passive cards carrying the full 70px-blur resting shadow
+   through a pan is the exact at-scale paint cost this tier exists to avoid
+   (measured: mean frame 8.6→16ms). So passives shed shadows at ANY motion —
+   rest is when you look, motion is when simplifying is invisible — while
+   full cards keep theirs until 'fast' as before. */
+html:not([data-canvas-motion='idle'])[data-canvas-motion] [data-world-layer] .gp-widget-card[data-passive-widget] {
+  box-shadow: none !important;
 }

@@ -92,23 +92,36 @@ describe('windowed residency', () => {
     expect(result.fullIds.has('p')).toBe(true)
   })
 
-  it('keeps small-on-screen cards primitive until they are readable', () => {
-    const entries = [entry('a', 400)]
-    const small = residency({ entries, zoom: 0.5 })
-    expect(small.mountedIds).toEqual(['a'])
+  it('skips the readability gate when the whole board fits the full budget', () => {
+    // Five cards, budget 32: no scarcity — full tier at ANY zoom, exactly
+    // like a small board always rendered before tiers existed.
+    const entries = [entry('a', 400), entry('b', 700)]
+    const tiny = residency({ entries, zoom: 0.1, fullBudget: 32 })
+    expect(tiny.fullIds.size).toBe(2)
+  })
+
+  it('keeps small-on-screen cards primitive when the budget is scarce', () => {
+    // More candidates than budget: the gate rations glass toward readable
+    // cards, so a sub-threshold card stays primitive.
+    const entries = Array.from({ length: 5 }, (_, i) => entry(`w${i}`, 200 + i * 90))
+    const small = residency({ entries, zoom: 0.4, fullBudget: 4 })
+    expect(small.mountedIds).toHaveLength(5)
     expect(small.fullIds.size).toBe(0)
-    expect(residency({ entries, zoom: 1 }).fullIds.has('a')).toBe(true)
+    const readable = residency({ entries, zoom: 1, fullBudget: 4 })
+    expect(readable.fullIds.size).toBe(4)
   })
 
   it('holds full tier through zoom jitter at the readability boundary', () => {
-    const entries = [entry('h', 400)]
+    // Two candidates vs budget 1 keeps the gate active (scarcity).
+    const entries = [entry('h', 400), entry('other', 700)]
     // 200px × 0.7 zoom = 140 on-screen px: below entry, above the exit floor.
     const zoom = (FULL_TIER_MIN_SCREEN_WIDTH - 10) / 200
-    expect(residency({ entries, zoom }).fullIds.size).toBe(0)
+    expect(residency({ entries, zoom, fullBudget: 1 }).fullIds.size).toBe(0)
     const held = residency({
       entries,
       zoom,
-      previousMounted: new Set(['h']),
+      fullBudget: 1,
+      previousMounted: new Set(['h', 'other']),
       previousFull: new Set(['h']),
     })
     expect(held.fullIds.has('h')).toBe(true)
