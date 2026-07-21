@@ -39,10 +39,18 @@ export interface ResidencyInput {
   previousFull: ReadonlySet<string>
   /** True only when the camera is idle — the only time teardown may happen. */
   allowUnmount: boolean
-  /** True only when the camera is idle: promoting a primitive to a full glass
-   * card (or demoting one) is the single most expensive mount event, so tier
-   * membership is frozen mid-motion — only pins may still promote. */
-  allowTierChange: boolean
+  /** Run the readability promotion loop (promote primitives to full cards).
+   * On at idle and during SLOW ('moving') motion — a slow pan has frame
+   * budget and the cards are readable, so keeping real faces matters. Off at
+   * 'fast', where nothing is legible anyway and glass mounts would cost
+   * frames. */
+  allowPromote: boolean
+  /** Keep every already-full card full even if it no longer passes the
+   * readability gate this pass — i.e. never DEMOTE. On during any motion so a
+   * card's real face never flips to the generic primitive mid-gesture (that
+   * flip, repeated every pan, is what read as "faces revert to generic all
+   * the time"). Off at idle, where demotion is finally reconciled at rest. */
+  preserveFull: boolean
   /** Max NEW mounts this pass (keeps a single flush bounded mid-gesture). */
   mountBatch: number
   /** Max NEW full-tier promotions this pass. A full glass card is the most
@@ -147,11 +155,17 @@ export function computeResidency(input: ResidencyInput): ResidencyResult {
   const fullIds = new Set<string>()
   for (const id of input.pinnedIds) if (mountedSet.has(id)) fullIds.add(id)
 
-  // Mid-motion the tier is frozen: existing full cards stay full (their mount
-  // cost is already paid), nothing else promotes, and the readability sort is
-  // skipped entirely. Promotions and demotions land on the settle slice.
-  if (!input.allowTierChange) {
+  // Never demote mid-motion: carry every still-mounted full card forward so a
+  // real face can't flip to the generic primitive during a gesture. At idle
+  // this is off, so a card that scrolled away or shrank below readability is
+  // finally reconciled down to a primitive at rest.
+  if (input.preserveFull) {
     for (const id of input.previousFull) if (mountedSet.has(id)) fullIds.add(id)
+  }
+
+  // At 'fast' the promotion loop is skipped entirely (nothing legible; glass
+  // mounts would cost frames). preserveFull already carried the incumbents.
+  if (!input.allowPromote) {
     return { mountedIds: mounted, fullIds }
   }
 

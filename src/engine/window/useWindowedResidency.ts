@@ -19,13 +19,26 @@ const FULL_BUDGET = 32
  * time pays no React commits at all — only pins may still mount. Sized so a
  * single backfill commit stays affordable even at 4x CPU throttle. */
 const IDLE_MOUNT_BATCH = 48
-/** Full-card promotions per idle slice, and only on slices where primitive
- * backfill has gone quiet — glass mounts never share a commit with a mount
- * batch. One per slice: a glass card's FIRST backdrop-filter paint is the
- * most expensive raster event left, and it shows up as dropped frames with
- * zero long tasks (paint cost, not JS cost). */
-const IDLE_PROMOTE_BATCH = 2
-const RECOMPUTE_INTERVAL_MS = 90
+/** During SLOW ('moving') motion the mount RING is frozen (no new mounts, no
+ * teardown) — growing it while panning a huge board balloons residency to
+ * hundreds of cards and tanks the frame budget. But cards already mounted in
+ * the ring's forward margin (pre-mounted ahead of travel at the last settle)
+ * may PROMOTE to full as the pan brings them into view, so a deliberate pan
+ * navigates over real faces without any new mount cost. 'fast' motion freezes
+ * promotion too (nothing legible mid-fling). */
+const MOVING_MOUNT_BATCH = 0
+const MOVING_PROMOTE_BATCH = 6
+/** Full-card promotions per idle slice, on slices where primitive backfill
+ * has gone quiet (glass mounts never share a commit with a mount batch). The
+ * count of on-screen READABLE widgets is bounded by screen space (~20-30 fit
+ * at readable size), so this restores every visible real face within one or
+ * two slices of settling — the old value of 2 left widgets showing the
+ * generic primitive face for ~1s after every pan/zoom, which read as "faces
+ * revert to generic all the time." A glass card's first backdrop-filter
+ * paint is the priciest raster event left, so it is still capped and staged,
+ * just far less timidly. */
+const IDLE_PROMOTE_BATCH = 12
+const RECOMPUTE_INTERVAL_MS = 55
 
 function sameResidency(a: ResidencyResult, b: ResidencyResult): boolean {
   if (a.mountedIds.length !== b.mountedIds.length || a.fullIds.size !== b.fullIds.size) return false
@@ -54,7 +67,15 @@ export function useWindowedResidency(
   const pinsRef = useRef(pinnedIds)
   pinsRef.current = pinnedIds
 
-  const compute = (idle: boolean, mountBatch: number, promoteBatch: number): ResidencyResult => {
+  interface SliceOptions {
+    allowUnmount: boolean
+    allowPromote: boolean
+    preserveFull: boolean
+    mountBatch: number
+    promoteBatch: number
+  }
+
+  const compute = (opts: SliceOptions): ResidencyResult => {
     const frame = cameraEngine.getFrame()
     const result = computeResidency({
       entries: entriesRef.current,
@@ -64,10 +85,11 @@ export function useWindowedResidency(
       pinnedIds: pinsRef.current,
       previousMounted: previousMounted.current,
       previousFull: previousFull.current,
-      allowUnmount: idle,
-      allowTierChange: idle,
-      mountBatch,
-      promoteBatch,
+      allowUnmount: opts.allowUnmount,
+      allowPromote: opts.allowPromote,
+      preserveFull: opts.preserveFull,
+      mountBatch: opts.mountBatch,
+      promoteBatch: opts.promoteBatch,
       fullBudget: FULL_BUDGET,
       mountedBudget: MOUNTED_BUDGET,
     })
@@ -77,27 +99,58 @@ export function useWindowedResidency(
   }
 
   // Cold open mounts the whole window at once — board-open cost, not a
-  // gesture cost — so the first paint already has every nearby card.
+  // gesture cost — so the first paint already has every nearby card, full.
   const [residency, setResidency] = useState<ResidencyResult>(() =>
-    compute(true, MOUNTED_BUDGET, FULL_BUDGET),
+    compute({
+      allowUnmount: true,
+      allowPromote: true,
+      preserveFull: false,
+      mountBatch: MOUNTED_BUDGET,
+      promoteBatch: FULL_BUDGET,
+    }),
   )
 
   useEffect(() => {
     let timer: number | null = null
-    // Two-phase settle: primitive backfill first; glass promotions begin only
-    // once a slice produced zero new mounts, so the two most expensive commit
-    // kinds never land in the same frame.
+    // Two-phase idle settle: the first slice after motion is mounts-only, so a
+    // heavy 48-card mount commit never shares a frame with glass promotions.
     let lastSliceGrew = true
 
-    /** Recompute once; report whether a batch cap was hit (needs more slices). */
+    /** Recompute once; report whether more backfill slices are still needed. */
     const apply = (): boolean => {
-      const idle = cameraEngine.getVelocity().tier === 'idle'
-      const enteredWithGrowth = lastSliceGrew
-      const batch = idle ? IDLE_MOUNT_BATCH : 0
-      const promoteBatch = idle && !enteredWithGrowth ? IDLE_PROMOTE_BATCH : 0
+      const tier = cameraEngine.getVelocity().tier
       const before = previousMounted.current
       const beforeFull = previousFull.current
-      const next = compute(idle, batch, promoteBatch)
+
+      let opts: SliceOptions
+      if (tier === 'idle') {
+        // At rest: full reconcile — teardown, demotion, and generous
+        // mount/promote batches. Promotions hold off the slice right after a
+        // mount-growth slice (the bridge) to keep the two heavy commits apart.
+        opts = {
+          allowUnmount: true,
+          allowPromote: true,
+          preserveFull: false,
+          mountBatch: IDLE_MOUNT_BATCH,
+          promoteBatch: lastSliceGrew ? 0 : IDLE_PROMOTE_BATCH,
+        }
+      } else if (tier === 'fast') {
+        // Fast fling: freeze. Nothing legible; glass mounts would cost frames.
+        opts = { allowUnmount: false, allowPromote: false, preserveFull: true, mountBatch: 0, promoteBatch: 0 }
+      } else {
+        // Slow ('moving') pan: grow only — mount and promote a few entering
+        // cards per slice so a deliberate navigation shows real faces, never
+        // demote (preserveFull), never tear down (allowUnmount false).
+        opts = {
+          allowUnmount: false,
+          allowPromote: true,
+          preserveFull: true,
+          mountBatch: MOVING_MOUNT_BATCH,
+          promoteBatch: MOVING_PROMOTE_BATCH,
+        }
+      }
+
+      const next = compute(opts)
       let grew = 0
       for (const id of next.mountedIds) {
         if (!before.has(id)) grew++
@@ -106,17 +159,13 @@ export function useWindowedResidency(
       for (const id of next.fullIds) {
         if (!beforeFull.has(id)) promoted++
       }
-      // Motion slices count as "growth pending" so the first settle slice is
-      // always mounts-only; promotions start from the second slice onward.
-      lastSliceGrew = idle ? grew > 0 : true
+      // Motion slices count as "growth pending" so the first idle slice after
+      // motion is always mounts-only (the bridge before promotions begin).
+      lastSliceGrew = tier === 'idle' ? grew > 0 : true
       setResidency((current) => (sameResidency(current, next) ? current : next))
-      // More slices while mounts flow, while promotions hit their cap, or for
-      // the one bridge slice between the mount phase and the promotion phase.
-      return (
-        (idle && grew > 0) ||
-        (idle && promoted >= IDLE_PROMOTE_BATCH) ||
-        (idle && grew === 0 && promoteBatch === 0)
-      )
+      // Keep backfilling while work is still flowing, or to cross the bridge
+      // slice into the idle promotion phase.
+      return grew > 0 || promoted > 0 || (tier === 'idle' && opts.promoteBatch === 0)
     }
 
     const schedule = (): void => {

@@ -24,7 +24,8 @@ function residency(overrides: Partial<ResidencyInput>): ReturnType<typeof comput
     previousMounted: new Set(),
     previousFull: new Set(),
     allowUnmount: true,
-    allowTierChange: true,
+    allowPromote: true,
+    preserveFull: false,
     mountBatch: 100,
     promoteBatch: 100,
     fullBudget: 100,
@@ -145,26 +146,45 @@ describe('windowed residency', () => {
     expect(result.fullIds.size).toBe(0)
   })
 
-  it('freezes tier membership mid-motion: no promotions, no demotions', () => {
+  it('freezes tier membership at fast motion: no promotions, no demotions', () => {
     const entries = [entry('was-full', 700), entry('closer', 400)]
     const result = residency({
       entries,
-      allowTierChange: false,
+      allowPromote: false,
+      preserveFull: true,
       previousMounted: new Set(['was-full', 'closer']),
       previousFull: new Set(['was-full']),
       fullBudget: 1,
     })
-    // 'closer' would win the budget at idle; mid-motion the incumbent holds.
+    // 'closer' would win the budget at idle; at fast motion the incumbent holds.
     expect([...result.fullIds]).toEqual(['was-full'])
   })
 
   it('still promotes pins while the tier is frozen', () => {
     const result = residency({
       entries: [entry('pinned', 400)],
-      allowTierChange: false,
+      allowPromote: false,
+      preserveFull: true,
       pinnedIds: new Set(['pinned']),
     })
     expect(result.fullIds.has('pinned')).toBe(true)
+  })
+
+  it('promotes newcomers but never demotes during slow motion', () => {
+    // 'moving' tier: preserveFull keeps the incumbent, allowPromote adds the
+    // newcomer — a slow pan navigates over real faces, none flip to generic.
+    const entries = [entry('incumbent-far', 1400), entry('newcomer-near', 400)]
+    const result = residency({
+      entries,
+      allowPromote: true,
+      preserveFull: true,
+      previousMounted: new Set(['incumbent-far', 'newcomer-near']),
+      previousFull: new Set(['incumbent-far']),
+    })
+    // Incumbent held even though it drifted out of the enter ring (no demote),
+    // and the newcomer promoted.
+    expect(result.fullIds.has('incumbent-far')).toBe(true)
+    expect(result.fullIds.has('newcomer-near')).toBe(true)
   })
 
   it('staggers full-tier promotions across passes, incumbents unaffected', () => {
@@ -183,7 +203,8 @@ describe('windowed residency', () => {
   it('drops a frozen full card only if it unmounts entirely', () => {
     const result = residency({
       entries: [entry('gone-full', 2300)],
-      allowTierChange: false,
+      allowPromote: false,
+      preserveFull: true,
       allowUnmount: false,
       previousMounted: new Set(['gone-full']),
       previousFull: new Set(['gone-full']),
