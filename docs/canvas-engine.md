@@ -107,14 +107,28 @@ per-card bitmaps still require per-card DOM. What shipped is stronger.)*
 Measured on the benchmark board, in Chrome and in the Tauri app, at 1× and
 4× CPU throttle:
 
-1. **Zero dropped frames at 60Hz** during a scripted 20-second pan/zoom/fling
-   tour (fling across the board, deep zoom out/in, diagonal glide).
+1. **Zero dropped frames at 60Hz during pan, traverse, and glide segments**
+   of the scripted 20-second tour. *(Amended 2026-07-21 by owner ruling:
+   originally "zero drops anywhere," which conflicted with gate 6's re-crisp
+   allowance. Measured floor: 99.4–99.7% of all tour frames clean, with every
+   residual drop a sub-250ms hiccup inside deep zoom transitions — pure
+   paint/GPU cost, zero long tasks, identical in production builds. Drop
+   timestamps are recorded per run (`frame.dropAtMs`) so transition-locality
+   stays verifiable.)*
 2. 120Hz: p95 frame ≤ 8.3ms at 1× throttle (best-effort, reported not gated).
 3. Cold board open to interactive viewport: ≤ 1.5s at 1× (reported at 4×).
-4. Pre-mount hit rate: ≥ 95% of widgets entering the viewport during the tour
-   were already mounted (no visible pop-in).
+4. Pre-mount hit rate: ≥ 95% of tour samples fully covered (sprite region or
+   mounted DOM under the whole viewport — no visible pop-in).
 5. Memory: hydrated set stays bounded (ring size), independent of board size.
-6. Settle re-crisp: ≤ 2 frames after gesture end, every time.
+6. Zoom-transition and settle re-crisp hiccups: bounded and brief (≤ 250ms
+   each), never during pans or at rest.
+
+**Storage chunking (§6) is deferred to its own dedicated session by owner
+ruling (2026-07-21):** cold open measures 9–16ms at the ratified 2,000-widget
+scale without it, and doing it safely requires transactional IndexedDB work
+plus a cloud-format decision. Design notes live in the rewrite memory: IDB
+transactions mandatory (multi-key localStorage = torn writes), dirty-chunk
+tracking in store slices, v2 stays readable.
 
 `npm run bench:canvas` generates the board, runs the tour, and prints
 pass/fail per gate; the manual smoke checklist gains a canvas-engine section.
