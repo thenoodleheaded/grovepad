@@ -126,7 +126,12 @@ export function attachCanvasGestures(el: HTMLElement): () => void {
   }
 
   const onWheel = (event: WheelEvent) => {
-    if (isEditableTarget(event.target)) return
+    // The wheel always drives the camera — over widget content, inputs,
+    // textareas, everywhere — the same convention as Figma/Miro/design
+    // tools generally: a canvas full of cards is not a scrollable page, and
+    // an unfocused text field is not a scroll target. Only an ACTIVELY
+    // FOCUSED editable region (focus mode) or a followed collaborator's
+    // locked camera opt out.
     if (useFocusStore.getState().focusedWidgetId) return
     if (useCollaborationStore.getState().followingClientId !== null) return
     event.preventDefault()
