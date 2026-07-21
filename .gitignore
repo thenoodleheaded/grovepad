@@ -41,3 +41,6 @@ src-tauri/native/apple/build/
 
 # Local business documents that live in this folder but not in code history.
 /grovepad_*.pdf
+
+# Benchmark run artifacts — blessed baselines are copied to bench/baselines/.
+/bench/results/

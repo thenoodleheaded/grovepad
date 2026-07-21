@@ -1,21 +1,23 @@
 import { useEffect, useState } from 'react'
-import { useCanvasStore, type CanvasState } from '../store/useCanvasStore'
+import { useCanvasStore } from '../store/useCanvasStore'
 import type { Size } from '../types/spatial'
 import { viewportToWorldRect, type WorldRect } from '../utils/canvasView'
-import {
-  isCameraMotionActive,
-  subscribeCameraMotion,
-} from '../runtime/cameraMotionRuntime'
+import { cameraEngine, subscribeCameraMotion } from '../engine/camera/cameraEngine'
 
 /**
- * World-space chunk the visible rect snaps to. Culling only recomputes when
- * the camera crosses a chunk boundary, so ordinary panning costs zero React
- * work — the world layer's CSS transform does everything.
+ * Motion-aware quantization (canvas engine contract §4). Culling only
+ * recomputes when the camera crosses a chunk/bucket boundary, so ordinary
+ * panning costs zero React work — the world layer's CSS transform does
+ * everything. The faster the camera, the coarser the boundaries and the
+ * rarer the flushes: a zoom gesture that crossed ~47 fine buckets (one
+ * SVG-layer re-render each) crosses a handful of coarse ones instead, and
+ * the settle flush restores full precision.
  */
-const VIEW_CHUNK = 256
-
-/** Zoom is bucketed so tiny pinch jitter doesn't invalidate camera culling. */
-const ZOOM_BUCKET = 0.02
+const GRANULARITY = {
+  idle: { chunk: 256, zoomBucket: 0.02, minIntervalMs: 0 },
+  moving: { chunk: 512, zoomBucket: 0.05, minIntervalMs: 120 },
+  fast: { chunk: 1024, zoomBucket: 0.15, minIntervalMs: 200 },
+} as const
 
 export interface QuantizedView {
   /** Visible world rect, expanded by overscan and snapped outward to chunks. */
@@ -25,16 +27,19 @@ export interface QuantizedView {
   viewportSize: Size
 }
 
-function computeView(state: CanvasState, overscanScreen: number): QuantizedView {
-  const raw = viewportToWorldRect(state.pan, state.zoom, state.viewportSize, overscanScreen)
-  const x = Math.floor(raw.x / VIEW_CHUNK) * VIEW_CHUNK
-  const y = Math.floor(raw.y / VIEW_CHUNK) * VIEW_CHUNK
-  const right = Math.ceil((raw.x + raw.width) / VIEW_CHUNK) * VIEW_CHUNK
-  const bottom = Math.ceil((raw.y + raw.height) / VIEW_CHUNK) * VIEW_CHUNK
+function computeView(overscanScreen: number): QuantizedView {
+  const { pan, zoom } = cameraEngine.getFrame()
+  const viewportSize = cameraEngine.getViewportSize()
+  const { chunk, zoomBucket } = GRANULARITY[cameraEngine.getVelocity().tier]
+  const raw = viewportToWorldRect(pan, zoom, viewportSize, overscanScreen)
+  const x = Math.floor(raw.x / chunk) * chunk
+  const y = Math.floor(raw.y / chunk) * chunk
+  const right = Math.ceil((raw.x + raw.width) / chunk) * chunk
+  const bottom = Math.ceil((raw.y + raw.height) / chunk) * chunk
   return {
     rect: { x, y, width: right - x, height: bottom - y },
-    zoom: Math.round(state.zoom / ZOOM_BUCKET) * ZOOM_BUCKET,
-    viewportSize: state.viewportSize,
+    zoom: Math.round(zoom / zoomBucket) * zoomBucket,
+    viewportSize,
   }
 }
 
@@ -45,68 +50,106 @@ function sameView(a: QuantizedView, b: QuantizedView): boolean {
     a.rect.width === b.rect.width &&
     a.rect.height === b.rect.height &&
     a.zoom === b.zoom &&
-    a.viewportSize === b.viewportSize
+    a.viewportSize.width === b.viewportSize.width &&
+    a.viewportSize.height === b.viewportSize.height
   )
 }
 
 /**
  * rAF-coalesced, chunk-quantized camera snapshot for world-space layers.
  *
- * High-frequency pan/zoom updates are folded to at most one state check per
- * frame, and the returned snapshot only changes identity when the quantized
- * rect, zoom bucket, or viewport actually change — so subscribing components
- * do not re-render at all during in-chunk panning.
+ * Engine frames are folded to at most one recompute per animation frame, and
+ * the snapshot only changes identity when the quantized rect, zoom bucket, or
+ * viewport actually change — so subscribers never re-render during in-chunk
+ * panning, and culling keeps up continuously during motion (the old pipeline
+ * paused culling mid-gesture and paid for it with a giant settle reveal).
  */
-export function useQuantizedView(overscanScreen: number): QuantizedView {
-  const [view, setView] = useState(() =>
-    computeView(useCanvasStore.getState(), overscanScreen),
-  )
+export interface QuantizedViewOptions {
+  /** Layers whose pixels the sprite underlay carries during motion set this:
+   * no recomputes at all while the camera moves — one settle reconcile. */
+  freezeWhileMoving?: boolean
+}
+
+/** Settle stagger: each frozen consumer reconciles in its own slot a few
+ * frames apart, so four heavy layers never share one settle frame (the
+ * convoy that produced multi-hundred-ms commits at CPU throttle). */
+const SETTLE_STAGGER_MS = 45
+let nextStaggerSlot = 0
+
+export function useQuantizedView(
+  overscanScreen: number,
+  { freezeWhileMoving = false }: QuantizedViewOptions = {},
+): QuantizedView {
+  const [view, setView] = useState(() => computeView(overscanScreen))
 
   useEffect(() => {
-    let latest = useCanvasStore.getState()
     let rafId = 0
+    let holdTimer: ReturnType<typeof setTimeout> | null = null
+    let lastFlushAt = 0
+    const staggerSlot = freezeWhileMoving ? nextStaggerSlot++ % 4 : 0
 
     const flush = () => {
       rafId = 0
-      const next = computeView(latest, overscanScreen)
+      lastFlushAt = performance.now()
+      const next = computeView(overscanScreen)
       setView((prev) => (sameView(prev, next) ? prev : next))
+    }
+
+    // Flushes are rAF-aligned but also tier-throttled: mid-motion a flush may
+    // fire at most once per the tier's min interval, so a fast zoom crosses
+    // coarse buckets a few times instead of re-rendering per fine bucket.
+    // Frozen layers skip motion flushes entirely — settle reconciles them.
+    const request = () => {
+      if (rafId !== 0 || holdTimer !== null) return
+      const tier = cameraEngine.getVelocity().tier
+      if (freezeWhileMoving && tier !== 'idle') return
+      const { minIntervalMs } = GRANULARITY[tier]
+      const wait = minIntervalMs - (performance.now() - lastFlushAt)
+      if (wait > 0) {
+        holdTimer = setTimeout(() => {
+          holdTimer = null
+          if (rafId === 0) rafId = requestAnimationFrame(flush)
+        }, wait)
+        return
+      }
+      rafId = requestAnimationFrame(flush)
     }
 
     // Catch changes that landed between render and effect setup.
     flush()
 
-    const unsubscribe = useCanvasStore.subscribe((state) => {
-      if (
-        state.pan === latest.pan &&
-        state.zoom === latest.zoom &&
-        state.viewportSize === latest.viewportSize
-      ) {
-        return
-      }
-      latest = state
-      // The live SVG/group layers are hidden behind the detailed motion
-      // surface. Re-rendering all four culling consumers for every zoom bucket
-      // would spend React work on pixels the user cannot see; reconcile them
-      // once with the final view during the two-frame reveal handoff instead.
-      if (isCameraMotionActive()) return
-      if (rafId === 0) rafId = requestAnimationFrame(flush)
-    })
+    const unsubscribeFrames = cameraEngine.onFrame(request)
+    // Settle: cancel any hold and reconcile at full precision — frozen
+    // consumers each in their own stagger slot so they never share a frame.
     const unsubscribeMotion = subscribeCameraMotion((active) => {
-      latest = useCanvasStore.getState()
-      if (active) {
-        if (rafId !== 0) cancelAnimationFrame(rafId)
-        rafId = 0
+      if (active) return
+      if (holdTimer !== null) {
+        clearTimeout(holdTimer)
+        holdTimer = null
+      }
+      if (rafId !== 0) return
+      if (staggerSlot === 0) {
+        rafId = requestAnimationFrame(flush)
         return
       }
-      if (rafId === 0) rafId = requestAnimationFrame(flush)
+      holdTimer = setTimeout(() => {
+        holdTimer = null
+        if (rafId === 0) rafId = requestAnimationFrame(flush)
+      }, staggerSlot * SETTLE_STAGGER_MS)
+    })
+    // Viewport size arrives through the store, not engine frames.
+    const unsubscribeStore = useCanvasStore.subscribe((state, previous) => {
+      if (state.viewportSize !== previous.viewportSize) request()
     })
 
     return () => {
       if (rafId !== 0) cancelAnimationFrame(rafId)
-      unsubscribe()
+      if (holdTimer !== null) clearTimeout(holdTimer)
+      unsubscribeFrames()
       unsubscribeMotion()
+      unsubscribeStore()
     }
-  }, [overscanScreen])
+  }, [overscanScreen, freezeWhileMoving])
 
   return view
 }

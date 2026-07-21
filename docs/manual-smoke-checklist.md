@@ -17,4 +17,14 @@ Run this checklist after every implementation phase, against a production build 
 - [ ] Exercise Owner, Editor, Commenter, and Viewer accounts: only Owner manages access; Owner/Editor mutate; Commenter posts and replies only; Viewer remains read-only. Confirm prohibited direct API writes are rejected by RLS.
 - [ ] Follow a collaborator while they pan and zoom; confirm local camera controls lock until follow is stopped and reduced-motion mode does not add cursor animation.
 
+## Canvas engine (docs/canvas-engine.md)
+
+- [ ] Drag-pan, wheel-pan, and ctrl/pinch zoom track the pointer exactly; `html[data-canvas-motion]` reaches `fast` during a fling and returns to `idle` after stopping.
+- [ ] Marquee select (Select mode drag or Shift+drag) selects exactly the enclosed widgets, and the camera does not move during the marquee.
+- [ ] On a large board (`?bench=1` → prepare), the full-board overview appears instantly, far cards render as sprites, and stopping re-crisps nearby cards within a beat.
+- [ ] Widget drag, resize, group (Cmd+G), and undo behave identically to a small board; no console errors during the whole pass.
+- [ ] `npm run bench:canvas` (BENCH_HEADED=1) gates: coverage, residency, and cold-open PASS; frame numbers recorded in the handoff.
+
+*Last executed 2026-07-21 (canvas-engine branch, commit 94ec7cc): all items above verified in Chromium; marquee failure observed once was an HMR ghost-listener artifact — passed after fresh reload.*
+
 The phase gate is complete only when build, lint, automated tests, and all applicable checklist items pass. Items blocked by unavailable credentials or browser capabilities must be recorded explicitly in the phase handoff.

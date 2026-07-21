@@ -9,7 +9,7 @@ import { IconButton } from './IconButton'
 import {
   isCameraMotionActive,
   subscribeCameraMotion,
-} from '../../runtime/cameraMotionRuntime'
+} from '../../engine/camera/cameraEngine'
 
 const ZOOM_STEP = 1.25
 const ZOOM_PRESETS = [25, 50, 75, 100, 150, 200]

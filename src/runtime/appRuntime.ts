@@ -1,4 +1,6 @@
 import { initCircuitEngine } from '../engine/circuitEngine'
+import { initWidgetModulePrefetch } from '../engine/loader/idlePrefetch'
+import { isBenchMode } from '../bench/benchMode'
 import { useCanvasStore } from '../store/useCanvasStore'
 import { useWidgetStore } from '../store/useWidgetStore'
 import { initPersistence } from '../utils/persistence'
@@ -59,7 +61,10 @@ function initSignedInCollaboration(): () => void {
 }
 
 const appRuntime = createRuntimeBoundary(() => [
-  initPersistence(useWidgetStore, useCanvasStore),
+  // Bench mode runs on a synthetic 2,000-widget board that must never be
+  // written into real storage; everything else about the app stays live.
+  isBenchMode() ? () => {} : initPersistence(useWidgetStore, useCanvasStore),
+  initWidgetModulePrefetch(),
   initDeployVersionMonitor(),
   initCircuitEngine(),
   initNativeFileOpen(),
