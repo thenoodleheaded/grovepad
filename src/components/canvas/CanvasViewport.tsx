@@ -36,6 +36,7 @@ import { WireLayer } from './WireLayer'
 import { AutomationRuntime } from './AutomationRuntime'
 import { useCircuitStore } from '../../store/useCircuitStore'
 import { GlueSeamLayer } from '../widgets/GlueSeamLayer'
+import { GlueClusterChrome } from '../widgets/GlueClusterChrome'
 import { WidgetLayer } from '../widgets/WidgetLayer'
 import { CanvasContextMenu } from '../ui/CanvasContextMenu'
 import { CanvasToolbar } from '../ui/CanvasToolbar'
@@ -739,6 +740,7 @@ export function CanvasViewport() {
         {canvasLinksVisible && <DependencyLines />}
         <GlueSeamLayer />
         <WidgetLayer />
+        <GlueClusterChrome />
         {/* Wires render above cards: they anchor to card-edge ports and their
             delivery pulses must stay visible while crossing the board. */}
         {canvasLinksVisible && <WireLayer />}

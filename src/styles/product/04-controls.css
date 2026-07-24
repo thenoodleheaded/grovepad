@@ -267,6 +267,65 @@ html[data-has-coarse-pointer='true'] .gp-widget-move-handle {
   }
 }
 
+/* ── Group frame ────────────────────────────────────────────────────────────
+ * A glued cluster's outer chrome: two subtle boundary lines (top and bottom,
+ * full width) and a title + button row floating above the top line. Quiet by
+ * default; the cards stay the subject. The welds between members are painted
+ * by GlueSeamLayer — this is only the enclosing frame.
+ * ------------------------------------------------------------------------- */
+.gp-group-line {
+  height: 2px;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--gp-relation-outline), transparent 55%);
+  opacity: 0.55;
+}
+
+.gp-group-bar {
+  padding: 2px 4px 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--gp-hairline);
+  background: color-mix(in oklab, var(--gp-surface-panel), transparent 8%);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  color: var(--gp-widget-muted-text);
+  opacity: 0.72;
+  transition: opacity var(--gp-duration-snap) var(--gp-ease-snap);
+}
+
+.gp-group-bar:hover,
+.gp-group-bar:focus-within {
+  opacity: 1;
+}
+
+.gp-group-name {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: color-mix(in oklab, currentColor, white 22%);
+  padding: 2px 4px;
+}
+
+.gp-group-name::placeholder {
+  color: color-mix(in oklab, currentColor, transparent 35%);
+}
+
+.gp-group-btn {
+  display: flex;
+  height: 20px;
+  width: 20px;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  color: var(--gp-widget-muted-text);
+  transition: background var(--gp-duration-snap) var(--gp-ease-snap), color var(--gp-duration-snap) var(--gp-ease-snap);
+}
+
+.gp-group-btn:hover {
+  background: var(--gp-hairline);
+  color: color-mix(in oklab, currentColor, white 40%);
+}
+
 /* Text editing inside a card belongs to that card's hue: caret, focus ring,
    selection, and native form controls (range, radio, native checkbox). */
 .gp-widget-content {

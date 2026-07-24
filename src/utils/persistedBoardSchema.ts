@@ -326,10 +326,14 @@ function parseGlueEnvelope(
 function sanitizeGlue(value: unknown, widgets: Record<string, Widget>): WidgetGlue | null {
   const envelope = parseGlueEnvelope(value, widgets)
   if (!envelope) return null
+  const rawName = envelope.source.name
+  const name =
+    typeof rawName === 'string' && rawName.trim() ? rawName.replace(/\s+/g, ' ').trim().slice(0, 60) : undefined
   return {
     ...envelope.source,
     id: envelope.source.id,
     widgetIds: envelope.widgetIds,
+    ...(name ? { name } : {}),
   } as unknown as WidgetGlue
 }
 

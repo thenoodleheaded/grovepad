@@ -252,4 +252,59 @@ describe('dragging glued widgets', () => {
     expect(state.widgetGlueIndex[b]).toBeUndefined()
     expect(Object.values(state.glues).some((glue) => glue.widgetIds.includes(b))).toBe(false)
   })
+
+  it('ungroups a whole cluster back into free widgets without deleting any', () => {
+    const [a, b] = createPair()
+    useWidgetStore.getState().glueWidgets(b, a)
+    const glueId = useWidgetStore.getState().widgetGlueIndex[a]!
+    useWidgetStore.getState().unglueCluster(glueId)
+    const state = useWidgetStore.getState()
+    expect(state.glues[glueId]).toBeUndefined()
+    expect(state.widgetGlueIndex[a]).toBeUndefined()
+    expect(state.widgetGlueIndex[b]).toBeUndefined()
+    // Neither widget is deleted — only the weld is gone.
+    expect(state.widgets[a]).toBeDefined()
+    expect(state.widgets[b]).toBeDefined()
+    // Ungroup rides its own history step.
+    useWidgetStore.getState().undo()
+    expect(useWidgetStore.getState().widgetGlueIndex[a]).toBe(glueId)
+  })
+
+  it('names a cluster and clears the name back to default', () => {
+    const [a, b] = createPair()
+    useWidgetStore.getState().glueWidgets(b, a)
+    const glueId = useWidgetStore.getState().widgetGlueIndex[a]!
+    useWidgetStore.getState().renameGlue(glueId, '  Launch  plan  ')
+    expect(useWidgetStore.getState().glues[glueId]!.name).toBe('Launch plan')
+    useWidgetStore.getState().renameGlue(glueId, '   ')
+    expect(useWidgetStore.getState().glues[glueId]!.name).toBeUndefined()
+  })
+
+  it('collapses every member to an icon and re-packs the cluster grid-aligned', () => {
+    const [a, b] = createPair()
+    useWidgetStore.getState().glueWidgets(b, a)
+    const glueId = useWidgetStore.getState().widgetGlueIndex[a]!
+    useWidgetStore.getState().setClusterCollapsed(glueId, true)
+    const collapsed = useWidgetStore.getState()
+    expect(collapsed.widgets[a]!.iconified).toBe(true)
+    expect(collapsed.widgets[b]!.iconified).toBe(true)
+    // Members re-pack touching on the grid, still one welded cluster.
+    const left = [collapsed.widgets[a]!, collapsed.widgets[b]!].sort((x, y) => x.position.x - y.position.x)
+    expect(left[1]!.position.x - (left[0]!.position.x + left[0]!.size.width)).toBe(0)
+    expect(left[0]!.position.x % 40).toBe(0)
+    expect(collapsed.widgetGlueIndex[a]).toBe(glueId)
+    // Expanding restores full cards.
+    useWidgetStore.getState().setClusterCollapsed(glueId, false)
+    expect(useWidgetStore.getState().widgets[a]!.iconified).toBe(false)
+  })
+
+  it('round-trips a cluster name through a snapshot', () => {
+    const [a, b] = createPair()
+    useWidgetStore.getState().glueWidgets(b, a)
+    const glueId = useWidgetStore.getState().widgetGlueIndex[a]!
+    useWidgetStore.getState().renameGlue(glueId, 'Sprint board')
+    const parsed = parsePersistedBoard(buildBoardSnapshot(useWidgetStore.getState()))!
+    const glue = Object.values(parsed.glues).find((entry) => entry.widgetIds.includes(a))
+    expect(glue?.name).toBe('Sprint board')
+  })
 })

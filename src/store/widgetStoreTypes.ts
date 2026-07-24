@@ -159,6 +159,14 @@ export interface WidgetStoreState {
   glueWidgets: (draggedId: string, targetId: string) => void
   /** Pull one widget off its cluster; dissolves a cluster left with < 2. */
   unglueWidget: (widgetId: string, options?: { skipHistory?: boolean }) => boolean
+  /** Dissolve a whole cluster back into free widgets (the group frame's
+   *  Ungroup button). No widget is deleted; only the weld is removed. */
+  unglueCluster: (glueId: string) => void
+  /** Rename a cluster's group label; empty clears it back to the default. */
+  renameGlue: (glueId: string, name: string) => void
+  /** Collapse every cluster member to an icon, or expand them all back, and
+   *  re-pack the cluster touching so it stays a grid-aligned welded block. */
+  setClusterCollapsed: (glueId: string, collapsed: boolean) => void
   /** Commit the live glue intent: snap the dragged widget to the previewed
    *  0.3-cell seam and weld it to the target. True when a bond committed. */
   commitGlue: () => boolean

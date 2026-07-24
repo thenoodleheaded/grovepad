@@ -2,8 +2,12 @@ import { useToastStore } from '../useToastStore'
 import { applyWidgetPositions } from '../widgetCollection'
 import { buildGlueIndex } from '../widgetGraph'
 import { reconcileGlueClusters } from '../../utils/glueGeometry'
-import type { WidgetGlue } from '../../types/spatial'
+import { clusterLayout } from '../treeCommitLayout'
+import { settleWidgetsByCanvas } from '../widgetSettling'
+import { ICONIFIED_SIZE, snapToGrid, type Size, type Widget, type WidgetGlue } from '../../types/spatial'
 import type { WidgetStoreSlice, WidgetStoreSliceContext } from '../widgetStoreSliceContext'
+
+const MAX_GLUE_NAME = 60
 
 function sameCanvas(
   aId: string,
@@ -74,6 +78,84 @@ export function createGlueSlice({ set, get, pushHistory }: WidgetStoreSliceConte
     })
     useToastStore.getState().addToast('Unglued')
     return true
+  },
+
+  unglueCluster: (glueId) => {
+    if (!get().glues[glueId]) return
+    pushHistory()
+    set((state) => {
+      if (!state.glues[glueId]) return state
+      const glues = { ...state.glues }
+      delete glues[glueId]
+      return { glues, widgetGlueIndex: buildGlueIndex(glues) }
+    })
+    useToastStore.getState().addToast('Ungrouped')
+  },
+
+  renameGlue: (glueId, name) => {
+    const glue = get().glues[glueId]
+    if (!glue) return
+    const clean = name.replace(/\s+/g, ' ').trim().slice(0, MAX_GLUE_NAME)
+    if ((glue.name ?? '') === clean) return
+    pushHistory()
+    set((state) => {
+      const current = state.glues[glueId]
+      if (!current) return state
+      const next: WidgetGlue = { ...current }
+      if (clean) next.name = clean
+      else delete next.name
+      return { glues: { ...state.glues, [glueId]: next } }
+    })
+  },
+
+  setClusterCollapsed: (glueId, collapsed) => {
+    const glue = get().glues[glueId]
+    if (!glue) return
+    pushHistory()
+    set((state) => {
+      const cluster = state.glues[glueId]
+      if (!cluster) return state
+      const memberIds = cluster.widgetIds.filter((id) => state.widgets[id])
+      if (memberIds.length === 0) return state
+      // The cluster keeps its top-left anchor, grid-snapped, and re-packs its
+      // members touching at their new sizes — so collapsing to icons (or
+      // expanding back) leaves one grid-aligned welded block, not a scatter.
+      let anchorX = Infinity
+      let anchorY = Infinity
+      for (const id of memberIds) {
+        anchorX = Math.min(anchorX, state.widgets[id]!.position.x)
+        anchorY = Math.min(anchorY, state.widgets[id]!.position.y)
+      }
+      anchorX = snapToGrid(anchorX)
+      anchorY = snapToGrid(anchorY)
+      const resized = new Map<string, { widget: Widget; size: Size }>()
+      for (const id of memberIds) {
+        const widget = state.widgets[id]!
+        if (collapsed) {
+          const expandedSize = widget.expandedSize ?? widget.size
+          resized.set(id, {
+            widget: { ...widget, iconified: true, expandedSize, size: { ...ICONIFIED_SIZE } },
+            size: { ...ICONIFIED_SIZE },
+          })
+        } else {
+          const size = widget.expandedSize ?? widget.size
+          resized.set(id, { widget: { ...widget, iconified: false, size }, size })
+        }
+      }
+      const layout = clusterLayout(memberIds.map((id) => resized.get(id)!.size))
+      const widgets = { ...state.widgets }
+      memberIds.forEach((id, index) => {
+        const offset = layout.offsets[index] ?? { x: 0, y: 0 }
+        widgets[id] = {
+          ...resized.get(id)!.widget,
+          position: { x: anchorX + offset.x, y: anchorY + offset.y },
+        }
+      })
+      return {
+        widgets: settleWidgetsByCanvas(widgets, memberIds, state.widgetGlueIndex),
+        widgetStructureVersion: state.widgetStructureVersion + 1,
+      }
+    })
   },
 
   commitGlue: () => {

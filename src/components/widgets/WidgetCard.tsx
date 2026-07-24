@@ -10,10 +10,7 @@ import { GRID_SIZE, WIDGET_MAX_EDGE } from '../../types/spatial'
 import { WIDGET_HOVER_RIGHT, WIDGET_HOVER_TOP } from '../../utils/widgetBounds'
 import {
   findGlueSnap,
-  glueBoxRect,
   glueMemberInsets,
-  GLUE_MIN_OVERLAP,
-  GLUE_SEAM_MAX,
   pulledFreeOfCluster,
 } from '../../utils/glueGeometry'
 import { resolveLinkTargetAt } from '../../utils/linkTarget'
@@ -109,28 +106,10 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
   // This card is the target an option-drag would weld to right now — glows so
   // the near-invisible seam preview is not the only "about to glue" cue.
   const isGlueTarget = useWidgetStore((state) => state.glueIntent?.targetId === widgetId)
-  // A clustermate is welded directly onto this card's top edge, so this card's
-  // own title label — which floats half a cell above the card — would land on
-  // that neighbour. Suppress it; the topmost card carries the cluster's title.
-  const hasGluedNeighborAbove = useWidgetStore((state) => {
-    const glueId = state.widgetGlueIndex[widgetId]
-    if (!glueId) return false
-    const self = state.widgets[widgetId]
-    if (!self) return false
-    const members = state.glues[glueId]?.widgetIds ?? []
-    const selfBox = glueBoxRect(self)
-    for (const memberId of members) {
-      if (memberId === widgetId) continue
-      const other = state.widgets[memberId]
-      if (!other) continue
-      const box = glueBoxRect(other)
-      const gapY = selfBox.y - (box.y + box.height)
-      const overlapX =
-        Math.min(selfBox.x + selfBox.width, box.x + box.width) - Math.max(selfBox.x, box.x)
-      if (gapY >= -2 && gapY <= GLUE_SEAM_MAX && overlapX >= GLUE_MIN_OVERLAP) return true
-    }
-    return false
-  })
+  // A glued member hides its own floating title capsule: the cluster's group
+  // frame (GlueClusterChrome) carries the shared group name above the whole
+  // cluster, so a per-card label would only clutter and collide with it.
+  const isGluedMember = useWidgetStore((state) => Boolean(state.widgetGlueIndex[widgetId]))
 
   // Render inset for a glued member: each welded edge gives up GLUE_HALF_GAP so
   // the seam is carved equally from both cards and the cluster's outer corners
@@ -819,7 +798,7 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
   const capsuleHidden = (iconified || restIcon) && !titleEditing
   // A card welded below a clustermate hides its floating title too — it would
   // otherwise land on the neighbour above. Renaming (F2) still forces it back.
-  const titleChromeHidden = capsuleHidden || (hasGluedNeighborAbove && !titleEditing)
+  const titleChromeHidden = capsuleHidden || (isGluedMember && !titleEditing)
   const def = widgetDefinition(widget.type)
   const treeRevealMs = treeRevealDelay('widget', widgetId)
   const Icon = def.icon

@@ -161,6 +161,9 @@ export const WIDGET_MAX_EDGE = CELL * 32 // 1280px
 export interface WidgetGlue {
   id: string
   widgetIds: string[]
+  /** Owner-editable label shown in the cluster's group frame. Defaults to
+   * "Group" in the UI when unset; never required for the weld to work. */
+  name?: string
 }
 
 // ---------------------------------------------------------------------------

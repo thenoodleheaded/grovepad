@@ -15,7 +15,7 @@ export const GLUE_GAP = Math.round(GRID_SIZE * 0.3) // 12
 
 /** Half the seam — the inset each of two touching cards gives up on their
  * shared edge, so the gap comes out of both sizes equally. */
-export const GLUE_HALF_GAP = Math.round(GLUE_GAP / 2) // 6
+const GLUE_HALF_GAP = Math.round(GLUE_GAP / 2) // 6
 
 /**
  * Reach of the option-drag gesture, edge to edge: inside one grid cell the
@@ -27,7 +27,7 @@ export const GLUE_RANGE = GRID_SIZE // 40
 
 /** A bond needs this much shared edge before two cards count as facing each
  * other — less than half a cell of overlap is a corner graze, not a weld. */
-export const GLUE_MIN_OVERLAP = GRID_SIZE / 2 // 20
+const GLUE_MIN_OVERLAP = GRID_SIZE / 2 // 20
 
 /** How far an option-drag may overshoot its target — pushing the dragged card
  * a little *into* the one it means to weld to — and still snap back onto the
@@ -39,7 +39,7 @@ const GLUE_OVERSHOOT = Math.round(GRID_SIZE / 2) // 20
 
 /** Seams wider than this no longer render a weld: the cards have visibly come
  * apart (content growth, manual nudge) even though the bond persists. */
-export const GLUE_SEAM_MAX = Math.round(GRID_SIZE * 0.75) // 30
+const GLUE_SEAM_MAX = Math.round(GRID_SIZE * 0.75) // 30
 
 /** The box a glued widget visually occupies: its resting tile while it rests,
  * otherwise its stored card. Welds hug what the eye sees, not dormant sizes. */
