@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { buildBoardSnapshot } from '../utils/persistence'
 import { parsePersistedBoard } from '../utils/persistedBoardSchema'
-import { GLUE_GAP } from '../utils/glueGeometry'
+import { GLUE_GAP, insetGlueRects } from '../utils/glueGeometry'
 import { useWidgetStore } from './useWidgetStore'
 
 const baseline = parsePersistedBoard(buildBoardSnapshot(useWidgetStore.getState()))!
@@ -73,10 +73,15 @@ describe('ghost tree widget bundles', () => {
     expect([...state.glues[glueId!]!.widgetIds].sort()).toEqual(bundle.map((widget) => widget.id).sort())
     expect(state.widgetGlueIndex[singleton.id]).toBeUndefined()
 
-    // The bundle's two members sit exactly one weld seam apart, so the glue
-    // renders — the grid snap on commit never rounds the 0.3-cell seam away.
+    // The bundle's two members are stored touching (grid-aligned), and their
+    // rendered (inset) boxes sit exactly one weld seam apart — the seam is
+    // carved from both cards, so the cluster's outer corners hold the grid.
     const [left, right] = [...bundle].sort((a, b) => a.position.x - b.position.x)
-    expect(right!.position.x - (left!.position.x + left!.size.width)).toBe(GLUE_GAP)
+    expect(right!.position.x - (left!.position.x + left!.size.width)).toBe(0)
+    const rects = insetGlueRects(bundle.map((w) => w.id), state.widgets)
+    const rl = rects.get(left!.id)!
+    const rr = rects.get(right!.id)!
+    expect(rr.x - (rl.x + rl.width)).toBe(GLUE_GAP)
 
     // Undo takes the cluster with the widgets — no orphaned glue record.
     useWidgetStore.getState().undo()

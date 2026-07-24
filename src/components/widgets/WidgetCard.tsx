@@ -1,4 +1,5 @@
 import { memo, useEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react'
+import { useShallow } from 'zustand/react/shallow'
 import { Check, Plus, Sparkles, Star, Trash2, TriangleAlert, Pin, Copy, FileText } from 'lucide-react'
 import { ErrorBoundary } from '../ErrorBoundary'
 import { useCanvasStore } from '../../store/useCanvasStore'
@@ -10,6 +11,7 @@ import { WIDGET_HOVER_RIGHT, WIDGET_HOVER_TOP } from '../../utils/widgetBounds'
 import {
   findGlueSnap,
   glueBoxRect,
+  glueMemberInsets,
   GLUE_MIN_OVERLAP,
   GLUE_SEAM_MAX,
   pulledFreeOfCluster,
@@ -87,6 +89,9 @@ interface LinkDragState {
 
 const isInteractiveTarget = isInteractiveWidgetTarget
 
+/** Stable "no glue inset" so an unglued card's selector keeps one identity. */
+const GLUE_NO_INSET = { left: 0, right: 0, top: 0, bottom: 0 } as const
+
 export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps) {
   const widget = useWidgetStore((state) => state.widgets[widgetId])
   const isBlocked = useWidgetStore((state) => state.blockedWidgetIds.has(widgetId))
@@ -126,6 +131,19 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
     }
     return false
   })
+
+  // Render inset for a glued member: each welded edge gives up GLUE_HALF_GAP so
+  // the seam is carved equally from both cards and the cluster's outer corners
+  // stay on the grid. Zero on every free edge and when unglued. useShallow so a
+  // fresh object with identical numbers never re-renders the card.
+  const glueInset = useWidgetStore(
+    useShallow((state) => {
+      const glueId = state.widgetGlueIndex[widgetId]
+      if (!glueId) return GLUE_NO_INSET
+      const members = state.glues[glueId]?.widgetIds ?? []
+      return glueMemberInsets(widgetId, members, state.widgets)
+    }),
+  )
 
   const ghostOffset = useDragDisplacementStore((state) => state.offsets[widgetId])
   const settlePending = useDragDisplacementStore((state) => state.pendingSettleIds.has(widgetId))
@@ -839,7 +857,17 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
         : iconLike
           ? Math.round(iconEdge * 0.26)
           : 22
-  const effectiveSize = resting && restTile ? restTile : widget.size
+  const baseSize = resting && restTile ? restTile : widget.size
+  // A glued member shrinks by its welded-edge insets and shifts by the leading
+  // (left/top) insets, so the gap comes out of both cards equally and the
+  // cluster's outer corners hold the grid. An expanded card floats free of the
+  // cluster, so it never insets. Everything downstream reads this effective box.
+  const glueShrunk = restExpanded ? GLUE_NO_INSET : glueInset
+  const effectiveSize = {
+    width: baseSize.width - glueShrunk.left - glueShrunk.right,
+    height: baseSize.height - glueShrunk.top - glueShrunk.bottom,
+  }
+  const glueOffset = { x: glueShrunk.left, y: glueShrunk.top }
   // The offset this card opened with: it grows out of the middle of its own
   // tile, so the thing you pressed stays put instead of the card unfolding
   // down-and-right. Captured once at expansion and held still after that, so
@@ -873,9 +901,9 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
         // cards preview their post-drop spot without their stored position
         // (or anything downstream of it) changing until commit.
         transform: `translate3d(${
-          widget.position.x + (ghostOffset?.x ?? 0) + restOffset.x
+          widget.position.x + (ghostOffset?.x ?? 0) + restOffset.x + glueOffset.x
         }px, ${
-          widget.position.y + (ghostOffset?.y ?? 0) + restOffset.y
+          widget.position.y + (ghostOffset?.y ?? 0) + restOffset.y + glueOffset.y
         }px, 0)`,
         width: effectiveSize.width,
         height: effectiveSize.height,

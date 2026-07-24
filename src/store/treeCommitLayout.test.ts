@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest'
-import { GLUE_GAP } from '../utils/glueGeometry'
 import {
   clusterLayout,
   layoutCommittedTree,
@@ -42,12 +41,12 @@ describe('clusterLayout', () => {
     expect(layout).toEqual({ width: 320, height: 240, offsets: [{ x: 0, y: 0 }] })
   })
 
-  it('packs two members at the exact weld seam so the glue renders', () => {
+  it('packs members touching so the cluster stays grid-aligned', () => {
     const layout = clusterLayout([CARD, CARD])
-    // Second card sits GLUE_GAP past the first — the 0.3-cell seam, not a
-    // full grid cell, so the commit can weld them into one visible cluster.
-    expect(layout.offsets[1]!.x - (layout.offsets[0]!.x + CARD.width)).toBe(GLUE_GAP)
-    expect(layout.width).toBe(CARD.width * 2 + GLUE_GAP)
+    // Second card sits flush against the first (no stored gap) — the 0.3-cell
+    // seam is a render inset, so the cluster's outer corners hold the grid.
+    expect(layout.offsets[1]!.x - (layout.offsets[0]!.x + CARD.width)).toBe(0)
+    expect(layout.width).toBe(CARD.width * 2)
   })
 
   it('wraps into rows and never overlaps members', () => {

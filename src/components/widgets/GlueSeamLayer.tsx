@@ -8,6 +8,7 @@ import {
   glueBoxRect,
   glueSeamBetween,
   glueSeamsForCluster,
+  insetGlueRects,
   type GlueSeam,
 } from '../../utils/glueGeometry'
 import { widgetAccent } from '../../utils/widgetSkins'
@@ -157,12 +158,13 @@ export function GlueSeamLayer() {
     const target = widgets[glueIntent.targetId]
     if (!dragged || !target) return null
     const snapped: Widget = { ...dragged, position: glueIntent.position }
-    const seam = glueSeamBetween(
-      snapped.id,
-      glueBoxRect(snapped),
-      target.id,
-      glueBoxRect(target),
-    )
+    // The snap position touches the target (gap 0); the seam lives in the
+    // insets both cards give up, so measure it from the inset boxes.
+    const rects = insetGlueRects([snapped.id, target.id], {
+      [snapped.id]: snapped,
+      [target.id]: target,
+    })
+    const seam = glueSeamBetween(snapped.id, rects.get(snapped.id)!, target.id, rects.get(target.id)!)
     return seam ? { seam, a: snapped, b: target } : null
   }, [glueIntent, widgets])
 

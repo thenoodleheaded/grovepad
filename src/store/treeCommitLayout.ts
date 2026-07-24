@@ -1,6 +1,5 @@
 import type { Size, Vector2D } from '../types/spatial'
 import { GRID_SIZE, snapToGrid } from '../types/spatial'
-import { GLUE_GAP } from '../utils/glueGeometry'
 
 // ---------------------------------------------------------------------------
 // Committed tree-shaper layout.
@@ -47,11 +46,12 @@ interface ClusterLayout {
 }
 
 /**
- * Packs one node's widgets weld-adjacent, at the exact `GLUE_GAP` (0.3-cell)
- * seam on both axes, so the commit can glue them into one welded cluster whose
- * seams render immediately. Top-aligned within each row, which keeps one flush
- * rim and one line of title capsules; rows wrap into a near-square block so a
- * 4-widget node reads as a filled 2×2 weld.
+ * Packs one node's widgets grid-aligned and touching (no gap), so the commit
+ * can weld them into one cluster whose outer corners land on the grid. The
+ * 0.3-cell seam is not stored here — each glued member renders inset by
+ * `GLUE_HALF_GAP`, carving the gap equally from both cards. Top-aligned within
+ * each row (one flush rim, one line of title capsules); rows wrap into a
+ * near-square block so a 4-widget node reads as a filled 2×2 weld.
  */
 export function clusterLayout(sizes: readonly Size[]): ClusterLayout {
   if (sizes.length === 0) return { width: 0, height: 0, offsets: [] }
@@ -65,20 +65,16 @@ export function clusterLayout(sizes: readonly Size[]): ClusterLayout {
     rowIndexOf.push(row)
   }
 
-  const rowWidths = rows.map((row) =>
-    row.reduce((total, size) => total + size.width, 0) + Math.max(0, row.length - 1) * GLUE_GAP,
-  )
+  const rowWidths = rows.map((row) => row.reduce((total, size) => total + size.width, 0))
   const rowHeights = rows.map((row) => Math.max(...row.map((size) => size.height)))
   const width = Math.max(...rowWidths)
-  const height =
-    rowHeights.reduce((total, value) => total + value, 0) +
-    Math.max(0, rows.length - 1) * GLUE_GAP
+  const height = rowHeights.reduce((total, value) => total + value, 0)
 
   const rowTops: number[] = []
   let y = 0
   for (const rowHeight of rowHeights) {
     rowTops.push(y)
-    y += rowHeight + GLUE_GAP
+    y += rowHeight
   }
 
   const offsets: Vector2D[] = []
@@ -86,7 +82,7 @@ export function clusterLayout(sizes: readonly Size[]): ClusterLayout {
   for (let i = 0; i < sizes.length; i += 1) {
     const row = rowIndexOf[i]!
     offsets.push({ x: cursorByRow[row]!, y: rowTops[row]! })
-    cursorByRow[row] = cursorByRow[row]! + sizes[i]!.width + GLUE_GAP
+    cursorByRow[row] = cursorByRow[row]! + sizes[i]!.width
   }
   return { width, height, offsets }
 }

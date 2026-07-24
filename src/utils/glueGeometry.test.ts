@@ -9,6 +9,7 @@ import {
   glueSeamBetween,
   glueSeamsForCluster,
   glueSeparation,
+  insetGlueRects,
   pulledFreeOfCluster,
   reconcileGlueClusters,
 } from './glueGeometry'
@@ -89,6 +90,19 @@ describe('glue seams', () => {
     expect(seams.filter((seam) => seam.axis === 'y')).toHaveLength(2)
     expect(seams.filter((seam) => seam.axis === 'corner')).toHaveLength(2)
   })
+
+  it('insets touching members so the carved seam is exactly GLUE_GAP', () => {
+    // Two grid-aligned cards stored edge to edge (gap 0). The seam is carved
+    // half from each, and the outer corners never move off the grid.
+    const widgets = { a: widget('a', 0, 0, 200, 160), b: widget('b', 200, 0, 200, 160) }
+    const rects = insetGlueRects(['a', 'b'], widgets)
+    const ra = rects.get('a')!
+    const rb = rects.get('b')!
+    expect(rb.x - (ra.x + ra.width)).toBe(GLUE_GAP)
+    expect(ra.x).toBe(0)
+    expect(rb.x + rb.width).toBe(400)
+    expect(glueSeamsForCluster(['a', 'b'], widgets).map((seam) => seam.axis)).toEqual(['x'])
+  })
 })
 
 describe('option-drag glue snapping', () => {
@@ -98,19 +112,19 @@ describe('option-drag glue snapping', () => {
     const snap = findGlueSnap(dragged, { dragged, target })!
     expect(snap.targetId).toBe('target')
     expect(snap.axis).toBe('x')
-    // Bond axis: target right edge (60 + 240) + GLUE_GAP. Perpendicular:
-    // the hand's y=10 snaps to the grid so the weld lands flush-aligned.
-    expect(snap.position).toEqual({ x: 300 + GLUE_GAP, y: 0 })
+    // Bond axis: the dragged edge TOUCHES the target's right edge (60 + 240);
+    // the visible seam is the render inset. Perpendicular: y=10 grid-snaps.
+    expect(snap.position).toEqual({ x: 300, y: 0 })
   })
 
   it('snaps from the left and above symmetrically', () => {
     const target = widget('target', 300, 300)
     const fromLeft = widget('left', 300 - 240 - 30, 320)
     expect(findGlueSnap(fromLeft, { left: fromLeft, target })!.position.x)
-      .toBe(300 - GLUE_GAP - 240)
+      .toBe(300 - 240)
     const fromAbove = widget('above', 320, 300 - 160 - 30)
     expect(findGlueSnap(fromAbove, { above: fromAbove, target })!.position.y)
-      .toBe(300 - GLUE_GAP - 160)
+      .toBe(300 - 160)
   })
 
   it('finds nothing beyond glue range or without facing overlap', () => {
@@ -128,7 +142,7 @@ describe('option-drag glue snapping', () => {
     const snap = findGlueSnap(overshot, { overshot, target })!
     expect(snap.targetId).toBe('target')
     expect(snap.axis).toBe('x')
-    expect(snap.position).toEqual({ x: 240 + GLUE_GAP, y: 0 })
+    expect(snap.position).toEqual({ x: 240, y: 0 })
   })
 
   it('refuses to glue a card dropped squarely on top of another', () => {

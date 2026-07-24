@@ -5,9 +5,17 @@ import { isWidgetResting, restingTileSize } from './widgetRest'
 /**
  * The seam between two glued widgets: 0.3 of a grid cell. Close enough that
  * the cards read as one welded object, wide enough that each card keeps its
- * own rounded silhouette and the gradient weld between them has room to show.
+ * own rounded silhouette and the weld between them has room to show. This gap
+ * is NOT stored between the cards — members are stored grid-aligned and
+ * touching, and each renders inset by `GLUE_HALF_GAP` on every glued edge, so
+ * the seam is carved equally from both cards and the cluster's outer corners
+ * always land on the grid (`glueMemberInsets`, `insetGlueRects`).
  */
 export const GLUE_GAP = Math.round(GRID_SIZE * 0.3) // 12
+
+/** Half the seam — the inset each of two touching cards gives up on their
+ * shared edge, so the gap comes out of both sizes equally. */
+export const GLUE_HALF_GAP = Math.round(GLUE_GAP / 2) // 6
 
 /**
  * Reach of the option-drag gesture, edge to edge: inside one grid cell the
@@ -141,26 +149,124 @@ export function glueSeamBetween(
   return null
 }
 
+export interface GlueEdgeInsets {
+  left: number
+  right: number
+  top: number
+  bottom: number
+}
+
+const NO_INSETS: GlueEdgeInsets = { left: 0, right: 0, top: 0, bottom: 0 }
+/** Slack when deciding "these two edges touch" — stored boxes settle to whole
+ * pixels, so anything closer than this counts as a shared edge. */
+const TOUCH_EPS = 1.5
+
+/** Which of a box's four edges are welded to a clustermate (share that edge,
+ * with real perpendicular overlap). Each welded edge gives up `GLUE_HALF_GAP`,
+ * so the seam is carved equally from both cards. */
+function edgeInsets(a: WorldRect, others: readonly WorldRect[]): GlueEdgeInsets {
+  let left = 0, right = 0, top = 0, bottom = 0
+  for (const o of others) {
+    const overlapY = Math.min(a.y + a.height, o.y + o.height) - Math.max(a.y, o.y)
+    const overlapX = Math.min(a.x + a.width, o.x + o.width) - Math.max(a.x, o.x)
+    if (overlapY > TOUCH_EPS) {
+      if (Math.abs(a.x + a.width - o.x) <= TOUCH_EPS) right = GLUE_HALF_GAP
+      if (Math.abs(a.x - (o.x + o.width)) <= TOUCH_EPS) left = GLUE_HALF_GAP
+    }
+    if (overlapX > TOUCH_EPS) {
+      if (Math.abs(a.y + a.height - o.y) <= TOUCH_EPS) bottom = GLUE_HALF_GAP
+      if (Math.abs(a.y - (o.y + o.height)) <= TOUCH_EPS) top = GLUE_HALF_GAP
+    }
+  }
+  return { left, right, top, bottom }
+}
+
+function applyInsets(a: WorldRect, insets: GlueEdgeInsets): WorldRect {
+  return {
+    x: a.x + insets.left,
+    y: a.y + insets.top,
+    width: a.width - insets.left - insets.right,
+    height: a.height - insets.top - insets.bottom,
+  }
+}
+
+/** The render insets for one glued member: how much it shrinks on each edge
+ * that welds to a clustermate. Zero on every free edge, so the member's outer
+ * corners stay exactly on the grid its stored box sits on. */
+export function glueMemberInsets(
+  widgetId: string,
+  memberIds: readonly string[],
+  widgets: Record<string, Widget>,
+): GlueEdgeInsets {
+  const self = widgets[widgetId]
+  if (!self) return NO_INSETS
+  const others: WorldRect[] = []
+  for (const id of memberIds) {
+    if (id === widgetId) continue
+    const w = widgets[id]
+    if (w) others.push(glueBoxRect(w))
+  }
+  return edgeInsets(glueBoxRect(self), others)
+}
+
+/** Every member's on-screen (inset) box: the stored grid-aligned box pulled in
+ * by `GLUE_HALF_GAP` on each welded edge. Seams live in the gaps this opens. */
+export function insetGlueRects(
+  memberIds: readonly string[],
+  widgets: Record<string, Widget>,
+): Map<string, WorldRect> {
+  const boxes: Array<[string, WorldRect]> = []
+  for (const id of memberIds) {
+    const w = widgets[id]
+    if (w) boxes.push([id, glueBoxRect(w)])
+  }
+  const result = new Map<string, WorldRect>()
+  for (const [id, box] of boxes) {
+    const others = boxes.filter(([otherId]) => otherId !== id).map(([, rect]) => rect)
+    result.set(id, applyInsets(box, edgeInsets(box, others)))
+  }
+  return result
+}
+
+/** The grid-aligned outer box of a whole cluster, from its stored member boxes
+ * (before insets) — the footprint the group frame and its lines span. */
+export function clusterEnvelope(
+  memberIds: readonly string[],
+  widgets: Record<string, Widget>,
+): WorldRect | null {
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
+  let found = false
+  for (const id of memberIds) {
+    const w = widgets[id]
+    if (!w) continue
+    found = true
+    const b = glueBoxRect(w)
+    minX = Math.min(minX, b.x)
+    minY = Math.min(minY, b.y)
+    maxX = Math.max(maxX, b.x + b.width)
+    maxY = Math.max(maxY, b.y + b.height)
+  }
+  return found ? { x: minX, y: minY, width: maxX - minX, height: maxY - minY } : null
+}
+
 /**
- * Every weld a glue cluster currently shows: one straight seam per facing
- * pair, one corner patch per diagonal pair. Together they trace the shape of
- * the merge — a bar for two cards in a row, an elbow for an L, a filled heart
- * for a 2×2 — without any backplate behind the cards.
+ * Every weld a glue cluster shows: one straight seam per facing pair, one
+ * corner patch per diagonal pair, computed from the members' INSET boxes so
+ * each seam sits in the gap carved from both cards. Together they trace the
+ * shape of the merge — a bar for a row, an elbow for an L, a filled heart for
+ * a 2×2 — without any backplate behind the cards.
  */
 export function glueSeamsForCluster(
   widgetIds: readonly string[],
   widgets: Record<string, Widget>,
   maxGap: number = GLUE_SEAM_MAX,
 ): GlueSeam[] {
+  const rects = insetGlueRects(widgetIds, widgets)
+  const ids = [...rects.keys()]
   const seams: GlueSeam[] = []
-  for (let i = 0; i < widgetIds.length; i += 1) {
-    const a = widgets[widgetIds[i]!]
-    if (!a) continue
-    const aBox = glueBoxRect(a)
-    for (let j = i + 1; j < widgetIds.length; j += 1) {
-      const b = widgets[widgetIds[j]!]
-      if (!b) continue
-      const seam = glueSeamBetween(a.id, aBox, b.id, glueBoxRect(b), maxGap)
+  for (let i = 0; i < ids.length; i += 1) {
+    for (let j = i + 1; j < ids.length; j += 1) {
+      const seam = glueSeamBetween(ids[i]!, rects.get(ids[i]!)!, ids[j]!, rects.get(ids[j]!)!, maxGap)
       if (seam) seams.push(seam)
     }
   }
@@ -178,9 +284,10 @@ export interface GlueSnap {
  * The bond an option-drag would commit at the dragged widget's current spot:
  * the nearest widget whose facing edge sits within `GLUE_RANGE` and shares
  * enough perpendicular overlap to weld. The returned position slides the
- * dragged widget along the bond axis until the seam is exactly `GLUE_GAP`;
- * its perpendicular coordinate snaps to the grid, so a weld against an
- * on-grid target lands flush-aligned instead of wherever the hand hovered.
+ * dragged widget along the bond axis until its edge TOUCHES the target's
+ * (gap 0), and grid-snaps its perpendicular coordinate — so the cluster's
+ * outer corners land on the grid and the visible seam is carved from both
+ * cards' render insets, not added between their stored boxes.
  */
 export function findGlueSnap(
   dragged: Widget,
@@ -215,8 +322,8 @@ export function findGlueSnap(
             axis: 'x',
             position: {
               x: draggedOnLeft
-                ? box.x - GLUE_GAP - draggedBox.width
-                : box.x + box.width + GLUE_GAP,
+                ? box.x - draggedBox.width
+                : box.x + box.width,
               y: snapToGrid(dragged.position.y),
             },
           },
@@ -234,8 +341,8 @@ export function findGlueSnap(
             position: {
               x: snapToGrid(dragged.position.x),
               y: draggedOnTop
-                ? box.y - GLUE_GAP - draggedBox.height
-                : box.y + box.height + GLUE_GAP,
+                ? box.y - draggedBox.height
+                : box.y + box.height,
             },
           },
         }
