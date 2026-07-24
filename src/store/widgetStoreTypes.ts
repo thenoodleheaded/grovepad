@@ -181,7 +181,6 @@ export interface WidgetStoreState {
   selectWidgets: (ids: string[]) => void
   clearSelection: () => void
 
-  deleteWidget: (id: string) => void
   deleteWidgets: (ids: string[]) => void
   duplicateWidgets: (ids: string[]) => string[]
   pasteWidgets: (sources: Widget[]) => string[]

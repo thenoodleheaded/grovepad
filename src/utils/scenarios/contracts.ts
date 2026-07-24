@@ -36,8 +36,6 @@ export interface ArchetypeSpec {
   directions: readonly DirectionSpec[]
   question: QuestionSpec
   domain?: ScenarioDomain
-  tone?: 'standard' | 'gentle'
   priority?: number
   keywords?: readonly string[]
-  slots?: { deadline?: ModuleType; amount?: ModuleType; people?: ModuleType; links?: ModuleType }
 }

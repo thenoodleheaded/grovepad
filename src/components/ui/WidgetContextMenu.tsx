@@ -23,7 +23,6 @@ import { requestWidgetDeletion } from '../../store/useWidgetDeletionDialogStore'
 import { clampPopover } from '../../utils/popoverPosition'
 import { menuNavigationIndex } from '../../utils/menuNavigation'
 import { isNativeWidgetHost } from '../../runtime/nativeNoteWidgetSync'
-import { usesStrictRelations } from '../../utils/relationPolicy'
 
 function MenuButton({
   label,
@@ -65,9 +64,6 @@ export function WidgetContextMenu() {
   const selectedIds = useWidgetStore(useShallow((state) => [...state.selectedIds]))
   const isGlued = useWidgetStore((state) =>
     contextMenu ? Boolean(state.widgetGlueIndex[contextMenu.widgetId]) : false,
-  )
-  const strictRelations = useWidgetStore((state) =>
-    usesStrictRelations(state.canvases[widget?.canvasId ?? state.activeCanvasId]),
   )
   const { nativeWidgetId, nativeWidgetSyncStatus } = useNativeWidgetStore(useShallow((state) => ({
     nativeWidgetId: state.selectedWidgetId,
@@ -203,7 +199,7 @@ export function WidgetContextMenu() {
         )}
         <div className="my-1 border-t border-neutral-800" />
         <MenuButton
-          label={strictRelations ? 'Link as child of…' : 'Connect to…'}
+          label="Connect to…"
           onClick={() => run(() => useWidgetStore.getState().startChildLink(widget.id))}
         >
           <GitMerge size={13} aria-hidden />

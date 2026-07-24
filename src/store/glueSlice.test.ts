@@ -125,7 +125,7 @@ describe('glue clusters', () => {
     pin(c)
     useWidgetStore.getState().glueWidgets(c, b)
     expect(useWidgetStore.getState().widgetGlueIndex[a]).toBe(useWidgetStore.getState().widgetGlueIndex[c])
-    useWidgetStore.getState().deleteWidget(b)
+    useWidgetStore.getState().deleteWidgets([b])
     const state = useWidgetStore.getState()
     expect(state.widgetGlueIndex[a]).toBeUndefined()
     expect(state.widgetGlueIndex[c]).toBeUndefined()
@@ -231,7 +231,7 @@ describe('dragging glued widgets', () => {
   it('drops a deleted widget from its cluster and dissolves pairs', () => {
     const [a, b] = createPair()
     useWidgetStore.getState().glueWidgets(b, a)
-    useWidgetStore.getState().deleteWidget(a)
+    useWidgetStore.getState().deleteWidgets([a])
     const state = useWidgetStore.getState()
     expect(state.widgetGlueIndex[b]).toBeUndefined()
     expect(Object.values(state.glues).some((glue) => glue.widgetIds.includes(b))).toBe(false)

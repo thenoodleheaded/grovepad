@@ -12,13 +12,6 @@ import { isWidgetResting, widgetWithEffectiveSize } from '../../utils/widgetRest
 import { widgetDefinition } from '../../widgets/registry'
 import { treeRevealDelay } from '../../store/treeReveal'
 import {
-  relationAnchorRegion,
-  strictParentHasVerticalCorridor,
-  strictParentGeometryOrder,
-  usesStrictParentGeometry,
-  usesStrictRelations,
-} from '../../utils/relationPolicy'
-import {
   CanvasEdge,
   CanvasEdgeLayer,
 } from './CanvasEdge'
@@ -107,16 +100,7 @@ interface PillInfo {
 }
 
 interface EndpointGeo extends RectGeo {
-  /** Parent edges derive from the closest point on the parent's lower border
-   *  half and arrive at the closest point on the child's upper border half.
-   *  Other relation types may use the full border. */
-  anchorRegion: 'any' | 'upper' | 'lower'
   pill: PillInfo | null
-}
-
-interface StrictParentRoute {
-  d: string
-  mid: Vector2D
 }
 
 /** Nearest point on a rect's border to `towards`, held back from the
@@ -161,35 +145,6 @@ function insetFromCorners(point: Vector2D, geo: RectGeo): Vector2D {
   return point
 }
 
-/** Nearest border point restricted to a rect's upper half (top edge plus the
- *  upper reach of both sides). A rectangle's border is convex, so when the
- *  unrestricted nearest point already falls in the upper half it's the
- *  answer; otherwise the closest point *on* the restricted arc is whichever
- *  side's mid-height endpoint sits nearer to `towards`. */
-function upperHalfBorderPoint(geo: RectGeo, towards: Vector2D): Vector2D {
-  const point = borderPoint(geo, towards)
-  if (point.y <= geo.center.y) return point
-  const left = { x: geo.center.x - geo.halfW, y: geo.center.y }
-  const right = { x: geo.center.x + geo.halfW, y: geo.center.y }
-  const dl = Math.hypot(towards.x - left.x, towards.y - left.y)
-  const dr = Math.hypot(towards.x - right.x, towards.y - right.y)
-  return dl <= dr ? left : right
-}
-
-/** Nearest border point restricted to a rect's lower half (bottom edge plus
- *  the lower reach of both sides). This is the parent derivation surface:
- *  the x/y attachment slides continuously toward the child instead of being
- *  pinned to the card's side or bottom-center. */
-function lowerHalfBorderPoint(geo: RectGeo, towards: Vector2D): Vector2D {
-  const point = borderPoint(geo, towards)
-  if (point.y >= geo.center.y) return point
-  const left = { x: geo.center.x - geo.halfW, y: geo.center.y }
-  const right = { x: geo.center.x + geo.halfW, y: geo.center.y }
-  const dl = Math.hypot(towards.x - left.x, towards.y - left.y)
-  const dr = Math.hypot(towards.x - right.x, towards.y - right.y)
-  return dl <= dr ? left : right
-}
-
 /** Pushes a point clear of the pill's rounded-capsule (stadium) silhouette,
  *  always exiting toward the far side, away from the card the pill floats
  *  above — never toward it, which would poke the "gap" straight through the
@@ -220,11 +175,7 @@ function anchorPoint(geo: EndpointGeo, towards: Vector2D): Vector2D {
     halfW: geo.halfW + LINE_STANDOFF,
     halfH: geo.halfH + LINE_STANDOFF,
   }
-  const raw = geo.anchorRegion === 'upper'
-    ? upperHalfBorderPoint(padded, towards)
-    : geo.anchorRegion === 'lower'
-      ? lowerHalfBorderPoint(padded, towards)
-      : borderPoint(padded, towards)
+  const raw = borderPoint(padded, towards)
   return geo.pill ? pushOutsidePill(raw, geo.pill) : raw
 }
 
@@ -241,53 +192,6 @@ function pickAnchors(from: EndpointGeo, to: EndpointGeo): { start: Vector2D; end
   return {
     start: anchorPoint(from, to.center),
     end: anchorPoint(to, from.center),
-  }
-}
-
-/** Hierarchy-preserving anchors for parent links. Attachment may slide along
- * the bottom/top rail as cards move, but never jumps onto a side edge. This
- * keeps parenthood readable throughout a live drag. The child endpoint also
- * clears the complete floating pill silhouette. */
-function pickParentAnchors(from: EndpointGeo, to: EndpointGeo): { start: Vector2D; end: Vector2D } {
-  const fromInset = Math.min(CORNER_INSET, Math.max(0, from.halfW - 1))
-  const toInset = Math.min(CORNER_INSET, Math.max(0, to.halfW - 1))
-  const start = {
-    x: clamp(to.center.x, from.center.x - from.halfW + fromInset, from.center.x + from.halfW - fromInset),
-    y: from.center.y + from.halfH + LINE_STANDOFF,
-  }
-  const end = {
-    x: clamp(from.center.x, to.center.x - to.halfW + toInset, to.center.x + to.halfW - toInset),
-    y: to.center.y - to.halfH - LINE_STANDOFF,
-  }
-  if (to.pill && Math.abs(end.x - to.pill.cx) <= to.pill.rx + LINE_STANDOFF) {
-    end.y = Math.min(end.y, to.pill.cy - to.pill.ry - LINE_STANDOFF)
-  }
-  return { start, end }
-}
-
-/** Complete strict-route decision kept pure for regression tests. Reversed
- * free-form records are ordered first; vertically overlapping cards use a
- * nearest-border curve until a real bottom→top corridor exists. */
-function strictParentRoute(
-  fromGeo: EndpointGeo,
-  toGeo: EndpointGeo,
-): StrictParentRoute {
-  const [parentGeo, childGeo] = strictParentGeometryOrder(fromGeo, toGeo)
-  const hasVerticalCorridor = strictParentHasVerticalCorridor(
-    parentGeo,
-    childGeo,
-    LINE_STANDOFF,
-  )
-  const { start, end } = hasVerticalCorridor
-    ? pickParentAnchors(parentGeo, childGeo)
-    : pickAnchors(parentGeo, childGeo)
-  return {
-    d: hasVerticalCorridor
-      ? curvedPath(start, end, 'vertical')
-      : anchoredCurvePath(start, parentGeo.center, end, childGeo.center),
-    mid: hasVerticalCorridor
-      ? { x: (start.x + end.x) / 2, y: (start.y + end.y) / 2 }
-      : anchoredCurveMidpoint(start, parentGeo.center, end, childGeo.center),
   }
 }
 
@@ -524,7 +428,6 @@ export function RelationLines() {
     activeCanvasId,
     criticalPathVisible,
     hoveredWidgetId,
-    canvas,
   } = useWidgetStore(
     useShallow((state) => ({
       relations: state.relations,
@@ -532,10 +435,8 @@ export function RelationLines() {
       activeCanvasId: state.activeCanvasId,
       criticalPathVisible: state.criticalPathVisible,
       hoveredWidgetId: state.hoveredWidgetId,
-      canvas: state.canvases[state.activeCanvasId],
     })),
   )
-  const strictRelations = usesStrictRelations(canvas)
   const contentRect = useWorldContentRect()
   const expandedWidgetId = useWidgetRestStore((state) => state.expandedWidgetId)
   const expandedOffset = useWidgetRestStore((state) => state.expandedOffset)
@@ -566,8 +467,8 @@ export function RelationLines() {
     }>()
 
     const endpointCache = new Map<string, EndpointGeo | null>()
-    const endpointGeo = (widgetId: string, anchorRegion: EndpointGeo['anchorRegion']): EndpointGeo | null => {
-      const cacheKey = `widget:${widgetId}:${anchorRegion}`
+    const endpointGeo = (widgetId: string): EndpointGeo | null => {
+      const cacheKey = `widget:${widgetId}`
       if (endpointCache.has(cacheKey)) return endpointCache.get(cacheKey) ?? null
 
       const stored = widgets[widgetId]
@@ -586,7 +487,6 @@ export function RelationLines() {
         center,
         halfW: w.size.width / 2,
         halfH: w.size.height / 2,
-        anchorRegion,
         // Left-aligned like the real capsule (icon cell at the card's left
         // edge), not centred — a line landing at a wide card's top-centre
         // has nothing to dodge there.
@@ -639,8 +539,8 @@ export function RelationLines() {
         continue
       }
 
-      const fromGeo = endpointGeo(rel.fromId, relationAnchorRegion(rel.type, 'from', strictRelations))
-      const toGeo = endpointGeo(rel.toId, relationAnchorRegion(rel.type, 'to', strictRelations))
+      const fromGeo = endpointGeo(rel.fromId)
+      const toGeo = endpointGeo(rel.toId)
       if (!fromGeo || !toGeo) continue
 
       edgeMap.set(edgeKey, {
@@ -656,24 +556,6 @@ export function RelationLines() {
     }
 
     return Array.from(edgeMap.entries(), ([key, edge]) => {
-      if (usesStrictParentGeometry(edge.type, strictRelations)) {
-        // A free-form canvas can persist a parent link in either direction.
-        // When strict paint is enabled, order the geometry by vertical
-        // placement before applying downward-only tangents; otherwise a
-        // lower→upper record doubles back into detached-looking hooks.
-        const route = strictParentRoute(edge.fromGeo, edge.toGeo)
-        return {
-          key,
-          d: route.d,
-          mid: route.mid,
-          type: edge.type,
-          isResolved: edge.isResolved,
-          highlighted: edge.highlighted,
-          hoverAccent: edge.hoverAccent,
-          singleRelationId: edge.singleRelationId,
-          revealDelay: edge.revealDelay,
-        }
-      }
       const { start, end } = pickAnchors(edge.fromGeo, edge.toGeo)
       return {
         key,
@@ -695,7 +577,6 @@ export function RelationLines() {
     hoveredAccent,
     hoveredWidgetId,
     relations,
-    strictRelations,
     widgets,
   ])
 

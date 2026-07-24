@@ -23,7 +23,6 @@
   --gp-light-panel-bg: linear-gradient(160deg, oklch(84% 0.006 250 / 0.985) 0%, oklch(74% 0.006 250 / 0.99) 100%);
   /* Aura intensity and falloff now live in src/components/canvas/auraTuning.ts,
      which the dev tuning panel edits and exports as a single bakeable block. */
-  --gp-grid-coarse: rgb(137 165 148 / 0.075);
   --gp-grid-fine: rgb(163 230 53 / 0.13);
   --gp-widget-muted-text: #a3a3a3;
   --gp-safe-top: env(safe-area-inset-top, 0px);
@@ -31,7 +30,6 @@
   --gp-safe-bottom: env(safe-area-inset-bottom, 0px);
   --gp-safe-left: env(safe-area-inset-left, 0px);
   --gp-touch-target: 44px;
-  --gp-grid-intensity: 1;
 }
 
 [data-theme='light'] {
@@ -41,7 +39,6 @@
   /* Same colors as widgets in light mode (oklch lightness 33% like widget cards) */
   --gp-surface-panel: oklch(95% 0.006 250 / 0.97);
   --gp-focus: oklch(48% 0.22 137 / 0.72);
-  --gp-grid-coarse: rgb(137 165 148 / 0.075);
   --gp-grid-fine: rgb(163 230 53 / 0.13);
   --gp-widget-muted-text: #a3a3a3;
 }

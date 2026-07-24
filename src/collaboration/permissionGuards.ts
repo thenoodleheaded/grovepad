@@ -17,7 +17,7 @@ const MUTATING_ACTIONS = [
   'nudgeSelection', 'addRelation', 'toggleResolveRelation', 'updateRelation', 'deleteRelation',
   'addConnection', 'updateConnection', 'deleteConnection', 'applyWireWrites',
   'glueWidgets', 'unglueWidget',
-  'deleteWidget', 'deleteWidgets', 'duplicateWidgets', 'pasteWidgets',
+  'deleteWidgets', 'duplicateWidgets', 'pasteWidgets',
   'importMindmap', 'togglePack', 'commitGhostTree',
 ] as const satisfies readonly (keyof WidgetStoreState)[]
 

@@ -79,7 +79,6 @@ body {
 /* ── Grid line colors ──────────────────────────────────────────────────────── */
 
 :root {
-  --gp-grid-coarse: rgba(148, 163, 184, calc(0.10 * var(--gp-tune-grid, 1)));
   --gp-grid-fine: rgba(148, 163, 184, calc(0.06 * var(--gp-tune-grid, 1)));
 
   /* Pure-white hairlines for widget UI contrast in dark mode; light mode
@@ -89,7 +88,6 @@ body {
   /* One structural outline language for parent relations, widgets, compact
      widget proxies, title capsules, and widget-like floating panels. */
   --gp-relation-outline: #94a3b8;
-  --gp-relation-outline-width: 2px;
 
   /* Shared motion language: quick feedback, confident layout movement, and
      a softer reveal. Pointer-tracked gestures always bypass these timings.
@@ -97,7 +95,6 @@ body {
      tokens so the two stylesheets stop drifting apart on near-identical
      values (patch registry S-008) — layout/reveal have no product.css
      equivalent and stay defined here. */
-  --gp-motion-instant: var(--gp-duration-instant);
   --gp-motion-fast: var(--gp-duration-snap);
   --gp-motion-layout: 300ms;
   --gp-motion-reveal: 260ms;
@@ -487,7 +484,6 @@ body[data-widget-dragging] .gp-card-motion {
   --color-neutral-950: oklch(98.8% 0 0);
 
   /* Grid lines — keep them light since canvas is dark-ish #2f3531 */
-  --gp-grid-coarse: rgb(137 165 148 / calc(0.075 * var(--gp-tune-grid, 1)));
   --gp-grid-fine: rgb(163 230 53 / calc(0.13 * var(--gp-tune-grid, 1)));
 
   /* Hairlines invert: pure black at the same subtlety. */

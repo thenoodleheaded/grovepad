@@ -32,7 +32,6 @@ describe('store no-op updates', () => {
     })
 
     state.panBy({ x: 0, y: 0 })
-    state.setPan(state.pan)
     state.setView(state.pan, state.zoom)
     state.setViewportSize(state.viewportSize)
     state.setIsPanning(state.isPanning)

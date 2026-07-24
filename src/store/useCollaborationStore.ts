@@ -18,7 +18,6 @@ export interface CollaborationState {
   participants: CollaborationPresence[]
   followingClientId: number | null
   comments: CollaborationComment[]
-  commentsOpen: boolean
   pendingUpdates: number
   error: string | null
 }
@@ -31,7 +30,6 @@ export const INITIAL_COLLABORATION_STATE: CollaborationState = {
   participants: [],
   followingClientId: null,
   comments: [],
-  commentsOpen: false,
   pendingUpdates: 0,
   error: null,
 }

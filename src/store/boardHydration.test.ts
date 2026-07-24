@@ -38,7 +38,7 @@ describe('board hydration boundary', () => {
     expect(board).not.toBeNull()
     useWidgetStore.getState().loadBoard(board!)
 
-    useWidgetStore.getState().deleteWidget('alpha')
+    useWidgetStore.getState().deleteWidgets(['alpha'])
 
     const snapshot = buildBoardSnapshot(useWidgetStore.getState())
     expect(snapshot.relations).toEqual({})

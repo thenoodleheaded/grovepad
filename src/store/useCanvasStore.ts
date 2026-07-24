@@ -33,7 +33,6 @@ export interface CanvasState {
   canGoForward: boolean
 
   panBy: (delta: Vector2D) => void
-  setPan: (pan: Vector2D) => void
   setView: (pan: Vector2D, zoom: number) => void
   setViewportSize: (size: Size) => void
   setIsPanning: (isPanning: boolean) => void
@@ -66,8 +65,6 @@ export const useCanvasStore = create<CanvasState>()((set, get) => {
     canGoForward: false,
 
     panBy: (delta) => cameraEngine.panBy(delta),
-
-    setPan: (pan) => cameraEngine.setView(pan, cameraEngine.getFrame().zoom),
 
     setView: (pan, zoom) => cameraEngine.setView(pan, zoom),
 

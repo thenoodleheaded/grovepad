@@ -11,14 +11,9 @@ export type DomainPack =
   | 'data_science'
   | 'ux_design'
   | 'creative_writing'
-  | 'digital_marketing'
   | 'finance_analytics'
   | 'project_management'
   | 'education'
-  | 'cybersecurity'
-  | 'hardware_engineering'
-  | 'healthcare'
-  | 'legal_tech'
   | 'life'
 
 export const DOMAIN_PACKS: readonly DomainPack[] = [
@@ -28,14 +23,9 @@ export const DOMAIN_PACKS: readonly DomainPack[] = [
   'data_science',
   'ux_design',
   'creative_writing',
-  'digital_marketing',
   'finance_analytics',
   'project_management',
   'education',
-  'cybersecurity',
-  'hardware_engineering',
-  'healthcare',
-  'legal_tech',
   'life',
 ]
 
@@ -46,14 +36,9 @@ export const DOMAIN_PACK_LABELS: Record<DomainPack, string> = {
   data_science: 'Data Science',
   ux_design: 'UX/UI Design',
   creative_writing: 'Creative Writing',
-  digital_marketing: 'Digital Marketing',
   finance_analytics: 'Finance & Analytics',
   project_management: 'Project Management',
   education: 'Education & Academics',
-  cybersecurity: 'Cybersecurity',
-  hardware_engineering: 'Hardware Engineering',
-  healthcare: 'Healthcare & Biotech',
-  legal_tech: 'Legal Technology',
   life: 'Life Systems',
 }
 

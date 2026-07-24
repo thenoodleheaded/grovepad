@@ -3,7 +3,6 @@ import { Cable, Copy, Link2, Maximize2, Trash2, Wind, X } from 'lucide-react'
 import { useWidgetStore } from '../../store/useWidgetStore'
 import { requestWidgetDeletion } from '../../store/useWidgetDeletionDialogStore'
 import { frameCanvas } from '../../utils/cameraFraming'
-import { usesStrictRelations } from '../../utils/relationPolicy'
 
 function ActionButton({
   label,
@@ -43,9 +42,6 @@ function ActionButton({
 
 export function SelectionActionBar() {
   const selectedSet = useWidgetStore((state) => state.selectedIds)
-  const strictRelations = useWidgetStore((state) =>
-    usesStrictRelations(state.canvases[state.activeCanvasId]),
-  )
   const selectedIds = [...selectedSet]
 
   if (selectedIds.length === 0) return null
@@ -87,7 +83,7 @@ export function SelectionActionBar() {
         </ActionButton>
       )}
       <ActionButton
-        label={strictRelations ? 'Link as child' : 'Connect'}
+        label="Connect"
         disabled={!singleSelectedId}
         onClick={() => {
           if (singleSelectedId) useWidgetStore.getState().startChildLink(singleSelectedId)

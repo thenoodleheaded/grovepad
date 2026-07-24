@@ -1,4 +1,4 @@
-import { detectDate, interpretThoughtCandidates, interpretThought, recordInterpretationChoice } from '../utils/thoughtInterpreter'
+import { detectDate, interpretThoughtCandidates, recordInterpretationChoice } from '../utils/thoughtInterpreter'
 import type { InterpretationContext, ProposedNode, ThoughtInterpretation, ThoughtPlan, ThoughtPrediction } from '../utils/thoughtInterpreter'
 import { planStructuralRequest } from '../utils/structuralPlanner'
 import { buildScaffold } from '../utils/scaffoldPlanner'
@@ -8,10 +8,7 @@ import { useAiDebugStore } from '../store/useAiDebugStore'
 import { buildLocalAiPlanSystemPrompt, extractLocalAiPlanJson, LOCAL_MODEL_PLAN_JSON_SCHEMA, parseLocalAiPlan } from './local-ai/planProtocol'
 import { detectRuntime, type DetectedRuntime } from './local-ai/modelProfiles'
 import {
-  createCapacitorLocalAiAdapter,
-  createTauriLocalAiAdapter,
   createWebLlmAdapter,
-  disposeCachedWebLlmEngine,
   isAbortError,
   type LocalAiModelProfile,
   type LocalAiRuntimeAdapter,
@@ -222,9 +219,8 @@ export class LocalAiService {
     this.runtime=options.runtime??detectRuntime()
     this.storage=options.storage===undefined?(typeof localStorage==='undefined'?null:localStorage):options.storage
     this.adapterFactory=options.adapterFactory
-    const native=this.runtime.platform!=='web'
-    this.enabled=options.enabled??(native||this.storage?.getItem(ENABLED_KEY)==='true')
-    const modelId=this.runtime.profile.modelId??this.runtime.profile.nativeModel
+    this.enabled=options.enabled??this.storage?.getItem(ENABLED_KEY)==='true'
+    const modelId=this.runtime.profile.modelId
     this.status={phase:modelId?'available':'heuristic',tier:this.runtime.profile.tier,modelId,progress:0,message:modelId?`${this.runtime.profile.label} available`:'Fast deterministic language engine',enabled:this.enabled}
   }
 
@@ -234,17 +230,16 @@ export class LocalAiService {
   private update(patch:Partial<LocalAiStatus>){this.status={...this.status,...patch};for(const listener of this.listeners)listener(this.getStatus())}
 
   private profile():LocalAiModelProfile|null{
-    const selected=this.runtime.profile;const modelId=selected.modelId??selected.nativeModel
-    if(!modelId||this.runtime.profile.tier==='heuristic')return null
-    const backend=this.runtime.platform==='tauri'?'tauri':this.runtime.platform==='capacitor'?'capacitor':'webllm'
-    return{id:selected.tier,backend,modelId,maxOutputTokens:selected.maxOutputTokens,contextWindowTokens:8192,temperature:.08,topP:.85}
+    const selected=this.runtime.profile
+    if(!selected.modelId||selected.tier==='heuristic')return null
+    return{id:selected.tier,backend:'webllm',modelId:selected.modelId,maxOutputTokens:selected.maxOutputTokens,contextWindowTokens:8192,temperature:.08,topP:.85}
   }
 
   private getAdapter():LocalAiRuntimeAdapter|null{
     if(this.adapter)return this.adapter
     if(this.adapterFactory){this.adapter=this.adapterFactory();return this.adapter}
     const profile=this.profile();if(!profile)return null
-    this.adapter=profile.backend==='tauri'?createTauriLocalAiAdapter(profile):profile.backend==='capacitor'?createCapacitorLocalAiAdapter(profile):createWebLlmAdapter(profile,{onInitProgress:p=>this.update({phase:'downloading',progress:p.progress,message:p.message})})
+    this.adapter=createWebLlmAdapter(profile,{onInitProgress:p=>this.update({phase:'downloading',progress:p.progress,message:p.message})})
     return this.adapter.isAvailable()?this.adapter:null
   }
 
@@ -263,10 +258,6 @@ export class LocalAiService {
       this.update({phase:'ready',enabled:true,progress:1,message:`${this.runtime.profile.label} ready`})
     }catch(error){this.enabled=false;this.storage?.setItem(ENABLED_KEY,'false');this.update({phase:'error',enabled:false,message:'Model setup failed; deterministic engine remains active'});throw error}
   }
-
-  public async disableModel():Promise<void>{this.enabled=false;this.storage?.setItem(ENABLED_KEY,'false');await this.adapter?.dispose();if(this.runtime.platform==='web')await disposeCachedWebLlmEngine();this.adapter=null;this.update({phase:this.profile()?'available':'heuristic',enabled:false,progress:0,message:'Fast deterministic language engine'})}
-
-  public async predictThought(sourceText:string,context:InterpretationContext={}):Promise<ThoughtPlan>{return (await this.predictThoughtCandidates(sourceText,context,{allowModel:true})).predictions[0]?.plan??interpretThought(sourceText,context)}
 
   /** Deliberate full-graph planning for callers that explicitly ask to deepen a workspace. */
   public async predictDeepThoughtCandidates(sourceText:string,context:InterpretationContext={},signal?:AbortSignal,skeleton?:ThoughtPlan):Promise<ThoughtInterpretation>{
@@ -297,7 +288,7 @@ export class LocalAiService {
     }
     if(!this.enabled||sourceText.trim().length<4){
       const skippedTrace=debug?.beginCall({
-        phase:'quickadd-model',label:traceLabel(sourceText),model:`${this.runtime.profile.label} · ${this.runtime.platform}/${this.runtime.profile.tier}`,prompt:tracePrompt(sourceText,context),
+        phase:'quickadd-model',label:traceLabel(sourceText),model:`${this.runtime.profile.label} · ${this.runtime.profile.tier}`,prompt:tracePrompt(sourceText,context),
       })
       if(debug&&skippedTrace)debug.endCall(skippedTrace,{
         status:'aborted',
@@ -331,7 +322,7 @@ export class LocalAiService {
     const candidates=fastCandidates(deterministic,sourceText)
     const systemPrompt=task==='router'?fastRouterPrompt(candidates):task==='titles'?titleEnrichPrompt(sourceText,titleTargets):buildLocalAiPlanSystemPrompt(options.skeleton,deepExtras)
     const jsonSchema=task==='router'?fastRouterSchema(candidates):task==='titles'?titleEnrichSchema(titleTargets.map(node=>node.temporaryId)):LOCAL_MODEL_PLAN_JSON_SCHEMA
-    const modelLabel=`${this.runtime.profile.label} · ${task==='router'?'intent router':task==='titles'?'branch namer':mode==='compose'?'composer':'deep planner'} · ${this.runtime.platform}/${this.runtime.profile.tier}`
+    const modelLabel=`${this.runtime.profile.label} · ${task==='router'?'intent router':task==='titles'?'branch namer':mode==='compose'?'composer':'deep planner'} · ${this.runtime.profile.tier}`
     if(debug&&this.activeDebugModelTraceId){
       debug.endCall(this.activeDebugModelTraceId,{status:'aborted',summary:'Superseded by newer Quick Add text'})
     }

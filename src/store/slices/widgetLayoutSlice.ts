@@ -15,7 +15,6 @@ import { fitWidgetSize, computeDataHeight, computeDataWidth } from '../widgetSiz
 import { settleWidgetLayout } from '../widgetSettling'
 import { untangleCanvasLayout } from '../widgetUntangle'
 import type { WidgetStoreSlice, WidgetStoreSliceContext } from '../widgetStoreSliceContext'
-import { usesStrictRelations } from '../../utils/relationPolicy'
 
 function fullSizing(widget: Widget) {
   return mergeWidgetSizing(widgetDefinition(widget.type).sizing, getLiveWidgetSizing(widget.id))
@@ -65,13 +64,10 @@ export function createWidgetLayoutSlice({ set, get, pushHistory }: WidgetStoreSl
         (widgetId) => !state.widgets[widgetId]?.metadata.locked,
       )
       if (ids.length === 0) return state
-      const widgets = applyWidgetDelta(
-        state.widgets,
-        state.relations,
-        ids,
-        { x: screenDelta.x / safeZoom, y: screenDelta.y / safeZoom },
-        usesStrictRelations(state.canvases[state.widgets[id]!.canvasId]),
-      )
+      const widgets = applyWidgetDelta(state.widgets, ids, {
+        x: screenDelta.x / safeZoom,
+        y: screenDelta.y / safeZoom,
+      })
       if (widgets === state.widgets) return state
       return { widgets }
     })
@@ -202,7 +198,9 @@ export function createWidgetLayoutSlice({ set, get, pushHistory }: WidgetStoreSl
     // after the store update, with the full before/after/rules picture —
     // resizeWidget is the single choke point nearly every scaling path
     // (manual drag, content-floor grow, the load-time fit, snap-to-grid,
-    // external callers) ultimately funnels through.
+    // external callers) ultimately funnels through. Manual drags arrive once
+    // per animation frame, so the trace only exists while the panel is open.
+    const scaleDebugOpen = useScaleDebugStore.getState().isOpen
     let trace: {
       before: Size
       after: Size
@@ -215,7 +213,7 @@ export function createWidgetLayoutSlice({ set, get, pushHistory }: WidgetStoreSl
       const w = state.widgets[id]
       if (!w) return state
       if (w.metadata.locked) {
-        trace = { before: w.size, after: w.size, rules: fullSizing(w), locked: true, changed: false }
+        if (scaleDebugOpen) trace = { before: w.size, after: w.size, rules: fullSizing(w), locked: true, changed: false }
         return state
       }
       // An icon follows live resize requests continuously across one cell.
@@ -245,7 +243,7 @@ export function createWidgetLayoutSlice({ set, get, pushHistory }: WidgetStoreSl
           }
       size = clampFullSize(w, size)
       const changed = size.width !== w.size.width || size.height !== w.size.height
-      trace = { before: w.size, after: size, rules: fullSizing(w), locked: false, changed }
+      if (scaleDebugOpen) trace = { before: w.size, after: size, rules: fullSizing(w), locked: false, changed }
       if (!changed) return state
       return {
         widgets: withWidget(state.widgets, id, (w) => ({
@@ -361,7 +359,7 @@ export function createWidgetLayoutSlice({ set, get, pushHistory }: WidgetStoreSl
       return { widgets }
     })
     const after = get().widgets[id]
-    if (after) {
+    if (after && useScaleDebugStore.getState().isOpen) {
       useScaleDebugStore.getState().record({
         widgetId: id,
         widgetType: after.type,
@@ -473,14 +471,7 @@ export function createWidgetLayoutSlice({ set, get, pushHistory }: WidgetStoreSl
     if (ids.length === 0) return
     pushHistory('nudge')
     set((state) => {
-      const first = state.widgets[ids[0]!]
-      const widgets = applyWidgetDelta(
-        state.widgets,
-        state.relations,
-        ids,
-        { x: dx, y: dy },
-        usesStrictRelations(state.canvases[first?.canvasId ?? state.activeCanvasId]),
-      )
+      const widgets = applyWidgetDelta(state.widgets, ids, { x: dx, y: dy })
       if (widgets === state.widgets) return state
       return { widgets: settleWidgetLayout(widgets, ids) }
     })

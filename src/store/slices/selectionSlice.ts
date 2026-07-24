@@ -57,10 +57,6 @@ export function createSelectionSlice({ set, get, pushHistory, markSpawned }: Wid
     )
   },
 
-  deleteWidget: (id) => {
-    get().deleteWidgets([id])
-  },
-
   deleteWidgets: (ids) => {
     const impact = analyzeWidgetDeletion(get(), ids)
     const deletableIds = impact.directWidgetIds

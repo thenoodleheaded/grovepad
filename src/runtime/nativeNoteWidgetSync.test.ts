@@ -50,7 +50,7 @@ describe('native Note widget sync runtime', () => {
     await vi.runAllTimersAsync()
     expect(invoke).toHaveBeenCalledTimes(2)
 
-    useWidgetStore.getState().deleteWidget(id)
+    useWidgetStore.getState().deleteWidgets([id])
     await vi.runAllTimersAsync()
     expect(JSON.parse(invoke.mock.calls[2]![1].payload).note).toBeNull()
     dispose()

@@ -48,7 +48,6 @@ export interface AuraTuning {
 /** Canvas colours that sit behind the glow. Applied live as CSS custom properties. */
 export interface CanvasColorTuning {
   canvasTintBase: string
-  gridCoarse: string
   gridFine: string
 }
 
@@ -97,12 +96,10 @@ export const DEFAULT_AURA_TUNING: AuraTuning = {
 const DEFAULT_CANVAS_COLORS: { dark: CanvasColorTuning; light: CanvasColorTuning } = {
   dark: {
     canvasTintBase: '#141815',
-    gridCoarse: 'rgb(137 165 148 / 0.075)',
     gridFine: 'rgb(163 230 53 / 0.13)',
   },
   light: {
     canvasTintBase: '#eef1ec',
-    gridCoarse: 'rgb(90 110 98 / 0.09)',
     gridFine: 'rgb(120 160 40 / 0.14)',
   },
 }
@@ -167,7 +164,6 @@ function sanitizeCanvas(raw: unknown, fallback: CanvasColorTuning): CanvasColorT
   const source = (raw ?? {}) as Partial<CanvasColorTuning>
   return {
     canvasTintBase: sanitizeColor(source.canvasTintBase, fallback.canvasTintBase),
-    gridCoarse: sanitizeColor(source.gridCoarse, fallback.gridCoarse),
     gridFine: sanitizeColor(source.gridFine, fallback.gridFine),
   }
 }
@@ -249,7 +245,6 @@ export function advanceAnchor(
 /** CSS custom property each canvas colour drives. */
 const CANVAS_COLOR_VARS: Record<keyof CanvasColorTuning, string> = {
   canvasTintBase: '--gp-canvas-tint-base',
-  gridCoarse: '--gp-grid-coarse',
   gridFine: '--gp-grid-fine',
 }
 

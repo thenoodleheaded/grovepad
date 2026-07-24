@@ -7,7 +7,6 @@ import { buildWidget, fuzzyScore } from '../widgetSizing'
 import { settleWidgetsByCanvas } from '../widgetSettling'
 import { layoutCommittedTree } from '../treeCommitLayout'
 import { buildTreeRevealSchedule, registerTreeReveal } from '../treeReveal'
-import { relationDropEndpoints, usesStrictRelations } from '../../utils/relationPolicy'
 import type { WidgetStoreSlice, WidgetStoreSliceContext } from '../widgetStoreSliceContext'
 export function createUiLinkingSlice({ set, get, pushHistory, initialPacks }: WidgetStoreSliceContext): WidgetStoreSlice {
   return {
@@ -117,9 +116,8 @@ export function createUiLinkingSlice({ set, get, pushHistory, initialPacks }: Wi
     const source = state.widgets[linkDrag.sourceId]
     const target = state.widgets[targetId]
     if (!source || !target) return
-    const strict = usesStrictRelations(state.canvases[source.canvasId])
-    const [fromId, toId] = relationDropEndpoints(source, target, strict)
-    state.addRelation(fromId, toId, 'parent')
+    // Free-form canvases keep the direction the user drew.
+    state.addRelation(source.id, target.id, 'parent')
   },
 
   childLinkSource: null,
@@ -411,16 +409,7 @@ export function createUiLinkingSlice({ set, get, pushHistory, initialPacks }: Wi
         const parentId = ids.get(node.parentId)?.[0]
         const childId = ids.get(node.id)?.[0]
         if (parentId && childId) {
-          const relationId = appendDraftRelation(
-            widgets,
-            relations,
-            relationKeys,
-            settleIds,
-            parentId,
-            childId,
-            'parent',
-            usesStrictRelations(state.canvases[widgets[parentId]!.canvasId]),
-          )
+          const relationId = appendDraftRelation(widgets, relations, relationKeys, parentId, childId, 'parent')
           if (relationId) relationIds.set(node.id, relationId)
         }
       }

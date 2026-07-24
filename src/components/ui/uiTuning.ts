@@ -213,17 +213,6 @@ export const TUNE_CATEGORIES: TuneCategory[] = [
     label: 'Lines & outlines',
     fields: [
       {
-        id: 'relationWidth',
-        label: 'Connector width',
-        cssVar: '--gp-relation-outline-width',
-        min: 1,
-        max: 5,
-        step: 0.5,
-        default: 2,
-        unit: 'px',
-        help: 'Line weight of parent/relation outlines between cards.',
-      },
-      {
         id: 'gridOpacity',
         label: 'Grid visibility',
         cssVar: '--gp-tune-grid',

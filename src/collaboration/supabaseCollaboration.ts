@@ -115,28 +115,6 @@ export class SupabaseCollaborationRepository {
     }))
   }
 
-  async persistUpdate(canvasId: string, updateId: string, payload: Uint8Array): Promise<number> {
-    const result = await this.client
-      .from('canvas_crdt_updates')
-      .upsert({ canvas_id: canvasId, update_id: updateId, payload: bytesToBytea(payload) }, {
-        onConflict: 'canvas_id,update_id', ignoreDuplicates: true,
-      })
-      .select('seq')
-      .single<{ seq: number }>()
-    if (result.error?.message.includes('0 rows')) {
-      const existing = await this.client
-        .from('canvas_crdt_updates')
-        .select('seq')
-        .eq('canvas_id', canvasId)
-        .eq('update_id', updateId)
-        .single<{ seq: number }>()
-      throwIfError(existing.error)
-      return Number(existing.data!.seq)
-    }
-    throwIfError(result.error)
-    return Number(result.data!.seq)
-  }
-
   async persistUpdates(
     canvasId: string,
     updates: ReadonlyArray<{ id: string; payload: Uint8Array }>,

@@ -6,8 +6,6 @@ import {
 } from './spatialNegotiation'
 import type { LayoutRect } from './widgetCollection'
 import { useWidgetStore } from './useWidgetStore'
-import { hierarchyBoundaryGuide, type HierarchyBoundaryGuide } from './hierarchyGuide'
-import { usesStrictRelations } from '../utils/relationPolicy'
 
 /**
  * Transient ghost layer for drag displacement. While a widget or cluster drag
@@ -29,8 +27,6 @@ interface DragDisplacementState {
   /** Widgets the gesture overlaps but that stayed put (locked, past the
    *  chain/area budget) — rendered dimmed as a "will settle on drop" hint. */
   pendingSettleIds: ReadonlySet<string>
-  /** Temporary strict-hierarchy boundary ruler for the active drag. */
-  hierarchyGuide: HierarchyBoundaryGuide | null
 }
 
 const EMPTY_SET: ReadonlySet<string> = new Set()
@@ -39,7 +35,6 @@ const ZERO_OFFSET: Vector2D = { x: 0, y: 0 }
 export const useDragDisplacementStore = create<DragDisplacementState>(() => ({
   offsets: {},
   pendingSettleIds: EMPTY_SET,
-  hierarchyGuide: null,
 }))
 
 /** How long a meaningful overlap must persist before neighbors move. Long
@@ -159,7 +154,6 @@ let tracker: GestureTracker | null = null
 /** Arm displacement for a new drag gesture. */
 export function beginDragDisplacement(): void {
   tracker = { directionX: 0, directionY: 0, dwellStart: null, displacing: false, suppressed: false }
-  useDragDisplacementStore.setState({ hierarchyGuide: null })
 }
 
 /**
@@ -214,20 +208,6 @@ export function updateDragDisplacement(
   if (tracker.suppressed) return
 
   const state = useWidgetStore.getState()
-  const movingCanvasId = state.widgets[movingIds[0] ?? '']?.canvasId
-  const nextGuide = usesStrictRelations(state.canvases[movingCanvasId ?? state.activeCanvasId])
-    ? hierarchyBoundaryGuide(state.widgets, state.relations, movingIds)
-    : null
-  const currentGuide = useDragDisplacementStore.getState().hierarchyGuide
-  if (
-    currentGuide?.childId !== nextGuide?.childId ||
-    currentGuide?.guardianId !== nextGuide?.guardianId ||
-    currentGuide?.x1 !== nextGuide?.x1 ||
-    currentGuide?.x2 !== nextGuide?.x2 ||
-    currentGuide?.y !== nextGuide?.y
-  ) {
-    useDragDisplacementStore.setState({ hierarchyGuide: nextGuide })
-  }
   const scene = buildNegotiationScene(
     state.widgets,
     state.glues,
@@ -331,9 +311,7 @@ export function endDragDisplacement(): Record<string, Vector2D> {
     if (offset.x !== 0 || offset.y !== 0) commit[id] = offset
   }
   if (Object.keys(state.offsets).length > 0 || state.pendingSettleIds.size > 0) {
-    useDragDisplacementStore.setState({ offsets: {}, pendingSettleIds: EMPTY_SET, hierarchyGuide: null })
-  } else if (state.hierarchyGuide) {
-    useDragDisplacementStore.setState({ hierarchyGuide: null })
+    useDragDisplacementStore.setState({ offsets: {}, pendingSettleIds: EMPTY_SET })
   }
   return commit
 }
@@ -343,8 +321,6 @@ export function cancelDragDisplacement(): void {
   tracker = null
   const state = useDragDisplacementStore.getState()
   if (Object.keys(state.offsets).length > 0 || state.pendingSettleIds.size > 0) {
-    useDragDisplacementStore.setState({ offsets: {}, pendingSettleIds: EMPTY_SET, hierarchyGuide: null })
-  } else if (state.hierarchyGuide) {
-    useDragDisplacementStore.setState({ hierarchyGuide: null })
+    useDragDisplacementStore.setState({ offsets: {}, pendingSettleIds: EMPTY_SET })
   }
 }

@@ -11,6 +11,10 @@ import type { Theme } from './useThemeStore'
 const STORAGE_KEY = 'gp-aura-tuning'
 
 function readStored(): AuraTuningDocument {
+  // The draft is a dev-session artifact. Production always renders from
+  // DEFAULT_AURA_TUNING — a stale draft left in localStorage must never
+  // restyle the shipped aura.
+  if (!import.meta.env.DEV) return DEFAULT_AURA_DOCUMENT
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return DEFAULT_AURA_DOCUMENT

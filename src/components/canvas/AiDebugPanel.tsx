@@ -97,7 +97,7 @@ export function AiDebugPanel() {
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
           <span>Quick Add runtime</span>
           <span className="text-neutral-300">{runtime.profile.label}</span>
-          <span>{runtime.platform} · {runtime.profile.tier}</span>
+          <span>{runtime.profile.tier}</span>
           <span className={runtimeStatus.phase === 'ready' ? 'text-emerald-300' : runtimeStatus.phase === 'error' ? 'text-amber-300' : 'text-neutral-400'}>
             {runtimeStatus.phase}
           </span>

@@ -1,10 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import {
-  pressWithinResizeCorner,
-  RESIZE_CORNER_ZONE_PX,
-  resolveWidgetPointerIntent,
-  usesAdditiveWidgetSelection,
-} from './widgetPointerPolicy'
+import { resolveWidgetPointerIntent, usesAdditiveWidgetSelection } from './widgetPointerPolicy'
 
 const base = {
   pointerType: 'mouse',
@@ -64,16 +59,4 @@ describe('widget pointer policy', () => {
     expect(usesAdditiveWidgetSelection('mouse', 'navigate', true)).toBe(true)
   })
 
-  it('routes presses inside the bottom-right corner zone to resize', () => {
-    const rect = { right: 440, bottom: 240 }
-    // Dead center of the 13px bracket and the zone's inner edge both count.
-    expect(pressWithinResizeCorner(rect, 433, 233)).toBe(true)
-    expect(pressWithinResizeCorner(rect, 440 - RESIZE_CORNER_ZONE_PX, 240 - RESIZE_CORNER_ZONE_PX)).toBe(true)
-    // One px past the zone on either axis is the card body again.
-    expect(pressWithinResizeCorner(rect, 440 - RESIZE_CORNER_ZONE_PX - 1, 233)).toBe(false)
-    expect(pressWithinResizeCorner(rect, 433, 240 - RESIZE_CORNER_ZONE_PX - 1)).toBe(false)
-    // Outside the card (hover catch-all territory) never resizes.
-    expect(pressWithinResizeCorner(rect, 441, 233)).toBe(false)
-    expect(pressWithinResizeCorner(rect, 433, 241)).toBe(false)
-  })
 })

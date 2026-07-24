@@ -56,7 +56,6 @@ const MAX_ENTRIES = 500
 interface ScaleDebugState {
   entries: ScaleDebugEntry[]
   snapshot: ScaleDebugSnapshot[]
-  snapshotAt: number
   isOpen: boolean
   anomaliesOnly: boolean
   record: (entry: Omit<ScaleDebugEntry, 'id' | 't'>) => void
@@ -91,7 +90,6 @@ interface ScaleDebugState {
 export const useScaleDebugStore = create<ScaleDebugState>()((set, get) => ({
   entries: [],
   snapshot: [],
-  snapshotAt: 0,
   isOpen: false,
   anomaliesOnly: false,
   record: (entry) => {
@@ -103,7 +101,7 @@ export const useScaleDebugStore = create<ScaleDebugState>()((set, get) => ({
       ].slice(0, MAX_ENTRIES),
     }))
   },
-  setSnapshot: (snapshot) => set({ snapshot, snapshotAt: Date.now() }),
+  setSnapshot: (snapshot) => set({ snapshot }),
   setOpen: (isOpen) => set((state) => (state.isOpen === isOpen ? state : { isOpen })),
   toggleOpen: () => set((state) => ({ isOpen: !state.isOpen })),
   setAnomaliesOnly: (anomaliesOnly) => set((state) => (state.anomaliesOnly === anomaliesOnly ? state : { anomaliesOnly })),

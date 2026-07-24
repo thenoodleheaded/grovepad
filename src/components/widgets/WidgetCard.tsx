@@ -26,7 +26,6 @@ import {
 } from '../../store/dragDisplacement'
 import { movedIdsForWidget } from '../../store/widgetCollection'
 import { contentFitHeight } from '../../utils/widgetContentFloor'
-import { usesStrictRelations } from '../../utils/relationPolicy'
 import {
   expansionOffsetFor,
   isWidgetRestExpanded,
@@ -368,10 +367,8 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
     if (!childSource) return false
     const targetId = widgetId
     const sourceId = childSource
-    const source = state.widgets[sourceId]
-    const strict = usesStrictRelations(state.canvases[source?.canvasId ?? state.activeCanvasId])
     if (sourceId !== targetId) {
-      state.addRelation(strict ? targetId : sourceId, strict ? sourceId : targetId, 'parent')
+      state.addRelation(sourceId, targetId, 'parent')
     }
     state.clearChildLink()
     return true

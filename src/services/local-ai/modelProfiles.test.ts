@@ -10,5 +10,4 @@ describe('local AI model routing',()=>{
     expect(profile.tier).toBe('webgpu-high')
     expect(profile.modelId).toBe('Qwen3.5-0.8B-q4f16_1-MLC')
   })
-  it('prefers native shells',()=>expect(detectRuntime({globals:{__TAURI_INTERNALS__:{}},userAgent:'Mac',hasWebGPU:false,memoryGb:8}).platform).toBe('tauri'))
 })

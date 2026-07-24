@@ -28,7 +28,6 @@ const NUMERIC_LABELS: Record<string, string> = {
 
 const CANVAS_LABELS: Record<keyof CanvasColorTuning, string> = {
   canvasTintBase: 'Canvas tint base',
-  gridCoarse: 'Grid (coarse)',
   gridFine: 'Grid (fine)',
 }
 

@@ -26,7 +26,7 @@ export function computeScaleDebugSnapshot(widget: Widget, zoom: number, cardEl: 
     height: computeDataHeight(widget.type, widget.data),
   }
 
-  const mounted = cardEl != null && cardEl.querySelector('.gp-widget-proxy') === null
+  const mounted = cardEl != null
   let domSizePx: Size | null = null
   let domStoreDeltaWorldPx: Size | null = null
   let naturalHeight: number | null = null

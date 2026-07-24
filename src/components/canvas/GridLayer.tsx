@@ -26,7 +26,7 @@ export function GridLayer({ canvasIntensity = 100 }: { canvasIntensity?: number 
         height: GRID_PLANE_SIZE,
         backgroundImage: dotBg('var(--gp-grid-fine)'),
         backgroundSize: `${FINE_SIZE}px ${FINE_SIZE}px`,
-        opacity: `calc(var(--gp-grid-intensity) * ${canvasIntensity / 100})`,
+        opacity: canvasIntensity / 100,
       }}
     />
   )

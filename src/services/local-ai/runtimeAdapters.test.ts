@@ -15,12 +15,6 @@ vi.mock('@mlc-ai/web-llm', () => ({
   CreateWebWorkerMLCEngine: mocks.createWorkerEngine,
 }))
 
-import {
-  CapacitorLocalAiAdapter,
-  TauriLocalAiAdapter,
-  detectCapacitorLocalAI,
-  detectTauriInvoke,
-} from './nativeAdapters'
 import { WebLlmAdapter, resetWebLlmRuntimeForTests } from './webLlmAdapter'
 
 const webProfile: LocalAiModelProfile = {
@@ -28,20 +22,6 @@ const webProfile: LocalAiModelProfile = {
   backend: 'webllm',
   modelId: 'tiny-test-model',
   maxOutputTokens: 64,
-}
-
-const tauriProfile: LocalAiModelProfile = {
-  id: 'tauri-test',
-  backend: 'tauri',
-  modelId: 'native-test-model',
-  maxOutputTokens: 128,
-}
-
-const capacitorProfile: LocalAiModelProfile = {
-  id: 'capacitor-test',
-  backend: 'capacitor',
-  modelId: 'mobile-test-model',
-  maxOutputTokens: 96,
 }
 
 async function* streamedAnswer() {
@@ -55,10 +35,6 @@ const mockEngine = {
   unload: mocks.unload,
   reload: mocks.reload,
   setInitProgressCallback: vi.fn(),
-}
-
-function globals(): Record<string, unknown> {
-  return globalThis as unknown as Record<string, unknown>
 }
 
 describe('WebLlmAdapter', () => {
@@ -174,67 +150,5 @@ describe('WebLlmAdapter', () => {
     expect(mocks.createWorkerEngine).toHaveBeenCalledTimes(1)
     expect(mocks.createEngine).not.toHaveBeenCalled()
     expect(mocks.createCompletion).toHaveBeenCalledTimes(1)
-  })
-})
-
-describe('native local AI adapters', () => {
-  afterEach(() => {
-    delete globals().__TAURI_INTERNALS__
-    delete globals().__TAURI__
-    delete globals().Capacitor
-    vi.restoreAllMocks()
-  })
-
-  it('detects modern and legacy Tauri invoke bridges', async () => {
-    const modernInvoke = vi.fn(async () => 'modern')
-    globals().__TAURI_INTERNALS__ = { invoke: modernInvoke }
-    expect(await detectTauriInvoke()?.('parse_thought')).toBe('modern')
-
-    delete globals().__TAURI_INTERNALS__
-    const legacyInvoke = vi.fn(async () => 'legacy')
-    globals().__TAURI__ = { core: { invoke: legacyInvoke } }
-    expect(await detectTauriInvoke()?.('parse_thought')).toBe('legacy')
-  })
-
-  it('passes the selected model profile through the Tauri bridge', async () => {
-    const invoke = vi.fn(async () => ({ text: '{"widgets":[]}' }))
-    const adapter = new TauriLocalAiAdapter(tauriProfile, { invoke })
-    const result = await adapter.generate({ prompt: 'build my week', maxOutputTokens: 24 })
-
-    expect(result.text).toBe('{"widgets":[]}')
-    expect(invoke).toHaveBeenCalledWith(
-      'parse_thought',
-      expect.objectContaining({ text: 'build my week', modelId: 'native-test-model', maxOutputTokens: 24 }),
-    )
-  })
-
-  it('detects Capacitor LocalAI and serializes structured plans', async () => {
-    const parseThought = vi.fn(async () => ({ plan: { widgets: [] } }))
-    globals().Capacitor = { Plugins: { LocalAI: { parseThought } } }
-    expect(detectCapacitorLocalAI()).not.toBeNull()
-
-    const adapter = new CapacitorLocalAiAdapter(capacitorProfile)
-    const result = await adapter.generate({ prompt: 'prepare a trip' })
-    expect(result.text).toBe('{"widgets":[]}')
-    expect(parseThought).toHaveBeenCalledWith(
-      expect.objectContaining({ text: 'prepare a trip', modelId: 'mobile-test-model' }),
-    )
-  })
-
-  it('discards a slow native response superseded by newer input', async () => {
-    let resolveFirst: ((value: unknown) => void) | undefined
-    const invoke = vi
-      .fn()
-      .mockImplementationOnce(
-        () => new Promise<unknown>((resolve) => (resolveFirst = resolve)),
-      )
-      .mockResolvedValueOnce({ text: 'new' })
-    const adapter = new TauriLocalAiAdapter(tauriProfile, { invoke })
-
-    const first = adapter.generate({ prompt: 'old' })
-    const firstExpectation = expect(first).rejects.toMatchObject({ name: 'AbortError' })
-    await expect(adapter.generate({ prompt: 'new' })).resolves.toMatchObject({ text: 'new' })
-    resolveFirst?.({ text: 'old' })
-    await firstExpectation
   })
 })

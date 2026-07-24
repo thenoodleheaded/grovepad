@@ -3,7 +3,6 @@ import { snapToGrid } from '../../types/spatial'
 import { layoutThoughtPlan, layoutWidth } from '../../utils/planLayout'
 import { consolidateWidgetData } from '../../utils/consolidatedWidgetData'
 import { isWidgetTypePublic, publicWidgetTypeFor, widgetDefinition } from '../../widgets/registry'
-import { usesStrictRelations } from '../../utils/relationPolicy'
 import { useToastStore } from '../useToastStore'
 import { computeBlockedWidgetIds } from '../widgetGraph'
 import { appendDraftRelation, relationKey } from '../widgetRelationDrafts'
@@ -138,16 +137,7 @@ export function createWidgetCreationSlice({ set, get, pushHistory, markSpawned }
       const fromId = ids.get(relation.fromTemporaryId)
       const toId = ids.get(relation.toTemporaryId)
       if (fromId && toId) {
-        appendDraftRelation(
-          widgets,
-          relations,
-          relationKeys,
-          settleIds,
-          fromId,
-          toId,
-          relation.type,
-          usesStrictRelations(state.canvases[widgets[fromId]!.canvasId]),
-        )
+        appendDraftRelation(widgets, relations, relationKeys, fromId, toId, relation.type)
       }
     }
 
@@ -157,16 +147,7 @@ export function createWidgetCreationSlice({ set, get, pushHistory, markSpawned }
         if (childIds.has(node.temporaryId)) continue
         const childId = ids.get(node.temporaryId)
         if (childId) {
-          appendDraftRelation(
-            widgets,
-            relations,
-            relationKeys,
-            settleIds,
-            parentId,
-            childId,
-            'parent',
-            usesStrictRelations(state.canvases[widgets[parentId]!.canvasId]),
-          )
+          appendDraftRelation(widgets, relations, relationKeys, parentId, childId, 'parent')
         }
       }
     }

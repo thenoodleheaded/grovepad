@@ -173,21 +173,6 @@ describe('drag displacement driver', () => {
     expect(offsets[b!]!.x).toBeGreaterThan(0)
   })
 
-  it('does not publish the retired canvas-wide hierarchy guide', () => {
-    const [parentId, childId] = createNotes(2)
-    useWidgetStore.getState().addRelation(parentId!, childId!, 'parent')
-    const parent = widget(parentId!)
-    place(parentId!, 0, 0)
-    place(childId!, 80, parent.size.height + 40)
-
-    beginDragDisplacement()
-    updateDragDisplacement([childId!], { x: 0, y: -40 }, 0)
-    expect(useDragDisplacementStore.getState().hierarchyGuide).toBeNull()
-
-    cancelDragDisplacement()
-    expect(useDragDisplacementStore.getState().hierarchyGuide).toBeNull()
-  })
-
   it('applyGhostDisplacement moves widgets by their offsets, skipping locked ones', () => {
     const [a, b] = createNotes(2)
     const beforeA = widget(a!).position

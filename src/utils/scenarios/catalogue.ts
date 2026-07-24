@@ -40,7 +40,6 @@ function compact(domain: ScenarioDomain, entries: readonly CompactEntry[]): Arch
       id,
       label,
       domain,
-      tone: suppliedTone ?? (domain === 'health' ? 'gentle' : 'standard'),
       priority: 0,
       keywords: [...words(id), ...trigger.toLowerCase().replace(/[^a-z| ]/g, ' ').split(/[ |]+/).filter((word) => word.length > 2)],
       patterns: [new RegExp(`\\b(?:${trigger})\\b`, 'i')],
