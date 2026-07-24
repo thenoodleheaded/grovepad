@@ -166,8 +166,10 @@ describe('option-drag owns gluing', () => {
   it('previews the weld or the pull-off continuously during the drag', () => {
     expect(card).toContain('findGlueSnap(dragged, state.widgets)')
     expect(card).toContain('pulledFreeOfCluster(dragged, members, state.widgets)')
-    // Neighbors must not scatter while the gesture is about to weld.
-    expect(card).toContain('setDragDisplacementSuppressed(Boolean(snap))')
+    // A welding gesture never arms displacement: every other card holds
+    // perfectly still while a seam is being aimed.
+    expect(card).toContain('if (!glueDragRef.current) beginDragDisplacement()')
+    expect(card).toContain('if (glueDragRef.current) return')
   })
 
   it('commits exactly what the preview promised on release', () => {

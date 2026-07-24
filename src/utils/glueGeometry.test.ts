@@ -98,8 +98,9 @@ describe('option-drag glue snapping', () => {
     const snap = findGlueSnap(dragged, { dragged, target })!
     expect(snap.targetId).toBe('target')
     expect(snap.axis).toBe('x')
-    // target right edge (60 + 240) + GLUE_GAP.
-    expect(snap.position).toEqual({ x: 300 + GLUE_GAP, y: 10 })
+    // Bond axis: target right edge (60 + 240) + GLUE_GAP. Perpendicular:
+    // the hand's y=10 snaps to the grid so the weld lands flush-aligned.
+    expect(snap.position).toEqual({ x: 300 + GLUE_GAP, y: 0 })
   })
 
   it('snaps from the left and above symmetrically', () => {
@@ -127,7 +128,7 @@ describe('option-drag glue snapping', () => {
     const snap = findGlueSnap(overshot, { overshot, target })!
     expect(snap.targetId).toBe('target')
     expect(snap.axis).toBe('x')
-    expect(snap.position).toEqual({ x: 240 + GLUE_GAP, y: 10 })
+    expect(snap.position).toEqual({ x: 240 + GLUE_GAP, y: 0 })
   })
 
   it('refuses to glue a card dropped squarely on top of another', () => {

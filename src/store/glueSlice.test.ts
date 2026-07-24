@@ -208,6 +208,22 @@ describe('dragging glued widgets', () => {
     expect(after.widgets[a]!.position.y % 40).toBe(0)
   })
 
+  it('anchors the rigid snap on the stationary member, so welding never shoves the target', () => {
+    const [a, b] = createPair()
+    // A sits on the grid (an untouched weld target); B just welded onto its
+    // right edge at the exact seam — off-grid on the bond axis by GLUE_GAP.
+    const first = widget(a)
+    place(a, 40_000, 40_000)
+    place(b, 40_000 + first.size.width + GLUE_GAP, 40_000)
+    useWidgetStore.getState().glueWidgets(b, a)
+    useWidgetStore.getState().settleWidgets([b])
+    const after = useWidgetStore.getState()
+    // The on-grid target holds its ground; the fresh weld keeps its seam.
+    expect(after.widgets[a]!.position).toEqual({ x: 40_000, y: 40_000 })
+    expect(after.widgets[b]!.position.x -
+      (after.widgets[a]!.position.x + after.widgets[a]!.size.width)).toBe(GLUE_GAP)
+  })
+
   it('undoes a glue commit as part of the drag history step', () => {
     const [a, b] = createPair()
     useWidgetStore.getState().snapshotHistory()

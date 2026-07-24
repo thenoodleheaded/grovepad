@@ -20,7 +20,6 @@ import {
   beginDragDisplacement,
   cancelDragDisplacement,
   endDragDisplacement,
-  setDragDisplacementSuppressed,
   updateDragDisplacement,
   useDragDisplacementStore,
 } from '../../store/dragDisplacement'
@@ -318,7 +317,10 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
       return
     }
     magneticHover.beginDrag()
-    beginDragDisplacement()
+    // An option-drag is a precision welding gesture: neighbors must hold
+    // perfectly still while a seam is being aimed, so it never arms the
+    // displacement system at all.
+    if (!glueDragRef.current) beginDragDisplacement()
     activeDragWidgetId.current = dragWidgetId
     dragRef.current = new PointerDragSession(e, {
       onFirstMove: () => {
@@ -333,17 +335,16 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
           zoom,
           glueDragRef.current ? { soloGlued: true, moveSelection: false } : undefined,
         )
+        if (glueDragRef.current) return
         const fresh = useWidgetStore.getState()
-        // What actually moved: the solo widget in an option-drag, otherwise
-        // the selection expanded through every touched glue cluster (the same
-        // expansion moveWidget applied).
-        const movingIds = (glueDragRef.current
-          ? [dragWidgetId]
-          : movedIdsForWidget(dragWidgetId, fresh.selectedIds, fresh.widgets).flatMap((id) => {
-              const glueId = fresh.widgetGlueIndex[id]
-              return glueId ? fresh.glues[glueId]?.widgetIds ?? [id] : [id]
-            })
-        ).filter((id, index, all) => all.indexOf(id) === index && !fresh.widgets[id]?.metadata.locked)
+        // What actually moved: the selection expanded through every touched
+        // glue cluster (the same expansion moveWidget applied).
+        const movingIds = movedIdsForWidget(dragWidgetId, fresh.selectedIds, fresh.widgets)
+          .flatMap((id) => {
+            const glueId = fresh.widgetGlueIndex[id]
+            return glueId ? fresh.glues[glueId]?.widgetIds ?? [id] : [id]
+          })
+          .filter((id, index, all) => all.indexOf(id) === index && !fresh.widgets[id]?.metadata.locked)
         const safeZoom = zoom > 0 ? zoom : 1
         updateDragDisplacement(movingIds, { x: dx / safeZoom, y: dy / safeZoom })
       },
@@ -475,8 +476,6 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
         const pullingFree =
           !snap && members.length > 0 && pulledFreeOfCluster(dragged, members, state.widgets)
         state.setUnglueIntentWidgetId(pullingFree ? dragged.id : null)
-        // While the gesture is about to weld, neighbors must not scatter.
-        setDragDisplacementSuppressed(Boolean(snap))
       }
     }
   }

@@ -77,20 +77,26 @@ export function settleWidgetLayout(
   if (queue.length === 0) return widgets
 
   const positions: Record<string, Vector2D> = {}
-  // A multi-member glue cluster snaps RIGIDLY: one delta (from its top-left
-  // corner to the grid) applied to every member, so the 0.3-cell weld seams
-  // inside the cluster survive the snap exactly. Snapping each member on its
-  // own would round every 12px seam to 0 or a full cell.
+  // A multi-member glue cluster snaps RIGIDLY: one delta applied to every
+  // member, so the 0.3-cell weld seams inside the cluster survive the snap
+  // exactly. Snapping each member on its own would round every 12px seam to
+  // 0 or a full cell. The delta comes from the member already CLOSEST to the
+  // grid — after a whole-cluster drag every member is off by the same amount
+  // (any anchor gives the same delta), while a fresh weld has its target
+  // still sitting on the grid, and anchoring there means welding a card onto
+  // a cluster never shoves the cards that were not touched.
   const rigidSnapDelta = new Map<string, Vector2D>()
   for (const [key, ids] of memberIds) {
     if (!queued.has(key) || !key.startsWith('g:') || ids.length < 2) continue
-    let minX = Infinity
-    let minY = Infinity
+    let best: Vector2D | null = null
     for (const id of ids) {
-      minX = Math.min(minX, widgets[id]!.position.x)
-      minY = Math.min(minY, widgets[id]!.position.y)
+      const { x, y } = widgets[id]!.position
+      const delta = { x: snapToGrid(x) - x, y: snapToGrid(y) - y }
+      if (!best || Math.abs(delta.x) + Math.abs(delta.y) < Math.abs(best.x) + Math.abs(best.y)) {
+        best = delta
+      }
     }
-    rigidSnapDelta.set(key, { x: snapToGrid(minX) - minX, y: snapToGrid(minY) - minY })
+    rigidSnapDelta.set(key, best!)
   }
   for (const id of allIds) {
     const widget = widgets[id]!

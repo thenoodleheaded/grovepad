@@ -146,29 +146,13 @@ interface GestureTracker {
   directionY: number
   dwellStart: number | null
   displacing: boolean
-  suppressed: boolean
 }
 
 let tracker: GestureTracker | null = null
 
 /** Arm displacement for a new drag gesture. */
 export function beginDragDisplacement(): void {
-  tracker = { directionX: 0, directionY: 0, dwellStart: null, displacing: false, suppressed: false }
-}
-
-/**
- * Glue intent wins over displacement: while an option-drag is about to weld
- * onto a target nothing may be pushed. Ghosts glide home and the dwell gate
- * re-arms.
- */
-export function setDragDisplacementSuppressed(suppressed: boolean): void {
-  if (!tracker || tracker.suppressed === suppressed) return
-  tracker.suppressed = suppressed
-  if (suppressed) {
-    tracker.dwellStart = null
-    tracker.displacing = false
-    withdrawGhosts()
-  }
+  tracker = { directionX: 0, directionY: 0, dwellStart: null, displacing: false }
 }
 
 /** Park every live ghost at zero (they animate home) and clear the dim hints. */
@@ -205,7 +189,6 @@ export function updateDragDisplacement(
   // which way rooms open.
   tracker.directionX = tracker.directionX * 0.6 + worldDelta.x * 0.4
   tracker.directionY = tracker.directionY * 0.6 + worldDelta.y * 0.4
-  if (tracker.suppressed) return
 
   const state = useWidgetStore.getState()
   const scene = buildNegotiationScene(

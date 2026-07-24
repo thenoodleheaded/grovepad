@@ -7,7 +7,6 @@ import {
   buildNegotiationScene,
   cancelDragDisplacement,
   endDragDisplacement,
-  setDragDisplacementSuppressed,
   updateDragDisplacement,
   useDragDisplacementStore,
 } from './dragDisplacement'
@@ -119,25 +118,6 @@ describe('drag displacement driver', () => {
     expect(state.offsets).toEqual({})
     expect(state.pendingSettleIds.has(b)).toBe(true)
     expect(endDragDisplacement()).toEqual({})
-  })
-
-  it('suppression parks ghosts at zero and re-arms the dwell gate', () => {
-    const [a, b] = overlapPair()
-    beginDragDisplacement()
-    updateDragDisplacement([a], RIGHT, 0)
-    updateDragDisplacement([a], RIGHT, AFTER_DWELL)
-    expect(useDragDisplacementStore.getState().offsets[b]!.x).toBeGreaterThan(0)
-
-    setDragDisplacementSuppressed(true)
-    const parked = useDragDisplacementStore.getState()
-    expect(parked.offsets[b]).toEqual({ x: 0, y: 0 })
-    expect(parked.pendingSettleIds.size).toBe(0)
-
-    setDragDisplacementSuppressed(false)
-    updateDragDisplacement([a], RIGHT, AFTER_DWELL + 10)
-    expect(useDragDisplacementStore.getState().offsets[b]).toEqual({ x: 0, y: 0 })
-    updateDragDisplacement([a], RIGHT, AFTER_DWELL + 10 + AFTER_DWELL)
-    expect(useDragDisplacementStore.getState().offsets[b]!.x).toBeGreaterThan(0)
   })
 
   it('end returns only non-zero offsets and clears the store; cancel commits nothing', () => {

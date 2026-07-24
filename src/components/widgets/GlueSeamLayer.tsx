@@ -13,9 +13,10 @@ import {
 import { widgetAccent } from '../../utils/widgetSkins'
 import { widgetDefinition } from '../../widgets/registry'
 
-/** How far a weld bleeds under each card's edge, so the gradient meets the
- * glass with no hairline of canvas showing through. */
-const SEAM_BLEED = 6
+/** How far a weld bleeds under each card's edge, so the weld meets the glass
+ * with no hairline of canvas showing through. Kept to a sliver: the cards'
+ * glass is translucent, so anything wider glows through them as a stain. */
+const SEAM_BLEED = 2
 
 function accentOf(widget: Widget): string {
   return widgetAccent(widget, widgetDefinition(widget.type))
@@ -40,48 +41,51 @@ const GlueSeamPatch = memo(function GlueSeamPatch({
 }) {
   const accentA = accentOf(a)
   const accentB = accentOf(b)
-  // The gradient always runs from the earlier widget (left/top) to the later
-  // one, whatever order the pair was welded in.
+  // The accents always run from the earlier widget (left/top) to the later
+  // one, whatever order the pair was welded in. The weld material itself —
+  // dark glass with the accents glowing faintly through it — lives in
+  // 04-controls.css; this component supplies geometry and the colour pair.
   const [fromAccent, toAccent] = seam.aFirst ? [accentA, accentB] : [accentB, accentA]
 
-  let style: CSSProperties
+  let geometry: CSSProperties
+  let angle: string
   if (seam.axis === 'x') {
-    style = {
+    geometry = {
       left: seam.rect.x - SEAM_BLEED,
       top: seam.rect.y,
       width: seam.rect.width + SEAM_BLEED * 2,
       height: seam.rect.height,
-      background: `linear-gradient(to right, ${fromAccent}, ${toAccent})`,
       // Soften the bar's open ends so the weld reads as a smooth meniscus,
       // not a hard-edged block floating between the cards.
       maskImage: 'linear-gradient(to bottom, transparent, black 18%, black 82%, transparent)',
       WebkitMaskImage: 'linear-gradient(to bottom, transparent, black 18%, black 82%, transparent)',
     }
+    angle = 'to right'
   } else if (seam.axis === 'y') {
-    style = {
+    geometry = {
       left: seam.rect.x,
       top: seam.rect.y - SEAM_BLEED,
       width: seam.rect.width,
       height: seam.rect.height + SEAM_BLEED * 2,
-      background: `linear-gradient(to bottom, ${fromAccent}, ${toAccent})`,
       maskImage: 'linear-gradient(to right, transparent, black 18%, black 82%, transparent)',
       WebkitMaskImage: 'linear-gradient(to right, transparent, black 18%, black 82%, transparent)',
     }
+    angle = 'to bottom'
   } else {
     // Corner patch: the tiny square where two diagonal neighbours meet. The
-    // gradient runs corner to corner, and the patch bleeds slightly under
-    // both cards so it fuses with the neighbouring bar welds.
+    // accents run corner to corner, and the patch bleeds slightly under both
+    // cards so it fuses with the neighbouring bar welds.
     const aBox = glueBoxRect(a)
     const bBox = glueBoxRect(b)
     const downRight =
       (aBox.x <= bBox.x && aBox.y <= bBox.y) || (bBox.x <= aBox.x && bBox.y <= aBox.y)
-    style = {
+    geometry = {
       left: seam.rect.x - SEAM_BLEED,
       top: seam.rect.y - SEAM_BLEED,
       width: seam.rect.width + SEAM_BLEED * 2,
       height: seam.rect.height + SEAM_BLEED * 2,
-      background: `linear-gradient(${downRight ? '135deg' : '45deg'}, ${fromAccent}, ${toAccent})`,
     }
+    angle = downRight ? '135deg' : '45deg'
   }
 
   return (
@@ -90,7 +94,12 @@ const GlueSeamPatch = memo(function GlueSeamPatch({
       className="gp-glue-seam absolute"
       data-glue-preview={preview || undefined}
       data-glue-fading={fading || undefined}
-      style={style}
+      style={{
+        ...geometry,
+        '--gp-weld-angle': angle,
+        '--gp-weld-a': fromAccent,
+        '--gp-weld-b': toAccent,
+      } as CSSProperties}
     />
   )
 })

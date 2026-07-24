@@ -1,4 +1,4 @@
-import { GRID_SIZE, type Vector2D, type Widget, type WidgetGlue } from '../types/spatial'
+import { GRID_SIZE, snapToGrid, type Vector2D, type Widget, type WidgetGlue } from '../types/spatial'
 import type { WorldRect } from './canvasView'
 import { isWidgetResting, restingTileSize } from './widgetRest'
 
@@ -179,7 +179,8 @@ export interface GlueSnap {
  * the nearest widget whose facing edge sits within `GLUE_RANGE` and shares
  * enough perpendicular overlap to weld. The returned position slides the
  * dragged widget along the bond axis until the seam is exactly `GLUE_GAP`;
- * its perpendicular coordinate stays where the hand left it.
+ * its perpendicular coordinate snaps to the grid, so a weld against an
+ * on-grid target lands flush-aligned instead of wherever the hand hovered.
  */
 export function findGlueSnap(
   dragged: Widget,
@@ -216,7 +217,7 @@ export function findGlueSnap(
               x: draggedOnLeft
                 ? box.x - GLUE_GAP - draggedBox.width
                 : box.x + box.width + GLUE_GAP,
-              y: dragged.position.y,
+              y: snapToGrid(dragged.position.y),
             },
           },
         }
@@ -231,7 +232,7 @@ export function findGlueSnap(
             targetId: candidate.id,
             axis: 'y',
             position: {
-              x: dragged.position.x,
+              x: snapToGrid(dragged.position.x),
               y: draggedOnTop
                 ? box.y - GLUE_GAP - draggedBox.height
                 : box.y + box.height + GLUE_GAP,
