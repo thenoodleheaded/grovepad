@@ -8,9 +8,9 @@ import {
 } from 'react'
 import { createPortal } from 'react-dom'
 import { ChevronRight, Layers, Search, SquarePlus, X, Zap } from 'lucide-react'
-import { useFocusTrap } from '../../hooks/useFocusTrap'
+import { useOverlayDismiss } from '../../hooks/useOverlayDismiss'
 import { useCanvasStore } from '../../store/useCanvasStore'
-import { isOverlayOpen, useOverlayLifecycle } from '../../store/useOverlayStore'
+import { isOverlayOpen } from '../../store/useOverlayStore'
 import { useWidgetStore } from '../../store/useWidgetStore'
 import { useSettingsStore } from '../../store/useSettingsStore'
 import {
@@ -312,8 +312,12 @@ export function CommandPalette() {
   const listRef = useRef<HTMLUListElement>(null)
   const panelRef = useRef<HTMLDivElement>(null)
 
-  useOverlayLifecycle(open)
-  useFocusTrap(open, panelRef, inputRef)
+  // Escape stays inside `onModalKeyDown`, which also owns list navigation.
+  useOverlayDismiss(open, () => useWidgetStore.getState().setPaletteOpen(false), {
+    containerRef: panelRef,
+    initialFocusRef: inputRef,
+    escape: false,
+  })
 
   // Global toggle shortcut — always active
   useEffect(() => {

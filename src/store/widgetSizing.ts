@@ -10,6 +10,7 @@ import type {
 } from '../types/spatial'
 import { GRID_SIZE, snapToGrid } from '../types/spatial'
 import { CONSOLIDATED_WIDGET_MODES, publicWidgetTypeFor, widgetDefinition } from '../widgets/registry'
+import { clamp } from '../utils/math'
 import { MIN_WIDGET_HEIGHT, MIN_WIDGET_WIDTH } from './widgetLayoutConstants'
 
 export function computeDataHeight(type: ModuleType, data: ModuleData): number {
@@ -185,7 +186,6 @@ export function computeDataHeight(type: ModuleType, data: ModuleData): number {
  */
 export function computeDataWidth(type: ModuleType, data: ModuleData): number {
   const C = GRID_SIZE
-  const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v))
   switch (type) {
     case 'table': {
       const d = data as TableData

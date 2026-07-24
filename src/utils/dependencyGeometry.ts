@@ -1,4 +1,5 @@
 import type { Vector2D } from '../types/spatial'
+import { clamp } from './math'
 
 const PORT_STANDOFF = 8
 const PORT_INSET = 24
@@ -11,10 +12,6 @@ export interface DependencyEndpointGeometry {
 
 export function dependencyStatusLabel(dependentTitle: string, prerequisiteTitles: string[]): string {
   return `${dependentTitle} waiting on ${prerequisiteTitles.filter(Boolean).join(', ') || 'dependency'}`
-}
-
-function clamp(value: number, minimum: number, maximum: number): number {
-  return Math.min(maximum, Math.max(minimum, value))
 }
 
 /**

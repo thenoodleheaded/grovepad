@@ -1,4 +1,5 @@
 import type { SketchpadPoint, SketchpadStroke } from '../types/widgetDataCore'
+import { clamp } from './math'
 
 export interface SketchSurfaceRect {
   left: number
@@ -13,9 +14,6 @@ export interface SketchPointerSample {
   pressure: number
   pointerType: string
 }
-
-const clamp = (value: number, min: number, max: number) =>
-  Math.min(max, Math.max(min, value))
 
 export function shouldStartSketchStroke(pointerType: string): boolean {
   return pointerType === 'pen' || pointerType === 'mouse'

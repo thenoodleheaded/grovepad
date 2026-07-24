@@ -73,14 +73,21 @@ describe('popup panel design contracts', () => {
       './CanvasContextMenu.tsx',
       './CanvasToolbar.tsx',
       './WidgetContextMenu.tsx',
-      '../canvas/DependencyLines.tsx',
-      '../canvas/RelationLines.tsx',
-      '../canvas/WireLayer.tsx',
     ]) {
       const menuOwner = source(path)
       const menuSurfaces = menuOwner.match(/className="[^"]*gp-menu gp-[^"]*"/g) ?? []
       expect(menuSurfaces.length).toBeGreaterThan(0)
       for (const menuSurface of menuSurfaces) expect(menuSurface).toContain('gp-popup-menu')
+    }
+    // The canvas edge layers share one menu surface; the material lives there.
+    const shared = source('./ContextMenuSurface.tsx')
+    expect(shared).toContain('gp-popup-menu gp-menu gp-pop gp-panel')
+    for (const path of [
+      '../canvas/DependencyLines.tsx',
+      '../canvas/RelationLines.tsx',
+      '../canvas/WireLayer.tsx',
+    ]) {
+      expect(source(path)).toContain('<ContextMenuSurface')
     }
   })
 })

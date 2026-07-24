@@ -5,8 +5,7 @@ import type { AppState, ExcalidrawInitialDataState } from '@excalidraw/excalidra
 import { Shapes, X } from 'lucide-react'
 import type { ExcalidrawData } from '../../../../types/spatial'
 import { useThemeStore } from '../../../../store/useThemeStore'
-import { useOverlayLifecycle } from '../../../../store/useOverlayStore'
-import { useFocusTrap } from '../../../../hooks/useFocusTrap'
+import { useOverlayDismiss } from '../../../../hooks/useOverlayDismiss'
 import { createOwnedTimeout } from '../../../../utils/ownedTimeout'
 import { loadExcalidrawFiles, persistNewExcalidrawFiles } from '../../../../utils/excalidrawFiles'
 import { pickPersistedAppState } from './excalidrawScene'
@@ -87,8 +86,13 @@ export function ExcalidrawFullscreen({ open, widgetId, title, data, onChange, on
   const panelRef = useRef<HTMLDivElement>(null)
   const closeButtonRef = useRef<HTMLButtonElement>(null)
 
-  useOverlayLifecycle(open)
-  useFocusTrap(open, panelRef, closeButtonRef)
+  // Escape stays below: its defaultPrevented guard lets Excalidraw's own
+  // Escape handling (menus, active tools) win over closing the overlay.
+  useOverlayDismiss(open, onClose, {
+    containerRef: panelRef,
+    initialFocusRef: closeButtonRef,
+    escape: false,
+  })
 
   useEffect(() => {
     if (!open) return

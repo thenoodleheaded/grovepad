@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { Widget } from '../types/spatial'
+import { makeWidget } from '../test/factories'
 import {
   widgetActiveButtonCount,
   widgetHasButtonOverflow,
@@ -7,13 +8,11 @@ import {
 } from './widgetButtonLayout'
 
 function widget(overrides: Partial<Widget> = {}): Pick<Widget, 'type' | 'metadata' | 'title' | 'size'> {
-  return {
-    type: 'notes',
+  return makeWidget({
     title: 'Notes',
     size: { width: 280, height: 160 },
-    metadata: { badges: [] },
     ...overrides,
-  }
+  })
 }
 
 describe('widgetActiveButtonCount', () => {

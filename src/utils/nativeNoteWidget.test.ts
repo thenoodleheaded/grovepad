@@ -1,19 +1,16 @@
 import { describe, expect, it } from 'vitest'
 import type { Widget } from '../types/spatial'
+import { makeWidget } from '../test/factories'
 import { deriveNativeNoteWidgetSnapshot, NATIVE_NOTE_WIDGET_TEXT_MAX } from './nativeNoteWidget'
 
 function note(overrides: Partial<Widget> = {}): Widget {
-  return {
+  return makeWidget({
     id: 'note-1',
-    type: 'notes',
     title: 'Launch thought',
-    canvasId: 'canvas',
-    position: { x: 0, y: 0 },
     size: { width: 320, height: 200 },
     data: { text: 'Ship the native widget', mode: 'sticky', color: 'purple', attribution: '' },
-    metadata: { badges: [] },
     ...overrides,
-  }
+  })
 }
 
 describe('native note widget snapshot', () => {

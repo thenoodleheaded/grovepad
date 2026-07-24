@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import * as Y from 'yjs'
 import type { Widget } from '../types/spatial'
+import { makeRelation, makeWidget } from '../test/factories'
 import {
   CollaborationPayloadError,
   LOCAL_STORE_ORIGIN,
@@ -13,16 +14,14 @@ import {
 const canvasId = 'canvas-a'
 
 function note(id: string, text: string, x = 0): Widget {
-  return {
+  return makeWidget({
     id,
-    type: 'notes',
     title: 'Shared note',
     canvasId,
     position: { x, y: 0 },
     size: { width: 320, height: 240 },
     data: { text },
-    metadata: { badges: [] },
-  }
+  })
 }
 
 function content(widget: Widget) {
@@ -49,8 +48,8 @@ describe('Yjs canvas document', () => {
     const snapshot = snapshotCanvas({
       widgets: { a, b },
       relations: {
-        inside: { id: 'inside', fromId: 'a', toId: 'a', type: 'cousin', isResolved: false },
-        outside: { id: 'outside', fromId: 'a', toId: 'b', type: 'parent', isResolved: false },
+        inside: makeRelation({ id: 'inside', fromId: 'a', toId: 'a', type: 'cousin', isResolved: false }),
+        outside: makeRelation({ id: 'outside', fromId: 'a', toId: 'b', isResolved: false }),
       },
       connections: {},
       glues: {},

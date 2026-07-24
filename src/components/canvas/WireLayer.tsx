@@ -1,11 +1,12 @@
 import { memo, useMemo, type CSSProperties } from 'react'
-import { createPortal } from 'react-dom'
 import { useShallow } from 'zustand/react/shallow'
 import { ArrowRight, CirclePause, CirclePlay, Trash2, TriangleAlert } from 'lucide-react'
 import { useCircuitStore } from '../../store/useCircuitStore'
 import { useWidgetStore } from '../../store/useWidgetStore'
 import { useWidgetRestStore } from '../../store/useWidgetRestStore'
 import { useWorldContentRect } from '../../hooks/useWorldContentRect'
+import { truncate } from '../../utils/text'
+import { ContextMenuSurface } from '../ui/ContextMenuSurface'
 import { widgetWithEffectiveSize } from '../../utils/widgetRest'
 import { useOverlayLifecycle } from '../../store/useOverlayStore'
 import type { Vector2D, Widget } from '../../types/spatial'
@@ -229,31 +230,22 @@ function WireInspector({
   // the target command actually reads the payload (add_item-style appenders).
   const showTransform = connection.kind === 'value' || targetCommandPort?.acceptsPayload === true
 
-  const left = Math.max(8, Math.min(x, window.innerWidth - 268))
-  const top = Math.max(8, Math.min(y, window.innerHeight - 330))
-  const truncate = (value: string, length = 15) => (value.length > length ? `${value.slice(0, length)}…` : value)
-
-  return createPortal(
-    <>
-      <div
-        className="fixed inset-0 z-40"
-        onPointerDown={onClose}
-        onContextMenu={(event) => {
-          event.preventDefault()
-          onClose()
-        }}
-      />
-      <div
-        className="gp-popup-menu gp-menu gp-pop gp-panel fixed z-50 max-h-[calc(100dvh-16px)] w-64 origin-top-left overflow-y-auto rounded-2xl p-2 shadow-2xl"
-        style={{ left, top }}
-      >
+  return (
+    <ContextMenuSurface
+      x={x}
+      y={y}
+      estimatedWidth={260}
+      estimatedHeight={322}
+      onClose={onClose}
+      panelClassName="w-64 p-2 max-h-[calc(100dvh-16px)]"
+    >
         <p className="px-2 pt-1  text-[10px] uppercase tracking-widest" style={{ color: accent }}>
           {connection.kind === 'trigger' ? 'Trigger wire' : 'Value wire'}
         </p>
         <p className="flex items-center gap-1 px-2 pb-2 pt-0.5 text-[10px] leading-4 text-neutral-400">
-          <span className="truncate">{truncate(source.title)}·{sourceField?.label ?? connection.fromField}</span>
+          <span className="truncate">{truncate(source.title, 15)}·{sourceField?.label ?? connection.fromField}</span>
           <ArrowRight size={9} className="shrink-0 text-neutral-600" aria-hidden />
-          <span className="truncate">{truncate(target.title)}·{targetLabel}</span>
+          <span className="truncate">{truncate(target.title, 15)}·{targetLabel}</span>
         </p>
 
         {damped && (
@@ -368,9 +360,7 @@ function WireInspector({
           <Trash2 size={12} aria-hidden />
           Delete wire
         </button>
-      </div>
-    </>,
-    document.body,
+    </ContextMenuSurface>
   )
 }
 
@@ -388,8 +378,6 @@ function FieldPicker() {
   const fields = ports.filter((port) => port.kind === 'field')
   const commands = ports.filter((port) => port.kind === 'command')
   const close = () => useCircuitStore.getState().setPendingDrop(null)
-  const left = Math.max(8, Math.min(drop.screen.x, window.innerWidth - 240))
-  const top = Math.max(8, Math.min(drop.screen.y, window.innerHeight - 320))
 
   const pick = (port: (typeof ports)[number]) => {
     const state = useWidgetStore.getState()
@@ -419,13 +407,15 @@ function FieldPicker() {
     close()
   }
 
-  return createPortal(
-    <>
-      <div className="fixed inset-0 z-40" onPointerDown={close} />
-      <div
-        className="gp-popup-menu gp-menu gp-pop gp-panel fixed z-50 max-h-[min(60vh,340px)] w-56 origin-top-left overflow-y-auto rounded-2xl p-1.5 shadow-2xl"
-        style={{ left, top }}
-      >
+  return (
+    <ContextMenuSurface
+      x={drop.screen.x}
+      y={drop.screen.y}
+      estimatedWidth={232}
+      estimatedHeight={312}
+      onClose={close}
+      panelClassName="w-56 p-1.5 max-h-[min(60vh,340px)]"
+    >
         <p className="px-3 py-1.5 text-[10px] leading-4 text-neutral-500">
           Wire into <span className="font-medium text-neutral-300">{target.title}</span>
         </p>
@@ -468,9 +458,7 @@ function FieldPicker() {
         {fields.length === 0 && commands.length === 0 && (
           <p className="px-3 py-2 text-[10px] text-neutral-500">This widget accepts no inputs.</p>
         )}
-      </div>
-    </>,
-    document.body,
+    </ContextMenuSurface>
   )
 }
 

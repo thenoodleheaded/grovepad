@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { HydratedPersistedBoard, PersistedBoard } from '../types/persistence'
+import { makeWidget } from '../test/factories'
 import { planBoardCanvasEmbedding } from './boardCanvasEmbedding'
 import { mergePersistedBoardWorkspaces } from './boardWorkspaceMerge'
 
@@ -24,16 +25,7 @@ function board(name: string): HydratedPersistedBoard {
       },
     },
     widgets: {
-      note: {
-        id: 'note',
-        type: 'notes',
-        title: `${name} note`,
-        canvasId: 'canvas',
-        position: { x: 0, y: 0 },
-        size: { width: 240, height: 160 },
-        data: { text: name },
-        metadata: { badges: [] },
-      },
+      note: makeWidget({ id: 'note', title: `${name} note`, data: { text: name } }),
     },
     relations: {},
     connections: {},

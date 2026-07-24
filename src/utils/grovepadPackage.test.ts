@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { HydratedPersistedBoard } from '../types/persistence'
+import { makeWidget } from '../test/factories'
 import currentBoardFixture from './fixtures/boards/v2.json?raw'
 import { canonicalJson } from './cloudDocuments'
 import { parsePersistedBoard, serializePersistedBoard } from './persistedBoardSchema'
@@ -25,16 +26,13 @@ function boardWithMedia(): { board: HydratedPersistedBoard; blob: Blob } {
     ...base,
     widgets: {
       ...base.widgets,
-      photo: {
+      photo: makeWidget({
         id: 'photo',
         type: 'media',
         title: 'Photo',
-        canvasId: 'canvas',
         position: { x: 300, y: 0 },
-        size: { width: 240, height: 160 },
         data: { url: '', caption: '', localBlobKey: 'photo' },
-        metadata: { badges: [] },
-      },
+      }),
     },
   }
   return { board, blob }

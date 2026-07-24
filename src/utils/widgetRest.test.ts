@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { Widget } from '../types/spatial'
 import { GRID_SIZE, ICON_MIN_EDGE } from '../types/spatial'
 import { useWidgetRestStore } from '../store/useWidgetRestStore'
+import { makeWidget as makeBaseWidget } from '../test/factories'
 import { WIDGET_REGISTRY } from '../widgets/registry'
 import {
   effectiveWidgetSize,
@@ -14,17 +15,15 @@ import {
 } from './widgetRest'
 
 function makeWidget(overrides: Partial<Widget> = {}): Widget {
-  return {
-    id: 'w1',
+  return makeBaseWidget({
     type: 'line_chart',
     title: 'Trend',
     canvasId: 'c1',
-    position: { x: 0, y: 0 },
     size: { width: 400, height: 240 },
     data: { title: 'Trend', unit: '', points: [] },
     metadata: {},
     ...overrides,
-  } as Widget
+  } as Partial<Widget>)
 }
 
 const idleCtx = { expandedWidgetId: null }

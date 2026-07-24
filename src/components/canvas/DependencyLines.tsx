@@ -1,15 +1,17 @@
 import { memo, useCallback, useMemo, useState, type CSSProperties } from 'react'
-import { createPortal } from 'react-dom'
 import { useShallow } from 'zustand/react/shallow'
 import { useWorldContentRect } from '../../hooks/useWorldContentRect'
 import { getCriticalPath, useWidgetStore } from '../../store/useWidgetStore'
 import { useWidgetRestStore } from '../../store/useWidgetRestStore'
 import { widgetWithEffectiveSize } from '../../utils/widgetRest'
 import { useOverlayLifecycle } from '../../store/useOverlayStore'
-import type { RelationType, Vector2D, Widget } from '../../types/spatial'
+import type { RelationType, Vector2D } from '../../types/spatial'
 import { RELATION_LABELS } from '../../types/spatial'
 import { anchoredCurveMidpoint, anchoredCurvePath } from '../../utils/curve'
 import { dependencyAnchors } from '../../utils/dependencyGeometry'
+import { widgetCenter } from '../../utils/widgetBounds'
+import { truncate } from '../../utils/text'
+import { ContextMenuSurface } from '../ui/ContextMenuSurface'
 import {
   CanvasEdge,
   CanvasEdgeLayer,
@@ -34,13 +36,6 @@ interface DependencyEdgeDescriptor {
   highlighted: boolean
   connected: boolean
   showStatusChip: boolean
-}
-
-function widgetCenter(widget: Widget): Vector2D {
-  return {
-    x: widget.position.x + widget.size.width / 2,
-    y: widget.position.y + widget.size.height / 2,
-  }
 }
 
 const DependencyEdge = memo(function DependencyEdge({
@@ -131,26 +126,13 @@ function DependencyContextMenu({
   const dependentTitle = useWidgetStore((state) => state.widgets[relation?.toId ?? '']?.title ?? '…')
   if (!relation || relation.type !== 'blocker') return null
 
-  const left = Math.max(8, Math.min(x, Math.max(8, window.innerWidth - 224)))
-  const top = Math.max(8, Math.min(y, Math.max(8, window.innerHeight - 286)))
-  const truncate = (value: string, length = 18) => value.length > length ? `${value.slice(0, length)}…` : value
-
-  return createPortal(
-    <>
-      <div
-        className="fixed inset-0 z-40"
-        onPointerDown={onClose}
-        onContextMenu={(event) => { event.preventDefault(); onClose() }}
-      />
-      <div
-        className="gp-popup-menu gp-menu gp-pop gp-panel fixed z-50 max-h-[calc(100dvh-16px)] w-52 origin-top-left overflow-y-auto rounded-2xl p-1.5 shadow-2xl"
-        style={{ left, top }}
-      >
+  return (
+    <ContextMenuSurface x={x} y={y} estimatedWidth={216} estimatedHeight={278} onClose={onClose}>
         <p className="px-3 py-1.5  text-[10px] uppercase tracking-widest text-amber-400">
           Dependency
         </p>
         <p className="px-3 pb-2 text-[10px] leading-4 text-neutral-500">
-          {truncate(prerequisiteTitle)} must finish before {truncate(dependentTitle)}
+          {truncate(prerequisiteTitle, 18)} must finish before {truncate(dependentTitle, 18)}
         </p>
         <button
           type="button"
@@ -192,9 +174,7 @@ function DependencyContextMenu({
         >
           Delete dependency
         </button>
-      </div>
-    </>,
-    document.body,
+    </ContextMenuSurface>
   )
 }
 

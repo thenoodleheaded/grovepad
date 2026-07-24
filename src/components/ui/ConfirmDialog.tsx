@@ -1,8 +1,6 @@
-import { useEffect, useRef } from 'react'
-import { createPortal } from 'react-dom'
+import { useRef } from 'react'
 import { AlertTriangle } from 'lucide-react'
-import { useFocusTrap } from '../../hooks/useFocusTrap'
-import { useOverlayLifecycle } from '../../store/useOverlayStore'
+import { DialogShell } from './DialogShell'
 
 interface ConfirmDialogProps {
   open: boolean
@@ -32,36 +30,16 @@ export function ConfirmDialog({
   const panelRef = useRef<HTMLDivElement>(null)
   const cancelRef = useRef<HTMLButtonElement>(null)
 
-  useOverlayLifecycle(open)
-  useFocusTrap(open, panelRef, cancelRef)
-
-  useEffect(() => {
-    if (!open) return
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        event.preventDefault()
-        onClose()
-      }
-    }
-    window.addEventListener('keydown', onKeyDown)
-    return () => window.removeEventListener('keydown', onKeyDown)
-  }, [open, onClose])
-
-  if (!open) return null
-
-  return createPortal(
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="gp-confirm-title"
-      aria-describedby="gp-confirm-description"
-      className="gp-confirm-overlay fixed inset-0 z-[300] flex items-center justify-center p-5"
+  return (
+    <DialogShell
+      open={open}
+      onClose={onClose}
+      labelledBy="gp-confirm-title"
+      describedBy="gp-confirm-description"
+      wrapperClassName="gp-confirm-overlay fixed inset-0 z-[300] flex items-center justify-center p-5"
+      panelRef={panelRef}
+      initialFocusRef={cancelRef}
     >
-      <div
-        role="presentation"
-        className="gp-scrim gp-fade absolute inset-0 bg-black/55"
-        onPointerDown={onClose}
-      />
       <div
         ref={panelRef}
         tabIndex={-1}
@@ -121,7 +99,6 @@ export function ConfirmDialog({
           </button>
         </div>
       </div>
-    </div>,
-    document.body,
+    </DialogShell>
   )
 }

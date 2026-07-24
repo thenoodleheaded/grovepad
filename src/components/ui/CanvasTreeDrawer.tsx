@@ -5,8 +5,7 @@ import { useWidgetStore } from '../../store/useWidgetStore'
 import { requestWidgetDeletion } from '../../store/useWidgetDeletionDialogStore'
 import type { CanvasMeta } from '../../types/spatial'
 import { useAdaptiveInputStore } from '../../store/useAdaptiveInputStore'
-import { useOverlayLifecycle } from '../../store/useOverlayStore'
-import { useFocusTrap } from '../../hooks/useFocusTrap'
+import { useOverlayDismiss } from '../../hooks/useOverlayDismiss'
 import { canvasParentTargets } from '../../utils/canvasTreePolicy'
 import {
   buildCanvasOutline,
@@ -40,8 +39,13 @@ export function CanvasTreeDrawer() {
   const modalDrawer = viewportClass !== 'desktop'
   const asideRef = useRef<HTMLElement>(null)
   const closeRef = useRef<HTMLButtonElement>(null)
-  useOverlayLifecycle(open && modalDrawer)
-  useFocusTrap(open && modalDrawer, asideRef, closeRef)
+  // Escape is staged below (close the move sheet first, then the drawer),
+  // so the shared hook skips Escape.
+  useOverlayDismiss(open && modalDrawer, () => useCanvasTreeStore.getState().setOpen(false), {
+    containerRef: asideRef,
+    initialFocusRef: closeRef,
+    escape: false,
+  })
   useEffect(() => {
     if (!open) return
     const onKeyDown = (event: KeyboardEvent) => {

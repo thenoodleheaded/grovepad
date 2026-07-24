@@ -1,9 +1,8 @@
 import { useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { Keyboard, X } from 'lucide-react'
-import { useOverlayLifecycle } from '../../store/useOverlayStore'
 import { useWidgetStore } from '../../store/useWidgetStore'
-import { useFocusTrap } from '../../hooks/useFocusTrap'
+import { useOverlayDismiss } from '../../hooks/useOverlayDismiss'
 import { useCanvasStore } from '../../store/useCanvasStore'
 import { frameCanvas } from '../../utils/cameraFraming'
 
@@ -146,8 +145,13 @@ export function ShortcutsOverlay() {
   const panelRef = useRef<HTMLDivElement>(null)
   const closeRef = useRef<HTMLButtonElement>(null)
 
-  useOverlayLifecycle(open)
-  useFocusTrap(open, panelRef, closeRef)
+  // Escape is handled below in the capture phase with stopPropagation so the
+  // canvas shortcut layer never sees it; the shared hook skips Escape.
+  useOverlayDismiss(open, () => useWidgetStore.getState().setShortcutsOpen(false), {
+    containerRef: panelRef,
+    initialFocusRef: closeRef,
+    escape: false,
+  })
 
   useEffect(() => {
     if (!open) return

@@ -1,5 +1,13 @@
-import { GRID_SIZE, type Widget } from '../types/spatial'
+import { GRID_SIZE, type Vector2D, type Widget } from '../types/spatial'
 import type { WorldRect } from './canvasView'
+
+/** World-space center of a widget's stored box. */
+export function widgetCenter(widget: Pick<Widget, 'position' | 'size'>): Vector2D {
+  return {
+    x: widget.position.x + widget.size.width / 2,
+    y: widget.position.y + widget.size.height / 2,
+  }
+}
 
 // WidgetCard's own hover catch-all reaches half a cell above every card (for
 // the floating title row) and half a cell right when the button cluster

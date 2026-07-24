@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { CanvasMeta, Widget } from '../types/spatial'
+import { makeWidget } from '../test/factories'
 import { buildCanvasOutline, nextCanvasOutlineKey } from './canvasOutline'
 
 const canvases: Record<string, CanvasMeta> = {
@@ -7,16 +8,15 @@ const canvases: Record<string, CanvasMeta> = {
   child: { id: 'child', workspaceId: 'ws', parentCanvasId: 'root', name: 'Child' },
 }
 
-const widget = (id: string, canvasId: string, x: number, y: number, type: Widget['type'] = 'notes'): Widget => ({
-  id,
-  type,
-  title: id,
-  canvasId,
-  position: { x, y },
-  size: { width: 200, height: 120 },
-  data: { text: '' },
-  metadata: { badges: [], zIndex: 1 },
-}) as Widget
+const widget = (id: string, canvasId: string, x: number, y: number, type: Widget['type'] = 'notes'): Widget =>
+  makeWidget({
+    id,
+    type,
+    canvasId,
+    position: { x, y },
+    size: { width: 200, height: 120 },
+    metadata: { badges: [], zIndex: 1 },
+  })
 
 describe('canvas accessibility outline', () => {
   it('orders cards spatially and canvases hierarchically without duplicating canvas nodes', () => {

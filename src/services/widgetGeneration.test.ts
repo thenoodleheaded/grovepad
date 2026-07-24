@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
+import { makeWidget } from '../test/factories'
 import type { ThoughtInterpretation, ThoughtPlan } from '../utils/thoughtInterpreter'
 import type { WidgetGenerationDependencies } from './widgetGeneration'
 import { generateWidgetOutput } from './widgetGeneration'
@@ -31,11 +32,11 @@ const interpretation = {
 
 function dependencies() {
   const commitThoughtPlan = vi.fn(() => ['created'])
-  const parent = {
-    id: 'generator', type: 'ai_generator' as const, title: 'AI Generator', canvasId: 'canvas',
+  const parent = makeWidget({
+    id: 'generator', type: 'ai_generator', title: 'AI Generator',
     position: { x: 100, y: 200 }, size: { width: 320, height: 160 },
-    data: { prompt: '', status: 'idle' as const }, metadata: { badges: [] },
-  }
+    data: { prompt: '', status: 'idle' },
+  })
   const store = {
     widgets: { generator: parent },
     canvases: { canvas: { id: 'canvas', name: 'Origin', workspaceId: 'workspace', parentCanvasId: null } },

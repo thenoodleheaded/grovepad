@@ -31,7 +31,6 @@ import { setCollaborativeCanvasShared } from '../../collaboration/collaborationC
 import { canToggleCanvasSharing } from '../../collaboration/canvasSharing'
 import { accountDisplayName, accountProfileColor, PROFILE_COLORS, useAuthStore } from '../../store/useAuthStore'
 import { useCanvasStore } from '../../store/useCanvasStore'
-import { useOverlayLifecycle } from '../../store/useOverlayStore'
 import { usePersistenceStatusStore } from '../../store/usePersistenceStatusStore'
 import { useMcpConnectorStore } from '../../store/useMcpConnectorStore'
 import { useSettingsStore, type AppPreferences } from '../../store/useSettingsStore'
@@ -43,7 +42,7 @@ import { screenToWorld, type CanvasMeta } from '../../types/spatial'
 import { importBoardFileOntoCanvas } from '../../utils/boardCanvasImport'
 import { buildGrovepadPackage, readGrovepadPackage } from '../../utils/grovepadPackage'
 import { localDayKey } from '../../utils/localDate'
-import { useFocusTrap } from '../../hooks/useFocusTrap'
+import { useOverlayDismiss } from '../../hooks/useOverlayDismiss'
 import { ShortcutReference } from './ShortcutsOverlay'
 import { ConfirmDialog } from './ConfirmDialog'
 
@@ -327,20 +326,13 @@ export function SettingsPanel() {
   const [bodyScrollable, setBodyScrollable] = useState(false)
   const [rendered, setRendered] = useState(settings.open)
 
-  useOverlayLifecycle(settings.open)
-  useFocusTrap(settings.open, panelRef, panelRef)
+  useOverlayDismiss(settings.open, () => useSettingsStore.getState().setOpen(false), {
+    containerRef: panelRef,
+    initialFocusRef: panelRef,
+  })
 
   useEffect(() => {
     if (settings.open) setRendered(true)
-  }, [settings.open])
-
-  useEffect(() => {
-    if (!settings.open) return
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') useSettingsStore.getState().setOpen(false)
-    }
-    window.addEventListener('keydown', onKeyDown)
-    return () => window.removeEventListener('keydown', onKeyDown)
   }, [settings.open])
 
   useLayoutEffect(() => {

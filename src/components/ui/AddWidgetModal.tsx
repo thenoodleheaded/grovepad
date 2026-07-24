@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { ArrowLeft, Blocks, Check, ChevronDown, Search, Star, X } from 'lucide-react'
-import { useFocusTrap } from '../../hooks/useFocusTrap'
-import { useOverlayLifecycle } from '../../store/useOverlayStore'
+import { useOverlayDismiss } from '../../hooks/useOverlayDismiss'
 import { useWidgetStore } from '../../store/useWidgetStore'
 import { useWidgetPickerPrefsStore } from '../../store/useWidgetPickerPrefsStore'
 import {
@@ -310,8 +309,13 @@ export function AddWidgetModal({ worldPos, onClose, selection }: AddWidgetModalP
   const dialogRef = useRef<HTMLDivElement>(null)
   const searchRef = useRef<HTMLInputElement>(null)
 
-  useOverlayLifecycle(true)
-  useFocusTrap(true, dialogRef, shouldFocusSearch ? searchRef : dialogRef)
+  // The window keydown below owns Escape (staged: packs view → widgets view
+  // → close) alongside grid navigation, so the shared hook skips Escape.
+  useOverlayDismiss(true, onClose, {
+    containerRef: dialogRef,
+    initialFocusRef: shouldFocusSearch ? searchRef : dialogRef,
+    escape: false,
+  })
 
   useEffect(() => {
     const raf = requestAnimationFrame(() => {

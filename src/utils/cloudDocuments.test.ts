@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { HydratedPersistedBoard } from '../types/persistence'
+import { makeRelation, makeWidget } from '../test/factories'
 import {
   canonicalJson,
   decodeCloudDocument,
@@ -22,13 +23,13 @@ function board(): HydratedPersistedBoard {
       b: { id: 'b', name: 'B', workspaceId: 'ws', parentCanvasId: 'a' },
     },
     widgets: {
-      one: { id: 'one', type: 'notes', title: 'One', canvasId: 'a', position: { x: 0, y: 0 }, size: { width: 240, height: 160 }, data: { text: '' }, metadata: { badges: [] } },
-      two: { id: 'two', type: 'notes', title: 'Two', canvasId: 'a', position: { x: 300, y: 0 }, size: { width: 240, height: 160 }, data: { text: '' }, metadata: { badges: [] } },
-      three: { id: 'three', type: 'notes', title: 'Three', canvasId: 'b', position: { x: 0, y: 0 }, size: { width: 240, height: 160 }, data: { text: '' }, metadata: { badges: [] } },
+      one: makeWidget({ id: 'one', title: 'One', canvasId: 'a' }),
+      two: makeWidget({ id: 'two', title: 'Two', canvasId: 'a', position: { x: 300, y: 0 } }),
+      three: makeWidget({ id: 'three', title: 'Three', canvasId: 'b' }),
     },
     relations: {
-      same: { id: 'same', fromId: 'one', toId: 'two', type: 'parent', isResolved: false },
-      cross: { id: 'cross', fromId: 'one', toId: 'three', type: 'blocker', isResolved: false },
+      same: makeRelation({ id: 'same', fromId: 'one', toId: 'two', isResolved: false }),
+      cross: makeRelation({ id: 'cross', fromId: 'one', toId: 'three', type: 'blocker', isResolved: false }),
     },
     connections: {},
     glues: {

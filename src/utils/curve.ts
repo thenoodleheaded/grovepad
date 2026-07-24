@@ -1,4 +1,5 @@
 import type { Vector2D } from '../types/spatial'
+import { clamp } from './math'
 
 /**
  * How an edge's tangents should leave and enter its endpoints.
@@ -15,10 +16,6 @@ interface CubicCurveGeometry {
   c1: Vector2D
   c2: Vector2D
   end: Vector2D
-}
-
-function clamp(v: number, lo: number, hi: number): number {
-  return Math.min(hi, Math.max(lo, v))
 }
 
 /**

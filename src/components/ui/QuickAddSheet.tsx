@@ -2,13 +2,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { BrainCircuit, Check, ChevronLeft, ChevronRight, CornerDownLeft, Sparkles, Telescope, X } from 'lucide-react'
 import { useCanvasStore } from '../../store/useCanvasStore'
-import { useOverlayLifecycle } from '../../store/useOverlayStore'
 import { useToastStore } from '../../store/useToastStore'
 import { useWidgetStore } from '../../store/useWidgetStore'
 import { useAiDebugStore } from '../../store/useAiDebugStore'
 import { useQuickAddPreviewStore, activePreviewPlan, type QuickAddCandidate } from '../../store/useQuickAddPreviewStore'
 import { screenToWorld, type Vector2D } from '../../types/spatial'
-import { useFocusTrap } from '../../hooks/useFocusTrap'
+import { useOverlayDismiss } from '../../hooks/useOverlayDismiss'
 import { localAiService } from '../../services/localAiService'
 import {
   isPresentablePrediction,
@@ -127,8 +126,7 @@ export function QuickAddSheet() {
     deepAbortRef.current?.abort()
   }, [])
 
-  useOverlayLifecycle(open)
-  useFocusTrap(open, panelRef, textareaRef)
+  useOverlayDismiss(open, close, { containerRef: panelRef, initialFocusRef: textareaRef })
 
   // The sheet is conditionally mounted — an unmount for any reason must
   // never strand a blueprint on the canvas or a model call in flight.
@@ -138,15 +136,6 @@ export function QuickAddSheet() {
     composeAbortRef.current?.abort()
     deepAbortRef.current?.abort()
   }, [])
-
-  useEffect(() => {
-    if (!open) return
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') close()
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [open, close])
 
   useEffect(() => {
     setAiStatus(currentAiStatus())

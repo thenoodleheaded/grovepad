@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { HydratedPersistedBoard, PersistedBoard } from '../types/persistence'
+import { makeRelation, makeWidget } from '../test/factories'
 import currentBoardFixture from './fixtures/boards/v2.json?raw'
 import unknownBoardFixture from './fixtures/boards/v2-unknown.json?raw'
 import futureBoardFixture from './fixtures/boards/v3.json?raw'
@@ -34,26 +35,8 @@ function validBoard(): HydratedPersistedBoard {
       },
     },
     widgets: {
-      alpha: {
-        id: 'alpha',
-        type: 'notes',
-        title: 'Alpha',
-        canvasId: 'canvas',
-        position: { x: 0, y: 0 },
-        size: { width: 240, height: 160 },
-        data: { text: '' },
-        metadata: { badges: [] },
-      },
-      bravo: {
-        id: 'bravo',
-        type: 'notes',
-        title: 'Bravo',
-        canvasId: 'canvas',
-        position: { x: 320, y: 0 },
-        size: { width: 240, height: 160 },
-        data: { text: '' },
-        metadata: { badges: [] },
-      },
+      alpha: makeWidget({ id: 'alpha', title: 'Alpha' }),
+      bravo: makeWidget({ id: 'bravo', title: 'Bravo', position: { x: 320, y: 0 } }),
     },
     relations: {},
     connections: {},
@@ -109,13 +92,7 @@ describe('persisted board schema', () => {
       title: 'Old section break',
       data: { label: 'Section' },
     }
-    source.relations.toDivider = {
-      id: 'toDivider',
-      fromId: 'alpha',
-      toId: 'divider',
-      type: 'parent',
-      isResolved: true,
-    }
+    source.relations.toDivider = makeRelation({ id: 'toDivider', fromId: 'alpha', toId: 'divider' })
 
     const parsed = parsePersistedBoard(source)
 
@@ -228,13 +205,7 @@ describe('persisted board schema', () => {
   it('drops references to invalid widgets while preserving valid content', () => {
     const source = validBoard()
     ;(source.widgets as Record<string, unknown>).invalid = { id: 'invalid', type: 'not-a-widget' }
-    source.relations.relation = {
-      id: 'relation',
-      fromId: 'alpha',
-      toId: 'invalid',
-      type: 'parent',
-      isResolved: false,
-    }
+    source.relations.relation = makeRelation({ id: 'relation', fromId: 'alpha', toId: 'invalid', isResolved: false })
     source.glues.glue = {
       id: 'glue',
       widgetIds: ['alpha', 'invalid'],

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { Relation } from '../types/relations'
 import type { Widget } from '../types/spatial'
+import { makeRelation, makeWidget } from '../test/factories'
 import {
   canvasOutline,
   MCP_TREE_LIMITS,
@@ -49,20 +50,17 @@ describe('MCP tree contract', () => {
   })
 
   it('returns a bounded semantic outline instead of raw board state', () => {
-    const note = (id: string, y: number): Widget => ({
+    const note = (id: string, y: number): Widget => makeWidget({
       id,
       canvasId: 'canvas-1',
-      type: 'notes',
-      title: id,
       position: { x: 0, y },
       size: { width: 320, height: 200 },
       data: { text: `${id} text`, mode: 'plain' },
-      metadata: { badges: [] },
     })
     const widgets = { child: note('child', 20), root: note('root', 0) }
-    const relation: Relation = {
-      id: 'relation-1', fromId: 'root', toId: 'child', type: 'parent', isResolved: false,
-    }
+    const relation: Relation = makeRelation({
+      id: 'relation-1', fromId: 'root', toId: 'child', isResolved: false,
+    })
 
     expect(canvasOutline(widgets, { [relation.id]: relation }, 'canvas-1')).toEqual({
       nodes: [

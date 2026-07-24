@@ -1,3 +1,4 @@
+import { clamp } from './math'
 export interface MagneticRect {
   left: number
   top: number
@@ -13,10 +14,6 @@ export interface MagneticPoint {
 const MAX_X = 3
 const MAX_Y = 2
 const RESTING_LIFT = 1
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(max, Math.max(min, value))
-}
 
 /**
  * Converts the real pointer position into a deliberately restrained visual

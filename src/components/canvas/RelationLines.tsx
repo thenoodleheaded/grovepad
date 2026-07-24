@@ -1,9 +1,8 @@
 import { memo, useCallback, useMemo, useState, type CSSProperties } from 'react'
-import { createPortal } from 'react-dom'
 import { useShallow } from 'zustand/react/shallow'
 import { getCriticalPath, useWidgetStore } from '../../store/useWidgetStore'
 import { useOverlayLifecycle } from '../../store/useOverlayStore'
-import type { RelationType, Vector2D, Widget } from '../../types/spatial'
+import type { RelationType, Vector2D } from '../../types/spatial'
 import { GRID_SIZE, RELATION_LABELS } from '../../types/spatial'
 import { anchoredCurveMidpoint, anchoredCurvePath, curvedPath } from '../../utils/curve'
 import { useWorldContentRect } from '../../hooks/useWorldContentRect'
@@ -11,6 +10,10 @@ import { useWidgetRestStore } from '../../store/useWidgetRestStore'
 import { isWidgetResting, widgetWithEffectiveSize } from '../../utils/widgetRest'
 import { widgetDefinition } from '../../widgets/registry'
 import { treeRevealDelay } from '../../store/treeReveal'
+import { truncate } from '../../utils/text'
+import { ContextMenuSurface } from '../ui/ContextMenuSurface'
+import { widgetCenter } from '../../utils/widgetBounds'
+import { clamp } from '../../utils/math'
 import {
   CanvasEdge,
   CanvasEdgeLayer,
@@ -61,10 +64,6 @@ const WIDGET_PILL_CHROME = 41
 const PILL_MIN_HALF_WIDTH = 32
 /** The floating title capsule is hidden while a card is an icon. */
 
-function clamp(v: number, lo: number, hi: number): number {
-  return Math.min(hi, Math.max(lo, v))
-}
-
 /**
  * Estimated half-width of a floating name pill, clamped to the pill's real
  * CSS bounds (`min-w-[64px]` .. `max-w-[80%]` of the card). Text width is a
@@ -74,10 +73,6 @@ function clamp(v: number, lo: number, hi: number): number {
 function estimatePillHalfWidth(label: string, chrome: number, boxWidth: number): number {
   const estimated = (chrome + label.length * PILL_CHAR_WIDTH) / 2
   return Math.min(Math.max(estimated, PILL_MIN_HALF_WIDTH), boxWidth * 0.4)
-}
-
-function widgetCenter(w: Widget): Vector2D {
-  return { x: w.position.x + w.size.width / 2, y: w.position.y + w.size.height / 2 }
 }
 
 // ---------------------------------------------------------------------------
@@ -308,16 +303,8 @@ function LineContextMenu({
     useWidgetStore.getState().addRelation(parentId, childId, 'parent')
     onClose()
   }
-  const truncate = (s: string, n = 14) => s.length > n ? s.slice(0, n) + '…' : s
-  const left = Math.max(8, Math.min(x, Math.max(8, window.innerWidth - 216)))
-  const top = Math.max(8, Math.min(y, Math.max(8, window.innerHeight - 252)))
-
-  return createPortal(
-    <>
-      <div className="fixed inset-0 z-40" onPointerDown={onClose}
-        onContextMenu={(e) => { e.preventDefault(); onClose() }} />
-      <div className="gp-popup-menu gp-menu gp-pop gp-panel fixed z-50 max-h-[calc(100dvh-16px)] w-52 origin-top-left overflow-y-auto rounded-2xl p-1.5 shadow-2xl"
-        style={{ left, top }}>
+  return (
+    <ContextMenuSurface x={x} y={y} estimatedWidth={208} estimatedHeight={244} onClose={onClose}>
         <p className="px-3 py-1.5  text-[10px] uppercase tracking-widest text-neutral-500">
           {RELATION_LABELS[relation.type]} link
         </p>
@@ -347,16 +334,16 @@ function LineContextMenu({
         <button type="button"
           onClick={() => addParent(relation.fromId, relation.toId)}
           className="block w-full px-3 py-1.5 text-left text-xs text-slate-300 hover:bg-slate-700/30">
-          <span className="text-neutral-500">{truncate(fromTitle)}</span>
+          <span className="text-neutral-500">{truncate(fromTitle, 14)}</span>
           <span className="mx-1 text-emerald-400">→</span>
-          <span className="text-neutral-300">parent of {truncate(toTitle)}</span>
+          <span className="text-neutral-300">parent of {truncate(toTitle, 14)}</span>
         </button>
         <button type="button"
           onClick={() => addParent(relation.toId, relation.fromId)}
           className="block w-full px-3 py-1.5 text-left text-xs text-slate-300 hover:bg-slate-700/30">
-          <span className="text-neutral-500">{truncate(toTitle)}</span>
+          <span className="text-neutral-500">{truncate(toTitle, 14)}</span>
           <span className="mx-1 text-emerald-400">→</span>
-          <span className="text-neutral-300">parent of {truncate(fromTitle)}</span>
+          <span className="text-neutral-300">parent of {truncate(fromTitle, 14)}</span>
         </button>
         <div className="my-1 border-t border-neutral-800" />
         <button type="button"
@@ -364,9 +351,7 @@ function LineContextMenu({
           className="block w-full px-3 py-1.5 text-left text-xs text-red-400 hover:bg-red-500/10">
           Delete Link
         </button>
-      </div>
-    </>,
-    document.body,
+    </ContextMenuSurface>
   )
 }
 

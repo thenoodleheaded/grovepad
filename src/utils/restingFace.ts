@@ -1,6 +1,7 @@
 import type { ModuleType, Size, Widget } from '../types/spatial'
 import { GRID_SIZE, ICON_MIN_EDGE } from '../types/spatial'
 import { titleCapsuleWidth } from './titleCapsuleWidth'
+import { clamp01 } from './math'
 
 // ---------------------------------------------------------------------------
 // Resting face model — the single source for WHAT a resting widget shows and
@@ -133,10 +134,6 @@ function record(value: unknown): Record<string, unknown> | null {
 
 function finite(value: unknown): number | null {
   return typeof value === 'number' && Number.isFinite(value) ? value : null
-}
-
-function clamp01(value: number): number {
-  return Math.max(0, Math.min(1, value))
 }
 
 function compact(value: string, limit: number): string {

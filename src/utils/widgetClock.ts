@@ -1,4 +1,5 @@
 import type { ModuleType, Widget } from '../types/spatial'
+import { clamp01 } from './math'
 
 // ---------------------------------------------------------------------------
 // Clock reading for the timer family (Timer, Pomodoro, Stopwatch, and the
@@ -29,10 +30,6 @@ const CLOCK_TYPES = new Set<ModuleType>(['timer', 'pomodoro', 'stopwatch', 'time
 
 export function isClockWidget(type: ModuleType): boolean {
   return CLOCK_TYPES.has(type)
-}
-
-function clamp01(value: number): number {
-  return Math.max(0, Math.min(1, value))
 }
 
 function record(value: unknown): Record<string, unknown> {

@@ -1,4 +1,5 @@
 import { localDayKey } from '../../../../utils/localDate'
+import { clamp as clampNumber } from '../../../../utils/math'
 
 /** Shared style classes and numeric guards for the essential widget modules. Extracted verbatim from EssentialWidgets.tsx. */
 export const inputClass =
@@ -12,7 +13,7 @@ export function finite(value: number, fallback = 0): number {
 }
 
 export function clamp(value: number, min: number, max: number): number {
-  return Math.min(max, Math.max(min, finite(value)))
+  return clampNumber(finite(value), min, max)
 }
 
 export function todayISO(): string {

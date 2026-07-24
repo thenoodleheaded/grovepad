@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { Widget } from '../types/spatial'
+import { makeWidget } from '../test/factories'
 import {
   connectedGlueComponents,
   findGlueSnap,
@@ -13,19 +14,15 @@ import {
 } from './glueGeometry'
 
 function widget(id: string, x: number, y: number, width = 240, height = 160): Widget {
-  return {
+  // Pinned cards keep their stored box on the board — the geometry under
+  // test is then exactly the rectangles this fixture writes, independent of
+  // the content-derived resting tiles.
+  return makeWidget({
     id,
-    type: 'notes',
-    title: id,
-    canvasId: 'canvas',
     position: { x, y },
     size: { width, height },
-    data: { text: '' },
-    // Pinned cards keep their stored box on the board — the geometry under
-    // test is then exactly the rectangles this fixture writes, independent of
-    // the content-derived resting tiles.
     metadata: { badges: [], pinned: true },
-  }
+  })
 }
 
 function rect(x: number, y: number, width: number, height: number) {

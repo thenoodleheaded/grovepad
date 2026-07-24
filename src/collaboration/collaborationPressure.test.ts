@@ -1,16 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import * as Y from 'yjs'
 import type { Widget } from '../types/spatial'
+import { makeWidget } from '../test/factories'
 import { readCanvasSnapshot, writeCanvasSnapshot } from './yjsCanvas'
 
 const canvasId = 'pressure-canvas'
 
 function note(id: string, text: string): Widget {
-  return {
-    id, canvasId, type: 'notes', title: id,
-    position: { x: 0, y: 0 }, size: { width: 320, height: 240 },
-    data: { text }, metadata: { badges: [] },
-  }
+  return makeWidget({ id, canvasId, size: { width: 320, height: 240 }, data: { text } })
 }
 
 function rotated<T>(values: T[], offset: number): T[] {

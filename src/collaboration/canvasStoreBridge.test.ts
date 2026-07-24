@@ -3,19 +3,16 @@ import { createCanvasStoreBridge } from './canvasStoreBridge'
 import { LOCAL_STORE_ORIGIN, writeCanvasSnapshot } from './yjsCanvas'
 import { useWidgetStore } from '../store/useWidgetStore'
 import type { Widget } from '../types/spatial'
+import { makeRelation, makeWidget } from '../test/factories'
 import { mergeCanvasIntoBoard } from './canvasStoreBridge'
 
 function widget(id: string, canvasId: string): Widget {
-  return {
+  return makeWidget({
     id,
     canvasId,
-    type: 'notes',
-    title: id,
-    position: { x: 0, y: 0 },
     size: { width: 240, height: 200 },
     data: { text: id },
-    metadata: { badges: [] },
-  }
+  })
 }
 
 describe('mergeCanvasIntoBoard', () => {
@@ -25,8 +22,8 @@ describe('mergeCanvasIntoBoard', () => {
     const state = {
       widgets: { 'old-a': oldA, 'keep-b': keepB },
       relations: {
-        old: { id: 'old', fromId: 'old-a', toId: 'old-a', type: 'cousin', isResolved: false },
-        keep: { id: 'keep', fromId: 'keep-b', toId: 'keep-b', type: 'cousin', isResolved: false },
+        old: makeRelation({ id: 'old', fromId: 'old-a', toId: 'old-a', type: 'cousin', isResolved: false }),
+        keep: makeRelation({ id: 'keep', fromId: 'keep-b', toId: 'keep-b', type: 'cousin', isResolved: false }),
       },
       connections: {},
       glues: {},
@@ -60,7 +57,7 @@ describe('mergeCanvasIntoBoard', () => {
     const state = {
       widgets: { a: widget('a', 'a'), b: widget('b', 'b') },
       relations: {
-        cross: { id: 'cross', fromId: 'a', toId: 'b', type: 'parent', isResolved: false },
+        cross: makeRelation({ id: 'cross', fromId: 'a', toId: 'b', isResolved: false }),
       },
       connections: {}, glues: {}, selectedIds: new Set<string>(), widgetStructureVersion: 0,
       canvases: {

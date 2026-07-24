@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { Connection } from '../types/circuit'
 import { isValidConnectionShape, suggestTransform } from '../types/circuit'
 import type { ChecklistData, CounterData, ModuleData, ModuleType, ProgressData, TextInputData, Widget, WorldClockData } from '../types/spatial'
+import { makeWidget } from '../test/factories'
 import { commandsFor, fieldDescriptor } from '../widgets/fields'
 import {
   buildConnectionIndex,
@@ -26,7 +27,7 @@ let widgetCounter = 0
 
 function widget(type: ModuleType, data: ModuleData, x = 0, y = 0): Widget {
   widgetCounter++
-  return {
+  return makeWidget({
     id: `w${widgetCounter}`,
     type,
     title: `${type} ${widgetCounter}`,
@@ -34,8 +35,7 @@ function widget(type: ModuleType, data: ModuleData, x = 0, y = 0): Widget {
     position: { x, y },
     size: { width: 280, height: 200 },
     data,
-    metadata: { badges: [] },
-  }
+  })
 }
 
 function record(widgets: Widget[]): Record<string, Widget> {

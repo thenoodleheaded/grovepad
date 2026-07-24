@@ -1,7 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { createPortal } from 'react-dom'
 import { BrainCircuit, FileText, FileUp, Sparkles, X, Loader2 } from 'lucide-react'
-import { useOverlayLifecycle } from '../../store/useOverlayStore'
 import { useWidgetStore } from '../../store/useWidgetStore'
 import { useCanvasStore } from '../../store/useCanvasStore'
 import { boundsForWidgets } from '../../utils/widgetBounds'
@@ -10,7 +8,7 @@ import { useAiDebugStore, type AiCallPhase } from '../../store/useAiDebugStore'
 import { extractFileContent } from '../../utils/documentReader'
 import { layoutMindmap } from '../../utils/mindmapLayout'
 import { importTypeCatalog, IMPORT_SELECTABLE_TYPES } from '../../widgets/registry'
-import { useFocusTrap } from '../../hooks/useFocusTrap'
+import { DialogShell } from './DialogShell'
 
 const MAX_FILES = 5
 const ACCEPTED = '.pdf,.md,.markdown,.txt,.csv'
@@ -694,9 +692,6 @@ export function ImportDocumentModal() {
     setLoadingMessage('')
   }, [])
 
-  useOverlayLifecycle(open)
-  useFocusTrap(open, panelRef, panelRef)
-
   useEffect(
     () => () => {
       foregroundAbortRef.current?.abort()
@@ -721,12 +716,7 @@ export function ImportDocumentModal() {
         })),
       ])
     })
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') close()
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [open, close])
+  }, [open])
 
   if (!open) return null
 
@@ -1042,18 +1032,16 @@ Return ONLY a JSON object that adheres strictly to the response schema for this 
     }
   }
 
-  return createPortal(
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="gp-import-title"
-      className="gp-import-dialog fixed inset-0 z-[200] flex items-start justify-center px-4 pb-4 pt-[clamp(24px,10vh,80px)]"
+  return (
+    <DialogShell
+      open={open}
+      onClose={close}
+      labelledBy="gp-import-title"
+      wrapperClassName="gp-import-dialog fixed inset-0 z-[200] flex items-start justify-center px-4 pb-4 pt-[clamp(24px,10vh,80px)]"
+      scrimClassName="bg-black/50"
+      panelRef={panelRef}
+      initialFocusRef={panelRef}
     >
-      <div
-        role="presentation"
-        className="gp-scrim gp-fade absolute inset-0 bg-black/50"
-        onClick={close}
-      />
       <div
         ref={panelRef}
         tabIndex={-1}
@@ -1236,7 +1224,6 @@ Return ONLY a JSON object that adheres strictly to the response schema for this 
         </div>
         </div>
       </div>
-    </div>,
-    document.body,
+    </DialogShell>
   )
 }
