@@ -6,6 +6,7 @@ import {
   ArrowRight,
   ArrowDown,
   ArrowUp,
+  BookOpen,
   ChevronRight,
   ChevronsUpDown,
   CircuitBoard,
@@ -20,7 +21,6 @@ import {
   SquarePlus,
   Trash2,
   Undo2,
-  Zap,
 } from 'lucide-react'
 import { useCanvasStore } from '../../store/useCanvasStore'
 import { useAdaptiveInputStore } from '../../store/useAdaptiveInputStore'
@@ -498,13 +498,12 @@ export function CanvasToolbar() {
         <button
           type="button"
           disabled={!canEdit}
-          onClick={() => useWidgetStore.getState().setQuickAddOpen(true)}
-          title="Capture and interpret a thought (N)"
-          aria-label="Quick capture (N)"
+          onClick={() => useWidgetStore.getState().setRecipesOpen(true)}
+          title="Build a ready-made board from the recipe catalogue"
           className="gp-toolbar-action flex h-9 items-center gap-1.5 rounded-xl px-2 text-xs font-medium text-neutral-400 transition-[background-color,color,transform,scale] hover:bg-neutral-700/60 hover:text-white active:scale-[0.96] disabled:cursor-not-allowed disabled:opacity-35"
         >
-          <Zap size={13} aria-hidden />
-          <span className="hidden xl:inline">Capture</span>
+          <BookOpen size={13} aria-hidden />
+          <span className="hidden sm:inline">Recipes</span>
         </button>
         <button
           type="button"

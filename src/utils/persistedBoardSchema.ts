@@ -10,6 +10,7 @@ import {
 import type {
   CanvasMeta,
   DomainPack,
+  GlueRestoreEntry,
   Relation,
   RelationType,
   Vector2D,
@@ -171,11 +172,33 @@ function restoreRetiredPill(widget: Widget & { collapsed?: boolean }): void {
   delete widget.expandedSize
 }
 
+/**
+ * The state a pin interrupted, as loaded from disk. Anything that is not a
+ * shape unpinning could act on is dropped: an unpin then falls back to the
+ * resting face, which is exactly the old behaviour and never a broken box.
+ */
+function sanitizePinOrigin(widget: Widget): void {
+  const metadata = widget.metadata as unknown as Record<string, unknown> | undefined
+  if (!metadata || !('pinnedFrom' in metadata)) return
+  const from = metadata.pinnedFrom
+  const valid =
+    isRecord(from) &&
+    ((from.kind === 'rest') ||
+      (from.kind === 'icon' &&
+        isFiniteNumber(from.width) &&
+        isFiniteNumber(from.height) &&
+        from.width > 0 &&
+        from.height > 0))
+  // A memory without a pin to belong to is stale bookkeeping, not state.
+  if (!valid || metadata.pinned !== true) delete metadata.pinnedFrom
+}
+
 /** One-time compatibility normalization for evolved widget data contracts. */
 function normalizeWidgetData(widget: Widget): Widget {
-  const persistentWidget = { ...widget }
+  const persistentWidget = { ...widget, metadata: { ...widget.metadata } }
   delete persistentWidget.isHydrating
   restoreRetiredPill(persistentWidget)
+  sanitizePinOrigin(persistentWidget)
 
   if (persistentWidget.type === 'ai_generator') {
     const data = persistentWidget.data as unknown as Record<string, unknown>
@@ -323,17 +346,53 @@ function parseGlueEnvelope(
   return { source: value, widgetIds }
 }
 
+/**
+ * The pre-collapse state map a folded cluster carries. Only entries for members
+ * the cluster still has are kept, and every field must be a finite number, so a
+ * corrupt or stale restore map can never place a widget at NaN on expand.
+ */
+function sanitizeGlueRestore(
+  value: unknown,
+  widgetIds: readonly string[],
+): Record<string, GlueRestoreEntry> | undefined {
+  if (!isRecord(value)) return undefined
+  const members = new Set(widgetIds)
+  const restore: Record<string, GlueRestoreEntry> = {}
+  for (const [id, entry] of Object.entries(value)) {
+    if (!members.has(id) || !isRecord(entry)) continue
+    const { x, y, width, height } = entry
+    if (!isFiniteNumber(x) || !isFiniteNumber(y)) continue
+    if (!isFiniteNumber(width) || !isFiniteNumber(height) || width <= 0 || height <= 0) continue
+    restore[id] = { x, y, width, height, iconified: entry.iconified === true }
+  }
+  return Object.keys(restore).length > 0 ? restore : undefined
+}
+
 function sanitizeGlue(value: unknown, widgets: Record<string, Widget>): WidgetGlue | null {
   const envelope = parseGlueEnvelope(value, widgets)
   if (!envelope) return null
   const rawName = envelope.source.name
   const name =
     typeof rawName === 'string' && rawName.trim() ? rawName.replace(/\s+/g, ' ').trim().slice(0, 60) : undefined
+  const restore = sanitizeGlueRestore(envelope.source.restore, envelope.widgetIds)
+  // A cluster is only "collapsed" if it also carries the map that can undo the
+  // fold — otherwise expanding it would have nothing to restore to.
+  const collapsed = envelope.source.collapsed === true && Boolean(restore)
+  // The fold anchor only means anything while the fold it describes is in
+  // effect, and must be finite so an expand can never shift members to NaN.
+  const rawFoldedAt = envelope.source.foldedAt
+  const foldedAt =
+    collapsed && isRecord(rawFoldedAt) && isFiniteNumber(rawFoldedAt.x) && isFiniteNumber(rawFoldedAt.y)
+      ? { x: rawFoldedAt.x, y: rawFoldedAt.y }
+      : undefined
   return {
     ...envelope.source,
     id: envelope.source.id,
     widgetIds: envelope.widgetIds,
     ...(name ? { name } : {}),
+    ...(collapsed ? { collapsed: true } : { collapsed: undefined }),
+    ...(collapsed && restore ? { restore } : { restore: undefined }),
+    ...(foldedAt ? { foldedAt } : { foldedAt: undefined }),
   } as unknown as WidgetGlue
 }
 

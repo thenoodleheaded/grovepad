@@ -24,7 +24,7 @@ describe('LoginPage field surfaces', () => {
     const markup = renderToStaticMarkup(<LoginPage />)
 
     expect(markup).toContain('max-w-md')
-    expect(markup).toMatch(/gp-login-form-panel gp-panel[\s\S]*gp-login-brand/)
+    expect(markup).toMatch(/gp-login-brand[\s\S]*gp-login-form-panel gp-panel/)
     expect(markup).not.toContain('gp-login-shell gp-pop gp-panel')
     expect(markup).not.toContain('Your infinite thinking canvas')
     expect(markup).not.toContain('Guest work saves')

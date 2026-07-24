@@ -2,6 +2,11 @@ import type { CanvasNodeData, Size, Vector2D, Widget } from '../../types/spatial
 import { ICONIFIED_SIZE, snapToGrid, WIDGET_MAX_EDGE } from '../../types/spatial'
 import { DEFAULT_SIZING, widgetDefinition } from '../../widgets/registry'
 import { resizeAnomalies } from '../../utils/scaleDebugAnomalies'
+import {
+  closeClusterGaps,
+  reconcileGlueClusters,
+  unfoldReleasedFoldedMembers,
+} from '../../utils/glueGeometry'
 import { anchoredOrigin, recenteredOrigin } from '../../utils/widgetResizeEdge'
 import { isWidgetResting, restingTileSize } from '../../utils/widgetRest'
 import { clampIconEdge, snapIconEdgeToGrid } from '../../utils/widgetScale'
@@ -10,6 +15,7 @@ import { useCanvasStore } from '../useCanvasStore'
 import { useScaleDebugStore } from '../useScaleDebugStore'
 import { useToastStore } from '../useToastStore'
 import { applyWidgetDelta, applyWidgetPositions, movedIdsForWidget, uniqueExistingIds, withWidget } from '../widgetCollection'
+import { buildGlueIndex, expandMovedWidgetIds } from '../widgetGraph'
 import { MIN_WIDGET_HEIGHT, MIN_WIDGET_WIDTH } from '../widgetLayoutConstants'
 import { fitWidgetSize, computeDataHeight, computeDataWidth } from '../widgetSizing'
 import { settleWidgetLayout } from '../widgetSettling'
@@ -51,16 +57,15 @@ export function createWidgetLayoutSlice({ set, get, pushHistory }: WidgetStoreSl
       const baseIds = options?.moveSelection === false
         ? uniqueExistingIds([id], state.widgets)
         : movedIdsForWidget(id, state.selectedIds, state.widgets)
-      // Glued widgets move as one object: any moved member pulls its whole
-      // cluster along. An option-drag (`soloGlued`) moves only the grabbed
-      // widget so it can be pulled off or re-welded elsewhere.
-      const withClusters = options?.soloGlued
+      // Glued widgets move as one object, and a strict holder moves its whole
+      // parent-linked family: the move expands through both closures at once.
+      // An option-drag (`soloGlued`) breaks every coupling for this drag —
+      // it moves only the grabbed widget so it can be pulled off, re-welded,
+      // or repositioned inside its family without carrying anyone.
+      const withFamilies = options?.soloGlued
         ? baseIds
-        : baseIds.flatMap((widgetId) => {
-            const glueId = state.widgetGlueIndex[widgetId]
-            return glueId ? state.glues[glueId]?.widgetIds ?? [widgetId] : [widgetId]
-          })
-      const ids = uniqueExistingIds(withClusters, state.widgets).filter(
+        : expandMovedWidgetIds(baseIds, state)
+      const ids = uniqueExistingIds(withFamilies, state.widgets).filter(
         (widgetId) => !state.widgets[widgetId]?.metadata.locked,
       )
       if (ids.length === 0) return state
@@ -77,26 +82,38 @@ export function createWidgetLayoutSlice({ set, get, pushHistory }: WidgetStoreSl
     set((state) => {
       const w = state.widgets[id]
       if (!w || w.metadata.locked) return state
-      return {
-        widgets: applyWidgetPositions(state.widgets, {
-          [id]: { x: snapToGrid(w.position.x), y: snapToGrid(w.position.y) },
-        }),
-      }
+      const snapped = applyWidgetPositions(state.widgets, {
+        [id]: { x: snapToGrid(w.position.x), y: snapToGrid(w.position.y) },
+      })
+      if (snapped === state.widgets) return state
+      // Landing on the grid is a position change like any other, so it runs
+      // the overlap check rather than trusting the caller to.
+      return { widgets: settleWidgetLayout(snapped, [id], state.widgetGlueIndex, { anchorIds: [id] }) }
     })
   },
 
   settleWidgets: (ids) => {
     set((state) => {
       // A glued widget never settles alone — its whole cluster is the rigid
-      // unit, so the request expands to every clustermate and the settle pass
-      // snaps the cluster by one shared delta (welds survive exactly).
-      const expanded = uniqueExistingIds(ids, state.widgets).flatMap((id) => {
-        const glueId = state.widgetGlueIndex[id]
-        return glueId ? state.glues[glueId]?.widgetIds ?? [id] : [id]
-      })
+      // unit — and a strict family that dragged together lands together, so
+      // the request expands through both closures before the settle pass
+      // (the cluster snaps by one shared delta; welds survive exactly).
+      const expanded = expandMovedWidgetIds(uniqueExistingIds(ids, state.widgets), state)
       const validIds = uniqueExistingIds(expanded, state.widgets)
       if (validIds.length === 0) return state
-      return { widgets: settleWidgetLayout(state.widgets, validIds, state.widgetGlueIndex) }
+      const settled = settleWidgetLayout(state.widgets, validIds, state.widgetGlueIndex)
+      // Release-time housekeeping: clusters must always equal what visibly
+      // touches. Any interaction that left a member floating free of its
+      // group splits here, so a "member" that no longer touches anything can
+      // never keep dragging the whole group with it.
+      const glues = reconcileGlueClusters(settled, state.glues)
+      if (glues === state.glues) return { widgets: settled }
+      return {
+        widgets: unfoldReleasedFoldedMembers(settled, state.glues, glues),
+        glues,
+        widgetGlueIndex: buildGlueIndex(glues),
+        widgetStructureVersion: state.widgetStructureVersion + 1,
+      }
     })
   },
 
@@ -109,7 +126,12 @@ export function createWidgetLayoutSlice({ set, get, pushHistory }: WidgetStoreSl
         positions[id] = { x: w.position.x + offset.x, y: w.position.y + offset.y }
       }
       if (Object.keys(positions).length === 0) return state
-      return { widgets: applyWidgetPositions(state.widgets, positions) }
+      // Committing the drag's ghost preview moves real cards, so it runs the
+      // overlap check on everything it just placed.
+      const moved = applyWidgetPositions(state.widgets, positions)
+      return {
+        widgets: settleWidgetLayout(moved, Object.keys(positions), state.widgetGlueIndex),
+      }
     })
   },
 
@@ -193,7 +215,16 @@ export function createWidgetLayoutSlice({ set, get, pushHistory }: WidgetStoreSl
     useToastStore.getState().addToast('Fit widgets to content')
   },
 
-  resizeWidget: (id, newSize, snap = true) => {
+  resizeWidget: (id, newSize, snap = true, options = {}) => {
+    // Every COMMITTED size change re-runs the overlap check, so growing a card
+    // can never leave it sitting on top of a neighbour. Live gesture frames
+    // (`snap: false`, one per animation frame) deliberately do not: settling
+    // mid-drag would shove neighbours around under the pointer and fight the
+    // gesture. The release commits, and that is what settles.
+    // `settle: false` is for callers that move the box again straight after
+    // (resizeWidgetFromEdge) and settle once themselves at the end.
+    const shouldSettle = snap && options.settle !== false
+    let sizeChanged = false
     // Populated during the set() pass below so the debug trace can fire once,
     // after the store update, with the full before/after/rules picture —
     // resizeWidget is the single choke point nearly every scaling path
@@ -225,6 +256,7 @@ export function createWidgetLayoutSlice({ set, get, pushHistory }: WidgetStoreSl
           ? snapIconEdgeToGrid(requestedEdge)
           : clampIconEdge(requestedEdge)
         if (edge === w.size.width && edge === w.size.height) return state
+        sizeChanged = true
         return {
           widgets: withWidget(state.widgets, id, (widget) => ({
             ...widget,
@@ -245,6 +277,7 @@ export function createWidgetLayoutSlice({ set, get, pushHistory }: WidgetStoreSl
       const changed = size.width !== w.size.width || size.height !== w.size.height
       if (scaleDebugOpen) trace = { before: w.size, after: size, rules: fullSizing(w), locked: false, changed }
       if (!changed) return state
+      sizeChanged = true
       return {
         widgets: withWidget(state.widgets, id, (w) => ({
           ...w,
@@ -252,6 +285,21 @@ export function createWidgetLayoutSlice({ set, get, pushHistory }: WidgetStoreSl
         })),
       }
     })
+
+    // The card just grew or shrank: re-run the overlap check so a bigger box
+    // cannot end up lying on top of its neighbours. Inside a glue cluster a
+    // SHRINK also leaves a hole in the weld that nothing else closes — a note
+    // converging to its content height, an inward edge drag — so the cluster
+    // pulls back together and stays one welded block.
+    if (sizeChanged && shouldSettle) {
+      set((state) => {
+        let settled = settleWidgetLayout(state.widgets, [id], state.widgetGlueIndex, { anchorIds: [id] })
+        const glueId = state.widgetGlueIndex[id]
+        const cluster = glueId ? state.glues[glueId] : undefined
+        if (cluster) settled = closeClusterGaps(settled, cluster.widgetIds)
+        return { widgets: settled }
+      })
+    }
 
     if (trace) {
       const t = trace as {
@@ -296,12 +344,24 @@ export function createWidgetLayoutSlice({ set, get, pushHistory }: WidgetStoreSl
   resizeWidgetFromEdge: (id, newSize, edge, snap = false) => {
     const before = get().widgets[id]
     if (!before) return
-    get().resizeWidget(id, newSize, snap)
+    // Resize without settling: the box is about to move again to hold the
+    // pinned edge still, and settling against the intermediate position would
+    // push neighbours away from a place this card never comes to rest at.
+    get().resizeWidget(id, newSize, snap, { settle: false })
     const after = get().widgets[id]
     if (!after) return
     const position = anchoredOrigin(before.position, before.size, after.size, edge)
-    if (position.x === after.position.x && position.y === after.position.y) return
-    set((state) => ({ widgets: withWidget(state.widgets, id, (w) => ({ ...w, position })) }))
+    const moved = position.x !== after.position.x || position.y !== after.position.y
+    if (moved) {
+      set((state) => ({ widgets: withWidget(state.widgets, id, (w) => ({ ...w, position })) }))
+    }
+    // One overlap check for the whole committed change — new size AND new
+    // origin together.
+    if (snap) {
+      set((state) => ({
+        widgets: settleWidgetLayout(state.widgets, [id], state.widgetGlueIndex, { anchorIds: [id] }),
+      }))
+    }
   },
 
   setWidgetScaleState: (id, target, options = {}) => {
@@ -354,9 +414,36 @@ export function createWidgetLayoutSlice({ set, get, pushHistory }: WidgetStoreSl
       // tile for a widget at rest, otherwise its stored size.
       const shownBefore = fromSize ?? (rests(widget) ? restingTileSize(widget) : widget.size)
       const shownAfter = rests(next) ? restingTileSize(next) : next.size
-      next.position = recenteredOrigin(widget.position, shownBefore, shownAfter)
+      const glueId = state.widgetGlueIndex[id]
+      const cluster = glueId ? state.glues[glueId] : undefined
+      // Inside a group a member is WELDED, not floating: it holds the corner
+      // it was welded at while its clustermates give way (grow) or close ranks
+      // (shrink) around it. Re-centring here is what made opening and closing
+      // a card inside a group walk it — and the whole group with it — half the
+      // size difference every single time; anchored, an open/close round trip
+      // returns the exact starting layout. Free cards still re-centre, so a
+      // state change on the open board grows out of the box you were looking at.
+      next.position = cluster
+        ? widget.position
+        : recenteredOrigin(widget.position, shownBefore, shownAfter)
       const widgets = { ...state.widgets, [id]: next }
-      return { widgets }
+      // Icon <-> full is the single largest box change a card can make, and it
+      // re-centres the card as well — so it always re-runs the overlap check.
+      let settled = settleWidgetLayout(widgets, [id], state.widgetGlueIndex, { anchorIds: [id] })
+      if (!cluster) return { widgets: settled }
+      // A member that grew made space through the reflow above; one that
+      // SHRANK left a hole nothing closes on its own. Pull the cluster back
+      // together so the changed card re-welds onto its nearest clustermate,
+      // then drop whatever genuinely no longer touches from the record.
+      settled = closeClusterGaps(settled, cluster.widgetIds)
+      const glues = reconcileGlueClusters(settled, state.glues)
+      if (glues === state.glues) return { widgets: settled }
+      return {
+        widgets: unfoldReleasedFoldedMembers(settled, state.glues, glues),
+        glues,
+        widgetGlueIndex: buildGlueIndex(glues),
+        widgetStructureVersion: state.widgetStructureVersion + 1,
+      }
     })
     const after = get().widgets[id]
     if (after && useScaleDebugStore.getState().isOpen) {
@@ -441,11 +528,12 @@ export function createWidgetLayoutSlice({ set, get, pushHistory }: WidgetStoreSl
           canvases = { ...state.canvases, [canvasId]: { ...canvas, name: title } }
         }
       }
+      // A resting card's tile is measured from its own title, so renaming one
+      // can widen its on-screen footprint — which is a shape change, and runs
+      // the overlap check like any other.
+      const renamed = withWidget(state.widgets, widgetId, (w) => ({ ...w, title }))
       return {
-        widgets: withWidget(state.widgets, widgetId, (w) => ({
-          ...w,
-          title,
-        })),
+        widgets: settleWidgetLayout(renamed, [widgetId], state.widgetGlueIndex, { anchorIds: [widgetId] }),
         canvases,
       }
     })

@@ -1,0 +1,176 @@
+/*
+ * Shared structural language for the large skin catalogue.
+ *
+ * Individual renderers continue to own their data and controls. These
+ * presentation families give every catalogued skin a useful, consistent
+ * arrangement immediately, while specialized renderers can refine a mode
+ * without inventing another styling dialect.
+ */
+
+.gp-widget-ui[data-skin-presentation] {
+  --gp-skin-rule: color-mix(in oklab, var(--gp-widget-accent), transparent 72%);
+  container-type: size;
+}
+
+.gp-widget-ui[data-skin-presentation='terminal'] {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  letter-spacing: -0.015em;
+}
+
+.gp-widget-ui[data-skin-presentation='terminal'] :where(input, textarea, select, button, code) {
+  font-family: inherit;
+}
+
+.gp-widget-ui[data-skin-presentation='compact'] {
+  font-size: 0.92em;
+}
+
+.gp-widget-ui[data-skin-presentation='compact'] :where(.gap-3, .space-y-3) {
+  gap: 0.375rem;
+}
+
+.gp-widget-ui[data-skin-presentation='ledger'] {
+  font-variant-numeric: tabular-nums;
+}
+
+.gp-widget-ui[data-skin-presentation='ledger'] :where(table, [data-floor-panel='rows']) {
+  border-radius: 0.35rem;
+}
+
+.gp-widget-ui[data-skin-presentation='ledger'] :where(input[type='number'], [class*='tabular']) {
+  text-align: right;
+}
+
+.gp-widget-ui[data-skin-presentation='cards'] :where(
+  .gp-subpanel,
+  .gp-subdivision,
+  [data-island],
+  li
+) {
+  border-radius: 0.85rem;
+}
+
+.gp-widget-ui[data-skin-presentation='grid'] {
+  background-image:
+    linear-gradient(var(--gp-skin-rule) 1px, transparent 1px),
+    linear-gradient(90deg, var(--gp-skin-rule) 1px, transparent 1px);
+  background-size: 20px 20px;
+  background-position: -1px -1px;
+}
+
+.gp-widget-ui[data-skin-presentation='board'] {
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+}
+
+.gp-widget-ui[data-skin-presentation='dashboard'] :where(
+  strong,
+  output,
+  [data-hero-value]
+) {
+  color: var(--gp-widget-accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.gp-widget-ui[data-skin-presentation='form'] :where(label) {
+  align-items: flex-start;
+}
+
+.gp-widget-ui[data-skin-presentation='timeline'] {
+  position: relative;
+  padding-inline-start: 0.7rem;
+}
+
+.gp-widget-ui[data-skin-presentation='timeline']::before {
+  position: absolute;
+  inset-block: 0.25rem;
+  inset-inline-start: 0.12rem;
+  width: 1px;
+  content: '';
+  background: linear-gradient(transparent, var(--gp-widget-accent), transparent);
+  opacity: 0.6;
+}
+
+.gp-widget-ui[data-skin-presentation='matrix'] {
+  background:
+    linear-gradient(90deg, transparent calc(50% - 0.5px), var(--gp-skin-rule) 50%, transparent calc(50% + 0.5px)),
+    linear-gradient(transparent calc(50% - 0.5px), var(--gp-skin-rule) 50%, transparent calc(50% + 0.5px));
+}
+
+.gp-widget-ui[data-skin-presentation='map'] {
+  background-image:
+    radial-gradient(circle at 20% 35%, var(--gp-skin-rule) 0 2px, transparent 2.5px),
+    radial-gradient(circle at 72% 62%, var(--gp-skin-rule) 0 2px, transparent 2.5px),
+    linear-gradient(30deg, transparent 48%, var(--gp-skin-rule) 49% 51%, transparent 52%);
+  background-size: 100% 100%, 100% 100%, 32px 32px;
+}
+
+.gp-widget-ui[data-skin-presentation='chart'] {
+  font-variant-numeric: tabular-nums;
+}
+
+.gp-widget-ui[data-skin-presentation='time'] :where(
+  input[type='time'],
+  input[type='date'],
+  output,
+  [class*='tabular']
+) {
+  font-variant-numeric: tabular-nums;
+}
+
+.gp-widget-ui[data-skin-presentation='steps'] {
+  counter-reset: gp-skin-step;
+}
+
+.gp-widget-ui[data-skin-presentation='steps'] :where(ol > li) {
+  counter-increment: gp-skin-step;
+}
+
+.gp-widget-ui[data-skin-presentation='steps'] :where(ol > li)::marker {
+  color: var(--gp-widget-accent);
+  font-weight: 700;
+}
+
+.gp-widget-ui[data-skin-presentation='media'] :where(img, video, canvas, svg) {
+  max-width: 100%;
+}
+
+.gp-skin-details-trigger {
+  border: 1px solid color-mix(in oklab, var(--gp-widget-accent), transparent 72%);
+  color: color-mix(in oklab, var(--gp-widget-accent), white 8%);
+  background: color-mix(in oklab, var(--gp-surface-control, #171717), transparent 8%);
+  box-shadow: 0 4px 14px rgb(0 0 0 / 0.18);
+  opacity: 0.62;
+  transition:
+    opacity var(--gp-duration-snap) var(--gp-ease-snap),
+    transform var(--gp-duration-snap) var(--gp-ease-snap);
+}
+
+.gp-skin-details-trigger:hover,
+.gp-skin-details-trigger:focus-visible,
+.gp-skin-details-trigger[aria-expanded='true'] {
+  opacity: 1;
+  transform: scale(1.04);
+}
+
+.gp-skin-details-panel {
+  border: 1px solid color-mix(in oklab, var(--gp-widget-accent), transparent 70%);
+  color: var(--gp-widget-ink, #f5f5f5);
+  background:
+    radial-gradient(circle at 8% 0%, color-mix(in oklab, var(--gp-widget-accent), transparent 84%), transparent 40%),
+    color-mix(in oklab, var(--gp-surface-panel, #111), black 8%);
+  box-shadow: 0 18px 48px rgb(0 0 0 / 0.42);
+  backdrop-filter: blur(18px);
+}
+
+[data-theme='light'] .gp-skin-details-panel {
+  background:
+    radial-gradient(circle at 8% 0%, color-mix(in oklab, var(--gp-widget-accent), transparent 88%), transparent 40%),
+    color-mix(in oklab, var(--gp-surface-panel, #fff), white 22%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gp-widget-ui[data-skin-presentation] * {
+    scroll-behavior: auto;
+  }
+}

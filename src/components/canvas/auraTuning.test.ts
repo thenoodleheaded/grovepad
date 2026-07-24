@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  auraBlobRadius,
   DEFAULT_AURA_DOCUMENT,
   DEFAULT_AURA_TUNING,
   advanceAnchor,
@@ -161,5 +162,48 @@ describe('aura accent source', () => {
         definition,
       ),
     ).toBe('#ff00ff')
+  })
+})
+
+describe('the aura pool that replaced the weld seam', () => {
+  const dark = DEFAULT_AURA_TUNING.dark
+  const BUFFER = 128
+  const VIEWPORT = 1280
+
+  it('keeps a 1×1 icon a small local pool instead of inflating it to a wash', () => {
+    // An 80px icon is the size a glued/collapsed member wears. Its pool must
+    // stay a tight bright spot: the old 0.1 floor forced it to a tenth of the
+    // whole viewport, which read as fog rather than as light off that card.
+    const icon = auraBlobRadius(80, 1, VIEWPORT, BUFFER, dark)
+    const iconViewportFraction = icon / BUFFER
+    expect(iconViewportFraction).toBeLessThan(0.09)
+    // And it is genuinely derived from the widget, not pinned at the floor.
+    expect(icon).toBeGreaterThan(BUFFER * dark.minRadius)
+  })
+
+  it('scales the pool with the card that casts it', () => {
+    const icon = auraBlobRadius(80, 1, VIEWPORT, BUFFER, dark)
+    const card = auraBlobRadius(360, 1, VIEWPORT, BUFFER, dark)
+    expect(card).toBeGreaterThan(icon)
+    // A big card still cannot wash the board out.
+    expect(auraBlobRadius(4000, 1, VIEWPORT, BUFFER, dark)).toBe(BUFFER * dark.maxRadius)
+  })
+
+  it('lets two welded icons pool into one mass, without reaching a distant card', () => {
+    // Welded members sit a 0.3-cell (12px) gap apart, so their 80px pools
+    // overlap and read as one — that overlap is the join now.
+    const r = auraBlobRadius(80, 1, VIEWPORT, BUFFER, dark)
+    const bufferPerWorldPx = BUFFER / VIEWPORT
+    const weldedCentreGap = (80 + 12) * bufferPerWorldPx
+    expect(r * 2).toBeGreaterThan(weldedCentreGap)
+    // A card five cells away is NOT swallowed into that pool.
+    const distantCentreGap = (80 + 200) * bufferPerWorldPx
+    expect(r * 2).toBeLessThan(distantCentreGap)
+  })
+
+  it('survives a degenerate viewport without producing NaN', () => {
+    // A non-finite radius throws out of createRadialGradient.
+    expect(auraBlobRadius(80, 1, 0, BUFFER, dark)).toBe(0)
+    expect(Number.isFinite(auraBlobRadius(80, 1, VIEWPORT, BUFFER, dark))).toBe(true)
   })
 })

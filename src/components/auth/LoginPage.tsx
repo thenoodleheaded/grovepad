@@ -1,6 +1,6 @@
 import { useState, type FormEvent, type ReactElement } from 'react'
 import type { Provider } from '@supabase/supabase-js'
-import { ArrowRight, Loader2, Sparkles, WandSparkles } from 'lucide-react'
+import { ArrowRight, Loader2, WandSparkles } from 'lucide-react'
 import { getSupabaseClient, supabaseConfigured } from '../../lib/supabase'
 import { ensureAuthInitialized, useAuthStore } from '../../store/useAuthStore'
 
@@ -178,148 +178,144 @@ export function LoginPage() {
       {/* Ambient background bloom — two static radial glows, zero per-frame cost */}
       <div aria-hidden className="gp-login-glow pointer-events-none absolute inset-0" />
 
-      <div className="gp-login-shell gp-pop relative z-10 w-full max-w-md p-9">
-        <div
-          aria-hidden
-          className="gp-login-form-panel gp-panel pointer-events-none absolute inset-x-0 bottom-0 top-[8.25rem] -z-10 rounded-3xl shadow-2xl"
-        />
-        <div className="gp-login-brand mb-7 flex flex-col items-center gap-2 text-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-emerald-400/25 bg-emerald-400/10 shadow-[0_0_28px_rgba(163,230,53,0.18)]">
-            <Sparkles size={20} className="text-emerald-300" aria-hidden />
-          </div>
-          <h1 className="text-lg font-bold tracking-tight text-neutral-100">
+      <div className="gp-login-shell gp-pop relative z-10 flex w-full max-w-md flex-col items-center gap-7">
+        <div className="gp-login-brand flex flex-col items-center gap-2 text-center">
+          <img src="/brand/logo-light.png" alt="" aria-hidden className="h-11 w-11" />
+          <h1 className="text-2xl font-bold tracking-tight text-neutral-100">
             grove<span className="text-emerald-400">pad</span>
           </h1>
         </div>
 
-        {!supabaseConfigured && (
-          <div className="mb-4 rounded-xl border border-amber-400/25 bg-amber-400/[0.06] px-3 py-2.5 text-[11px] leading-relaxed text-amber-200/90">
-            Supabase isn't configured yet. Add <code className="">VITE_SUPABASE_URL</code>{' '}
-            and <code className="">VITE_SUPABASE_ANON_KEY</code> to{' '}
-            <code className="">.env.local</code>, then restart the dev server. Guest mode
-            works in the meantime.
-          </div>
-        )}
+        <div className="gp-login-form-panel gp-panel w-full rounded-3xl p-9 shadow-2xl">
+          {!supabaseConfigured && (
+            <div className="mb-4 rounded-xl border border-amber-400/25 bg-amber-400/[0.06] px-3 py-2.5 text-[11px] leading-relaxed text-amber-200/90">
+              Supabase isn't configured yet. Add <code className="">VITE_SUPABASE_URL</code>{' '}
+              and <code className="">VITE_SUPABASE_ANON_KEY</code> to{' '}
+              <code className="">.env.local</code>, then restart the dev server. Guest mode
+              works in the meantime.
+            </div>
+          )}
 
-        <form onSubmit={submitPassword} className="flex flex-col gap-2.5">
-          <div className="gp-field-island">
-            <input
-              type="email"
-              required
-              autoComplete="email"
-              value={email}
-              placeholder="Email"
-              aria-label="Email"
-              disabled={!supabaseConfigured}
-              onChange={(e) => setEmail(e.target.value)}
-              className="gp-input h-10 w-full text-sm text-neutral-100 placeholder:text-neutral-600 disabled:opacity-50"
-            />
-          </div>
-          <div className="gp-field-island">
-            <input
-              type="password"
-              required
-              autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
-              value={password}
-              placeholder="Password"
-              aria-label="Password"
-              disabled={!supabaseConfigured}
-              onChange={(e) => setPassword(e.target.value)}
-              className="gp-input h-10 w-full text-sm text-neutral-100 placeholder:text-neutral-600 disabled:opacity-50"
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={!supabaseConfigured || busy !== null}
-            className="group flex h-10 items-center justify-center gap-2 rounded-xl bg-emerald-500/90 text-sm font-semibold text-neutral-950 transition-all hover:bg-emerald-400 active:scale-[0.98] disabled:opacity-40"
-          >
-            {busy === 'password' ? (
-              <Loader2 size={15} className="animate-spin" aria-hidden />
-            ) : (
-              <>
-                {mode === 'signin' ? 'Sign in' : 'Create account'}
-                <ArrowRight
-                  size={14}
-                  className="transition-transform duration-200 group-hover:translate-x-0.5"
-                  aria-hidden
-                />
-              </>
-            )}
-          </button>
-        </form>
-
-        {/* Create account and guest are equally weighted, real buttons — guest
-            is a first-class local-only path, not an afterthought link. */}
-        <div className="mt-2.5 grid grid-cols-2 gap-2">
-          <button
-            type="button"
-            onClick={() => {
-              setMode(mode === 'signin' ? 'signup' : 'signin')
-              setNotice(null)
-            }}
-            className="gp-island gp-login-action gp-login-action--secondary flex h-10 items-center justify-center text-sm font-medium text-neutral-200 transition-all active:scale-[0.98]"
-          >
-            {mode === 'signin' ? 'Create account' : 'Sign in instead'}
-          </button>
-          <button
-            type="button"
-            onClick={continueAsGuest}
-            className="gp-island gp-login-action gp-login-action--guest flex h-10 items-center justify-center gap-1.5 text-sm font-medium text-emerald-300 transition-all active:scale-[0.98]"
-          >
-            Continue as guest
-            <ArrowRight size={13} aria-hidden />
-          </button>
-        </div>
-        <div className="mt-3 flex justify-center">
-          <button
-            type="button"
-            disabled={!supabaseConfigured || busy !== null}
-            onClick={sendMagicLink}
-            className="flex items-center gap-1 text-[11px] text-neutral-500 transition-colors hover:text-emerald-300 disabled:opacity-40"
-          >
-            {busy === 'magic' ? (
-              <Loader2 size={11} className="animate-spin" aria-hidden />
-            ) : (
-              <WandSparkles size={11} aria-hidden />
-            )}
-            Magic link
-          </button>
-        </div>
-
-        {notice && (
-          <p
-            role={notice.kind === 'error' ? 'alert' : 'status'}
-            className={`mt-3 rounded-xl px-3 py-2 text-[11px] leading-relaxed ${
-              notice.kind === 'error'
-                ? 'border border-red-500/25 bg-red-500/[0.07] text-red-300'
-                : 'border border-emerald-400/25 bg-emerald-400/[0.07] text-emerald-300'
-            }`}
-          >
-            {notice.text}
-          </p>
-        )}
-
-        <div className="my-5 flex items-center gap-3">
-          <span className="h-px flex-1 bg-neutral-800" aria-hidden />
-          <span className="text-[10px] uppercase tracking-widest text-neutral-600">or</span>
-          <span className="h-px flex-1 bg-neutral-800" aria-hidden />
-        </div>
-
-        <div className="grid grid-cols-2 gap-2">
-          {OAUTH_PROVIDERS.map(({ id, label, Mark, tint, comingSoon }) => (
+          <form onSubmit={submitPassword} className="flex flex-col gap-2.5">
+            <div className="gp-field-island">
+              <input
+                type="email"
+                required
+                autoComplete="email"
+                value={email}
+                placeholder="Email"
+                aria-label="Email"
+                disabled={!supabaseConfigured}
+                onChange={(e) => setEmail(e.target.value)}
+                className="gp-input h-10 w-full text-sm text-neutral-100 placeholder:text-neutral-600 disabled:opacity-50"
+              />
+            </div>
+            <div className="gp-field-island">
+              <input
+                type="password"
+                required
+                autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
+                value={password}
+                placeholder="Password"
+                aria-label="Password"
+                disabled={!supabaseConfigured}
+                onChange={(e) => setPassword(e.target.value)}
+                className="gp-input h-10 w-full text-sm text-neutral-100 placeholder:text-neutral-600 disabled:opacity-50"
+              />
+            </div>
             <button
-              key={id}
-              type="button"
-              title={comingSoon ? `${label} sign-in is coming soon` : `Continue with ${label}`}
-              aria-label={comingSoon ? `${label} sign-in is coming soon` : `Continue with ${label}`}
-              disabled={comingSoon || !supabaseConfigured || busy !== null}
-              onClick={() => oauth(id)}
-              className={`gp-island gp-login-provider flex h-11 items-center justify-center gap-2 px-3 text-xs font-medium transition-all active:scale-[0.97] disabled:opacity-40 ${tint}`}
+              type="submit"
+              disabled={!supabaseConfigured || busy !== null}
+              className="group flex h-10 items-center justify-center gap-2 rounded-xl bg-emerald-500/90 text-sm font-semibold text-neutral-950 transition-all hover:bg-emerald-400 active:scale-[0.98] disabled:opacity-40"
             >
-              {busy === id ? <Loader2 size={14} className="animate-spin" aria-hidden /> : <Mark />}
-              {busy === id ? 'Connecting…' : label}
+              {busy === 'password' ? (
+                <Loader2 size={15} className="animate-spin" aria-hidden />
+              ) : (
+                <>
+                  {mode === 'signin' ? 'Sign in' : 'Create account'}
+                  <ArrowRight
+                    size={14}
+                    className="transition-transform duration-200 group-hover:translate-x-0.5"
+                    aria-hidden
+                  />
+                </>
+              )}
             </button>
-          ))}
+          </form>
+
+          {/* Create account and guest are equally weighted, real buttons — guest
+              is a first-class local-only path, not an afterthought link. */}
+          <div className="mt-2.5 grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setMode(mode === 'signin' ? 'signup' : 'signin')
+                setNotice(null)
+              }}
+              className="gp-island gp-login-action gp-login-action--secondary flex h-10 items-center justify-center text-sm font-medium text-neutral-200 transition-all active:scale-[0.98]"
+            >
+              {mode === 'signin' ? 'Create account' : 'Sign in instead'}
+            </button>
+            <button
+              type="button"
+              onClick={continueAsGuest}
+              className="gp-island gp-login-action gp-login-action--guest flex h-10 items-center justify-center gap-1.5 text-sm font-medium text-emerald-300 transition-all active:scale-[0.98]"
+            >
+              Continue as guest
+              <ArrowRight size={13} aria-hidden />
+            </button>
+          </div>
+          <div className="mt-3 flex justify-center">
+            <button
+              type="button"
+              disabled={!supabaseConfigured || busy !== null}
+              onClick={sendMagicLink}
+              className="flex items-center gap-1 text-[11px] text-neutral-500 transition-colors hover:text-emerald-300 disabled:opacity-40"
+            >
+              {busy === 'magic' ? (
+                <Loader2 size={11} className="animate-spin" aria-hidden />
+              ) : (
+                <WandSparkles size={11} aria-hidden />
+              )}
+              Magic link
+            </button>
+          </div>
+
+          {notice && (
+            <p
+              role={notice.kind === 'error' ? 'alert' : 'status'}
+              className={`mt-3 rounded-xl px-3 py-2 text-[11px] leading-relaxed ${
+                notice.kind === 'error'
+                  ? 'border border-red-500/25 bg-red-500/[0.07] text-red-300'
+                  : 'border border-emerald-400/25 bg-emerald-400/[0.07] text-emerald-300'
+              }`}
+            >
+              {notice.text}
+            </p>
+          )}
+
+          <div className="my-5 flex items-center gap-3">
+            <span className="h-px flex-1 bg-neutral-800" aria-hidden />
+            <span className="text-[10px] uppercase tracking-widest text-neutral-600">or</span>
+            <span className="h-px flex-1 bg-neutral-800" aria-hidden />
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            {OAUTH_PROVIDERS.map(({ id, label, Mark, tint, comingSoon }) => (
+              <button
+                key={id}
+                type="button"
+                title={comingSoon ? `${label} sign-in is coming soon` : `Continue with ${label}`}
+                aria-label={comingSoon ? `${label} sign-in is coming soon` : `Continue with ${label}`}
+                disabled={comingSoon || !supabaseConfigured || busy !== null}
+                onClick={() => oauth(id)}
+                className={`gp-island gp-login-provider flex h-11 items-center justify-center gap-2 px-3 text-xs font-medium transition-all active:scale-[0.97] disabled:opacity-40 ${tint}`}
+              >
+                {busy === id ? <Loader2 size={14} className="animate-spin" aria-hidden /> : <Mark />}
+                {busy === id ? 'Connecting…' : label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
     </div>

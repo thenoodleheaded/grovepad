@@ -11,27 +11,29 @@ export interface TreeRevealSchedule {
   totalMs: number
 }
 
-const MAX_CHOREOGRAPHY_MS = 5_200
+const MAX_CHOREOGRAPHY_MS = 3_600
 
 /**
- * Reveals a tree in reading order: branch flows first, then its widgets bloom
- * one by one.
+ * Reveals a tree in reading order: a branch starts flowing, and its widgets
+ * begin blooming while the flow is still travelling — each icon launches its
+ * own entrance a beat after the one before, so a node reads as a quick
+ * cascade instead of a queue that waits for every animation to finish.
  */
 export function buildTreeRevealSchedule(nodes: readonly TreeRevealNode[]): TreeRevealSchedule {
   const widgetDelays = new Map<string, number>()
   const relationDelays = new Map<string, number>()
-  let cursor = 80
+  let cursor = 40
 
   for (const node of nodes) {
     if (node.relationId) {
       relationDelays.set(node.relationId, cursor)
-      cursor += 620
+      cursor += 220
     }
     for (const widgetId of node.widgetIds) {
       widgetDelays.set(widgetId, cursor)
-      cursor += 220
+      cursor += 70
     }
-    cursor += 80
+    cursor += 40
   }
 
   const scale = cursor > MAX_CHOREOGRAPHY_MS ? MAX_CHOREOGRAPHY_MS / cursor : 1

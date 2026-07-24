@@ -18,6 +18,7 @@ import type {
 import { GRID_SIZE } from '../types/spatial'
 
 import { SEED_ROOT_CANVAS_ID, SEED_WORKSPACE_ID, createSeedCanvases, createSeedRelations, createSeedWidgets, createSeedWorkspaces } from './widgetSeeds'
+import { reconcileGlueClusters, unfoldReleasedFoldedMembers } from '../utils/glueGeometry'
 import { setGlueIndexProvider } from './widgetSettling'
 import { buildGlueIndex, computeBlockedWidgetIds } from './widgetGraph'
 import { createNavigationSlice } from './slices/navigationSlice'
@@ -29,7 +30,7 @@ import { createSelectionSlice } from './slices/selectionSlice'
 import { createUiLinkingSlice } from './slices/uiLinkingSlice'
 
 export { untangleCanvasLayout } from './widgetUntangle'
-export { getCriticalPath } from './widgetGraph'
+export { getCriticalPath, strictCarrierIds, strictHolderOf } from './widgetGraph'
 
 
 interface HistorySnapshot {
@@ -304,15 +305,35 @@ export const useWidgetStore = create<WidgetStoreState>()((set, get) => {
     const deviceState = options?.restorePersistedDeviceState
       ? loadPersistedDeviceState(board, board)
       : resolvePersistedDeviceState(null, board, current)
+    // A persisted record can be stale — earlier builds could leave a member
+    // that drifted free still on a cluster's books, so it dragged the whole
+    // group while looking separate. Membership is re-derived from what
+    // actually touches at hydration; positions are NOT settled (loads restore
+    // exactly what was recorded), only the records are healed. Records
+    // carrying fields this version does not know are from a NEWER build and
+    // may follow rules we cannot reason about — those round-trip untouched.
+    const knownGlueKeys = new Set(['id', 'widgetIds', 'name', 'collapsed', 'restore', 'foldedAt'])
+    const healable: Record<string, WidgetGlue> = {}
+    const opaqueGlues: Record<string, WidgetGlue> = {}
+    for (const [glueId, glue] of Object.entries(board.glues)) {
+      if (Object.keys(glue).every((key) => knownGlueKeys.has(key))) healable[glueId] = glue
+      else opaqueGlues[glueId] = glue
+    }
+    const reconciled = reconcileGlueClusters(board.widgets, healable)
+    const glues = reconciled === healable ? board.glues : { ...opaqueGlues, ...reconciled }
+    const widgets =
+      reconciled === healable
+        ? board.widgets
+        : unfoldReleasedFoldedMembers(board.widgets, healable, reconciled)
     set({
       workspaces: board.workspaces,
       canvases: board.canvases,
-      widgets: board.widgets,
+      widgets,
       widgetStructureVersion: current.widgetStructureVersion + 1,
       relations: board.relations,
       connections: board.connections,
-      glues: board.glues,
-      widgetGlueIndex: buildGlueIndex(board.glues),
+      glues,
+      widgetGlueIndex: buildGlueIndex(glues),
       activePacks: board.activePacks,
       activeWorkspaceId: deviceState.activeWorkspaceId,
       activeCanvasId: deviceState.activeCanvasId,

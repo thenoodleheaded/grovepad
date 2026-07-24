@@ -359,6 +359,20 @@ html:is([data-viewport-class='phone'], [data-viewport-class='tablet']) .gp-canva
   transition: color var(--gp-duration-snap) var(--gp-ease-snap);
 }
 
+.gp-skin-roller-description {
+  color: color-mix(in oklab, currentColor 38%, transparent);
+  opacity: 0;
+  transform: translateY(-2px);
+  transition:
+    opacity var(--gp-duration-snap) var(--gp-ease-snap),
+    transform var(--gp-duration-snap) var(--gp-ease-snap);
+}
+
+.gp-skin-roller-row[data-in-lane] .gp-skin-roller-description {
+  opacity: 0.78;
+  transform: translateY(0);
+}
+
 /* Only the row in the lane is fully present: full-strength type and a lit
  * icon tile. Everything else is a candidate, not a value. */
 .gp-skin-roller-row[data-in-lane] .gp-skin-roller-label {

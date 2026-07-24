@@ -189,10 +189,12 @@ describe('option-drag owns gluing', () => {
     }
   })
 
-  it('drags whole glue clusters on a plain drag, matching the store move', () => {
+  it('drags whole glue clusters and strict families on a plain drag, matching the store move', () => {
     // The displacement scene must mirror exactly what moveWidget moved: the
-    // selection expanded through every touched cluster.
-    expect(card).toContain('glueId ? fresh.glues[glueId]?.widgetIds ?? [id] : [id]')
+    // selection expanded through every touched cluster and strict family, via
+    // the one shared closure the store itself uses.
+    expect(card).toContain('expandMovedWidgetIds(')
+    expect(card).toContain('movedIdsForWidget(dragWidgetId, fresh.selectedIds, fresh.widgets)')
   })
 })
 

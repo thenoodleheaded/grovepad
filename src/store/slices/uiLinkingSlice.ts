@@ -28,6 +28,10 @@ export function createUiLinkingSlice({ set, get, pushHistory, initialPacks }: Wi
     set((state) => (state.addWidgetAt ? { addWidgetAt: null } : state))
   },
 
+  recipesOpen: false,
+  setRecipesOpen: (recipesOpen) =>
+    set((state) => (state.recipesOpen === recipesOpen ? state : { recipesOpen })),
+
   shortcutsOpen: false,
   setShortcutsOpen: (shortcutsOpen) =>
     set((state) => (state.shortcutsOpen === shortcutsOpen ? state : { shortcutsOpen })),

@@ -1,8 +1,14 @@
 import type { Vector2D, Widget } from '../types/spatial'
 import { GRID_SIZE, snapToGrid } from '../types/spatial'
-import { restingFootprintWidget } from '../utils/widgetRest'
+import {
+  GLUE_FRAME_BAND,
+  GLUE_TITLE_HEADROOM,
+  reflowWeldedCluster,
+  type WeldedBox,
+} from '../utils/glueGeometry'
+import { restingFootprintWidget, WIDGET_TITLE_ROW, widgetShowsTitleRow } from '../utils/widgetRest'
 import { LAYOUT_GAP, SETTLE_ITERATION_LIMIT } from './widgetLayoutConstants'
-import { rectCenter, rectsOverlap, uniqueExistingIds, type LayoutRect } from './widgetCollection'
+import { rectCenter, uniqueExistingIds, type LayoutRect } from './widgetCollection'
 
 /** Uniform-grid cell size for the settle pass's spatial hash. */
 const SETTLE_CELL = 640
@@ -31,6 +37,12 @@ function liveGlueIndex(): Record<string, string> {
   return glueIndexProvider()
 }
 
+export interface SettleOptions {
+  /** Widgets (and their clusters) the check must not move — not displaced, and
+   * not grid-snapped either. Everything else gives way around them. */
+  anchorIds?: string[]
+}
+
 /**
  * Push overlapping neighbors apart until the layout is collision-free.
  * Collision is resolved at CLUSTER granularity: a glue cluster moves as one
@@ -44,6 +56,7 @@ export function settleWidgetLayout(
   widgets: Record<string, Widget>,
   activeIds: string[],
   glueIndexOverride?: Record<string, string>,
+  options?: SettleOptions,
 ): Record<string, Widget> {
   const requested = uniqueExistingIds(activeIds, widgets)
   if (requested.length === 0) return widgets
@@ -63,6 +76,15 @@ export function settleWidgetLayout(
     const list = memberIds.get(key)
     if (list) list.push(id)
     else memberIds.set(key, [id])
+  }
+
+  /** Clusters that must hold their ground: the overlap check moves everything
+   * AROUND them, never them, and never re-snaps them either. This is what makes
+   * "resize a card / pin it open / swap it to an icon" feel right — the card you
+   * just acted on stays exactly where you put it, and the board makes room. */
+  const anchored = new Set<string>()
+  for (const id of options?.anchorIds ?? []) {
+    if (widgets[id]) anchored.add(clusterOf(id))
   }
 
   const queue: string[] = []
@@ -108,13 +130,51 @@ export function settleWidgetLayout(
     // placement the drag chose for it.
     positions[id] = rigid
       ? { x: widget.position.x + rigid.x, y: widget.position.y + rigid.y }
-      : queued.has(key) && !widget.iconified
+      : queued.has(key) && !widget.iconified && !anchored.has(key)
         ? { x: snapToGrid(widget.position.x), y: snapToGrid(widget.position.y) }
         : widget.position
   }
 
+  // Overlaps INSIDE a queued cluster resolve first, and by the cluster's own
+  // rule (push exactly enough to touch again, never a whole cell). Board-level
+  // settling below treats a cluster as one rigid box and lets members pass
+  // through each other, so without this a member that just changed footprint —
+  // pinned open, scaled back to a full card, renamed into a wider tile — grew
+  // straight over its clustermates and nothing gave way. Anchors hold here too.
+  for (const [key, ids] of memberIds) {
+    if (!queued.has(key) || !key.startsWith('g:') || ids.length < 2) continue
+    const boxes: WeldedBox[] = ids.map((id) => {
+      const footprint = restingFootprintWidget(widgets[id]!)
+      const pos = positions[id]!
+      // Measured with the member's own title row on top, so a card packed
+      // below another leaves room for the name and buttons it floats instead
+      // of having them painted over its neighbour.
+      const head = widgetShowsTitleRow(widgets[id]!, { glued: true }) ? WIDGET_TITLE_ROW : 0
+      return {
+        id,
+        rect: {
+          x: pos.x,
+          y: pos.y - head,
+          width: footprint.size.width,
+          height: footprint.size.height + head,
+        },
+      }
+    })
+    // The acting card holds its ground; failing an explicit anchor, the ids the
+    // caller queued are what just changed, so they hold instead.
+    const anchors = (options?.anchorIds ?? []).filter((id) => ids.includes(id))
+    const held = anchors.length > 0 ? anchors : requested.filter((id) => ids.includes(id))
+    // The reflow answers in chrome-box corners; hand each member back the
+    // headroom that was added so the stored position stays the card's own.
+    for (const [id, next] of reflowWeldedCluster(boxes, held)) {
+      const head = widgetShowsTitleRow(widgets[id]!, { glued: true }) ? WIDGET_TITLE_ROW : 0
+      positions[id] = { x: next.x, y: next.y + head }
+    }
+  }
+
   const rectFor = (key: string): LayoutRect => {
     const ids = memberIds.get(key)!
+    const isCluster = key.startsWith('g:') && ids.length > 1
     let minX = Infinity
     let minY = Infinity
     let maxX = -Infinity
@@ -129,10 +189,23 @@ export function settleWidgetLayout(
       // glue geometry and rendering use so creation cannot produce a board
       // that already needs Untangle.
       const footprint = restingFootprintWidget(widget)
+      // A widget's own title row is part of its boundary — the board must not
+      // place a neighbour where this card's name and buttons are painted.
+      const head = widgetShowsTitleRow(widget, { glued: isCluster }) ? WIDGET_TITLE_ROW : 0
       minX = Math.min(minX, pos.x)
-      minY = Math.min(minY, pos.y)
+      minY = Math.min(minY, pos.y - head)
       maxX = Math.max(maxX, pos.x + footprint.size.width)
       maxY = Math.max(maxY, pos.y + footprint.size.height)
+    }
+    // A GROUP claims its frame as well: the boundary lines stand a band clear
+    // of the cards on every side, and the name/button row sits above the top
+    // one. Without this a neighbouring widget could be settled flush against
+    // the frame — visually inside the group it does not belong to.
+    if (isCluster) {
+      minX -= GLUE_FRAME_BAND
+      maxX += GLUE_FRAME_BAND
+      minY -= GLUE_TITLE_HEADROOM
+      maxY += GLUE_FRAME_BAND
     }
     return {
       id: key,
@@ -184,12 +257,14 @@ export function settleWidgetLayout(
 
   /** Rigid move: every member shifts by the same grid-aligned delta, so a
    *  displaced glue cluster keeps its exact internal arrangement. */
-  const displace = (key: string, dx: number, dy: number) => {
+  const displace = (key: string, dx: number, dy: number): boolean => {
+    if (anchored.has(key)) return false
     for (const id of memberIds.get(key)!) {
       const pos = positions[id]!
       positions[id] = { x: pos.x + dx, y: pos.y + dy }
     }
     reindex(key)
+    return true
   }
 
   let cursor = 0
@@ -219,29 +294,41 @@ export function settleWidgetLayout(
     for (const otherKey of candidates) {
       if (otherKey === activeKey) continue
       const otherRect = rectFor(otherKey)
-      if (!rectsOverlap(activeRect, otherRect)) continue
 
-      const otherCenter = rectCenter(otherRect)
+      // The real intersection on each axis. Negative means the boxes already
+      // clear each other — only a GENUINE overlap may move anything.
+      //
+      // Settling used to treat "within LAYOUT_GAP" as an overlap and then add
+      // that gap on top before rounding up to whole cells, so a card dropped
+      // merely NEAR its neighbours shoved each of them a full cell, and every
+      // shove cascaded into the next one. A drop now disturbs only what it
+      // actually lands on top of.
       const overlapX =
         Math.min(activeRect.x + activeRect.width, otherRect.x + otherRect.width) -
-        Math.max(activeRect.x, otherRect.x) +
-        LAYOUT_GAP
+        Math.max(activeRect.x, otherRect.x)
       const overlapY =
         Math.min(activeRect.y + activeRect.height, otherRect.y + otherRect.height) -
-        Math.max(activeRect.y, otherRect.y) +
-        LAYOUT_GAP
+        Math.max(activeRect.y, otherRect.y)
+      if (overlapX <= 0 || overlapY <= 0) continue
 
-      // Grid-quantized shift keeps every displaced widget snapped without
-      // rounding a small overlap down to a zero-pixel (infinite-loop) push.
+      const otherCenter = rectCenter(otherRect)
+      // The fewest whole cells that STRICTLY clear the overlap: enough to stop
+      // the boxes touching, never a cell more. Always at least one cell, so a
+      // sub-pixel overlap can never round down to a zero-length (looping) push.
+      const stepFor = (overlap: number) => (Math.floor(overlap / GRID_SIZE) + 1) * GRID_SIZE
+
+      let moved: boolean
       if (overlapX <= overlapY) {
         const direction = otherCenter.x >= activeCenter.x ? 1 : -1
-        displace(otherKey, direction * Math.ceil(overlapX / GRID_SIZE) * GRID_SIZE, 0)
+        moved = displace(otherKey, direction * stepFor(overlapX), 0)
       } else {
         const direction = otherCenter.y >= activeCenter.y ? 1 : -1
-        displace(otherKey, 0, direction * Math.ceil(overlapY / GRID_SIZE) * GRID_SIZE)
+        moved = displace(otherKey, 0, direction * stepFor(overlapY))
       }
 
-      if (!queued.has(otherKey)) {
+      // An anchored neighbour never moves, so re-queueing it would spin the
+      // loop against a wall until the iteration limit.
+      if (moved && !queued.has(otherKey)) {
         queued.add(otherKey)
         queue.push(otherKey)
       }
@@ -271,6 +358,7 @@ export function settleWidgetsByCanvas(
   widgets: Record<string, Widget>,
   activeIds: Iterable<string>,
   glueIndexOverride?: Record<string, string>,
+  options?: SettleOptions,
 ): Record<string, Widget> {
   const idsByCanvas = new Map<string, string[]>()
   for (const id of activeIds) {
@@ -282,6 +370,6 @@ export function settleWidgetsByCanvas(
   }
 
   let next = widgets
-  for (const ids of idsByCanvas.values()) next = settleWidgetLayout(next, ids, glueIndexOverride)
+  for (const ids of idsByCanvas.values()) next = settleWidgetLayout(next, ids, glueIndexOverride, options)
   return next
 }

@@ -18,6 +18,6 @@ describe('tree reveal choreography', () => {
       widgetIds: [`widget-${index}`],
       relationId: index === 0 ? undefined : `relation-${index}`,
     })))
-    expect(schedule.totalMs).toBeLessThanOrEqual(5_200)
+    expect(schedule.totalMs).toBeLessThanOrEqual(3_600)
   })
 })

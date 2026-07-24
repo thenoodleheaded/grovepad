@@ -1,5 +1,9 @@
 import type { LucideIcon } from 'lucide-react'
 import type { DomainPack, ModuleData, ModuleType, Size } from '../../types/spatial'
+import type {
+  SkinImplementation,
+  SkinPresentation,
+} from '../skinBlueprints.generated'
 
 export type WidgetCategory =
   | 'structure'
@@ -52,6 +56,12 @@ export interface WidgetSkinOption {
   icon: LucideIcon
   /** Every skin owns its hue: the card icon, resting tile, and roller wear it. */
   accent: string
+  /** What this skin helps the user do, shown by accessible skin surfaces. */
+  description?: string
+  /** Whether the existing data is enough or the skin owns optional extra data. */
+  implementation?: SkinImplementation
+  /** Shared layout language used by the renderer shell and resting face. */
+  presentation?: SkinPresentation
 }
 
 export interface WidgetDefinition {
@@ -68,6 +78,12 @@ export interface WidgetDefinition {
   sizing?: WidgetSizing
   /** Skins this widget can wear, rolled through from the card's title. */
   skins?: readonly WidgetSkinOption[]
+  /**
+   * Persisted field used by the skin roller. Existing consolidated widgets
+   * use `mode`; widgets whose domain data already owns `mode` use `skin` so
+   * changing appearance can never alter circuit behavior.
+   */
+  skinField?: 'mode' | 'skin'
   /** Present when the type is gated behind a domain pack. */
   pack?: DomainPack
   /** Existing-only types hydrate safely but are not offered for new work. */

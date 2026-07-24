@@ -325,7 +325,7 @@ body[data-widget-dragging] .gp-card-motion {
 }
 
 .gp-tree-widget-reveal {
-  animation: gp-tree-widget-reveal 760ms cubic-bezier(0.16, 1, 0.3, 1) backwards;
+  animation: gp-tree-widget-reveal 560ms cubic-bezier(0.16, 1, 0.3, 1) backwards;
   animation-delay: var(--gp-tree-reveal-delay, 0ms);
 }
 
@@ -613,9 +613,13 @@ body[data-widget-dragging] .gp-card-motion {
     0 1px 2px rgba(0, 0, 0, 0.16);
 }
 
+/* `data-hover-inert` is the card saying "the pointer merely passing over me
+   means nothing right now": it is background behind a card held open, or one
+   icon inside a folded cluster that answers as a single object. Both keep
+   their click; neither answers a hover. */
 @media (any-hover: hover) and (any-pointer: fine) {
   body:not([data-widget-dragging])
-    .gp-widget-card:not([data-selected="true"]):not([data-link-source="true"]):not([data-locked="true"]):hover {
+    .gp-widget-card:not([data-selected="true"]):not([data-link-source="true"]):not([data-locked="true"]):not([data-hover-inert="true"]):hover {
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.1),
       0 10px 30px rgba(0, 0, 0, 0.42),
@@ -745,7 +749,7 @@ body[data-keys-modifier="true"] .gp-widget-content * {
 
 @media (any-hover: hover) and (any-pointer: fine) {
   body:not([data-widget-dragging])
-    [data-widget-id].gp-card-motion:not([data-locked="true"]):hover {
+    [data-widget-id].gp-card-motion:not([data-locked="true"]):not([data-hover-inert="true"]):hover {
     scale: 1.010;
     translate: 0 -1px;
     z-index: 5;
@@ -761,7 +765,7 @@ body[data-keys-modifier="true"] .gp-widget-content * {
 
 @media (any-hover: hover) and (any-pointer: fine) {
   body:not([data-widget-dragging])
-    [data-widget-id].gp-card-motion[data-selected="true"]:hover {
+    [data-widget-id].gp-card-motion[data-selected="true"]:not([data-hover-inert="true"]):hover {
     scale: 1.010;
   }
 }

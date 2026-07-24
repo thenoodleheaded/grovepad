@@ -472,6 +472,11 @@ export function WidgetSkinRoller({
               id={`${listId}-${index}`}
               role="option"
               aria-selected={inLane}
+              aria-label={
+                skin.description
+                  ? `${skin.label}. ${skin.description}`
+                  : skin.label
+              }
               data-in-lane={inLane || undefined}
               data-row-index={index}
               className="gp-skin-roller-row absolute left-0 top-0 flex w-full items-center gap-3"
@@ -515,7 +520,7 @@ export function WidgetSkinRoller({
                 <SkinIcon size={19} strokeWidth={1.9} aria-hidden />
               </span>
               <span
-                className="gp-skin-roller-label min-w-0 truncate text-[19px] font-bold tracking-[-0.02em]"
+                className="gp-skin-roller-label min-w-0 flex-1"
                 // The chosen label does not travel with its icon: it bows out
                 // quickly so the icon lands alone on the waiting title.
                 style={
@@ -524,7 +529,14 @@ export function WidgetSkinRoller({
                     : undefined
                 }
               >
-                {skin.label}
+                <span className="block truncate text-[19px] font-bold leading-5 tracking-[-0.02em]">
+                  {skin.label}
+                </span>
+                {skin.description && (
+                  <span className="gp-skin-roller-description block truncate text-[9px] font-medium leading-3">
+                    {skin.description}
+                  </span>
+                )}
               </span>
             </div>
           )

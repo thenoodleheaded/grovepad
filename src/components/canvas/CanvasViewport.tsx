@@ -35,7 +35,6 @@ import { DependencyLines } from './DependencyLines'
 import { WireLayer } from './WireLayer'
 import { AutomationRuntime } from './AutomationRuntime'
 import { useCircuitStore } from '../../store/useCircuitStore'
-import { GlueSeamLayer } from '../widgets/GlueSeamLayer'
 import { GlueClusterChrome } from '../widgets/GlueClusterChrome'
 import { WidgetLayer } from '../widgets/WidgetLayer'
 import { CanvasContextMenu } from '../ui/CanvasContextMenu'
@@ -66,6 +65,10 @@ const AddWidgetModal = lazy(() =>
 )
 const CommandPalette = lazy(() =>
   import('../ui/CommandPalette').then((module) => ({ default: module.CommandPalette })),
+)
+// The recipe catalogue is large data; it must never ride the initial bundle.
+const RecipesModal = lazy(() =>
+  import('../ui/RecipesModal').then((module) => ({ default: module.RecipesModal })),
 )
 const ImportDocumentModal = lazy(() =>
   import('../ui/ImportDocumentModal').then((module) => ({ default: module.ImportDocumentModal })),
@@ -175,6 +178,7 @@ export function CanvasViewport() {
     paletteOpen,
     importOpen,
     quickAddOpen,
+    recipesOpen,
     workspaceTint,
   } = useWidgetStore(
     useShallow((state) => ({
@@ -182,6 +186,7 @@ export function CanvasViewport() {
       paletteOpen: state.paletteOpen,
       importOpen: state.importOpen,
       quickAddOpen: state.quickAddOpen,
+      recipesOpen: state.recipesOpen,
       workspaceTint: state.workspaces[state.activeWorkspaceId]?.tint ?? '#84cc16',
     })),
   )
@@ -738,7 +743,6 @@ export function CanvasViewport() {
         <GridLayer canvasIntensity={canvasGridIntensity} />
         {canvasLinksVisible && <RelationLines />}
         {canvasLinksVisible && <DependencyLines />}
-        <GlueSeamLayer />
         <WidgetLayer />
         <GlueClusterChrome />
         {/* Wires render above cards: they anchor to card-edge ports and their
@@ -813,6 +817,12 @@ export function CanvasViewport() {
             worldPos={addWidgetPos}
             onClose={() => useWidgetStore.getState().closeAddWidget()}
           />
+        </Suspense>
+      )}
+
+      {recipesOpen && (
+        <Suspense fallback={null}>
+          <RecipesModal onClose={() => useWidgetStore.getState().setRecipesOpen(false)} />
         </Suspense>
       )}
 

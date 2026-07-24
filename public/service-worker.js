@@ -1,10 +1,11 @@
 const CACHE_PREFIX = 'grovepad-shell-'
-const CACHE_NAME = `${CACHE_PREFIX}v2`
+const CACHE_NAME = `${CACHE_PREFIX}v3`
 const INSTALL_SHELL = [
   '/manifest.webmanifest',
-  '/favicon.svg',
-  '/app-icon-192.svg',
-  '/app-icon-512.svg',
+  '/favicon.png',
+  '/apple-touch-icon.png',
+  '/app-icon-192.png',
+  '/app-icon-512.png',
 ]
 
 async function precacheCurrentShell() {

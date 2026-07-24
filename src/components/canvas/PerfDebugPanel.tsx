@@ -21,6 +21,12 @@ interface TypeBreakdownRow {
   approxBytes: number
 }
 
+interface WidgetRenderCounts {
+  domNodes: number
+  live: number
+  previews: number
+}
+
 /** performance.memory is a non-standard Chrome extension; every other
  * engine leaves it undefined. */
 function readHeap(): { usedMb: number | null; limitMb: number | null } {
@@ -62,7 +68,11 @@ export function PerfDebugPanel() {
     heapUsedMb: null,
     heapLimitMb: null,
   })
-  const [domNodeCount, setDomNodeCount] = useState(0)
+  const [renderCounts, setRenderCounts] = useState<WidgetRenderCounts>({
+    domNodes: 0,
+    live: 0,
+    previews: 0,
+  })
 
   const frameCountRef = useRef(0)
   const longTaskCountRef = useRef(0)
@@ -107,7 +117,12 @@ export function PerfDebugPanel() {
       frameTimeSumRef.current = 0
       longTaskCountRef.current = 0
 
-      setDomNodeCount(document.querySelectorAll('[data-widget-id] *').length)
+      const layer = document.querySelector('[data-widget-layer]')
+      setRenderCounts({
+        domNodes: layer?.querySelectorAll('*').length ?? 0,
+        live: layer?.querySelectorAll('.gp-widget-card').length ?? 0,
+        previews: layer?.querySelectorAll('[data-widget-preview]').length ?? 0,
+      })
     }, SAMPLE_INTERVAL_MS)
 
     return () => {
@@ -141,11 +156,13 @@ export function PerfDebugPanel() {
   }, [canvasWidgetIds, sample])
 
   const copyReport = () => {
+    const unloaded = Math.max(0, canvasWidgetIds.length - renderCounts.live - renderCounts.previews)
     const lines = [
       `# Perf debug report — ${new Date().toLocaleString()}`,
       '',
-      `Active canvas: ${canvasWidgetIds.length} widgets mounted (${totalBoardWidgets} total across the whole board)`,
-      `DOM nodes under mounted widget cards: ${domNodeCount}`,
+      `Active canvas: ${canvasWidgetIds.length} widgets (${totalBoardWidgets} total across the whole board)`,
+      `Render state: ${renderCounts.live} live, ${renderCounts.previews} image previews, ${unloaded} unloaded`,
+      `DOM nodes in widget layer: ${renderCounts.domNodes}`,
       `Board data on this canvas: ${fmtBytes(totalDataBytes)}`,
       `FPS: ${sample.fps}  avg frame time: ${sample.frameTimeMs.toFixed(2)}ms  long tasks/s: ${sample.longTasksPerSec}`,
       sample.heapUsedMb !== null
@@ -205,8 +222,13 @@ export function PerfDebugPanel() {
         <span className="text-neutral-500">Widgets on whole board</span>
         <span className="text-right tabular-nums text-base">{totalBoardWidgets}</span>
 
-        <span className="text-neutral-500">DOM nodes (mounted widgets)</span>
-        <span className="text-right tabular-nums text-base">{domNodeCount}</span>
+        <span className="text-neutral-500">Live / image / unloaded</span>
+        <span className="text-right tabular-nums text-base">
+          {renderCounts.live} / {renderCounts.previews} / {Math.max(0, canvasWidgetIds.length - renderCounts.live - renderCounts.previews)}
+        </span>
+
+        <span className="text-neutral-500">DOM nodes (widget layer)</span>
+        <span className="text-right tabular-nums text-base">{renderCounts.domNodes}</span>
 
         <span className="text-neutral-500">Board data (this canvas)</span>
         <span className="text-right tabular-nums text-base">{fmtBytes(totalDataBytes)}</span>

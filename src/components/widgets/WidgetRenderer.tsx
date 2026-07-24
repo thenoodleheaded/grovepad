@@ -1,7 +1,10 @@
 import { Suspense } from 'react'
 import type { ModuleData, Widget } from '../../types/spatial'
 import { getOpaqueWidgetType } from '../../utils/persistedBoardSchema'
+import { currentSkin } from '../../utils/widgetSkins'
+import { widgetDefinition } from '../../widgets/registry'
 import { renderFromFamilies, WIDGET_RENDERER_FAMILIES } from './renderers'
+import { WidgetSkinDetails } from './WidgetSkinDetails'
 
 interface WidgetRendererProps {
   widget: Widget
@@ -32,6 +35,8 @@ export function WidgetRenderer({ widget, onUpdate, onHeightChange }: WidgetRende
     )
   }
 
+  const skin = currentSkin(widget, widgetDefinition(widget.type))
+
   return (
     <Suspense
       fallback={
@@ -41,10 +46,22 @@ export function WidgetRenderer({ widget, onUpdate, onHeightChange }: WidgetRende
       }
     >
       <div
-        className="gp-widget-ui h-full w-full"
+        className="gp-widget-ui relative h-full w-full"
         data-widget-type={widget.type}
+        data-widget-skin={skin?.value}
+        data-skin-presentation={skin?.presentation}
+        data-skin-implementation={skin?.implementation}
+        role={skin?.description ? 'group' : undefined}
+        aria-label={
+          skin?.description
+            ? `${skin.label} skin. ${skin.description}`
+            : undefined
+        }
       >
         {renderFromFamilies(WIDGET_RENDERER_FAMILIES, { widget, onUpdate, onHeightChange })}
+        {skin?.implementation === 'schema-extension' && (
+          <WidgetSkinDetails data={widget.data} skin={skin} onUpdate={onUpdate} />
+        )}
       </div>
     </Suspense>
   )

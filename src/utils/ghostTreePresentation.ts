@@ -17,7 +17,14 @@ export interface GhostNodeGrid {
   placements: GhostIconPlacement[]
 }
 
-function balancedRowCounts(itemCount: number): number[] {
+/**
+ * How many items sit in each row when a count is packed into the closest
+ * practical square, fuller rows first and short rows centred by the caller.
+ * Shared with the folded-cluster layout (`collapsedClusterLayout`), so a
+ * bundle of widgets stacks the same way as a ghost node and as a collapsed
+ * group on the board.
+ */
+export function balancedRowCounts(itemCount: number): number[] {
   const rowCount = Math.max(1, Math.round(Math.sqrt(itemCount)))
   const base = Math.floor(itemCount / rowCount)
   const counts = Array.from({ length: rowCount }, () => base)

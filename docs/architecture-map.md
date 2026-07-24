@@ -58,7 +58,7 @@ flowchart TD
 3. Mounting `CanvasViewport` starts `runtime/appRuntime.ts`; unmount, StrictMode replay, and HMR dispose persistence subscriptions, deploy checks, and circuit listeners explicitly.
 4. `useWidgetStore` constructs its initial state from `loadPersistedBoard()`; `initPersistence` can later replace it with IndexedDB/cloud state.
 5. `CanvasViewport` composes every canvas layer, global overlay, and runtime helper.
-6. `WidgetLayer` mounts every widget on the active canvas; each `WidgetCard` owns drag, bounded resizing, title chrome, and ports.
+6. `WidgetLayer` virtualizes the active canvas: outside-window widgets mount nothing, nearby widgets begin as lightweight images, and centre-first idle batches hydrate `WidgetCard`; each live card owns drag, bounded resizing, title chrome, and ports.
 7. `WidgetRenderer` owns suspense and the responsive content shell. Family maps under `components/widgets/renderers/` own typed dispatch, while their lazy-component files keep concrete implementations out of the startup chunk.
 
 ## Subsystem contracts

@@ -15,6 +15,7 @@ const confirm = source('./ConfirmDialog.tsx')
 const documentImport = source('./ImportDocumentModal.tsx')
 const quickAdd = source('./QuickAddSheet.tsx')
 const widgetLibrary = source('./AddWidgetModal.tsx')
+const recipes = source('./RecipesModal.tsx')
 const shortcuts = source('./ShortcutsOverlay.tsx')
 const canvasTree = source('./CanvasTreeDrawer.tsx')
 const excalidraw = source('../widgets/modules/excalidraw/ExcalidrawFullscreen.tsx')
@@ -65,6 +66,9 @@ describe('popup panel design contracts', () => {
     expect(quickAdd).toContain('gp-popup-action')
     expect(widgetLibrary).toContain('gp-popup-title-pill')
     expect(widgetLibrary).toContain('gp-popup-island')
+    // Recipes browses like the widget library, so it wears the same anatomy.
+    expect(recipes).toContain('gp-popup-title-pill')
+    expect(recipes).toContain('gp-popup-island')
   })
 
   it('applies the compact popup menu material to every menu owner', () => {

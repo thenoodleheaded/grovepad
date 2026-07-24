@@ -1,6 +1,6 @@
 import { memo, useCallback, useMemo, useState, type CSSProperties } from 'react'
 import { useShallow } from 'zustand/react/shallow'
-import { getCriticalPath, useWidgetStore } from '../../store/useWidgetStore'
+import { getCriticalPath, strictCarrierIds, strictHolderOf, useWidgetStore } from '../../store/useWidgetStore'
 import { useOverlayLifecycle } from '../../store/useOverlayStore'
 import type { RelationType, Vector2D } from '../../types/spatial'
 import { GRID_SIZE, RELATION_LABELS } from '../../types/spatial'
@@ -8,6 +8,7 @@ import { anchoredCurveMidpoint, anchoredCurvePath, curvedPath } from '../../util
 import { useWorldContentRect } from '../../hooks/useWorldContentRect'
 import { useWidgetRestStore } from '../../store/useWidgetRestStore'
 import { isWidgetResting, widgetWithEffectiveSize } from '../../utils/widgetRest'
+import { clusterFrameEnvelope, clusterTitleRowRect } from '../../utils/glueGeometry'
 import { widgetDefinition } from '../../widgets/registry'
 import { treeRevealDelay } from '../../store/treeReveal'
 import { truncate } from '../../utils/text'
@@ -201,6 +202,9 @@ interface MergedEdge {
   type: RelationType
   isResolved: boolean
   highlighted: boolean
+  /** A parent edge inside a strict hold — its parent node carries the child
+   * when it moves, and the line paints heavier to show the coupling. */
+  strict: boolean
   /** Accent applied while either endpoint widget is hovered. */
   hoverAccent: string | null
   /** Only set if this edge represents exactly one relation (for context menu). */
@@ -221,6 +225,10 @@ const RelationEdge = memo(function RelationEdge({ edge, onOpenMenu }: RelationEd
   const { d, mid } = edge
   const { x: midX, y: midY } = mid
   const style = EDGE_STYLES[edge.type]
+  // A strict parent edge is load-bearing — the parent moves the child — so it
+  // draws heavier than a soft line, which is only a drawn meaning.
+  const strictEdge = edge.type === 'parent' && edge.strict
+  const mainWidth = strictEdge ? style.width + 1 : style.width
   const resolvable = edge.type === 'blocker' || edge.type === 'conflict'
   const muted = resolvable && edge.isResolved
   const stroke = muted ? MUTED_STROKE : style.stroke
@@ -237,7 +245,7 @@ const RelationEdge = memo(function RelationEdge({ edge, onOpenMenu }: RelationEd
       variant="relation"
       connected={Boolean(edge.hoverAccent)}
       resolved={muted}
-      groupClassName={revealing ? 'gp-tree-relation-reveal' : ''}
+      groupClassName={[revealing ? 'gp-tree-relation-reveal' : '', strictEdge ? 'gp-edge-strict' : ''].filter(Boolean).join(' ')}
       style={{
         ...(edge.hoverAccent ? { '--gp-edge-accent': edge.hoverAccent } : {}),
         '--gp-tree-reveal-delay': `${edge.revealDelay ?? 0}ms`,
@@ -246,7 +254,7 @@ const RelationEdge = memo(function RelationEdge({ edge, onOpenMenu }: RelationEd
       halo={{ stroke, width: 7, pathLength: revealing ? 1 : undefined }}
       main={{
         stroke,
-        width: style.width,
+        width: mainWidth,
         dash: style.dash,
         markerStart: conflictMarker,
         markerEnd: endMarker,
@@ -282,6 +290,7 @@ const RelationEdge = memo(function RelationEdge({ edge, onOpenMenu }: RelationEd
   prev.edge.type === next.edge.type &&
   prev.edge.isResolved === next.edge.isResolved &&
   prev.edge.highlighted === next.edge.highlighted &&
+  prev.edge.strict === next.edge.strict &&
   prev.edge.hoverAccent === next.edge.hoverAccent &&
   prev.edge.singleRelationId === next.edge.singleRelationId &&
   prev.onOpenMenu === next.onOpenMenu,
@@ -297,6 +306,17 @@ function LineContextMenu({
   const relation = useWidgetStore((state) => state.relations[relationId])
   const fromTitle = useWidgetStore((state) => state.widgets[relation?.fromId ?? '']?.title ?? '…')
   const toTitle = useWidgetStore((state) => state.widgets[relation?.toId ?? '']?.title ?? '…')
+  const parentStrict = useWidgetStore(
+    (state) => state.widgets[relation?.fromId ?? '']?.metadata.strictHold === true,
+  )
+  // Inheritance owns the toggle: inside a held subtree the strict decision
+  // lives at the holder above, so this menu only names it instead of offering
+  // a switch that the rules would ignore.
+  const heldByTitle = useWidgetStore((state) => {
+    if (!relation || relation.type !== 'parent') return null
+    const holderId = strictHolderOf(relation.fromId, state.widgets, state.relations)
+    return holderId ? state.widgets[holderId]?.title ?? null : null
+  })
   if (!relation) return null
   const resolvable = relation.type === 'blocker' || relation.type === 'conflict'
   const addParent = (parentId: string, childId: string) => {
@@ -304,7 +324,7 @@ function LineContextMenu({
     onClose()
   }
   return (
-    <ContextMenuSurface x={x} y={y} estimatedWidth={208} estimatedHeight={244} onClose={onClose}>
+    <ContextMenuSurface x={x} y={y} estimatedWidth={208} estimatedHeight={relation.type === 'parent' ? 300 : 244} onClose={onClose}>
         <p className="px-3 py-1.5  text-[10px] uppercase tracking-widest text-neutral-500">
           {RELATION_LABELS[relation.type]} link
         </p>
@@ -327,6 +347,30 @@ function LineContextMenu({
           ))}
         </div>
         <button type="button" onClick={() => { useWidgetStore.getState().updateRelation(relationId, { fromId: relation.toId, toId: relation.fromId }); onClose() }} className="block w-full px-3 py-1.5 text-left text-xs text-neutral-300 hover:bg-neutral-800">Reverse direction</button>
+        {relation.type === 'parent' && (
+          <>
+            <div className="my-1 border-t border-neutral-800" />
+            <p className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-neutral-500">
+              Family movement
+            </p>
+            {heldByTitle ? (
+              <p className="px-3 py-1.5 text-xs text-neutral-500">
+                Held strictly by <span className="text-neutral-300">{truncate(heldByTitle, 16)}</span> — release it there
+              </p>
+            ) : (
+              <button type="button"
+                onClick={() => {
+                  useWidgetStore.getState().updateWidgetsMetadata([relation.fromId], { strictHold: !parentStrict })
+                  onClose()
+                }}
+                className="block w-full px-3 py-1.5 text-left text-xs text-neutral-300 hover:bg-neutral-800">
+                {parentStrict
+                  ? 'Release strict hold'
+                  : `${truncate(fromTitle, 14)} holds its family strictly`}
+              </button>
+            )}
+          </>
+        )}
         <div className="my-1 border-t border-neutral-800" />
         <p className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-neutral-500">
           Add child link
@@ -413,6 +457,8 @@ export function RelationLines() {
     activeCanvasId,
     criticalPathVisible,
     hoveredWidgetId,
+    glues,
+    widgetGlueIndex,
   } = useWidgetStore(
     useShallow((state) => ({
       relations: state.relations,
@@ -420,6 +466,8 @@ export function RelationLines() {
       activeCanvasId: state.activeCanvasId,
       criticalPathVisible: state.criticalPathVisible,
       hoveredWidgetId: state.hoveredWidgetId,
+      glues: state.glues,
+      widgetGlueIndex: state.widgetGlueIndex,
     })),
   )
   const contentRect = useWorldContentRect()
@@ -445,14 +493,58 @@ export function RelationLines() {
       type: RelationType
       isResolved: boolean
       highlighted: boolean
+      strict: boolean
       hoverAccent: string | null
       singleRelationId: string | null
       priority: number
       revealDelay: number | null
     }>()
 
+    // Every edge whose parent side carries a strict hold — directly or
+    // inherited — wears the strict paint, so a whole held subtree reads as
+    // one load-bearing structure.
+    const strictCarriers = strictCarrierIds(widgets, relations)
+
     const endpointCache = new Map<string, EndpointGeo | null>()
+    /** The node a widget links AS. A glued cluster is one node on the board, so
+     * every member shares the cluster's id — one line reaches the group instead
+     * of a separate line per welded card. */
+    const linkNodeId = (widgetId: string): string => {
+      const glueId = widgetGlueIndex[widgetId]
+      return glueId && (glues[glueId]?.widgetIds.length ?? 0) >= 2 ? `glue:${glueId}` : widgetId
+    }
     const endpointGeo = (widgetId: string): EndpointGeo | null => {
+      const glueId = widgetGlueIndex[widgetId]
+      const cluster = glueId ? glues[glueId] : undefined
+      if (cluster && cluster.widgetIds.length >= 2) {
+        const cacheKey = `glue:${glueId}`
+        if (endpointCache.has(cacheKey)) return endpointCache.get(cacheKey) ?? null
+        // Anchor to the cluster's frame — boundary lines included — so the
+        // line keeps its gap from the GROUP rather than from whichever welded
+        // card sits nearest. The title/button row is dodged as a pill exactly
+        // where it is painted, so a line never cuts through the group's name
+        // while the empty canvas beside that row stays freely reachable.
+        const env = clusterFrameEnvelope(cluster.widgetIds, widgets)
+        const row = clusterTitleRowRect(cluster.widgetIds, widgets, cluster.name)
+        const result: EndpointGeo | null = env
+          ? {
+              center: { x: env.x + env.width / 2, y: env.y + env.height / 2 },
+              halfW: env.width / 2,
+              halfH: env.height / 2,
+              pill: row
+                ? {
+                    cx: row.x + row.width / 2,
+                    cy: row.y + row.height / 2,
+                    rx: row.width / 2,
+                    ry: row.height / 2,
+                  }
+                : null,
+            }
+          : null
+        endpointCache.set(cacheKey, result)
+        return result
+      }
+
       const cacheKey = `widget:${widgetId}`
       if (endpointCache.has(cacheKey)) return endpointCache.get(cacheKey) ?? null
 
@@ -496,10 +588,19 @@ export function RelationLines() {
       const toWidget = widgets[rel.toId]
       if (!fromWidget || !toWidget) continue
       if (fromWidget.canvasId !== activeCanvasId || toWidget.canvasId !== activeCanvasId) continue
+      const fromNode = linkNodeId(rel.fromId)
+      const toNode = linkNodeId(rel.toId)
+      // Both ends inside the same cluster: the group is one node, so the
+      // relation has nowhere to travel and would draw a dot on itself.
+      if (fromNode === toNode) continue
       const highlighted = criticalIds?.has(relId) ?? false
+      const strictEdge = rel.type === 'parent' && strictCarriers.has(rel.fromId)
       const relationHovered = hoveredWidgetId === rel.fromId || hoveredWidgetId === rel.toId
 
-      const edgeKey = `${rel.fromId}::${rel.toId}`
+      // Keyed by NODE, not widget: two relations reaching different members of
+      // the same cluster are one line to the group, merged here rather than
+      // stacked as identical curves.
+      const edgeKey = `${fromNode}::${toNode}`
       const priority = TYPE_PRIORITY[rel.type]
 
       const existing = edgeMap.get(edgeKey)
@@ -514,6 +615,7 @@ export function RelationLines() {
           existing.priority = priority
         }
         if (highlighted) existing.highlighted = true
+        if (strictEdge) existing.strict = true
         if (relationHovered) existing.hoverAccent = hoveredAccent
         const revealDelay = treeRevealDelay('relation', relId)
         if (revealDelay !== null) {
@@ -533,6 +635,7 @@ export function RelationLines() {
         type: rel.type,
         isResolved: rel.isResolved,
         highlighted,
+        strict: strictEdge,
         hoverAccent: relationHovered ? hoveredAccent : null,
         singleRelationId: relId,
         priority,
@@ -549,6 +652,7 @@ export function RelationLines() {
         type: edge.type,
         isResolved: edge.isResolved,
         highlighted: edge.highlighted,
+        strict: edge.strict,
         hoverAccent: edge.hoverAccent,
         singleRelationId: edge.singleRelationId,
         revealDelay: edge.revealDelay,
@@ -559,9 +663,11 @@ export function RelationLines() {
     criticalIds,
     expandedOffset,
     expandedWidgetId,
+    glues,
     hoveredAccent,
     hoveredWidgetId,
     relations,
+    widgetGlueIndex,
     widgets,
   ])
 

@@ -1,7 +1,15 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { buildBoardSnapshot } from '../utils/persistence'
 import { parsePersistedBoard } from '../utils/persistedBoardSchema'
-import { GLUE_GAP } from '../utils/glueGeometry'
+import { GRID_SIZE } from '../types/spatial'
+import {
+  COLLAPSED_MEMBER_SIZE,
+  GLUE_GAP,
+  GLUE_RANGE,
+  glueBoxRect,
+  glueSeparation,
+} from '../utils/glueGeometry'
+import { restingTileSize } from '../utils/widgetRest'
 import { useWidgetStore } from './useWidgetStore'
 
 const baseline = parsePersistedBoard(buildBoardSnapshot(useWidgetStore.getState()))!
@@ -111,9 +119,10 @@ describe('glue clusters', () => {
     expect(state.widgetGlueIndex[a]).toBeUndefined()
   })
 
-  it('splits a cluster whose connecting middle member is deleted', () => {
-    // Row A — B — C where only B touches both ends. Deleting B must not leave
-    // A and C glued into one record with empty space (and no seam) between them.
+  it('closes ranks instead of splitting when the connecting middle member is deleted', () => {
+    // Row A — B — C where only B touches both ends. Deleting B pulls A and C
+    // back together until they weld again, so the group survives as ONE record
+    // — never a record spanning empty canvas, and never a split-apart group.
     const [a, b] = createPair()
     const store = useWidgetStore.getState()
     store.glueWidgets(b, a)
@@ -127,9 +136,14 @@ describe('glue clusters', () => {
     expect(useWidgetStore.getState().widgetGlueIndex[a]).toBe(useWidgetStore.getState().widgetGlueIndex[c])
     useWidgetStore.getState().deleteWidgets([b])
     const state = useWidgetStore.getState()
-    expect(state.widgetGlueIndex[a]).toBeUndefined()
-    expect(state.widgetGlueIndex[c]).toBeUndefined()
-    expect(Object.values(state.glues).some((glue) => glue.widgetIds.includes(a) || glue.widgetIds.includes(c))).toBe(false)
+    const glueId = state.widgetGlueIndex[a]
+    expect(glueId).toBeDefined()
+    expect(state.widgetGlueIndex[c]).toBe(glueId)
+    expect(state.glues[glueId!]?.widgetIds.sort()).toEqual([a, c].sort())
+    // The survivors physically touch again — the gap B left is closed.
+    expect(
+      glueSeparation(glueBoxRect(state.widgets[a]!), glueBoxRect(state.widgets[c]!)),
+    ).toBe(0)
   })
 
   it('detaches a member re-welded elsewhere from the cluster it left behind', () => {
@@ -152,7 +166,7 @@ describe('glue clusters', () => {
     expect(state.widgetGlueIndex[b]).toBeUndefined()
   })
 
-  it('ungluing the middle of a row frees the two ends that no longer touch', () => {
+  it('closes ranks when the middle of a row is unglued — the ends keep the group', () => {
     const [a, b] = createPair()
     const store = useWidgetStore.getState()
     store.glueWidgets(b, a)
@@ -163,12 +177,29 @@ describe('glue clusters', () => {
     }, 'notes')
     pin(c)
     useWidgetStore.getState().glueWidgets(c, b)
-    // Menu-unglue the middle card. A, C are no longer adjacent, so neither
-    // stays glued to the other.
+    const glueId = useWidgetStore.getState().widgetGlueIndex[a]!
+    // Pull the middle card out. A and C are innocent: they were welded to the
+    // GROUP, not to the card that left, so they re-magnetize onto each other
+    // and keep the group instead of being ungrouped by someone else's exit.
     useWidgetStore.getState().unglueWidget(b)
     const state = useWidgetStore.getState()
-    expect(state.widgetGlueIndex[a]).toBeUndefined()
-    expect(state.widgetGlueIndex[c]).toBeUndefined()
+    expect(state.widgetGlueIndex[b]).toBeUndefined()
+    expect(state.widgetGlueIndex[a]).toBe(glueId)
+    expect(state.widgetGlueIndex[c]).toBe(glueId)
+    expect(
+      glueSeparation(glueBoxRect(state.widgets[a]!), glueBoxRect(state.widgets[c]!)),
+    ).toBe(0)
+  })
+
+  it('leaves the freed widget selected alone, so it cannot drag its old group', () => {
+    const [a, b] = createPair()
+    useWidgetStore.getState().glueWidgets(b, a)
+    // Selecting a member selects the whole cluster.
+    useWidgetStore.getState().selectWidget(b, false)
+    expect(useWidgetStore.getState().selectedIds.size).toBe(2)
+    useWidgetStore.getState().unglueWidget(b)
+    const selected = [...useWidgetStore.getState().selectedIds]
+    expect(selected).toEqual([b])
   })
 })
 
@@ -270,6 +301,122 @@ describe('dragging glued widgets', () => {
     expect(useWidgetStore.getState().widgetGlueIndex[a]).toBe(glueId)
   })
 
+  it('holds a member on its weld through a scale change, and a round trip restores the layout exactly', () => {
+    // A welded member is anchored, not re-centred: it keeps the corner it was
+    // welded at while the cluster gives way or closes ranks around it. That is
+    // what makes opening and closing a card inside a group reversible —
+    // re-centring walked the card, and the whole group, by half the size
+    // difference on every single open and close.
+    const [a, b] = createPair()
+    useWidgetStore.getState().glueWidgets(b, a)
+    const glueId = useWidgetStore.getState().widgetGlueIndex[a]!
+    const before = { a: { ...widget(a).position }, b: { ...widget(b).position } }
+
+    useWidgetStore.getState().setWidgetScaleState(b, 'icon')
+    const folded = useWidgetStore.getState()
+    expect(folded.widgetGlueIndex[a]).toBe(glueId)
+    expect(folded.widgetGlueIndex[b]).toBe(glueId)
+    expect(folded.widgets[b]!.position).toEqual(before.b)
+
+    useWidgetStore.getState().setWidgetScaleState(b, 'full')
+    const reopened = useWidgetStore.getState()
+    expect(reopened.widgets[a]!.position).toEqual(before.a)
+    expect(reopened.widgets[b]!.position).toEqual(before.b)
+    expect(reopened.widgetGlueIndex[b]).toBe(glueId)
+  })
+
+  it('closes ranks when unpinning shrinks a member back to an icon', () => {
+    // Unpinning is the shrink half of pinning: the card that was held open
+    // gives its space back. Nothing in the overlap check ever pulls anything
+    // closer, so without a close-ranks pass the group keeps a card-sized hole
+    // where the open card used to be.
+    const [a, b] = createPair()
+    const store = useWidgetStore.getState()
+    store.glueWidgets(b, a)
+    const second = widget(b)
+    const c = store.createWidget('Glue C', {
+      x: second.position.x + second.size.width + GLUE_GAP,
+      y: second.position.y,
+    }, 'notes')
+    pin(c)
+    useWidgetStore.getState().glueWidgets(c, b)
+    const glueId = useWidgetStore.getState().widgetGlueIndex[a]!
+    // The fixture pins every member; give the MIDDLE one the memory of an icon
+    // so unpinning shrinks it back to that square and opens a hole after it.
+    useWidgetStore.getState().updateWidgetMetadata(b, {
+      pinnedFrom: { kind: 'icon', width: 80, height: 80 },
+    })
+
+    useWidgetStore.getState().toggleWidgetPinned(b)
+    const state = useWidgetStore.getState()
+    expect(state.widgets[b]!.iconified).toBe(true)
+    // C closed up onto the shrunken B instead of being left stranded a card's
+    // width away — and the group is still one group.
+    expect(
+      glueSeparation(glueBoxRect(state.widgets[b]!), glueBoxRect(state.widgets[c]!)),
+    ).toBeLessThanOrEqual(GLUE_RANGE)
+    expect(state.widgetGlueIndex[c]).toBe(glueId)
+    expect(state.widgetGlueIndex[b]).toBe(glueId)
+  })
+
+  it('closes the weld back up when a glued member shrinks', () => {
+    // A committed shrink (content-fit convergence, an inward edge drag) opens
+    // a hole in the weld; the cluster pulls back together instead of leaving
+    // a gap that would split the group at the next reconcile.
+    const [a, b] = createPair()
+    useWidgetStore.getState().glueWidgets(b, a)
+    const glueId = useWidgetStore.getState().widgetGlueIndex[a]!
+    const wa = widget(a)
+    useWidgetStore.getState().resizeWidget(a, { width: wa.size.width - 80, height: wa.size.height })
+    const state = useWidgetStore.getState()
+    expect(state.widgetGlueIndex[a]).toBe(glueId)
+    expect(state.widgetGlueIndex[b]).toBe(glueId)
+    expect(
+      glueSeparation(glueBoxRect(state.widgets[a]!), glueBoxRect(state.widgets[b]!)),
+    ).toBe(0)
+  })
+
+  it('drops a member that no longer touches from the record at settle time', () => {
+    // However a member ended up visually free of its group, the next settle
+    // reconciles the record — so a card that touches nothing can never keep
+    // dragging the whole group with it.
+    const [a, b] = createPair()
+    useWidgetStore.getState().glueWidgets(b, a)
+    place(b, widget(a).position.x + 2_000, widget(a).position.y)
+    useWidgetStore.getState().settleWidgets([a])
+    const state = useWidgetStore.getState()
+    expect(state.widgetGlueIndex[a]).toBeUndefined()
+    expect(state.widgetGlueIndex[b]).toBeUndefined()
+  })
+
+  it('heals a stale record on board load — membership equals what touches', () => {
+    const [a, b] = createPair()
+    useWidgetStore.getState().glueWidgets(b, a)
+    place(b, widget(a).position.x + 2_000, widget(a).position.y)
+    const snapshot = parsePersistedBoard(buildBoardSnapshot(useWidgetStore.getState()))!
+    useWidgetStore.getState().loadBoard(snapshot)
+    const state = useWidgetStore.getState()
+    expect(state.widgetGlueIndex[a]).toBeUndefined()
+    expect(state.widgetGlueIndex[b]).toBeUndefined()
+    // Positions are NOT settled by a load — only the record is healed.
+    expect(state.widgets[b]!.position.x).toBe(widget(a).position.x + 2_000)
+  })
+
+  it('pushes ungrouped members physically apart — the split is visible, not just bookkeeping', () => {
+    const [a, b] = createPair()
+    useWidgetStore.getState().glueWidgets(b, a)
+    const glueId = useWidgetStore.getState().widgetGlueIndex[a]!
+    useWidgetStore.getState().unglueCluster(glueId)
+    const state = useWidgetStore.getState()
+    // The cards no longer touch: a clear gap opens between them, so nothing
+    // keeps reading (or settling) as one welded object after the record died.
+    const separation = glueSeparation(glueBoxRect(state.widgets[a]!), glueBoxRect(state.widgets[b]!))
+    expect(separation).toBeGreaterThanOrEqual(GRID_SIZE / 2)
+    // And they land back on the grid.
+    expect(Math.abs(state.widgets[a]!.position.x % GRID_SIZE)).toBe(0)
+    expect(Math.abs(state.widgets[b]!.position.x % GRID_SIZE)).toBe(0)
+  })
+
   it('names a cluster and clears the name back to default', () => {
     const [a, b] = createPair()
     useWidgetStore.getState().glueWidgets(b, a)
@@ -280,7 +427,7 @@ describe('dragging glued widgets', () => {
     expect(useWidgetStore.getState().glues[glueId]!.name).toBeUndefined()
   })
 
-  it('collapses every member to an icon and re-packs the cluster grid-aligned', () => {
+  it('collapses every member to a single-cell icon and stacks them like a ghost node', () => {
     const [a, b] = createPair()
     useWidgetStore.getState().glueWidgets(b, a)
     const glueId = useWidgetStore.getState().widgetGlueIndex[a]!
@@ -288,6 +435,10 @@ describe('dragging glued widgets', () => {
     const collapsed = useWidgetStore.getState()
     expect(collapsed.widgets[a]!.iconified).toBe(true)
     expect(collapsed.widgets[b]!.iconified).toBe(true)
+    // 1×1 each — a folded collection is one pointer target, so its members sit
+    // below the 2×2 floor that governs icons you aim at individually.
+    expect(collapsed.widgets[a]!.size).toEqual(COLLAPSED_MEMBER_SIZE)
+    expect(collapsed.widgets[b]!.size).toEqual(COLLAPSED_MEMBER_SIZE)
     // Members re-pack touching on the grid, still one welded cluster.
     const left = [collapsed.widgets[a]!, collapsed.widgets[b]!].sort((x, y) => x.position.x - y.position.x)
     expect(left[1]!.position.x - (left[0]!.position.x + left[0]!.size.width)).toBe(0)
@@ -296,6 +447,211 @@ describe('dragging glued widgets', () => {
     // Expanding restores full cards.
     useWidgetStore.getState().setClusterCollapsed(glueId, false)
     expect(useWidgetStore.getState().widgets[a]!.iconified).toBe(false)
+  })
+
+  it('restores every member to the exact position, size and scale state it was folded from', () => {
+    const [a, b] = createPair()
+    useWidgetStore.getState().glueWidgets(b, a)
+    const glueId = useWidgetStore.getState().widgetGlueIndex[a]!
+    // One member starts as an icon, so the fold has two different states to
+    // remember — not just "everything was a full card".
+    useWidgetStore.getState().setWidgetScaleState(b, 'icon')
+    const before = {
+      a: { ...widget(a).position, ...widget(a).size, icon: widget(a).iconified === true },
+      b: { ...widget(b).position, ...widget(b).size, icon: widget(b).iconified === true },
+    }
+    expect(before.b.icon).toBe(true)
+
+    useWidgetStore.getState().setClusterCollapsed(glueId, true)
+    const folded = useWidgetStore.getState()
+    expect(folded.glues[glueId]!.collapsed).toBe(true)
+    expect(folded.widgets[a]!.iconified).toBe(true)
+    expect(folded.widgets[b]!.iconified).toBe(true)
+
+    useWidgetStore.getState().setClusterCollapsed(glueId, false)
+    const after = useWidgetStore.getState()
+    // Exactly what the fold replaced comes back — including the member that
+    // was already an icon, which must NOT be opened by the unfold.
+    expect(after.widgets[a]!.position).toEqual({ x: before.a.x, y: before.a.y })
+    expect(after.widgets[a]!.size).toEqual({ width: before.a.width, height: before.a.height })
+    expect(after.widgets[a]!.iconified === true).toBe(before.a.icon)
+    expect(after.widgets[b]!.position).toEqual({ x: before.b.x, y: before.b.y })
+    expect(after.widgets[b]!.size).toEqual({ width: before.b.width, height: before.b.height })
+    expect(after.widgets[b]!.iconified === true).toBe(true)
+    // The fold record is cleared once it has been spent.
+    expect(after.glues[glueId]!.collapsed).toBeUndefined()
+    expect(after.glues[glueId]!.restore).toBeUndefined()
+  })
+
+  it('expands a group around where it sits NOW, not where it was folded', () => {
+    const [a, b] = createPair()
+    useWidgetStore.getState().glueWidgets(b, a)
+    const glueId = useWidgetStore.getState().widgetGlueIndex[a]!
+    const beforeA = { ...widget(a).position }
+    const beforeB = { ...widget(b).position }
+    useWidgetStore.getState().setClusterCollapsed(glueId, true)
+
+    // Drag the folded block eight cells right and two down (the whole-cluster
+    // move a plain drag performs), then expand: the members open translated by
+    // that same travel instead of rewinding to their pre-collapse coordinates.
+    const shift = { x: 8 * GRID_SIZE, y: 2 * GRID_SIZE }
+    for (const id of [a, b]) {
+      const w = widget(id)
+      place(id, w.position.x + shift.x, w.position.y + shift.y)
+    }
+    useWidgetStore.getState().setClusterCollapsed(glueId, false)
+    const after = useWidgetStore.getState()
+    expect(after.widgets[a]!.position).toEqual({ x: beforeA.x + shift.x, y: beforeA.y + shift.y })
+    expect(after.widgets[b]!.position).toEqual({ x: beforeB.x + shift.x, y: beforeB.y + shift.y })
+  })
+
+  it('welds an external widget into a collapsed group — it joins, folds, and re-stacks', () => {
+    const [a, b] = createPair()
+    useWidgetStore.getState().glueWidgets(b, a)
+    const glueId = useWidgetStore.getState().widgetGlueIndex[a]!
+    useWidgetStore.getState().setClusterCollapsed(glueId, true)
+
+    // A third widget, ungrouped and full-size, welded onto the folded block.
+    const store = useWidgetStore.getState()
+    const c = store.createWidget('Glue C', { x: 90_000, y: 90_000 }, 'notes')
+    pin(c)
+    useWidgetStore.getState().glueWidgets(c, a)
+
+    const st = useWidgetStore.getState()
+    const mergedId = st.widgetGlueIndex[c]!
+    const glue = st.glues[mergedId]!
+    // Still collapsed, now three, and the newcomer folded to a 1×1 icon.
+    expect(glue.collapsed).toBe(true)
+    expect(glue.widgetIds).toHaveLength(3)
+    expect([a, b, c].every((id) => st.widgetGlueIndex[id] === mergedId)).toBe(true)
+    expect(st.widgets[c]!.size).toEqual(COLLAPSED_MEMBER_SIZE)
+    expect(st.widgets[c]!.iconified).toBe(true)
+    // The newcomer remembers its pre-fold FULL size, so an unfold can bring it
+    // back — not the 1×1 it is now folded to.
+    expect(glue.restore?.[c]?.width).toBeGreaterThan(COLLAPSED_MEMBER_SIZE.width)
+
+    // Unfolding returns EVERY member — including the one added while folded —
+    // to a real card rather than leaving it a lone icon.
+    useWidgetStore.getState().setClusterCollapsed(mergedId, false)
+    const after = useWidgetStore.getState()
+    for (const id of [a, b, c]) {
+      expect(after.widgets[id]!.size).not.toEqual(COLLAPSED_MEMBER_SIZE)
+      expect(after.widgets[id]!.iconified).toBe(false)
+    }
+  })
+
+  it('restores a member released from a collapsed group instead of leaving a 1×1 icon', () => {
+    const [a, b] = createPair()
+    const store = useWidgetStore.getState()
+    store.glueWidgets(b, a)
+    const second = widget(b)
+    const c = store.createWidget('Glue C', {
+      x: second.position.x + second.size.width + GLUE_GAP,
+      y: second.position.y,
+    }, 'notes')
+    pin(c)
+    useWidgetStore.getState().glueWidgets(c, b)
+    const glueId = useWidgetStore.getState().widgetGlueIndex[a]!
+    useWidgetStore.getState().setClusterCollapsed(glueId, true)
+
+    // Pull one member out of the folded collection.
+    useWidgetStore.getState().unglueWidget(c)
+    const st = useWidgetStore.getState()
+    // The released member is a real card again, not a sub-floor icon.
+    expect(st.widgets[c]!.size).not.toEqual(COLLAPSED_MEMBER_SIZE)
+    expect(st.widgetGlueIndex[c]).toBeUndefined()
+    // The two left behind stay a folded collection.
+    const remainingId = st.widgetGlueIndex[a]!
+    expect(st.glues[remainingId]!.collapsed).toBe(true)
+    expect(st.widgets[a]!.size).toEqual(COLLAPSED_MEMBER_SIZE)
+  })
+
+  it('restores both members when ungluing dissolves a collapsed pair', () => {
+    const [a, b] = createPair()
+    useWidgetStore.getState().glueWidgets(b, a)
+    const glueId = useWidgetStore.getState().widgetGlueIndex[a]!
+    useWidgetStore.getState().setClusterCollapsed(glueId, true)
+    useWidgetStore.getState().unglueWidget(b)
+    const st = useWidgetStore.getState()
+    expect(st.glues[glueId]).toBeUndefined()
+    expect(st.widgets[a]!.size).not.toEqual(COLLAPSED_MEMBER_SIZE)
+    expect(st.widgets[b]!.size).not.toEqual(COLLAPSED_MEMBER_SIZE)
+  })
+
+  it('restores every member when a collapsed group is ungrouped', () => {
+    const [a, b] = createPair()
+    useWidgetStore.getState().glueWidgets(b, a)
+    const glueId = useWidgetStore.getState().widgetGlueIndex[a]!
+    useWidgetStore.getState().setClusterCollapsed(glueId, true)
+    useWidgetStore.getState().unglueCluster(glueId)
+    const st = useWidgetStore.getState()
+    expect(st.glues[glueId]).toBeUndefined()
+    for (const id of [a, b]) {
+      expect(st.widgets[id]!.size).not.toEqual(COLLAPSED_MEMBER_SIZE)
+      expect(st.widgetGlueIndex[id]).toBeUndefined()
+    }
+  })
+
+  it('restores the survivor when deleting drops a collapsed pair below two', () => {
+    const [a, b] = createPair()
+    useWidgetStore.getState().glueWidgets(b, a)
+    const glueId = useWidgetStore.getState().widgetGlueIndex[a]!
+    useWidgetStore.getState().setClusterCollapsed(glueId, true)
+    useWidgetStore.getState().deleteWidgets([b])
+    const st = useWidgetStore.getState()
+    expect(st.widgets[b]).toBeUndefined()
+    expect(st.widgets[a]!.size).not.toEqual(COLLAPSED_MEMBER_SIZE)
+    expect(st.widgetGlueIndex[a]).toBeUndefined()
+  })
+
+  it('carries a collapsed cluster and its restore map through a save/load round trip', () => {
+    const [a, b] = createPair()
+    useWidgetStore.getState().glueWidgets(b, a)
+    const glueId = useWidgetStore.getState().widgetGlueIndex[a]!
+    const originalA = { ...widget(a).position }
+    useWidgetStore.getState().setClusterCollapsed(glueId, true)
+
+    const reloaded = parsePersistedBoard(buildBoardSnapshot(useWidgetStore.getState()))!
+    useWidgetStore.getState().loadBoard(reloaded)
+    const glue = useWidgetStore.getState().glues[glueId]!
+    expect(glue.collapsed).toBe(true)
+    expect(glue.restore?.[a]).toMatchObject({ x: originalA.x, y: originalA.y })
+
+    // And it still unfolds correctly after the reload.
+    useWidgetStore.getState().setClusterCollapsed(glueId, false)
+    expect(useWidgetStore.getState().widgets[a]!.position).toEqual(originalA)
+  })
+
+  it('re-packs the cluster when a member is pinned open inside it', () => {
+    // Two welded cards. Unpin the second so it sits as a compact resting tile,
+    // then pin it back open: it grows to a full card straight through its
+    // clustermate. The cluster has to give way around it.
+    const [a, b] = createPair()
+    useWidgetStore.getState().glueWidgets(b, a)
+    useWidgetStore.getState().toggleWidgetPinned(b) // b now rests as a tile
+    const tile = restingTileSize(widget(b))
+    const anchor = { ...widget(b).position }
+    // Weld a onto the tile's right edge: opening b must now push a along.
+    place(a, anchor.x + tile.width, anchor.y)
+    const before = { ...widget(a).position }
+    expect(widget(b).size.width).toBeGreaterThan(tile.width)
+
+    useWidgetStore.getState().toggleWidgetPinned(b) // held open again
+    const pinned = widget(b)
+    const neighbour = widget(a)
+    expect(pinned.metadata.pinned).toBe(true)
+    // The pinned card holds its ground — the cluster's own rigid grid snap can
+    // still shift the whole block by less than a cell, but nothing shoves the
+    // card that was just acted on...
+    expect(Math.abs(pinned.position.x - anchor.x)).toBeLessThan(40)
+    expect(Math.abs(pinned.position.y - anchor.y)).toBeLessThan(40)
+    // ...its clustermate moved out of the way...
+    expect(neighbour.position.x).toBeGreaterThan(before.x)
+    // ...they are still welded (touching, so the seam re-carves itself)...
+    expect(neighbour.position.x - (pinned.position.x + pinned.size.width)).toBe(0)
+    // ...and they are still one cluster.
+    expect(useWidgetStore.getState().widgetGlueIndex[a])
+      .toBe(useWidgetStore.getState().widgetGlueIndex[b])
   })
 
   it('round-trips a cluster name through a snapshot', () => {

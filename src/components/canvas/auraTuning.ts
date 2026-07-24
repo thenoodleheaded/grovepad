@@ -60,16 +60,16 @@ export interface AuraTuningDocument {
 
 export const DEFAULT_AURA_TUNING: AuraTuning = {
   dark: {
-    alpha: 0.1,
-    coreAlpha: 0.35,
-    midStop: 0.42,
-    midAlpha: 0.85,
-    reach: 1.15,
-    scatter: 0.35,
-    blur: 6,
-    minRadius: 0.1,
-    maxRadius: 0.55,
-    maxEmitters: 8,
+    alpha: 0.34,
+    coreAlpha: 0.5,
+    midStop: 0.36,
+    midAlpha: 0.95,
+    reach: 0.9,
+    scatter: 0.15,
+    blur: 5,
+    minRadius: 0.025,
+    maxRadius: 0.3,
+    maxEmitters: 20,
     blend: 'lighter',
     settleMs: 220,
     glide: 0.06,
@@ -77,16 +77,16 @@ export const DEFAULT_AURA_TUNING: AuraTuning = {
   light: {
     // Light mode overpaints through `multiply` rather than adding, so it needs a
     // higher alpha than dark to land at a comparable strength.
-    alpha: 0.45,
-    coreAlpha: 0.35,
-    midStop: 0.42,
-    midAlpha: 0.85,
-    reach: 1.15,
-    scatter: 0.35,
-    blur: 6,
-    minRadius: 0.1,
-    maxRadius: 0.55,
-    maxEmitters: 8,
+    alpha: 0.62,
+    coreAlpha: 0.5,
+    midStop: 0.36,
+    midAlpha: 0.95,
+    reach: 0.9,
+    scatter: 0.15,
+    blur: 5,
+    minRadius: 0.025,
+    maxRadius: 0.3,
+    maxEmitters: 20,
     blend: 'source-over',
     settleMs: 220,
     glide: 0.06,
@@ -280,4 +280,31 @@ export function resolveAccent(
   registryAccent: string,
 ): string {
   return doc.accents[type]?.[theme] ?? registryAccent
+}
+
+/**
+ * The radius of the pool one widget casts, in buffer pixels.
+ *
+ * This is the whole "strong but LOCAL" contract in one place: the pool is sized
+ * from the widget's own longest edge (`reach`), spreads only a little past that
+ * (`scatter`), and is then clamped. The floor matters most — set too high, a
+ * 1×1 icon is inflated into a board-wide wash instead of the tight bright pool
+ * that now carries a glue cluster's join.
+ *
+ * Extracted from the layer so the falloff can be reasoned about without a
+ * canvas: the drawing code must not be the only definition of the geometry.
+ */
+export function auraBlobRadius(
+  longestEdge: number,
+  zoom: number,
+  viewportWidth: number,
+  bufferResolution: number,
+  tuning: Pick<AuraThemeTuning, 'reach' | 'scatter' | 'minRadius' | 'maxRadius'>,
+): number {
+  if (!(viewportWidth > 0) || !(bufferResolution > 0)) return 0
+  const screenRadius = longestEdge * zoom * tuning.reach * (1 + tuning.scatter)
+  const normRadius = (screenRadius / viewportWidth) * bufferResolution
+  const min = bufferResolution * tuning.minRadius
+  const max = bufferResolution * tuning.maxRadius
+  return Math.min(Math.max(normRadius, min), max)
 }

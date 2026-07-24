@@ -25,10 +25,6 @@
      which the dev tuning panel edits and exports as a single bakeable block. */
   --gp-grid-fine: rgb(163 230 53 / 0.13);
   --gp-widget-muted-text: #a3a3a3;
-  /* Weld material between glued cards: a bridge of the cards' own dark glass
-     with the pair's accents glowing faintly through it (04-controls.css). */
-  --gp-weld-glass: oklch(21% 0.01 148 / 0.92);
-  --gp-weld-accent-alpha: 78%;
   --gp-safe-top: env(safe-area-inset-top, 0px);
   --gp-safe-right: env(safe-area-inset-right, 0px);
   --gp-safe-bottom: env(safe-area-inset-bottom, 0px);
@@ -45,8 +41,6 @@
   --gp-focus: oklch(48% 0.22 137 / 0.72);
   --gp-grid-fine: rgb(163 230 53 / 0.13);
   --gp-widget-muted-text: #a3a3a3;
-  --gp-weld-glass: oklch(88% 0.008 148 / 0.92);
-  --gp-weld-accent-alpha: 68%;
 }
 
 /* Fixed chrome uses these shared offsets so notches, rounded display corners,

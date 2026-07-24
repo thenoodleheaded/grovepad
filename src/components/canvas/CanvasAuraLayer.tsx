@@ -7,7 +7,7 @@ import { useCanvasWidgetIds } from '../../hooks/useCanvasWidgets'
 import { widgetDefinition } from '../../widgets/registry'
 import { useSettingsStore } from '../../store/useSettingsStore'
 import { useAuraTuningStore } from '../../store/useAuraTuningStore'
-import { advanceAnchor, resolveAccent } from './auraTuning'
+import { advanceAnchor, auraBlobRadius, resolveAccent } from './auraTuning'
 import { widgetAccent } from '../../utils/widgetSkins'
 import type { Widget } from '../../types/spatial'
 
@@ -58,10 +58,11 @@ function accentChannels(ctx: CanvasRenderingContext2D, color: string, cache: Map
  * avoiding expensive CSS blurs or DOM thrashing during panning.
  */
 export function CanvasAuraLayer() {
-  const { widgets, activeCanvasId } = useWidgetStore(
+  const { widgets, activeCanvasId, widgetGlueIndex } = useWidgetStore(
     useShallow((state) => ({
       widgets: state.widgets,
       activeCanvasId: state.activeCanvasId,
+      widgetGlueIndex: state.widgetGlueIndex,
     })),
   )
   const canvasWidgetIds = useCanvasWidgetIds(activeCanvasId)
@@ -98,8 +99,6 @@ export function CanvasAuraLayer() {
     let lastZoom = NaN
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)')
     const tuning = tuningDoc.aura[theme]
-    const minRadius = CANVAS_RESOLUTION * tuning.minRadius
-    const maxRadius = CANVAS_RESOLUTION * tuning.maxRadius
 
     const scheduleDraw = () => {
       if (rafId || document.hidden) return
@@ -124,9 +123,14 @@ export function CanvasAuraLayer() {
       let needsRedraw = false
 
       // Pick this frame's emitters in screen space: a widget only lights the board
-      // when its own glow actually reaches the viewport, and the widgets that read
-      // largest on screen right now are the ones that dominate.
-      const onScreen: Array<{ widget: Widget; screenArea: number }> = []
+      // when its own glow actually reaches the viewport.
+      //
+      // Glued members always make the cut, whatever their size. Their pooled
+      // light IS what says "these belong together" now that the gradient weld
+      // between them is gone — and they are usually the SMALLEST cards on the
+      // board, so a purely largest-first cut dropped exactly the widgets that
+      // most need to glow. Everything else still ranks by how large it reads.
+      const onScreen: Array<{ widget: Widget; screenArea: number; glued: boolean }> = []
       for (const widget of canvasWidgets) {
         const w = widget.size.width * zoom
         const h = widget.size.height * zoom
@@ -135,10 +139,12 @@ export function CanvasAuraLayer() {
         const margin = Math.max(w, h) * tuning.reach * (1 + tuning.scatter)
         if (left + w + margin < 0 || left - margin > viewportSize.width) continue
         if (top + h + margin < 0 || top - margin > viewportSize.height) continue
-        onScreen.push({ widget, screenArea: w * h })
+        onScreen.push({ widget, screenArea: w * h, glued: Boolean(widgetGlueIndex[widget.id]) })
       }
       onScreen.sort((a, b) =>
-        (b.screenArea - a.screenArea) || a.widget.id.localeCompare(b.widget.id),
+        (Number(b.glued) - Number(a.glued)) ||
+        (b.screenArea - a.screenArea) ||
+        a.widget.id.localeCompare(b.widget.id),
       )
       const visibleWidgets = onScreen.slice(0, tuning.maxEmitters).map((entry) => entry.widget)
 
@@ -249,9 +255,7 @@ export function CanvasAuraLayer() {
         // would average into a single flat wash. `scatter` extends the faint tail
         // past `reach` without brightening the pool itself.
         const radiusBase = Math.max(widget.size.width, widget.size.height)
-        const screenRadius = radiusBase * zoom * tuning.reach * (1 + tuning.scatter)
-        const normRadius = (screenRadius / viewportSize.width) * CANVAS_RESOLUTION
-        const r = Math.min(Math.max(normRadius, minRadius), maxRadius)
+        const r = auraBlobRadius(radiusBase, zoom, viewportSize.width, CANVAS_RESOLUTION, tuning)
 
         // The colour the card itself wears, skin included — a Tracker's type accent
         // is one green for every skin, so reading the registry directly would light
@@ -296,7 +300,7 @@ export function CanvasAuraLayer() {
       document.removeEventListener('visibilitychange', handleVisibility)
       reducedMotion.removeEventListener('change', scheduleDraw)
     }
-  }, [auraEnabled, canvasWidgets, theme, tuningDoc])
+  }, [auraEnabled, canvasWidgets, theme, tuningDoc, widgetGlueIndex])
 
   // Do not unmount when visibleWidgets is empty, otherwise we can't play the fade-out animation
   // when the last widget leaves the screen.

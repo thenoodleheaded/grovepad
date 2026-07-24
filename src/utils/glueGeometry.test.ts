@@ -1,17 +1,27 @@
 import { describe, expect, it } from 'vitest'
 import type { Widget } from '../types/spatial'
 import { makeWidget } from '../test/factories'
+import { WIDGET_TITLE_ROW } from './widgetRest'
 import {
+  COLLAPSED_MEMBER_SIZE,
+  collapsedClusterLayout,
   connectedGlueComponents,
   findGlueSnap,
+  clusterFrameEnvelope,
+  clusterTitleRowRect,
+  GLUE_FRAME_BAND,
   GLUE_GAP,
   GLUE_RANGE,
-  glueSeamBetween,
-  glueSeamsForCluster,
+  GLUE_TITLE_HEADROOM,
+  GLUE_TITLE_ROW_H,
+  glueChromeRect,
   glueSeparation,
   insetGlueRects,
   pulledFreeOfCluster,
   reconcileGlueClusters,
+  reflowWeldedCluster,
+  refoldCollapsedCluster,
+  unfoldReleasedFoldedMembers,
 } from './glueGeometry'
 
 function widget(id: string, x: number, y: number, width = 240, height = 160): Widget {
@@ -39,61 +49,12 @@ describe('glue separation', () => {
   })
 })
 
-describe('glue seams', () => {
-  it('welds a side-by-side pair with a straight bar spanning the gap', () => {
-    const seam = glueSeamBetween('a', rect(0, 0, 100, 100), 'b', rect(112, 20, 100, 100))!
-    expect(seam.axis).toBe('x')
-    expect(seam.aFirst).toBe(true)
-    expect(seam.rect).toEqual({ x: 100, y: 20, width: 12, height: 80 })
-  })
-
-  it('welds a stacked pair with a horizontal bar', () => {
-    const seam = glueSeamBetween('a', rect(0, 0, 100, 100), 'b', rect(-30, 112, 100, 100))!
-    expect(seam.axis).toBe('y')
-    expect(seam.rect).toEqual({ x: 0, y: 100, width: 70, height: 12 })
-  })
-
-  it('fills a diagonal elbow with a corner patch', () => {
-    const seam = glueSeamBetween('a', rect(0, 0, 100, 100), 'b', rect(112, 112, 100, 100))!
-    expect(seam.axis).toBe('corner')
-    expect(seam.rect).toEqual({ x: 100, y: 100, width: 12, height: 12 })
-  })
-
-  it('refuses a weld once the gap opens past the seam ceiling', () => {
-    expect(glueSeamBetween('a', rect(0, 0, 100, 100), 'b', rect(140, 0, 100, 100))).toBeNull()
-  })
-
-  it('refuses a bar weld without real perpendicular overlap', () => {
-    expect(glueSeamBetween('a', rect(0, 0, 100, 100), 'b', rect(112, 90, 100, 100))?.axis).not.toBe('x')
-  })
-
-  it('traces an L-arrangement as two bars plus the corner elbow', () => {
-    const widgets = {
-      a: widget('a', 0, 0, 200, 160),
-      b: widget('b', 212, 0, 200, 160),
-      c: widget('c', 212, 172, 200, 160),
-    }
-    const seams = glueSeamsForCluster(['a', 'b', 'c'], widgets)
-    const axes = seams.map((seam) => seam.axis).sort()
-    expect(axes).toEqual(['corner', 'x', 'y'])
-  })
-
-  it('fills the heart of a 2×2 square arrangement', () => {
-    const widgets = {
-      a: widget('a', 0, 0, 200, 160),
-      b: widget('b', 212, 0, 200, 160),
-      c: widget('c', 0, 172, 200, 160),
-      d: widget('d', 212, 172, 200, 160),
-    }
-    const seams = glueSeamsForCluster(['a', 'b', 'c', 'd'], widgets)
-    expect(seams.filter((seam) => seam.axis === 'x')).toHaveLength(2)
-    expect(seams.filter((seam) => seam.axis === 'y')).toHaveLength(2)
-    expect(seams.filter((seam) => seam.axis === 'corner')).toHaveLength(2)
-  })
-
-  it('insets touching members so the carved seam is exactly GLUE_GAP', () => {
-    // Two grid-aligned cards stored edge to edge (gap 0). The seam is carved
-    // half from each, and the outer corners never move off the grid.
+describe('carved glue seam geometry', () => {
+  it('insets touching members so the carved gap is exactly GLUE_GAP', () => {
+    // Two grid-aligned cards stored edge to edge (gap 0). The gap is carved
+    // half from each, and the outer corners never move off the grid. Nothing
+    // is painted into that gap any more — the cards' own local aura pools
+    // behind them is what reads as the join.
     const widgets = { a: widget('a', 0, 0, 200, 160), b: widget('b', 200, 0, 200, 160) }
     const rects = insetGlueRects(['a', 'b'], widgets)
     const ra = rects.get('a')!
@@ -101,7 +62,6 @@ describe('glue seams', () => {
     expect(rb.x - (ra.x + ra.width)).toBe(GLUE_GAP)
     expect(ra.x).toBe(0)
     expect(rb.x + rb.width).toBe(400)
-    expect(glueSeamsForCluster(['a', 'b'], widgets).map((seam) => seam.axis)).toEqual(['x'])
   })
 })
 
@@ -204,5 +164,220 @@ describe('cluster connectedness', () => {
   it('returns the same reference when every cluster is still whole', () => {
     const glues = { g1: { id: 'g1', widgetIds: ['a', 'b', 'c'] } }
     expect(reconcileGlueClusters({ a, b, c }, glues)).toBe(glues)
+  })
+})
+
+describe('cluster reflow when a member changes footprint', () => {
+  const box = (id: string, x: number, y: number, width: number, height: number) =>
+    ({ id, rect: rect(x, y, width, height) })
+
+  it('pushes clustermates exactly far enough to touch the grown card again', () => {
+    // A row of three 200-wide cards. The first is pinned open and now measures
+    // 320 — 120px into its neighbour, which is 120px into the third.
+    const moved = reflowWeldedCluster(
+      [box('a', 0, 0, 320, 160), box('b', 200, 0, 200, 160), box('c', 400, 0, 200, 160)],
+      ['a'],
+    )
+    // The anchor holds; the rest of the row shifts by the whole growth...
+    expect(moved.has('a')).toBe(false)
+    expect(moved.get('b')).toEqual({ x: 320, y: 0 })
+    expect(moved.get('c')).toEqual({ x: 520, y: 0 })
+    // ...and every seam is still a seam: the cards touch, so the render insets
+    // carve the same GLUE_GAP they always did. Nothing is a cell apart.
+    expect(moved.get('b')!.x).toBe(320)
+    expect(moved.get('c')!.x - (moved.get('b')!.x + 200)).toBe(0)
+  })
+
+  it('pushes along the axis the pair is arranged on, keeping the arrangement', () => {
+    // Welded below: the card that grew is taller now, so its neighbour slides
+    // further down — it must not be lifted sideways out of the column.
+    const below = reflowWeldedCluster(
+      [box('a', 0, 0, 200, 260), box('b', 0, 160, 200, 160)],
+      ['a'],
+    )
+    expect(below.get('b')).toEqual({ x: 0, y: 260 })
+
+    // Welded beside: a card 320 tall growing to 400 wide would escape "cheaper"
+    // upward, which would tear the row apart. It goes sideways instead.
+    const beside = reflowWeldedCluster(
+      [box('a', 0, 0, 400, 320), box('b', 200, 0, 200, 320)],
+      ['a'],
+    )
+    expect(beside.get('b')).toEqual({ x: 400, y: 0 })
+  })
+
+  it('never moves an anchored member, and leaves a clean cluster untouched', () => {
+    expect(reflowWeldedCluster([box('a', 0, 0, 200, 160), box('b', 200, 0, 200, 160)], ['a']).size)
+      .toBe(0)
+    // Both anchored: the caller asked for both to hold, so neither is shoved.
+    const held = reflowWeldedCluster(
+      [box('a', 0, 0, 320, 160), box('b', 200, 0, 200, 160)],
+      ['a', 'b'],
+    )
+    expect(held.size).toBe(0)
+  })
+
+  it('falls back to the leading member when nothing is anchored', () => {
+    const moved = reflowWeldedCluster([box('a', 0, 0, 320, 160), box('b', 200, 0, 200, 160)], [])
+    expect(moved.has('a')).toBe(false)
+    expect(moved.get('b')).toEqual({ x: 320, y: 0 })
+  })
+})
+
+describe('folded cluster packing', () => {
+  it('folds every member to a single cell', () => {
+    expect(COLLAPSED_MEMBER_SIZE).toEqual({ width: 40, height: 40 })
+  })
+
+  it('stacks icons into the closest square, exactly like a ghost node', () => {
+    // Four members: a 2×2 block, cells touching, grid-aligned.
+    const four = collapsedClusterLayout(4)
+    expect(four.offsets).toEqual([
+      { x: 0, y: 0 }, { x: 40, y: 0 },
+      { x: 0, y: 40 }, { x: 40, y: 40 },
+    ])
+    expect(four).toMatchObject({ width: 80, height: 80 })
+  })
+
+  it('centres a short row on whole cells, so the block stays grid-aligned', () => {
+    // Three members pack as 2 over 1 (balanced rows); the lone one centres.
+    const three = collapsedClusterLayout(3)
+    expect(three.offsets).toEqual([{ x: 0, y: 0 }, { x: 40, y: 0 }, { x: 0, y: 40 }])
+    for (const offset of collapsedClusterLayout(7).offsets) {
+      expect(offset.x % 40).toBe(0)
+      expect(offset.y % 40).toBe(0)
+    }
+  })
+
+  it('lays a pair out side by side and handles the empty case', () => {
+    expect(collapsedClusterLayout(2).offsets).toEqual([{ x: 0, y: 0 }, { x: 40, y: 0 }])
+    expect(collapsedClusterLayout(0)).toEqual({ width: 0, height: 0, offsets: [] })
+  })
+})
+
+describe('folding and re-folding a collapsed cluster', () => {
+  it('folds every member to one cell and records its pre-fold state', () => {
+    const widgets = { a: widget('a', 0, 0, 240, 160), b: widget('b', 260, 0, 200, 120) }
+    const { widgets: folded, restore } = refoldCollapsedCluster(widgets, ['a', 'b'], undefined)
+    expect(folded.a!.size).toEqual({ width: 40, height: 40 })
+    expect(folded.b!.size).toEqual({ width: 40, height: 40 })
+    expect(folded.a!.iconified).toBe(true)
+    // Pre-fold state remembered, so an unfold can put each card back exactly.
+    expect(restore.a).toEqual({ x: 0, y: 0, width: 240, height: 160, iconified: false })
+    expect(restore.b).toMatchObject({ width: 200, height: 120 })
+    // The parked full size lets a member expand on its own once released.
+    expect(folded.a!.expandedSize).toEqual({ width: 240, height: 160 })
+    // Packed touching and grid-aligned.
+    expect(folded.b!.position.x - folded.a!.position.x).toBe(40)
+  })
+
+  it('stacks a newcomer in while keeping the standing block anchored', () => {
+    // a,b already folded near (400,400); c is a full card far away.
+    const widgets = {
+      a: { ...widget('a', 400, 400, 40, 40), iconified: true, expandedSize: { width: 240, height: 160 } },
+      b: { ...widget('b', 440, 400, 40, 40), iconified: true, expandedSize: { width: 200, height: 120 } },
+      c: widget('c', 9000, 9000, 320, 200),
+    }
+    const existingRestore = {
+      a: { x: 100, y: 100, width: 240, height: 160, iconified: false },
+      b: { x: 340, y: 100, width: 200, height: 120, iconified: false },
+    }
+    const { widgets: folded, restore } = refoldCollapsedCluster(widgets, ['a', 'b', 'c'], existingRestore)
+    // The block stays put at the existing members' corner, not c's far one.
+    const minX = Math.min(folded.a!.position.x, folded.b!.position.x, folded.c!.position.x)
+    const minY = Math.min(folded.a!.position.y, folded.b!.position.y, folded.c!.position.y)
+    expect(minX).toBe(400)
+    expect(minY).toBe(400)
+    // The newcomer folds and records its OWN pre-fold state; a,b keep theirs.
+    expect(folded.c!.size).toEqual({ width: 40, height: 40 })
+    expect(restore.c).toEqual({ x: 9000, y: 9000, width: 320, height: 200, iconified: false })
+    expect(restore.a).toEqual(existingRestore.a)
+  })
+})
+
+describe('restoring members released from a collapsed group', () => {
+  const folded = (id: string, x: number, y: number) => ({
+    ...widget(id, x, y, 40, 40),
+    iconified: true,
+    expandedSize: { width: 240, height: 160 },
+  })
+
+  it('unfolds a 1×1 member no longer in any collapsed cluster, using the saved entry', () => {
+    const widgets = { a: folded('a', 0, 0), b: folded('b', 40, 0) }
+    const prev = {
+      g: {
+        id: 'g', widgetIds: ['a', 'b'], collapsed: true, restore: {
+          a: { x: 5, y: 6, width: 240, height: 160, iconified: false },
+          b: { x: 250, y: 6, width: 200, height: 120, iconified: false },
+        },
+      },
+    }
+    const out = unfoldReleasedFoldedMembers(widgets, prev, {})
+    expect(out.a!.size).toEqual({ width: 240, height: 160 })
+    expect(out.a!.position).toEqual({ x: 5, y: 6 })
+    expect(out.a!.iconified).toBe(false)
+    expect(out.b!.position).toEqual({ x: 250, y: 6 })
+  })
+
+  it('leaves members still inside a collapsed cluster folded', () => {
+    const widgets = { a: folded('a', 0, 0), b: folded('b', 40, 0) }
+    const glues = { g: { id: 'g', widgetIds: ['a', 'b'], collapsed: true, restore: {} } }
+    expect(unfoldReleasedFoldedMembers(widgets, glues, glues)).toBe(widgets)
+  })
+
+  it('falls back to the dormant full size when no memory survives', () => {
+    const widgets = { a: folded('a', 0, 0) }
+    const out = unfoldReleasedFoldedMembers(widgets, {}, {})
+    expect(out.a!.size).toEqual({ width: 240, height: 160 })
+    expect(out.a!.iconified).toBe(false)
+  })
+})
+
+describe('the group boundary is a frame plus its own title row', () => {
+  // A wide cluster with a short name: most of the band above it is empty
+  // canvas, and that emptiness must stay board, not group.
+  const wide = { a: widget('a', 0, 0, 600, 160), b: widget('b', 0, 160, 600, 160) }
+  const ids = ['a', 'b']
+
+  it('grows the frame by the band on every side — and claims no title headroom', () => {
+    // Plain members hand their names to the group frame and float no rows.
+    const plain = {
+      a: { ...wide.a, metadata: { badges: [] } },
+      b: { ...wide.b, metadata: { badges: [] } },
+    }
+    const env = clusterFrameEnvelope(ids, plain)!
+    expect(env.x).toBe(-GLUE_FRAME_BAND)
+    expect(env.y).toBe(-GLUE_FRAME_BAND)
+    expect(env.width).toBe(600 + GLUE_FRAME_BAND * 2)
+    expect(env.height).toBe(320 + GLUE_FRAME_BAND * 2)
+    // A PINNED top member floats its own title row, and that strip is real
+    // occupied space — the frame stands clear of it too.
+    expect(clusterFrameEnvelope(ids, wide)!.y).toBe(-GLUE_FRAME_BAND - WIDGET_TITLE_ROW)
+  })
+
+  it('bounds the title row to the icon, name, and buttons — never the full width', () => {
+    const row = clusterTitleRowRect(ids, wide, undefined)!
+    expect(row.x).toBe(0)
+    expect(row.y).toBe(-GLUE_TITLE_HEADROOM)
+    expect(row.height).toBe(GLUE_TITLE_ROW_H)
+    // The empty canvas beside a short name is not the group.
+    expect(row.width).toBeLessThan(300)
+    // A long name claims more of the band, but the row still tracks the label.
+    const named = clusterTitleRowRect(ids, wide, 'Quarterly planning workstream')!
+    expect(named.width).toBeGreaterThan(row.width)
+  })
+
+  it('reserves a member’s own title row only when that member shows one', () => {
+    // A pinned member floats its own row (its only Pin control), so the card
+    // above it must not be packed into that strip.
+    const pinned = widget('p', 0, 0, 240, 160)
+    expect(glueChromeRect(pinned).y).toBe(-WIDGET_TITLE_ROW)
+    expect(glueChromeRect(pinned).height).toBe(160 + WIDGET_TITLE_ROW)
+    // An unpinned member hands its name to the group frame: no strip at all.
+    const plain = { ...pinned, metadata: { badges: [] } }
+    expect(glueChromeRect(plain).y).toBe(0)
+    // An icon IS its own identity mark and floats nothing.
+    const icon = { ...pinned, iconified: true, size: { width: 80, height: 80 } }
+    expect(glueChromeRect(icon).y).toBe(0)
   })
 })

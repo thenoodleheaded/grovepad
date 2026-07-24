@@ -1,6 +1,6 @@
 import { memo, useEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react'
 import { useShallow } from 'zustand/react/shallow'
-import { Check, Plus, Sparkles, Star, Trash2, TriangleAlert, Pin, Copy, FileText } from 'lucide-react'
+import { Check, Sparkles, Star, Trash2, TriangleAlert, Pin } from 'lucide-react'
 import { ErrorBoundary } from '../ErrorBoundary'
 import { useCanvasStore } from '../../store/useCanvasStore'
 import { isRecentlySpawned, useWidgetStore } from '../../store/useWidgetStore'
@@ -10,6 +10,7 @@ import { GRID_SIZE, WIDGET_MAX_EDGE } from '../../types/spatial'
 import { WIDGET_HOVER_RIGHT, WIDGET_HOVER_TOP } from '../../utils/widgetBounds'
 import {
   findGlueSnap,
+  foldedMemberInsets,
   glueMemberInsets,
   pulledFreeOfCluster,
 } from '../../utils/glueGeometry'
@@ -23,6 +24,7 @@ import {
   useDragDisplacementStore,
 } from '../../store/dragDisplacement'
 import { movedIdsForWidget } from '../../store/widgetCollection'
+import { expandMovedWidgetIds } from '../../store/widgetGraph'
 import { contentFitHeight } from '../../utils/widgetContentFloor'
 import {
   expansionOffsetFor,
@@ -39,7 +41,6 @@ import { WidgetClockRing } from './WidgetClockRing'
 import { useWidgetRestStore } from '../../store/useWidgetRestStore'
 import { isWidgetSizingGestureActive } from '../../store/widgetSizingGesture'
 import { widgetHasButtonOverflow } from '../../utils/widgetButtonLayout'
-import { widgetToMarkdown } from '../../utils/widgetMarkdown'
 import { DEFAULT_SIZING, widgetDefinition } from '../../widgets/registry'
 import { FloatingBadges } from './FloatingBadges'
 import { PortRail } from './PortRail'
@@ -110,6 +111,13 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
   // frame (GlueClusterChrome) carries the shared group name above the whole
   // cluster, so a per-card label would only clutter and collide with it.
   const isGluedMember = useWidgetStore((state) => Boolean(state.widgetGlueIndex[widgetId]))
+  // This card's cluster is folded. A folded cluster is ONE object: it wears
+  // one hover state, answers one click (unfold), and its members are inert
+  // single-cell icons — no per-icon lift, resize, ports, or expand.
+  const inFoldedCluster = useWidgetStore((state) => {
+    const glueId = state.widgetGlueIndex[widgetId]
+    return glueId ? state.glues[glueId]?.collapsed === true : false
+  })
 
   // Render inset for a glued member: each welded edge gives up GLUE_HALF_GAP so
   // the seam is carved equally from both cards and the cluster's outer corners
@@ -119,8 +127,12 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
     useShallow((state) => {
       const glueId = state.widgetGlueIndex[widgetId]
       if (!glueId) return GLUE_NO_INSET
-      const members = state.glues[glueId]?.widgetIds ?? []
-      return glueMemberInsets(widgetId, members, state.widgets)
+      const cluster = state.glues[glueId]
+      // Folded, every cell gives up the seam on all four edges instead: the
+      // block reads as one even grid of icons rather than end cells painting
+      // wider than the ones between them.
+      if (cluster?.collapsed === true) return foldedMemberInsets()
+      return glueMemberInsets(widgetId, cluster?.widgetIds ?? [], state.widgets)
     }),
   )
 
@@ -129,7 +141,6 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
   const isRenaming = useWidgetStore((state) => state.renamingWidgetId === widgetId)
   const [titleEditing, setTitleEditing] = useState(false)
   const lastTitleClickRef = useRef(0)
-  const [isAddMenuOpen, setIsAddMenuOpen] = useState(false)
   const dragRef = useRef<PointerDragSession | null>(null)
   const linkDragRef = useRef<LinkDragState | null>(null)
   const activeDragWidgetId = useRef(widgetId)
@@ -147,6 +158,16 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
   const restCtx = { expandedWidgetId, expandedOffset }
   const resting = Boolean(widget && isWidgetResting(widget, restCtx))
   const restExpanded = Boolean(widget && isWidgetRestExpanded(widget, restCtx))
+  // While one card is held open, every other card is BACKGROUND. The open card
+  // is the thing being worked in — a neighbour underneath it lighting up, and
+  // leaning toward the cursor, as the pointer crosses on its way to the open
+  // card reads as if the click would land there. Background cards keep their
+  // click (the accordion still opens the next card), but nothing about them
+  // answers the pointer merely passing over.
+  const backgrounded = expandedWidgetId !== null && expandedWidgetId !== widgetId
+  /** No hover response at all: bloom, lift, magnetic tilt, outline-resize
+   * proximity, and the hovered-widget signal the relation layers read. */
+  const hoverInert = backgrounded || inFoldedCluster
   // An expanded card floats above *everything else* — and "everything" is a
   // moving target, because bring-to-front grows zIndex metadata without bound.
   // So the lift is one past the live top of the board, never a constant a
@@ -212,6 +233,18 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
     )
   }
 
+  // A collapsed cluster is ONE object on the board — a collected row of icons.
+  // So a single click anywhere on it unfolds the whole cluster back to the
+  // positions, sizes and scale states the fold remembered, rather than opening
+  // the one icon that happened to be under the pointer.
+  const unfoldCollapsedCluster = (): boolean => {
+    const store = useWidgetStore.getState()
+    const glueId = store.widgetGlueIndex[widgetId]
+    if (!glueId || store.glues[glueId]?.collapsed !== true) return false
+    store.setClusterCollapsed(glueId, false)
+    return true
+  }
+
   // A plain click on an icon opens the widget, exactly like a click on a
   // resting tile. The scale-state change lands the resting tile centred where
   // the icon sat, and the ephemeral expansion then opens the card out of that
@@ -258,6 +291,7 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
       // The outline was pressed but never dragged, so honour what the press
       // would have meant on the card body itself.
       useWidgetStore.getState().selectWidget(widgetId, false)
+      if (unfoldCollapsedCluster()) return
       if (resting) expandFromRest()
       else if (widget?.iconified) expandFromIcon()
     },
@@ -269,6 +303,22 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
     Boolean(widget?.metadata?.locked),
   )
 
+  // The pointer can already be resting on this card when it becomes background
+  // (another card expands under the keyboard, a cluster folds under the
+  // cursor): no pointerleave ever fires, so the lift and the hover signal would
+  // simply stay lit. Drop both the moment the card stops answering hover.
+  useEffect(() => {
+    if (!hoverInert) return
+    magneticHover.suspend()
+    edgeResize.onEdgeHoverLeave()
+    if (useWidgetStore.getState().hoveredWidgetId === widgetId) {
+      useWidgetStore.getState().setHoveredWidgetId(null)
+    }
+    // magneticHover/edgeResize are stable per-render facades over refs; keying
+    // this on the state change alone is what keeps it a one-shot.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hoverInert, widgetId])
+
   // Trigger title editing when renamed via F2 or external action.
   useEffect(() => {
     if (isRenaming) {
@@ -276,14 +326,6 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
       useWidgetStore.getState().stopRenaming()
     }
   }, [isRenaming])
-
-  // Click outside to close the custom action '+' dropdown
-  useEffect(() => {
-    if (!isAddMenuOpen) return
-    const closeMenu = () => setIsAddMenuOpen(false)
-    window.addEventListener('pointerdown', closeMenu)
-    return () => window.removeEventListener('pointerdown', closeMenu)
-  }, [isAddMenuOpen])
 
   const skinSwitch = useWidgetSkinSwitch(widget ? widget.iconified === true : false)
 
@@ -335,13 +377,11 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
         if (glueDragRef.current) return
         const fresh = useWidgetStore.getState()
         // What actually moved: the selection expanded through every touched
-        // glue cluster (the same expansion moveWidget applied).
-        const movingIds = movedIdsForWidget(dragWidgetId, fresh.selectedIds, fresh.widgets)
-          .flatMap((id) => {
-            const glueId = fresh.widgetGlueIndex[id]
-            return glueId ? fresh.glues[glueId]?.widgetIds ?? [id] : [id]
-          })
-          .filter((id, index, all) => all.indexOf(id) === index && !fresh.widgets[id]?.metadata.locked)
+        // glue cluster and strict family (the same expansion moveWidget applied).
+        const movingIds = expandMovedWidgetIds(
+          movedIdsForWidget(dragWidgetId, fresh.selectedIds, fresh.widgets),
+          fresh,
+        ).filter((id) => !fresh.widgets[id]?.metadata.locked)
         const safeZoom = zoom > 0 ? zoom : 1
         updateDragDisplacement(movingIds, { x: dx / safeZoom, y: dy / safeZoom })
       },
@@ -383,6 +423,11 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
     if (
       !isModifier &&
       widget.metadata.locked !== true &&
+      // A card that shows no outline affordance must not answer one: while it
+      // is background (another card is held open) or folded into a collapsed
+      // cluster, the press falls through to select/drag/open instead of
+      // silently starting an invisible resize.
+      !hoverInert &&
       !linkingState.childLinkSource &&
       !linkingState.dependencyLinkSource &&
       !isInteractiveTarget(e.target)
@@ -423,7 +468,10 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
     } else {
       const state = useWidgetStore.getState()
       activeSelectionAdditive.current = additive
-      glueDragRef.current = e.altKey
+      // No pulling one icon out of a folded collection: while a cluster is
+      // collapsed it is a single object, so ⌥-drag moves it whole like any
+      // other drag rather than unwelding whichever icon was under the pointer.
+      glueDragRef.current = e.altKey && !inFoldedCluster
       if (!additive && !state.selectedIds.has(widgetId)) state.selectWidget(widgetId, false)
       startDrag(e, false)
     }
@@ -448,7 +496,7 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
       return
     }
     const session = dragRef.current
-    if (!session && !widget.metadata.locked) magneticHover.move(e)
+    if (!session && !widget.metadata.locked && !hoverInert) magneticHover.move(e)
     session?.move(e)
     if (session?.moved && glueDragRef.current) {
       // The option-drag continuously answers "what would release do?": weld
@@ -499,7 +547,9 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
       // view state only — accordion, no history, nothing persisted. A click
       // on an icon opens the widget the same way (that one is a real state
       // change, so it carries its own undo step).
-      if (resting && draggedId === widgetId) {
+      if (draggedId === widgetId && unfoldCollapsedCluster()) {
+        // The whole collection opened; no per-widget expansion on top of it.
+      } else if (resting && draggedId === widgetId) {
         expandFromRest()
       } else if (widget.iconified && draggedId === widgetId) {
         expandFromIcon()
@@ -513,12 +563,18 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
       // budget left overlapped.
       const ghostOffsets = endDragDisplacement()
       if (Object.keys(ghostOffsets).length > 0) state.applyGhostDisplacement(ghostOffsets)
-      // Option-drag resolution: the weld the preview promised, or the pull-off
-      // the distance implied. Both ride the drag's history step.
+      // Option-drag resolution: the weld the preview promised, or — for a
+      // member released ANYWHERE off a seam — the pull-off. A release between
+      // "welds here" and "a full cell clear of everyone" used to resolve to
+      // nothing, leaving a card that touches no one still on the cluster's
+      // books (framed with the group, moving with it, parked off-grid). If the
+      // drop welds nothing, the member comes off; the seam-forgiveness in
+      // `findGlueSnap` is what protects a small jiggle from reading as a pull.
+      // Both outcomes ride the drag's history step.
       if (glueDragRef.current) {
         if (state.glueIntent?.draggedId === draggedId) {
           state.commitGlue()
-        } else if (state.unglueIntentWidgetId === draggedId) {
+        } else if (state.widgetGlueIndex[draggedId]) {
           state.unglueWidget(draggedId, { skipHistory: true })
         }
       }
@@ -660,64 +716,37 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
     setTitleEditing(false)
   }
 
-  const copyAsMarkdown = () => {
-    navigator.clipboard.writeText(widgetToMarkdown(widget))
-  }
-
+  // The title row's button set is STATIC — no customize menu, no per-widget
+  // visibility flags. Pin, Favorite, and Delete on every card; the Completed
+  // checkbox only where completion means something (checklists).
   const isButtonActive = (btnId: string) => {
     switch (btnId) {
-      case 'completed':
-        return widget.metadata.showDoneCheckbox ?? (widget.type === 'checklist')
+      case 'pin':
       case 'favorite':
-        return widget.metadata.showFavoriteButton !== false || !!widget.metadata.favorite
-      case 'duplicate':
-        return !!widget.metadata.showDuplicateButton
-      case 'markdown':
-        return !!widget.metadata.showMarkdownButton
       case 'delete':
-        return widget.metadata.showDeleteButton !== false
+        return true
+      case 'completed':
+        return widget.type === 'checklist'
       default:
         return false
     }
   }
 
-  const toggleButtonVisibility = (btnId: string) => {
-    switch (btnId) {
-      case 'completed':
-        useWidgetStore.getState().updateWidgetMetadata(widgetId, {
-          showDoneCheckbox: !isButtonActive('completed')
-        })
-        break
-      case 'favorite':
-        useWidgetStore.getState().updateWidgetMetadata(widgetId, {
-          showFavoriteButton: !isButtonActive('favorite')
-        })
-        break
-      case 'duplicate':
-        useWidgetStore.getState().updateWidgetMetadata(widgetId, {
-          showDuplicateButton: !isButtonActive('duplicate')
-        })
-        break
-      case 'markdown':
-        useWidgetStore.getState().updateWidgetMetadata(widgetId, {
-          showMarkdownButton: !isButtonActive('markdown')
-        })
-        break
-      case 'delete':
-        useWidgetStore.getState().updateWidgetMetadata(widgetId, {
-          showDeleteButton: !isButtonActive('delete')
-        })
-        break
-    }
-  }
-
   // Pinning hands the card a permanent open state, so it no longer needs the
   // single ephemeral expansion slot — release it first, or the accordion keeps
-  // a member that can never collapse. The control lives on its own as a
-  // floating pill above the expanded card rather than in the customize row.
+  // a member that can never collapse. The control is the title row's Pin
+  // button, a default like Favorite and Delete.
   // (Position locking is a separate thing, in the right-click menu.)
   const togglePin = () => {
     if (!widget.metadata.pinned && expandedWidgetId === widgetId) {
+      // What the pin is interrupting, captured before the slot is released:
+      // a card opened out of an icon must come back to that exact icon when it
+      // is unpinned, not drop onto a resting tile it never showed. Only the
+      // expansion still knows — by now the card itself is an ordinary full card.
+      const origin = useWidgetRestStore.getState().expandedFrom
+      const from = origin?.kind === 'icon'
+        ? { kind: 'icon' as const, width: origin.size.width, height: origin.size.height }
+        : { kind: 'rest' as const }
       // Pin means "hold this card open", so the slot is released WITHOUT the
       // fold-back to the expansion's origin — restoring it would iconify the
       // very card being pinned. The view offset the expansion was drawn at is
@@ -726,65 +755,40 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
       // the user sees it rather than jumping diagonally back to the anchor.
       const absorbOffset = useWidgetRestStore.getState().expandedOffset
       useWidgetRestStore.getState().collapseWidget({ restoreOrigin: false })
-      useWidgetStore.getState().toggleWidgetPinned(widgetId, { absorbOffset })
+      useWidgetStore.getState().toggleWidgetPinned(widgetId, { absorbOffset, from })
       return
     }
-    useWidgetStore.getState().toggleWidgetPinned(widgetId)
+    // Pinning without the expansion slot (a card that never rests) still
+    // records where it came from; unpinning a card that was already open just
+    // leaves it open, which is what `rest` means for a non-resting type.
+    useWidgetStore.getState().toggleWidgetPinned(widgetId, { from: { kind: 'rest' } })
   }
 
   const handleButtonClick = (btnId: string) => {
-    if (isAddMenuOpen) {
-      toggleButtonVisibility(btnId)
-    } else {
-      if (btnId === 'completed') {
-        const nextVal = !widget.metadata.completed
-        useWidgetStore.getState().updateWidgetMetadata(widgetId, { completed: nextVal })
-      } else if (btnId === 'favorite') {
-        useWidgetStore.getState().toggleWidgetFavorite(widgetId)
-      } else if (btnId === 'duplicate') {
-        useWidgetStore.getState().duplicateWidgets([widgetId])
-      } else if (btnId === 'markdown') {
-        copyAsMarkdown()
-      } else if (btnId === 'delete') {
-        requestWidgetDeletion(widgetId)
-      }
+    if (btnId === 'pin') {
+      togglePin()
+    } else if (btnId === 'completed') {
+      const nextVal = !widget.metadata.completed
+      useWidgetStore.getState().updateWidgetMetadata(widgetId, { completed: nextVal })
+    } else if (btnId === 'favorite') {
+      useWidgetStore.getState().toggleWidgetFavorite(widgetId)
+    } else if (btnId === 'delete') {
+      requestWidgetDeletion(widgetId)
     }
   }
 
-  const getButtonStyle = (btnId: string, isMenuOpen: boolean): CSSProperties => {
-    const active = isButtonActive(btnId)
-    const accentColor = cardAccent
-    
-    if (isMenuOpen) {
-      if (active) {
-        return { color: accentColor }
-      }
-    } else {
-      const isToggled =
-        (btnId === 'completed' && widget.metadata.completed) ||
-        (btnId === 'favorite' && widget.metadata.favorite)
-      if (isToggled) {
-        return { color: accentColor }
-      }
-    }
-    return {}
-  }
+  const isButtonToggled = (btnId: string) =>
+    (btnId === 'pin' && widget.metadata.pinned) ||
+    (btnId === 'completed' && widget.metadata.completed) ||
+    (btnId === 'favorite' && widget.metadata.favorite)
 
-  const getButtonClass = (btnId: string, isMenuOpen: boolean) => {
-    const active = isButtonActive(btnId)
-    let base = "flex h-[34px] w-[34px] items-center justify-center shrink-0 rounded-full transition-all duration-300 ease-out filter drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] outline-none focus:outline-none focus-visible:outline-none focus-visible:ring-0"
-    
-    if (isMenuOpen) {
-      if (!active) {
-        base += " text-neutral-600/40 hover:text-neutral-400/60"
-      }
-    } else {
-      const isToggled =
-        (btnId === 'completed' && widget.metadata.completed) ||
-        (btnId === 'favorite' && widget.metadata.favorite)
-      if (!isToggled) {
-        base += " text-neutral-400 hover:text-neutral-200"
-      }
+  const getButtonStyle = (btnId: string): CSSProperties =>
+    isButtonToggled(btnId) ? { color: cardAccent } : {}
+
+  const getButtonClass = (btnId: string) => {
+    let base = "flex h-[34px] w-[34px] items-center justify-center shrink-0 rounded-full filter drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] outline-none focus:outline-none focus-visible:outline-none focus-visible:ring-0"
+    if (!isButtonToggled(btnId)) {
+      base += " text-neutral-400 hover:text-neutral-200"
     }
     return base
   }
@@ -797,8 +801,13 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
   // name capsule wider than the icon cell would defeat the shrink entirely.
   const capsuleHidden = (iconified || restIcon) && !titleEditing
   // A card welded below a clustermate hides its floating title too — it would
-  // otherwise land on the neighbour above. Renaming (F2) still forces it back.
-  const titleChromeHidden = capsuleHidden || (isGluedMember && !titleEditing)
+  // otherwise land on the neighbour above. Renaming (F2) still forces it back,
+  // and so do the two states whose only control lives in that row: the
+  // ephemerally expanded member (floating above the cluster, so nothing is
+  // under the row) and a pinned member (the row is the only unpin).
+  const titleChromeHidden =
+    capsuleHidden ||
+    (isGluedMember && !titleEditing && !restExpanded && widget.metadata.pinned !== true)
   const def = widgetDefinition(widget.type)
   const treeRevealMs = treeRevealDelay('widget', widgetId)
   const Icon = def.icon
@@ -916,7 +925,9 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
         data-resting={resting || undefined}
         data-rest-face={restFaceKind ?? undefined}
         data-rest-expanded={restExpanded || undefined}
-        data-resize-edge={edgeResize.resizeEdgeAttribute}
+        data-hover-inert={hoverInert || undefined}
+        data-cluster-collapsed={inFoldedCluster || undefined}
+        data-resize-edge={hoverInert ? undefined : edgeResize.resizeEdgeAttribute}
         tabIndex={isSelected ? 0 : -1}
         aria-label={`${widget.title}, ${def.label} widget`}
         title={iconified || restIcon ? widget.title : undefined}
@@ -929,6 +940,7 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
           if (!iconified) return
           e.preventDefault()
           e.stopPropagation()
+          if (unfoldCollapsedCluster()) return
           expandFromIcon()
         }}
         // Capture phase: this must run for presses on the card's own controls
@@ -938,13 +950,13 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
         onFocus={() => useWidgetStore.getState().selectWidget(widgetId, false)}
         onKeyDown={onCardKeyDown}
         onPointerEnter={(event) => {
-          if (widget.metadata.locked) return
+          if (widget.metadata.locked || hoverInert) return
           useWidgetStore.getState().setHoveredWidgetId(widgetId)
           magneticHover.enter(event)
         }}
         onPointerLeave={() => {
           edgeResize.onEdgeHoverLeave()
-          if (widget.metadata.locked) return
+          if (widget.metadata.locked || hoverInert) return
           magneticHover.leave()
           if (useWidgetStore.getState().hoveredWidgetId === widgetId) {
             useWidgetStore.getState().setHoveredWidgetId(null)
@@ -952,7 +964,7 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
         }}
         onPointerDown={onPointerDown}
         onPointerMove={(event) => {
-          edgeResize.onEdgeHoverMove(event)
+          if (!hoverInert) edgeResize.onEdgeHoverMove(event)
           onPointerMove(event)
         }}
         onPointerUp={onPointerUp}
@@ -966,7 +978,11 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
         } ${isFlashing ? 'gp-flash' : ''}`}
         style={{
           borderRadius: widgetRadius,
-          cursor: edgeResize.resizeCursor ?? (dragRef.current?.moved ? 'grabbing' : 'grab'),
+          // A folded collection is a button: one click unfolds it, so it says
+          // "press me" rather than "grab me" (and never "resize me").
+          cursor: inFoldedCluster
+            ? 'pointer'
+            : edgeResize.resizeCursor ?? (dragRef.current?.moved ? 'grabbing' : 'grab'),
           '--gp-widget-accent': cardAccent,
           '--gp-widget-radius': `${widgetRadius}px`,
           '--gp-tree-reveal-delay': `${treeRevealMs ?? 0}ms`,
@@ -1008,9 +1024,10 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
         </div>
       )}
 
-      {/* Dynamic wrapping logic for top row vs right column. A resting tile
-          keeps the title capsule (its identity floats above the face) but
-          mounts none of the action buttons. */}
+      {/* The static title-row button set. A resting tile keeps the title
+          capsule (its identity floats above the face) but mounts none of the
+          action buttons. Buttons sit in one row after the title — no
+          customize menu, no wrapping into columns, no entrance animation. */}
       {(() => {
         // Estimate title width dynamically based on typical character widths (7px for text-xs font-bold)
         // Icon takes 40px cell. Input takes w-24 (96px). Truncation limits it to 200px.
@@ -1018,67 +1035,13 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
         const titleAreaWidthResting = 40 + 4 + estimatedTitleWidth + 8
         const titleAreaCells = Math.ceil(titleAreaWidthResting / 40)
         const titleAreaWidth = titleAreaCells * 40
-        const maxHorizontalSpace = widget.size.width - titleAreaWidth
-        const maxHorizontalCount = Math.max(0, Math.floor(maxHorizontalSpace / 40))
-        
-        const allButtons = [
+
+        const visibleButtons = [
+          { id: 'pin', icon: Pin, label: 'Pin' },
           { id: 'completed', icon: Check, label: 'Completed' },
           { id: 'favorite', icon: Star, label: 'Favorite' },
-          { id: 'duplicate', icon: Copy, label: 'Duplicate' },
-          { id: 'markdown', icon: FileText, label: 'Markdown' },
           { id: 'delete', icon: Trash2, label: 'Delete' },
-        ]
-
-        // Define the sequence of elements to render based on the menu state
-        type SequenceItem = { id: string, type: 'button' | 'plus' }
-        let renderSequence: SequenceItem[] = []
-
-        if (isAddMenuOpen) {
-          // When open, all buttons are visible in order.
-          renderSequence = allButtons.map(b => ({ id: b.id, type: 'button' }))
-          renderSequence.push({ id: 'plus', type: 'plus' })
-        } else {
-          // When closed, only active buttons + Plus are visible.
-          renderSequence = allButtons.filter(b => isButtonActive(b.id)).map(b => ({ id: b.id, type: 'button' }))
-          renderSequence.push({ id: 'plus', type: 'plus' })
-        }
-
-        // Overflow buttons run down a column past the card's right edge. On a
-        // short card that column used to trail straight down into empty canvas
-        // below the card; instead we wrap it into a second column once it would
-        // pass the card's bottom, keeping every button beside the card (and so
-        // within the card's own hover reach). Bound the column length by how
-        // many whole 40px cells tall the card is.
-        const rowsPerColumn = Math.max(1, Math.floor(widget.size.height / 40))
-
-        // Helper to get position of any element by its index in the flow sequence
-        const getPosForIndex = (index: number) => {
-          if (index < maxHorizontalCount) {
-            // Fits in the title row, next to the title — unchanged.
-            return { x: titleAreaWidth + index * 40, y: 0 }
-          }
-          // Overflow: fill a column down the right edge, then wrap rightward.
-          // Each button sits centered on a clean 40px grid cell — no per-index
-          // corner-hugging nudge, so the cluster reads as an even grid.
-          const overflowIndex = index - maxHorizontalCount
-          const column = Math.floor(overflowIndex / rowsPerColumn)
-          const rowInColumn = overflowIndex % rowsPerColumn
-          return { x: widget.size.width + 6 + column * 40, y: (rowInColumn + 1) * 40 }
-        }
-
-        // The position where the Plus button sits when the menu is closed
-        const closedPlusIndex = allButtons.filter(b => isButtonActive(b.id)).length
-        const closedPlusPos = getPosForIndex(closedPlusIndex)
-
-        // Unified layout resolving engine
-        const resolvePosition = (id: string, type: 'button' | 'plus') => {
-          const indexInRender = renderSequence.findIndex(item => item.id === id && item.type === type)
-          if (indexInRender !== -1) {
-            return getPosForIndex(indexInRender) // It is visible and assigned a slot in the grid sequence
-          } else {
-            return closedPlusPos // It is hidden! It perfectly hides inside the closed Plus button's position!
-          }
-        }
+        ].filter((btn) => isButtonActive(btn.id))
 
         return (
           <>
@@ -1197,65 +1160,43 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
                 )}
               </div>
 
-              {/* Engine-powered absolutely positioned customizable buttons.
-                  None mount while resting — a resting tile is non-interactive
+              {/* The static action buttons, one row after the title. None
+                  mount while resting — a resting tile is non-interactive
                   beyond click-to-expand, drag, and ports. */}
-              {!resting && allButtons.map((btn) => {
+              {!resting && visibleButtons.map((btn, index) => {
                 const IconComponent = btn.icon
-                const isActive = isButtonActive(btn.id)
-                const isVisible = isAddMenuOpen || isActive
-                const pos = resolvePosition(btn.id, 'button')
-                
                 return (
-                  <div 
+                  <div
                     key={btn.id}
-                    className={`gp-card-action absolute top-0 w-10 h-10 flex items-center justify-center transition-all duration-300 ease-out z-30 ${isVisible ? 'pointer-events-auto' : 'pointer-events-none'}`}
-                    style={{ transform: `translate(${pos.x}px, ${pos.y}px)` }}
+                    className="gp-card-action absolute top-0 w-10 h-10 flex items-center justify-center z-30 pointer-events-auto"
+                    style={{ transform: `translate(${titleAreaWidth + index * 40}px, 0px)` }}
                   >
                     <button
                       type="button"
-                      title={isAddMenuOpen ? `Toggle ${btn.label} Button Persistence` : btn.label}
+                      title={btn.label}
                       aria-label={btn.label}
                       onPointerDown={(e) => e.stopPropagation()}
                       onClick={(e) => {
                         e.stopPropagation()
                         handleButtonClick(btn.id)
                       }}
-                      className={`${getButtonClass(btn.id, isAddMenuOpen)} transition-all duration-300 ease-out ${
-                        isVisible ? 'scale-100 opacity-100' : 'scale-0 opacity-0'
-                      }`}
-                      style={getButtonStyle(btn.id, isAddMenuOpen)}
+                      className={getButtonClass(btn.id)}
+                      style={getButtonStyle(btn.id)}
                     >
-                      <IconComponent size={15} fill={btn.id === 'favorite' && widget.metadata.favorite && !isAddMenuOpen ? 'currentColor' : 'none'} />
+                      <IconComponent
+                        size={15}
+                        className={btn.id === 'pin' ? 'rotate-45' : undefined}
+                        fill={
+                          (btn.id === 'favorite' && widget.metadata.favorite) ||
+                          (btn.id === 'pin' && widget.metadata.pinned)
+                            ? 'currentColor'
+                            : 'none'
+                        }
+                      />
                     </button>
                   </div>
                 )
               })}
-
-              {/* Plus '+' Toggle Button */}
-              {!resting && (
-              <div
-                className="gp-card-action absolute top-0 w-10 h-10 flex items-center justify-center transition-all duration-300 ease-out z-40 pointer-events-auto"
-                style={{ transform: `translate(${resolvePosition('plus', 'plus').x}px, ${resolvePosition('plus', 'plus').y}px)` }}
-              >
-                <button
-                  type="button"
-                  aria-label="Customize header buttons"
-                  title="Customize header buttons"
-                  onPointerDown={(e) => e.stopPropagation()}
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    setIsAddMenuOpen(!isAddMenuOpen)
-                  }}
-                  className={`flex h-[34px] w-[34px] shrink-0 items-center justify-center transition-colors filter drop-shadow-[0_2px_5px_rgba(0,0,0,0.9)] outline-none focus:outline-none focus-visible:outline-none focus-visible:ring-0 ${
-                    isAddMenuOpen ? '' : 'text-neutral-500 hover:text-neutral-300'
-                  }`}
-                  style={isAddMenuOpen ? { color: cardAccent } : undefined}
-                >
-                  <Plus size={15} className={`transition-transform duration-200 ${isAddMenuOpen ? 'rotate-45' : ''}`} aria-hidden />
-                </button>
-              </div>
-              )}
             </div>
           </>
         )
@@ -1278,43 +1219,9 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
             // copy — the card may have changed while the drum was open.
             const current = useWidgetStore.getState().widgets[widgetId]
             if (!current) return
-            useWidgetStore.getState().updateWidgetData(widgetId, dataWearingSkin(current, value))
+            useWidgetStore.getState().updateWidgetData(widgetId, dataWearingSkin(current, value, def))
           }}
         />
-      )}
-
-      {/* Pin control — a default floating pill above the expanded card. It is
-          shown exactly when pinning is meaningful: while the card is the
-          ephemerally expanded member (so you can hold it open), or while it is
-          already pinned (so you can let it rest again). A resting tile, an
-          icon, and a widget that never rests all skip it — there is nothing to
-          hold open. It rides the card's own transform. */}
-      {(restExpanded || widget.metadata.pinned) && !iconified && (
-        <div
-          className="gp-widget-pin-float pointer-events-auto absolute left-1/2 z-40 -translate-x-1/2"
-          style={{ bottom: 'calc(100% + 44px)' }}
-        >
-          <button
-            type="button"
-            title={widget.metadata.pinned ? 'Unpin — let it rest again' : 'Pin open'}
-            aria-label={widget.metadata.pinned ? 'Unpin widget' : 'Pin widget open'}
-            aria-pressed={!!widget.metadata.pinned}
-            onPointerDown={(e) => e.stopPropagation()}
-            onClick={(e) => {
-              e.stopPropagation()
-              togglePin()
-            }}
-            className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-semibold transition-all duration-200 active:scale-95 filter drop-shadow-[0_2px_6px_rgba(0,0,0,0.6)] outline-none focus:outline-none focus-visible:outline-none focus-visible:ring-0"
-            style={
-              widget.metadata.pinned
-                ? { color: '#0a0a0a', background: cardAccent, boxShadow: `0 0 0 1px ${cardAccent}` }
-                : { color: cardAccent, background: `${cardAccent}1c`, boxShadow: `inset 0 0 0 1px ${cardAccent}40` }
-            }
-          >
-            <Pin size={13} className="rotate-45" fill={widget.metadata.pinned ? 'currentColor' : 'none'} aria-hidden />
-            {widget.metadata.pinned ? 'Pinned' : 'Pin'}
-          </button>
-        </div>
       )}
 
       {/* Icon state keeps one unmistakable identity mark and no partial UI —
@@ -1445,7 +1352,10 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
       )}
 
       <FloatingBadges widgetId={widgetId} />
-      <PortRail widgetId={widgetId} />
+      {/* A folded member has no rail: wiring a single-cell icon inside a
+          collection that answers one click is not a thing you can aim at.
+          Existing wires still land on it — they follow the box, not the rail. */}
+      {!inFoldedCluster && <PortRail widgetId={widgetId} />}
       </article>
     </div>
   )

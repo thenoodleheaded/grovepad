@@ -27,7 +27,19 @@ interface AccentedCard extends SkinnedCard {
   metadata: { accent?: string }
 }
 
-type SkinnedDefinition = { skins?: readonly WidgetSkinOption[] }
+type SkinnedDefinition = {
+  skins?: readonly WidgetSkinOption[]
+  skinField?: 'mode' | 'skin'
+}
+
+export type WidgetSkinState = Record<string, unknown>
+export type WidgetSkinStates = Record<string, WidgetSkinState>
+
+interface DataWithSkinState {
+  mode?: string
+  skin?: string
+  skinStates?: WidgetSkinStates
+}
 
 /** Atlas entries as skins, in catalogue order. Built once — the list is fixed. */
 const TRACKER_SKINS: readonly WidgetSkinOption[] = ATLAS_TYPES.map((type) => ({
@@ -59,7 +71,7 @@ export function currentSkin(
   if (skins.length === 0) return null
   const value = isTrackerWidget(widget)
     ? atlasModeFor(widget.data as AtlasWidgetData)
-    : (widget.data as { mode?: string }).mode ?? ''
+    : (widget.data as DataWithSkinState)[def.skinField ?? 'mode'] ?? ''
   return skins.find((skin) => skin.value === value) ?? skins[0]!
 }
 
@@ -68,11 +80,49 @@ export function currentSkin(
  * its whole preset (keeping a snapshot of the outgoing one); everything else
  * only changes the `mode` field it already persists.
  */
-export function dataWearingSkin(widget: SkinnedCard, value: string): ModuleData {
+export function dataWearingSkin(
+  widget: SkinnedCard,
+  value: string,
+  def: SkinnedDefinition = {},
+): ModuleData {
   if (isTrackerWidget(widget)) {
     return switchAtlasMode(widget.data as AtlasWidgetData, value as never) as ModuleData
   }
-  return { ...(widget.data as object), mode: value } as ModuleData
+  const field = def.skinField ?? 'mode'
+  return { ...(widget.data as object), [field]: value } as unknown as ModuleData
+}
+
+/** Optional data owned by one skin, isolated from the widget's shared fields. */
+export function skinStateFor(data: unknown, value: string): WidgetSkinState {
+  const states = (data as DataWithSkinState | null)?.skinStates
+  const state = states?.[value]
+  return state && typeof state === 'object' && !Array.isArray(state) ? state : {}
+}
+
+/**
+ * Update one skin's optional state without disturbing another skin or the
+ * widget's canonical fields. This is the migration-safe home for advanced
+ * skin data such as a selected grouping, review history, or extra columns.
+ */
+export function dataWithSkinState(
+  data: ModuleData,
+  value: string,
+  state: WidgetSkinState,
+): ModuleData {
+  const current = data as ModuleData & DataWithSkinState
+  const nextStates: WidgetSkinStates = { ...(current.skinStates ?? {}) }
+  if (Object.keys(state).length === 0) delete nextStates[value]
+  else nextStates[value] = { ...state }
+
+  if (Object.keys(nextStates).length === 0) {
+    const { skinStates: _removed, ...withoutSkinStates } = current
+    return withoutSkinStates as unknown as ModuleData
+  }
+
+  return {
+    ...(current as object),
+    skinStates: nextStates,
+  } as unknown as ModuleData
 }
 
 /**

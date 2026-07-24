@@ -66,6 +66,7 @@ describe('beta UI interaction contracts', () => {
   it('keeps the top-right actions focused and moves navigation beside the account', () => {
     expect(toolbar).not.toContain('Import document')
     expect(toolbar).not.toContain('Keyboard shortcuts')
+    expect(toolbar).not.toContain('Quick capture')
     expect(toolbar).not.toContain('Untangle layout')
     expect(toolbar).not.toContain('Auto-fit sizes')
     expect(toolbar).not.toContain('Light theme')

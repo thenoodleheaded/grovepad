@@ -12,6 +12,7 @@ import { DATA_TRACKING_WIDGET_DEFINITIONS } from './registry/dataTrackingWidgets
 import { MEDIA_INPUT_WIDGET_DEFINITIONS } from './registry/mediaInputWidgets'
 import { PROFESSIONAL_WIDGET_DEFINITIONS } from './registry/professionalWidgets'
 import { REVIEWED_WIDGET_SIZING } from './sizingProfiles'
+import { installCataloguedSkins } from './skinCatalog'
 
 // ---------------------------------------------------------------------------
 // Widget registry — the single database describing every widget type.
@@ -127,6 +128,10 @@ for (const type of Object.keys(WIDGET_REGISTRY) as ModuleType[]) {
     delete WIDGET_REGISTRY[type].pack
   }
 }
+
+// Product-reviewed skins are generated from the readable catalogue document.
+// Install them before any UI derives stable definition order or picker data.
+installCataloguedSkins(WIDGET_REGISTRY)
 
 // Apply the calibrated 35-widget content-safety profiles after generated
 // families and local declarations meet. Existing per-type values remain the

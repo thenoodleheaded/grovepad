@@ -219,59 +219,11 @@ html[data-has-coarse-pointer='true'] .gp-widget-move-handle {
   box-shadow: 0 0 0 6px color-mix(in oklab, var(--gp-widget-accent) 22%, transparent);
 }
 
-/* -------------------------------------------------------------------------
- * Glue welds — the gradient seams between glued widgets.
- *
- * Each weld fills the 0.3-cell gap between two facing cards with a smooth
- * blend of their accent colours (bar for side-by-side, patch for a diagonal
- * elbow). Deliberately quiet: low opacity, no border, no shadow — the cards
- * stay the subject; the weld only says "these belong together".
- * ------------------------------------------------------------------------- */
-.gp-glue-seam {
-  /* A bridge of the cards' own glass with the pair's accents glowing softly
-     through it — connective tissue in the same language as the widget glass
-     and the luminous edge strokes, never an opaque colour bar. The component
-     sets the pair (--gp-weld-a/-b) and the axis (--gp-weld-angle). */
-  background:
-    linear-gradient(
-      var(--gp-weld-angle, to right),
-      color-mix(in oklab, var(--gp-weld-a, #94a3b8), transparent var(--gp-weld-accent-alpha)),
-      color-mix(in oklab, var(--gp-weld-b, #94a3b8), transparent var(--gp-weld-accent-alpha))
-    ),
-    var(--gp-weld-glass);
-  border-radius: 4px;
-  pointer-events: none;
-  transition: opacity var(--gp-duration-snap) var(--gp-ease-snap);
-}
-
-/* The weld an option-drag is about to commit: previewed at the exact snap
- * position with a soft breathing pulse — widgets visibly about to merge. */
-.gp-glue-seam[data-glue-preview] {
-  animation: gp-glue-preview-pulse 1.1s var(--gp-ease-standard) infinite alternate;
-}
-
-@keyframes gp-glue-preview-pulse {
-  from { opacity: 0.55; }
-  to { opacity: 1; }
-}
-
-/* Welds to a member being pulled free let go visibly before the release. */
-.gp-glue-seam[data-glue-fading] {
-  opacity: 0.18;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .gp-glue-seam[data-glue-preview] {
-    animation: none;
-    opacity: 0.9;
-  }
-}
-
 /* ── Group frame ────────────────────────────────────────────────────────────
  * A glued cluster's outer chrome: two subtle boundary lines (top and bottom,
  * full width) and a title + button row floating above the top line. Quiet by
- * default; the cards stay the subject. The welds between members are painted
- * by GlueSeamLayer — this is only the enclosing frame.
+ * default; the cards stay the subject. Members are joined by their own local
+ * aura pooling on the canvas behind them, not by any painted seam.
  * ------------------------------------------------------------------------- */
 .gp-group-line {
   height: 2px;
@@ -280,13 +232,11 @@ html[data-has-coarse-pointer='true'] .gp-widget-move-handle {
   opacity: 0.55;
 }
 
+/* The cluster's title row wears exactly a widget's title anatomy: a tinted
+   icon square, the bold name beside it, action buttons in cells to the right.
+   No pill, no plate — the frame's boundary lines are the cluster's only
+   enclosure, so a floating capsule here would read as a second container. */
 .gp-group-bar {
-  padding: 2px 4px 2px 8px;
-  border-radius: 999px;
-  border: 1px solid var(--gp-hairline);
-  background: color-mix(in oklab, var(--gp-surface-panel), transparent 8%);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
   color: var(--gp-widget-muted-text);
   opacity: 0.72;
   transition: opacity var(--gp-duration-snap) var(--gp-ease-snap);
@@ -297,12 +247,30 @@ html[data-has-coarse-pointer='true'] .gp-widget-move-handle {
   opacity: 1;
 }
 
+/* Same 28px tinted square a widget's title icon uses, in the frame's own hue
+   so the icon, the boundary lines, and the group read as one system. */
+.gp-group-icon {
+  display: flex;
+  height: 28px;
+  width: 28px;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  color: var(--gp-relation-outline);
+  background: color-mix(in oklab, var(--gp-relation-outline), transparent 89%);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--gp-relation-outline), transparent 81%);
+}
+
+/* Matches the widget title's `text-xs font-bold` so a cluster and a card name
+   sit on the same typographic footing. */
 .gp-group-name {
-  font-size: 11px;
-  font-weight: 600;
+  font-size: 12px;
+  font-weight: 700;
   letter-spacing: 0.01em;
-  color: color-mix(in oklab, currentColor, white 22%);
-  padding: 2px 4px;
+  color: color-mix(in oklab, currentColor, white 32%);
+  padding: 2px 0;
+  cursor: text;
 }
 
 .gp-group-name::placeholder {
@@ -324,6 +292,22 @@ html[data-has-coarse-pointer='true'] .gp-widget-move-handle {
 .gp-group-btn:hover {
   background: var(--gp-hairline);
   color: color-mix(in oklab, currentColor, white 40%);
+}
+
+/* ── Folded cluster ─────────────────────────────────────────────────────────
+ * Collapsed, a cluster is ONE object: a block of single-cell icons that
+ * unfolds on a click anywhere in it. So its members go completely static —
+ * no per-icon lift, no selection scale, no resize affordance, nothing that
+ * says "this icon is a thing you can act on by itself". The whole collection
+ * carries one cursor, and the group frame above it carries the controls.
+ * ------------------------------------------------------------------------- */
+[data-widget-id].gp-card-motion[data-cluster-collapsed='true'] {
+  scale: 1 !important;
+  translate: 0 0 !important;
+}
+
+.gp-widget-card[data-cluster-collapsed='true'] .gp-resize-edge {
+  display: none;
 }
 
 /* Text editing inside a card belongs to that card's hue: caret, focus ring,

@@ -7,6 +7,7 @@ import type {
   GhostTreeConfig,
   ModuleData,
   ModuleType,
+  PinOrigin,
   Relation,
   RelationType,
   SearchResult,
@@ -91,8 +92,16 @@ export interface WidgetStoreState {
   untangleWidgets: (ids: string[]) => void
   /** Fit widgets to content and remove overlaps. */
   autoScaleCanvas: () => void
-  /** `snap: false` for live drag frames (free-form); the release call snaps. */
-  resizeWidget: (id: string, newSize: Size, snap?: boolean) => void
+  /** `snap: false` for live drag frames (free-form); the release call snaps.
+   *  A snapped (committed) resize re-runs the overlap check; live frames never
+   *  do. `settle: false` is for callers that immediately move the box again and
+   *  run the check once themselves. */
+  resizeWidget: (
+    id: string,
+    newSize: Size,
+    snap?: boolean,
+    options?: { settle?: boolean },
+  ) => void
   /** Resize with the sides the gesture is not moving pinned in place, so a
    *  left/top edge drag walks the origin instead of growing from the centre. */
   resizeWidgetFromEdge: (id: string, newSize: Size, edge: ResizeEdge, snap?: boolean) => void
@@ -121,11 +130,21 @@ export interface WidgetStoreState {
   /** `absorbOffset` folds an expanded card's view offset into the stored
    *  position in the same step as the pin, so pinning holds the card exactly
    *  where it is on screen instead of snapping back to the un-offset anchor. */
-  toggleWidgetPinned: (widgetId: string, options?: { absorbOffset?: Vector2D }) => void
+  /** `from` records the state the pin interrupts, so unpinning can put it back
+   * (a card opened out of an icon returns to that icon, not to a resting
+   * tile). Only the caller knows it: by the time the store sees the widget it
+   * is already a full card. */
+  toggleWidgetPinned: (
+    widgetId: string,
+    options?: { absorbOffset?: Vector2D; from?: PinOrigin },
+  ) => void
   toggleWidgetFavorite: (widgetId: string) => void
   bringWidgetToFront: (widgetId: string) => void
   setWidgetHydration: (widgetId: string, isHydrating: boolean) => void
   updateWidgetMetadata: (widgetId: string, metadata: Partial<WidgetMetadata>) => void
+  /** One metadata patch across many widgets in a single history step — the
+   *  group frame's bulk actions (complete all, favorite all). */
+  updateWidgetsMetadata: (ids: readonly string[], metadata: Partial<WidgetMetadata>) => void
   nudgeSelection: (dx: number, dy: number) => void
 
   canUndo: boolean
@@ -205,6 +224,9 @@ export interface WidgetStoreState {
   addWidgetView: 'widgets' | 'packs'
   openAddWidget: (worldPos: Vector2D, view?: 'widgets' | 'packs') => void
   closeAddWidget: () => void
+
+  recipesOpen: boolean
+  setRecipesOpen: (open: boolean) => void
 
   shortcutsOpen: boolean
   setShortcutsOpen: (open: boolean) => void

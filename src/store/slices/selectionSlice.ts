@@ -1,7 +1,13 @@
-import type { CanvasMeta, Relation, Widget } from '../../types/spatial'
+import type { CanvasMeta, Relation, Widget, WidgetGlue, WidgetMetadata } from '../../types/spatial'
 import { GRID_SIZE, snapToGrid } from '../../types/spatial'
+import { clampIconEdge } from '../../utils/widgetScale'
 import { getOpaqueWidgetType } from '../../utils/persistedBoardSchema'
-import { reconcileGlueClusters } from '../../utils/glueGeometry'
+import {
+  closeClusterGaps,
+  reconcileGlueClusters,
+  refoldCollapsedCluster,
+  unfoldReleasedFoldedMembers,
+} from '../../utils/glueGeometry'
 import { useToastStore } from '../useToastStore'
 import { buildGlueIndex, computeBlockedWidgetIds } from '../widgetGraph'
 import { settleWidgetsByCanvas } from '../widgetSettling'
@@ -101,17 +107,40 @@ export function createSelectionSlice({ set, get, pushHistory, markSpawned }: Wid
         delete connections[connection.id]
       }
 
-      // Drop deleted members and, since deleting the card that joined two ends
-      // of a cluster leaves the survivors no longer touching, re-derive
-      // clusters from what still welds.
-      const glues = reconcileGlueClusters(widgets, state.glues)
+      // A cluster that lost a member closes ranks instead of splitting:
+      // survivors of a deleted middle card slide back together until they
+      // touch (a collapsed group re-stacks its block), so the group stays ONE
+      // group and only then is membership re-derived from what still welds.
+      let repacked = widgets
+      let glueRecords = state.glues
+      for (const glue of Object.values(state.glues)) {
+        const survivors = glue.widgetIds.filter((id) => repacked[id])
+        if (survivors.length === glue.widgetIds.length || survivors.length < 2) continue
+        if (glue.collapsed === true) {
+          const folded = refoldCollapsedCluster(repacked, survivors, glue.restore)
+          repacked = folded.widgets
+          if (glueRecords === state.glues) glueRecords = { ...state.glues }
+          glueRecords[glue.id] = {
+            ...glue,
+            widgetIds: survivors,
+            restore: folded.restore,
+            foldedAt: folded.anchor,
+          }
+        } else {
+          repacked = closeClusterGaps(repacked, survivors)
+        }
+      }
+      const glues = reconcileGlueClusters(repacked, glueRecords)
+      // If deleting a member drops a collapsed group below two, the lone
+      // survivor is no longer a folded set — it must not be left a 1×1 icon.
+      const restoredWidgets = unfoldReleasedFoldedMembers(repacked, state.glues, glues)
 
       const selectedIds = new Set(
-        [...state.selectedIds].filter((id) => widgets[id]),
+        [...state.selectedIds].filter((id) => restoredWidgets[id]),
       )
 
       return {
-        widgets,
+        widgets: restoredWidgets,
         widgetStructureVersion: state.widgetStructureVersion + 1,
         canvases,
         canvasViews,
@@ -194,13 +223,46 @@ export function createSelectionSlice({ set, get, pushHistory, markSpawned }: Wid
         const id = crypto.randomUUID()
         connections[id] = { ...connection, id, fromId: fromClone, toId: toClone }
       }
+      // A glue cluster wholly inside the duplicated set travels too: the copies
+      // come out welded the same way (name, fold state and all), not as a loose
+      // pile that only looks like the group it was copied from. The restore map
+      // and fold anchor shift by the same one-cell offset the clones did.
+      let glues = current.glues
+      for (const glue of Object.values(current.glues)) {
+        if (!glue.widgetIds.every((id) => cloneIdBySource.has(id))) continue
+        if (glues === current.glues) glues = { ...current.glues }
+        const id = crypto.randomUUID()
+        const cloneGlue: WidgetGlue = {
+          ...glue,
+          id,
+          widgetIds: glue.widgetIds.map((memberId) => cloneIdBySource.get(memberId)!),
+        }
+        if (glue.restore) {
+          const restore: typeof glue.restore = {}
+          for (const [memberId, entry] of Object.entries(glue.restore)) {
+            const cloneId = cloneIdBySource.get(memberId)
+            if (!cloneId) continue
+            restore[cloneId] = { ...entry, x: entry.x + GRID_SIZE, y: entry.y + GRID_SIZE }
+          }
+          cloneGlue.restore = restore
+        }
+        if (glue.foldedAt) {
+          cloneGlue.foldedAt = { x: glue.foldedAt.x + GRID_SIZE, y: glue.foldedAt.y + GRID_SIZE }
+        }
+        glues[id] = cloneGlue
+      }
+      const widgetGlueIndex = glues === current.glues ? current.widgetGlueIndex : buildGlueIndex(glues)
       return {
-        widgets: settleWidgetsByCanvas(widgets, newIds),
+        // Settle with the fresh index so a duplicated cluster snaps rigidly as
+        // one unit and its weld seams survive, exactly like the original.
+        widgets: settleWidgetsByCanvas(widgets, newIds, widgetGlueIndex),
         widgetStructureVersion: current.widgetStructureVersion + 1,
         selectedIds: new Set(newIds),
         contextMenu: null,
         canvases,
         connections,
+        glues,
+        widgetGlueIndex,
       }
     })
     for (const id of newIds) markSpawned(id)
@@ -291,10 +353,53 @@ export function createSelectionSlice({ set, get, pushHistory, markSpawned }: Wid
   toggleWidgetPinned: (widgetId, options) => {
     if (!get().widgets[widgetId]) return
     pushHistory()
+    const glueId = get().widgetGlueIndex[widgetId]
     set((state) => ({
       widgets: withWidget(state.widgets, widgetId, (widget) => {
         const nextPinned = !widget.metadata.pinned
+        const metadata: WidgetMetadata = { ...widget.metadata, pinned: nextPinned }
         let position = widget.position
+        // A welded member holds the corner it is welded at, exactly like any
+        // other in-group footprint change: its clustermates give way when it
+        // grows and close ranks when it shrinks. Re-centring it here would
+        // slide it off its own weld and off the grid the group sits on.
+        const welded = Boolean(glueId)
+        if (nextPinned) {
+          // Remember what the pin interrupted. The caller knows more than the
+          // store can: a card opened out of an icon is, at this instant, an
+          // ordinary full card, and only the expansion still remembers the
+          // exact icon square it came from.
+          const from = options?.from ?? { kind: 'rest' as const }
+          metadata.pinnedFrom = from
+        } else {
+          delete metadata.pinnedFrom
+        }
+        // Unpinning a card that was an icon before it was pinned puts the icon
+        // back — at its own square, re-centred on the card the user can see, so
+        // it folds into its own middle instead of collapsing to the top-left.
+        // Without this every unpin dropped the card onto its resting face, and
+        // an icon that was opened, pinned, and let go never came back.
+        const restoreIcon =
+          !nextPinned && widget.metadata.pinnedFrom?.kind === 'icon'
+            ? widget.metadata.pinnedFrom
+            : null
+        if (restoreIcon) {
+          const edge = clampIconEdge(Math.min(restoreIcon.width, restoreIcon.height))
+          const icon = { width: edge, height: edge }
+          return {
+            ...widget,
+            iconified: true,
+            expandedSize: widget.size,
+            size: icon,
+            position: welded
+              ? widget.position
+              : {
+                  x: widget.position.x + (widget.size.width - icon.width) / 2,
+                  y: widget.position.y + (widget.size.height - icon.height) / 2,
+                },
+            metadata,
+          }
+        }
         if (options?.absorbOffset) {
           // Pinning an ephemerally expanded card absorbs its view offset into
           // the stored anchor, in the same history step as the pin itself. The
@@ -302,11 +407,15 @@ export function createSelectionSlice({ set, get, pushHistory, markSpawned }: Wid
           // at the tile it opened from; a pinned card draws exactly where its
           // saved position says, so without this hand-off the card jumped
           // diagonally down-right by the whole offset the instant it was pinned.
+          // The absorbed offset is view geometry and lands anywhere — snap the
+          // result to the grid BEFORE the settle pass reads it: the settle
+          // anchors the pinned card (never re-snaps it), so an off-grid pin
+          // would shove its clustermates off rhythm by exactly that fraction.
           position = {
-            x: position.x + options.absorbOffset.x,
-            y: position.y + options.absorbOffset.y,
+            x: snapToGrid(position.x + options.absorbOffset.x),
+            y: snapToGrid(position.y + options.absorbOffset.y),
           }
-        } else if (!nextPinned) {
+        } else if (!nextPinned && !welded) {
           // Unpinning a card that falls back to a resting tile: shift its anchor
           // so the tile lands CENTRED under the full card, so the card collapses
           // toward its own centre instead of shrinking into its top-left corner.
@@ -322,9 +431,25 @@ export function createSelectionSlice({ set, get, pushHistory, markSpawned }: Wid
             }
           }
         }
-        return { ...widget, position, metadata: { ...widget.metadata, pinned: nextPinned } }
+        return { ...widget, position, metadata }
       }),
     }))
+    // Pinning swaps a compact resting tile for the full stored card (and
+    // unpinning does the reverse) — a real footprint change, so it runs the
+    // overlap check. Inside a glue cluster that check also re-packs the cluster
+    // around the pinned card (see reflowWeldedCluster): clustermates give way
+    // to the card that just grew, and the welds hold. An UNPIN is the shrink
+    // half of the same story, and nothing in the overlap check ever pulls
+    // anything closer — so the cluster closes ranks here, or unpinning would
+    // leave a card-sized hole where the open card used to be.
+    set((state) => {
+      let widgets = settleWidgetsByCanvas(state.widgets, [widgetId], state.widgetGlueIndex, {
+        anchorIds: [widgetId],
+      })
+      const cluster = glueId ? state.glues[glueId] : undefined
+      if (cluster) widgets = closeClusterGaps(widgets, cluster.widgetIds)
+      return { widgets }
+    })
   },
 
   toggleWidgetFavorite: (widgetId) => {
@@ -347,6 +472,20 @@ export function createSelectionSlice({ set, get, pushHistory, markSpawned }: Wid
         metadata: { ...widget.metadata, ...metadata },
       })),
     }))
+  },
+
+  updateWidgetsMetadata: (ids, metadata) => {
+    const existing = uniqueExistingIds([...ids], get().widgets)
+    if (existing.length === 0) return
+    pushHistory()
+    set((state) => {
+      const widgets = { ...state.widgets }
+      for (const id of existing) {
+        const widget = widgets[id]!
+        widgets[id] = { ...widget, metadata: { ...widget.metadata, ...metadata } }
+      }
+      return { widgets }
+    })
   },
 
   bringWidgetToFront: (widgetId) => {

@@ -67,6 +67,17 @@ export type WidgetBadge =
   | { type: 'deadline_countdown'; dueDate: string }
   | { type: 'tag_pill'; tags: Array<{ label: string; color: string }> }
 
+/**
+ * The state a card was in when it was pinned open — what unpinning must put
+ * back. An icon keeps its exact square, because an icon scaled between 2×2 and
+ * 3×3 has to come back at that precise size rather than at the 2×2 floor.
+ * Persisted alongside the pin itself: a pin can outlive the session, so the
+ * memory of what it interrupted has to as well.
+ */
+export type PinOrigin =
+  | { kind: 'rest' }
+  | { kind: 'icon'; width: number; height: number }
+
 export interface WidgetMetadata {
   badges: WidgetBadge[]
   locked?: boolean
@@ -75,16 +86,20 @@ export interface WidgetMetadata {
    * Unlike an ephemeral expansion this is a deliberate, durable choice — it
    * belongs to the board, survives reload, and reaches collaborators. */
   pinned?: boolean
+  /** What the card was doing before it was pinned, so unpinning returns it
+   * there instead of dropping every card onto its resting face. Written by the
+   * pin, consumed and cleared by the unpin. */
+  pinnedFrom?: PinOrigin
   favorite?: boolean
+  /** Strict hold: this widget carries its parent-linked descendants whenever it
+   * moves — the family drags as one. Inherited downward: every node inside a
+   * held subtree carries its own branch too, so a strict tree has no soft
+   * pockets. Absent means soft parenting — a relation is just a drawn line and
+   * never moves anyone (the default, and the only pre-existing behavior). */
+  strictHold?: boolean
   accent?: string
   zIndex?: number
   completed?: boolean
-  showDoneCheckbox?: boolean
-  showDeleteButton?: boolean
-  showPinButton?: boolean
-  showFavoriteButton?: boolean
-  showDuplicateButton?: boolean
-  showMarkdownButton?: boolean
   /** Original local-interpreter input, retained for reversibility and future re-interpretation. */
   sourceText?: string
   interpretationConfidence?: number
@@ -126,7 +141,12 @@ export const ICONIFIED_SIZE: Size = { width: 80, height: 80 }
  * release. There are no size states or detents in between. 2×2 is the floor
  * for anything icon-shaped anywhere in the app — a
  * one-cell icon is too small to read or to aim at, so no surface may render
- * one; 3×3 is the ceiling, past which the drag restores the full card. */
+ * one; 3×3 is the ceiling, past which the drag restores the full card.
+ *
+ * One deliberate exception, and only one: the members of a COLLAPSED glue
+ * cluster fold to a single cell each (`COLLAPSED_MEMBER_SIZE`). The floor
+ * protects icons you aim at, and a folded cluster is one object with one
+ * pointer target — its members are inert, so none of them is ever aimed at. */
 export const ICON_MIN_EDGE = CELL * 2 // 80
 export const ICON_MAX_EDGE = CELL * 3 // 120
 
@@ -158,12 +178,37 @@ export const WIDGET_MAX_EDGE = CELL * 32 // 1280px
  * a gradient weld between their facing edges. Dragging any member moves the
  * whole cluster; option-drag pulls one member off.
  */
+/**
+ * One member's geometry and scale state as it stood before its cluster was
+ * collapsed, so expanding restores exactly what folding away replaced — not a
+ * repacked approximation.
+ */
+export interface GlueRestoreEntry {
+  x: number
+  y: number
+  width: number
+  height: number
+  iconified: boolean
+}
+
 export interface WidgetGlue {
   id: string
   widgetIds: string[]
   /** Owner-editable label shown in the cluster's group frame. Defaults to
    * "Group" in the UI when unset; never required for the weld to work. */
   name?: string
+  /** True while the cluster is folded into its collected icon row. */
+  collapsed?: boolean
+  /** widgetId → the state to put back on expand. Written when the cluster
+   * collapses and cleared when it expands, so it only ever describes a fold
+   * that is currently in effect. */
+  restore?: Record<string, GlueRestoreEntry>
+  /** Where the folded block's top-left landed when the fold was made. Expanding
+   * compares it against where the block sits NOW, so a group dragged while
+   * collapsed opens around its current spot instead of rewinding every member
+   * to the coordinates the fold recorded. Written with `restore`, cleared with
+   * it. */
+  foldedAt?: Vector2D
 }
 
 // ---------------------------------------------------------------------------

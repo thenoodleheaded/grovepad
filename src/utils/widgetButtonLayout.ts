@@ -16,16 +16,11 @@ const TITLE_TRAILING_PAD = 8
 const MAX_TITLE_TEXT_WIDTH = 200
 const ESTIMATED_CHAR_WIDTH = 7
 
-/** Count of action buttons visible in the title row when the customize menu is closed. */
+/** Count of the STATIC action buttons in the title row: Pin, Favorite, and
+ * Delete on every card, plus the Completed checkbox on checklists. There is
+ * no customize menu and no per-widget visibility. */
 export function widgetActiveButtonCount(widget: Pick<Widget, 'type' | 'metadata'>): number {
-  const m = widget.metadata
-  let count = 0
-  if (m.showDoneCheckbox ?? widget.type === 'checklist') count++
-  if (m.showFavoriteButton !== false || m.favorite) count++
-  if (m.showDuplicateButton) count++
-  if (m.showMarkdownButton) count++
-  if (m.showDeleteButton !== false) count++
-  return count
+  return widget.type === 'checklist' ? 4 : 3
 }
 
 /** Same estimate WidgetCard uses to reserve room for the draggable title text. */
@@ -35,15 +30,14 @@ export function widgetTitleAreaWidth(title: string): number {
 }
 
 /**
- * True when the card's title row can't fit every active button (plus the
- * trailing "+" customize button) — the overflow buttons render in the
- * vertical column past the card's right edge, past its own hover-catch-all
- * width.
+ * True when the static button row runs past the card's right edge — buttons
+ * never wrap into a column, so a narrow card's row simply extends rightward,
+ * past the card's own hover-catch-all width.
  */
 export function widgetHasButtonOverflow(
   widget: Pick<Widget, 'type' | 'metadata' | 'title' | 'size'>,
 ): boolean {
-  const itemCount = widgetActiveButtonCount(widget) + 1 // + plus
+  const itemCount = widgetActiveButtonCount(widget)
   const titleAreaWidth = widgetTitleAreaWidth(widget.title)
   const maxHorizontalSpace = widget.size.width - titleAreaWidth
   const maxHorizontalCount = Math.max(0, Math.floor(maxHorizontalSpace / BUTTON_CELL))

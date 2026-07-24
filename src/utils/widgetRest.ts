@@ -1,6 +1,31 @@
 import type { Size, Vector2D, Widget } from '../types/spatial'
+import { GRID_SIZE } from '../types/spatial'
 import { widgetDefinition } from '../widgets/registry'
 import { restingFace } from './restingFace'
+
+/**
+ * The floating title row — icon square, name, and the static action buttons —
+ * lives in a one-cell strip ABOVE a card's own box. It is chrome, but it is
+ * chrome that must not be drawn over, so every geometry pass that reserves
+ * space for a widget reserves this strip too (`widgetShowsTitleRow`).
+ */
+export const WIDGET_TITLE_ROW = GRID_SIZE // 40
+
+/**
+ * Whether a widget actually shows that row right now. Mirrors WidgetCard's own
+ * rule so the reserved space and the painted chrome can never disagree: an
+ * icon and an icon-faced resting tile ARE their own identity mark and float no
+ * capsule, and a glued member hands its name to the group frame — unless it is
+ * pinned open, where that row carries its only Pin control.
+ */
+export function widgetShowsTitleRow(widget: Widget, options: { glued?: boolean } = {}): boolean {
+  if (widget.iconified === true) return false
+  if (isWidgetResting(widget, { expandedWidgetId: null }) && restingFace(widget).model.kind === 'icon') {
+    return false
+  }
+  if (options.glued && widget.metadata.pinned !== true) return false
+  return true
+}
 
 // ---------------------------------------------------------------------------
 // Resting-face system, pure decisions.

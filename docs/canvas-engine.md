@@ -1,10 +1,8 @@
 # Canvas engine contract
 
-Describes the pan/zoom/render pipeline as it exists after the 2026-07-21
-owner-directed removal of every scale/zoom/scroll performance optimization
-(sprites, primitive cards, windowed residency, quantized culling, motion
-tiers, quality governor, and the canvas benchmark harness). If code and
-contract disagree, report the mismatch — do not quietly reinterpret either.
+Describes the pan/zoom/render pipeline, including the owner-directed
+progressive widget residency added on 2026-07-25. If code and contract
+disagree, report the mismatch — do not quietly reinterpret either.
 
 ## Architecture
 
@@ -19,9 +17,16 @@ contract disagree, report the mismatch — do not quietly reinterpret either.
   Camera history (back/forward) lives in the engine.
 
 ### 2. Rendering
-- `WidgetLayer` mounts a full `WidgetCard` for **every** widget on the active
-  canvas. There is no viewport culling, no passive/primitive representation,
-  and no sprite backdrop — a card is always live DOM.
+- `WidgetLayer` keeps a retained world-space window around the viewport.
+  Widgets outside it mount nothing; widgets entering it appear as one-image
+  previews, then hydrate centre-first into full `WidgetCard` DOM in bounded
+  idle-time batches. Leaving cards release in bounded batches too.
+- Camera motion never drives a React render every frame. The retained window
+  carries a screen-space gutter and only replans after the viewport consumes
+  its inner safety margin or crosses the 60% detail boundary.
+- Below 60% zoom, inactive widgets remain lightweight SVG-data images.
+  Resting faces are pointer-transparent there; selected, expanded, renaming,
+  linking, and hydrating widgets are urgent and stay live.
 - Relation, dependency, and wire layers build descriptors for every edge on
   the active canvas and share paint through `CanvasEdge.tsx`. Their SVG
   container anchors to the visible world rect from `useWorldViewRect`, which

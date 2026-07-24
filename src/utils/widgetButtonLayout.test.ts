@@ -16,27 +16,15 @@ function widget(overrides: Partial<Widget> = {}): Pick<Widget, 'type' | 'metadat
 }
 
 describe('widgetActiveButtonCount', () => {
-  it('defaults to favorite + delete active, others off', () => {
-    expect(widgetActiveButtonCount(widget())).toBe(2)
+  it('is the static set: pin + favorite + delete on every card', () => {
+    // The customize menu is gone — the row is fixed, and metadata cannot add
+    // or remove buttons.
+    expect(widgetActiveButtonCount(widget())).toBe(3)
+    expect(widgetActiveButtonCount(widget({ metadata: { badges: [], pinned: true } }))).toBe(3)
   })
 
   it('checklist widgets get the completed checkbox for free', () => {
-    expect(widgetActiveButtonCount(widget({ type: 'checklist' }))).toBe(3)
-  })
-
-  it('no longer reserves a title-row slot for pinning', () => {
-    // Pinning moved out of the customize row to a floating pill above the
-    // expanded card, so neither an explicit toggle nor a locked state adds a
-    // pin button to the row count.
-    expect(widgetActiveButtonCount(widget({ metadata: { badges: [], locked: true } }))).toBe(2)
-  })
-
-  it('explicit show* toggles add buttons; showFavoriteButton: false removes the default one', () => {
-    expect(
-      widgetActiveButtonCount(
-        widget({ metadata: { badges: [], showFavoriteButton: false, showDuplicateButton: true, showMarkdownButton: true } }),
-      ),
-    ).toBe(3) // delete, duplicate, markdown — favorite dropped
+    expect(widgetActiveButtonCount(widget({ type: 'checklist' }))).toBe(4)
   })
 })
 
@@ -49,8 +37,8 @@ describe('widgetTitleAreaWidth', () => {
 })
 
 describe('widgetHasButtonOverflow', () => {
-  it('fits the default 2 buttons + plus in a normal-width card', () => {
-    // width 280: titleArea 87 -> 193 available -> 4 horizontal slots; 2 buttons + plus = 3 items.
+  it('fits the default 3 buttons + plus in a normal-width card', () => {
+    // width 280: titleArea 87 -> 193 available -> 4 horizontal slots; 3 buttons + plus = 4 items.
     expect(widgetHasButtonOverflow(widget())).toBe(false)
   })
 
