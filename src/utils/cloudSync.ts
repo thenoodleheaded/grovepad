@@ -21,9 +21,10 @@ import {
   parsePersistedBoard,
 } from './persistedBoardSchema'
 
-// New clients use board_indexes + canvas_docs. The legacy boards row remains
-// dual-written during the transition so stale clients and rollback builds keep
-// a complete copy. The index's server timestamp is the multi-row commit marker.
+// Clients use board_indexes + canvas_docs. The legacy boards row is no longer
+// dual-written: it is written only when the documents schema is missing, and
+// read as a fallback so boards last saved by older builds still load. The
+// index's server timestamp is the multi-row commit marker.
 
 interface LegacyBoardRow {
   data: unknown
@@ -252,8 +253,8 @@ function batches<T>(items: readonly T[], size: number): T[][] {
 }
 
 /**
- * Checksum-diff and dual-write one board. Legacy writes happen first; changed
- * canvas docs follow; the index upsert is the final server-stamped commit.
+ * Checksum-diff one board into split documents. Changed canvas docs go first;
+ * the index upsert is the final server-stamped commit.
  */
 export async function pushCloudBoard(
   userId: string,
@@ -313,9 +314,6 @@ export async function pushCloudBoard(
   const changedCanvases = encodedCanvases.filter(({ canvas }) =>
     changedCanvasIdSet.has(canvas.canvasId),
   )
-
-  // Belt-and-suspenders copy for rollback builds and stale clients.
-  await pushLegacyBoard(supabase, userId, board)
 
   for (const batch of batches(changedCanvases, 20)) {
     const rows = batch.map(({ canvas, encoded }) => {
