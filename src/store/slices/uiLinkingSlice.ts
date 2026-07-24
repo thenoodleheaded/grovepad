@@ -1,7 +1,7 @@
 import type { GhostTreeNode, ModuleType, SearchResult, Vector2D } from '../../types/spatial'
 import { GHOST_PITCH_Y, GHOST_SIBLINGS_PER_SIDE_MAX, ICONIFIED_SIZE, MODULE_LABELS, snapToGrid } from '../../types/spatial'
 import { ghostGestureIds, ghostGestureState, gestureGhostId, layoutGhostTree } from '../widgetGhostLayout'
-import { computeBlockedWidgetIds } from '../widgetGraph'
+import { buildGlueIndex, computeBlockedWidgetIds } from '../widgetGraph'
 import { appendDraftRelation, relationKey } from '../widgetRelationDrafts'
 import { buildWidget, fuzzyScore } from '../widgetSizing'
 import { settleWidgetsByCanvas } from '../widgetSettling'
@@ -404,6 +404,20 @@ export function createUiLinkingSlice({ set, get, pushHistory, initialPacks }: Wi
       )
       ids.set(node.id, nodeIds)
     }
+
+    // Widgets that share a node are one bundle: weld them into a glue cluster
+    // (grouping is repealed — glue is how widgets become one object). They were
+    // laid out at the exact GLUE_GAP seam above, so the cluster reads as a
+    // welded block the moment it appears. Nodes are separate clusters, joined
+    // to their parents by relation lines, not glue.
+    const glues = { ...state.glues }
+    for (const node of nodes) {
+      const memberIds = ids.get(node.id) ?? []
+      if (memberIds.length < 2) continue
+      const glueId = crypto.randomUUID()
+      glues[glueId] = { id: glueId, widgetIds: memberIds }
+    }
+    const widgetGlueIndex = buildGlueIndex(glues)
     for (const node of nodes) {
       if (node.parentId) {
         const parentId = ids.get(node.parentId)?.[0]
@@ -425,7 +439,11 @@ export function createUiLinkingSlice({ set, get, pushHistory, initialPacks }: Wi
     ))
 
     set({
-      widgets: settleWidgetsByCanvas(widgets, settleIds),
+      // Settle with the fresh glue index so each node's bundle snaps rigidly
+      // as one unit and its 0.3-cell weld seams survive the grid snap exactly.
+      widgets: settleWidgetsByCanvas(widgets, settleIds, widgetGlueIndex),
+      glues,
+      widgetGlueIndex,
       widgetStructureVersion: state.widgetStructureVersion + 1,
       relations,
       blockedWidgetIds: computeBlockedWidgetIds(relations),

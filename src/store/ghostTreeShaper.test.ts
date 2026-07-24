@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { buildBoardSnapshot } from '../utils/persistence'
 import { parsePersistedBoard } from '../utils/persistedBoardSchema'
+import { GLUE_GAP } from '../utils/glueGeometry'
 import { useWidgetStore } from './useWidgetStore'
 
 const baseline = parsePersistedBoard(buildBoardSnapshot(useWidgetStore.getState()))!
@@ -46,6 +47,42 @@ describe('ghost tree widget bundles', () => {
     useWidgetStore.getState().undo()
     for (const widget of created) expect(useWidgetStore.getState().widgets[widget.id]).toBeUndefined()
     expect(useWidgetStore.getState().relations[createdRelations[0]!.id]).toBeUndefined()
+  })
+
+  it('welds the widgets that share a node into one glue cluster, leaving singletons unglued', () => {
+    const beforeIds = new Set(Object.keys(useWidgetStore.getState().widgets))
+    useWidgetStore.getState().startGhostShaper(44_000, 44_000)
+    const rootId = useWidgetStore.getState().ghostConfig!.nodes[0]!.id
+    useWidgetStore.getState().setGhostNodeWidgetTypes(rootId, ['notes', 'checklist'])
+    useWidgetStore.getState().beginGhostGesture()
+    useWidgetStore.getState().shapeGhostTree(rootId, 'down', 1)
+    useWidgetStore.getState().endGhostGesture()
+    const childId = useWidgetStore.getState().ghostConfig!.nodes.find((node) => node.parentId === rootId)!.id
+    useWidgetStore.getState().setGhostNodeWidgetTypes(childId, ['flashcards'])
+    useWidgetStore.getState().commitGhostTree()
+
+    const state = useWidgetStore.getState()
+    const created = Object.values(state.widgets).filter((widget) => !beforeIds.has(widget.id))
+    const bundle = created.filter((widget) => widget.type === 'notes' || widget.type === 'checklist')
+    const singleton = created.find((widget) => widget.type === 'flashcards')!
+
+    // The root's two widgets share one cluster; the lone child never welds.
+    const glueId = state.widgetGlueIndex[bundle[0]!.id]
+    expect(glueId).toBeDefined()
+    expect(state.widgetGlueIndex[bundle[1]!.id]).toBe(glueId)
+    expect([...state.glues[glueId!]!.widgetIds].sort()).toEqual(bundle.map((widget) => widget.id).sort())
+    expect(state.widgetGlueIndex[singleton.id]).toBeUndefined()
+
+    // The bundle's two members sit exactly one weld seam apart, so the glue
+    // renders — the grid snap on commit never rounds the 0.3-cell seam away.
+    const [left, right] = [...bundle].sort((a, b) => a.position.x - b.position.x)
+    expect(right!.position.x - (left!.position.x + left!.size.width)).toBe(GLUE_GAP)
+
+    // Undo takes the cluster with the widgets — no orphaned glue record.
+    useWidgetStore.getState().undo()
+    const afterUndo = useWidgetStore.getState()
+    expect(afterUndo.glues[glueId!]).toBeUndefined()
+    for (const widget of created) expect(afterUndo.widgetGlueIndex[widget.id]).toBeUndefined()
   })
 
   it('grows root siblings sideways and lets each root shape its own branch', () => {

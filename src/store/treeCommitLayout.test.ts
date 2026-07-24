@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { GLUE_GAP } from '../utils/glueGeometry'
 import {
   clusterLayout,
   layoutCommittedTree,
@@ -39,6 +40,14 @@ describe('clusterLayout', () => {
   it('lays a single widget out at the origin with its own size', () => {
     const layout = clusterLayout([CARD])
     expect(layout).toEqual({ width: 320, height: 240, offsets: [{ x: 0, y: 0 }] })
+  })
+
+  it('packs two members at the exact weld seam so the glue renders', () => {
+    const layout = clusterLayout([CARD, CARD])
+    // Second card sits GLUE_GAP past the first — the 0.3-cell seam, not a
+    // full grid cell, so the commit can weld them into one visible cluster.
+    expect(layout.offsets[1]!.x - (layout.offsets[0]!.x + CARD.width)).toBe(GLUE_GAP)
+    expect(layout.width).toBe(CARD.width * 2 + GLUE_GAP)
   })
 
   it('wraps into rows and never overlaps members', () => {
@@ -121,17 +130,20 @@ describe('layoutCommittedTree', () => {
     expect(Math.abs(root.minY - 300)).toBeLessThanOrEqual(GRID_TOLERANCE)
   })
 
-  it('snaps every widget onto the layout grid', () => {
-    const placements = layoutCommittedTree(
-      [node('root', null, 0, 2), node('child', 'root', 0, 3)],
-      137,
-      91,
-    )
-    for (const placement of placements) {
-      for (const position of placement.widgetPositions) {
-        expect(Math.abs(position.x % GRID_TOLERANCE)).toBe(0)
-        expect(Math.abs(position.y % GRID_TOLERANCE)).toBe(0)
-      }
+  it('snaps each bundle to the grid while keeping members at their weld offsets', () => {
+    // Only the bundle's top-left corner lands on the grid; its members carry
+    // the exact GLUE_GAP weld offsets, so snapping never rounds a seam away.
+    const nodes = [node('root', null, 0, 2), node('child', 'root', 0, 3)]
+    const placements = layoutCommittedTree(nodes, 137, 91)
+    for (const commitNode of nodes) {
+      const positions = placements.find((p) => p.nodeId === commitNode.id)!.widgetPositions
+      expect(Math.abs(positions[0]!.x % GRID_TOLERANCE)).toBe(0)
+      expect(Math.abs(positions[0]!.y % GRID_TOLERANCE)).toBe(0)
+      const offsets = clusterLayout(commitNode.widgetSizes).offsets
+      positions.forEach((position, index) => {
+        expect(position.x - positions[0]!.x).toBe(offsets[index]!.x)
+        expect(position.y - positions[0]!.y).toBe(offsets[index]!.y)
+      })
     }
   })
 

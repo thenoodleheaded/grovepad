@@ -1,6 +1,6 @@
 import type { Size, Vector2D } from '../types/spatial'
 import { GRID_SIZE, snapToGrid } from '../types/spatial'
-import { TREE_CLUSTER_GAP } from './widgetLayoutConstants'
+import { GLUE_GAP } from '../utils/glueGeometry'
 
 // ---------------------------------------------------------------------------
 // Committed tree-shaper layout.
@@ -47,9 +47,11 @@ interface ClusterLayout {
 }
 
 /**
- * Packs one node's widgets into the same row grid a real group uses, so a
- * committed bundle already sits exactly where compaction would put it —
- * top-aligned, which keeps one flush plate rim and one line of title capsules.
+ * Packs one node's widgets weld-adjacent, at the exact `GLUE_GAP` (0.3-cell)
+ * seam on both axes, so the commit can glue them into one welded cluster whose
+ * seams render immediately. Top-aligned within each row, which keeps one flush
+ * rim and one line of title capsules; rows wrap into a near-square block so a
+ * 4-widget node reads as a filled 2×2 weld.
  */
 export function clusterLayout(sizes: readonly Size[]): ClusterLayout {
   if (sizes.length === 0) return { width: 0, height: 0, offsets: [] }
@@ -64,19 +66,19 @@ export function clusterLayout(sizes: readonly Size[]): ClusterLayout {
   }
 
   const rowWidths = rows.map((row) =>
-    row.reduce((total, size) => total + size.width, 0) + Math.max(0, row.length - 1) * TREE_CLUSTER_GAP,
+    row.reduce((total, size) => total + size.width, 0) + Math.max(0, row.length - 1) * GLUE_GAP,
   )
   const rowHeights = rows.map((row) => Math.max(...row.map((size) => size.height)))
   const width = Math.max(...rowWidths)
   const height =
     rowHeights.reduce((total, value) => total + value, 0) +
-    Math.max(0, rows.length - 1) * TREE_CLUSTER_GAP
+    Math.max(0, rows.length - 1) * GLUE_GAP
 
   const rowTops: number[] = []
   let y = 0
   for (const rowHeight of rowHeights) {
     rowTops.push(y)
-    y += rowHeight + TREE_CLUSTER_GAP
+    y += rowHeight + GLUE_GAP
   }
 
   const offsets: Vector2D[] = []
@@ -84,7 +86,7 @@ export function clusterLayout(sizes: readonly Size[]): ClusterLayout {
   for (let i = 0; i < sizes.length; i += 1) {
     const row = rowIndexOf[i]!
     offsets.push({ x: cursorByRow[row]!, y: rowTops[row]! })
-    cursorByRow[row] = cursorByRow[row]! + sizes[i]!.width + TREE_CLUSTER_GAP
+    cursorByRow[row] = cursorByRow[row]! + sizes[i]!.width + GLUE_GAP
   }
   return { width, height, offsets }
 }
@@ -177,11 +179,17 @@ export function layoutCommittedTree(
     const origin = clusterOrigin.get(node.id)
     const cluster = clusters.get(node.id)!
     if (!origin) return { nodeId: node.id, widgetPositions: [] }
+    // Snap the cluster's top-left corner to the grid ONCE, then place every
+    // member at its exact weld offset. Snapping each member on its own would
+    // round the 0.3-cell (12px) seams to 0 or a whole cell and tear the
+    // welded bundle apart — the same rigid-snap law the settle pass uses.
+    const baseX = snapToGrid(origin.x + shiftX)
+    const baseY = snapToGrid(origin.y + shiftY)
     return {
       nodeId: node.id,
       widgetPositions: cluster.offsets.map((offset) => ({
-        x: snapToGrid(origin.x + shiftX + offset.x),
-        y: snapToGrid(origin.y + shiftY + offset.y),
+        x: baseX + offset.x,
+        y: baseY + offset.y,
       })),
     }
   })
