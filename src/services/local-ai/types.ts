@@ -1,4 +1,4 @@
-export type LocalAiBackend = 'webllm'
+type LocalAiBackend = 'webllm'
 
 /**
  * A concrete, already-selected model configuration. Platform selection belongs

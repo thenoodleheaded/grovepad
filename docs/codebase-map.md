@@ -86,15 +86,31 @@ Start with the semantic layer named by the user. Relation, dependency, and wire 
 
 At minimum verify finite SVG geometry, zoom alignment, endpoint side, selection hit target, deletion, and no `NaN`/`Infinity` attributes.
 
+## Recurring route: temporary surfaces (modals, sheets, menus)
+
+Every temporary surface builds on three shared primitives instead of hand-rolling
+portal/scrim/Escape scaffolding. [useOverlayDismiss.ts](../src/hooks/useOverlayDismiss.ts)
+bundles the overlay count, the focus trap, and window Escape (`escape: false` when
+the surface owns richer keyboard handling). [DialogShell.tsx](../src/components/ui/DialogShell.tsx)
+adds the portal, `role="dialog"` semantics, and the `gp-scrim` backdrop —
+[ConfirmDialog.tsx](../src/components/ui/ConfirmDialog.tsx) is the exemplar.
+[ContextMenuSurface.tsx](../src/components/ui/ContextMenuSurface.tsx) is the shared
+right-click menu surface (close catcher + viewport-clamped `gp-popup-menu` panel via
+[popoverPosition.ts](../src/utils/popoverPosition.ts)); the relation, dependency, and
+wire menus all render through it. Small shared helpers live in
+[math.ts](../src/utils/math.ts) (`clamp`, `clamp01`), [text.ts](../src/utils/text.ts)
+(`truncate`), and tests build fixtures with [factories.ts](../src/test/factories.ts)
+(`makeWidget`, `makeRelation`). Visual law stays in the
+[popup panel design standard](popup-panel-design.md).
+
 ## Recurring route: fullscreen widget editors
 
 A widget whose real interaction surface can't share the app canvas's wheel/pointer
 input (a drawing/diagramming tool, anything embedding a heavy third-party editor)
 follows the pattern in [modules/excalidraw/](../src/components/widgets/modules/excalidraw):
 the in-card renderer is a non-interactive preview/launcher only; the actual editor
-mounts exclusively inside a `createPortal(..., document.body)` overlay modeled on
-[ConfirmDialog.tsx](../src/components/ui/ConfirmDialog.tsx) (`useOverlayLifecycle`,
-`useFocusTrap`, Escape-to-close, `z-[200]` tier — see the z-index scale used across
+mounts exclusively inside a `createPortal(..., document.body)` overlay built on the
+shared dismiss primitives (`z-[200]` tier — see the z-index scale used across
 `src/components`). Because the portal renders outside the canvas viewport's DOM
 subtree, none of [gestureEngine.ts](../src/engine/camera/gestureEngine.ts)'s native
 wheel/pointerdown listeners (bound unconditionally on the viewport root) ever see

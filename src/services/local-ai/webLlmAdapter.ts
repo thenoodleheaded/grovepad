@@ -351,7 +351,7 @@ export function createWebLlmAdapter(
   return new WebLlmAdapter(profile, options)
 }
 
-export async function disposeCachedWebLlmEngine(): Promise<void> {
+async function disposeCachedWebLlmEngine(): Promise<void> {
   latestRequestId += 1
   if (enginePromise) await enginePromise.catch(() => undefined)
   if (cached) {
