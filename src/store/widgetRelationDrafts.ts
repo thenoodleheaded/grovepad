@@ -1,6 +1,6 @@
 import type { Relation, RelationType, Widget } from '../types/spatial'
 import { snapToGrid } from '../types/spatial'
-import { MIN_PARENT_CHILD_GAP } from './widgetLayoutConstants'
+import { minimumHierarchyChildTop } from './widgetCollection'
 
 export function relationKey(fromId: string, toId: string, type: RelationType): string {
   return `${fromId}\u0000${toId}\u0000${type}`
@@ -14,6 +14,7 @@ export function appendDraftRelation(
   fromId: string,
   toId: string,
   type: RelationType,
+  strictParent = true,
 ): string | null {
   if (fromId === toId || !widgets[fromId] || !widgets[toId]) return null
   const key = relationKey(fromId, toId, type)
@@ -29,11 +30,10 @@ export function appendDraftRelation(
     isResolved: type !== 'blocker' && type !== 'conflict',
   }
 
-  if (type !== 'parent') return id
-  const parent = widgets[fromId]!
+  if (type !== 'parent' || !strictParent) return id
   const child = widgets[toId]!
-  const minChildY = parent.position.y + parent.size.height + MIN_PARENT_CHILD_GAP
-  if (child.position.y >= minChildY) return id
+  const minChildY = minimumHierarchyChildTop(fromId, widgets, relations)
+  if (minChildY === null || child.position.y >= minChildY) return id
   widgets[toId] = {
     ...child,
     position: { ...child.position, y: snapToGrid(minChildY) },

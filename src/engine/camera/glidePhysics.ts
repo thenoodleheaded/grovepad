@@ -13,9 +13,9 @@ export interface TimedPoint {
 
 /** Only samples inside this window count toward release velocity: a finger
  * that stopped before lifting must produce zero, not its old speed. */
-export const FLING_WINDOW_MS = 140
+const FLING_WINDOW_MS = 140
 /** Below this release speed a fling is a tap-stop, not a glide. */
-export const FLING_MIN_SPEED = 60
+const FLING_MIN_SPEED = 60
 /** Ceiling keeps a wild sample from launching the board into orbit. */
 export const FLING_MAX_SPEED = 4200
 

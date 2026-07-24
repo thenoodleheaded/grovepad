@@ -3,15 +3,14 @@ import {
   Cable,
   CheckSquare,
   Copy,
+  Droplets,
   FolderOpen,
   GitMerge,
   LockKeyhole,
   UnlockKeyhole,
-  Layers,
   MonitorSmartphone,
   MousePointer2,
   Trash2,
-  Unlink,
 } from 'lucide-react'
 import { useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
@@ -24,6 +23,7 @@ import { requestWidgetDeletion } from '../../store/useWidgetDeletionDialogStore'
 import { clampPopover } from '../../utils/popoverPosition'
 import { menuNavigationIndex } from '../../utils/menuNavigation'
 import { isNativeWidgetHost } from '../../runtime/nativeNoteWidgetSync'
+import { usesStrictRelations } from '../../utils/relationPolicy'
 
 function MenuButton({
   label,
@@ -63,8 +63,11 @@ export function WidgetContextMenu() {
     contextMenu ? state.widgets[contextMenu.widgetId] : undefined,
   )
   const selectedIds = useWidgetStore(useShallow((state) => [...state.selectedIds]))
-  const groupId = useWidgetStore((state) =>
-    contextMenu ? state.widgetGroupIndex[contextMenu.widgetId] : undefined,
+  const isGlued = useWidgetStore((state) =>
+    contextMenu ? Boolean(state.widgetGlueIndex[contextMenu.widgetId]) : false,
+  )
+  const strictRelations = useWidgetStore((state) =>
+    usesStrictRelations(state.canvases[widget?.canvasId ?? state.activeCanvasId]),
   )
   const { nativeWidgetId, nativeWidgetSyncStatus } = useNativeWidgetStore(useShallow((state) => ({
     nativeWidgetId: state.selectedWidgetId,
@@ -130,7 +133,7 @@ export function WidgetContextMenu() {
         data-canvas-ui
         role="menu"
         aria-label={`Actions for ${widget.title}`}
-        className="gp-menu gp-pop gp-panel fixed z-[211] w-52 origin-top-left overflow-hidden rounded-2xl p-1.5 shadow-2xl"
+        className="gp-popup-menu gp-menu gp-pop gp-panel fixed z-[211] w-52 origin-top-left overflow-hidden rounded-2xl p-1.5 shadow-2xl"
         style={{ left, top }}
       >
         <p className="truncate px-3 py-1.5 text-xs font-bold text-neutral-100">
@@ -190,62 +193,27 @@ export function WidgetContextMenu() {
         >
           {widget.metadata.locked ? <UnlockKeyhole size={13} aria-hidden /> : <LockKeyhole size={13} aria-hidden />}
         </MenuButton>
-        <MenuButton
-          label="Group selected"
-          disabled={actionIds.length < 2}
-          onClick={() =>
-            run(() => {
-              useWidgetStore.getState().createGroup(actionIds)
-              useWidgetStore.getState().clearSelection()
-            })
-          }
-        >
-          <Layers size={13} aria-hidden />
-        </MenuButton>
-        {groupId && (
-          <>
-            <div className="my-1 border-t border-neutral-800" />
-            <MenuButton
-              label="Detach from group"
-              onClick={() =>
-                run(() => useWidgetStore.getState().removeFromGroup(groupId, widget.id))
-              }
-            >
-              <Unlink size={13} aria-hidden />
-            </MenuButton>
-            <MenuButton
-              label="Tighten group"
-              onClick={() => run(() => useWidgetStore.getState().compactGroup(groupId))}
-            >
-              <Layers size={13} aria-hidden />
-            </MenuButton>
-            <MenuButton
-              label="Dissolve group"
-              onClick={() => run(() => useWidgetStore.getState().dissolveGroup(groupId))}
-            >
-              <Unlink size={13} aria-hidden />
-            </MenuButton>
-          </>
-        )}
-        {!groupId && (
-          <>
-            <div className="my-1 border-t border-neutral-800" />
-            <MenuButton
-              label="Link as child of…"
-              onClick={() => run(() => useWidgetStore.getState().startChildLink(widget.id))}
-            >
-              <GitMerge size={13} aria-hidden />
-            </MenuButton>
-          </>
-        )}
-        {!groupId && (
+        {isGlued && (
           <MenuButton
-            label="Make prerequisite for… (X)"
-            onClick={() => run(() => useWidgetStore.getState().startDependencyLink(widget.id))}
+            label="Unglue"
+            onClick={() => run(() => useWidgetStore.getState().unglueWidget(widget.id))}
           >
-            <Cable size={13} aria-hidden />
+            <Droplets size={13} aria-hidden />
           </MenuButton>
         )}
+        <div className="my-1 border-t border-neutral-800" />
+        <MenuButton
+          label={strictRelations ? 'Link as child of…' : 'Connect to…'}
+          onClick={() => run(() => useWidgetStore.getState().startChildLink(widget.id))}
+        >
+          <GitMerge size={13} aria-hidden />
+        </MenuButton>
+        <MenuButton
+          label="Make prerequisite for… (X)"
+          onClick={() => run(() => useWidgetStore.getState().startDependencyLink(widget.id))}
+        >
+          <Cable size={13} aria-hidden />
+        </MenuButton>
         <div className="my-1 border-t border-neutral-800" />
         <MenuButton
           label={actionIds.length > 1 ? `Delete ${actionIds.length}` : 'Delete'}

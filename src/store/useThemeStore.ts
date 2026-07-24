@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 
-type Theme = 'dark' | 'light'
+export type Theme = 'dark' | 'light'
 
 interface ThemeState {
   theme: Theme

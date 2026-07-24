@@ -1,9 +1,9 @@
 import { create } from 'zustand'
 import type { Size } from '../types/spatial'
 
-export type ScaleEventKind =
+type ScaleEventKind =
   | 'resize-request' // every call into the store's resizeWidget, from any caller
-  | 'scale-state' // full <-> pill <-> icon transition
+  | 'scale-state' // full <-> icon transition
   | 'pointer-resize' // one committed frame of a manual drag on the resize handle
   | 'content-floor' // a content-floor measurement pass, whether or not it resized
 
@@ -26,15 +26,14 @@ export interface ScaleDebugEntry {
 /** Full per-widget state, resampled on a fixed cadence while the panel is
  * open — the "every variable, once a second" heartbeat, independent of
  * whether any resize event fired. Catches drift a discrete event would miss:
- * a store/DOM desync, a stale registry bound, a collapsed size that no
- * longer matches its pill. */
+ * a store/DOM desync, a stale registry bound, an icon size that no
+ * longer matches its cell. */
 export interface ScaleDebugSnapshot {
   widgetId: string
   widgetType: string
   title: string
   t: number
   size: Size
-  collapsed: boolean
   iconified: boolean
   locked: boolean
   mounted: boolean
@@ -70,7 +69,7 @@ interface ScaleDebugState {
 
 /**
  * Live trace of the whole-card scaling system: every resizeWidget call,
- * every full/pill/icon transition, every manual drag frame, and every
+ * every full/icon transition, every manual drag frame, and every
  * content-floor measurement pass, plus a per-second full-state snapshot of
  * every widget on the active canvas. Toggled with `S`, rendered by
  * ScaleDebugPanel, exposed on the dev-only `__grovepad` hook.

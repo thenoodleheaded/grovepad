@@ -1,6 +1,5 @@
 import { Plus, X } from 'lucide-react'
 import type { FormulaSheetData } from '../../../types/spatial'
-import { useFieldAnchor } from '../../../hooks/useFieldAnchor'
 
 interface FormulaSheetWidgetProps {
   data: FormulaSheetData
@@ -9,8 +8,6 @@ interface FormulaSheetWidgetProps {
 
 /** A quick-reference list of named formulas — name on top, expression below. */
 export function FormulaSheetWidget({ data, onChange }: FormulaSheetWidgetProps) {
-  const countRef = useFieldAnchor<HTMLSpanElement>('count')
-
   const setFormula = (id: string, patch: Partial<FormulaSheetData['formulas'][number]>) =>
     onChange({ formulas: data.formulas.map((f) => (f.id === id ? { ...f, ...patch } : f)) })
 
@@ -62,7 +59,7 @@ export function FormulaSheetWidget({ data, onChange }: FormulaSheetWidgetProps) 
           <Plus size={11} aria-hidden />
           Add formula
         </button>
-        <span ref={countRef} className=" text-[10px] tabular-nums text-neutral-600">
+        <span className=" text-[10px] tabular-nums text-neutral-600">
           {data.formulas.length}
         </span>
       </div>

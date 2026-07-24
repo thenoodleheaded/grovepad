@@ -101,7 +101,7 @@ export interface AtlasWidgetData {
   modeStates?: Record<string, Omit<AtlasWidgetData, 'modeStates'>>
 }
 
-export type TimekeeperMode = 'countdown' | 'pomodoro' | 'stopwatch'
+type TimekeeperMode = 'countdown' | 'pomodoro' | 'stopwatch'
 
 /** One card with independent saved state for each timekeeping mode. */
 export interface TimekeeperData {

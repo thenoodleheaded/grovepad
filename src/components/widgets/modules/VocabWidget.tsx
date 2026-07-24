@@ -1,6 +1,5 @@
 import { Check, Plus, X } from 'lucide-react'
 import type { VocabData } from '../../../types/spatial'
-import { useFieldAnchor } from '../../../hooks/useFieldAnchor'
 
 interface VocabWidgetProps {
   data: VocabData
@@ -10,8 +9,6 @@ interface VocabWidgetProps {
 /** Term → definition study list; tap the check to mark a term known. */
 export function VocabWidget({ data, onChange }: VocabWidgetProps) {
   const knownCount = data.terms.filter((t) => t.known).length
-  const knownCountRef = useFieldAnchor<HTMLSpanElement>('known_count')
-
   const setTerm = (id: string, patch: Partial<VocabData['terms'][number]>) =>
     onChange({ terms: data.terms.map((t) => (t.id === id ? { ...t, ...patch } : t)) })
 
@@ -80,7 +77,7 @@ export function VocabWidget({ data, onChange }: VocabWidgetProps) {
           Add term
         </button>
         <span
-          ref={knownCountRef}
+
           className={` text-[10px] tabular-nums transition-colors ${
             data.terms.length > 0 && knownCount === data.terms.length ? 'text-emerald-400' : 'text-neutral-600'
           }`}

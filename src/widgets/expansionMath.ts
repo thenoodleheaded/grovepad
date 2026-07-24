@@ -1,7 +1,7 @@
 import type { DebtPayoffData, ExpenseSplitData, SeriesPoint } from '../types/spatial'
-import { localDayKey, localDayKeyInDays } from '../utils/localDate'
+import { localDayKey } from '../utils/localDate'
 
-export { localDayKey, localDayKeyInDays }
+export { localDayKey }
 
 export const DAY_MS = 86_400_000
 

@@ -31,6 +31,11 @@ const requiredClauses = [
     'create policy grovepad_canvas_member_receive on realtime.messages',
     'public.canvas_role(canvas_id) in (\'owner\', \'editor\')',
     'perform pg_advisory_xact_lock',
+    'create or replace function public.delete_canvas_collaboration',
+    // NULL-safe role guards: `<> 'owner'` lets non-members through, because
+    // canvas_role returns NULL for them and `NULL <> 'owner'` is not true.
+    "if public.canvas_role(p_canvas_id) is distinct from 'owner' then raise insufficient_privilege; end if;",
+    "if coalesce(public.canvas_role(p_canvas_id)::text, '') not in ('owner', 'editor') then",
   ]
 for (const clause of requiredClauses) {
   if (!migrationCorpus.includes(clause)) {

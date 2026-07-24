@@ -18,7 +18,7 @@ export const ATLAS_WIDGET_DEFINITIONS = Object.fromEntries(
 ) as Record<AtlasType,WidgetDefinition>
 
 export const TRACKER_WIDGET_DEFINITION: WidgetDefinition = {
-  type:'tracker',label:'Tracker',description:'One flexible tracker with modes for logs, routines, status, and planning',
+  type:'tracker',label:'Tracker',description:'One flexible tracker with skins for logs, routines, status, and planning',
   icon:ATLAS_CATALOG.price_book.icon,category:'tracking',accent:'#34d399',
   defaultSize:{width:360,height:GRID_SIZE*7},defaultData:()=>defaultAtlasData('price_book'),
 }

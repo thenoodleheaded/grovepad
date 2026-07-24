@@ -1,6 +1,5 @@
 import { Plus, X } from 'lucide-react'
 import type { GradeCalcData } from '../../../types/spatial'
-import { useFieldAnchor } from '../../../hooks/useFieldAnchor'
 
 interface GradeCalcWidgetProps {
   data: GradeCalcData
@@ -20,8 +19,6 @@ function computeGrade(components: GradeCalcData['components']): number {
 
 export function GradeCalcWidget({ data, onChange }: GradeCalcWidgetProps) {
   const grade = computeGrade(data.components)
-  const gradeRowRef = useFieldAnchor('grade')
-
   const setComponent = (id: string, patch: Partial<GradeCalcData['components'][number]>) =>
     onChange({ components: data.components.map((c) => (c.id === id ? { ...c, ...patch } : c)) })
 
@@ -97,7 +94,7 @@ export function GradeCalcWidget({ data, onChange }: GradeCalcWidgetProps) {
         </button>
       </div>
 
-      <div ref={gradeRowRef} className="flex h-9 shrink-0 items-center justify-between border-t gp-hairline">
+      <div className="flex h-9 shrink-0 items-center justify-between border-t gp-hairline">
         <span className="text-[11px] font-medium uppercase tracking-wider text-neutral-600">Grade</span>
         <span className={` text-lg font-bold tabular-nums ${gradeColor}`}>
           {grade.toFixed(1)}%

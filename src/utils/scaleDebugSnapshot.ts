@@ -1,6 +1,5 @@
 import type { Size, Widget } from '../types/spatial'
-import { GRID_SIZE, ICONIFIED_SIZE } from '../types/spatial'
-import { pillSizeForTitle } from './collapsedWidget'
+import { GRID_SIZE, ICONIFIED_SIZE, WIDGET_MAX_EDGE } from '../types/spatial'
 import { computeDataHeight, computeDataWidth } from '../store/widgetSizing'
 import { getLiveWidgetSizing, mergeWidgetSizing } from '../store/liveWidgetSizing'
 import type { ScaleDebugSnapshot } from '../store/useScaleDebugStore'
@@ -51,11 +50,6 @@ export function computeScaleDebugSnapshot(widget: Widget, zoom: number, cardEl: 
   const anomalies: string[] = []
   if (!Number.isFinite(widget.size.width) || !Number.isFinite(widget.size.height)) {
     anomalies.push('nan-or-infinite-size')
-  } else if (widget.collapsed) {
-    const pill = pillSizeForTitle(widget.title)
-    if (Math.abs(widget.size.width - pill.width) > 1 || Math.abs(widget.size.height - pill.height) > 1) {
-      anomalies.push('collapsed-size-mismatch')
-    }
   } else if (widget.iconified) {
     if (widget.size.width !== ICONIFIED_SIZE.width || widget.size.height !== ICONIFIED_SIZE.height) {
       anomalies.push('iconified-size-mismatch')
@@ -64,7 +58,10 @@ export function computeScaleDebugSnapshot(widget: Widget, zoom: number, cardEl: 
     const minWidth = effective.minWidth ?? DEFAULT_SIZING.minWidth
     const minHeight = effective.minHeight ?? DEFAULT_SIZING.minHeight
     const maxWidth = effective.maxWidth ?? DEFAULT_SIZING.maxWidth
-    const maxHeight = effective.autoHeight ? effective.maxHeight ?? Infinity : effective.maxHeight ?? DEFAULT_SIZING.maxHeight
+    const maxHeight = Math.min(
+      WIDGET_MAX_EDGE,
+      effective.autoHeight ? effective.maxHeight ?? WIDGET_MAX_EDGE : effective.maxHeight ?? DEFAULT_SIZING.maxHeight,
+    )
     if (widget.size.width < minWidth - 0.5) anomalies.push('below-min-width')
     if (widget.size.height < minHeight - 0.5) anomalies.push('below-min-height')
     if (widget.size.width > maxWidth + 0.5) anomalies.push('above-max-width')
@@ -83,7 +80,6 @@ export function computeScaleDebugSnapshot(widget: Widget, zoom: number, cardEl: 
     title: widget.title,
     t: Date.now(),
     size: widget.size,
-    collapsed: widget.collapsed === true,
     iconified: widget.iconified === true,
     locked: widget.metadata.locked === true,
     mounted,

@@ -1,8 +1,6 @@
 import { useLayoutEffect, useRef } from 'react'
 import type { StickyNoteColor, StickyNoteData } from '../../../types/spatial'
-import { useFieldAnchor } from '../../../hooks/useFieldAnchor'
 import { WidgetPanel } from '../WidgetPanel'
-import { setCollaborativeEditingWidget } from '../../../collaboration/collaborationController'
 import { useCollaborationStore } from '../../../store/useCollaborationStore'
 
 interface StickyNoteWidgetProps {
@@ -51,7 +49,6 @@ const COLOR_ORDER: StickyNoteColor[] = ['yellow', 'pink', 'blue', 'green', 'purp
  */
 export function StickyNoteWidget({ data, onChange, onHeightChange, widgetId }: StickyNoteWidgetProps) {
   const style = COLOR_STYLES[data.color] ?? COLOR_STYLES.yellow
-  const textRowRef = useFieldAnchor('text')
   const rootRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const remoteEditor = useCollaborationStore((state) =>
@@ -71,7 +68,7 @@ export function StickyNoteWidget({ data, onChange, onHeightChange, widgetId }: S
 
   return (
     <div ref={rootRef} className="flex flex-col gap-1">
-      <div ref={textRowRef}>
+      <div>
         <WidgetPanel className={`p-2.5 ${style.panel}`}>
           <textarea
             ref={textareaRef}
@@ -80,8 +77,6 @@ export function StickyNoteWidget({ data, onChange, onHeightChange, widgetId }: S
             placeholder="Jot something down…"
             aria-label="Sticky note text"
             onChange={(e) => onChange({ ...data, text: e.target.value })}
-            onFocus={() => setCollaborativeEditingWidget(widgetId ?? null)}
-            onBlur={() => setCollaborativeEditingWidget(null)}
             data-collaboration-editing={Boolean(remoteEditor)}
             className={`w-full resize-none bg-transparent text-[13px] leading-[1.6] text-neutral-100 outline-none placeholder:text-neutral-600 ${style.caret}`}
           />

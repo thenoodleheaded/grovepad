@@ -1,6 +1,5 @@
 import { Plus, X } from 'lucide-react'
 import type { ProsConsData, ProsConsItem } from '../../../types/spatial'
-import { useFieldAnchor } from '../../../hooks/useFieldAnchor'
 import { WidgetPanel } from '../WidgetPanel'
 
 interface ProsConsWidgetProps {
@@ -26,16 +25,14 @@ function Column({
 
   const headerClass = accent === 'pro' ? 'text-emerald-400' : 'text-red-400'
   const dotClass = accent === 'pro' ? 'bg-emerald-400/70' : 'bg-red-400/70'
-  const countRef = useFieldAnchor<HTMLSpanElement>(accent === 'pro' ? 'pros_count' : 'cons_count')
-
   return (
-    // Paired alternatives never scale asymmetrically (XVIII.1, symmetry rule).
-    <WidgetPanel grip={false} island={accent} sizing="fixed" className="flex min-w-0 flex-1 flex-col p-3">
+    // Paired alternatives never scale asymmetrically (glass constitution symmetry rule).
+    <WidgetPanel grip={false} floor="rigid" className="flex min-w-0 flex-1 flex-col p-3">
       <div className="flex items-center justify-between pb-1.5">
         <span className={`text-[10px] font-semibold uppercase tracking-widest ${headerClass}`}>
           {title}
         </span>
-        <span ref={countRef} className=" text-[10px] tabular-nums text-neutral-600">
+        <span className=" text-[10px] tabular-nums text-neutral-600">
           {items.length}
         </span>
       </div>

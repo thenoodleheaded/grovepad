@@ -1,6 +1,5 @@
 import { CalendarClock } from 'lucide-react'
 import type { CountdownData } from '../../../types/spatial'
-import { useFieldAnchor } from '../../../hooks/useFieldAnchor'
 import { useSharedClock } from '../../../hooks/useSharedClock'
 import { SplitWell } from '../instruments/GlassInstrumentParts'
 
@@ -24,8 +23,6 @@ export function CountdownWidget({ data, onChange }: CountdownWidgetProps) {
   const hours=Math.floor(remaining/3_600_000)%24
   const minutes=Math.floor(remaining/60_000)%60
   const tone=daysLeft<1?'rose':daysLeft<7?'amber':'accent'
-  const daysLeftRef = useFieldAnchor('days_left')
-
   return (
     <div className="flex h-full flex-col justify-between gap-2">
       <div className="flex items-center gap-2">
@@ -47,7 +44,7 @@ export function CountdownWidget({ data, onChange }: CountdownWidgetProps) {
           />
         </label>
       </div>
-      <div ref={daysLeftRef} aria-live="polite" aria-label={overdue?'Elapsed':`${daysLeft} days, ${hours} hours left`} className="grid grid-cols-3 gap-2">
+      <div aria-live="polite" aria-label={overdue?'Elapsed':`${daysLeft} days, ${hours} hours left`} className="grid grid-cols-3 gap-2">
         {overdue?<div className="col-span-3"><SplitWell value="--" label="ELAPSED" tone="rose"/></div>:<><SplitWell value={daysLeft} label="DAYS" tone={tone}/><SplitWell value={hours} label="HRS" tone={tone}/><SplitWell value={minutes} label="MIN" tone={tone}/></>}
       </div>
     </div>

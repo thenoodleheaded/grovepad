@@ -29,7 +29,7 @@ describe('mergeCanvasIntoBoard', () => {
         keep: { id: 'keep', fromId: 'keep-b', toId: 'keep-b', type: 'cousin', isResolved: false },
       },
       connections: {},
-      groups: {},
+      glues: {},
       selectedIds: new Set(['old-a', 'keep-b']),
       widgetStructureVersion: 4,
       canvases: {
@@ -45,7 +45,7 @@ describe('mergeCanvasIntoBoard', () => {
       widgets: { 'next-a': nextA },
       relations: {},
       connections: {},
-      groups: {},
+      glues: {},
     })
 
     expect(patch.widgets).toEqual({ 'keep-b': keepB, 'next-a': nextA })
@@ -62,7 +62,7 @@ describe('mergeCanvasIntoBoard', () => {
       relations: {
         cross: { id: 'cross', fromId: 'a', toId: 'b', type: 'parent', isResolved: false },
       },
-      connections: {}, groups: {}, selectedIds: new Set<string>(), widgetStructureVersion: 0,
+      connections: {}, glues: {}, selectedIds: new Set<string>(), widgetStructureVersion: 0,
       canvases: {
         a: { id: 'a', name: 'A', workspaceId: 'workspace', parentCanvasId: null },
         b: { id: 'b', name: 'B', workspaceId: 'workspace', parentCanvasId: null },
@@ -70,7 +70,7 @@ describe('mergeCanvasIntoBoard', () => {
     } satisfies Parameters<typeof mergeCanvasIntoBoard>[0]
 
     const patch = mergeCanvasIntoBoard(state, {
-      canvasId: 'a', canvas: { id: 'a', name: 'A' }, widgets: {}, relations: {}, connections: {}, groups: {},
+      canvasId: 'a', canvas: { id: 'a', name: 'A' }, widgets: {}, relations: {}, connections: {}, glues: {},
     })
     expect(patch.relations).toEqual({})
   })
@@ -95,7 +95,7 @@ describe('mergeCanvasIntoBoard', () => {
       canvasId: '__bridge-undo-test__',
       canvas: { id: '__bridge-undo-test__', name: 'Undo test' },
       widgets: { note: widget('note', '__bridge-undo-test__') },
-      relations: {}, connections: {}, groups: {},
+      relations: {}, connections: {}, glues: {},
     }, LOCAL_STORE_ORIGIN)
     bridge.undoManager.stopCapturing()
 

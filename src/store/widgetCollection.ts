@@ -1,6 +1,5 @@
 import type { Relation, Vector2D, Widget } from '../types/spatial'
-import { snapToGrid } from '../types/spatial'
-import { GROUP_CLUSTER_GAP, LAYOUT_GAP, MIN_PARENT_CHILD_GAP } from './widgetLayoutConstants'
+import { LAYOUT_GAP, MIN_PARENT_CHILD_GAP } from './widgetLayoutConstants'
 
 export interface LayoutRect {
   id: string
@@ -42,29 +41,6 @@ export function rectsOverlap(a: LayoutRect, b: LayoutRect, gap = LAYOUT_GAP): bo
 
 export function rectCenter(rect: LayoutRect): Vector2D {
   return { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 }
-}
-
-export function groupBounds(widgets: Record<string, Widget>, ids: string[]) {
-  let minX = Infinity
-  let minY = Infinity
-  let maxX = -Infinity
-  let maxY = -Infinity
-  for (const id of ids) {
-    const w = widgets[id]
-    if (!w) continue
-    minX = Math.min(minX, w.position.x)
-    minY = Math.min(minY, w.position.y)
-    maxX = Math.max(maxX, w.position.x + w.size.width)
-    maxY = Math.max(maxY, w.position.y + w.size.height)
-  }
-  if (!isFinite(minX)) return null
-  return {
-    x: minX,
-    y: minY,
-    width: maxX - minX,
-    height: maxY - minY,
-    center: { x: (minX + maxX) / 2, y: (minY + maxY) / 2 },
-  }
 }
 
 export function movedIdsForWidget(
@@ -110,11 +86,68 @@ function getParentIndex(relations: Record<string, Relation>): ParentIndex {
   return index
 }
 
+/** The generation row that guards a child: its direct parent plus every
+ * sibling of that parent (widgets sharing one of the parent's own parents). */
+export function hierarchyGuardiansForChild(
+  childId: string,
+  relations: Record<string, Relation>,
+): string[] {
+  const { parentsOf, childrenOf } = getParentIndex(relations)
+  const guardians = new Set<string>()
+  for (const parentId of parentsOf.get(childId) ?? []) {
+    guardians.add(parentId)
+    for (const grandparentId of parentsOf.get(parentId) ?? []) {
+      for (const siblingId of childrenOf.get(grandparentId) ?? []) guardians.add(siblingId)
+    }
+  }
+  guardians.delete(childId)
+  return [...guardians]
+}
+
+/** Every child whose hierarchy boundary includes `guardianId`. A node guards
+ * its own children and the children of every sibling in its generation row. */
+export function hierarchyChildrenGuardedBy(
+  guardianId: string,
+  relations: Record<string, Relation>,
+): string[] {
+  const { parentsOf, childrenOf } = getParentIndex(relations)
+  const row = new Set<string>([guardianId])
+  for (const parentId of parentsOf.get(guardianId) ?? []) {
+    for (const siblingId of childrenOf.get(parentId) ?? []) row.add(siblingId)
+  }
+  const children = new Set<string>()
+  for (const rowId of row) {
+    for (const childId of childrenOf.get(rowId) ?? []) {
+      if (!row.has(childId)) children.add(childId)
+    }
+  }
+  return [...children]
+}
+
+export function minimumHierarchyChildTop(
+  parentId: string,
+  widgets: Record<string, Widget>,
+  relations: Record<string, Relation>,
+): number | null {
+  const { parentsOf, childrenOf } = getParentIndex(relations)
+  const row = new Set<string>([parentId])
+  for (const grandparentId of parentsOf.get(parentId) ?? []) {
+    for (const siblingId of childrenOf.get(grandparentId) ?? []) row.add(siblingId)
+  }
+  let bottom = -Infinity
+  for (const id of row) {
+    const widget = widgets[id]
+    if (widget) bottom = Math.max(bottom, widget.position.y + widget.size.height)
+  }
+  return Number.isFinite(bottom) ? bottom + MIN_PARENT_CHILD_GAP : null
+}
+
 export function applyWidgetDelta(
   widgets: Record<string, Widget>,
   relations: Record<string, Relation>,
   ids: string[],
   delta: Vector2D,
+  enforceParentConstraints = true,
 ): Record<string, Widget> {
   if (delta.x === 0 && delta.y === 0) return widgets
   const movingIds = uniqueExistingIds(ids, widgets)
@@ -129,27 +162,20 @@ export function applyWidgetDelta(
     }
   }
 
-  const { parentsOf, childrenOf } = getParentIndex(relations)
-  for (const id of movingIds) {
-    const pos = positions[id]!
-    const ownHeight = widgets[id]!.size.height
-    const parents = parentsOf.get(id)
-    if (parents) {
-      for (const parentId of parents) {
-        const parentWidget = widgets[parentId]
-        if (!parentWidget) continue
-        const parentPosition = positions[parentId] ?? parentWidget.position
-        // Keep at least MIN_PARENT_CHILD_GAP clear below the parent's
-        // bottom edge, not just below its top-left corner.
+  if (enforceParentConstraints) {
+    for (const id of movingIds) {
+      const pos = positions[id]!
+      const ownHeight = widgets[id]!.size.height
+      for (const guardianId of hierarchyGuardiansForChild(id, relations)) {
+        const guardian = widgets[guardianId]
+        if (!guardian) continue
+        const guardianPosition = positions[guardianId] ?? guardian.position
         pos.y = Math.max(
           pos.y,
-          parentPosition.y + parentWidget.size.height + MIN_PARENT_CHILD_GAP,
+          guardianPosition.y + guardian.size.height + MIN_PARENT_CHILD_GAP,
         )
       }
-    }
-    const children = childrenOf.get(id)
-    if (children) {
-      for (const childId of children) {
+      for (const childId of hierarchyChildrenGuardedBy(id, relations)) {
         const childPosition = positions[childId] ?? widgets[childId]?.position
         if (childPosition) {
           pos.y = Math.min(pos.y, childPosition.y - ownHeight - MIN_PARENT_CHILD_GAP)
@@ -180,56 +206,4 @@ export function applyWidgetPositions(
     next[id] = { ...widget, position }
   }
   return next ?? widgets
-}
-
-export function compactGroupPositions(
-  widgets: Record<string, Widget>,
-  ids: string[],
-): Record<string, Vector2D> {
-  const groupIds = uniqueExistingIds(ids, widgets).sort((a, b) => {
-    const aw = widgets[a]!
-    const bw = widgets[b]!
-    return aw.position.y - bw.position.y || aw.position.x - bw.position.x
-  })
-  if (groupIds.length < 2) return {}
-
-  const bounds = groupBounds(widgets, groupIds)
-  if (!bounds) return {}
-
-  const columns = Math.ceil(Math.sqrt(groupIds.length))
-  const rows: string[][] = []
-  for (let i = 0; i < groupIds.length; i += columns) {
-    rows.push(groupIds.slice(i, i + columns))
-  }
-
-  const rowMetrics = rows.map((row) => {
-    const width =
-      row.reduce((total, id) => total + widgets[id]!.size.width, 0) +
-      Math.max(0, row.length - 1) * GROUP_CLUSTER_GAP
-    const height = Math.max(...row.map((id) => widgets[id]!.size.height))
-    return { width, height }
-  })
-
-  const clusterWidth = Math.max(...rowMetrics.map((row) => row.width))
-  const clusterHeight =
-    rowMetrics.reduce((total, row) => total + row.height, 0) +
-    Math.max(0, rowMetrics.length - 1) * GROUP_CLUSTER_GAP
-
-  let y = bounds.center.y - clusterHeight / 2
-  const positions: Record<string, Vector2D> = {}
-  rows.forEach((row, rowIndex) => {
-    const metrics = rowMetrics[rowIndex]!
-    let x = bounds.center.x - clusterWidth / 2 + (clusterWidth - metrics.width) / 2
-    for (const id of row) {
-      const widget = widgets[id]!
-      positions[id] = {
-        x: snapToGrid(x),
-        y: snapToGrid(y + (metrics.height - widget.size.height) / 2),
-      }
-      x += widget.size.width + GROUP_CLUSTER_GAP
-    }
-    y += metrics.height + GROUP_CLUSTER_GAP
-  })
-
-  return positions
 }

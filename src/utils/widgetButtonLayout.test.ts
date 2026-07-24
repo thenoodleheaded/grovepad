@@ -17,16 +17,19 @@ function widget(overrides: Partial<Widget> = {}): Pick<Widget, 'type' | 'metadat
 }
 
 describe('widgetActiveButtonCount', () => {
-  it('defaults to favorite + focus + delete active, others off', () => {
-    expect(widgetActiveButtonCount(widget())).toBe(3)
+  it('defaults to favorite + delete active, others off', () => {
+    expect(widgetActiveButtonCount(widget())).toBe(2)
   })
 
   it('checklist widgets get the completed checkbox for free', () => {
-    expect(widgetActiveButtonCount(widget({ type: 'checklist' }))).toBe(4)
+    expect(widgetActiveButtonCount(widget({ type: 'checklist' }))).toBe(3)
   })
 
-  it('locked widgets show the pin even without an explicit toggle', () => {
-    expect(widgetActiveButtonCount(widget({ metadata: { badges: [], locked: true } }))).toBe(4)
+  it('no longer reserves a title-row slot for pinning', () => {
+    // Pinning moved out of the customize row to a floating pill above the
+    // expanded card, so neither an explicit toggle nor a locked state adds a
+    // pin button to the row count.
+    expect(widgetActiveButtonCount(widget({ metadata: { badges: [], locked: true } }))).toBe(2)
   })
 
   it('explicit show* toggles add buttons; showFavoriteButton: false removes the default one', () => {
@@ -34,7 +37,7 @@ describe('widgetActiveButtonCount', () => {
       widgetActiveButtonCount(
         widget({ metadata: { badges: [], showFavoriteButton: false, showDuplicateButton: true, showMarkdownButton: true } }),
       ),
-    ).toBe(4) // focus, delete, duplicate, markdown — favorite dropped
+    ).toBe(3) // delete, duplicate, markdown — favorite dropped
   })
 })
 
@@ -47,22 +50,16 @@ describe('widgetTitleAreaWidth', () => {
 })
 
 describe('widgetHasButtonOverflow', () => {
-  it('fits the default 3 buttons + plus in a normal-width card', () => {
-    // width 280: titleArea 87 -> 193 available -> 4 horizontal slots; 3 buttons + plus = 4 items.
-    expect(widgetHasButtonOverflow(widget(), false)).toBe(false)
+  it('fits the default 2 buttons + plus in a normal-width card', () => {
+    // width 280: titleArea 87 -> 193 available -> 4 horizontal slots; 2 buttons + plus = 3 items.
+    expect(widgetHasButtonOverflow(widget())).toBe(false)
   })
 
   it('overflows a narrow card with the same default buttons', () => {
-    expect(widgetHasButtonOverflow(widget({ size: { width: 160, height: 160 } }), false)).toBe(true)
-  })
-
-  it('the group detach button can push a borderline card into overflow', () => {
-    const w = widget({ size: { width: 280, height: 160 } })
-    expect(widgetHasButtonOverflow(w, false)).toBe(false)
-    expect(widgetHasButtonOverflow(w, true)).toBe(true)
+    expect(widgetHasButtonOverflow(widget({ size: { width: 160, height: 160 } }))).toBe(true)
   })
 
   it('a long title shrinks available room enough to force overflow', () => {
-    expect(widgetHasButtonOverflow(widget({ title: 'A considerably longer widget title' }), false)).toBe(true)
+    expect(widgetHasButtonOverflow(widget({ title: 'A considerably longer widget title' }))).toBe(true)
   })
 })

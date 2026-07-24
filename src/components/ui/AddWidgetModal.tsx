@@ -474,21 +474,16 @@ export function AddWidgetModal({ worldPos, onClose, selection }: AddWidgetModalP
           <>
             {/* Header */}
             <div className="gp-picker-header flex shrink-0 items-center justify-between gap-3 pt-10 pb-1">
-              <div className="min-w-0">
-                <h2 className="gp-picker-title bg-gradient-to-r from-neutral-100 via-emerald-300 to-neutral-100 bg-clip-text text-2xl font-semibold tracking-tight text-transparent">
+              <div className="gp-popup-title-pill gp-panel gp-pop flex h-10 min-w-0 items-center rounded-full px-4">
+                <h2 className="gp-picker-title bg-gradient-to-r from-neutral-100 via-emerald-300 to-neutral-100 bg-clip-text text-[15px] font-semibold tracking-tight text-transparent">
                   {selection ? 'Choose widgets for this tree point' : 'Widget Library'}
                 </h2>
-                <p className="gp-picker-subtitle mt-0.5 text-[12px] text-neutral-500">
-                  {selection
-                    ? 'Select one or several cards for this branch bundle.'
-                    : 'Pick a card — it lands right where you clicked.'}
-                </p>
               </div>
               <div className="flex items-center gap-1.5">
                 <button
                   type="button"
                   onClick={() => setView('packs')}
-                  className="gp-picker-pack-button gp-touch-target flex h-8 items-center gap-1.5 rounded-lg border gp-hairline px-3 text-[12px] font-medium text-neutral-300 transition-colors hover:border-emerald-400/40 hover:text-emerald-300"
+                  className="gp-picker-pack-button gp-popup-action gp-touch-target"
                 >
                   <Blocks size={13} aria-hidden />
                   Packs
@@ -497,7 +492,7 @@ export function AddWidgetModal({ worldPos, onClose, selection }: AddWidgetModalP
                   type="button"
                   aria-label="Close"
                   onClick={onClose}
-                  className="gp-picker-close gp-touch-target flex h-8 w-8 items-center justify-center rounded-lg text-neutral-500 transition-colors hover:bg-neutral-800 hover:text-neutral-200"
+                  className="gp-picker-close gp-popup-close-naked gp-touch-target h-8 w-8"
                 >
                   <X size={15} aria-hidden />
                 </button>
@@ -505,7 +500,7 @@ export function AddWidgetModal({ worldPos, onClose, selection }: AddWidgetModalP
             </div>
 
             {/* Search — a glowing glass pill under the title */}
-            <div className="gp-picker-search mt-3 flex shrink-0 items-center gap-3 rounded-2xl px-4 py-2.5">
+            <div className="gp-picker-search gp-popup-island mt-3 flex shrink-0 items-center gap-3 rounded-2xl px-4 py-2.5">
               <Search size={17} className="shrink-0 text-neutral-600" aria-hidden />
               <input
                 ref={searchRef}

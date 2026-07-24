@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { ChevronLeft, ChevronRight, Plus, X } from 'lucide-react'
 import type { KanbanCard, KanbanData } from '../../../types/spatial'
-import { useFieldAnchor } from '../../../hooks/useFieldAnchor'
 
 interface KanbanWidgetProps {
   data: KanbanData
@@ -17,8 +16,6 @@ export function KanbanWidget({ data, onChange }: KanbanWidgetProps) {
   const [dragging,setDragging]=useState<{column:number;cardId:string}|null>(null)
   const [dropColumn,setDropColumn]=useState<number|null>(null)
   // The last column is conventionally "Done" — its count is the wireable one.
-  const doneCountRef = useFieldAnchor<HTMLSpanElement>('done_count')
-
   const setColumnLabel = (columnId: string, label: string) =>
     onChange({
       columns: data.columns.map((c) => (c.id === columnId ? { ...c, label } : c)),
@@ -92,7 +89,6 @@ export function KanbanWidget({ data, onChange }: KanbanWidgetProps) {
               }`}
             />
             <span
-              ref={columnIndex === data.columns.length - 1 ? doneCountRef : undefined}
               className="flex h-4 min-w-4 shrink-0 items-center justify-center rounded-full px-1  text-[9px] tabular-nums"
               style={{ color: hue, background: `${hue}1a` }}
             >

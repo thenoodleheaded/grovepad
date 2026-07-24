@@ -79,8 +79,8 @@ body {
 /* ── Grid line colors ──────────────────────────────────────────────────────── */
 
 :root {
-  --gp-grid-coarse: rgba(148, 163, 184, 0.10);
-  --gp-grid-fine: rgba(148, 163, 184, 0.06);
+  --gp-grid-coarse: rgba(148, 163, 184, calc(0.10 * var(--gp-tune-grid, 1)));
+  --gp-grid-fine: rgba(148, 163, 184, calc(0.06 * var(--gp-tune-grid, 1)));
 
   /* Pure-white hairlines for widget UI contrast in dark mode; light mode
      flips them to pure black. Applied via .gp-hairline. */
@@ -139,15 +139,6 @@ body {
  * data-widget-dragging and transitions collapse to zero so per-frame drag
  * updates are never smoothed (which would feel laggy).
  */
-.gp-widget-motion {
-  transition:
-    transform var(--gp-motion-layout) var(--gp-ease-layout),
-    opacity var(--gp-motion-fast) var(--gp-ease-standard),
-    box-shadow var(--gp-motion-fast) var(--gp-ease-standard),
-    border-color var(--gp-motion-fast) var(--gp-ease-standard),
-    background-color var(--gp-motion-fast) var(--gp-ease-standard);
-}
-
 /* WidgetCard owns world position and size on its outer wrapper. Keeping this
    timing identical to SVG route morphing prevents endpoints from detaching
    during settle, nudge, collapse, undo, and redo. */
@@ -159,6 +150,64 @@ body {
     height var(--gp-motion-layout) var(--gp-ease-layout);
 }
 
+/*
+ * Expand/collapse cross-fade for the resting-face system. The card's box
+ * glides between tile and full size on .gp-widget-layout-motion above; these
+ * two rules carry what's *inside* it across the same window, so nothing pops.
+ * Both run for exactly --gp-motion-layout, matching REST_TRANSITION_MS in
+ * widgetRest.ts, which is how long WidgetCard keeps the outgoing content
+ * subtree mounted on collapse.
+ */
+.gp-rest-face {
+  transition: opacity var(--gp-motion-layout) var(--gp-ease-layout);
+}
+
+@keyframes gp-rest-content-in {
+  from {
+    opacity: 0;
+  }
+}
+
+.gp-rest-content-in {
+  animation: gp-rest-content-in var(--gp-motion-layout) var(--gp-ease-layout) both;
+}
+
+/*
+ * The floor shadow under an ephemerally expanded card: one ring reaching
+ * three grid cells (120px) past every edge. It lives inside the card's
+ * lifted wrapper, so it stacks above every surrounding widget; backdrop-filter
+ * genuinely blurs and dims what sits beneath it, and the radial mask feathers
+ * that effect out gradually across the ring so it reads as a soft glow, not
+ * a panel with an edge. The card renders after it in DOM order and stays crisp.
+ */
+.gp-rest-halo {
+  position: absolute;
+  /* Reach past every edge — three grid cells by default. All four knobs below
+     are live-overridable from the Fine-tune menu (G); the fallbacks here are the
+     stock look and MUST match the defaults in uiTuning.ts. */
+  inset: calc(var(--gp-tune-halo-spread, 120px) * -1);
+  pointer-events: none;
+  background: rgb(5 9 18 / var(--gp-tune-halo-dim, 0.3));
+  backdrop-filter: blur(var(--gp-tune-halo-blur, 13px));
+  -webkit-backdrop-filter: blur(var(--gp-tune-halo-blur, 13px));
+  /* The mask holds the blur solid to `softness`, then feathers to nothing at the
+     rim — higher reads crisper, lower reads as a soft cloud. */
+  mask-image: radial-gradient(closest-side, #000 var(--gp-tune-halo-softness, 55%), transparent 100%);
+  -webkit-mask-image: radial-gradient(closest-side, #000 var(--gp-tune-halo-softness, 55%), transparent 100%);
+  transition: opacity var(--gp-motion-layout) var(--gp-ease-layout);
+  animation: gp-rest-halo-in var(--gp-motion-layout) var(--gp-ease-layout) both;
+}
+
+@keyframes gp-rest-halo-in {
+  from { opacity: 0; }
+}
+
+/* Collapse: the halo fades out across the same window the card's box glides
+   back to its tile, then unmounts. */
+.gp-rest-halo[data-halo-out] {
+  opacity: 0;
+}
+
 .gp-route-motion {
   transition: d var(--gp-motion-layout) var(--gp-ease-layout);
 }
@@ -167,7 +216,6 @@ body {
   transition: transform var(--gp-motion-layout) var(--gp-ease-layout);
 }
 
-body[data-widget-dragging] .gp-widget-motion,
 body[data-widget-dragging] .gp-widget-layout-motion,
 body[data-widget-dragging] .gp-route-motion,
 body[data-widget-dragging] .gp-route-chip-motion {
@@ -182,7 +230,6 @@ body[data-widget-dragging] .gp-route-chip-motion {
  * prefers-reduced-motion the global duration override still flattens this
  * to an instant move.
  */
-body[data-widget-dragging] .gp-widget-motion[data-ghost-displaced],
 body[data-widget-dragging] .gp-widget-layout-motion[data-ghost-displaced] {
   transition: transform var(--gp-motion-layout) var(--gp-ease-layout);
 }
@@ -196,7 +243,7 @@ body[data-widget-dragging] .gp-widget-layout-motion[data-settle-pending] > .gp-c
 
 /*
  * WidgetCard variant of the motion system: also transitions width/height/
- * border-radius so collapse-to-pill and the resize-release grid snap glide.
+ * border-radius so shrink-to-icon and the resize-release grid snap glide.
  * Only ever fires on discrete changes — live resize drags set
  * data-widget-dragging on <body>, which collapses these to zero, so
  * per-frame size updates track the pointer exactly.
@@ -236,435 +283,6 @@ body[data-widget-dragging] .gp-widget-layout-motion[data-settle-pending] > .gp-c
     background-color, scale;
 }
 
-/* Primitive passive widgets -------------------------------------------------
-   The canvas keeps hundreds of these asleep at once. All recurring visual
-   work is expressed with ordinary paint and pseudo-elements: no filters,
-   backdrop sampling, animation loops, or per-card compositor promotion. */
-.gp-widget-card[data-passive-widget] {
-  isolation: isolate;
-}
-
-.gp-primitive-title {
-  width: min(100%, 240px);
-  gap: 0.45rem;
-  filter: drop-shadow(0 2px 5px rgb(0 0 0 / 0.7));
-}
-
-.gp-primitive-content {
-  padding: 0.7rem;
-  color: rgb(212 212 216 / 0.9);
-  pointer-events: none;
-}
-
-.gp-primitive-text-wrap,
-.gp-primitive-stack {
-  display: flex;
-  min-height: 0;
-  height: 100%;
-  flex-direction: column;
-  gap: 0.45rem;
-}
-
-.gp-primitive-kicker {
-  flex: none;
-  font-size: 9px;
-  line-height: 1.2;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: rgb(161 161 170 / 0.78);
-}
-
-.gp-primitive-text {
-  min-height: 0;
-  overflow: hidden;
-  margin: 0;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-  font-size: 13px;
-  line-height: 1.65;
-  color: rgb(244 244 245 / 0.92);
-}
-
-.gp-primitive-summary {
-  display: flex;
-  min-width: 0;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 0.5rem;
-}
-
-.gp-primitive-summary > span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 12px;
-  font-weight: 600;
-  color: rgb(228 228 231 / 0.9);
-}
-
-.gp-primitive-summary > strong {
-  flex: none;
-  font-size: 15px;
-  font-variant-numeric: tabular-nums;
-  color: var(--gp-widget-accent);
-}
-
-.gp-primitive-progress {
-  height: 5px;
-  overflow: hidden;
-  flex: none;
-  border-radius: 999px;
-  background: rgb(255 255 255 / 0.07);
-}
-
-.gp-primitive-progress > span {
-  display: block;
-  height: 100%;
-  border-radius: inherit;
-  background: var(--gp-widget-accent);
-}
-
-.gp-primitive-rows {
-  display: flex;
-  min-height: 0;
-  overflow: hidden;
-  flex: 1;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.gp-primitive-row {
-  position: relative;
-  display: grid;
-  min-height: 22px;
-  flex: none;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 7px;
-  overflow: hidden;
-  border-radius: 7px;
-  padding: 2px 7px 2px 24px;
-  background: rgb(255 255 255 / 0.035);
-  font-size: 10px;
-  line-height: 1.2;
-}
-
-.gp-primitive-row::before {
-  content: '';
-  position: absolute;
-  z-index: 0;
-  left: 8px;
-  top: 50%;
-  translate: 0 -50%;
-  width: 7px;
-  height: 7px;
-  border: 1px solid color-mix(in srgb, var(--gp-widget-accent) 55%, transparent);
-  border-radius: 2px;
-}
-
-.gp-primitive-row-done::before {
-  background: var(--gp-widget-accent);
-}
-
-.gp-primitive-row[data-bar]::before {
-  inset: 0 auto 0 0;
-  width: var(--gp-primitive-row-ratio);
-  height: auto;
-  translate: none;
-  border: 0;
-  border-radius: inherit;
-  background: var(--gp-primitive-row-color);
-  opacity: 0.18;
-}
-
-.gp-primitive-row-done .gp-primitive-row-label {
-  opacity: 0.55;
-  text-decoration: line-through;
-}
-
-.gp-primitive-row-label,
-.gp-primitive-row-value {
-  position: relative;
-  z-index: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.gp-primitive-row-value {
-  color: rgb(161 161 170 / 0.82);
-  font-variant-numeric: tabular-nums;
-}
-
-.gp-primitive-table {
-  display: flex;
-  height: 100%;
-  min-height: 0;
-  overflow: hidden;
-  flex-direction: column;
-  border: 1px solid rgb(255 255 255 / 0.07);
-  border-radius: 9px;
-}
-
-.gp-primitive-table > div {
-  min-height: 23px;
-  overflow: hidden;
-  flex: none;
-  border-bottom: 1px solid rgb(255 255 255 / 0.055);
-  padding: 4px 7px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 10px;
-}
-
-.gp-primitive-table-head {
-  font-weight: 650;
-  color: rgb(244 244 245 / 0.88);
-  background: rgb(255 255 255 / 0.055);
-}
-
-.gp-primitive-palette {
-  display: grid;
-  height: 100%;
-  min-height: 0;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 6px;
-}
-
-.gp-primitive-palette > span {
-  min-height: 22px;
-  border-radius: 8px;
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.12);
-}
-
-.gp-primitive-media {
-  display: flex;
-  height: 100%;
-  min-height: 0;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.gp-primitive-media img {
-  min-height: 0;
-  width: 100%;
-  flex: 1;
-  object-fit: cover;
-  border-radius: 10px;
-}
-
-.gp-primitive-media span {
-  overflow: hidden;
-  flex: none;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 10px;
-  color: rgb(161 161 170 / 0.86);
-}
-
-.gp-primitive-badges {
-  position: absolute;
-  z-index: 12;
-  top: -12px;
-  right: 8px;
-  display: flex;
-  max-width: 60%;
-  align-items: center;
-  gap: 3px;
-  pointer-events: none;
-}
-
-.gp-primitive-badge {
-  overflow: hidden;
-  border: 1px solid rgb(255 255 255 / 0.1);
-  border-radius: 999px;
-  padding: 1px 6px;
-  background: rgb(9 9 11 / 0.9);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 8px;
-  color: rgb(212 212 216 / 0.82);
-}
-
-.gp-primitive-badge-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 999px;
-}
-
-.gp-primitive-badge-dot-red { background: #ef4444; }
-.gp-primitive-badge-dot-yellow { background: #eab308; }
-.gp-primitive-badge-dot-green { background: #22c55e; }
-
-.gp-primitive-blocked {
-  position: absolute;
-  z-index: 15;
-  bottom: -10px;
-  left: 50%;
-  display: flex;
-  max-width: 90%;
-  translate: -50% 0;
-  align-items: center;
-  gap: 4px;
-  border: 1px solid rgb(245 158 11 / 0.4);
-  border-radius: 999px;
-  padding: 1px 7px;
-  background: rgb(9 9 11 / 0.94);
-  font-size: 8px;
-  font-weight: 650;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: rgb(252 211 77 / 0.9);
-}
-
-.gp-primitive-blocked > span {
-  width: 5px;
-  height: 5px;
-  border-radius: 999px;
-  background: #fbbf24;
-}
-
-.gp-primitive-hydrating {
-  position: absolute;
-  z-index: 20;
-  inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
-  background: linear-gradient(110deg, transparent 15%, rgb(52 211 153 / 0.1) 45%, transparent 75%);
-}
-
-/* Resting furniture — archetypal shapes for widgets whose extracted content
-   is too sparse to carry the face. Mirrors what real empty renderers show
-   (writing wells, task rows, table grids, metric dials, media frames,
-   control keys) so far-zoom boards read as textured cards, never blank
-   slabs. Same well/key tones as the glass instrument primitives. */
-.gp-primitive-furn {
-  display: flex;
-  min-height: 0;
-  flex: 1;
-  flex-direction: column;
-  gap: 0.45rem;
-}
-
-.gp-primitive-furn-text > span {
-  height: 9px;
-  flex: none;
-  border-radius: 4px;
-  background: rgb(255 255 255 / 0.07);
-}
-
-.gp-primitive-furn-list > div {
-  display: flex;
-  flex: none;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.gp-primitive-furn-list i {
-  width: 12px;
-  height: 12px;
-  flex: none;
-  border-radius: 9999px;
-  border: 1.5px solid rgb(255 255 255 / 0.16);
-}
-
-.gp-primitive-furn-list span {
-  height: 8px;
-  border-radius: 4px;
-  background: rgb(255 255 255 / 0.07);
-}
-
-.gp-primitive-furn-table {
-  gap: 0;
-  border: 1px solid rgb(255 255 255 / 0.08);
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.gp-primitive-furn-table > div {
-  display: flex;
-  flex: 1;
-  min-height: 16px;
-}
-
-.gp-primitive-furn-table > div[data-head] {
-  background: rgb(255 255 255 / 0.05);
-}
-
-.gp-primitive-furn-table > div + div {
-  border-top: 1px solid rgb(255 255 255 / 0.07);
-}
-
-.gp-primitive-furn-table span {
-  flex: 1;
-}
-
-.gp-primitive-furn-table span + span {
-  border-left: 1px solid rgb(255 255 255 / 0.07);
-}
-
-.gp-primitive-furn-metric {
-  justify-content: center;
-}
-
-.gp-primitive-furn-metric-value {
-  width: 46%;
-  height: 22px;
-  flex: none;
-  border-radius: 6px;
-  background: rgba(6, 8, 7, 0.72);
-  box-shadow: inset 0 1.5px 3px rgb(0 0 0 / 0.5), inset 0 -1px 0 rgb(255 255 255 / 0.04);
-}
-
-.gp-primitive-furn-metric-bar {
-  height: 7px;
-  flex: none;
-  border-radius: 9999px;
-  background:
-    linear-gradient(90deg, color-mix(in oklab, var(--gp-widget-accent), transparent 45%) 0 38%, rgb(255 255 255 / 0.06) 38%);
-}
-
-.gp-primitive-furn-media {
-  flex: 1;
-  align-items: center;
-  justify-content: center;
-  border-radius: 8px;
-  background: rgba(6, 8, 7, 0.55);
-  box-shadow: inset 0 1.5px 3px rgb(0 0 0 / 0.4);
-}
-
-.gp-primitive-furn-media i {
-  width: 26px;
-  height: 20px;
-  border-radius: 4px;
-  border: 1.5px solid rgb(255 255 255 / 0.14);
-  background:
-    linear-gradient(135deg, transparent 55%, rgb(255 255 255 / 0.1) 55% 70%, transparent 70%);
-}
-
-.gp-primitive-furn-well,
-.gp-primitive-furn-controls .gp-primitive-furn-well {
-  flex: 1;
-  min-height: 18px;
-  border-radius: 8px;
-  background: rgba(6, 8, 7, 0.72);
-  box-shadow: inset 0 1.5px 3px rgb(0 0 0 / 0.5), inset 0 -1px 0 rgb(255 255 255 / 0.04);
-}
-
-.gp-primitive-furn-controls > div {
-  display: flex;
-  flex: none;
-  gap: 0.4rem;
-}
-
-.gp-primitive-furn-controls i {
-  flex: 1;
-  height: 14px;
-  border-radius: 6px;
-  background: rgb(255 255 255 / 0.045);
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.065), 0 2px 4px rgb(0 0 0 / 0.2);
-}
-
 body[data-widget-dragging] .gp-card-motion {
   transition: none;
 }
@@ -687,7 +305,7 @@ body[data-widget-dragging] .gp-card-motion {
 }
 
 /* Tree materialization is one atomic board transaction with an intentionally
- * asynchronous visual reveal: branch, cards, then the shared group plate. */
+ * asynchronous visual reveal: branch first, then its cards. */
 @keyframes gp-tree-widget-reveal {
   from {
     visibility: hidden;
@@ -711,36 +329,6 @@ body[data-widget-dragging] .gp-card-motion {
 
 .gp-tree-widget-reveal {
   animation: gp-tree-widget-reveal 760ms cubic-bezier(0.16, 1, 0.3, 1) backwards;
-  animation-delay: var(--gp-tree-reveal-delay, 0ms);
-}
-
-@keyframes gp-tree-group-reveal {
-  from {
-    visibility: hidden;
-    opacity: 0;
-    scale: 0.94;
-    clip-path: inset(48% 46% round 28px);
-    filter: blur(8px) saturate(0.72);
-  }
-  68% {
-    visibility: visible;
-    opacity: 1;
-    scale: 1.012;
-    clip-path: inset(0 round 26px);
-    filter: blur(0) saturate(1.12);
-  }
-  to {
-    visibility: visible;
-    opacity: 1;
-    scale: 1;
-    clip-path: inset(0 round 26px);
-    filter: none;
-  }
-}
-
-.gp-tree-group-reveal {
-  transform-origin: center;
-  animation: gp-tree-group-reveal 920ms cubic-bezier(0.16, 1, 0.3, 1) backwards;
   animation-delay: var(--gp-tree-reveal-delay, 0ms);
 }
 
@@ -844,16 +432,18 @@ body[data-widget-dragging] .gp-card-motion {
     scroll-behavior: auto !important;
     transition-duration: 0.01ms !important;
   }
-  .gp-widget-motion,
   .gp-widget-layout-motion,
   .gp-route-motion,
   .gp-route-chip-motion,
-  .gp-card-motion {
+  .gp-card-motion,
+  .gp-rest-face,
+  .gp-rest-halo {
     transition: none;
   }
+  .gp-rest-halo,
+  .gp-rest-content-in,
   .gp-spawn,
   .gp-tree-widget-reveal,
-  .gp-tree-group-reveal,
   .gp-tree-relation-reveal,
   .gp-tree-relation-reveal :is(.gp-canvas-edge-main, .gp-canvas-edge-halo),
   .gp-pop,
@@ -897,8 +487,8 @@ body[data-widget-dragging] .gp-card-motion {
   --color-neutral-950: oklch(98.8% 0 0);
 
   /* Grid lines — keep them light since canvas is dark-ish #2f3531 */
-  --gp-grid-coarse: rgb(137 165 148 / 0.075);
-  --gp-grid-fine: rgb(163 230 53 / 0.13);
+  --gp-grid-coarse: rgb(137 165 148 / calc(0.075 * var(--gp-tune-grid, 1)));
+  --gp-grid-fine: rgb(163 230 53 / calc(0.13 * var(--gp-tune-grid, 1)));
 
   /* Hairlines invert: pure black at the same subtlety. */
   --gp-hairline: rgba(0, 0, 0, 0.10);
@@ -985,14 +575,6 @@ body[data-widget-dragging] .gp-card-motion {
    islands in both themes; raised keys reuse the glass recipe without filters. */
 .gp-display-well{position:relative;overflow:hidden;border:0;border-radius:var(--gp-r2, 8px);background:rgba(6,8,7,.72);box-shadow:inset 0 1.5px 3px rgb(0 0 0/.5),inset 0 -1px 0 rgba(255,255,255,.04),0 1px 0 rgba(255,255,255,.045)}
 .gp-display-well::before{content:none}
-.gp-glass-key{border:1px solid transparent;border-radius:var(--gp-r2, 8px);background:rgba(255,255,255,.045);box-shadow:inset 0 1px 0 rgba(255,255,255,.065),0 2px 4px rgb(0 0 0/.2);transition:transform var(--gp-motion-instant),background-color var(--gp-motion-instant),border-color var(--gp-motion-instant)}
-.gp-glass-key:hover{border-color:color-mix(in oklab,var(--gp-widget-accent),transparent 72%);background:rgba(255,255,255,.07)}
-.gp-glass-key:active{transform:translateY(1px) scale(.98);box-shadow:inset 0 1px 3px rgb(0 0 0/.35)}
-.gp-led-colon{color:var(--gp-widget-accent);font-family:var(--font-sans);font-size:24px;font-weight:700;line-height:1}
-[data-running='true'] .gp-led-colon{animation:gp-led-colon 1s steps(1,end) infinite}
-@keyframes gp-led-colon{50%{opacity:.2}}
-@media(prefers-reduced-motion:reduce){[data-running='true'] .gp-led-colon{animation:none}}
-
 /* ---------------------------------------------------------------------------
  * Accent-infused card identity
  *
@@ -1031,7 +613,7 @@ body[data-widget-dragging] .gp-card-motion {
 .gp-widget-card {
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    0 5px 16px rgba(0, 0, 0, 0.32),
+    0 5px 16px rgb(0 0 0 / var(--gp-tune-card-shadow, 0.32)),
     0 1px 2px rgba(0, 0, 0, 0.16);
 }
 
@@ -1050,7 +632,7 @@ body[data-widget-dragging] .gp-card-motion {
   border-color: color-mix(in oklab, var(--gp-widget-accent), var(--gp-relation-outline) 30%);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.09),
-    0 0 0 3px color-mix(in oklab, var(--gp-widget-accent), transparent 70%),
+    0 0 0 var(--gp-tune-select-ring, 3px) color-mix(in oklab, var(--gp-widget-accent), transparent 70%),
     0 0 30px color-mix(in oklab, var(--gp-widget-accent), transparent 76%),
     0 6px 22px rgba(0, 0, 0, 0.38);
 }
@@ -1061,6 +643,26 @@ body[data-widget-dragging] .gp-card-motion {
     0 0 0 3px rgba(99, 102, 241, 0.38),
     0 0 26px rgba(99, 102, 241, 0.3),
     0 6px 22px rgba(0, 0, 0, 0.38);
+}
+
+/* An ephemerally expanded card floats above its neighbours, so it casts a
+   deeper drop shadow than a resting card to sell the lift. The combined
+   selector below keeps the selection ring when an expanded card is also
+   selected, layering the deep shadow underneath it. */
+.gp-widget-card[data-rest-expanded="true"] {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.09),
+    0 24px 60px rgb(0 0 0 / var(--gp-tune-expand-shadow, 0.58)),
+    0 10px 24px rgba(0, 0, 0, 0.42);
+}
+
+.gp-widget-card[data-selected="true"][data-rest-expanded="true"] {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.09),
+    0 0 0 var(--gp-tune-select-ring, 3px) color-mix(in oklab, var(--gp-widget-accent), transparent 70%),
+    0 0 30px color-mix(in oklab, var(--gp-widget-accent), transparent 76%),
+    0 24px 60px rgb(0 0 0 / var(--gp-tune-expand-shadow, 0.58)),
+    0 10px 24px rgba(0, 0, 0, 0.42);
 }
 
 
@@ -1242,6 +844,19 @@ body[data-keys-modifier="true"] .gp-widget-content * {
 
 .gp-link-dash {
   animation: gp-edge-dash-march 600ms linear infinite;
+}
+
+.gp-hierarchy-guide-line,
+.gp-hierarchy-guide-cap {
+  fill: none;
+  stroke: color-mix(in oklab, #a7f3d0, var(--gp-relation-outline) 28%);
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+  filter: drop-shadow(0 0 4px rgb(52 211 153 / 0.42));
+}
+
+.gp-hierarchy-guide-line {
+  stroke-dasharray: 5 4;
 }
 
 /* Relations and dependencies replace their solid stroke with directional
@@ -1650,6 +1265,14 @@ body[data-circuit-mode] .gp-widget-card {
   animation: gp-ghost-cell-close 220ms cubic-bezier(0.55, 0, 1, 0.45) both;
 }
 
+.gp-ghost-cell--selected {
+  background-color: rgb(168 85 247 / 0.22);
+}
+
+.gp-ghost-cell--selected .gp-ghost-outline {
+  stroke-width: 3.15;
+}
+
 .gp-ghost-rope {
   /* World-unit dashes stay identical on short vertical and long diagonal
      connectors. Never normalize these with SVG pathLength. */
@@ -1824,17 +1447,6 @@ body[data-circuit-mode] .gp-widget-card {
   filter: drop-shadow(0 0 3px oklch(83% 0.16 75 / 0.35));
 }
 
-.gp-bp-band {
-  border: 1.5px dashed oklch(87% 0.17 162 / 0.22);
-  background: oklch(87% 0.17 162 / 0.03);
-  animation: gp-bp-bloom 380ms var(--gp-ease-out) backwards;
-  transition:
-    left 340ms var(--gp-ease-out),
-    top 340ms var(--gp-ease-out),
-    width 340ms var(--gp-ease-out),
-    height 340ms var(--gp-ease-out);
-}
-
 .gp-bp-pill {
   animation: gp-bp-bloom 300ms var(--gp-ease-out) backwards;
   transition: left 340ms var(--gp-ease-out), top 340ms var(--gp-ease-out);
@@ -1856,7 +1468,6 @@ body[data-circuit-mode] .gp-widget-card {
   .gp-bp-chip--sketch,
   .gp-bp-chip--sketch::after,
   .gp-bp-rope,
-  .gp-bp-band,
   .gp-bp-pill,
   .gp-bp-breathe,
   .gp-bp-spin {

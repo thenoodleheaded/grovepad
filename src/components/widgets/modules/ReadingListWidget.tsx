@@ -1,6 +1,5 @@
 import { Plus, X } from 'lucide-react'
 import type { ReadingItem, ReadingListData, ReadingStatus } from '../../../types/spatial'
-import { useFieldAnchor } from '../../../hooks/useFieldAnchor'
 
 interface ReadingListWidgetProps {
   data: ReadingListData
@@ -18,8 +17,6 @@ const hash=(text:string)=>[...text].reduce((sum,char)=>sum+char.charCodeAt(0),0)
 
 /** Books & articles with a tap-to-cycle status chip. */
 export function ReadingListWidget({ data, onChange }: ReadingListWidgetProps) {
-  const doneCountRef = useFieldAnchor('done_count')
-
   const setItem = (id: string, patch: Partial<ReadingItem>) =>
     onChange({ items: data.items.map((item) => (item.id === id ? { ...item, ...patch } : item)) })
 
@@ -45,7 +42,7 @@ export function ReadingListWidget({ data, onChange }: ReadingListWidgetProps) {
         <div className="ml-auto flex min-w-12 flex-col-reverse gap-0.5">{data.items.filter(item=>item.status==='done').map(item=><button key={item.id} type="button" aria-label={`${item.title||'Untitled'} — done`} onClick={()=>setItem(item.id,{status:'queued'})} className="h-1.5 w-12 rounded-sm border-t gp-hairline bg-neutral-700/70" title={item.title}/>)}</div>
       </div>
 
-      <div ref={doneCountRef} className="mt-auto flex h-8 items-center justify-between border-t gp-hairline">
+      <div className="mt-auto flex h-8 items-center justify-between border-t gp-hairline">
         <button
           type="button"
           onClick={addItem}

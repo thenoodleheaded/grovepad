@@ -1,6 +1,5 @@
 import { Plus, X } from 'lucide-react'
 import type { PollData } from '../../../types/spatial'
-import { useFieldAnchor } from '../../../hooks/useFieldAnchor'
 
 interface PollWidgetProps {
   data: PollData
@@ -10,8 +9,6 @@ interface PollWidgetProps {
 /** Tap-to-vote poll — each option fills with its share of the vote. */
 export function PollWidget({ data, onChange }: PollWidgetProps) {
   const totalVotes = data.options.reduce((sum, o) => sum + o.votes, 0)
-  const votesRowRef = useFieldAnchor<HTMLSpanElement>('votes')
-
   const setOptionLabel = (id: string, label: string) =>
     onChange({
       ...data,
@@ -96,7 +93,7 @@ export function PollWidget({ data, onChange }: PollWidgetProps) {
           <Plus size={11} aria-hidden />
           Add option
         </button>
-        <span ref={votesRowRef} className=" text-[10px] tabular-nums text-neutral-600">
+        <span className=" text-[10px] tabular-nums text-neutral-600">
           {totalVotes} vote{totalVotes === 1 ? '' : 's'}
         </span>
       </div>

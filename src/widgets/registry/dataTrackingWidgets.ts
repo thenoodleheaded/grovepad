@@ -87,7 +87,9 @@ export const DATA_TRACKING_WIDGET_DEFINITIONS = {
     icon: Star,
     category: 'data',
     accent: '#fbbf24',
-    defaultSize: { width: 260, height: C * 3 },
+    // Five stars and a label: a short, wide card with nothing to stretch.
+    defaultSize: { width: C * 5, height: C * 2 },
+    sizing: { minWidth: C * 5, minHeight: C * 2, autoHeight: true, fixed: true },
     defaultData: () => ({ label: 'Rate it', value: 0 }),
   },
   calculator: {
@@ -107,6 +109,7 @@ export const DATA_TRACKING_WIDGET_DEFINITIONS = {
     icon: BarChart3,
     category: 'data',
     accent: '#7dd3fc',
+    restingFace: true,
     defaultSize: { width: 400, height: C * 7 },
     defaultData: () => ({
       title: 'Chart',
@@ -117,11 +120,11 @@ export const DATA_TRACKING_WIDGET_DEFINITIONS = {
         { id: uid(), label: 'B', value: 5, color: '#a3e635' },
       ],
     }),
-    modes: [
-      { value: 'bar', label: 'Bar', icon: BarChart3 },
-      { value: 'line', label: 'Line', icon: ChartLine },
-      { value: 'donut', label: 'Donut', icon: ChartPie },
-      { value: 'pie', label: 'Pie', icon: ChartPie },
+    skins: [
+      { value: 'bar', label: 'Bar', icon: BarChart3, accent: '#7dd3fc' },
+      { value: 'line', label: 'Line', icon: ChartLine, accent: '#4ade80' },
+      { value: 'donut', label: 'Donut', icon: ChartPie, accent: '#fbbf24' },
+      { value: 'pie', label: 'Pie', icon: ChartPie, accent: '#fb923c' },
     ],
   },
   table: {
@@ -191,17 +194,21 @@ export const DATA_TRACKING_WIDGET_DEFINITIONS = {
     icon: Timer,
     category: 'tracking',
     accent: '#86efac',
-    defaultSize: { width: 280, height: C * 6 },
+    // A dial is square: the clock ring rides the card's own outline, so the
+    // card stays between 4×4 and 7×7 cells and never stretches into a bar
+    // that would make the ring read as a border instead of a bezel.
+    defaultSize: { width: C * 5, height: C * 5 },
+    sizing: { minWidth: C * 4, minHeight: C * 4, maxWidth: C * 7, maxHeight: C * 7 },
     defaultData: () => ({
       mode: 'countdown',
       countdown: { label: 'Timer', durationSeconds: 300, remainingSeconds: 300, endAt: null },
       pomodoro: { label: 'Focus', workMinutes: 25, breakMinutes: 5, phase: 'work', endAt: null, remainingSeconds: 25 * 60, completed: 0 },
       stopwatch: { elapsedMs: 0, startedAt: null, laps: [] },
     }),
-    modes: [
-      { value: 'countdown', label: 'Countdown', icon: Timer },
-      { value: 'pomodoro', label: 'Pomodoro', icon: Coffee },
-      { value: 'stopwatch', label: 'Stopwatch', icon: Hourglass },
+    skins: [
+      { value: 'countdown', label: 'Countdown', icon: Timer, accent: '#86efac' },
+      { value: 'pomodoro', label: 'Pomodoro', icon: Coffee, accent: '#fb7185' },
+      { value: 'stopwatch', label: 'Stopwatch', icon: Hourglass, accent: '#7dd3fc' },
     ],
   },
   mood_tracker: {

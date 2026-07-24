@@ -5,7 +5,6 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from 'react'
 import { Eraser, Pen, Redo2, Trash2, Undo2 } from 'lucide-react'
-import { useFocusStore } from '../../../store/useFocusStore'
 import { useWidgetStore } from '../../../store/useWidgetStore'
 import type {
   SketchpadData,
@@ -22,7 +21,6 @@ import {
 } from '../../../utils/sketchpadStroke'
 
 interface SketchpadWidgetProps {
-  widgetId: string
   data: SketchpadData
   onChange: (data: SketchpadData) => void
 }
@@ -80,8 +78,7 @@ function drawStroke(
  * in refs and one requestAnimationFrame loop; React/store update only when a
  * complete stroke (or erase gesture) is committed.
  */
-export function SketchpadWidget({ widgetId, data, onChange }: SketchpadWidgetProps) {
-  const drawingEnabled = useFocusStore((state) => state.focusedWidgetId === widgetId)
+export function SketchpadWidget({ data, onChange }: SketchpadWidgetProps) {
   const canUndo = useWidgetStore((state) => state.canUndo)
   const canRedo = useWidgetStore((state) => state.canRedo)
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -163,7 +160,6 @@ export function SketchpadWidget({ widgetId, data, onChange }: SketchpadWidgetPro
     const visible =
       event.pointerType === 'pen' &&
       event.buttons === 0 &&
-      drawingEnabled &&
       document.documentElement.dataset.pencilHover !== 'off'
     if (!visible) {
       hover.hidden = true
@@ -215,7 +211,7 @@ export function SketchpadWidget({ widgetId, data, onChange }: SketchpadWidgetPro
   }
 
   const onPointerDown = (event: ReactPointerEvent<HTMLCanvasElement>) => {
-    if (event.pointerType === 'touch' && drawingEnabled) {
+    if (event.pointerType === 'touch') {
       // A finger landing while Pencil is drawing is a palm, not a stroke or a
       // widget drag. Two-finger canvas navigation remains available outside
       // the ink surface.
@@ -223,7 +219,7 @@ export function SketchpadWidget({ widgetId, data, onChange }: SketchpadWidgetPro
       event.stopPropagation()
       return
     }
-    if (!shouldStartSketchStroke(event.pointerType, drawingEnabled) || event.button !== 0) return
+    if (!shouldStartSketchStroke(event.pointerType) || event.button !== 0) return
     event.preventDefault()
     event.stopPropagation()
     event.currentTarget.setPointerCapture(event.pointerId)
@@ -288,7 +284,7 @@ export function SketchpadWidget({ widgetId, data, onChange }: SketchpadWidgetPro
   ]
 
   return (
-    <div className="flex h-full flex-col gap-2" data-sketchpad-focused={drawingEnabled || undefined}>
+    <div className="flex h-full flex-col gap-2">
       <div className="flex shrink-0 flex-wrap items-center gap-1" role="toolbar" aria-label="Sketch tools">
         {tools.map(({ id, Icon, label }) => (
           <button
@@ -349,7 +345,7 @@ export function SketchpadWidget({ widgetId, data, onChange }: SketchpadWidgetPro
           onPointerCancel={(event) => finishGesture(event, true)}
           onLostPointerCapture={(event) => finishGesture(event, true)}
           onPointerLeave={() => { if (hoverRef.current) hoverRef.current.hidden = true }}
-          className={`block h-full w-full ${drawingEnabled ? 'touch-none cursor-crosshair' : 'cursor-pointer'}`}
+          className="block h-full w-full touch-none cursor-crosshair"
         />
         <div
           ref={hoverRef}
@@ -357,11 +353,6 @@ export function SketchpadWidget({ widgetId, data, onChange }: SketchpadWidgetPro
           aria-hidden
           className="pointer-events-none absolute left-0 top-0 z-10 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/70 bg-white/10 shadow-[0_0_12px_rgba(255,255,255,.24)]"
         />
-        {!drawingEnabled && (
-          <div className="pointer-events-none absolute inset-x-3 bottom-3 rounded-lg bg-black/45 px-2 py-1.5 text-center text-[10px] text-neutral-400">
-            Focus this Sketchpad to draw; fingers remain reserved for navigation.
-          </div>
-        )}
       </div>
     </div>
   )

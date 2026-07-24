@@ -1,6 +1,6 @@
 import type { CanvasMeta, Widget } from '../types/spatial'
 
-export type CanvasOutlineEntryKind = 'canvas' | 'widget'
+type CanvasOutlineEntryKind = 'canvas' | 'widget'
 
 export interface CanvasOutlineEntry {
   key: string

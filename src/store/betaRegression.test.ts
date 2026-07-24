@@ -5,6 +5,8 @@ import { useCanvasStore } from './useCanvasStore'
 import { useWidgetStore } from './useWidgetStore'
 import { analyzeWidgetDeletion } from './widgetDeletion'
 import { widgetsForFrame } from '../utils/cameraFraming'
+import { restingFootprintWidget } from '../utils/widgetRest'
+import { rectsOverlap } from './widgetCollection'
 
 const baseline = parsePersistedBoard(buildBoardSnapshot(useWidgetStore.getState()))!
 
@@ -15,6 +17,37 @@ afterEach(() => {
 })
 
 describe('beta report store regressions', () => {
+  it('keeps consecutive picker creations from overlapping at their resting footprints', () => {
+    const origin = { x: 1200, y: 1200 }
+    const ids = [
+      useWidgetStore.getState().createWidget('Audit Note', origin, 'notes'),
+      useWidgetStore.getState().createWidget('Tasks', origin, 'checklist'),
+      useWidgetStore.getState().createWidget('Toggle', origin, 'toggle'),
+      useWidgetStore.getState().createWidget('Calculator', origin, 'calculator'),
+      useWidgetStore.getState().createWidget('Number Input', origin, 'number_input'),
+      useWidgetStore.getState().createWidget('Table', origin, 'table'),
+      useWidgetStore.getState().createWidget('Timer', origin, 'timekeeper'),
+    ]
+    const widgets = ids.map((id) =>
+      restingFootprintWidget(useWidgetStore.getState().widgets[id]!),
+    )
+
+    for (let i = 0; i < widgets.length; i++) {
+      for (let j = i + 1; j < widgets.length; j++) {
+        const a = widgets[i]!
+        const b = widgets[j]!
+        expect(
+          rectsOverlap(
+            { id: a.id, ...a.position, ...a.size },
+            { id: b.id, ...b.position, ...b.size },
+            0,
+          ),
+          `${a.title} ${JSON.stringify({ ...a.position, ...a.size })} overlaps ${b.title} ${JSON.stringify({ ...b.position, ...b.size })}`,
+        ).toBe(false)
+      }
+    }
+  })
+
   it('clears an obsolete redo branch when a workspace is created', () => {
     const first = useWidgetStore.getState().createWorkspace('First')
     useWidgetStore.getState().undo()
@@ -42,14 +75,6 @@ describe('beta report store regressions', () => {
     useWidgetStore.getState().redo()
     expect(useWidgetStore.getState().widgets[id]?.position).toEqual(after.position)
     expect(useWidgetStore.getState().widgets[id]?.size).toEqual(after.size)
-  })
-
-  it('groups without moving either child', () => {
-    const a = useWidgetStore.getState().createWidget('A', { x: -400, y: -120 }, 'notes')
-    const b = useWidgetStore.getState().createWidget('B', { x: 600, y: 920 }, 'notes')
-    const before = [a, b].map((id) => useWidgetStore.getState().widgets[id]!.position)
-    useWidgetStore.getState().createGroup([a, b])
-    expect([a, b].map((id) => useWidgetStore.getState().widgets[id]!.position)).toEqual(before)
   })
 
   it('makes framing atomic, padded, and board-scoped regardless of selection', () => {
@@ -90,7 +115,7 @@ describe('beta report store regressions', () => {
     const created = useWidgetStore.getState().commitThoughtPlan({
       sourceText: 'One checklist', confidence: 1,
       nodes: [{ temporaryId: 'one', widgetType: 'checklist', title: 'One checklist', data: { items: [] }, sourceText: 'One checklist', confidence: 1, depth: 0, metadata: { badges: [] } }],
-      relations: [], groups: [], warnings: [],
+      relations: [], warnings: [],
     }, { x: 500, y: 0 })
     useWidgetStore.getState().applyWireWrites(new Map([[generator, { prompt: 'One checklist', status: 'done' }]]))
     expect(created).toHaveLength(1)

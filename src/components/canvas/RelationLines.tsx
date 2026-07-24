@@ -5,25 +5,23 @@ import { getCriticalPath, useWidgetStore } from '../../store/useWidgetStore'
 import { useOverlayLifecycle } from '../../store/useOverlayStore'
 import type { RelationType, Vector2D, Widget } from '../../types/spatial'
 import { GRID_SIZE, RELATION_LABELS } from '../../types/spatial'
-import { widgetIntersectsRect } from '../../utils/canvasView'
 import { anchoredCurveMidpoint, anchoredCurvePath, curvedPath } from '../../utils/curve'
-import { groupWorldBounds } from '../../utils/groupGeometry'
-import { useQuantizedView } from '../../hooks/useQuantizedView'
+import { useWorldContentRect } from '../../hooks/useWorldContentRect'
+import { useWidgetRestStore } from '../../store/useWidgetRestStore'
+import { isWidgetResting, widgetWithEffectiveSize } from '../../utils/widgetRest'
 import { widgetDefinition } from '../../widgets/registry'
 import { treeRevealDelay } from '../../store/treeReveal'
+import {
+  relationAnchorRegion,
+  strictParentHasVerticalCorridor,
+  strictParentGeometryOrder,
+  usesStrictParentGeometry,
+  usesStrictRelations,
+} from '../../utils/relationPolicy'
 import {
   CanvasEdge,
   CanvasEdgeLayer,
 } from './CanvasEdge'
-import { edgeCorridorIntersectsRect, edgeDetailFor, type EdgeDetail } from './canvasEdgePolicy'
-
-const EDGE_OVERSCAN_SCREEN = 700
-const EDGE_RENDER_LIMIT = 950
-const CRITICAL_EDGE_RENDER_LIMIT = 1600
-/** Off-screen-to-off-screen edges still render if their straight-line
- *  corridor sweeps through the viewport (a wide relation shouldn't pop away
- *  just because both endpoints are currently scrolled out of view). */
-const CORRIDOR_MARGIN = 360
 
 interface EdgeStyle {
   stroke: string
@@ -56,10 +54,9 @@ const CORNER_INSET = 24
 const GAP_BUFFER = LINE_STANDOFF
 
 /** A widget's title capsule floats above its top edge (`-top-9`, h-8) — its
- *  footprint spans roughly [cardTop-36, cardTop-4]. */
+ *  footprint spans roughly [cardTop-36, cardTop-4]. It is left-aligned with
+ *  the card (icon cell first), never centred. */
 const WIDGET_PILL_TOP = 36
-/** A group band's name pill floats higher (`top:-60`, h-8). */
-const GROUP_PILL_TOP = 60
 /** Half of the shared `h-8` pill height. */
 const PILL_HALF_HEIGHT = 16
 /** Rough px-per-character for the pill's text-xs label — a layout estimate,
@@ -67,11 +64,9 @@ const PILL_HALF_HEIGHT = 16
 const PILL_CHAR_WIDTH = 6.5
 /** Icon + internal gaps baked into the widget pill markup: icon(11) + ml-1.5(6) + px-3*2(24). */
 const WIDGET_PILL_CHROME = 41
-/** Group pill markup: color dot(6) + gap-1.5(6) + px-3*2(24). */
-const GROUP_PILL_CHROME = 36
 /** Matches the pill's `min-w-[64px]`. */
 const PILL_MIN_HALF_WIDTH = 32
-/** The floating title capsule is hidden while a card is collapsed. */
+/** The floating title capsule is hidden while a card is an icon. */
 
 function clamp(v: number, lo: number, hi: number): number {
   return Math.min(hi, Math.max(lo, v))
@@ -117,6 +112,11 @@ interface EndpointGeo extends RectGeo {
    *  Other relation types may use the full border. */
   anchorRegion: 'any' | 'upper' | 'lower'
   pill: PillInfo | null
+}
+
+interface StrictParentRoute {
+  d: string
+  mid: Vector2D
 }
 
 /** Nearest point on a rect's border to `towards`, held back from the
@@ -247,7 +247,7 @@ function pickAnchors(from: EndpointGeo, to: EndpointGeo): { start: Vector2D; end
 /** Hierarchy-preserving anchors for parent links. Attachment may slide along
  * the bottom/top rail as cards move, but never jumps onto a side edge. This
  * keeps parenthood readable throughout a live drag. The child endpoint also
- * clears the complete floating pill silhouette, including group-name pills. */
+ * clears the complete floating pill silhouette. */
 function pickParentAnchors(from: EndpointGeo, to: EndpointGeo): { start: Vector2D; end: Vector2D } {
   const fromInset = Math.min(CORNER_INSET, Math.max(0, from.halfW - 1))
   const toInset = Math.min(CORNER_INSET, Math.max(0, to.halfW - 1))
@@ -265,8 +265,34 @@ function pickParentAnchors(from: EndpointGeo, to: EndpointGeo): { start: Vector2
   return { start, end }
 }
 
+/** Complete strict-route decision kept pure for regression tests. Reversed
+ * free-form records are ordered first; vertically overlapping cards use a
+ * nearest-border curve until a real bottom→top corridor exists. */
+function strictParentRoute(
+  fromGeo: EndpointGeo,
+  toGeo: EndpointGeo,
+): StrictParentRoute {
+  const [parentGeo, childGeo] = strictParentGeometryOrder(fromGeo, toGeo)
+  const hasVerticalCorridor = strictParentHasVerticalCorridor(
+    parentGeo,
+    childGeo,
+    LINE_STANDOFF,
+  )
+  const { start, end } = hasVerticalCorridor
+    ? pickParentAnchors(parentGeo, childGeo)
+    : pickAnchors(parentGeo, childGeo)
+  return {
+    d: hasVerticalCorridor
+      ? curvedPath(start, end, 'vertical')
+      : anchoredCurvePath(start, parentGeo.center, end, childGeo.center),
+    mid: hasVerticalCorridor
+      ? { x: (start.x + end.x) / 2, y: (start.y + end.y) / 2 }
+      : anchoredCurveMidpoint(start, parentGeo.center, end, childGeo.center),
+  }
+}
+
 // ---------------------------------------------------------------------------
-// Merged edge descriptor (after group routing is applied)
+// Merged edge descriptor
 // ---------------------------------------------------------------------------
 
 interface MergedEdge {
@@ -289,11 +315,10 @@ interface MergedEdge {
 
 interface RelationEdgeProps {
   edge: MergedEdge
-  detail: EdgeDetail
   onOpenMenu: (relationId: string, x: number, y: number) => void
 }
 
-const RelationEdge = memo(function RelationEdge({ edge, detail, onOpenMenu }: RelationEdgeProps) {
+const RelationEdge = memo(function RelationEdge({ edge, onOpenMenu }: RelationEdgeProps) {
   const { d, mid } = edge
   const { x: midX, y: midY } = mid
   const style = EDGE_STYLES[edge.type]
@@ -311,7 +336,6 @@ const RelationEdge = memo(function RelationEdge({ edge, detail, onOpenMenu }: Re
     <CanvasEdge
       d={d}
       variant="relation"
-      detail={detail}
       connected={Boolean(edge.hoverAccent)}
       resolved={muted}
       groupClassName={revealing ? 'gp-tree-relation-reveal' : ''}
@@ -341,7 +365,7 @@ const RelationEdge = memo(function RelationEdge({ edge, detail, onOpenMenu }: Re
         },
       }}
     >
-      {edge.type === 'blocker' && detail !== 'minimal' && (
+      {edge.type === 'blocker' && (
         <g className="gp-route-chip-motion" transform={`translate(${midX}, ${midY})`}>
           <circle r={7} fill="#171717" stroke={stroke} strokeWidth={1.5} />
           <text x={0} y={0} textAnchor="middle" dominantBaseline="central"
@@ -361,7 +385,6 @@ const RelationEdge = memo(function RelationEdge({ edge, detail, onOpenMenu }: Re
   prev.edge.highlighted === next.edge.highlighted &&
   prev.edge.hoverAccent === next.edge.hoverAccent &&
   prev.edge.singleRelationId === next.edge.singleRelationId &&
-  prev.detail === next.detail &&
   prev.onOpenMenu === next.onOpenMenu,
 )
 
@@ -389,7 +412,7 @@ function LineContextMenu({
     <>
       <div className="fixed inset-0 z-40" onPointerDown={onClose}
         onContextMenu={(e) => { e.preventDefault(); onClose() }} />
-      <div className="gp-menu gp-pop gp-panel fixed z-50 max-h-[calc(100dvh-16px)] w-52 origin-top-left overflow-y-auto rounded-2xl p-1.5 shadow-2xl"
+      <div className="gp-popup-menu gp-menu gp-pop gp-panel fixed z-50 max-h-[calc(100dvh-16px)] w-52 origin-top-left overflow-y-auto rounded-2xl p-1.5 shadow-2xl"
         style={{ left, top }}>
         <p className="px-3 py-1.5  text-[10px] uppercase tracking-widest text-neutral-500">
           {RELATION_LABELS[relation.type]} link
@@ -470,18 +493,13 @@ function LinkDragLine({ sourceCenter, cursorWorld }: { sourceCenter: Vector2D; c
  * scene. Previously every pointer move reconciled the complete edge list even
  * though none of those edges had changed.
  */
-const RelationLinkPreview = memo(function RelationLinkPreview({
-  groupGeo,
-}: {
-  groupGeo: Record<string, RectGeo>
-}) {
-  const { linkDrag, source, sourceGroupId } = useWidgetStore(
+const RelationLinkPreview = memo(function RelationLinkPreview() {
+  const { linkDrag, source } = useWidgetStore(
     useShallow((state) => {
       const drag = state.linkDrag
       return {
         linkDrag: drag,
         source: drag ? state.widgets[drag.sourceId] : undefined,
-        sourceGroupId: drag ? state.widgetGroupIndex[drag.sourceId] : undefined,
       }
     }),
   )
@@ -489,9 +507,7 @@ const RelationLinkPreview = memo(function RelationLinkPreview({
 
   return (
     <LinkDragLine
-      sourceCenter={
-        (sourceGroupId && groupGeo[sourceGroupId]?.center) || widgetCenter(source)
-      }
+      sourceCenter={widgetCenter(source)}
       cursorWorld={linkDrag.cursorWorld}
     />
   )
@@ -506,24 +522,23 @@ export function RelationLines() {
     relations,
     widgets,
     activeCanvasId,
-    widgetGroupIndex,
-    groups,
     criticalPathVisible,
     hoveredWidgetId,
+    canvas,
   } = useWidgetStore(
     useShallow((state) => ({
       relations: state.relations,
       widgets: state.widgets,
       activeCanvasId: state.activeCanvasId,
-      widgetGroupIndex: state.widgetGroupIndex,
-      groups: state.groups,
       criticalPathVisible: state.criticalPathVisible,
       hoveredWidgetId: state.hoveredWidgetId,
+      canvas: state.canvases[state.activeCanvasId],
     })),
   )
-  // Chunk-quantized camera: edges rebuild only on chunk crossings, not per pan pixel.
-  const view = useQuantizedView(EDGE_OVERSCAN_SCREEN, { freezeWhileMoving: true })
-  const visibleRect = view.rect
+  const strictRelations = usesStrictRelations(canvas)
+  const contentRect = useWorldContentRect()
+  const expandedWidgetId = useWidgetRestStore((state) => state.expandedWidgetId)
+  const expandedOffset = useWidgetRestStore((state) => state.expandedOffset)
 
   const [menu, setMenu] = useState<{ relationId: string; x: number; y: number } | null>(null)
   useOverlayLifecycle(menu !== null)
@@ -536,30 +551,7 @@ export function RelationLines() {
     ? widgetDefinition(widgets[hoveredWidgetId]!.type).accent
     : null
 
-  // Group bounding boxes for routing — padded to the band's outer extent so
-  // edges attach at the visible band, not at inner member bounds.
-  const groupGeo = useMemo(() => {
-    const out: Record<string, RectGeo> = {}
-    for (const groupId in groups) {
-      const group = groups[groupId]!
-      let anchor: Widget | undefined
-      for (const widgetId of group.widgetIds) {
-        anchor = widgets[widgetId]
-        if (anchor) break
-      }
-      if (!anchor || anchor.canvasId !== activeCanvasId) continue
-      const b = groupWorldBounds(group, widgets)
-      if (!b) continue
-      out[groupId] = {
-        center: { x: b.x + b.width / 2, y: b.y + b.height / 2 },
-        halfW: b.width / 2,
-        halfH: b.height / 2,
-      }
-    }
-    return out
-  }, [activeCanvasId, groups, widgets])
-
-  // Build merged edges: group multiple relations to the same group into one line
+  // Build merged edges: multiple relations between the same pair become one line
   const edges = useMemo((): MergedEdge[] => {
     const edgeMap = new Map<string, {
       fromGeo: EndpointGeo
@@ -572,71 +564,41 @@ export function RelationLines() {
       priority: number
       revealDelay: number | null
     }>()
-    const edgeBudget = criticalPathVisible ? CRITICAL_EDGE_RENDER_LIMIT : EDGE_RENDER_LIMIT
-    let activeRelationCount = 0
-    for (const relId in relations) {
-      const relation = relations[relId]!
-      // Dependencies have their own directional layer. Keeping them out of
-      // this budget and edge map prevents a blocker from inheriting generic
-      // nearest-border anchors or being merged into an ordinary relation.
-      if (relation.type === 'blocker') continue
-      const from = widgets[relation.fromId]
-      const to = widgets[relation.toId]
-      if (from?.canvasId !== activeCanvasId || to?.canvasId !== activeCanvasId) continue
-      activeRelationCount++
-      // Only the threshold matters. Huge boards avoid a redundant full scan
-      // before the real edge-building pass.
-      if (activeRelationCount > edgeBudget) break
-    }
-    // Small and ordinary boards keep every valid edge mounted. Spatial
-    // culling is only worth its pop-in tradeoff once the edge budget is under
-    // real pressure; this also keeps links stable while cards are moved.
-    const cullByViewport = activeRelationCount > edgeBudget
 
     const endpointCache = new Map<string, EndpointGeo | null>()
     const endpointGeo = (widgetId: string, anchorRegion: EndpointGeo['anchorRegion']): EndpointGeo | null => {
-      const groupId = widgetGroupIndex[widgetId]
-      const cacheKey = `${groupId ? `group:${groupId}` : `widget:${widgetId}`}:${anchorRegion}`
+      const cacheKey = `widget:${widgetId}:${anchorRegion}`
       if (endpointCache.has(cacheKey)) return endpointCache.get(cacheKey) ?? null
 
-      let result: EndpointGeo | null
-      if (groupId) {
-        const geo = groupGeo[groupId]
-        const group = groups[groupId]
-        if (!geo || !group) {
-          endpointCache.set(cacheKey, null)
-          return null
-        }
-        result = {
-          ...geo,
-          anchorRegion,
-          pill: {
-            cx: geo.center.x,
-            cy: geo.center.y - geo.halfH - GROUP_PILL_TOP + PILL_HALF_HEIGHT,
-            rx: estimatePillHalfWidth(group.label, GROUP_PILL_CHROME, geo.halfW * 2),
-            ry: PILL_HALF_HEIGHT,
-          },
-        }
-      } else {
-        const w = widgets[widgetId]
-        if (!w) {
-          endpointCache.set(cacheKey, null)
-          return null
-        }
-        const center = widgetCenter(w)
-        const pillHidden = w.collapsed === true || w.iconified === true
-        result = {
-          center,
-          halfW: w.size.width / 2,
-          halfH: w.size.height / 2,
-          anchorRegion,
-          pill: pillHidden ? null : {
-            cx: center.x,
+      const stored = widgets[widgetId]
+      if (!stored) {
+        endpointCache.set(cacheKey, null)
+        return null
+      }
+      // Lines anchor to the on-screen footprint; a resting tile also hides
+      // its floating title capsule, so there is no pill to dodge.
+      const restCtx = { expandedWidgetId, expandedOffset }
+      const restingHere = isWidgetResting(stored, restCtx)
+      const w = widgetWithEffectiveSize(stored, restCtx)
+      const center = widgetCenter(w)
+      const pillHidden = w.iconified === true || restingHere
+      const result: EndpointGeo | null = {
+        center,
+        halfW: w.size.width / 2,
+        halfH: w.size.height / 2,
+        anchorRegion,
+        // Left-aligned like the real capsule (icon cell at the card's left
+        // edge), not centred — a line landing at a wide card's top-centre
+        // has nothing to dodge there.
+        pill: pillHidden ? null : (() => {
+          const rx = estimatePillHalfWidth(w.title, WIDGET_PILL_CHROME, w.size.width)
+          return {
+            cx: w.position.x + rx,
             cy: w.position.y - WIDGET_PILL_TOP + PILL_HALF_HEIGHT,
-            rx: estimatePillHalfWidth(w.title, WIDGET_PILL_CHROME, w.size.width),
+            rx,
             ry: PILL_HALF_HEIGHT,
-          },
-        }
+          }
+        })(),
       }
       endpointCache.set(cacheKey, result)
       return result
@@ -651,28 +613,8 @@ export function RelationLines() {
       if (fromWidget.canvasId !== activeCanvasId || toWidget.canvasId !== activeCanvasId) continue
       const highlighted = criticalIds?.has(relId) ?? false
       const relationHovered = hoveredWidgetId === rel.fromId || hoveredWidgetId === rel.toId
-      const important = highlighted || rel.type === 'conflict'
-      if (
-        cullByViewport &&
-        !important &&
-        !widgetIntersectsRect(fromWidget, visibleRect) &&
-        !widgetIntersectsRect(toWidget, visibleRect) &&
-        !edgeCorridorIntersectsRect(
-          widgetCenter(fromWidget),
-          widgetCenter(toWidget),
-          visibleRect,
-          CORRIDOR_MARGIN,
-        )
-      ) {
-        continue
-      }
 
-      const fromGroupId = widgetGroupIndex[rel.fromId]
-      const toGroupId = widgetGroupIndex[rel.toId]
-      // Skip intra-group relations (both ends in same group)
-      if (fromGroupId && fromGroupId === toGroupId) continue
-
-      const edgeKey = `${fromGroupId ?? rel.fromId}::${toGroupId ?? rel.toId}`
+      const edgeKey = `${rel.fromId}::${rel.toId}`
       const priority = TYPE_PRIORITY[rel.type]
 
       const existing = edgeMap.get(edgeKey)
@@ -696,10 +638,9 @@ export function RelationLines() {
         }
         continue
       }
-      if (edgeMap.size >= edgeBudget && !important) continue
 
-      const fromGeo = endpointGeo(rel.fromId, rel.type === 'parent' ? 'lower' : 'any')
-      const toGeo = endpointGeo(rel.toId, rel.type === 'parent' ? 'upper' : 'any')
+      const fromGeo = endpointGeo(rel.fromId, relationAnchorRegion(rel.type, 'from', strictRelations))
+      const toGeo = endpointGeo(rel.toId, relationAnchorRegion(rel.type, 'to', strictRelations))
       if (!fromGeo || !toGeo) continue
 
       edgeMap.set(edgeKey, {
@@ -715,16 +656,16 @@ export function RelationLines() {
     }
 
     return Array.from(edgeMap.entries(), ([key, edge]) => {
-      if (edge.type === 'parent') {
-        // Parent links still choose the nearest legal point on the parent's
-        // lower boundary and child's upper boundary, including group hulls
-        // and floating name pills. Unlike the old escape route, one vertical
-        // cubic joins those adaptive anchors without stubs or reverse bends.
-        const { start, end } = pickParentAnchors(edge.fromGeo, edge.toGeo)
+      if (usesStrictParentGeometry(edge.type, strictRelations)) {
+        // A free-form canvas can persist a parent link in either direction.
+        // When strict paint is enabled, order the geometry by vertical
+        // placement before applying downward-only tangents; otherwise a
+        // lower→upper record doubles back into detached-looking hooks.
+        const route = strictParentRoute(edge.fromGeo, edge.toGeo)
         return {
           key,
-          d: curvedPath(start, end, 'vertical'),
-          mid: { x: (start.x + end.x) / 2, y: (start.y + end.y) / 2 },
+          d: route.d,
+          mid: route.mid,
           type: edge.type,
           isResolved: edge.isResolved,
           highlighted: edge.highlighted,
@@ -749,14 +690,12 @@ export function RelationLines() {
   }, [
     activeCanvasId,
     criticalIds,
-    criticalPathVisible,
-    groupGeo,
-    groups,
+    expandedOffset,
+    expandedWidgetId,
     hoveredAccent,
     hoveredWidgetId,
     relations,
-    visibleRect,
-    widgetGroupIndex,
+    strictRelations,
     widgets,
   ])
 
@@ -765,13 +704,12 @@ export function RelationLines() {
     [],
   )
   const closeMenu = useCallback(() => setMenu(null), [])
-  const edgeDetail = edgeDetailFor(edges.length)
 
   return (
     <>
       <CanvasEdgeLayer
-        visibleRect={visibleRect}
-        detail={edgeDetail}
+        contentRect={contentRect}
+        ariaHidden
         defs={
           <>
           <marker id="rel-arrow-conflict" viewBox="0 0 10 10" refX="9" refY="5"
@@ -787,10 +725,10 @@ export function RelationLines() {
       >
 
         {edges.map((edge) => (
-          <RelationEdge key={edge.key} edge={edge} detail={edgeDetail} onOpenMenu={openMenu} />
+          <RelationEdge key={edge.key} edge={edge} onOpenMenu={openMenu} />
         ))}
 
-        <RelationLinkPreview groupGeo={groupGeo} />
+        <RelationLinkPreview />
       </CanvasEdgeLayer>
 
       {menu && (

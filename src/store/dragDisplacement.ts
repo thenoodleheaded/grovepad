@@ -1,15 +1,16 @@
 import { create } from 'zustand'
 import type { Vector2D, Widget } from '../types/spatial'
-import { GROUP_PAD } from '../utils/groupGeometry'
 import {
   negotiateDisplacement,
   type NegotiationRect,
 } from './spatialNegotiation'
 import type { LayoutRect } from './widgetCollection'
 import { useWidgetStore } from './useWidgetStore'
+import { hierarchyBoundaryGuide, type HierarchyBoundaryGuide } from './hierarchyGuide'
+import { usesStrictRelations } from '../utils/relationPolicy'
 
 /**
- * Transient ghost layer for drag displacement. While a widget or group drag
+ * Transient ghost layer for drag displacement. While a widget or cluster drag
  * is live, neighbors that must make room shift visually through the offsets
  * published here — their stored positions never change until the drop
  * commits. Cancelling a gesture therefore only clears this store and every
@@ -28,6 +29,8 @@ interface DragDisplacementState {
   /** Widgets the gesture overlaps but that stayed put (locked, past the
    *  chain/area budget) — rendered dimmed as a "will settle on drop" hint. */
   pendingSettleIds: ReadonlySet<string>
+  /** Temporary strict-hierarchy boundary ruler for the active drag. */
+  hierarchyGuide: HierarchyBoundaryGuide | null
 }
 
 const EMPTY_SET: ReadonlySet<string> = new Set()
@@ -36,6 +39,7 @@ const ZERO_OFFSET: Vector2D = { x: 0, y: 0 }
 export const useDragDisplacementStore = create<DragDisplacementState>(() => ({
   offsets: {},
   pendingSettleIds: EMPTY_SET,
+  hierarchyGuide: null,
 }))
 
 /** How long a meaningful overlap must persist before neighbors move. Long
@@ -46,7 +50,7 @@ export const DISPLACEMENT_DWELL_MS = 300
 const NEGOTIATION_RANGE = 1600
 
 export interface NegotiationScene {
-  /** The moving footprint (a whole dragged group is padded like its plate). */
+  /** The moving footprint. */
   active: LayoutRect
   /** One rigid rect per non-moving cluster near the drag. */
   clusters: NegotiationRect[]
@@ -57,14 +61,14 @@ export interface NegotiationScene {
 /**
  * Collapse the board into the rect-level scene the negotiation engine
  * understands: moving widgets become one active rect, every nearby
- * non-moving widget joins its group's rigid cluster (padded like the
- * settle pass pads plates), and clusters containing a locked member are
- * walls. Pure — exported for deterministic tests.
+ * non-moving widget joins its glue cluster's rigid rect, and clusters
+ * containing a locked member are walls. Pure — exported for deterministic
+ * tests.
  */
 export function buildNegotiationScene(
   widgets: Record<string, Widget>,
-  groups: Record<string, { widgetIds: string[] }>,
-  groupIndex: Record<string, string>,
+  glues: Record<string, { widgetIds: string[] }>,
+  glueIndex: Record<string, string>,
   movingIds: string[],
   range = NEGOTIATION_RANGE,
 ): NegotiationScene | null {
@@ -86,24 +90,20 @@ export function buildNegotiationScene(
     maxY = Math.max(maxY, w.position.y + w.size.height)
   }
   if (!isFinite(minX)) return null
-  const movingGroupId = groupIndex[moving[0]!]
-  const movingWholeGroup =
-    moving.length > 1 && Boolean(movingGroupId) && moving.every((id) => groupIndex[id] === movingGroupId)
-  const activePad = movingWholeGroup ? GROUP_PAD : 0
   const active: LayoutRect = {
     id: '__drag__',
-    x: minX - activePad,
-    y: minY - activePad,
-    width: maxX - minX + activePad * 2,
-    height: maxY - minY + activePad * 2,
+    x: minX,
+    y: minY,
+    width: maxX - minX,
+    height: maxY - minY,
   }
 
   const byCluster = new Map<string, string[]>()
   for (const id of Object.keys(widgets)) {
     const w = widgets[id]!
     if (w.canvasId !== canvasId || movingSet.has(id)) continue
-    const gid = groupIndex[id]
-    const key = gid && groups[gid] ? `g:${gid}` : `w:${id}`
+    const gid = glueIndex[id]
+    const key = gid && glues[gid] ? `g:${gid}` : `w:${id}`
     const list = byCluster.get(key)
     if (list) list.push(id)
     else byCluster.set(key, [id])
@@ -130,13 +130,12 @@ export function buildNegotiationScene(
       cMaxY = Math.max(cMaxY, w.position.y + w.size.height)
       if (w.metadata.locked) locked = true
     }
-    const pad = key.startsWith('g:') && ids.length > 1 ? GROUP_PAD : 0
     const rect: NegotiationRect = {
       id: key,
-      x: cMinX - pad,
-      y: cMinY - pad,
-      width: cMaxX - cMinX + pad * 2,
-      height: cMaxY - cMinY + pad * 2,
+      x: cMinX,
+      y: cMinY,
+      width: cMaxX - cMinX,
+      height: cMaxY - cMinY,
     }
     if (locked) rect.locked = true
     if (rect.x + rect.width < nearMinX || rect.x > nearMaxX) continue
@@ -160,12 +159,13 @@ let tracker: GestureTracker | null = null
 /** Arm displacement for a new drag gesture. */
 export function beginDragDisplacement(): void {
   tracker = { directionX: 0, directionY: 0, dwellStart: null, displacing: false, suppressed: false }
+  useDragDisplacementStore.setState({ hierarchyGuide: null })
 }
 
 /**
- * Join intent wins over displacement: while the drag hovers a group plate
- * (or rearranges inside its own group's retention bounds) nothing may be
- * pushed. Ghosts glide home and the dwell gate re-arms.
+ * Glue intent wins over displacement: while an option-drag is about to weld
+ * onto a target nothing may be pushed. Ghosts glide home and the dwell gate
+ * re-arms.
  */
 export function setDragDisplacementSuppressed(suppressed: boolean): void {
   if (!tracker || tracker.suppressed === suppressed) return
@@ -214,10 +214,24 @@ export function updateDragDisplacement(
   if (tracker.suppressed) return
 
   const state = useWidgetStore.getState()
+  const movingCanvasId = state.widgets[movingIds[0] ?? '']?.canvasId
+  const nextGuide = usesStrictRelations(state.canvases[movingCanvasId ?? state.activeCanvasId])
+    ? hierarchyBoundaryGuide(state.widgets, state.relations, movingIds)
+    : null
+  const currentGuide = useDragDisplacementStore.getState().hierarchyGuide
+  if (
+    currentGuide?.childId !== nextGuide?.childId ||
+    currentGuide?.guardianId !== nextGuide?.guardianId ||
+    currentGuide?.x1 !== nextGuide?.x1 ||
+    currentGuide?.x2 !== nextGuide?.x2 ||
+    currentGuide?.y !== nextGuide?.y
+  ) {
+    useDragDisplacementStore.setState({ hierarchyGuide: nextGuide })
+  }
   const scene = buildNegotiationScene(
     state.widgets,
-    state.groups,
-    state.widgetGroupIndex,
+    state.glues,
+    state.widgetGlueIndex,
     movingIds,
   )
   if (!scene) {
@@ -317,7 +331,9 @@ export function endDragDisplacement(): Record<string, Vector2D> {
     if (offset.x !== 0 || offset.y !== 0) commit[id] = offset
   }
   if (Object.keys(state.offsets).length > 0 || state.pendingSettleIds.size > 0) {
-    useDragDisplacementStore.setState({ offsets: {}, pendingSettleIds: EMPTY_SET })
+    useDragDisplacementStore.setState({ offsets: {}, pendingSettleIds: EMPTY_SET, hierarchyGuide: null })
+  } else if (state.hierarchyGuide) {
+    useDragDisplacementStore.setState({ hierarchyGuide: null })
   }
   return commit
 }
@@ -327,6 +343,8 @@ export function cancelDragDisplacement(): void {
   tracker = null
   const state = useDragDisplacementStore.getState()
   if (Object.keys(state.offsets).length > 0 || state.pendingSettleIds.size > 0) {
-    useDragDisplacementStore.setState({ offsets: {}, pendingSettleIds: EMPTY_SET })
+    useDragDisplacementStore.setState({ offsets: {}, pendingSettleIds: EMPTY_SET, hierarchyGuide: null })
+  } else if (state.hierarchyGuide) {
+    useDragDisplacementStore.setState({ hierarchyGuide: null })
   }
 }

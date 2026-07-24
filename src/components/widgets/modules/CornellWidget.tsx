@@ -1,5 +1,4 @@
 import type { CornellData } from '../../../types/spatial'
-import { useFieldAnchor } from '../../../hooks/useFieldAnchor'
 
 interface CornellWidgetProps {
   data: CornellData
@@ -11,9 +10,6 @@ interface CornellWidgetProps {
  * with a summary band pinned along the bottom.
  */
 export function CornellWidget({ data, onChange }: CornellWidgetProps) {
-  const notesRef = useFieldAnchor<HTMLTextAreaElement>('notes')
-  const summaryRef = useFieldAnchor<HTMLTextAreaElement>('summary')
-
   return (
     <div className="flex h-full flex-col gap-2">
       <div className="flex min-h-0 flex-1 gap-2">
@@ -34,7 +30,7 @@ export function CornellWidget({ data, onChange }: CornellWidgetProps) {
             Notes
           </span>
           <textarea
-            ref={notesRef}
+
             value={data.notes}
             placeholder="Main notes…"
             aria-label="Notes"
@@ -49,7 +45,7 @@ export function CornellWidget({ data, onChange }: CornellWidgetProps) {
           Summary
         </span>
         <textarea
-          ref={summaryRef}
+
           value={data.summary}
           rows={2}
           placeholder="Sum it up in a sentence…"

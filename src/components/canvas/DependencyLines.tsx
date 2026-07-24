@@ -1,25 +1,20 @@
 import { memo, useCallback, useMemo, useState, type CSSProperties } from 'react'
 import { createPortal } from 'react-dom'
 import { useShallow } from 'zustand/react/shallow'
-import { useQuantizedView } from '../../hooks/useQuantizedView'
+import { useWorldContentRect } from '../../hooks/useWorldContentRect'
 import { getCriticalPath, useWidgetStore } from '../../store/useWidgetStore'
+import { useWidgetRestStore } from '../../store/useWidgetRestStore'
+import { widgetWithEffectiveSize } from '../../utils/widgetRest'
 import { useOverlayLifecycle } from '../../store/useOverlayStore'
 import type { RelationType, Vector2D, Widget } from '../../types/spatial'
 import { RELATION_LABELS } from '../../types/spatial'
-import { widgetIntersectsRect } from '../../utils/canvasView'
 import { anchoredCurveMidpoint, anchoredCurvePath } from '../../utils/curve'
 import { dependencyAnchors } from '../../utils/dependencyGeometry'
-import { groupWorldBounds } from '../../utils/groupGeometry'
 import {
   CanvasEdge,
   CanvasEdgeLayer,
 } from './CanvasEdge'
-import { edgeCorridorIntersectsRect, edgeDetailFor, type EdgeDetail } from './canvasEdgePolicy'
 
-const EDGE_OVERSCAN_SCREEN = 700
-const EDGE_RENDER_LIMIT = 950
-const CRITICAL_EDGE_RENDER_LIMIT = 1600
-const CORRIDOR_MARGIN = 360
 const DEPENDENCY_STROKE = '#f59e0b'
 const RESOLVED_STROKE = '#64748b'
 
@@ -50,11 +45,9 @@ function widgetCenter(widget: Widget): Vector2D {
 
 const DependencyEdge = memo(function DependencyEdge({
   edge,
-  detail,
   onOpenMenu,
 }: {
   edge: DependencyEdgeDescriptor
-  detail: EdgeDetail
   onOpenMenu: (relationId: string, x: number, y: number) => void
 }) {
   const stroke = edge.isResolved ? RESOLVED_STROKE : DEPENDENCY_STROKE
@@ -64,7 +57,6 @@ const DependencyEdge = memo(function DependencyEdge({
     <CanvasEdge
       d={edge.d}
       variant="dependency"
-      detail={detail}
       connected={edge.connected}
       resolved={edge.isResolved}
       style={{ '--gp-edge-accent': DEPENDENCY_STROKE } as CSSProperties}
@@ -93,35 +85,31 @@ const DependencyEdge = memo(function DependencyEdge({
         },
       }}
     >
-      {detail !== 'minimal' && (
-        <>
-          <circle
-            className="gp-dependency-port"
-            cx={edge.start.x}
-            cy={edge.start.y}
-            r={4}
-            fill="#171717"
-            stroke={stroke}
-            strokeWidth={1.6}
-            vectorEffect="non-scaling-stroke"
-          />
-          {edge.showStatusChip && (
-            <g className="gp-route-chip-motion" transform={`translate(${edge.mid.x}, ${edge.mid.y})`}>
-              <circle r={8} fill="#111827" stroke={stroke} strokeWidth={1.5} vectorEffect="non-scaling-stroke" />
-              <text
-                x={0}
-                y={0}
-                textAnchor="middle"
-                dominantBaseline="central"
-                fontSize={9}
-                fontWeight={800}
-                fill={stroke}
-              >
-                {edge.isResolved ? '✓' : '!'}
-              </text>
-            </g>
-          )}
-        </>
+      <circle
+        className="gp-dependency-port"
+        cx={edge.start.x}
+        cy={edge.start.y}
+        r={4}
+        fill="#171717"
+        stroke={stroke}
+        strokeWidth={1.6}
+        vectorEffect="non-scaling-stroke"
+      />
+      {edge.showStatusChip && (
+        <g className="gp-route-chip-motion" transform={`translate(${edge.mid.x}, ${edge.mid.y})`}>
+          <circle r={8} fill="#111827" stroke={stroke} strokeWidth={1.5} vectorEffect="non-scaling-stroke" />
+          <text
+            x={0}
+            y={0}
+            textAnchor="middle"
+            dominantBaseline="central"
+            fontSize={9}
+            fontWeight={800}
+            fill={stroke}
+          >
+            {edge.isResolved ? '✓' : '!'}
+          </text>
+        </g>
       )}
     </CanvasEdge>
   )
@@ -155,7 +143,7 @@ function DependencyContextMenu({
         onContextMenu={(event) => { event.preventDefault(); onClose() }}
       />
       <div
-        className="gp-menu gp-pop gp-panel fixed z-50 max-h-[calc(100dvh-16px)] w-52 origin-top-left overflow-y-auto rounded-2xl p-1.5 shadow-2xl"
+        className="gp-popup-menu gp-menu gp-pop gp-panel fixed z-50 max-h-[calc(100dvh-16px)] w-52 origin-top-left overflow-y-auto rounded-2xl p-1.5 shadow-2xl"
         style={{ left, top }}
       >
         <p className="px-3 py-1.5  text-[10px] uppercase tracking-widest text-amber-400">
@@ -215,8 +203,6 @@ export function DependencyLines() {
     relations,
     widgets,
     activeCanvasId,
-    widgetGroupIndex,
-    groups,
     criticalPathVisible,
     hoveredWidgetId,
   } = useWidgetStore(
@@ -224,14 +210,13 @@ export function DependencyLines() {
       relations: state.relations,
       widgets: state.widgets,
       activeCanvasId: state.activeCanvasId,
-      widgetGroupIndex: state.widgetGroupIndex,
-      groups: state.groups,
       criticalPathVisible: state.criticalPathVisible,
       hoveredWidgetId: state.hoveredWidgetId,
     })),
   )
-  const view = useQuantizedView(EDGE_OVERSCAN_SCREEN, { freezeWhileMoving: true })
-  const visibleRect = view.rect
+  const contentRect = useWorldContentRect()
+  const expandedWidgetId = useWidgetRestStore((state) => state.expandedWidgetId)
+  const expandedOffset = useWidgetRestStore((state) => state.expandedOffset)
   const [menu, setMenu] = useState<{ relationId: string; x: number; y: number } | null>(null)
   useOverlayLifecycle(menu !== null)
 
@@ -239,23 +224,6 @@ export function DependencyLines() {
     if (!criticalPathVisible) return null
     return new Set(getCriticalPath(widgets, relations).relationIds)
   }, [criticalPathVisible, relations, widgets])
-
-  const groupGeometry = useMemo(() => {
-    const geometry: Record<string, EndpointGeometry> = {}
-    for (const groupId in groups) {
-      const group = groups[groupId]!
-      const anchor = group.widgetIds.map((widgetId) => widgets[widgetId]).find(Boolean)
-      if (!anchor || anchor.canvasId !== activeCanvasId) continue
-      const bounds = groupWorldBounds(group, widgets)
-      if (!bounds) continue
-      geometry[groupId] = {
-        center: { x: bounds.x + bounds.width / 2, y: bounds.y + bounds.height / 2 },
-        halfW: bounds.width / 2,
-        halfH: bounds.height / 2,
-      }
-    }
-    return geometry
-  }, [activeCanvasId, groups, widgets])
 
   const edges = useMemo(() => {
     const dependencyIds: string[] = []
@@ -267,15 +235,16 @@ export function DependencyLines() {
       if (from?.canvasId === activeCanvasId && to?.canvasId === activeCanvasId) dependencyIds.push(relationId)
     }
 
-    const edgeBudget = criticalPathVisible ? CRITICAL_EDGE_RENDER_LIMIT : EDGE_RENDER_LIMIT
-    const cullByViewport = dependencyIds.length > edgeBudget
     const result: DependencyEdgeDescriptor[] = []
 
     const endpoint = (widgetId: string): EndpointGeometry | null => {
-      const groupId = widgetGroupIndex[widgetId]
-      if (groupId) return groupGeometry[groupId] ?? null
-      const widget = widgets[widgetId]
-      if (!widget) return null
+      const stored = widgets[widgetId]
+      if (!stored) return null
+      // Anchor to the on-screen footprint, which shrinks while a widget rests.
+      const widget = widgetWithEffectiveSize(stored, {
+        expandedWidgetId,
+        expandedOffset,
+      })
       return {
         center: widgetCenter(widget),
         halfW: widget.size.width / 2,
@@ -285,32 +254,12 @@ export function DependencyLines() {
 
     for (const relationId of dependencyIds) {
       const relation = relations[relationId]!
-      const fromWidget = widgets[relation.fromId]!
-      const toWidget = widgets[relation.toId]!
       const highlighted = criticalIds?.has(relationId) ?? false
       const connected = hoveredWidgetId === relation.fromId || hoveredWidgetId === relation.toId
-      if (
-        cullByViewport &&
-        !highlighted &&
-        !connected &&
-        !widgetIntersectsRect(fromWidget, visibleRect) &&
-        !widgetIntersectsRect(toWidget, visibleRect) &&
-        !edgeCorridorIntersectsRect(
-          widgetCenter(fromWidget),
-          widgetCenter(toWidget),
-          visibleRect,
-          CORRIDOR_MARGIN,
-        )
-      ) continue
-
-      const fromGroupId = widgetGroupIndex[relation.fromId]
-      const toGroupId = widgetGroupIndex[relation.toId]
-      if (fromGroupId && fromGroupId === toGroupId) continue
 
       const fromGeometry = endpoint(relation.fromId)
       const toGeometry = endpoint(relation.toId)
       if (!fromGeometry || !toGeometry) continue
-      if (result.length >= edgeBudget && !highlighted && !connected) continue
 
       const { start, end } = dependencyAnchors(fromGeometry, toGeometry)
       result.push({
@@ -329,12 +278,10 @@ export function DependencyLines() {
   }, [
     activeCanvasId,
     criticalIds,
-    criticalPathVisible,
-    groupGeometry,
+    expandedOffset,
+    expandedWidgetId,
     hoveredWidgetId,
     relations,
-    visibleRect,
-    widgetGroupIndex,
     widgets,
   ])
 
@@ -343,13 +290,12 @@ export function DependencyLines() {
     [],
   )
   const closeMenu = useCallback(() => setMenu(null), [])
-  const detail = edgeDetailFor(edges.length)
 
   return (
     <>
       <CanvasEdgeLayer
-        visibleRect={visibleRect}
-        detail={detail}
+        contentRect={contentRect}
+        ariaHidden
         defs={
           <>
           <marker id="dependency-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
@@ -362,7 +308,7 @@ export function DependencyLines() {
         }
       >
         {edges.map((edge) => (
-          <DependencyEdge key={edge.id} edge={edge} detail={detail} onOpenMenu={openMenu} />
+          <DependencyEdge key={edge.id} edge={edge} onOpenMenu={openMenu} />
         ))}
       </CanvasEdgeLayer>
       {menu && (

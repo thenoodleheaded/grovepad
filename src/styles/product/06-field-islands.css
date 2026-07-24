@@ -11,10 +11,22 @@
   height: auto;
 }
 
-.gp-widget-card[data-auto-height] .gp-resize-handle {
-  bottom: 50%;
-  cursor: ew-resize;
-  transform: translateY(50%);
+/* A content-fit card's height follows its content, so only its vertical sides
+   are live: arming a horizontal one would promise a drag that cannot move. */
+.gp-widget-card[data-auto-height] .gp-resize-edge {
+  border-top-width: 0 !important;
+  border-bottom-width: 0 !important;
+}
+
+/* The timer family scales its readout with the card, so its body is a size
+   container. Scoped to these renderers only — making every widget body a
+   container would change containment for layouts that never asked for it. */
+.gp-clock-body {
+  container-type: size;
+  /* Clear the bezel: the ring's marks reach ~17px in from the card edge, and
+     the content box already contributes 10px, so 8px more keeps the readout
+     and the transport keys off the marks at every size. */
+  padding: 8px;
 }
 
 /* Explicit primitives for new renderers. Existing modules are normalized by
@@ -28,44 +40,12 @@
   border: 0 !important;
   border-radius: var(--gp-r1) !important;
   background-color: transparent;
-  background-image: linear-gradient(180deg, rgb(255 255 255 / .10), rgb(255 255 255 / .05)) !important;
+  background-image: linear-gradient(180deg, rgb(255 255 255 / calc(var(--gp-tune-island-light, 10) / 100)), rgb(255 255 255 / .05)) !important;
   box-shadow:
     inset 0 1px 0 rgb(255 255 255 / .14),
     inset 0 0 0 1px rgb(255 255 255 / .07),
     0 2px 4px rgb(0 0 0 / .34),
     0 10px 22px rgb(0 0 0 / .22) !important;
-}
-
-/* A grouped card is itself the E1 wrapper. Flat renderers such as Notes and
-   Quote therefore gain the island they previously lacked without another
-   nested surface. Existing internal islands step down to wells so the group
-   still has exactly one E0 plate and no invented E2 elevation. */
-.gp-widget-card.gp-grouped-widget {
-  width: 100%;
-  height: 100%;
-  max-height: 100%;
-  overflow: visible;
-}
-
-.gp-widget-card.gp-grouped-widget[data-selected='true'] {
-  box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / .14),
-    inset 0 0 0 1px rgb(255 255 255 / .07),
-    0 0 0 2px color-mix(in oklab, var(--gp-widget-accent), transparent 58%),
-    0 3px 7px rgb(0 0 0 / .32),
-    0 12px 24px rgb(0 0 0 / .20) !important;
-}
-
-.gp-widget-card.gp-grouped-widget .gp-widget-ui :where(
-  .gp-island,
-  .gp-subpanel,
-  .gp-subdivision
-) {
-  background: rgb(0 0 0 / .28) !important;
-  box-shadow:
-    inset 0 1.5px 3px rgb(0 0 0 / .48),
-    inset 0 -1px 0 rgb(255 255 255 / .05),
-    0 1px 0 rgb(255 255 255 / .04) !important;
 }
 
 .gp-well,
@@ -183,7 +163,7 @@
 }
 
 /* An island whose only child is an action is redundant construction chrome.
-   Keep the semantic wrapper for focus-mode layout, but make it visually flat. */
+   Keep the semantic wrapper, but make it visually flat. */
 .gp-widget-ui :where(.gp-island, .gp-subpanel, .gp-subdivision):has(> button:only-child) {
   min-height: 0;
   padding: 0;
@@ -529,61 +509,10 @@
   border-radius: var(--gp-r2) !important;
 }
 
-/* Resting cards expose content, not construction chrome (Article XVIII.6).
-   The legacy per-panel widget-drag grip is superseded by focus-mode island
-   grips; it renders nowhere. */
+/* Resting cards expose content, not construction chrome.
+   The legacy per-panel widget-drag grip renders nowhere. */
 .gp-subpanel-grip {
   display: none;
-}
-
-/* ---------------------------------------------------------------------------
- * Focus mode — one widget under the lens (Article XVIII).
- *
- * The camera is pinned by the event layer; here the rest of the board
- * recedes (dim + inert) while the subject holds full clarity. Island chrome
- * (reorder grip, resize handle) exists only inside this state.
- * ------------------------------------------------------------------------- */
-
-body[data-focus-mode] .gp-widget-card:not([data-focused]) {
-  opacity: 0.32;
-  filter: saturate(0.55);
-  pointer-events: none;
-  transition: opacity 200ms var(--gp-ease-standard), filter 200ms var(--gp-ease-standard);
-}
-
-body[data-focus-mode] .gp-group-backplate:not([data-focus-group]) {
-  opacity: 0.32;
-  filter: saturate(0.55);
-  pointer-events: none;
-  transition: opacity 200ms var(--gp-ease-standard), filter 200ms var(--gp-ease-standard);
-}
-
-body[data-focus-mode] .gp-widget-card[data-focused] {
-  cursor: default;
-  box-shadow:
-    0 0 0 1px color-mix(in oklab, var(--gp-widget-accent), transparent 55%),
-    0 0 44px color-mix(in oklab, var(--gp-widget-accent), transparent 82%),
-    0 30px 70px rgb(0 0 0 / 0.5);
-}
-
-.gp-focus-session-bar {
-  top: calc(var(--gp-safe-top) + 64px);
-  background: color-mix(in oklab, var(--gp-surface-panel), transparent 4%);
-  box-shadow: var(--gp-shadow-float);
-}
-
-body[data-focus-mode] [data-canvas-ui]:not([data-focus-session-ui]) {
-  opacity: 0.18;
-  pointer-events: none;
-  transition: opacity 160ms var(--gp-ease-standard);
-}
-
-body[data-focus-purpose='edit'] .gp-widget-card[data-focused] .gp-widget-content {
-  overflow: auto;
-  overscroll-behavior: contain;
-  touch-action: pan-y;
-  user-select: text;
-  -webkit-overflow-scrolling: touch;
 }
 
 /* Apple Pencil Scribble is owned by the operating system. Text-entry controls
@@ -600,184 +529,6 @@ body[data-pencil-drawing] * {
 
 .gp-sketch-surface canvas {
   overscroll-behavior: contain;
-}
-
-html:is(
-  [data-viewport-class='phone'],
-  [data-viewport-class='tablet'],
-  [data-active-input='touch'],
-  [data-active-input='pen'],
-  [data-virtual-keyboard='open']
-)
-  body[data-focus-purpose='edit']
-  .gp-widget-card[data-focused]
-  :is(input:not([type='range']), textarea, select, [contenteditable='true']) {
-  /* iOS zooms the whole page when a focused control is smaller than 16px. */
-  font-size: 16px !important;
-}
-
-html:is(
-  [data-viewport-class='phone'],
-  [data-viewport-class='tablet'],
-  [data-active-input='touch'],
-  [data-active-input='pen'],
-  [data-virtual-keyboard='open']
-)
-  body[data-focus-purpose='edit']
-  .gp-widget-card[data-focused]
-  :is(button, input:not([type='checkbox'], [type='radio']), select) {
-  min-height: var(--gp-touch-target);
-}
-
-html:is(
-  [data-viewport-class='phone'],
-  [data-viewport-class='tablet'],
-  [data-active-input='touch'],
-  [data-active-input='pen']
-)
-  body[data-focus-purpose='edit']
-  .gp-widget-card[data-focused]
-  button {
-  min-width: var(--gp-touch-target);
-}
-
-html:is(
-  [data-viewport-class='phone'],
-  [data-viewport-class='tablet'],
-  [data-active-input='touch'],
-  [data-active-input='pen']
-)
-  body[data-focus-purpose='edit']
-  .gp-widget-card[data-focused]
-  :is(input[type='checkbox'], input[type='radio']) {
-  width: 24px;
-  height: 24px;
-}
-
-html[data-virtual-keyboard='open'] .gp-focus-session-bar {
-  top: calc(var(--gp-safe-top) + 8px);
-}
-
-/* The subject's islands lift slightly — they read as loose, movable tiles. */
-body[data-focus-mode] .gp-widget-card[data-focused] .gp-island {
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.07),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.05),
-    0 4px 9px rgb(0 0 0 / 0.3),
-    0 14px 28px rgb(0 0 0 / 0.2);
-}
-
-/* A block stack that has been reordered becomes an ordered flex column.
-   Margins collapse into the flex gap so `space-y-*` spacing doesn't double. */
-.gp-island-flow {
-  display: flex !important;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.gp-island-flow > * {
-  margin-block: 0 !important;
-}
-
-/* The whole reorderable island body is the drag surface — no handle. */
-.gp-focus-island--drag {
-  cursor: grab;
-  touch-action: none;
-  border-radius: 12px;
-  transition: box-shadow 140ms ease, background-color 140ms ease;
-}
-
-.gp-focus-island--drag:hover {
-  background: color-mix(in oklab, var(--gp-widget-accent), transparent 92%);
-  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--gp-widget-accent), transparent 62%);
-}
-
-.gp-focus-island--drag:active {
-  cursor: grabbing;
-}
-
-/* A real island lifted out of the flow to float under the cursor. */
-.gp-island-lift {
-  cursor: grabbing;
-  border-radius: 12px;
-  box-shadow:
-    0 1px 2px rgb(0 0 0 / 0.28),
-    0 18px 40px rgb(0 0 0 / 0.42);
-}
-
-/* Siblings glide to open a landing slot as the dragged panel passes — the
-   slide itself is a self-cleaning Web Animation driven from the layer. */
-
-/* While a reorder drag runs, mute the resize brackets so they don't fight
-   the float gesture or trail behind the moving panels. */
-.gp-widget-card[data-focus-reordering] .gp-focus-resize {
-  opacity: 0;
-  pointer-events: none;
-}
-
-/* Resize handle — bottom-right corner bracket. */
-.gp-focus-resize {
-  position: absolute;
-  right: -10px;
-  bottom: -10px;
-  width: 28px;
-  height: 28px;
-  border: 0;
-  background: transparent;
-  cursor: nwse-resize;
-  opacity: 0.75;
-  touch-action: none;
-}
-
-.gp-focus-resize-mark {
-  position: absolute;
-  right: 6px;
-  bottom: 6px;
-  width: 14px;
-  height: 14px;
-  border-right: 2px solid color-mix(in oklab, var(--gp-widget-accent), white 20%);
-  border-bottom: 2px solid color-mix(in oklab, var(--gp-widget-accent), white 20%);
-  border-bottom-right-radius: 7px;
-  background: rgba(9, 12, 18, 0.7);
-}
-
-.gp-focus-resize[data-sizing='width'] {
-  cursor: ew-resize;
-}
-
-.gp-focus-resize:hover,
-.gp-focus-resize:active {
-  opacity: 1;
-}
-
-.gp-focus-resize:hover .gp-focus-resize-mark,
-.gp-focus-resize:active .gp-focus-resize-mark {
-  scale: 1.15;
-}
-
-[data-theme='light'] .gp-focus-resize-mark {
-  background: rgba(255, 255, 255, 0.95);
-  color: color-mix(in oklab, var(--gp-widget-accent), black 25%);
-}
-
-@media (any-pointer: coarse) {
-  .gp-focus-resize {
-    right: -16px;
-    bottom: -16px;
-    width: var(--gp-touch-target);
-    height: var(--gp-touch-target);
-  }
-
-  .gp-focus-resize-mark {
-    right: 15px;
-    bottom: 15px;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  body[data-focus-mode] .gp-widget-card:not([data-focused]) {
-    transition: none;
-  }
 }
 
 /* Widget cards are dark grey in light mode, so their contents keep the

@@ -544,7 +544,7 @@ export function QuickAddSheet() {
               cycleCandidates(e.deltaX > 0 ? 1 : -1)
             }
           }}
-          className="gp-quick-add-panel gp-dialog gp-pop gp-panel pointer-events-auto relative w-full max-w-xl overflow-hidden rounded-2xl shadow-2xl outline-none"
+          className="gp-quick-add-panel gp-popup-surface gp-dialog gp-pop gp-panel pointer-events-auto relative w-full max-w-xl overflow-hidden rounded-2xl shadow-2xl outline-none"
         >
           {/* Row 1 — input */}
           <div className="flex items-start gap-2.5 px-4 pt-3">
@@ -604,7 +604,7 @@ export function QuickAddSheet() {
                 type="button"
                 aria-label="Close quick add"
                 onClick={close}
-                className="gp-touch-target rounded p-1 text-neutral-600 transition-colors hover:bg-white/[0.05] hover:text-neutral-300"
+                className="gp-popup-close-naked gp-touch-target h-7 w-7"
               >
                 <X size={13} aria-hidden />
               </button>
@@ -714,7 +714,8 @@ export function QuickAddSheet() {
                   type="button"
                   disabled={!canCreate}
                   onClick={createAll}
-                  className="flex shrink-0 items-center gap-1.5 rounded-xl bg-emerald-500/90 py-1.5 pl-3 pr-2.5 text-[11.5px] font-semibold text-neutral-950 transition-all hover:bg-emerald-400 active:scale-95 disabled:opacity-30"
+                  data-tone="primary"
+                  className="gp-popup-action shrink-0 disabled:opacity-30"
                 >
                   Create{activeCandidate && activeCandidate.plan.nodes.length > 1 ? ` ${activeCandidate.plan.nodes.length}` : ''}
                   <CornerDownLeft size={11} aria-hidden />

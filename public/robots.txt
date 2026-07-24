@@ -1,0 +1,14 @@
+# Grovepad is a single-page app: every path serves the same shell, and boards
+# live behind sign-in. Only the root is real content; the canonical tag in
+# index.html folds any stray deep link back into it.
+User-agent: *
+
+# Collaboration invites are private links, not public pages.
+Disallow: /*?collaborate=
+Disallow: /*&collaborate=
+
+# App plumbing, never content.
+Disallow: /assets/
+Disallow: /service-worker.js
+
+Sitemap: https://grovepad.app/sitemap.xml

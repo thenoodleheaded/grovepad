@@ -37,7 +37,10 @@ function ActiveGhostTree({ config }: { config: GhostTreeConfig }) {
   const previousNodes = useRef(config.nodes)
   const exitTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [exitingNodes, setExitingNodes] = useState<GhostTreeNode[]>([])
-  const [pickerNodeId, setPickerNodeId] = useState<string | null>(null)
+  const [pickerTarget, setPickerTarget] = useState<string[] | null>(null)
+  // Lives in the store (not local state) so the canvas's shift-drag marquee
+  // gesture — outside the React tree — can add ghost nodes to it too.
+  const selectedNodeIds = useWidgetStore((state) => state.ghostSelectedNodeIds)
   const suppressPickerRef = useRef(false)
 
   useEffect(() => () => {
@@ -61,12 +64,15 @@ function ActiveGhostTree({ config }: { config: GhostTreeConfig }) {
   const liveIds = new Set(config.nodes.map((node) => node.id))
   const renderedNodes = [...exitingNodes.filter((node) => !liveIds.has(node.id)), ...config.nodes]
   const nodeById = new Map(renderedNodes.map((node) => [node.id, node]))
-  const pickerNode = pickerNodeId
-    ? config.nodes.find((node) => node.id === pickerNodeId)
-    : undefined
+  const pickerNodes = pickerTarget
+    ? config.nodes.filter((node) => pickerTarget.includes(node.id))
+    : []
+  const pickerAnchor = pickerNodes[0]
 
   const begin = (node: GhostTreeNode) => (event: ReactPointerEvent<HTMLButtonElement>) => {
     if (event.button !== 0) return
+    // Shift-click is a selection toggle, not a shaping drag.
+    if (event.shiftKey) return
     event.stopPropagation()
     event.currentTarget.setPointerCapture(event.pointerId)
     suppressPickerRef.current = false
@@ -173,20 +179,30 @@ function ActiveGhostTree({ config }: { config: GhostTreeConfig }) {
             key={node.id}
             type="button"
             title={node.widgetTypes.length > 0
-              ? 'Edit widgets · drag up/down for children · left/right for siblings'
-              : 'Choose widgets · drag up/down for children · left/right for siblings'}
+              ? 'Edit widgets · shift-click to multi-select · drag up/down for children · left/right for siblings'
+              : 'Choose widgets · shift-click to multi-select · drag up/down for children · left/right for siblings'}
             aria-label={node.widgetTypes.length > 0
               ? `Edit this tree bundle of ${node.widgetTypes.length} widgets`
               : 'Choose widgets for this tree point'}
+            aria-pressed={selectedNodeIds.has(node.id)}
             onPointerDown={closing ? undefined : begin(node)}
-            onClick={() => {
+            onClick={(event) => {
               if (closing || suppressPickerRef.current) {
                 suppressPickerRef.current = false
                 return
               }
-              setPickerNodeId(node.id)
+              if (event.shiftKey) {
+                useWidgetStore.getState().toggleGhostNodeSelected(node.id)
+                return
+              }
+              if (selectedNodeIds.size > 1) {
+                setPickerTarget([...selectedNodeIds])
+                return
+              }
+              useWidgetStore.getState().clearGhostNodeSelection()
+              setPickerTarget([node.id])
             }}
-            className={`gp-ghost-cell ${closing ? 'gp-ghost-cell--closing pointer-events-none' : ''} absolute rounded-lg bg-black/25 shadow-[0_0_18px_rgb(0_0_0_/_0.28)] outline-none hover:bg-white/[0.055]`}
+            className={`gp-ghost-cell ${closing ? 'gp-ghost-cell--closing pointer-events-none' : ''} ${selectedNodeIds.has(node.id) ? 'gp-ghost-cell--selected' : ''} absolute rounded-lg bg-black/25 shadow-[0_0_18px_rgb(0_0_0_/_0.28)] outline-none hover:bg-white/[0.055]`}
             style={{
               left: node.x,
               top: node.y,
@@ -247,16 +263,26 @@ function ActiveGhostTree({ config }: { config: GhostTreeConfig }) {
         )
       })}
 
-      {pickerNodeId && pickerNode && (
+      {pickerTarget && pickerAnchor && (
         <AddWidgetModal
-          key={pickerNodeId}
-          worldPos={{ x: pickerNode.x, y: pickerNode.y }}
-          onClose={() => setPickerNodeId(null)}
+          key={pickerTarget.join(',')}
+          worldPos={{ x: pickerAnchor.x, y: pickerAnchor.y }}
+          onClose={() => {
+            setPickerTarget(null)
+            useWidgetStore.getState().clearGhostNodeSelection()
+          }}
           selection={{
-            initialTypes: pickerNode.widgetTypes,
+            // A bulk edit spans nodes that may already differ, so it starts
+            // blank and adds the chosen widgets rather than replacing.
+            initialTypes: pickerTarget.length === 1 ? pickerAnchor.widgetTypes : [],
             onConfirm: (widgetTypes) => {
-              useWidgetStore.getState().setGhostNodeWidgetTypes(pickerNodeId, widgetTypes)
-              setPickerNodeId(null)
+              if (pickerTarget.length === 1) {
+                useWidgetStore.getState().setGhostNodeWidgetTypes(pickerTarget[0]!, widgetTypes)
+              } else {
+                useWidgetStore.getState().addWidgetTypesToGhostNodes(pickerTarget, widgetTypes)
+              }
+              setPickerTarget(null)
+              useWidgetStore.getState().clearGhostNodeSelection()
             },
           }}
         />

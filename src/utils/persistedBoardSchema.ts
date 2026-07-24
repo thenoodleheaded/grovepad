@@ -14,16 +14,17 @@ import type {
   RelationType,
   Vector2D,
   Widget,
-  WidgetGroup,
+  WidgetGlue,
   Workspace,
 } from '../types/spatial'
-import { clampZoom, DOMAIN_PACKS, GROUP_COLORS, MODULE_TYPES } from '../types/spatial'
+import { clampZoom, DOMAIN_PACKS, MODULE_TYPES } from '../types/spatial'
 import { AUTOMATION_CORE_SET } from '../widgets/automationCoreCatalog'
+import { widgetDefinition } from '../widgets/registry'
 
 const MODULE_TYPE_SET = new Set<string>(MODULE_TYPES)
+const RETIRED_WIDGET_TYPES = new Set(['divider'])
 const TRANSIENT_AUTOMATION_RUN_TYPES = new Set<string>(['http_request', 'webhook_sender', 'widget_creator'])
 const DOMAIN_PACK_SET = new Set<string>(DOMAIN_PACKS)
-const GROUP_COLOR_SET = new Set<string>(GROUP_COLORS)
 const RELATION_TYPES: readonly RelationType[] = [
   'parent',
   'co-parent',
@@ -41,6 +42,10 @@ const KNOWN_BOARD_FIELDS = new Set([
   'widgets',
   'relations',
   'connections',
+  'glues',
+  // Legacy widget-grouping records. The grouping feature was replaced by
+  // gluing; recognized here only so old payloads' groups are dropped cleanly
+  // instead of round-tripping as opaque unknown fields.
   'groups',
   'activePacks',
   'activeWorkspaceId',
@@ -72,14 +77,14 @@ function collectUnknownBoardFields(value: Record<string, unknown>): Record<strin
 interface PersistenceSidecars {
   unknownRelations: Record<string, Record<string, unknown>>
   unknownConnections: Record<string, Record<string, unknown>>
-  unknownGroups: Record<string, Record<string, unknown>>
+  unknownGlues: Record<string, Record<string, unknown>>
   rawActivePacks: string[]
 }
 
 const EMPTY_SIDECARS: PersistenceSidecars = {
   unknownRelations: {},
   unknownConnections: {},
-  unknownGroups: {},
+  unknownGlues: {},
   rawActivePacks: [],
 }
 
@@ -107,11 +112,11 @@ function attachPersistenceSidecars(
       writable: false,
       value: sidecars.unknownConnections,
     },
-    persistenceUnknownGroups: {
+    persistenceUnknownGlues: {
       configurable: false,
       enumerable: false,
       writable: false,
-      value: sidecars.unknownGroups,
+      value: sidecars.unknownGlues,
     },
     persistenceRawActivePacks: {
       configurable: false,
@@ -153,10 +158,24 @@ function isVector(value: unknown): value is Vector2D {
   return isRecord(value) && isFiniteNumber(value.x) && isFiniteNumber(value.y)
 }
 
+/**
+ * The `collapsed` name-pill scale state was retired. A board saved while a
+ * widget was a pill still carries the flag plus the pill's 200×40 `size`, so
+ * restore the dormant full-card geometry instead of leaving a stunted card.
+ */
+function restoreRetiredPill(widget: Widget & { collapsed?: boolean }): void {
+  if (widget.collapsed !== true) return
+  delete widget.collapsed
+  if (widget.iconified === true) return
+  widget.size = widget.expandedSize ?? widgetDefinition(widget.type).defaultSize
+  delete widget.expandedSize
+}
+
 /** One-time compatibility normalization for evolved widget data contracts. */
 function normalizeWidgetData(widget: Widget): Widget {
   const persistentWidget = { ...widget }
   delete persistentWidget.isHydrating
+  restoreRetiredPill(persistentWidget)
 
   if (persistentWidget.type === 'ai_generator') {
     const data = persistentWidget.data as unknown as Record<string, unknown>
@@ -283,23 +302,20 @@ function isValidCanvas(value: unknown): value is CanvasMeta {
     typeof value.id === 'string' &&
     typeof value.name === 'string' &&
     typeof value.workspaceId === 'string' &&
-    (value.parentCanvasId === null || typeof value.parentCanvasId === 'string')
+    (value.parentCanvasId === null || typeof value.parentCanvasId === 'string') &&
+    (value.shared === undefined || typeof value.shared === 'boolean') &&
+    (value.gridIntensity === undefined || (isFiniteNumber(value.gridIntensity) && value.gridIntensity >= 0 && value.gridIntensity <= 100)) &&
+    (value.linksVisible === undefined || typeof value.linksVisible === 'boolean') &&
+    (value.relationStrict === undefined || typeof value.relationStrict === 'boolean')
   )
 }
 
-function parseGroupEnvelope(
+function parseGlueEnvelope(
   value: unknown,
   widgets: Record<string, Widget>,
 ): { source: Record<string, unknown>; widgetIds: string[] } | null {
   if (!isRecord(value)) return null
-  if (
-    typeof value.id !== 'string' ||
-    typeof value.label !== 'string' ||
-    typeof value.color !== 'string' ||
-    !Array.isArray(value.widgetIds)
-  ) {
-    return null
-  }
+  if (typeof value.id !== 'string' || !Array.isArray(value.widgetIds)) return null
   const widgetIds = value.widgetIds.filter(
     (id): id is string => typeof id === 'string' && Boolean(widgets[id]),
   )
@@ -307,16 +323,14 @@ function parseGroupEnvelope(
   return { source: value, widgetIds }
 }
 
-function sanitizeGroup(value: unknown, widgets: Record<string, Widget>): WidgetGroup | null {
-  const envelope = parseGroupEnvelope(value, widgets)
-  if (!envelope || !GROUP_COLOR_SET.has(envelope.source.color as string)) return null
+function sanitizeGlue(value: unknown, widgets: Record<string, Widget>): WidgetGlue | null {
+  const envelope = parseGlueEnvelope(value, widgets)
+  if (!envelope) return null
   return {
     ...envelope.source,
     id: envelope.source.id,
-    label: envelope.source.label,
     widgetIds: envelope.widgetIds,
-    color: envelope.source.color as WidgetGroup['color'],
-  } as unknown as WidgetGroup
+  } as unknown as WidgetGlue
 }
 
 interface ParsedRecords<T> {
@@ -385,14 +399,14 @@ function parseConnections(
   return { known, unknown }
 }
 
-function parseGroups(raw: unknown, widgets: Record<string, Widget>): ParsedRecords<WidgetGroup> {
-  const known: Record<string, WidgetGroup> = {}
+function parseGlues(raw: unknown, widgets: Record<string, Widget>): ParsedRecords<WidgetGlue> {
+  const known: Record<string, WidgetGlue> = {}
   const unknown: Record<string, Record<string, unknown>> = {}
   if (isRecord(raw)) {
-    for (const [id, group] of Object.entries(raw)) {
-      const envelope = parseGroupEnvelope(group, widgets)
+    for (const [id, glue] of Object.entries(raw)) {
+      const envelope = parseGlueEnvelope(glue, widgets)
       if (!envelope || envelope.source.id !== id) continue
-      const sanitized = sanitizeGroup(group, widgets)
+      const sanitized = sanitizeGlue(glue, widgets)
       if (sanitized) known[id] = sanitized
       else unknown[id] = { ...envelope.source, widgetIds: envelope.widgetIds }
     }
@@ -420,6 +434,7 @@ export function migrateLegacyBoard(parsed: unknown): HydratedPersistedBoard | nu
   const widgets: Record<string, Widget> = {}
   for (const [id, widget] of Object.entries(parsed.widgets)) {
     if (!hasValidWidgetEnvelope(widget, false) || widget.id !== id) continue
+    if (RETIRED_WIDGET_TYPES.has(widget.type as string)) continue
     const migratedWidget = { ...widget, canvasId: MIGRATED_ROOT_CANVAS_ID }
     widgets[id] = MODULE_TYPE_SET.has(widget.type as string)
       ? normalizeWidgetData(migratedWidget as unknown as Widget)
@@ -444,7 +459,7 @@ export function migrateLegacyBoard(parsed: unknown): HydratedPersistedBoard | nu
   }
   const relations = parseRelations(parsed.relations, widgets)
   const connections = parseConnections(parsed.connections, widgets)
-  const groups = parseGroups(parsed.groups, widgets)
+  const glues = parseGlues(parsed.glues, widgets)
   const packs = parsePacks(parsed.activePacks)
 
   return attachPersistenceSidecars({
@@ -455,7 +470,7 @@ export function migrateLegacyBoard(parsed: unknown): HydratedPersistedBoard | nu
     widgets,
     relations: relations.known,
     connections: connections.known,
-    groups: groups.known,
+    glues: glues.known,
     activePacks: packs.known,
     activeWorkspaceId: MIGRATED_WORKSPACE_ID,
     activeCanvasId: MIGRATED_ROOT_CANVAS_ID,
@@ -463,7 +478,7 @@ export function migrateLegacyBoard(parsed: unknown): HydratedPersistedBoard | nu
   }, parsed, {
     unknownRelations: relations.unknown,
     unknownConnections: connections.unknown,
-    unknownGroups: groups.unknown,
+    unknownGlues: glues.unknown,
     rawActivePacks: packs.rawStrings,
   })
 }
@@ -502,6 +517,7 @@ export function parsePersistedBoard(parsed: unknown): HydratedPersistedBoard | n
   const widgets: Record<string, Widget> = {}
   for (const [id, widget] of Object.entries(parsed.widgets)) {
     if (!hasValidWidgetEnvelope(widget, true) || widget.id !== id) continue
+    if (RETIRED_WIDGET_TYPES.has(widget.type as string)) continue
     if (typeof widget.canvasId !== 'string' || !canvases[widget.canvasId]) continue
     widgets[id] = isValidWidget(widget, true)
       ? normalizeWidgetData(widget)
@@ -529,7 +545,7 @@ export function parsePersistedBoard(parsed: unknown): HydratedPersistedBoard | n
   }
   const relations = parseRelations(parsed.relations, widgets)
   const connections = parseConnections(parsed.connections, widgets)
-  const groups = parseGroups(parsed.groups, widgets)
+  const glues = parseGlues(parsed.glues, widgets)
   const packs = parsePacks(parsed.activePacks)
 
   return attachPersistenceSidecars({
@@ -540,7 +556,7 @@ export function parsePersistedBoard(parsed: unknown): HydratedPersistedBoard | n
     widgets,
     relations: relations.known,
     connections: connections.known,
-    groups: groups.known,
+    glues: glues.known,
     activePacks: packs.known,
     activeWorkspaceId,
     activeCanvasId,
@@ -548,7 +564,7 @@ export function parsePersistedBoard(parsed: unknown): HydratedPersistedBoard | n
   }, parsed, {
     unknownRelations: relations.unknown,
     unknownConnections: connections.unknown,
-    unknownGroups: groups.unknown,
+    unknownGlues: glues.unknown,
     rawActivePacks: packs.rawStrings,
   })
 }
@@ -567,7 +583,7 @@ function retainOpaqueEdges(
   )
 }
 
-function retainOpaqueGroups(
+function retainOpaqueGlues(
   records: Record<string, Record<string, unknown>> | undefined,
   widgets: Record<string, Widget>,
 ): Record<string, Record<string, unknown>> {
@@ -616,7 +632,7 @@ export function serializePersistedBoard(state: PersistedBoardState): PersistedBo
   )
   const unknownRelations = retainOpaqueEdges(state.persistenceUnknownRelations, state.widgets)
   const unknownConnections = retainOpaqueEdges(state.persistenceUnknownConnections, state.widgets)
-  const unknownGroups = retainOpaqueGroups(state.persistenceUnknownGroups, state.widgets)
+  const unknownGlues = retainOpaqueGlues(state.persistenceUnknownGlues, state.widgets)
   return {
     ...(state.persistenceUnknownFields ?? {}),
     format: PERSISTED_BOARD_FORMAT,
@@ -626,7 +642,7 @@ export function serializePersistedBoard(state: PersistedBoardState): PersistedBo
     widgets,
     relations: { ...unknownRelations, ...state.relations } as unknown as Record<string, Relation>,
     connections: { ...unknownConnections, ...state.connections } as unknown as Record<string, Connection>,
-    groups: { ...unknownGroups, ...state.groups } as unknown as Record<string, WidgetGroup>,
+    glues: { ...unknownGlues, ...state.glues } as unknown as Record<string, WidgetGlue>,
     activePacks: serializePacks(state.activePacks, state.persistenceRawActivePacks),
   }
 }

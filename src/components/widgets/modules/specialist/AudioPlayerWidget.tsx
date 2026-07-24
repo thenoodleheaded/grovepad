@@ -1,6 +1,5 @@
 import { Play, Pause, Music } from 'lucide-react'
 import type { AudioPlayerData } from '../../../../types/spatial'
-import { useFieldAnchor } from '../../../../hooks/useFieldAnchor'
 
 interface AudioPlayerWidgetProps {
   data: AudioPlayerData
@@ -8,9 +7,6 @@ interface AudioPlayerWidgetProps {
 }
 
 export function AudioPlayerWidget({ data, onChange }: AudioPlayerWidgetProps) {
-  const playingRef = useFieldAnchor<HTMLButtonElement>('playing')
-  const bpmRef = useFieldAnchor('bpm')
-
   const togglePlay = () => {
     onChange({ ...data, isPlaying: !data.isPlaying })
   }
@@ -59,7 +55,7 @@ export function AudioPlayerWidget({ data, onChange }: AudioPlayerWidgetProps) {
       <div className="flex items-center gap-3">
         {/* Play/Pause Button */}
         <button
-          ref={playingRef}
+
           type="button"
           aria-label={data.isPlaying ? 'Pause audio' : 'Play audio'}
           aria-pressed={data.isPlaying}
@@ -75,7 +71,7 @@ export function AudioPlayerWidget({ data, onChange }: AudioPlayerWidgetProps) {
 
         {/* BPM & Key controls */}
         <div className="flex-1 grid grid-cols-2 gap-2">
-          <div ref={bpmRef} className="space-y-0.5">
+          <div className="space-y-0.5">
             <span className="gp-label">BPM</span>
             <input
               type="number"

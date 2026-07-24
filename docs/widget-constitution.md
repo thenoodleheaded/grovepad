@@ -113,9 +113,13 @@ Five invariants are binding at every released size:
 
 **Ownership and authority.** The registry declares a safe fallback `sizing` window (protects creation, hydration, unmounted cards). A mounted renderer reports a content-derived floor that may raise but never loosen the registry minimum. The board store is the final clamp for every resize path — gesture and programmatic resizes obey the same merged floor and ceiling. Control-only cards set `autoHeight` (width-only gesture).
 
-**Dynamic re-flooring.** Content changes recalculate the floor immediately; a card below the new floor grows to it, a card above does not move. Shrinking is always a user action. Collapsed/iconified cards retain a dormant full size that data arrival may grow; expansion rechecks it against estimates immediately and the mounted floor once present.
+**Dynamic re-flooring.** Content changes recalculate the floor immediately; a card below the new floor grows to it, a card above does not move. Shrinking is always a user action. Iconified cards retain a dormant full size that data arrival may grow; expansion rechecks it against estimates immediately and the mounted floor once present.
 
-**One full-card composition.** Resizing within the full state changes room, not layout — no partial compact layouts. At the floor, resizing clamps without elastic deformation. A state change requires the same drag to continue ≥90 world px past both width and height minima (raised from 36, which accidental overshoot crossed routinely), commits exactly one neighbouring state (full → pill → icon shrinking; reverse growing), then requires release. Single-axis movement and over-max growth never collapse a widget. Context-menu actions expose the same states without a precision gesture.
+**One full-card composition.** Resizing within the full state changes room, not layout — no partial compact layouts. At the floor, resizing clamps to a rubber band that shows the pull and releases back to the limit; the stored size never leaves the legal window.
+
+**The outline is the affordance.** There is no corner grip. The stretch of border nearest the pointer thickens, and both stretches do where two sides meet — that corner arming is how a diagonal, square-preserving drag is expressed. A drag moves only the sides it grabbed; the opposite sides stay pinned, so a gesture never grows a widget out of its own centre.
+
+**Where a state change may happen.** Only from what is on screen. An opened full card resizes and never changes state — a card being worked in cannot be lost to a pull. A resting tile is sized by its content, so its gesture is state-only: a diagonal crush inward past a deliberate corner threshold on both axes turns it into an icon, and anything else is elastic. An icon is one square scaled continuously across a single grid cell — from 2×2 up to 3×3 — while a corner is held, with no live detents; only release snaps its geometry to the nearest 2×2 or 3×3 grid square. Those are sizes, never separate states. It restores the full card only on growth: a diagonal pull past the 3×3 ceiling lets go. Shrinking never escapes — a crush is not a request for the card — and pulling below 2×2 only stretches a band that clamps back. **2×2 is the floor for anything icon-shaped anywhere in the app** — the icon scale state and the bare-icon resting face share it, and no surface may render a one-cell icon: it is too small to read and too small to aim at. Every state change re-centres the new box on the box it replaced, so a round trip is exactly reversible. There is no intermediate name-pill state.
 
 **Charts and aspect-bound visuals.** Siblings claim minimum space first; the chart gets the remaining rectangle. Radial/square-lattice visuals use the smaller remaining axis and keep aspect — never size from the whole card and cover siblings.
 
@@ -123,11 +127,11 @@ Five invariants are binding at every released size:
 
 ## Article XIII — Pencil and ink interaction
 
-Sketchpad is the lightweight native-ink surface; Excalidraw remains the fullscreen diagram editor. Ink is available only while the Sketchpad itself is focused, so Pencil contact can never unexpectedly write on the bare board. Mouse and Pencil draw; fingers remain reserved for navigation and palm rejection.
+Sketchpad is the lightweight native-ink surface; Excalidraw remains the fullscreen diagram editor. Mouse and Pencil draw; fingers remain reserved for navigation and palm rejection, so Pencil contact can never unexpectedly write on the bare board.
 
 1. Pencil and mouse may ink; touch never creates a stroke. A touch landing inside an active ink surface is rejected as a palm. Canvas pinch/pan remains available outside that surface.
 2. Pointer samples use coalesced events when available, fall back when the browser returns an empty coalesced batch, and repaint at most once per animation frame. React/store state updates once per completed gesture, never per point.
 3. Pressure changes visible stroke width. Completed points are simplified in x/y/pressure space before persistence, and normalized coordinates keep ink aligned through widget resizing.
 4. Every draw, erase, or clear gesture owns one non-coalesced Undo step. Pointer cancel discards the entire in-progress gesture.
 5. Pencil hover may show a cursor preview or the shared magnetic card response, but hover must not write React state, run an idle animation, or activate while the Pencil is touching.
-6. Apple Scribble remains operating-system-owned: Pencil contact on a text entry must reach the input without first moving the card or relocating it into focus mode. Text controls retain text selection and the standard caret.
+6. Apple Scribble remains operating-system-owned: Pencil contact on a text entry must reach the input without first moving the card. Text controls retain text selection and the standard caret.

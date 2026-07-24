@@ -1,7 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { buildBoardSnapshot } from '../utils/persistence'
 import { parsePersistedBoard } from '../utils/persistedBoardSchema'
-import { GROUP_PAD } from '../utils/groupGeometry'
 import {
   DISPLACEMENT_DWELL_MS,
   beginDragDisplacement,
@@ -60,20 +59,23 @@ function overlapPair(): [string, string] {
 }
 
 describe('buildNegotiationScene', () => {
-  it('excludes moving widgets and collapses a group into one padded rigid cluster', () => {
+  it('excludes moving widgets and collapses a glue cluster into one rigid rect', () => {
     const [mover, a, b] = createNotes(3)
-    const state = useWidgetStore.getState()
-    const groupId = state.createGroup([a!, b!], 'Cluster')
+    // Weld a and b edge to edge so they form one cluster.
+    const first = widget(a!)
+    place(b!, first.position.x + first.size.width + 12, first.position.y)
+    useWidgetStore.getState().glueWidgets(b!, a!)
+    const glueId = useWidgetStore.getState().widgetGlueIndex[a!]!
     const fresh = useWidgetStore.getState()
 
-    const scene = buildNegotiationScene(fresh.widgets, fresh.groups, fresh.widgetGroupIndex, [mover!])!
+    const scene = buildNegotiationScene(fresh.widgets, fresh.glues, fresh.widgetGlueIndex, [mover!])!
     expect(scene.active.width).toBe(widget(mover!).size.width)
-    const cluster = scene.clusters.find((rect) => rect.id === `g:${groupId}`)!
+    const cluster = scene.clusters.find((rect) => rect.id === `g:${glueId}`)!
     expect(cluster).toBeDefined()
     expect(scene.clusters.some((rect) => rect.id === `w:${mover}`)).toBe(false)
-    expect(scene.members.get(`g:${groupId}`)?.sort()).toEqual([a, b].sort())
+    expect(scene.members.get(`g:${glueId}`)?.sort()).toEqual([a, b].sort())
     const memberMinX = Math.min(widget(a!).position.x, widget(b!).position.x)
-    expect(cluster.x).toBe(memberMinX - GROUP_PAD)
+    expect(cluster.x).toBe(memberMinX)
   })
 
   it('marks clusters containing a locked member as walls and drops far-away rects', () => {
@@ -83,7 +85,7 @@ describe('buildNegotiationScene', () => {
     place(far!, base.position.x + 40_000, base.position.y)
     const fresh = useWidgetStore.getState()
 
-    const scene = buildNegotiationScene(fresh.widgets, fresh.groups, fresh.widgetGroupIndex, [mover!])!
+    const scene = buildNegotiationScene(fresh.widgets, fresh.glues, fresh.widgetGlueIndex, [mover!])!
     const nearCluster = scene.clusters.find((rect) => rect.id === `w:${near}`)!
     expect(nearCluster.locked).toBe(true)
     expect(scene.clusters.some((rect) => rect.id === `w:${far}`)).toBe(false)
@@ -169,6 +171,21 @@ describe('drag displacement driver', () => {
     const offsets = useDragDisplacementStore.getState().offsets
     expect(offsets[b!]).toBeDefined()
     expect(offsets[b!]!.x).toBeGreaterThan(0)
+  })
+
+  it('does not publish the retired canvas-wide hierarchy guide', () => {
+    const [parentId, childId] = createNotes(2)
+    useWidgetStore.getState().addRelation(parentId!, childId!, 'parent')
+    const parent = widget(parentId!)
+    place(parentId!, 0, 0)
+    place(childId!, 80, parent.size.height + 40)
+
+    beginDragDisplacement()
+    updateDragDisplacement([childId!], { x: 0, y: -40 }, 0)
+    expect(useDragDisplacementStore.getState().hierarchyGuide).toBeNull()
+
+    cancelDragDisplacement()
+    expect(useDragDisplacementStore.getState().hierarchyGuide).toBeNull()
   })
 
   it('applyGhostDisplacement moves widgets by their offsets, skipping locked ones', () => {

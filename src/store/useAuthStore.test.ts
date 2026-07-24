@@ -22,4 +22,33 @@ describe('auth initialization lifecycle', () => {
     useAuthStore.getState().exitGuest()
     expect(useAuthStore.getState()).toMatchObject({ isGuest: false, loading: false })
   })
+
+  it('saves only compact public profile metadata and refreshes the live session', async () => {
+    const updateUser = vi.fn(async () => ({
+      data: {
+        user: {
+          id: 'person-1',
+          email: 'person@example.com',
+          user_metadata: { full_name: 'Mira', profile_color: '#a78bfa' },
+        },
+      },
+      error: null,
+    }))
+    vi.doMock('../lib/supabase', () => ({
+      supabaseConfigured: false,
+      getSupabaseClient: async () => ({ auth: { updateUser } }),
+    }))
+    const { accountDisplayName, accountProfileColor, useAuthStore } = await import('./useAuthStore')
+    useAuthStore.setState({
+      session: {
+        user: { id: 'person-1', email: 'person@example.com', user_metadata: {} },
+      } as never,
+    })
+
+    await useAuthStore.getState().updateProfile({ displayName: '  Mira  ', profileColor: '#a78bfa' })
+
+    expect(updateUser).toHaveBeenCalledWith({ data: { full_name: 'Mira', profile_color: '#a78bfa' } })
+    expect(accountDisplayName(useAuthStore.getState().session)).toBe('Mira')
+    expect(accountProfileColor(useAuthStore.getState().session)).toBe('#a78bfa')
+  })
 })

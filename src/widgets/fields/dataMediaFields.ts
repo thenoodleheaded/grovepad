@@ -10,7 +10,6 @@ import type { ModuleType,
   ContactData,
   DecisionData,
   DialogData,
-  DividerData,
   FlashcardsData,
   GameTunerData,
   KanbanData,
@@ -240,15 +239,6 @@ export const DATA_MEDIA_FIELDS = {
       valueType: 'number',
       unit: 'count',
       get: (d) => (d as DialogData).lines.length,
-    },
-  ],
-  divider: [
-    {
-      key: 'label',
-      label: 'Label',
-      valueType: 'text',
-      get: (d) => (d as DividerData).label,
-      set: (_d, v) => ({ label: text(v) }) satisfies DividerData,
     },
   ],
   calendar: [

@@ -1,8 +1,9 @@
 import type { ReactNode } from 'react'
-import { Cable, Copy, Layers, Link2, Maximize2, Trash2, Unlink, X } from 'lucide-react'
+import { Cable, Copy, Link2, Maximize2, Trash2, Wind, X } from 'lucide-react'
 import { useWidgetStore } from '../../store/useWidgetStore'
 import { requestWidgetDeletion } from '../../store/useWidgetDeletionDialogStore'
 import { frameCanvas } from '../../utils/cameraFraming'
+import { usesStrictRelations } from '../../utils/relationPolicy'
 
 function ActionButton({
   label,
@@ -42,29 +43,20 @@ function ActionButton({
 
 export function SelectionActionBar() {
   const selectedSet = useWidgetStore((state) => state.selectedIds)
-  const widgetGroupIndex = useWidgetStore((state) => state.widgetGroupIndex)
+  const strictRelations = useWidgetStore((state) =>
+    usesStrictRelations(state.canvases[state.activeCanvasId]),
+  )
   const selectedIds = [...selectedSet]
-  const groupIds = [
-    ...new Set(
-      selectedIds
-        .map((id) => widgetGroupIndex[id])
-        .filter((groupId): groupId is string => Boolean(groupId)),
-    ),
-  ]
-  const groupedSelectedIds = selectedIds.filter((id) => widgetGroupIndex[id])
 
   if (selectedIds.length === 0) return null
 
   const selectedLabel = `${selectedIds.length} selected`
-  const canGroup = selectedIds.length >= 2
-  const canDetach = groupedSelectedIds.length > 0
-  const canTighten = groupIds.length > 0
   const singleSelectedId = selectedIds.length === 1 ? selectedIds[0] : null
 
   return (
     <div
       data-canvas-ui
-      className="gp-safe-canvas-bottom-center gp-selection-bar gp-toolbar gp-pop gp-panel absolute left-1/2 z-20 flex max-w-[calc(100vw-1.5rem)] -translate-x-1/2 select-none items-center gap-0.5 overflow-x-auto overscroll-x-contain rounded-t-2xl rounded-b-none p-1 shadow-2xl sm:gap-1"
+      className="gp-canvas-ui-scale gp-safe-canvas-bottom-center gp-selection-bar gp-toolbar gp-pop gp-panel absolute left-1/2 z-20 flex max-w-[calc(100vw-1.5rem)] -translate-x-1/2 select-none items-center gap-0.5 overflow-x-auto overscroll-x-contain rounded-t-2xl rounded-b-none p-1 shadow-2xl sm:gap-1"
       style={{ transformOrigin: '50% 100%' }}
     >
       <div className="min-w-16 px-1.5 text-center text-[11px] font-semibold text-neutral-200 sm:min-w-20 sm:px-2 sm:text-xs">
@@ -85,8 +77,17 @@ export function SelectionActionBar() {
       >
         <Copy size={13} aria-hidden />
       </ActionButton>
+      {selectedIds.length >= 2 && (
+        <ActionButton
+          label="Untangle"
+          showLabel
+          onClick={() => useWidgetStore.getState().untangleWidgets(selectedIds)}
+        >
+          <Wind size={13} aria-hidden />
+        </ActionButton>
+      )}
       <ActionButton
-        label="Link as child"
+        label={strictRelations ? 'Link as child' : 'Connect'}
         disabled={!singleSelectedId}
         onClick={() => {
           if (singleSelectedId) useWidgetStore.getState().startChildLink(singleSelectedId)
@@ -102,50 +103,6 @@ export function SelectionActionBar() {
         }}
       >
         <Cable size={13} aria-hidden />
-      </ActionButton>
-      <ActionButton
-        label="Group"
-        disabled={!canGroup}
-        onClick={() => {
-          const { createGroup, clearSelection } = useWidgetStore.getState()
-          createGroup(selectedIds)
-          clearSelection()
-        }}
-      >
-        <Layers size={13} aria-hidden />
-      </ActionButton>
-      <ActionButton
-        label="Tighten"
-        disabled={!canTighten}
-        onClick={() => {
-          let historyCaptured = false
-          for (const groupId of groupIds) {
-            const changed = useWidgetStore.getState().compactGroup(groupId, {
-              skipHistory: historyCaptured,
-            })
-            if (changed) historyCaptured = true
-          }
-        }}
-      >
-        <Layers size={13} aria-hidden />
-      </ActionButton>
-      <ActionButton
-        label="Detach"
-        disabled={!canDetach}
-        onClick={() => {
-          let historyCaptured = false
-          for (const widgetId of groupedSelectedIds) {
-            const state = useWidgetStore.getState()
-            const groupId = state.widgetGroupIndex[widgetId]
-            if (!groupId) continue
-            const changed = state.removeFromGroup(groupId, widgetId, {
-              skipHistory: historyCaptured,
-            })
-            if (changed) historyCaptured = true
-          }
-        }}
-      >
-        <Unlink size={13} aria-hidden />
       </ActionButton>
       <ActionButton
         label="Delete"

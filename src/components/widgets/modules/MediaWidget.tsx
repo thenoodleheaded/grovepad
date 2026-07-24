@@ -1,14 +1,19 @@
 import { useEffect, useState } from 'react'
 import { Image } from 'lucide-react'
 import type { MediaData } from '../../../types/spatial'
-import { useFieldAnchor } from '../../../hooks/useFieldAnchor'
 
 interface MediaWidgetProps {
   data: MediaData
   onChange: (data: MediaData) => void
 }
 
-/** A single image by URL with a caption. Broken URLs fall back gracefully. */
+/**
+ * A single image by URL with a caption. Broken URLs fall back gracefully.
+ *
+ * The text fields are marked as scrolling floors so the card's width is set
+ * by the picture, never by the length of the address that fetched it — a
+ * 400-character CDN link must not stretch the card across the board.
+ */
 export function MediaWidget({ data, onChange }: MediaWidgetProps) {
   const [failed, setFailed] = useState(false)
   const [localUrl, setLocalUrl] = useState('')
@@ -22,9 +27,6 @@ export function MediaWidget({ data, onChange }: MediaWidgetProps) {
   }, [data.localBlobKey])
   const imageUrl = localUrl || data.url
   const showImage = imageUrl.trim() !== '' && !failed
-  const urlRef = useFieldAnchor<HTMLInputElement>('url')
-  const captionRef = useFieldAnchor<HTMLInputElement>('caption')
-
   return (
     <div className="flex h-full flex-col gap-2">
       <div className="relative min-h-0 flex-1 overflow-hidden rounded-xl border gp-hairline bg-neutral-950/60">
@@ -46,7 +48,8 @@ export function MediaWidget({ data, onChange }: MediaWidgetProps) {
       </div>
 
       <input
-        ref={urlRef}
+
+        data-floor-overflow="scroll"
         value={data.url}
         placeholder="https://image…"
         aria-label="Image URL"
@@ -57,6 +60,7 @@ export function MediaWidget({ data, onChange }: MediaWidgetProps) {
         className="w-full shrink-0 bg-transparent  text-[10px] text-neutral-500 outline-none placeholder:text-neutral-700"
       />
       <input
+        data-floor-overflow="scroll"
         value={data.altText ?? ''}
         placeholder="Alt text for accessibility…"
         aria-label="Image alt text"
@@ -64,7 +68,8 @@ export function MediaWidget({ data, onChange }: MediaWidgetProps) {
         className="w-full shrink-0 bg-transparent text-[10px] text-neutral-500 outline-none placeholder:text-neutral-700"
       />
       <input
-        ref={captionRef}
+
+        data-floor-overflow="scroll"
         value={data.caption}
         placeholder="Caption…"
         aria-label="Caption"

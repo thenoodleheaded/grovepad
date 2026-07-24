@@ -1,6 +1,5 @@
 import { Minus, Plus } from 'lucide-react'
 import type { StudyGoalData } from '../../../types/spatial'
-import { useFieldAnchor } from '../../../hooks/useFieldAnchor'
 
 interface StudyGoalWidgetProps {
   data: StudyGoalData
@@ -12,7 +11,6 @@ export function StudyGoalWidget({ data, onChange }: StudyGoalWidgetProps) {
   const target = Math.max(0, data.targetHours)
   const logged = Math.max(0, data.loggedHours)
   const percent = target > 0 ? Math.min(100, Math.round((logged / target) * 100)) : 0
-  const percentRingRef = useFieldAnchor('percent')
   const CIRC = 2 * Math.PI * 15
 
   const logHours = (delta: number) =>
@@ -29,7 +27,7 @@ export function StudyGoalWidget({ data, onChange }: StudyGoalWidgetProps) {
       />
 
       <div className="flex flex-1 items-center gap-4">
-        <div ref={percentRingRef} className="relative h-16 w-16 shrink-0">
+        <div className="relative h-16 w-16 shrink-0">
           <svg viewBox="0 0 36 36" className="h-full w-full -rotate-90">
             <circle cx="18" cy="18" r="15" fill="none" strokeWidth="3" className="stroke-neutral-800" />
             <circle

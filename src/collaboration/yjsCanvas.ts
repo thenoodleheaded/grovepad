@@ -1,6 +1,6 @@
 import * as Y from 'yjs'
 import type { Connection } from '../types/circuit'
-import type { Relation, Widget, WidgetGroup } from '../types/spatial'
+import type { Relation, Widget, WidgetGlue } from '../types/spatial'
 import { parsePersistedBoard } from '../utils/persistedBoardSchema'
 import type { CanvasCollaborationSnapshot } from './types'
 
@@ -8,7 +8,7 @@ const ROOT_WIDGETS = 'widgets'
 const ROOT_CANVAS = 'canvas'
 const ROOT_RELATIONS = 'relations'
 const ROOT_CONNECTIONS = 'connections'
-const ROOT_GROUPS = 'groups'
+const ROOT_GLUES = 'glues'
 const ROOT_TEXTS = 'texts'
 
 const VALIDATION_WORKSPACE_ID = '__collaboration_workspace__'
@@ -20,6 +20,16 @@ export const LOCAL_STORE_ORIGIN = Symbol('grovepad-local-store')
 export const REMOTE_TRANSPORT_ORIGIN = Symbol('grovepad-remote-transport')
 
 type JsonRecord = Record<string, unknown>
+
+function canvasSnapshotMeta(canvas: CanvasCollaborationSnapshot['canvas']): CanvasCollaborationSnapshot['canvas'] {
+  return {
+    id: canvas.id,
+    name: canvas.name,
+    ...(canvas.gridIntensity === undefined ? {} : { gridIntensity: canvas.gridIntensity }),
+    ...(canvas.linksVisible === undefined ? {} : { linksVisible: canvas.linksVisible }),
+    ...(canvas.relationStrict === undefined ? {} : { relationStrict: canvas.relationStrict }),
+  }
+}
 
 export class CollaborationPayloadError extends Error {
   constructor(message: string) {
@@ -111,7 +121,7 @@ export function writeCanvasSnapshot(
   previous?: CanvasCollaborationSnapshot,
 ): void {
   doc.transact(() => {
-    if (!previous || previous.canvas.id !== snapshot.canvas.id || previous.canvas.name !== snapshot.canvas.name) {
+    if (!previous || !sameJson(previous.canvas, snapshot.canvas)) {
       replaceMapFields(doc.getMap(ROOT_CANVAS), snapshot.canvas)
     }
     const widgets = Object.fromEntries(
@@ -123,7 +133,7 @@ export function writeCanvasSnapshot(
     reconcileRecords(doc.getMap(ROOT_WIDGETS), widgets, previous?.widgets)
     reconcileRecords(doc.getMap(ROOT_RELATIONS), snapshot.relations, previous?.relations)
     reconcileRecords(doc.getMap(ROOT_CONNECTIONS), snapshot.connections, previous?.connections)
-    reconcileRecords(doc.getMap(ROOT_GROUPS), snapshot.groups, previous?.groups)
+    reconcileRecords(doc.getMap(ROOT_GLUES), snapshot.glues, previous?.glues)
 
     const texts = doc.getMap<Y.Text>(ROOT_TEXTS)
     for (const id of previous ? Object.keys(previous.widgets) : [...texts.keys()]) {
@@ -162,7 +172,7 @@ function validateSnapshot(
   widgets: Record<string, JsonRecord>,
   relations: Record<string, JsonRecord>,
   connections: Record<string, JsonRecord>,
-  groups: Record<string, JsonRecord>,
+  glues: Record<string, JsonRecord>,
 ): CanvasCollaborationSnapshot {
   if (canvas.id !== canvasId) throw new CollaborationPayloadError('canvas metadata id mismatch')
   const candidate = {
@@ -182,12 +192,15 @@ function validateSnapshot(
         name: canvas.name,
         workspaceId: VALIDATION_WORKSPACE_ID,
         parentCanvasId: null,
+        gridIntensity: canvas.gridIntensity,
+        linksVisible: canvas.linksVisible,
+        relationStrict: canvas.relationStrict,
       },
     },
     widgets,
     relations,
     connections,
-    groups,
+    glues,
     activePacks: [],
     activeWorkspaceId: VALIDATION_WORKSPACE_ID,
     activeCanvasId: canvasId,
@@ -201,11 +214,17 @@ function validateSnapshot(
   if (!parsed) throw new CollaborationPayloadError('canvas payload failed board validation')
   return {
     canvasId,
-    canvas: { id: canvasId, name: parsed.canvases[canvasId]!.name },
+    canvas: canvasSnapshotMeta({
+      id: canvasId,
+      name: parsed.canvases[canvasId]!.name,
+      gridIntensity: parsed.canvases[canvasId]!.gridIntensity,
+      linksVisible: parsed.canvases[canvasId]!.linksVisible,
+      relationStrict: parsed.canvases[canvasId]!.relationStrict,
+    }),
     widgets: parsed.widgets,
     relations: parsed.relations,
     connections: parsed.connections,
-    groups: parsed.groups,
+    glues: parsed.glues,
   }
 }
 
@@ -215,7 +234,7 @@ export function readCanvasSnapshot(doc: Y.Doc, canvasId: string): CanvasCollabor
   const widgets = readRecords(doc.getMap(ROOT_WIDGETS), ROOT_WIDGETS)
   const relations = readRecords(doc.getMap(ROOT_RELATIONS), ROOT_RELATIONS)
   const connections = readRecords(doc.getMap(ROOT_CONNECTIONS), ROOT_CONNECTIONS)
-  const groups = readRecords(doc.getMap(ROOT_GROUPS), ROOT_GROUPS)
+  const glues = readRecords(doc.getMap(ROOT_GLUES), ROOT_GLUES)
   const texts = doc.getMap<Y.Text>(ROOT_TEXTS)
   if (texts.size > MAX_ENTITIES_PER_KIND) {
     throw new CollaborationPayloadError(`${ROOT_TEXTS} exceeds ${MAX_ENTITIES_PER_KIND} records`)
@@ -232,7 +251,7 @@ export function readCanvasSnapshot(doc: Y.Doc, canvasId: string): CanvasCollabor
       text: text.toString(),
     }
   }
-  return validateSnapshot(canvasId, canvas, widgets, relations, connections, groups)
+  return validateSnapshot(canvasId, canvas, widgets, relations, connections, glues)
 }
 
 /** Select only the active canvas and its internal edges from the board. */
@@ -241,8 +260,14 @@ export function snapshotCanvas(
     widgets: Record<string, Widget>
     relations: Record<string, Relation>
     connections: Record<string, Connection>
-    groups: Record<string, WidgetGroup>
-    canvases: Record<string, { id: string; name: string }>
+    glues: Record<string, WidgetGlue>
+    canvases: Record<string, {
+      id: string
+      name: string
+      gridIntensity?: number
+      linksVisible?: boolean
+      relationStrict?: boolean
+    }>
   },
   canvasId: string,
 ): CanvasCollaborationSnapshot {
@@ -256,10 +281,23 @@ export function snapshotCanvas(
   const connections = Object.fromEntries(
     Object.entries(state.connections).filter(([, edge]) => hasWidget(edge.fromId) && hasWidget(edge.toId)),
   )
-  const groups = Object.fromEntries(
-    Object.entries(state.groups).filter(([, group]) => group.widgetIds.some(hasWidget)),
+  const glues = Object.fromEntries(
+    Object.entries(state.glues).filter(([, glue]) => glue.widgetIds.some(hasWidget)),
   )
   const canvas = state.canvases[canvasId]
   if (!canvas) throw new CollaborationPayloadError(`canvas ${canvasId} does not exist locally`)
-  return { canvasId, canvas: { id: canvas.id, name: canvas.name }, widgets, relations, connections, groups }
+  return {
+    canvasId,
+    canvas: canvasSnapshotMeta({
+      id: canvas.id,
+      name: canvas.name,
+      gridIntensity: canvas.gridIntensity,
+      linksVisible: canvas.linksVisible,
+      relationStrict: canvas.relationStrict,
+    }),
+    widgets,
+    relations,
+    connections,
+    glues,
+  }
 }

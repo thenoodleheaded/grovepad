@@ -1,25 +1,43 @@
-import type { CanvasMeta, Relation, Widget, WidgetGroup } from '../../types/spatial'
+import type { CanvasMeta, Relation, Widget } from '../../types/spatial'
 import { GRID_SIZE, snapToGrid } from '../../types/spatial'
 import { getOpaqueWidgetType } from '../../utils/persistedBoardSchema'
+import { reconcileGlueClusters } from '../../utils/glueGeometry'
 import { useToastStore } from '../useToastStore'
-import { buildGroupIndex, computeBlockedWidgetIds } from '../widgetGraph'
-import { settleWidgetLayout, settleWidgetsByCanvas } from '../widgetSettling'
+import { buildGlueIndex, computeBlockedWidgetIds } from '../widgetGraph'
+import { settleWidgetsByCanvas } from '../widgetSettling'
 import { uniqueExistingIds, withWidget } from '../widgetCollection'
 import { analyzeWidgetDeletion } from '../widgetDeletion'
+import { restingTileSize } from '../../utils/widgetRest'
+import { widgetDefinition } from '../../widgets/registry'
 import type { WidgetStoreSlice, WidgetStoreSliceContext } from '../widgetStoreSliceContext'
 export function createSelectionSlice({ set, get, pushHistory, markSpawned }: WidgetStoreSliceContext): WidgetStoreSlice {
   return {
   selectWidget: (id, additive) => {
     set((state) => {
       if (!state.widgets[id]) return state
+      // A glued widget is one welded object: selecting a member selects the
+      // whole cluster, the same unit a plain drag moves. Keeps select and drag
+      // agreeing on what a cluster is.
+      const glueId = state.widgetGlueIndex[id]
+      const clusterIds = (
+        glueId ? state.glues[glueId]?.widgetIds ?? [id] : [id]
+      ).filter((wid) => state.widgets[wid])
       if (additive) {
         const next = new Set(state.selectedIds)
-        if (next.has(id)) next.delete(id)
-        else next.add(id)
+        if (clusterIds.every((wid) => next.has(wid))) {
+          clusterIds.forEach((wid) => next.delete(wid))
+        } else {
+          clusterIds.forEach((wid) => next.add(wid))
+        }
         return { selectedIds: next }
       }
-      if (state.selectedIds.size === 1 && state.selectedIds.has(id)) return state
-      return { selectedIds: new Set([id]) }
+      if (
+        state.selectedIds.size === clusterIds.length &&
+        clusterIds.every((wid) => state.selectedIds.has(wid))
+      ) {
+        return state
+      }
+      return { selectedIds: new Set(clusterIds) }
     })
   },
 
@@ -87,11 +105,10 @@ export function createSelectionSlice({ set, get, pushHistory, markSpawned }: Wid
         delete connections[connection.id]
       }
 
-      const groups: Record<string, WidgetGroup> = {}
-      for (const [groupId, group] of Object.entries(state.groups)) {
-        const widgetIds = group.widgetIds.filter((id) => widgets[id])
-        if (widgetIds.length >= 2) groups[groupId] = { ...group, widgetIds }
-      }
+      // Drop deleted members and, since deleting the card that joined two ends
+      // of a cluster leaves the survivors no longer touching, re-derive
+      // clusters from what still welds.
+      const glues = reconcileGlueClusters(widgets, state.glues)
 
       const selectedIds = new Set(
         [...state.selectedIds].filter((id) => widgets[id]),
@@ -104,8 +121,8 @@ export function createSelectionSlice({ set, get, pushHistory, markSpawned }: Wid
         canvasViews,
         relations,
         connections,
-        groups,
-        widgetGroupIndex: buildGroupIndex(groups),
+        glues,
+        widgetGlueIndex: buildGlueIndex(glues),
         selectedIds,
         blockedWidgetIds: computeBlockedWidgetIds(relations),
         contextMenu:
@@ -120,51 +137,6 @@ export function createSelectionSlice({ set, get, pushHistory, markSpawned }: Wid
         : deletedCount === 1 ? 'Deleted widget' : `Deleted ${deletedCount} widgets`,
       { action: { label: 'Undo', run: () => get().undo() } },
     )
-  },
-
-  duplicateWidget: (id) => {
-    const state = get()
-    const source = state.widgets[id]
-    if (!source) return ''
-    if (getOpaqueWidgetType(source)) {
-      useToastStore.getState().addToast('Update Grovepad before duplicating this widget')
-      return ''
-    }
-    pushHistory()
-    const nextId = crypto.randomUUID()
-    const clone: Widget = {
-      ...source,
-      id: nextId,
-      title: `${source.title} copy`,
-      position: {
-        x: snapToGrid(source.position.x + GRID_SIZE),
-        y: snapToGrid(source.position.y + GRID_SIZE),
-      },
-      data: structuredClone(source.data),
-      metadata: structuredClone(source.metadata),
-    }
-    // A duplicated canvas node opens a fresh empty canvas of the same name —
-    // two nodes must never share one backing canvas.
-    let newCanvas: CanvasMeta | null = null
-    if (clone.type === 'canvas_node') {
-      const subCanvasId = crypto.randomUUID()
-      newCanvas = {
-        id: subCanvasId,
-        name: clone.title,
-        workspaceId: state.activeWorkspaceId,
-        parentCanvasId: source.canvasId,
-      }
-      clone.data = { canvasId: subCanvasId }
-    }
-    set((current) => ({
-      widgets: settleWidgetLayout({ ...current.widgets, [nextId]: clone }, [nextId]),
-      widgetStructureVersion: current.widgetStructureVersion + 1,
-      selectedIds: new Set([nextId]),
-      contextMenu: null,
-      ...(newCanvas ? { canvases: { ...current.canvases, [newCanvas.id]: newCanvas } } : {}),
-    }))
-    markSpawned(nextId)
-    return nextId
   },
 
   duplicateWidgets: (ids) => {
@@ -320,6 +292,45 @@ export function createSelectionSlice({ set, get, pushHistory, markSpawned }: Wid
     }))
   },
 
+  toggleWidgetPinned: (widgetId, options) => {
+    if (!get().widgets[widgetId]) return
+    pushHistory()
+    set((state) => ({
+      widgets: withWidget(state.widgets, widgetId, (widget) => {
+        const nextPinned = !widget.metadata.pinned
+        let position = widget.position
+        if (options?.absorbOffset) {
+          // Pinning an ephemerally expanded card absorbs its view offset into
+          // the stored anchor, in the same history step as the pin itself. The
+          // expanded card was DRAWN at position+offset while its anchor stayed
+          // at the tile it opened from; a pinned card draws exactly where its
+          // saved position says, so without this hand-off the card jumped
+          // diagonally down-right by the whole offset the instant it was pinned.
+          position = {
+            x: position.x + options.absorbOffset.x,
+            y: position.y + options.absorbOffset.y,
+          }
+        } else if (!nextPinned) {
+          // Unpinning a card that falls back to a resting tile: shift its anchor
+          // so the tile lands CENTRED under the full card, so the card collapses
+          // toward its own centre instead of shrinking into its top-left corner.
+          // This is the exact inverse of the offset a pin absorbs, so pinning and
+          // unpinning round-trips leave the anchor exactly where it started.
+          const rests =
+            widgetDefinition(widget.type).restingFace !== false && widget.iconified !== true
+          if (rests) {
+            const tile = restingTileSize(widget)
+            position = {
+              x: position.x + (widget.size.width - tile.width) / 2,
+              y: position.y + (widget.size.height - tile.height) / 2,
+            }
+          }
+        }
+        return { ...widget, position, metadata: { ...widget.metadata, pinned: nextPinned } }
+      }),
+    }))
+  },
+
   toggleWidgetFavorite: (widgetId) => {
     if (!get().widgets[widgetId]) return
     pushHistory()
@@ -327,17 +338,6 @@ export function createSelectionSlice({ set, get, pushHistory, markSpawned }: Wid
       widgets: withWidget(state.widgets, widgetId, (widget) => ({
         ...widget,
         metadata: { ...widget.metadata, favorite: !widget.metadata.favorite },
-      })),
-    }))
-  },
-
-  setWidgetAccent: (widgetId, accent) => {
-    if (!get().widgets[widgetId]) return
-    pushHistory()
-    set((state) => ({
-      widgets: withWidget(state.widgets, widgetId, (widget) => ({
-        ...widget,
-        metadata: { ...widget.metadata, accent },
       })),
     }))
   },

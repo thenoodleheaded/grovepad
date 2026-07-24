@@ -1,5 +1,5 @@
 export type ActiveInput = 'mouse' | 'touch' | 'pen' | 'keyboard'
-export type InteractionMode = 'navigate' | 'select' | 'connect' | 'edit'
+export type InteractionMode = 'navigate' | 'select' | 'connect'
 export type ViewportClass = 'phone' | 'tablet' | 'desktop'
 
 export interface InputCapabilitySnapshot {
@@ -54,6 +54,5 @@ export function interactionModeAcceptsDirectManipulation(
   mode: InteractionMode,
   _pointerType: string,
 ): boolean {
-  if (mode === 'edit') return false
   return mode === 'select' || mode === 'connect'
 }

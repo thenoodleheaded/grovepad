@@ -12,7 +12,8 @@ describe('store no-op updates', () => {
 
     if (state.dependencyLinkSource) state.startDependencyLink(state.dependencyLinkSource)
     else state.clearDependencyLink()
-    state.setDragOverGroupId(state.dragOverGroupId)
+    state.setGlueIntent(state.glueIntent)
+    state.setUnglueIntentWidgetId(state.unglueIntentWidgetId)
     state.setShortcutsOpen(state.shortcutsOpen)
     state.setImportOpen(state.importOpen)
     state.setQuickAddOpen(state.quickAddOpen)

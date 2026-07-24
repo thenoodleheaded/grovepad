@@ -240,10 +240,6 @@ export interface MetricsData {
   tiles: MetricTile[]
 }
 
-export interface DividerData {
-  label: string
-}
-
 export type StickyNoteColor = 'yellow' | 'pink' | 'blue' | 'green' | 'purple'
 
 export interface StickyNoteData {

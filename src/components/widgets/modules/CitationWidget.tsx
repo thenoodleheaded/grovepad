@@ -1,6 +1,5 @@
 import { Copy, Plus, X } from 'lucide-react'
 import type { CitationData, CitationSource, CitationStyle } from '../../../types/spatial'
-import { useFieldAnchor } from '../../../hooks/useFieldAnchor'
 import { useTransientValue } from '../../../hooks/useTransientValue'
 
 interface CitationWidgetProps {
@@ -22,8 +21,6 @@ function formatSource(style: CitationStyle, s: CitationSource): string {
 
 export function CitationWidget({ data, onChange }: CitationWidgetProps) {
   const [copiedId, showCopiedId] = useTransientValue<string | null>(null)
-  const countRef = useFieldAnchor<HTMLSpanElement>('count')
-
   const setSource = (id: string, patch: Partial<CitationSource>) =>
     onChange({ ...data, sources: data.sources.map((s) => (s.id === id ? { ...s, ...patch } : s)) })
 
@@ -116,7 +113,7 @@ export function CitationWidget({ data, onChange }: CitationWidgetProps) {
           <Plus size={11} aria-hidden />
           Add source
         </button>
-        <span ref={countRef} className=" text-[10px] tabular-nums text-neutral-600">
+        <span className=" text-[10px] tabular-nums text-neutral-600">
           {data.sources.length} source{data.sources.length === 1 ? '' : 's'}
         </span>
       </div>

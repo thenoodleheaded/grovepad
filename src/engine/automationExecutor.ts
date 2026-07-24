@@ -160,7 +160,7 @@ export async function executeAutomationWidget(widgetId: string): Promise<void> {
         sourceText: data.input,
         confidence: 1,
         nodes: titles.map((title, index) => ({ temporaryId: `created-${index}`, widgetType: requestedType as never, title, data: widgetDefinition(requestedType as never).defaultData(), sourceText: title, confidence: 1, depth: 0, metadata: { badges: [] } })),
-        relations: [], groups: [], warnings: [],
+        relations: [], warnings: [],
       }
       const created = store.commitThoughtPlan(plan, { x: self.position.x + self.size.width + 80, y: self.position.y })
       write(widgetId, { output: created.join(','), running: false, count: data.count + 1, lastRunAt: Date.now(), lastError: '' })
@@ -208,9 +208,6 @@ export async function executeAutomationWidget(widgetId: string): Promise<void> {
       const from = String(config.fromId ?? widgetId)
       const to = String(config.toId ?? data.input)
       if (to) output = store.addRelation(from, to, String(config.relation ?? 'parent') as RelationType)
-    } else if (type === 'auto_grouper') {
-      const ids = lines(data.input)
-      if (ids.length > 1) output = store.createGroup(ids)
     } else if (type === 'clone_branch') {
       output = store.duplicateWidgets(lines(data.input).length ? lines(data.input) : [widgetId]).join(',')
     } else if (type === 'auto_layout_action') {

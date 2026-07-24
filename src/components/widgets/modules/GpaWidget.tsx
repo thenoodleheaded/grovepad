@@ -1,6 +1,5 @@
 import { Plus, X } from 'lucide-react'
 import type { GpaData } from '../../../types/spatial'
-import { useFieldAnchor } from '../../../hooks/useFieldAnchor'
 
 interface GpaWidgetProps {
   data: GpaData
@@ -20,8 +19,6 @@ function computeGpa(courses: GpaData['courses']): number {
 
 export function GpaWidget({ data, onChange }: GpaWidgetProps) {
   const gpa = computeGpa(data.courses)
-  const gpaRowRef = useFieldAnchor('gpa')
-
   const setCourse = (id: string, patch: Partial<GpaData['courses'][number]>) =>
     onChange({ courses: data.courses.map((c) => (c.id === id ? { ...c, ...patch } : c)) })
 
@@ -95,7 +92,7 @@ export function GpaWidget({ data, onChange }: GpaWidgetProps) {
         </button>
       </div>
 
-      <div ref={gpaRowRef} className="flex h-9 shrink-0 items-center justify-between border-t gp-hairline">
+      <div className="flex h-9 shrink-0 items-center justify-between border-t gp-hairline">
         <span className="text-[11px] font-medium uppercase tracking-wider text-neutral-600">GPA</span>
         <span className={` text-lg font-bold tabular-nums ${gpaColor}`}>
           {gpa.toFixed(2)}

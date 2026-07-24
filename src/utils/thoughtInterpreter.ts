@@ -30,20 +30,11 @@ export interface ProposedRelation {
   label?: string
 }
 
-/** A real widget group (band + name pill) to create on commit — distinct
- *  from a parent relation, which only draws a line. */
-export interface ProposedGroup {
-  temporaryId: string
-  memberTemporaryIds: string[]
-  label?: string
-}
-
 export interface ThoughtPlan {
   sourceText: string
   confidence: number
   nodes: ProposedNode[]
   relations: ProposedRelation[]
-  groups: ProposedGroup[]
   warnings: InterpretationWarning[]
 }
 
@@ -127,7 +118,6 @@ const INTENT_PATTERNS: Partial<Record<ModuleType, RegExp>> = {
   contact: /\b(contact card|phone number|email address)\b/i,
   media: /\b(media|image|video|photo)\b/i,
   metrics: /\b(metrics?|kpis?|measurements?|dashboard stats?)\b/i,
-  divider: /\b(divider|section break|separator)\b/i,
   sticky_note: /\b(sticky(?: note)?|post-?it)\b/i,
   calendar: /\b(monthly calendar|calendar month)\b/i,
   timer: /\b(timer|time for \d+)\b/i,
@@ -633,7 +623,7 @@ function singlePlan(source: string, type: ModuleType, confidence: number, margin
         depth: 0,
         metadata: metadataFor(source, confidence),
       }]
-  return { sourceText: source, confidence, nodes, relations: inferRelations(nodes), groups: [], warnings: makeWarnings(source, confidence, margin) }
+  return { sourceText: source, confidence, nodes, relations: inferRelations(nodes), warnings: makeWarnings(source, confidence, margin) }
 }
 
 function combinedPlan(source: string, clauses: string[], context: InterpretationContext): ThoughtPlan | null {
@@ -673,7 +663,7 @@ function combinedPlan(source: string, clauses: string[], context: Interpretation
       }))
     }
   }
-  return { sourceText: source, confidence, nodes, relations, groups: [], warnings: makeWarnings(source, confidence) }
+  return { sourceText: source, confidence, nodes, relations, warnings: makeWarnings(source, confidence) }
 }
 
 function predictionLabel(types: ModuleType[], combined = false): string {
@@ -744,5 +734,5 @@ export function isPresentablePrediction(prediction: ThoughtPrediction): boolean 
 /** Backwards-compatible recommended plan for non-interactive callers. */
 export function interpretThought(sourceText: string, context: InterpretationContext = {}): ThoughtPlan {
   const result = interpretThoughtCandidates(sourceText, context)
-  return result.predictions[0]?.plan ?? { sourceText, confidence: 0, nodes: [], relations: [], groups: [], warnings: [] }
+  return result.predictions[0]?.plan ?? { sourceText, confidence: 0, nodes: [], relations: [], warnings: [] }
 }

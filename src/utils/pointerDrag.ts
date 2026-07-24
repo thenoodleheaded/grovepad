@@ -1,4 +1,7 @@
-const DRAG_THRESHOLD = 4
+// Movement (px) a press must travel before it becomes a drag rather than a
+// click/select. Small enough that engaging a drag feels immediate, large
+// enough that the hand-jitter in a deliberate click never nudges the widget.
+const DRAG_THRESHOLD = 3
 
 interface PointerSample {
   pointerId: number
@@ -14,10 +17,15 @@ interface DragCallbacks {
 }
 
 /**
- * Frame-batched drag gesture. Pointer events can fire far above display
- * refresh (120Hz+ mice); deltas are accumulated and flushed through a single
- * requestAnimationFrame per frame so the store — and React — never do more
- * than one drag update per rendered frame.
+ * Drag gesture with zero added latency: every qualifying pointer move applies
+ * its delta the instant it arrives, rather than queuing behind a
+ * `requestAnimationFrame` hop first. A queued rAF only ever helps hardware
+ * firing pointermove faster than the display repaints — and that is exactly
+ * the case where an added frame of latency is most noticeable, since the
+ * whole point of high-frequency input is to track the pointer tightly. Since
+ * `onDelta` receives one small delta per event instead of one accumulated
+ * delta per frame, the cumulative motion over the gesture is identical either
+ * way — only the added lag is removed.
  *
  * While a drag is live, `data-widget-dragging` is set on <body> so the CSS
  * position transitions on widgets collapse to zero (per-frame movement must
@@ -29,9 +37,6 @@ export class PointerDragSession {
 
   private lastX: number
   private lastY: number
-  private pendingX = 0
-  private pendingY = 0
-  private rafId = 0
   private readonly callbacks: DragCallbacks
 
   constructor(event: PointerSample, callbacks: DragCallbacks) {
@@ -53,33 +58,12 @@ export class PointerDragSession {
     }
     this.lastX = event.clientX
     this.lastY = event.clientY
-    this.pendingX += dx
-    this.pendingY += dy
-    if (this.rafId === 0) {
-      this.rafId = requestAnimationFrame(() => {
-        this.rafId = 0
-        this.flush()
-      })
-    }
+    if (dx !== 0 || dy !== 0) this.callbacks.onDelta(dx, dy)
   }
 
-  /** Flush pending movement, tear down, and report whether a drag happened. */
+  /** Tear down and report whether a drag happened. */
   end(): boolean {
-    if (this.rafId !== 0) {
-      cancelAnimationFrame(this.rafId)
-      this.rafId = 0
-    }
-    this.flush()
     if (this.moved) document.body.removeAttribute('data-widget-dragging')
     return this.moved
-  }
-
-  private flush(): void {
-    if (this.pendingX === 0 && this.pendingY === 0) return
-    const dx = this.pendingX
-    const dy = this.pendingY
-    this.pendingX = 0
-    this.pendingY = 0
-    this.callbacks.onDelta(dx, dy)
   }
 }

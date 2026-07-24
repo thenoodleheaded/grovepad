@@ -1,14 +1,16 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { composePanelFloors, contentFitHeight, hasSignificantVerticalOverflow, naturalContentHeight, panelClassForIsland, verticalContentFloor } from './widgetContentFloor'
+import { composePanelFloors, contentFitHeight, contentStretchesToFill, hasSignificantVerticalOverflow, naturalContentHeight, verticalContentFloor } from './widgetContentFloor'
 
 /** A stub element carrying just the fields naturalContentHeight reads. */
-function fakeChild(offsetHeight: number, opts: { position?: string; marginTop?: number; marginBottom?: number } = {}) {
+function fakeChild(offsetHeight: number, opts: { position?: string; marginTop?: number; marginBottom?: number; flexGrow?: number; height?: string } = {}) {
   return {
     offsetHeight,
     __style: {
       position: opts.position ?? 'static',
       marginTop: `${opts.marginTop ?? 0}px`,
       marginBottom: `${opts.marginBottom ?? 0}px`,
+      flexGrow: `${opts.flexGrow ?? 0}`,
+      height: opts.height ?? 'auto',
     },
   } as unknown as HTMLElement
 }
@@ -22,13 +24,6 @@ describe('widget content floors', () => {
     const panels = [{ width: 120, height: 80 }, { width: 180, height: 120 }]
     expect(composePanelFloors(panels, 'row', 8, 24, 24)).toEqual({ width: 332, height: 144 })
     expect(composePanelFloors(panels, 'column', 8, 24, 24)).toEqual({ width: 204, height: 232 })
-  })
-
-  it('maps focus island behavior to the matching whole-card floor class', () => {
-    expect(panelClassForIsland('free')).toBe('reflow')
-    expect(panelClassForIsland('width')).toBe('controls')
-    expect(panelClassForIsland('aspect')).toBe('rigid')
-    expect(panelClassForIsland('fixed')).toBe('rigid')
   })
 
   it('ignores sub-grid overflow noise that would otherwise cause grow loops', () => {
@@ -47,6 +42,38 @@ describe('widget content floors', () => {
     expect(contentFitHeight(48, 120)).toBe(120)
     expect(contentFitHeight(121, 120)).toBe(160)
     expect(contentFitHeight(121, 120, 140)).toBe(140)
+  })
+
+  describe('whether a card can hold a void at all', () => {
+    afterEach(() => vi.unstubAllGlobals())
+    const withStyleStub = (fn: () => void) => {
+      vi.stubGlobal('getComputedStyle', (el: HTMLElement & { __style?: Record<string, string> }) => el.__style)
+      fn()
+    }
+
+    it('reads a stack of fixed-height pieces as having its own intrinsic height', () => {
+      // Rows, stat tiles, buttons: taller than their sum is empty space.
+      withStyleStub(() => {
+        expect(contentStretchesToFill(fakeUi([fakeChild(40), fakeChild(60), fakeChild(32)]))).toBe(false)
+      })
+    })
+
+    it('reads a flex-growing region as having no intrinsic height', () => {
+      // An internal scroll panel or a chart uses whatever height it is given,
+      // so "too tall" is not a thing that can happen to it.
+      withStyleStub(() => {
+        expect(contentStretchesToFill(fakeUi([fakeChild(40), fakeChild(200, { flexGrow: 1 })]))).toBe(true)
+      })
+    })
+
+    it('ignores floating chrome, which never fills anything', () => {
+      withStyleStub(() => {
+        expect(contentStretchesToFill(fakeUi([
+          fakeChild(40),
+          fakeChild(999, { position: 'absolute', flexGrow: 1 }),
+        ]))).toBe(false)
+      })
+    })
   })
 
   describe('natural content height (load-time void reclaim)', () => {

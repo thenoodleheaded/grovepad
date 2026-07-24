@@ -6,10 +6,6 @@ import { useWidgetStore } from '../../store/useWidgetStore'
 import { useCollaborationStore } from '../../store/useCollaborationStore'
 import { frameCanvas } from '../../utils/cameraFraming'
 import { IconButton } from './IconButton'
-import {
-  isCameraMotionActive,
-  subscribeCameraMotion,
-} from '../../engine/camera/cameraEngine'
 
 const ZOOM_STEP = 1.25
 const ZOOM_PRESETS = [25, 50, 75, 100, 150, 200]
@@ -40,21 +36,16 @@ export function ZoomControls() {
 
   useEffect(() => {
     let lastPercent = Number.NaN
-    const apply = (force = false) => {
-      if (!force && isCameraMotionActive()) return
+    const apply = () => {
       const nextPercent = Math.round(useCanvasStore.getState().zoom * 100)
       if (nextPercent === lastPercent) return
       lastPercent = nextPercent
       if (zoomLabelRef.current) zoomLabelRef.current.textContent = `${nextPercent}%`
     }
-    apply(true)
+    apply()
     const unsubscribeCanvas = useCanvasStore.subscribe(() => apply())
-    const unsubscribeMotion = subscribeCameraMotion((active) => {
-      if (!active) apply(true)
-    })
     return () => {
       unsubscribeCanvas()
-      unsubscribeMotion()
     }
   }, [])
 
@@ -75,9 +66,9 @@ export function ZoomControls() {
   return (
     <div
       data-canvas-ui
-      className="gp-safe-canvas-bottom-right gp-toolbar gp-panel absolute z-10 flex select-none items-center gap-0.5 rounded-2xl p-1 shadow-xl sm:gap-1"
+      className="gp-canvas-ui-scale gp-safe-canvas-bottom-right gp-toolbar gp-panel absolute z-10 flex select-none items-center gap-0.5 rounded-2xl p-1 shadow-xl sm:gap-1"
     >
-      <span className="hidden sm:contents">
+      <span className="gp-tablet-zoom-secondary hidden sm:contents">
         <IconButton label="Undo (⌘Z)" disabled={!canUndo} onClick={() => useWidgetStore.getState().undo()}>
           <Undo2 size={15} />
         </IconButton>

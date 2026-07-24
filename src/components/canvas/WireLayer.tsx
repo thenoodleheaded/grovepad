@@ -4,7 +4,9 @@ import { useShallow } from 'zustand/react/shallow'
 import { ArrowRight, CirclePause, CirclePlay, Trash2, TriangleAlert } from 'lucide-react'
 import { useCircuitStore } from '../../store/useCircuitStore'
 import { useWidgetStore } from '../../store/useWidgetStore'
-import { useQuantizedView } from '../../hooks/useQuantizedView'
+import { useWidgetRestStore } from '../../store/useWidgetRestStore'
+import { useWorldContentRect } from '../../hooks/useWorldContentRect'
+import { widgetWithEffectiveSize } from '../../utils/widgetRest'
 import { useOverlayLifecycle } from '../../store/useOverlayStore'
 import type { Vector2D, Widget } from '../../types/spatial'
 import type { Connection, TriggerEdge, WireTransformOp } from '../../types/circuit'
@@ -19,7 +21,6 @@ import {
   WIRE_TRANSFORM_OPS,
 } from '../../types/circuit'
 import { flowCurve } from '../../utils/curve'
-import { widgetIntersectsRect } from '../../utils/canvasView'
 import {
   findInputPort,
   findOutputPort,
@@ -30,11 +31,7 @@ import {
 import { fieldDescriptor, type FieldValue } from '../../widgets/fields'
 import { applyTransform } from '../../engine/transforms'
 import { CanvasEdge, CanvasEdgeLayer } from './CanvasEdge'
-import { edgeCorridorIntersectsRect } from './canvasEdgePolicy'
 
-const EDGE_OVERSCAN_SCREEN = 700
-const WIRE_RENDER_LIMIT = 600
-const CORRIDOR_MARGIN = 320
 const PULSE_WINDOW_MS = 1400
 
 interface WireDescriptor {
@@ -247,7 +244,7 @@ function WireInspector({
         }}
       />
       <div
-        className="gp-menu gp-pop gp-panel fixed z-50 max-h-[calc(100dvh-16px)] w-64 origin-top-left overflow-y-auto rounded-2xl p-2 shadow-2xl"
+        className="gp-popup-menu gp-menu gp-pop gp-panel fixed z-50 max-h-[calc(100dvh-16px)] w-64 origin-top-left overflow-y-auto rounded-2xl p-2 shadow-2xl"
         style={{ left, top }}
       >
         <p className="px-2 pt-1  text-[10px] uppercase tracking-widest" style={{ color: accent }}>
@@ -426,7 +423,7 @@ function FieldPicker() {
     <>
       <div className="fixed inset-0 z-40" onPointerDown={close} />
       <div
-        className="gp-menu gp-pop gp-panel fixed z-50 max-h-[min(60vh,340px)] w-56 origin-top-left overflow-y-auto rounded-2xl p-1.5 shadow-2xl"
+        className="gp-popup-menu gp-menu gp-pop gp-panel fixed z-50 max-h-[min(60vh,340px)] w-56 origin-top-left overflow-y-auto rounded-2xl p-1.5 shadow-2xl"
         style={{ left, top }}
       >
         <p className="px-3 py-1.5 text-[10px] leading-4 text-neutral-500">
@@ -489,13 +486,14 @@ export function WireLayer() {
       activeCanvasId: state.activeCanvasId,
     })),
   )
+  const expandedWidgetId = useWidgetRestStore((state) => state.expandedWidgetId)
+  const expandedOffset = useWidgetRestStore((state) => state.expandedOffset)
   const circuitMode = useCircuitStore((state) => state.circuitMode)
   const firePulses = useCircuitStore((state) => state.firePulses)
   const dampedIds = useCircuitStore((state) => state.dampedIds)
   const inspector = useCircuitStore((state) => state.inspector)
   const dragActive = useCircuitStore((state) => state.wireDrag !== null)
-  const view = useQuantizedView(EDGE_OVERSCAN_SCREEN, { freezeWhileMoving: true })
-  const visibleRect = view.rect
+  const contentRect = useWorldContentRect()
 
   const wires = useMemo(() => {
     const now = Date.now()
@@ -507,29 +505,19 @@ export function WireLayer() {
         relevant.push(connection)
       }
     }
-    const cullByViewport = relevant.length > WIRE_RENDER_LIMIT
     const showValues = circuitMode && relevant.length <= 80
     const result: WireDescriptor[] = []
     for (const connection of relevant) {
       const source = widgets[connection.fromId]!
       const target = widgets[connection.toId]!
-      if (
-        cullByViewport &&
-        !widgetIntersectsRect(source, visibleRect) &&
-        !widgetIntersectsRect(target, visibleRect)
-      ) {
-        continue
-      }
-      const endpoints = wireEndpoints(connection, source, target)
+      // Wires land on the on-screen footprint — a resting tile's edge, not
+      // the dormant full-card bounds.
+      const endpoints = wireEndpoints(
+        connection,
+        widgetWithEffectiveSize(source, { expandedWidgetId, expandedOffset }),
+        widgetWithEffectiveSize(target, { expandedWidgetId, expandedOffset }),
+      )
       if (!endpoints) continue
-      if (
-        relevant.length <= WIRE_RENDER_LIMIT &&
-        !widgetIntersectsRect(source, visibleRect) &&
-        !widgetIntersectsRect(target, visibleRect) &&
-        !edgeCorridorIntersectsRect(endpoints.start, endpoints.end, visibleRect, CORRIDOR_MARGIN)
-      ) {
-        continue
-      }
       const curve = flowCurve(endpoints.start, endpoints.end)
       const sourceField = fieldDescriptor(source.type, connection.fromField)
       const pulseAt = firePulses[connection.id]
@@ -553,7 +541,7 @@ export function WireLayer() {
       })
     }
     return result
-  }, [activeCanvasId, circuitMode, connections, dampedIds, firePulses, visibleRect, widgets])
+  }, [activeCanvasId, circuitMode, connections, dampedIds, expandedOffset, expandedWidgetId, firePulses, widgets])
 
   const openInspector = useCircuitStore((state) => state.openInspector)
   const closeInspector = useCircuitStore((state) => state.closeInspector)
@@ -562,7 +550,7 @@ export function WireLayer() {
 
   return (
     <>
-      <CanvasEdgeLayer visibleRect={visibleRect} detail="rich" dataCircuitLayer>
+      <CanvasEdgeLayer contentRect={contentRect} dataCircuitLayer>
         {wires.map((wire) => (
           <Wire key={wire.id} wire={wire} onOpen={openInspector} />
         ))}

@@ -5,8 +5,7 @@ import {
   type TransitionEventHandler,
 } from 'react'
 import { GripVertical } from 'lucide-react'
-import type { IslandSizing } from './FocusModeLayer'
-import { panelClassForIsland, type PanelFloorClass } from '../../utils/widgetContentFloor'
+import type { PanelFloorClass } from '../../utils/widgetContentFloor'
 
 interface WidgetPanelProps {
   children: ReactNode
@@ -18,15 +17,9 @@ interface WidgetPanelProps {
   removing?: boolean
   /** Finalize removal from the CSS transition itself, not from a guessed timer. */
   onExitComplete?: () => void
-  /** Stable island id for focus-mode layout persistence (XVIII.1). */
-  island?: string
-  /** Sizing charter class — how focus mode may scale this island. */
-  sizing?: IslandSizing
-  /** Optional widget-specific bounds. They may only tighten the global charter. */
+  /** Optional widget-specific floor bounds. */
   minWidth?: number
   minHeight?: number
-  maxWidth?: number
-  maxHeight?: number
   /** How this panel contributes to the full card's content-derived floor. */
   floor?: PanelFloorClass
   /** Deliberate internal scrolling: overflow here does not grow the card. */
@@ -34,10 +27,9 @@ interface WidgetPanelProps {
 }
 
 /**
- * One glass subdivision of a multi-panel widget. On a standalone card it is
- * an E1 island; when the whole card is grouped and becomes E1, CSS steps the
- * panel down to a well so elevations never nest. Panels keep an 8px seam and
- * are never shorter than 32px (0.8 cells).
+ * One glass subdivision of a multi-panel widget — an E1 island on the
+ * card's backplate. Panels keep an 8px seam and are never shorter than 32px
+ * (0.8 cells).
  *
  * The grip is intentionally NOT a button: WidgetCard treats non-interactive
  * targets as drag surface, so grabbing any panel's grip moves the entire
@@ -50,25 +42,15 @@ export const WidgetPanel = forwardRef<HTMLDivElement, WidgetPanelProps>(function
   grip = true,
   removing = false,
   onExitComplete,
-  island,
-  sizing,
   minWidth,
   minHeight,
-  maxWidth,
-  maxHeight,
   floor,
   allowOverflow = false,
 }, ref) {
   return (
     <div
       ref={ref}
-      data-island={island}
-      data-island-size={sizing}
-      data-island-min-w={minWidth}
-      data-island-min-h={minHeight}
-      data-island-max-w={maxWidth}
-      data-island-max-h={maxHeight}
-      data-floor-panel={floor ?? panelClassForIsland(sizing)}
+      data-floor-panel={floor ?? 'reflow'}
       data-floor-min-w={minWidth}
       data-floor-min-h={minHeight}
       data-floor-overflow={allowOverflow ? 'scroll' : undefined}

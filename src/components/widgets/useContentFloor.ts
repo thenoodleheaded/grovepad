@@ -2,8 +2,9 @@ import {useLayoutEffect, type RefObject} from 'react'
 import { useCanvasStore } from '../../store/useCanvasStore'
 import { useWidgetStore } from '../../store/useWidgetStore'
 import { clearLiveWidgetSizing, setLiveWidgetSizing } from '../../store/liveWidgetSizing'
+import { isWidgetSizingGestureActive, registerWidgetFloorProbe, subscribeWidgetSizingGestureEnd } from '../../store/widgetSizingGesture'
 import type { Size, Widget } from '../../types/spatial'
-import { GRID_SIZE } from '../../types/spatial'
+import { GRID_SIZE, WIDGET_MAX_EDGE } from '../../types/spatial'
 import { CARD_INSET as CONTENT_FLOOR_INSET, SUBGRID, contentFitHeight, hasSignificantVerticalOverflow, measureWidgetContentFloor, naturalContentHeight, verticalContentFloor } from '../../utils/widgetContentFloor'
 import { contentFloorAnomalies } from '../../utils/scaleDebugAnomalies'
 import { useScaleDebugStore } from '../../store/useScaleDebugStore'
@@ -72,21 +73,46 @@ export function useContentFloor(
       ready = true
       measure()
     }, 360)
+    /**
+     * Measure the content and publish the bounds a resize gesture clamps
+     * against. Synchronous and side-effect-free beyond that publication, so
+     * the gesture itself can call it at the instant a press lands — a card
+     * opened out of its resting tile may be grabbed before any scheduled
+     * frame has run, and without this the drag would obey only the generic
+     * registry limits and slide straight through its own content.
+     */
+    const publishBounds = (): { ui: HTMLElement; live: Widget; declaredSizing: ReturnType<typeof widgetDefinition>['sizing']; result: ReturnType<typeof measureWidgetContentFloor> } | null => {
+      const ui = content.querySelector<HTMLElement>('.gp-widget-ui')
+      if (!ui) return null
+      const live = useWidgetStore.getState().widgets[widgetId]
+      if (!live || live.iconified) return null
+      const declaredSizing = widgetDefinition(live.type).sizing
+      const result = measureWidgetContentFloor(ui, live.size, {
+        ...DEFAULT_SIZING,
+        ...declaredSizing,
+      })
+      setLiveWidgetSizing(widgetId, result.sizing)
+      return { ui, live, declaredSizing, result }
+    }
+    const disposeProbe = registerWidgetFloorProbe(widgetId, () => { publishBounds() })
+
     const measure = () => {
-      if (!ready) return
+      // A pointer gesture owns this widget's size while it runs. Measuring
+      // here would grow the card between two frames of the drag, and the drag
+      // would shrink it again on the next — the two trading sizes at pointer
+      // speed. The gesture's own end wakes this pass back up.
+      if (isWidgetSizingGestureActive(widgetId)) return
       cancelAnimationFrame(raf)
       raf = requestAnimationFrame(() => {
-        const ui = content.querySelector<HTMLElement>('.gp-widget-ui')
-        if (!ui) return
-        const live = useWidgetStore.getState().widgets[widgetId]
-        if (!live || live.collapsed || live.iconified) return
-        const declaredSizing = widgetDefinition(live.type).sizing
-        const fallback = {
-          ...DEFAULT_SIZING,
-          ...declaredSizing,
-        }
-        const result = measureWidgetContentFloor(ui, live.size, fallback)
-        setLiveWidgetSizing(widgetId, result.sizing)
+        const measured = publishBounds()
+        if (!measured) return
+        const { ui, live, declaredSizing, result } = measured
+        // Publishing bounds is safe on the first frame; changing the card's
+        // own size is not. A renderer can measure tall for a frame before it
+        // lays out, and growing on that transient is not reversible under the
+        // grow-only rule — so that still waits for a settled reading.
+        if (!ready) return
+        const fallback = { ...DEFAULT_SIZING, ...declaredSizing }
         const autoHeight = declaredSizing?.autoHeight === true
         const overflowY = Math.max(0, ui.scrollHeight - ui.clientHeight)
 
@@ -102,7 +128,7 @@ export function useContentFloor(
             const fitted = contentFitHeight(
               natural,
               minHeight,
-              fallback.maxHeight ?? Infinity,
+              Math.min(WIDGET_MAX_EDGE, fallback.maxHeight ?? WIDGET_MAX_EDGE),
               CONTENT_FLOOR_INSET,
               SUBGRID,
             )
@@ -154,7 +180,9 @@ export function useContentFloor(
           ? contentFitHeight(
               ui.scrollHeight,
               declaredSizing.minHeight ?? DEFAULT_SIZING.minHeight,
-              declaredSizing.maxHeight ?? Infinity,
+              // Auto-grow stops at the absolute ceiling; past it the card
+              // holds its size and the content scrolls inside it.
+              Math.min(WIDGET_MAX_EDGE, declaredSizing.maxHeight ?? WIDGET_MAX_EDGE),
             )
           : result.growTo.height
         const willGrow =
@@ -178,6 +206,11 @@ export function useContentFloor(
         }
       })
     }
+    // The committed box may match the last dragged one, in which case no
+    // observer fires — so the gesture's end is its own trigger.
+    const disposeGestureEnd = subscribeWidgetSizingGestureEnd((endedId) => {
+      if (endedId === widgetId) measure()
+    })
     const resizeObserver = new ResizeObserver(measure)
     resizeObserver.observe(content)
     const mutationObserver = new MutationObserver(measure)
@@ -189,6 +222,8 @@ export function useContentFloor(
       cancelAnimationFrame(raf)
       window.clearTimeout(readyTimer)
       window.clearTimeout(retryTimer)
+      disposeGestureEnd()
+      disposeProbe()
       resizeObserver.disconnect()
       mutationObserver.disconnect()
       content.removeEventListener('input', measure, true)
@@ -205,12 +240,16 @@ export function useContentFloor(
     if (!content || !shouldFitContent) return
     let raf = 0
     const fitOverflow = () => {
+      if (isWidgetSizingGestureActive(widgetId)) return
       const live = useWidgetStore.getState().widgets[widgetId]
-      if (!live || live.collapsed || live.iconified) return
+      if (!live || live.iconified) return
       const overflow = Math.ceil(content.scrollHeight - content.clientHeight)
       if (!hasSignificantVerticalOverflow(overflow)) return
 
-      const maxHeight = widgetDefinition(live.type).sizing?.maxHeight ?? Infinity
+      const maxHeight = Math.min(
+        WIDGET_MAX_EDGE,
+        widgetDefinition(live.type).sizing?.maxHeight ?? WIDGET_MAX_EDGE,
+      )
       const height = Math.min(
         maxHeight,
         verticalContentFloor(content.scrollHeight, overflow, DEFAULT_SIZING.minHeight, 0),

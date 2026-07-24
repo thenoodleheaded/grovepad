@@ -10,7 +10,7 @@ flowchart TD
   App --> Login["LoginPage"]
   App --> Canvas["CanvasViewport\ncomposition root"]
 
-  Canvas --> Layers["Canvas layers\ngrid, groups, widgets, relations, dependencies, wires"]
+  Canvas --> Layers["Canvas layers\ngrid, glue welds, widgets, relations, dependencies, wires"]
   Canvas --> UI["UI overlays\ntoolbar, quick add, picker, search, import"]
   Canvas --> Events["gestureEngine\npan, zoom, select, touch"]
   Canvas --> Runtime["appRuntime boundary\npersistence + collaboration + circuit engine"]
@@ -26,8 +26,12 @@ flowchart TD
   Runtime --> WidgetStore
   Runtime --> CircuitStore["useCircuitStore\ntransient wire runtime"]
   Runtime --> Collaboration["collaborationRuntime\nYjs + presence + reconnect"]
+  Runtime --> MCPApp["mcpBridgeRuntime\nvalidated browser tool boundary"]
+  MCPApp --> MCPServer["grovepad-mcp.mjs\nlocal stdio + loopback broker"]
+  MCPServer --> Claude["Claude MCP host\nuser-owned AI account"]
+  MCPApp --> WidgetStore
 
-  WidgetStore --> Slices["domain slices\nnavigation, layout, circuit, groups, selection"]
+  WidgetStore --> Slices["domain slices\nnavigation, layout, circuit, glue, selection"]
   WidgetStore --> Registry["widget registry\nmetadata + defaults"]
   WidgetStore --> Fields["field registry\nports + commands"]
   Registry --> Contracts["neutral registry/field contracts"]
@@ -54,7 +58,7 @@ flowchart TD
 3. Mounting `CanvasViewport` starts `runtime/appRuntime.ts`; unmount, StrictMode replay, and HMR dispose persistence subscriptions, deploy checks, and circuit listeners explicitly.
 4. `useWidgetStore` constructs its initial state from `loadPersistedBoard()`; `initPersistence` can later replace it with IndexedDB/cloud state.
 5. `CanvasViewport` composes every canvas layer, global overlay, and runtime helper.
-6. `WidgetLayer` culls by viewport while keeping card rendering stable across zoom; each `WidgetCard` owns drag, bounded resizing, focus-mode, title chrome, and ports.
+6. `WidgetLayer` mounts every widget on the active canvas; each `WidgetCard` owns drag, bounded resizing, title chrome, and ports.
 7. `WidgetRenderer` owns suspense and the responsive content shell. Family maps under `components/widgets/renderers/` own typed dispatch, while their lazy-component files keep concrete implementations out of the startup chunk.
 
 ## Subsystem contracts
@@ -63,14 +67,15 @@ flowchart TD
 |---|---|---|---|
 | Authentication | `useAuthStore.ts`, `LoginPage.tsx`, `lib/supabase.ts` | Session/guest route state | Board mutations |
 | Camera | `cameraEngine.ts`, `gestureEngine.ts`, `useCanvasStore.ts`, `canvasView.ts` | Pan, zoom, viewport size, camera history | Widget geometry persistence |
-| Canonical board | `useWidgetStore.ts`, `store/slices/*Slice.ts` | Widgets, relations, connections, groups, hierarchy, selection, undo | Render-only animation state |
+| Canonical board | `useWidgetStore.ts`, `store/slices/*Slice.ts` | Widgets, relations, connections, glue clusters, hierarchy, selection, undo | Render-only animation state |
 | Circuit runtime | `circuitEngine.ts`, `useCircuitStore.ts`, `transforms.ts` | Deterministic propagation, delivery memory, wire-drag/runtime feedback | Widget renderer details |
 | Application runtime | `runtime/appRuntime.ts`, `runtime/deployVersionMonitor.ts` | Idempotent start/stop ownership for persistence, stale-deploy checks, and circuit services | Domain behavior or visual rendering |
+| Claude MCP connector | `scripts/grovepad-mcp.mjs`, `scripts/mcp/grovepadBridge.mjs`, `runtime/mcpBridgeRuntime.ts`, `mcp/treeContract.ts` | Local stdio tools, origin/token-guarded loopback delivery, bounded reads, preview validation | Direct IndexedDB access, raw board replacement, or mutation outside canonical store actions |
 | Widget definition | `registry.ts`, `registry/*`, `widgets/contracts/registry.ts` | Metadata, defaults, sizing, packs | Live widget state |
 | Widget sizing | `widgets/sizingProfiles.ts`, `utils/widgetContentFloor.ts`, `store/liveWidgetSizing.ts`, `store/slices/widgetLayoutSlice.ts` | Registry fallback windows, ephemeral mounted floors, grow-only adjustment, scale states, and resize clamping | Persisting browser-only measurements |
 | Field definition | `fields.ts`, `fields/*`, `widgets/contracts/fields.ts` | Read/write fields, commands, semantic units | Canvas drawing |
 | Widget rendering | `WidgetCard.tsx`, `WidgetRenderer.tsx`, `renderers/*`, `modules/*` | Card interaction shell, family-owned typed dispatch, and content | Persistence orchestration |
-| Spatial graph drawing | `RelationLines.tsx`, `DependencyLines.tsx`, `WireLayer.tsx` | SVG descriptors, stable density policy/culling, hit paths and menus | Graph mutation rules |
+| Spatial graph drawing | `RelationLines.tsx`, `DependencyLines.tsx`, `WireLayer.tsx` | SVG descriptors, hit paths and menus | Graph mutation rules |
 | Persistence | `persistence.ts`, `persistedBoardSchema.ts`, `types/persistence.ts`, adapters | Validation, atomic migration snapshots, debounced saves, optional cloud reconciliation | UI component lifecycle |
 | Realtime collaboration | `runtime/collaborationRuntime.ts`, `collaboration/*`, `useCollaborationStore.ts` | Active-canvas CRDT transport, validated store projection, awareness, role guards, offline replay, compaction | Replacing the canonical board store or weakening server authorization |
 | Thought interpretation | `thoughtInterpreter.ts`, `scenarioResolver.ts`, `scenarios/catalogue.ts` | Deterministic parsing, scenario candidates, local preference learning | Direct board rendering |
@@ -82,14 +87,14 @@ flowchart TD
 | Store | Persistent? | Main consumers | Notes |
 |---|---|---|---|
 | `useWidgetStore` | Yes | Almost every canvas/UI subsystem | Stable facade; action implementations are routed by domain slice |
-| `useCanvasStore` | View only | Canvas events, layers, focus, zoom controls | Camera saves separately from board |
+| `useCanvasStore` | View only | Canvas events, layers, zoom controls | Camera saves separately from board |
 | `useCircuitStore` | No | Port rail, wire layer, engine | Transient drag/firing/damped presentation |
-| `useFocusStore` | No | Widget card, focus layer, canvas events | Locks camera and restores prior view |
 | `useCanvasTreeStore` | UI state | Tree drawer/navigation | Hierarchy data itself remains in widget store |
 | `useOverlayStore` | No | Dialogs, menus, canvas keyboard guards | Central overlay lifecycle counter |
 | `usePersistenceStatusStore` | No | App compatibility gate and account/conflict/save UI | Imports the persisted board type back from persistence |
 | `useAuthStore` | Session | App, persistence, account UI | Cloud sync observes it directly |
 | `useCollaborationStore` | No | Collaboration chrome, overlays, note edit indicators | Presentation state only; shared board data remains in `useWidgetStore` |
+| `useMcpConnectorStore` | No | Settings connector status, `McpPreviewLayer`, `mcpBridgeRuntime` | Connection display plus pending AI tree previews with a consume-once commit shared by the AI client and the on-canvas Add button; the opt-in preference remains device-local in `useSettingsStore` |
 | Toast/theme/debug/preview stores | No | Narrow UI/runtime consumers | Appropriate small stores |
 
 ## Shared edge rendering with three semantic systems
@@ -98,11 +103,11 @@ All three systems keep their own model, endpoint policy, geometry, menus, and ac
 
 | Layer | Source model | Endpoint policy | Route helper | Unique behavior |
 |---|---|---|---|---|
-| `RelationLines` | General `Relation` records | Closest legal card/group border, title-pill avoidance | `anchoredCurvePath`, `curvedPath` | Five relation types, relation editor, grouped endpoint routing, critical path |
+| `RelationLines` | General `Relation` records | Closest legal card border, title-pill avoidance | `anchoredCurvePath`, `curvedPath` | Five relation types, relation editor, critical path |
 | `DependencyLines` | `blocker` relations only | Dedicated right-to-left dependency anchors | `dependencyAnchors` + `anchoredCurvePath` | Directional arrow, resolved state, dependency status chip |
 | `WireLayer` | Typed `Connection` records | Exact left/right I/O port rails | `portWorldPosition` + `flowCurve` | Typed values, transforms, trigger state, pulse/execution inspector |
 
-`CanvasEdge.tsx` renders the shared highlight → track → halo → main → flow → accessory → hit-target stack. `canvasEdgePolicy.ts` owns common detail and corridor-culling policy. Marker definitions, portal menus, status chips, value labels, firing pulses, and endpoint calculation remain in the semantic layer that understands them.
+`CanvasEdge.tsx` renders the shared highlight → track → halo → main → flow → accessory → hit-target stack. Marker definitions, portal menus, status chips, value labels, firing pulses, and endpoint calculation remain in the semantic layer that understands them.
 
 ## Widget pipeline
 
@@ -173,7 +178,7 @@ sequenceDiagram
 
 ## Architectural invariants worth protecting
 
-1. `useWidgetStore.widgets`, `relations`, `connections`, `groups`, and canvas hierarchy are the canonical board model.
+1. `useWidgetStore.widgets`, `relations`, `connections`, `glues`, and canvas hierarchy are the canonical board model.
 2. Engine-derived writes use `applyWireWrites` and belong to the originating undo step, not a new history entry.
 3. Widget definitions and field descriptors are exhaustive over `ModuleType`.
 4. Persistence validates unknown data before it enters the store.

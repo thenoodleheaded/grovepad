@@ -1,4 +1,3 @@
-import { cameraEngine } from '../camera/cameraEngine'
 import {
   CORE_WIDGET_MODULE_LOADERS,
 } from '../../components/widgets/renderers/lazyCoreWidgets'
@@ -7,11 +6,9 @@ import {
 } from '../../components/widgets/renderers/lazyCatalogWidgets'
 
 // ---------------------------------------------------------------------------
-// Idle module prefetch (canvas engine contract §5). After the board settles,
-// quietly warm every lazy widget module so no scroll or promotion ever hits
-// a cold chunk load. One module per idle slice, and only while the camera is
-// idle — a gesture instantly pauses the queue. Network+parse happen off the
-// interaction path; the modules land in Vite's module cache.
+// Startup module prefetch. Shortly after launch, quietly warm every lazy
+// widget module so a first mount never hits a cold chunk load. One module per
+// slice; the modules land in Vite's module cache.
 // ---------------------------------------------------------------------------
 
 const FIRST_SLICE_DELAY_MS = 2500
@@ -25,10 +22,6 @@ export function initWidgetModulePrefetch(): () => void {
   const pump = () => {
     timer = null
     if (disposed || queue.length === 0) return
-    if (cameraEngine.getVelocity().tier !== 'idle') {
-      schedule(SLICE_INTERVAL_MS * 2)
-      return
-    }
     const load = queue.shift()
     void load?.().catch(() => {
       // A failed chunk fetch (offline, dev restart) is not an error here —

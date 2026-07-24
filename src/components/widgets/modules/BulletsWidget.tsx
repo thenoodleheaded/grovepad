@@ -1,7 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Plus, X } from 'lucide-react'
 import type { BulletsData } from '../../../types/spatial'
-import { useFieldAnchor } from '../../../hooks/useFieldAnchor'
 import { WidgetPanel } from '../WidgetPanel'
 import { withoutPanelItem } from '../panelRemoval'
 
@@ -12,17 +11,15 @@ interface BulletsWidgetProps {
 }
 
 /**
- * Every bullet is its own glass subpanel chip, plus one panel for the add
- * button. Width resize only re-wraps chips onto new lines; height always
- * follows the flow.
+ * One bullet, one island, one row — however many bullets are added. A list
+ * that re-flows two points onto a line stops reading as a list, so the stack
+ * stays vertical and the card's height follows it.
  */
 export function BulletsWidget({ data, onChange, onHeightChange }: BulletsWidgetProps) {
   const inputRefs = useRef(new Map<string, HTMLInputElement>())
   const pendingFocusId = useRef<string | null>(null)
   const rootRef = useRef<HTMLDivElement>(null)
   const [removingIds, setRemovingIds] = useState<ReadonlySet<string>>(new Set())
-  const countRef = useFieldAnchor<HTMLButtonElement>('count')
-
   useEffect(() => {
     if (pendingFocusId.current === null) return
     inputRefs.current.get(pendingFocusId.current)?.focus()
@@ -72,15 +69,14 @@ export function BulletsWidget({ data, onChange, onHeightChange }: BulletsWidgetP
   }
 
   return (
-    <div ref={rootRef} className="flex flex-wrap content-start items-start gap-1">
+    <div ref={rootRef} className="flex flex-col items-stretch gap-1">
       {data.items.map((item, index) => (
         <WidgetPanel
           key={item.id}
-          island={item.id}
           removing={removingIds.has(item.id)}
           onExitComplete={() => finishRemove(item.id)}
-          sizing="width"
-          className="group/row flex h-8 items-center gap-2 px-2.5 pr-4"
+          floor="controls"
+          className="group/row flex h-8 w-full items-center gap-2 px-2.5 pr-3"
         >
           <span aria-hidden className="shrink-0 select-none text-[7px] text-sky-400/70">
             ◆
@@ -95,7 +91,7 @@ export function BulletsWidget({ data, onChange, onHeightChange }: BulletsWidgetP
             placeholder="List item  ↵ adds another"
             onChange={(e) => setItem(item.id, e.target.value)}
             onKeyDown={(e) => onItemKeyDown(e, index)}
-            className="gp-chip-input bg-transparent text-[13px] text-neutral-200 outline-none placeholder:text-neutral-700"
+            className="gp-chip-input min-w-0 flex-1 bg-transparent text-[13px] text-neutral-200 outline-none placeholder:text-neutral-700"
           />
           {data.items.length > 1 && (
             <button
@@ -111,10 +107,10 @@ export function BulletsWidget({ data, onChange, onHeightChange }: BulletsWidgetP
       ))}
 
       <button
-        ref={countRef}
+
         type="button"
         onClick={() => insertAfter(data.items.length - 1)}
-        className="flex h-8 shrink-0 items-center gap-1.5 px-2.5 text-[11px] text-neutral-600 transition-colors hover:text-neutral-400"
+        className="flex h-7 shrink-0 items-center gap-1.5 self-start px-2.5 text-[11px] text-neutral-600 transition-colors hover:text-neutral-400"
       >
         <Plus size={11} />
         Add bullet

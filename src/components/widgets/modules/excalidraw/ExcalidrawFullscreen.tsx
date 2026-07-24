@@ -115,7 +115,7 @@ export function ExcalidrawFullscreen({ open, widgetId, title, data, onChange, on
       <div
         ref={panelRef}
         tabIndex={-1}
-        className="gp-excalidraw-panel gp-dialog gp-pop gp-panel relative z-10 flex h-full w-full max-w-[1680px] flex-col overflow-hidden rounded-3xl shadow-2xl outline-none"
+        className="gp-excalidraw-panel gp-popup-surface gp-dialog gp-pop gp-panel relative z-10 flex h-full w-full max-w-[1680px] flex-col overflow-hidden rounded-3xl shadow-2xl outline-none"
       >
         <div className="flex shrink-0 items-center justify-between border-b gp-hairline px-4 py-2.5">
           <h2 className="flex items-center gap-2 text-sm font-semibold text-neutral-200">
@@ -127,7 +127,7 @@ export function ExcalidrawFullscreen({ open, widgetId, title, data, onChange, on
             type="button"
             onClick={onClose}
             aria-label="Close fullscreen drawing"
-            className="gp-touch-target flex h-8 w-8 items-center justify-center rounded-lg text-neutral-400 transition-colors hover:bg-neutral-800 hover:text-white"
+            className="gp-popup-close-naked gp-touch-target h-8 w-8"
           >
             <X size={16} aria-hidden />
           </button>

@@ -1,6 +1,5 @@
 import { Flame } from 'lucide-react'
 import type { HabitData } from '../../../types/spatial'
-import { useFieldAnchor } from '../../../hooks/useFieldAnchor'
 
 interface HabitWidgetProps {
   data: HabitData
@@ -13,8 +12,6 @@ const DAY_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
 export function HabitWidget({ data, onChange }: HabitWidgetProps) {
   const days = data.days.length === 7 ? data.days : [...data.days, ...Array(7)].slice(0, 7).map(Boolean)
   const doneCount = days.filter(Boolean).length
-  const streakRef = useFieldAnchor<HTMLSpanElement>('streak')
-
   const toggleDay = (index: number) => {
     const next = days.map((done, i) => (i === index ? !done : done))
     onChange({ ...data, days: next, streak: next.filter(Boolean).length })
@@ -31,7 +28,7 @@ export function HabitWidget({ data, onChange }: HabitWidgetProps) {
           className="min-w-0 flex-1 bg-transparent text-[13px] text-neutral-200 outline-none placeholder:text-neutral-700"
         />
         <span
-          ref={streakRef}
+
           className={`flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5  text-[10px] tabular-nums transition-colors duration-300 ${
             doneCount >= 5
               ? 'border-amber-400/40 bg-amber-400/10 text-amber-300'

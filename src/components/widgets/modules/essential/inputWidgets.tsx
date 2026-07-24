@@ -7,7 +7,6 @@ import type {
   TextInputData,
   ToggleData,
 } from '../../../../types/spatial'
-import { useFieldAnchor } from '../../../../hooks/useFieldAnchor'
 import { WidgetPanel } from '../../WidgetPanel'
 import { SmallAction } from './shared'
 import { inputClass, numericClass, panelClass, finite, clamp } from './sharedPrimitives'
@@ -20,8 +19,6 @@ export function TextInputWidget({
   data: TextInputData
   onChange: (data: TextInputData) => void
 }) {
-  const valueRef = useFieldAnchor<HTMLDivElement>('value')
-  const hasValueRef = useFieldAnchor<HTMLSpanElement>('has_value')
   const control = data.multiline ? (
     <textarea
       value={data.value}
@@ -56,12 +53,12 @@ export function TextInputWidget({
           {data.multiline ? 'Wrap' : 'Single'}
         </button>
         <span
-          ref={hasValueRef}
+
           title={data.value.trim() ? 'Has a value' : 'Empty'}
           className={`h-1.5 w-1.5 rounded-full ${data.value.trim() ? 'bg-emerald-400' : 'bg-neutral-700'}`}
         />
       </div>
-      <div ref={valueRef} data-island="value" data-island-size="free" className={`${panelClass} flex min-h-0 flex-1 px-3 py-2`}>
+      <div data-island="value" className={`${panelClass} flex min-h-0 flex-1 px-3 py-2`}>
         {control}
       </div>
     </div>
@@ -75,7 +72,6 @@ export function NumberInputWidget({
   data: NumberInputData
   onChange: (data: NumberInputData) => void
 }) {
-  const valueRef = useFieldAnchor<HTMLDivElement>('value')
   const low = Math.min(finite(data.min), finite(data.max, 100))
   const high = Math.max(finite(data.min), finite(data.max, 100))
   const step = Math.max(0.0001, Math.abs(finite(data.step, 1)))
@@ -90,8 +86,8 @@ export function NumberInputWidget({
         onChange={(event) => onChange({ ...data, label: event.target.value })}
         className="gp-input--bare gp-label w-full outline-none"
       />
-      <div data-island="value" data-island-size="fixed" className={`${panelClass} space-y-2 px-2 py-2`}>
-      <div ref={valueRef} className="flex items-center gap-2">
+      <div data-island="value" className={`${panelClass} space-y-2 px-2 py-2`}>
+      <div className="flex items-center gap-2">
         <SmallAction label="Decrease" onClick={() => setValue(data.value - step)}>
           <Minus size={12} />
         </SmallAction>
@@ -121,7 +117,7 @@ export function NumberInputWidget({
         className="h-1.5 w-full cursor-pointer accent-sky-400"
       />
       </div>
-      <div data-island="bounds" data-island-size="fixed" className="gp-number-bounds mt-auto grid grid-cols-3 gap-2 border-t gp-hairline pt-2">
+      <div data-island="bounds" className="gp-number-bounds mt-auto grid grid-cols-3 gap-2 border-t gp-hairline pt-2">
         {(['min', 'max', 'step'] as const).map((key) => (
           <label key={key} className="flex items-center gap-1">
             <span className=" text-[8px] uppercase text-neutral-700">{key}</span>
@@ -146,7 +142,6 @@ export function ToggleWidget({
   data: ToggleData
   onChange: (data: ToggleData) => void
 }) {
-  const valueRef = useFieldAnchor<HTMLButtonElement>('value')
   return (
     <div className="flex h-full flex-col justify-between gap-3">
       <input
@@ -156,9 +151,9 @@ export function ToggleWidget({
         onChange={(event) => onChange({ ...data, label: event.target.value })}
         className={`${inputClass} text-center text-[14px] font-medium`}
       />
-      <div data-island="switch" data-island-size="fixed" className={`${panelClass} flex flex-col gap-2 px-3 py-2`}>
+      <div data-island="switch" className={`${panelClass} flex flex-col gap-2 px-3 py-2`}>
       <button
-        ref={valueRef}
+
         type="button"
         role="switch"
         aria-label={data.label || 'Toggle value'}
@@ -208,9 +203,6 @@ export function BranchGateWidget({
   data: BranchGateData
   onChange: (data: BranchGateData) => void
 }) {
-  const valueRef = useFieldAnchor<HTMLButtonElement>('value')
-  const inverseRef = useFieldAnchor<HTMLButtonElement>('inverse')
-
   const side = (isTrue: boolean) => {
     const active = data.value === isTrue
     const tone = isTrue
@@ -221,12 +213,11 @@ export function BranchGateWidget({
         ? 'border-violet-400/50 text-violet-300 shadow-[0_0_20px_rgba(167,139,250,0.10)]'
         : 'text-neutral-600 hover:border-violet-400/25'
     return (
-      // Paired outcomes are pixel-identical siblings forever (XVIII.1, the
+      // Paired outcomes are pixel-identical siblings forever (the glass
       // symmetry rule): a True button bigger than its False twin is a thumb
       // on the scale, so neither side may be scaled at all.
-      <WidgetPanel grip={false} island={isTrue ? 'true' : 'false'} sizing="fixed" className="relative min-w-[112px]">
+      <WidgetPanel grip={false} floor="rigid" className="relative min-w-[112px]">
         <button
-          ref={isTrue ? valueRef : inverseRef}
           type="button"
           aria-pressed={active}
           onClick={() => onChange({ ...data, value: isTrue })}
@@ -300,9 +291,6 @@ export function FormulaWidget({
   data: FormulaData
   onChange: (data: FormulaData) => void
 }) {
-  const aRef = useFieldAnchor<HTMLLabelElement>('a')
-  const bRef = useFieldAnchor<HTMLLabelElement>('b')
-  const resultRef = useFieldAnchor<HTMLDivElement>('result')
   const result = formulaResult(data)
   return (
     <div className="flex h-full flex-col gap-3">
@@ -312,9 +300,9 @@ export function FormulaWidget({
         onChange={(event) => onChange({ ...data, label: event.target.value })}
         className="bg-transparent text-center text-[11px] font-medium text-neutral-500 outline-none"
       />
-      <div data-island="operands" data-island-size="fixed" className="gp-formula-operands grid grid-cols-[1fr_52px_1fr] items-center gap-2">
+      <div data-island="operands" className="gp-formula-operands grid grid-cols-[1fr_52px_1fr] items-center gap-2">
         {/* Operands are visually equal alternatives — fixed by the symmetry rule. */}
-        <label ref={aRef} className={`${panelClass} px-2 py-2 text-center`}>
+        <label className={`${panelClass} px-2 py-2 text-center`}>
           <span className="block  text-[8px] uppercase text-neutral-700">A</span>
           <input
             type="number"
@@ -333,7 +321,7 @@ export function FormulaWidget({
             <option key={key} value={key}>{label}</option>
           ))}
         </select>
-        <label ref={bRef} className={`${panelClass} px-2 py-2 text-center`}>
+        <label className={`${panelClass} px-2 py-2 text-center`}>
           <span className="block  text-[8px] uppercase text-neutral-700">B</span>
           <input
             type="number"
@@ -343,7 +331,7 @@ export function FormulaWidget({
           />
         </label>
       </div>
-      <div ref={resultRef} data-island="result" data-island-size="fixed" className="gp-well flex flex-1 items-center justify-between gap-2 px-4 py-2">
+      <div data-island="result" className="gp-well flex flex-1 items-center justify-between gap-2 px-4 py-2">
         <span className="gp-label mb-0">Result</span>
         <strong className="gp-hero min-w-0 truncate">
           {Math.round(result * 1e8) / 1e8}

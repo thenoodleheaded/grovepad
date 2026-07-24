@@ -3,10 +3,11 @@ import type { Relation } from '../../types/spatial'
 import { snapToGrid } from '../../types/spatial'
 import { commandsFor, fieldDescriptor } from '../../widgets/fields'
 import { widgetDefinition } from '../../widgets/registry'
+import { usesStrictRelations } from '../../utils/relationPolicy'
 import { computeBlockedWidgetIds } from '../widgetGraph'
-import { MIN_PARENT_CHILD_GAP } from '../widgetLayoutConstants'
 import { computeDataHeight, computeDataWidth } from '../widgetSizing'
 import { settleWidgetLayout } from '../widgetSettling'
+import { minimumHierarchyChildTop } from '../widgetCollection'
 import type { WidgetStoreSlice, WidgetStoreSliceContext } from '../widgetStoreSliceContext'
 export function createCircuitSlice({ set, get, pushHistory }: WidgetStoreSliceContext): WidgetStoreSlice {
   return {
@@ -34,12 +35,13 @@ export function createCircuitSlice({ set, get, pushHistory }: WidgetStoreSliceCo
       // nudge the child down if it's currently closer than the minimum
       // clearance (existing drags already enforce this; this covers
       // relations drawn between two widgets that were never dragged).
-      if (type === 'parent') {
+      const relationCanvas = current.canvases[current.widgets[fromId]?.canvasId ?? '']
+      if (type === 'parent' && usesStrictRelations(relationCanvas)) {
         const parent = widgets[fromId]
         const child = widgets[toId]
         if (parent && child) {
-          const minChildY = parent.position.y + parent.size.height + MIN_PARENT_CHILD_GAP
-          if (child.position.y < minChildY) {
+          const minChildY = minimumHierarchyChildTop(fromId, widgets, relations)
+          if (minChildY !== null && child.position.y < minChildY) {
             widgets = settleWidgetLayout(
               {
                 ...widgets,
@@ -174,10 +176,10 @@ export function createCircuitSlice({ set, get, pushHistory }: WidgetStoreSliceCo
         if (!widget || widget.data === data) continue
         if (widgets === state.widgets) widgets = { ...state.widgets }
         // Same content-height discipline as updateWidgetData: growth lands on
-        // the live card, while a legacy collapsed card retains its pill size.
+        // the live card, while an icon retains its square.
         const newHeight = computeDataHeight(widget.type, data)
         const newWidth = computeDataWidth(widget.type, data)
-        if (widget.collapsed || widget.iconified) {
+        if (widget.iconified) {
           const previousExpanded = widget.expandedSize ?? widgetDefinition(widget.type).defaultSize
           const expandedSize = {
             width: Math.max(previousExpanded.width, newWidth),

@@ -1,6 +1,5 @@
 import { Minus, Plus, RotateCcw } from 'lucide-react'
 import type { CounterData } from '../../../types/spatial'
-import { useFieldAnchor } from '../../../hooks/useFieldAnchor'
 import { COUNTER_STEP_LIMIT, safeCounterStep } from '../../../utils/widgetValueValidation'
 
 interface CounterWidgetProps {
@@ -17,8 +16,6 @@ function safeCount(value: number): number {
 export function CounterWidget({ data, onChange }: CounterWidgetProps) {
   const step = safeCounterStep(data.step)
   // Field wires for `count` anchor to the number row, not the card edge slot.
-  const countRowRef = useFieldAnchor('count')
-
   const nudge = (delta: number) => onChange({ ...data, count: safeCount(data.count + delta) })
   const reset = () => onChange({ ...data, count: 0 })
 
@@ -32,7 +29,7 @@ export function CounterWidget({ data, onChange }: CounterWidgetProps) {
         className="gp-input--bare w-full text-[13px] text-neutral-200 outline-none placeholder:text-neutral-700"
       />
 
-      <div ref={countRowRef} className="flex flex-1 items-center justify-center gap-4">
+      <div className="flex flex-1 items-center justify-center gap-4">
         <button
           type="button"
           aria-label={`Decrease by ${step}`}

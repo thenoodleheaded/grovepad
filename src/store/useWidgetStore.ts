@@ -12,19 +12,19 @@ import type {
   ModuleType,
   Relation,
   Widget,
-  WidgetGroup,
+  WidgetGlue,
   Workspace,
 } from '../types/spatial'
 import { GRID_SIZE } from '../types/spatial'
 
 import { SEED_ROOT_CANVAS_ID, SEED_WORKSPACE_ID, createSeedCanvases, createSeedRelations, createSeedWidgets, createSeedWorkspaces } from './widgetSeeds'
-import { setGroupIndexProvider } from './widgetSettling'
-import { buildGroupIndex, computeBlockedWidgetIds } from './widgetGraph'
+import { setGlueIndexProvider } from './widgetSettling'
+import { buildGlueIndex, computeBlockedWidgetIds } from './widgetGraph'
 import { createNavigationSlice } from './slices/navigationSlice'
 import { createWidgetCreationSlice } from './slices/widgetCreationSlice'
 import { createWidgetLayoutSlice } from './slices/widgetLayoutSlice'
 import { createCircuitSlice } from './slices/circuitSlice'
-import { createGroupSlice } from './slices/groupSlice'
+import { createGlueSlice } from './slices/glueSlice'
 import { createSelectionSlice } from './slices/selectionSlice'
 import { createUiLinkingSlice } from './slices/uiLinkingSlice'
 
@@ -36,8 +36,8 @@ interface HistorySnapshot {
   widgets: Record<string, Widget>
   relations: Record<string, Relation>
   connections: Record<string, Connection>
-  groups: Record<string, WidgetGroup>
-  widgetGroupIndex: Record<string, string>
+  glues: Record<string, WidgetGlue>
+  widgetGlueIndex: Record<string, string>
   canvases: Record<string, CanvasMeta>
   workspaces: Record<string, Workspace>
 }
@@ -99,7 +99,7 @@ const initialWidgets = Object.fromEntries(
     const feedbackLoopHeight =
       INITIAL_FIT_FEEDBACK_TYPES.has(widget.type) && widget.size.height > defaultHeight
     const size =
-      !widget.collapsed && !widget.iconified && (widget.size.height > runawayHeight || feedbackLoopHeight)
+      !widget.iconified && (widget.size.height > runawayHeight || feedbackLoopHeight)
         ? { ...widget.size, height: defaultHeight }
         : widget.size
     const expandedSize =
@@ -113,7 +113,7 @@ const initialWidgets = Object.fromEntries(
 ) as Record<string, Widget>
 const initialRelations = persistedBoard?.relations ?? createSeedRelations()
 const initialConnections = persistedBoard?.connections ?? {}
-const initialGroups = persistedBoard?.groups ?? {}
+const initialGlues = persistedBoard?.glues ?? {}
 const initialPacks = persistedBoard?.activePacks ?? []
 const initialDeviceState = loadPersistedDeviceState(
   { workspaces: initialWorkspaces, canvases: initialCanvases },
@@ -126,7 +126,7 @@ const initialDeviceState = loadPersistedDeviceState(
 const initialPersistenceUnknownFields = persistedBoard?.persistenceUnknownFields ?? {}
 const initialPersistenceUnknownRelations = persistedBoard?.persistenceUnknownRelations ?? {}
 const initialPersistenceUnknownConnections = persistedBoard?.persistenceUnknownConnections ?? {}
-const initialPersistenceUnknownGroups = persistedBoard?.persistenceUnknownGroups ?? {}
+const initialPersistenceUnknownGlues = persistedBoard?.persistenceUnknownGlues ?? {}
 const initialPersistenceRawActivePacks = persistedBoard?.persistenceRawActivePacks ?? []
 
 /** Root → canvas chain used for the breadcrumb trail. */
@@ -159,8 +159,8 @@ export const useWidgetStore = create<WidgetStoreState>()((set, get) => {
       widgets: state.widgets,
       relations: state.relations,
       connections: state.connections,
-      groups: state.groups,
-      widgetGroupIndex: state.widgetGroupIndex,
+      glues: state.glues,
+      widgetGlueIndex: state.widgetGlueIndex,
       canvases: state.canvases,
       workspaces: state.workspaces,
     }, tag)
@@ -194,8 +194,8 @@ export const useWidgetStore = create<WidgetStoreState>()((set, get) => {
       widgetStructureVersion: state.widgetStructureVersion + 1,
       relations: snapshot.relations,
       connections: snapshot.connections,
-      groups: snapshot.groups,
-      widgetGroupIndex: snapshot.widgetGroupIndex,
+      glues: snapshot.glues,
+      widgetGlueIndex: snapshot.widgetGlueIndex,
       canvases: snapshot.canvases,
       workspaces: snapshot.workspaces,
       activeWorkspaceId,
@@ -216,8 +216,8 @@ export const useWidgetStore = create<WidgetStoreState>()((set, get) => {
       widgets: state.widgets,
       relations: state.relations,
       connections: state.connections,
-      groups: state.groups,
-      widgetGroupIndex: state.widgetGroupIndex,
+      glues: state.glues,
+      widgetGlueIndex: state.widgetGlueIndex,
       canvases: state.canvases,
       workspaces: state.workspaces,
     }
@@ -274,7 +274,7 @@ export const useWidgetStore = create<WidgetStoreState>()((set, get) => {
   persistenceUnknownFields: initialPersistenceUnknownFields,
   persistenceUnknownRelations: initialPersistenceUnknownRelations,
   persistenceUnknownConnections: initialPersistenceUnknownConnections,
-  persistenceUnknownGroups: initialPersistenceUnknownGroups,
+  persistenceUnknownGlues: initialPersistenceUnknownGlues,
   persistenceRawActivePacks: initialPersistenceRawActivePacks,
 
   ...createNavigationSlice(sliceContext),
@@ -311,8 +311,8 @@ export const useWidgetStore = create<WidgetStoreState>()((set, get) => {
       widgetStructureVersion: current.widgetStructureVersion + 1,
       relations: board.relations,
       connections: board.connections,
-      groups: board.groups,
-      widgetGroupIndex: buildGroupIndex(board.groups),
+      glues: board.glues,
+      widgetGlueIndex: buildGlueIndex(board.glues),
       activePacks: board.activePacks,
       activeWorkspaceId: deviceState.activeWorkspaceId,
       activeCanvasId: deviceState.activeCanvasId,
@@ -320,7 +320,7 @@ export const useWidgetStore = create<WidgetStoreState>()((set, get) => {
       persistenceUnknownFields: board.persistenceUnknownFields ?? {},
       persistenceUnknownRelations: board.persistenceUnknownRelations ?? {},
       persistenceUnknownConnections: board.persistenceUnknownConnections ?? {},
-      persistenceUnknownGroups: board.persistenceUnknownGroups ?? {},
+      persistenceUnknownGlues: board.persistenceUnknownGlues ?? {},
       persistenceRawActivePacks: board.persistenceRawActivePacks ?? [],
       blockedWidgetIds: computeBlockedWidgetIds(board.relations),
       selectedIds: new Set(),
@@ -340,10 +340,10 @@ export const useWidgetStore = create<WidgetStoreState>()((set, get) => {
 
   ...createCircuitSlice(sliceContext),
 
-  groups: initialGroups,
-  widgetGroupIndex: buildGroupIndex(initialGroups),
+  glues: initialGlues,
+  widgetGlueIndex: buildGlueIndex(initialGlues),
 
-  ...createGroupSlice(sliceContext),
+  ...createGlueSlice(sliceContext),
 
   selectedIds: new Set<string>(),
 
@@ -353,4 +353,4 @@ export const useWidgetStore = create<WidgetStoreState>()((set, get) => {
   } as WidgetStoreState
 })
 
-setGroupIndexProvider(() => useWidgetStore.getState().widgetGroupIndex)
+setGlueIndexProvider(() => useWidgetStore.getState().widgetGlueIndex)

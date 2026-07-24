@@ -1,18 +1,21 @@
 import type { CanvasNodeData, Size, Vector2D, Widget } from '../../types/spatial'
-import { ICONIFIED_SIZE, snapToGrid } from '../../types/spatial'
+import { ICONIFIED_SIZE, snapToGrid, WIDGET_MAX_EDGE } from '../../types/spatial'
 import { DEFAULT_SIZING, widgetDefinition } from '../../widgets/registry'
-import { pillSizeForTitle } from '../../utils/collapsedWidget'
 import { resizeAnomalies } from '../../utils/scaleDebugAnomalies'
+import { anchoredOrigin, recenteredOrigin } from '../../utils/widgetResizeEdge'
+import { isWidgetResting, restingTileSize } from '../../utils/widgetRest'
+import { clampIconEdge, snapIconEdgeToGrid } from '../../utils/widgetScale'
 import { getLiveWidgetSizing, mergeWidgetSizing } from '../liveWidgetSizing'
 import { useCanvasStore } from '../useCanvasStore'
 import { useScaleDebugStore } from '../useScaleDebugStore'
 import { useToastStore } from '../useToastStore'
-import { applyWidgetDelta, applyWidgetPositions, compactGroupPositions, movedIdsForWidget, uniqueExistingIds, withWidget } from '../widgetCollection'
+import { applyWidgetDelta, applyWidgetPositions, movedIdsForWidget, uniqueExistingIds, withWidget } from '../widgetCollection'
 import { MIN_WIDGET_HEIGHT, MIN_WIDGET_WIDTH } from '../widgetLayoutConstants'
 import { fitWidgetSize, computeDataHeight, computeDataWidth } from '../widgetSizing'
 import { settleWidgetLayout } from '../widgetSettling'
 import { untangleCanvasLayout } from '../widgetUntangle'
 import type { WidgetStoreSlice, WidgetStoreSliceContext } from '../widgetStoreSliceContext'
+import { usesStrictRelations } from '../../utils/relationPolicy'
 
 function fullSizing(widget: Widget) {
   return mergeWidgetSizing(widgetDefinition(widget.type).sizing, getLiveWidgetSizing(widget.id))
@@ -22,13 +25,18 @@ function clampFullSize(widget: Widget, requested: { width: number; height: numbe
   const rules = fullSizing(widget)
   const dataWidth = computeDataWidth(widget.type, widget.data)
   const dataHeight = computeDataHeight(widget.type, widget.data)
-  const minWidth = Math.max(rules.minWidth ?? DEFAULT_SIZING.minWidth, dataWidth)
-  const minHeight = Math.max(rules.minHeight ?? DEFAULT_SIZING.minHeight, dataHeight)
-  const maxWidth = Math.max(minWidth, rules.maxWidth ?? DEFAULT_SIZING.maxWidth)
+  // Even a content-derived floor answers to the absolute ceiling: a min above
+  // it would otherwise invert the range and pin the card at an illegal size.
+  const minWidth = Math.min(WIDGET_MAX_EDGE, Math.max(rules.minWidth ?? DEFAULT_SIZING.minWidth, dataWidth))
+  const minHeight = Math.min(WIDGET_MAX_EDGE, Math.max(rules.minHeight ?? DEFAULT_SIZING.minHeight, dataHeight))
+  const maxWidth = Math.min(WIDGET_MAX_EDGE, Math.max(minWidth, rules.maxWidth ?? DEFAULT_SIZING.maxWidth))
+  // Content-fit types grow past the per-type height ceiling by design, but
+  // never past the absolute one — that fallback used to be Infinity, which is
+  // how a long list could grow until it swallowed the board.
   const configuredMaxHeight = rules.autoHeight
-    ? rules.maxHeight ?? Infinity
+    ? rules.maxHeight ?? WIDGET_MAX_EDGE
     : rules.maxHeight ?? DEFAULT_SIZING.maxHeight
-  const maxHeight = Math.max(minHeight, configuredMaxHeight)
+  const maxHeight = Math.min(WIDGET_MAX_EDGE, Math.max(minHeight, configuredMaxHeight))
   return {
     width: Math.min(maxWidth, Math.max(minWidth, requested.width)),
     height: Math.min(maxHeight, Math.max(minHeight, requested.height)),
@@ -41,9 +49,19 @@ export function createWidgetLayoutSlice({ set, get, pushHistory }: WidgetStoreSl
     const safeZoom = zoom > 0 ? zoom : 1
     set((state) => {
       if (state.widgets[id]?.metadata.locked) return state
-      const ids = (options?.moveSelection === false
+      const baseIds = options?.moveSelection === false
         ? uniqueExistingIds([id], state.widgets)
-        : movedIdsForWidget(id, state.selectedIds, state.widgets)).filter(
+        : movedIdsForWidget(id, state.selectedIds, state.widgets)
+      // Glued widgets move as one object: any moved member pulls its whole
+      // cluster along. An option-drag (`soloGlued`) moves only the grabbed
+      // widget so it can be pulled off or re-welded elsewhere.
+      const withClusters = options?.soloGlued
+        ? baseIds
+        : baseIds.flatMap((widgetId) => {
+            const glueId = state.widgetGlueIndex[widgetId]
+            return glueId ? state.glues[glueId]?.widgetIds ?? [widgetId] : [widgetId]
+          })
+      const ids = uniqueExistingIds(withClusters, state.widgets).filter(
         (widgetId) => !state.widgets[widgetId]?.metadata.locked,
       )
       if (ids.length === 0) return state
@@ -52,6 +70,7 @@ export function createWidgetLayoutSlice({ set, get, pushHistory }: WidgetStoreSl
         state.relations,
         ids,
         { x: screenDelta.x / safeZoom, y: screenDelta.y / safeZoom },
+        usesStrictRelations(state.canvases[state.widgets[id]!.canvasId]),
       )
       if (widgets === state.widgets) return state
       return { widgets }
@@ -72,38 +91,16 @@ export function createWidgetLayoutSlice({ set, get, pushHistory }: WidgetStoreSl
 
   settleWidgets: (ids) => {
     set((state) => {
-      const validIds = uniqueExistingIds(ids, state.widgets)
+      // A glued widget never settles alone — its whole cluster is the rigid
+      // unit, so the request expands to every clustermate and the settle pass
+      // snaps the cluster by one shared delta (welds survive exactly).
+      const expanded = uniqueExistingIds(ids, state.widgets).flatMap((id) => {
+        const glueId = state.widgetGlueIndex[id]
+        return glueId ? state.glues[glueId]?.widgetIds ?? [id] : [id]
+      })
+      const validIds = uniqueExistingIds(expanded, state.widgets)
       if (validIds.length === 0) return state
-      const requested = new Set(validIds)
-      const layoutIds: string[] = []
-      const directSnapIds: string[] = []
-
-      for (const id of validIds) {
-        const groupId = state.widgetGroupIndex[id]
-        const members = groupId ? state.groups[groupId]?.widgetIds : undefined
-        if (!members) {
-          layoutIds.push(id)
-          continue
-        }
-        // One member released on its own stays exactly where it was dragged;
-        // only its grid snap is applied. The group is a rigid collision
-        // cluster only when the whole group was intentionally moved.
-        if (members.every((memberId) => requested.has(memberId))) layoutIds.push(id)
-        else directSnapIds.push(id)
-      }
-
-      const snapped = applyWidgetPositions(
-        state.widgets,
-        Object.fromEntries(directSnapIds.map((id) => {
-          const position = state.widgets[id]!.position
-          return [id, { x: snapToGrid(position.x), y: snapToGrid(position.y) }]
-        })),
-      )
-      return {
-        widgets: layoutIds.length > 0
-          ? settleWidgetLayout(snapped, layoutIds, state.widgetGroupIndex)
-          : snapped,
-      }
+      return { widgets: settleWidgetLayout(state.widgets, validIds, state.widgetGlueIndex) }
     })
   },
 
@@ -123,18 +120,7 @@ export function createWidgetLayoutSlice({ set, get, pushHistory }: WidgetStoreSl
   untangleCanvas: () => {
     const state = get()
     const canvasId = state.activeCanvasId
-    // Repair existing boards created before group packing happened at commit
-    // time. Untangling wide, scattered group bounds only makes the sprawl
-    // worse; tighten each group first, then resolve collisions between the
-    // resulting compact clusters.
-    let widgets = state.widgets
-    for (const group of Object.values(state.groups)) {
-      const members = group.widgetIds.filter((id) => widgets[id]?.canvasId === canvasId)
-      if (members.length >= 2) {
-        widgets = applyWidgetPositions(widgets, compactGroupPositions(widgets, members))
-      }
-    }
-    const untangled = untangleCanvasLayout(widgets, state.groups, canvasId)
+    const untangled = untangleCanvasLayout(state.widgets, state.glues, canvasId)
     if (untangled === state.widgets) {
       useToastStore.getState().addToast('Layout already untangled')
       return
@@ -142,6 +128,31 @@ export function createWidgetLayoutSlice({ set, get, pushHistory }: WidgetStoreSl
     pushHistory()
     set({ widgets: untangled })
     useToastStore.getState().addToast('Untangled layout')
+  },
+
+  untangleWidgets: (ids) => {
+    const state = get()
+    const canvasId = state.activeCanvasId
+    const selectedIds = uniqueExistingIds(ids, state.widgets).filter(
+      (id) => state.widgets[id]?.canvasId === canvasId,
+    )
+    if (selectedIds.length < 2) return
+
+    const selectedWidgets = Object.fromEntries(
+      selectedIds.map((id) => [id, state.widgets[id]!]),
+    )
+    const untangled = untangleCanvasLayout(selectedWidgets, state.glues, canvasId)
+    if (untangled === selectedWidgets) {
+      useToastStore.getState().addToast('Selection already untangled')
+      return
+    }
+
+    const positions = Object.fromEntries(
+      selectedIds.map((id) => [id, untangled[id]!.position]),
+    )
+    pushHistory()
+    set({ widgets: applyWidgetPositions(state.widgets, positions) })
+    useToastStore.getState().addToast('Untangled selection')
   },
 
   autoScaleCanvas: () => {
@@ -152,25 +163,16 @@ export function createWidgetLayoutSlice({ set, get, pushHistory }: WidgetStoreSl
     let widgets = { ...state.widgets }
     for (const id of Object.keys(widgets)) {
       const w = widgets[id]!
-      if (w.canvasId !== canvasId || w.collapsed || w.iconified) continue
+      if (w.canvasId !== canvasId || w.iconified) continue
       const size = fitWidgetSize(w)
       if (size.width !== w.size.width || size.height !== w.size.height) {
         widgets[id] = { ...w, size }
       }
     }
 
-    // 2. Re-tidy every group's internal packing so resized members don't
-    //    overlap one another inside the plate.
-    for (const group of Object.values(state.groups)) {
-      const members = group.widgetIds.filter((id) => widgets[id]?.canvasId === canvasId)
-      if (members.length >= 2) {
-        widgets = applyWidgetPositions(widgets, compactGroupPositions(widgets, members))
-      }
-    }
-
-    // 3. Untangle so any overlaps the resize introduced are cleared, groups
-    //    still moving as rigid units.
-    widgets = untangleCanvasLayout(widgets, state.groups, canvasId)
+    // 2. Untangle so any overlaps the resize introduced are cleared, glue
+    //    clusters still moving as rigid units.
+    widgets = untangleCanvasLayout(widgets, state.glues, canvasId)
 
     // Did anything on this canvas actually move or resize?
     const original = state.widgets
@@ -216,7 +218,22 @@ export function createWidgetLayoutSlice({ set, get, pushHistory }: WidgetStoreSl
         trace = { before: w.size, after: w.size, rules: fullSizing(w), locked: true, changed: false }
         return state
       }
-      if (w.collapsed || w.iconified) return state
+      // An icon follows live resize requests continuously across one cell.
+      // A committed (`snap`) request settles to the nearest grid-sized square:
+      // 2×2 or 3×3. Those are dimensions, never separate scale states.
+      if (w.iconified) {
+        const requestedEdge = Math.max(newSize.width, newSize.height)
+        const edge = snap
+          ? snapIconEdgeToGrid(requestedEdge)
+          : clampIconEdge(requestedEdge)
+        if (edge === w.size.width && edge === w.size.height) return state
+        return {
+          widgets: withWidget(state.widgets, id, (widget) => ({
+            ...widget,
+            size: { width: edge, height: edge },
+          })),
+        }
+      }
       let size = snap
         ? {
             width: Math.max(MIN_WIDGET_WIDTH, snapToGrid(newSize.width)),
@@ -278,51 +295,69 @@ export function createWidgetLayoutSlice({ set, get, pushHistory }: WidgetStoreSl
     }
   },
 
-  toggleWidgetCollapsed: (id) => {
-    const widget = get().widgets[id]
-    if (!widget) return
-    get().setWidgetScaleState(id, widget.collapsed ? 'full' : 'pill')
+  resizeWidgetFromEdge: (id, newSize, edge, snap = false) => {
+    const before = get().widgets[id]
+    if (!before) return
+    get().resizeWidget(id, newSize, snap)
+    const after = get().widgets[id]
+    if (!after) return
+    const position = anchoredOrigin(before.position, before.size, after.size, edge)
+    if (position.x === after.position.x && position.y === after.position.y) return
+    set((state) => ({ widgets: withWidget(state.widgets, id, (w) => ({ ...w, position })) }))
   },
 
-  setWidgetScaleState: (id, target, skipHistory = false) => {
+  setWidgetScaleState: (id, target, options = {}) => {
+    const { skipHistory = false, fromSize, toSize } = options
     const currentWidget = get().widgets[id]
     if (!currentWidget || currentWidget.metadata.locked) return
-    const current = currentWidget.collapsed ? 'pill' : currentWidget.iconified ? 'icon' : 'full'
+    const current = currentWidget.iconified ? 'icon' : 'full'
     if (current === target) return
     if (!skipHistory) pushHistory()
     const before = currentWidget.size
     set((state) => {
       const widget = state.widgets[id]
       if (!widget) return state
-      const expandedSize = widget.collapsed || widget.iconified
+      const expandedSize = widget.iconified
         ? widget.expandedSize ?? widgetDefinition(widget.type).defaultSize
         : widget.size
       const next = target === 'full'
         ? {
             ...widget,
-            collapsed: false,
             iconified: false,
             size: clampFullSize(widget, expandedSize),
             expandedSize: undefined,
           }
-        : target === 'pill'
-          ? {
-              ...widget,
-              collapsed: true,
-              iconified: false,
-              expandedSize,
-              size: pillSizeForTitle(widget.title),
-            }
-          : {
-              ...widget,
-              collapsed: false,
-              iconified: true,
-              expandedSize,
-              size: { ...ICONIFIED_SIZE },
-            }
+        : {
+            ...widget,
+            iconified: true,
+            expandedSize,
+            // A caller returning a card to a remembered icon (a closing
+            // expansion) lands it at that exact continuous square, clamped to
+            // the one-cell icon range. Without a memory, the 2×2 floor.
+            size: toSize
+              ? (() => {
+                  const edge = clampIconEdge(Math.min(toSize.width, toSize.height))
+                  return { width: edge, height: edge }
+                })()
+              : { ...ICONIFIED_SIZE },
+          }
+      // Every state change re-centres the box the user is about to see on the
+      // box they were just looking at. Both ends must be the VISIBLE boxes: a
+      // widget that rests draws its tile top-left-anchored at the stored
+      // position, so re-centring the dormant full card there put the tile at
+      // the card's top-left corner and each icon round trip walked the widget
+      // up-left by half the card-minus-tile difference.
+      // Same decision the resting system itself makes at idle, so a
+      // duplicated local predicate would drift.
+      const rests = (w: Widget) => isWidgetResting(w, { expandedWidgetId: null })
+      // Callers pass `fromSize` when they know the on-screen box (the gesture
+      // paths always do — an ephemerally expanded card is only their caller's
+      // knowledge). The fallback is the box this store can prove: the resting
+      // tile for a widget at rest, otherwise its stored size.
+      const shownBefore = fromSize ?? (rests(widget) ? restingTileSize(widget) : widget.size)
+      const shownAfter = rests(next) ? restingTileSize(next) : next.size
+      next.position = recenteredOrigin(widget.position, shownBefore, shownAfter)
       const widgets = { ...state.widgets, [id]: next }
-      // A scale-state round trip restores the same world geometry; expanding
-      // must not silently settle the card into a new location.
       return { widgets }
     })
     const after = get().widgets[id]
@@ -344,44 +379,6 @@ export function createWidgetLayoutSlice({ set, get, pushHistory }: WidgetStoreSl
     }
   },
 
-  setWidgetsCollapsed: (ids, collapsed) => {
-    const validIds = uniqueExistingIds(ids, get().widgets)
-    const actionable = validIds.filter((id) => {
-      const widget = get().widgets[id]
-      return widget && !widget.metadata.locked && widget.collapsed !== collapsed
-    })
-    if (actionable.length === 0) return
-    pushHistory()
-    set((state) => {
-      let widgets = state.widgets
-      for (const id of actionable) {
-        const widget = widgets[id]
-        if (!widget) continue
-        if (collapsed) {
-          const expandedSize = widget.iconified
-            ? widget.expandedSize ?? widgetDefinition(widget.type).defaultSize
-            : widget.size
-          widgets = withWidget(widgets, id, (item) => ({
-            ...item,
-            collapsed: true,
-            iconified: false,
-            expandedSize,
-            size: pillSizeForTitle(item.title),
-          }))
-        } else {
-          widgets = withWidget(widgets, id, (item) => ({
-            ...item,
-            collapsed: false,
-            iconified: false,
-            size: clampFullSize(item, item.expandedSize ?? widgetDefinition(item.type).defaultSize),
-            expandedSize: undefined,
-          }))
-        }
-      }
-      return { widgets }
-    })
-  },
-
   updateWidgetData: (widgetId, data, options) => {
     const previous = get().widgets[widgetId]
     if (!previous) return
@@ -394,15 +391,18 @@ export function createWidgetLayoutSlice({ set, get, pushHistory }: WidgetStoreSl
       // Content-length estimates are unbounded (more rows == more height), so
       // clamp them to the type's real full-card window.
       const rules = widgetDefinition(w.type).sizing
-      const maxHeight = rules?.autoHeight ? rules?.maxHeight ?? Infinity : rules?.maxHeight ?? DEFAULT_SIZING.maxHeight
+      const maxHeight = Math.min(
+        WIDGET_MAX_EDGE,
+        rules?.autoHeight ? rules?.maxHeight ?? WIDGET_MAX_EDGE : rules?.maxHeight ?? DEFAULT_SIZING.maxHeight,
+      )
       const newHeight =
         rawHeight > 0
           ? Math.min(maxHeight, Math.max(rules?.minHeight ?? DEFAULT_SIZING.minHeight, rawHeight))
           : 0
-      // A legacy collapsed pill keeps its visible size. Preserve its dormant
-      // full-card dimensions while accepting data updates.
+      // An icon keeps its visible square. Preserve its dormant full-card
+      // dimensions while accepting data updates.
       let widgets: Record<string, Widget>
-      if (w.collapsed || w.iconified) {
+      if (w.iconified) {
         const previousExpanded = w.expandedSize ?? widgetDefinition(w.type).defaultSize
         const expandedSize = clampFullSize(
           { ...w, data },
@@ -447,7 +447,6 @@ export function createWidgetLayoutSlice({ set, get, pushHistory }: WidgetStoreSl
         widgets: withWidget(state.widgets, widgetId, (w) => ({
           ...w,
           title,
-          ...(w.collapsed ? { size: pillSizeForTitle(title) } : {}),
         })),
         canvases,
       }
@@ -474,7 +473,14 @@ export function createWidgetLayoutSlice({ set, get, pushHistory }: WidgetStoreSl
     if (ids.length === 0) return
     pushHistory('nudge')
     set((state) => {
-      const widgets = applyWidgetDelta(state.widgets, state.relations, ids, { x: dx, y: dy })
+      const first = state.widgets[ids[0]!]
+      const widgets = applyWidgetDelta(
+        state.widgets,
+        state.relations,
+        ids,
+        { x: dx, y: dy },
+        usesStrictRelations(state.canvases[first?.canvasId ?? state.activeCanvasId]),
+      )
       if (widgets === state.widgets) return state
       return { widgets: settleWidgetLayout(widgets, ids) }
     })

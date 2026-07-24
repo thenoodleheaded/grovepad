@@ -24,6 +24,11 @@ describe('board hydration boundary', () => {
     Reflect.deleteProperty(expectedDocument, 'activeWorkspaceId')
     Reflect.deleteProperty(expectedDocument, 'activeCanvasId')
     Reflect.deleteProperty(expectedDocument, 'canvasViews')
+    // Legacy `groups` records and malformed glues are deliberately dropped.
+    Reflect.deleteProperty(expectedDocument, 'groups')
+    expectedDocument.glues = {
+      futureGlue: (expectedDocument.glues as Record<string, unknown>).futureGlue,
+    }
     expect(buildBoardSnapshot(useWidgetStore.getState())).toEqual(expectedDocument)
   })
 
@@ -38,7 +43,7 @@ describe('board hydration boundary', () => {
     const snapshot = buildBoardSnapshot(useWidgetStore.getState())
     expect(snapshot.relations).toEqual({})
     expect(snapshot.connections).toEqual({})
-    expect(snapshot.groups).toEqual({})
+    expect(snapshot.glues).toEqual({})
     expect(snapshot.widgets.future).toBeDefined()
   })
 

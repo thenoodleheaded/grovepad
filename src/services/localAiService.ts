@@ -172,8 +172,7 @@ function titleEnrichSchema(ids:readonly string[]){
   return {type:'object',additionalProperties:false,required:['titles'],properties:{titles:{type:'array',maxItems:ids.length,items:{type:'object',additionalProperties:false,required:['id','title'],properties:{id:{enum:[...ids]},title:{type:'string',minLength:1,maxLength:80}}}}}}
 }
 /** Applies validated renames to a cloned plan. Ids outside the skeleton are
- *  ignored; structure (nodes, relations, groups) is never touched. Group
- *  labels follow their host node's new name. */
+ *  ignored; structure (nodes, relations) is never touched. */
 function applyEnrichedTitles(prediction:ThoughtPrediction,raw:string,allowed:ReadonlySet<string>):ThoughtPrediction|null{
   const value=extractLocalAiPlanJson(raw)
   if(!value||typeof value!=='object'||Array.isArray(value))return null
@@ -191,11 +190,6 @@ function applyEnrichedTitles(prediction:ThoughtPrediction,raw:string,allowed:Rea
   const plan:ThoughtPlan={
     ...prediction.plan,
     nodes:prediction.plan.nodes.map(node=>renames.has(node.temporaryId)?{...node,title:renames.get(node.temporaryId)!}:node),
-    groups:prediction.plan.groups.map(group=>({
-      ...group,
-      memberTemporaryIds:[...group.memberTemporaryIds],
-      ...(renames.has(group.memberTemporaryIds[0]!)?{label:renames.get(group.memberTemporaryIds[0]!)!}:{}),
-    })),
   }
   return {...prediction,plan,explanation:'Structure built deterministically; the local model named the branches'}
 }
@@ -444,9 +438,6 @@ export class LocalAiService {
         finishModelTrace({status:'ok',response:result.text,summary:options.skeleton&&plan?'Deep plan changed or detached the fixed skeleton; rejected':planSummary(null)})
         return deterministic
       }
-      // Groups are structure. With a skeleton present the skeleton's groups
-      // are authoritative — the model may improve titles, never grouping.
-      if(options.skeleton)plan.groups=options.skeleton.groups.map(group=>({...group,memberTemporaryIds:[...group.memberTemporaryIds]}))
       const nodeBonus=plan.nodes.length>=10 ? .12 : plan.nodes.length>=3 ? .07 : 0
       const confidence=Math.min(.96,Math.max(plan.confidence,.79)+nodeBonus)
       plan.confidence=confidence;plan.nodes.forEach(node=>{node.confidence=Math.max(node.confidence,confidence-.06)})

@@ -42,7 +42,7 @@ const SECTIONS: ShortcutSection[] = [
       { keys: ['Pinch'], label: 'Zoom around your fingers' },
       { keys: ['Tap'], label: 'Select a card or clear selection' },
       { keys: ['Select + Drag'], label: 'Move a selected card' },
-      { keys: ['Focus + Pencil'], label: 'Pressure-sensitive Sketchpad ink' },
+      { keys: ['Pencil'], label: 'Pressure-sensitive Sketchpad ink' },
     ],
   },
   {
@@ -77,10 +77,10 @@ const SECTIONS: ShortcutSection[] = [
     title: 'Selection',
     rows: [
       { keys: ['Click'], label: 'Select widget' },
+      { keys: ['⌥ Drag'], label: 'Glue / unglue widget' },
       { keys: ['⇧ Click'], label: 'Toggle in selection' },
       { keys: ['⇧ Drag'], label: 'Marquee select' },
       { keys: ['⌘A'], label: 'Select all' },
-      { keys: ['⌘G'], label: 'Group selection' },
       { keys: ['Esc'], label: 'Clear selection' },
       { keys: ['⌫'], label: 'Delete selection' },
       { keys: ['Arrows', '⇧ Arrows'], label: 'Nudge (fine / coarse)' },
@@ -102,6 +102,41 @@ function Key({ children }: { children: string }) {
     <kbd className="rounded border border-neutral-700/80 bg-neutral-800/80 px-1.5 py-0.5  text-[10px] text-neutral-300 whitespace-nowrap">
       {children}
     </kbd>
+  )
+}
+
+export function ShortcutReference({ interactive = false, className = '' }: { interactive?: boolean; className?: string }) {
+  return (
+    <div className={`grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2 ${className}`}>
+      {SECTIONS.map((section) => (
+        <section key={section.title}>
+          <h3 className="pb-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-neutral-600">
+            {section.title}
+          </h3>
+          <ul className="space-y-1">
+            {section.rows.map((row) => (
+              <li key={row.label}>
+                {interactive ? (
+                  <button type="button" disabled={!ACTIONABLE.has(row.label)} onClick={() => runShortcut(row.label)} className="flex w-full items-center justify-between gap-3 rounded-lg px-1.5 py-1 text-left enabled:hover:bg-neutral-800 enabled:hover:text-white disabled:cursor-default">
+                    <span className="text-[11px] text-neutral-400">{row.label}</span>
+                    <span className="flex shrink-0 items-center gap-1">
+                      {row.keys.map((key) => <Key key={key}>{key}</Key>)}
+                    </span>
+                  </button>
+                ) : (
+                  <div className="flex items-center justify-between gap-3 rounded-lg px-1.5 py-1">
+                    <span className="text-[11px] text-neutral-400">{row.label}</span>
+                    <span className="flex shrink-0 items-center gap-1">
+                      {row.keys.map((key) => <Key key={key}>{key}</Key>)}
+                    </span>
+                  </div>
+                )}
+              </li>
+            ))}
+          </ul>
+        </section>
+      ))}
+    </div>
   )
 }
 
@@ -145,7 +180,7 @@ export function ShortcutsOverlay() {
       <div
         ref={panelRef}
         tabIndex={-1}
-        className="gp-shortcuts-panel gp-dialog gp-pop gp-panel relative z-10 flex w-full max-w-2xl flex-col overflow-hidden rounded-3xl shadow-2xl outline-none"
+        className="gp-shortcuts-panel gp-popup-surface gp-dialog gp-pop gp-panel relative z-10 flex w-full max-w-2xl flex-col overflow-hidden rounded-3xl shadow-2xl outline-none"
       >
         <div className="flex items-center justify-between border-b border-neutral-800 px-5 py-3.5">
           <div className="flex items-center gap-2">
@@ -157,34 +192,14 @@ export function ShortcutsOverlay() {
             type="button"
             aria-label="Close shortcuts"
             onClick={close}
-            className="gp-touch-target flex h-6 w-6 items-center justify-center rounded text-neutral-500 transition-colors hover:bg-neutral-800 hover:text-white"
+            className="gp-popup-close-naked gp-touch-target h-7 w-7"
           >
             <X size={13} />
           </button>
         </div>
 
-        <div className="gp-shortcuts-content grid max-h-[70vh] grid-cols-1 gap-x-8 gap-y-5 overflow-y-auto p-5 sm:grid-cols-2">
-          {SECTIONS.map((section) => (
-            <section key={section.title}>
-              <h3 className="pb-2  text-[10px] uppercase tracking-wider text-neutral-600">
-                {section.title}
-              </h3>
-              <ul className="space-y-1.5">
-                {section.rows.map((row) => (
-                  <li key={row.label}>
-                  <button type="button" disabled={!ACTIONABLE.has(row.label)} onClick={() => runShortcut(row.label)} className="flex w-full items-center justify-between gap-3 rounded-lg px-1 py-0.5 text-left enabled:hover:bg-neutral-800 enabled:hover:text-white disabled:cursor-default">
-                    <span className="text-xs text-neutral-400">{row.label}</span>
-                    <span className="flex shrink-0 items-center gap-1">
-                      {row.keys.map((key) => (
-                        <Key key={key}>{key}</Key>
-                      ))}
-                    </span>
-                  </button>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          ))}
+        <div className="gp-shortcuts-content max-h-[70vh] overflow-y-auto p-5">
+          <ShortcutReference interactive className="gap-x-8 gap-y-5" />
         </div>
       </div>
     </div>,

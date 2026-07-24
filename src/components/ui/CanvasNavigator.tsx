@@ -6,10 +6,6 @@ import { useAdaptiveInputStore } from '../../store/useAdaptiveInputStore'
 import { useWidgetStore } from '../../store/useWidgetStore'
 import { isMinimapExpanded } from '../../utils/adaptiveChrome'
 import { boundsForWidgets } from '../../utils/widgetBounds'
-import {
-  isCameraMotionActive,
-  subscribeCameraMotion,
-} from '../../engine/camera/cameraEngine'
 
 const MAP_WIDTH = 184
 const MAP_HEIGHT = 116
@@ -24,9 +20,20 @@ function colorFor(type: string): string {
 
 export function CanvasNavigator() {
   const [collapsed, setCollapsed] = useState(() => localStorage.getItem('grovepad:minimap') === 'collapsed')
-  const [phoneExpanded, setPhoneExpanded] = useState(false)
-  const viewportClass = useAdaptiveInputStore((state) => state.capabilities.viewportClass)
-  const expanded = isMinimapExpanded(viewportClass, collapsed, phoneExpanded)
+  const [compactExpanded, setCompactExpanded] = useState(false)
+  const { viewportClass, viewportHeight } = useAdaptiveInputStore(
+    useShallow((state) => ({
+      viewportClass: state.capabilities.viewportClass,
+      viewportHeight: state.capabilities.height,
+    })),
+  )
+  const compactViewport = viewportClass === 'phone' || viewportHeight < 560
+  const expanded = isMinimapExpanded(
+    viewportClass,
+    collapsed,
+    compactExpanded,
+    viewportHeight < 560,
+  )
   const { widgets, activeCanvasId } = useWidgetStore(
     useShallow((state) => ({ widgets: state.widgets, activeCanvasId: state.activeCanvasId })),
   )
@@ -38,12 +45,12 @@ export function CanvasNavigator() {
   const board = useMemo(() => boundsForWidgets(active), [active])
 
   useEffect(() => {
-    if (viewportClass === 'phone') setPhoneExpanded(false)
-  }, [viewportClass])
+    if (compactViewport) setCompactExpanded(false)
+  }, [compactViewport])
 
   const openMap = () => {
-    if (viewportClass === 'phone') {
-      setPhoneExpanded(true)
+    if (compactViewport) {
+      setCompactExpanded(true)
       return
     }
     setCollapsed(false)
@@ -51,8 +58,8 @@ export function CanvasNavigator() {
   }
 
   const closeMap = () => {
-    if (viewportClass === 'phone') {
-      setPhoneExpanded(false)
+    if (compactViewport) {
+      setCompactExpanded(false)
       return
     }
     setCollapsed(true)
@@ -68,8 +75,7 @@ export function CanvasNavigator() {
   const mapY = (y: number) => MAP_PAD + (y - extent.y) * scale
 
   useEffect(() => {
-    const apply = (force = false) => {
-      if (!force && isCameraMotionActive()) return
+    const apply = () => {
       const viewport = viewportRectRef.current
       if (!viewport) return
       const { pan, zoom, viewportSize } = useCanvasStore.getState()
@@ -80,14 +86,10 @@ export function CanvasNavigator() {
       viewport.setAttribute('width', String(Math.max(3, viewportSize.width / zoom * scale)))
       viewport.setAttribute('height', String(Math.max(3, viewportSize.height / zoom * scale)))
     }
-    apply(true)
+    apply()
     const unsubscribeCanvas = useCanvasStore.subscribe(() => apply())
-    const unsubscribeMotion = subscribeCameraMotion((active) => {
-      if (!active) apply(true)
-    })
     return () => {
       unsubscribeCanvas()
-      unsubscribeMotion()
     }
   }, [extent.x, extent.y, scale])
 
@@ -115,20 +117,17 @@ export function CanvasNavigator() {
   }
 
   return (
-    <div data-canvas-ui className="gp-safe-canvas-bottom-left gp-panel fixed z-30 overflow-hidden rounded-2xl border gp-hairline shadow-2xl">
-        {!expanded ? (
-          <button
-            type="button"
-            aria-label="Open minimap"
-            onClick={openMap}
-            className="gp-touch-target flex h-9 w-9 items-center justify-center text-neutral-400 hover:text-white"
-          ><Map size={14} /></button>
-        ) : (
-          <>
-            <div className="flex h-7 items-center justify-between border-b gp-hairline px-2 text-[9px] font-semibold uppercase tracking-widest text-neutral-500">
-              Board map
-              <button type="button" aria-label="Collapse minimap" onClick={closeMap} className="gp-touch-target -mr-2 flex items-center justify-center hover:text-white"><X size={12} /></button>
-            </div>
+    <div data-canvas-ui className="gp-canvas-ui-scale gp-minimap-shell gp-safe-canvas-bottom-left fixed z-30 flex items-end gap-2">
+      {!expanded ? (
+        <button
+          type="button"
+          aria-label="Open minimap"
+          onClick={openMap}
+          className="gp-touch-target gp-panel flex h-9 w-9 items-center justify-center rounded-xl border gp-hairline text-neutral-400 shadow-xl hover:text-white"
+        ><Map size={14} /></button>
+      ) : (
+        <>
+          <div className="gp-panel overflow-hidden rounded-2xl border gp-hairline shadow-2xl">
             <svg
               width={MAP_WIDTH}
               height={MAP_HEIGHT}
@@ -161,8 +160,20 @@ export function CanvasNavigator() {
                 strokeWidth="1.2"
               />
             </svg>
-          </>
-        )}
+          </div>
+          <div className="gp-minimap-actions flex items-center">
+            <button
+              type="button"
+              aria-label="Collapse minimap"
+              title="Collapse minimap"
+              onClick={closeMap}
+              className="gp-touch-target flex h-9 w-9 items-center justify-center rounded-xl text-neutral-500 transition-colors hover:bg-white/5 hover:text-white"
+            >
+              <X size={12} aria-hidden />
+            </button>
+          </div>
+        </>
+      )}
     </div>
   )
 }

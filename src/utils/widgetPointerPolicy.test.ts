@@ -3,7 +3,6 @@ import {
   pressWithinResizeCorner,
   RESIZE_CORNER_ZONE_PX,
   resolveWidgetPointerIntent,
-  shouldEnterWidgetEditFocus,
   usesAdditiveWidgetSelection,
 } from './widgetPointerPolicy'
 
@@ -11,11 +10,9 @@ const base = {
   pointerType: 'mouse',
   interactionMode: 'navigate' as const,
   isInteractiveTarget: false,
-  isFocused: false,
   isLocked: false,
   hasModifier: false,
   wantsLink: false,
-  isGrouped: false,
   isTargetingLink: false,
 }
 
@@ -34,9 +31,8 @@ describe('widget pointer policy', () => {
     expect(resolveWidgetPointerIntent({ ...base, pointerType: 'pen', interactionMode: 'select' })).toBe('drag')
   })
 
-  it('leaves controls and focused widgets with their own pointer ownership', () => {
+  it('leaves controls with their own pointer ownership', () => {
     expect(resolveWidgetPointerIntent({ ...base, isInteractiveTarget: true })).toBe('ignore')
-    expect(resolveWidgetPointerIntent({ ...base, isFocused: true })).toBe('ignore')
     expect(resolveWidgetPointerIntent({ ...base, isLocked: true })).toBe('select')
   })
 
@@ -55,7 +51,6 @@ describe('widget pointer policy', () => {
         ...base,
         pointerType: 'touch',
         isInteractiveTarget: true,
-        isFocused: true,
         isTargetingLink: true,
       }),
     ).toBe('target-link')
@@ -67,25 +62,6 @@ describe('widget pointer policy', () => {
     expect(usesAdditiveWidgetSelection('touch', 'navigate', false)).toBe(false)
     expect(usesAdditiveWidgetSelection('mouse', 'select', false)).toBe(false)
     expect(usesAdditiveWidgetSelection('mouse', 'navigate', true)).toBe(true)
-  })
-
-  it('enters focused editing only from a touch or Pencil control in Navigate mode', () => {
-    const editBase = {
-      pointerType: 'touch',
-      interactionMode: 'navigate' as const,
-      isInteractiveTarget: true,
-      isTextEntryTarget: false,
-      isInsideContent: true,
-      isAlreadyFocused: false,
-      isTargetingLink: false,
-    }
-    expect(shouldEnterWidgetEditFocus(editBase)).toBe(true)
-    expect(shouldEnterWidgetEditFocus({ ...editBase, pointerType: 'mouse' })).toBe(false)
-    expect(shouldEnterWidgetEditFocus({ ...editBase, interactionMode: 'select' })).toBe(false)
-    expect(shouldEnterWidgetEditFocus({ ...editBase, isTargetingLink: true })).toBe(false)
-    expect(shouldEnterWidgetEditFocus({ ...editBase, isInsideContent: false })).toBe(false)
-    expect(shouldEnterWidgetEditFocus({ ...editBase, pointerType: 'pen', isTextEntryTarget: true })).toBe(false)
-    expect(shouldEnterWidgetEditFocus({ ...editBase, pointerType: 'touch', isTextEntryTarget: true })).toBe(true)
   })
 
   it('routes presses inside the bottom-right corner zone to resize', () => {

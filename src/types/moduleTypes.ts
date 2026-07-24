@@ -27,7 +27,6 @@ export type ModuleType =
   | 'contact'
   | 'media'
   | 'metrics'
-  | 'divider'
   | 'sticky_note'
   | 'calendar'
   | 'timer'
@@ -124,7 +123,7 @@ export type ModuleType =
   | 'commission_queue' | 'content_pipeline'
   | 'loop' | 'batch_processor' | 'parallel_runner' | 'race' | 'transaction' | 'subroutine' | 'approval_gate' | 'workflow_lock'
   | 'webhook_receiver' | 'manual_trigger' | 'canvas_lifecycle' | 'event_merger' | 'data_join' | 'object_builder' | 'event_correlator' | 'multi_source_aggregator'
-  | 'widget_creator' | 'widget_updater' | 'widget_deleter' | 'branch_builder' | 'relation_builder' | 'canvas_router' | 'auto_grouper' | 'clone_branch' | 'template_instantiator' | 'archive_action' | 'auto_layout_action' | 'focus_action'
+  | 'widget_creator' | 'widget_updater' | 'widget_deleter' | 'branch_builder' | 'relation_builder' | 'canvas_router' | 'clone_branch' | 'template_instantiator' | 'archive_action' | 'auto_layout_action' | 'focus_action'
   | 'variable_store' | 'key_value_store' | 'queue' | 'stack_store' | 'set_store' | 'state_machine' | 'idempotency_store' | 'session_store' | 'mutex'
   | 'script_block' | 'local_function' | 'http_request' | 'webhook_sender' | 'secret_reference' | 'environment_config'
   | 'automation_console' | 'test_data_generator' | 'automation_recorder' | 'workflow_test_suite' | 'failure_inbox' | 'run_ledger'
@@ -154,7 +153,6 @@ export const MODULE_TYPES: readonly ModuleType[] = [
   'contact',
   'media',
   'metrics',
-  'divider',
   'sticky_note',
   'calendar',
   'timer',
@@ -224,7 +222,7 @@ export const MODULE_TYPES: readonly ModuleType[] = [
   'commission_queue', 'content_pipeline',
   'loop','batch_processor','parallel_runner','race','transaction','subroutine','approval_gate','workflow_lock',
   'webhook_receiver','manual_trigger','canvas_lifecycle','event_merger','data_join','object_builder','event_correlator','multi_source_aggregator',
-  'widget_creator','widget_updater','widget_deleter','branch_builder','relation_builder','canvas_router','auto_grouper','clone_branch','template_instantiator','archive_action','auto_layout_action','focus_action',
+  'widget_creator','widget_updater','widget_deleter','branch_builder','relation_builder','canvas_router','clone_branch','template_instantiator','archive_action','auto_layout_action','focus_action',
   'variable_store','key_value_store','queue','stack_store','set_store','state_machine','idempotency_store','session_store','mutex',
   'script_block','local_function','http_request','webhook_sender','secret_reference','environment_config',
   'automation_console','test_data_generator','automation_recorder','workflow_test_suite','failure_inbox','run_ledger',

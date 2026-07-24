@@ -1,6 +1,5 @@
 import { Plus, X } from 'lucide-react'
 import type { PlannerTask, WeeklyPlannerData } from '../../../types/spatial'
-import { useFieldAnchor } from '../../../hooks/useFieldAnchor'
 
 interface WeeklyPlannerWidgetProps {
   data: WeeklyPlannerData
@@ -20,8 +19,6 @@ export function WeeklyPlannerWidget({ data, onChange }: WeeklyPlannerWidgetProps
   // getDay(): 0=Sun..6=Sat → Monday-first index.
   const todayIndex = (new Date().getDay() + 6) % 7
   const doneCount = days.reduce((sum, tasks) => sum + tasks.filter((t) => t.done).length, 0)
-  const doneCountRef = useFieldAnchor<HTMLSpanElement>('done_count')
-
   const setDay = (dayIndex: number, tasks: PlannerTask[]) =>
     onChange({ days: days.map((d, i) => (i === dayIndex ? tasks : d)) })
 
@@ -37,7 +34,7 @@ export function WeeklyPlannerWidget({ data, onChange }: WeeklyPlannerWidgetProps
   return (
     <div className="flex h-full flex-col">
       <div className="flex shrink-0 items-center justify-end pb-1">
-        <span ref={doneCountRef} className=" text-[10px] tabular-nums text-neutral-600">
+        <span className=" text-[10px] tabular-nums text-neutral-600">
           {doneCount} done this week
         </span>
       </div>

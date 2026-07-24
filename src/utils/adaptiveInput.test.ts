@@ -43,7 +43,6 @@ describe('adaptive input contracts', () => {
   })
 
   it('reserves direct manipulation for selection and connection tools', () => {
-    expect(interactionModeAcceptsDirectManipulation('edit', 'pen')).toBe(false)
     expect(interactionModeAcceptsDirectManipulation('select', 'touch')).toBe(true)
     expect(interactionModeAcceptsDirectManipulation('connect', 'pen')).toBe(true)
     expect(interactionModeAcceptsDirectManipulation('navigate', 'mouse')).toBe(false)

@@ -13,11 +13,12 @@ import type {
   Size,
   Vector2D,
   Widget,
-  WidgetGroup,
+  WidgetGlue,
   WidgetMetadata,
   Workspace,
 } from '../types/spatial'
 import type { ThoughtPlan } from '../utils/thoughtInterpreter'
+import type { ResizeEdge } from '../utils/widgetResizeEdge'
 import type { WidgetScaleState } from '../utils/widgetScale'
 
 /** Public contract for the board store. Kept separate from the Zustand implementation. */
@@ -42,7 +43,7 @@ export interface WidgetStoreState {
   persistenceUnknownFields: Record<string, unknown>
   persistenceUnknownRelations: Record<string, Record<string, unknown>>
   persistenceUnknownConnections: Record<string, Record<string, unknown>>
-  persistenceUnknownGroups: Record<string, Record<string, unknown>>
+  persistenceUnknownGlues: Record<string, Record<string, unknown>>
   persistenceRawActivePacks: string[]
 
   createWorkspace: (name: string) => string
@@ -54,6 +55,10 @@ export interface WidgetStoreState {
   /** Enter a canvas: saves the current camera, restores the target's. */
   navigateToCanvas: (canvasId: string) => void
   renameCanvas: (canvasId: string, name: string) => void
+  updateCanvasSettings: (
+    canvasId: string,
+    settings: Partial<Pick<CanvasMeta, 'shared' | 'gridIntensity' | 'linksVisible'>>,
+  ) => void
   reparentCanvas: (canvasId: string, parentCanvasId: string) => void
   /** Embed an imported board behind one Canvas card without replacing local work. */
   importBoardAsCanvas: (
@@ -69,7 +74,11 @@ export interface WidgetStoreState {
     id: string,
     screenDelta: Vector2D,
     zoom: number,
-    options?: { moveSelection?: boolean },
+    options?: {
+      moveSelection?: boolean
+      /** Option-drag: move ONLY this widget, leaving its glue cluster put. */
+      soloGlued?: boolean
+    },
   ) => void
   snapWidgetToGrid: (id: string) => void
   settleWidgets: (ids: string[]) => void
@@ -78,13 +87,30 @@ export interface WidgetStoreState {
   applyGhostDisplacement: (offsets: Record<string, Vector2D>) => void
   /** Spread active-canvas nodes apart without resizing them. */
   untangleCanvas: () => void
-  /** Fit widgets to content, tidy groups, and remove overlaps. */
+  /** Spread only the chosen active-canvas widgets apart. */
+  untangleWidgets: (ids: string[]) => void
+  /** Fit widgets to content and remove overlaps. */
   autoScaleCanvas: () => void
   /** `snap: false` for live drag frames (free-form); the release call snaps. */
   resizeWidget: (id: string, newSize: Size, snap?: boolean) => void
-  toggleWidgetCollapsed: (id: string) => void
-  setWidgetScaleState: (id: string, target: WidgetScaleState, skipHistory?: boolean) => void
-  setWidgetsCollapsed: (ids: string[], collapsed: boolean) => void
+  /** Resize with the sides the gesture is not moving pinned in place, so a
+   *  left/top edge drag walks the origin instead of growing from the centre. */
+  resizeWidgetFromEdge: (id: string, newSize: Size, edge: ResizeEdge, snap?: boolean) => void
+  setWidgetScaleState: (
+    id: string,
+    target: WidgetScaleState,
+    options?: {
+      skipHistory?: boolean
+      /** The on-screen box the change is re-centred on — the resting tile when
+       *  one is showing, so an icon lands where the tile was rather than on the
+       *  dormant full-card footprint. */
+      fromSize?: Size
+      /** For target `'icon'` only: the exact continuous icon square to land at
+       *  instead of the 2×2 floor — how a closing expansion returns an icon at
+       *  the precise size it was opened from. */
+      toSize?: Size
+    },
+  ) => void
   updateWidgetData: (
     widgetId: string,
     data: ModuleData,
@@ -92,8 +118,11 @@ export interface WidgetStoreState {
   ) => void
   updateWidgetTitle: (widgetId: string, title: string) => void
   toggleWidgetLocked: (widgetId: string) => void
+  /** `absorbOffset` folds an expanded card's view offset into the stored
+   *  position in the same step as the pin, so pinning holds the card exactly
+   *  where it is on screen instead of snapping back to the un-offset anchor. */
+  toggleWidgetPinned: (widgetId: string, options?: { absorbOffset?: Vector2D }) => void
   toggleWidgetFavorite: (widgetId: string) => void
-  setWidgetAccent: (widgetId: string, accent?: string) => void
   bringWidgetToFront: (widgetId: string) => void
   setWidgetHydration: (widgetId: string, isHydrating: boolean) => void
   updateWidgetMetadata: (widgetId: string, metadata: Partial<WidgetMetadata>) => void
@@ -123,20 +152,27 @@ export interface WidgetStoreState {
   deleteConnection: (id: string) => void
   applyWireWrites: (writes: ReadonlyMap<string, ModuleData>) => void
 
-  groups: Record<string, WidgetGroup>
-  widgetGroupIndex: Record<string, string>
-  createGroup: (widgetIds: string[], label?: string) => string
-  dissolveGroup: (groupId: string) => void
-  renameGroup: (groupId: string, label: string) => void
-  toggleGroupFavorite: (groupId: string) => void
-  compactGroup: (groupId: string, options?: { skipHistory?: boolean }) => boolean
-  addToGroup: (groupId: string, widgetId: string) => void
-  joinGroup: (groupId: string, widgetId: string) => void
-  removeFromGroup: (groupId: string, widgetId: string, options?: { skipHistory?: boolean; preservePosition?: boolean }) => boolean
-  moveGroup: (groupId: string, screenDelta: Vector2D, zoom: number) => void
+  glues: Record<string, WidgetGlue>
+  widgetGlueIndex: Record<string, string>
+  /** Weld two widgets (and whatever clusters they already belong to) into one
+   *  glue cluster. Rides the in-flight drag's history step. */
+  glueWidgets: (draggedId: string, targetId: string) => void
+  /** Pull one widget off its cluster; dissolves a cluster left with < 2. */
+  unglueWidget: (widgetId: string, options?: { skipHistory?: boolean }) => boolean
+  /** Commit the live glue intent: snap the dragged widget to the previewed
+   *  0.3-cell seam and weld it to the target. True when a bond committed. */
+  commitGlue: () => boolean
 
-  dragOverGroupId: string | null
-  setDragOverGroupId: (id: string | null) => void
+  /** Ephemeral option-drag intent: the bond a drop would commit right now —
+   *  target widget, snap position, and bond axis — for the weld preview. */
+  glueIntent: { draggedId: string; targetId: string; position: Vector2D; axis: 'x' | 'y' } | null
+  setGlueIntent: (
+    intent: { draggedId: string; targetId: string; position: Vector2D; axis: 'x' | 'y' } | null,
+  ) => void
+  /** The glued widget an option-drag has pulled beyond glue range — release
+   *  now and it comes off. Drives the fading weld preview. */
+  unglueIntentWidgetId: string | null
+  setUnglueIntentWidgetId: (id: string | null) => void
   hoveredWidgetId: string | null
   setHoveredWidgetId: (id: string | null) => void
 
@@ -147,7 +183,6 @@ export interface WidgetStoreState {
 
   deleteWidget: (id: string) => void
   deleteWidgets: (ids: string[]) => void
-  duplicateWidget: (id: string) => string
   duplicateWidgets: (ids: string[]) => string[]
   pasteWidgets: (sources: Widget[]) => string[]
 
@@ -170,7 +205,6 @@ export interface WidgetStoreState {
   setImportOpen: (open: boolean) => void
   importMindmap: (
     widgets: Record<string, Widget>,
-    groups: Record<string, WidgetGroup>,
     relations: Relation[],
   ) => void
   quickAddOpen: boolean
@@ -200,6 +234,12 @@ export interface WidgetStoreState {
   shapeGhostTree: (nodeId: string, direction: GhostShapeDirection, steps: number) => void
   endGhostGesture: () => void
   setGhostNodeWidgetTypes: (nodeId: string, widgetTypes: ModuleType[]) => void
+  addWidgetTypesToGhostNodes: (nodeIds: string[], widgetTypes: ModuleType[]) => void
   cancelGhostShaper: () => void
   commitGhostTree: () => void
+
+  ghostSelectedNodeIds: ReadonlySet<string>
+  toggleGhostNodeSelected: (nodeId: string) => void
+  addGhostNodesToSelection: (nodeIds: string[]) => void
+  clearGhostNodeSelection: () => void
 }

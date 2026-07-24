@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { GRID_SIZE } from '../types/spatial'
-import type { Widget, WidgetGroup } from '../types/spatial'
+import type { Widget, WidgetGlue } from '../types/spatial'
 import { untangleCanvasLayout, useWidgetStore } from './useWidgetStore'
 
 const UNTANGLE_GAP = GRID_SIZE * 2
@@ -60,7 +60,28 @@ describe('untangleCanvas', () => {
     useWidgetStore.getState().deleteWidgets([aId, bId])
   })
 
-  it('leaves exactly UNTANGLE_GAP between two rigid groups treated as clusters', () => {
+  it('untangles only the requested widgets and leaves the rest of the canvas still', () => {
+    const store = useWidgetStore.getState()
+    const OX = 150_000
+    const OY = 150_000
+    const aId = store.createWidget('Selected A', { x: OX, y: OY }, 'notes')
+    const bId = store.createWidget('Selected B', { x: OX, y: OY }, 'notes')
+    const untouchedId = store.createWidget('Untouched', { x: OX, y: OY }, 'notes')
+
+    place(aId, OX, OY, 200, 120)
+    place(bId, OX + 160, OY + 40, 200, 120)
+    place(untouchedId, OX + 40, OY + 40, 200, 120)
+    const untouchedBefore = widgetAt(untouchedId).position
+
+    useWidgetStore.getState().untangleWidgets([aId, bId])
+
+    expect(xGap(widgetAt(aId), widgetAt(bId))).toBe(UNTANGLE_GAP)
+    expect(widgetAt(untouchedId).position).toEqual(untouchedBefore)
+
+    useWidgetStore.getState().deleteWidgets([aId, bId, untouchedId])
+  })
+
+  it('leaves exactly UNTANGLE_GAP between two rigid glue clusters', () => {
     // Calls untangleCanvasLayout directly (not the untangleCanvas() store
     // action) so the group's own internal compaction pass — a separate,
     // unrelated concern — can't confound the geometry under test.
@@ -84,11 +105,11 @@ describe('untangleCanvas', () => {
     // by 40px in x, an overlap that becomes an ODD cell count once the gap is
     // folded in (120 + 80 = 200 = 5 cells) — the case that used to drift.
 
-    const groupA: WidgetGroup = { id: crypto.randomUUID(), label: 'A', widgetIds: [a1, a2], color: '#6366f1' }
-    const groupB: WidgetGroup = { id: crypto.randomUUID(), label: 'B', widgetIds: [b1, b2], color: '#8b5cf6' }
-    const groups = { [groupA.id]: groupA, [groupB.id]: groupB }
+    const glueA: WidgetGlue = { id: crypto.randomUUID(), widgetIds: [a1, a2] }
+    const glueB: WidgetGlue = { id: crypto.randomUUID(), widgetIds: [b1, b2] }
+    const glues = { [glueA.id]: glueA, [glueB.id]: glueB }
 
-    const untangled = untangleCanvasLayout(useWidgetStore.getState().widgets, groups, canvasId)
+    const untangled = untangleCanvasLayout(useWidgetStore.getState().widgets, glues, canvasId)
 
     const groupBoundsX = (ids: string[]) => {
       const widgets = ids.map((id) => untangled[id]!)
@@ -101,7 +122,7 @@ describe('untangleCanvas', () => {
     const boundsB = groupBoundsX([b1, b2])
     const gap = boundsA.max <= boundsB.min ? boundsB.min - boundsA.max : boundsA.min - boundsB.max
     expect(gap).toBe(UNTANGLE_GAP)
-    // Each group's two members must still be exactly stacked — the cluster
+    // Each cluster's two members must still be exactly stacked — the cluster
     // translated as a rigid unit, internal layout untouched.
     expect(untangled[a2]!.position.x).toBe(untangled[a1]!.position.x)
     expect(untangled[b2]!.position.x).toBe(untangled[b1]!.position.x)

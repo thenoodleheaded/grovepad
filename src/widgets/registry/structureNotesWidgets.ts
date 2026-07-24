@@ -4,7 +4,6 @@ import {
   FolderOpen,
   List,
   Quote,
-  SeparatorHorizontal,
   StickyNote,
 } from 'lucide-react'
 import type { WidgetDefinition } from '../contracts/registry'
@@ -24,30 +23,20 @@ export const STRUCTURE_NOTES_WIDGET_DEFINITIONS = {
     // canvasId is assigned by the store when the backing canvas is created.
     defaultData: () => ({ canvasId: '' }),
   },
-  divider: {
-    type: 'divider',
-    label: 'Divider',
-    description: 'A labeled section break for organizing the canvas',
-    icon: SeparatorHorizontal,
-    category: 'structure',
-    accent: '#94a3b8',
-    defaultSize: { width: 320, height: C * 2 },
-    defaultData: () => ({ label: 'Section' }),
-  },
   notes: {
     type: 'notes',
     label: 'Note',
-    description: 'Plain, sticky, and quote modes in one writing card',
+    description: 'Plain, sticky, and quote skins in one writing card',
     icon: FileText,
     category: 'notes',
     accent: '#e2e8f0',
     defaultSize: { width: 320, height: C * 5 },
     sizing: { minWidth: C * 4, autoHeight: true },
     defaultData: () => ({ text: '', mode: 'plain', color: 'yellow', attribution: '' }),
-    modes: [
-      { value: 'plain', label: 'Plain', icon: FileText },
-      { value: 'sticky', label: 'Sticky', icon: StickyNote },
-      { value: 'quote', label: 'Quote', icon: Quote },
+    skins: [
+      { value: 'plain', label: 'Plain', icon: FileText, accent: '#e2e8f0' },
+      { value: 'sticky', label: 'Sticky', icon: StickyNote, accent: '#fcd34d' },
+      { value: 'quote', label: 'Quote', icon: Quote, accent: '#c4b5fd' },
     ],
   },
   bullets: {
@@ -57,8 +46,10 @@ export const STRUCTURE_NOTES_WIDGET_DEFINITIONS = {
     icon: List,
     category: 'notes',
     accent: '#93c5fd',
-    defaultSize: { width: 280, height: C * 4 },
-    sizing: { minWidth: C * 4, autoHeight: true },
+    // Bullets are a column of points and nothing else — the card is exactly
+    // its list, so there is no edge worth dragging.
+    defaultSize: { width: C * 6, height: C * 3 },
+    sizing: { minWidth: C * 5, autoHeight: true, fixed: true },
     defaultData: () => ({ items: [{ id: crypto.randomUUID(), text: 'First point' }] }),
   },
   quote: {

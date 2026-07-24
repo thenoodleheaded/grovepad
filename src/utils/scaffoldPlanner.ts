@@ -149,7 +149,6 @@ export function buildScaffold(sourceText: string, options: ScaffoldOptions = {})
       confidence: SCAFFOLD_CONFIDENCE,
       nodes,
       relations,
-      groups: [],
       warnings: [],
     },
     archetypeId: useArchetype ? top!.id : 'generic',

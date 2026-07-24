@@ -7,8 +7,8 @@ import { PUBLIC_AUTOMATION_CORE_TYPES } from './registry/automationCore'
 
 describe('core automation widgets',()=>{
   it('ships the complete irreducible automation catalog',()=>{
-    expect(AUTOMATION_CORE_TYPES).toHaveLength(49)
-    expect(new Set(AUTOMATION_CORE_TYPES).size).toBe(49)
+    expect(AUTOMATION_CORE_TYPES).toHaveLength(48)
+    expect(new Set(AUTOMATION_CORE_TYPES).size).toBe(48)
   })
   it.each(AUTOMATION_CORE_TYPES)('%s is registered, persistent, command-capable and wireable',type=>{
     const definition=WIDGET_REGISTRY[type],data=definition.defaultData()

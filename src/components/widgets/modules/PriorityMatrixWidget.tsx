@@ -1,6 +1,5 @@
 import { Plus, X } from 'lucide-react'
 import type { MatrixItem, PriorityMatrixData } from '../../../types/spatial'
-import { useFieldAnchor } from '../../../hooks/useFieldAnchor'
 import { WidgetPanel } from '../WidgetPanel'
 
 interface PriorityMatrixWidgetProps {
@@ -17,8 +16,6 @@ const QUADRANTS: Array<{ q: MatrixItem['quadrant']; label: string; hint: string;
 
 /** Eisenhower 2×2 — click an item's dot to move it clockwise to the next quadrant. */
 export function PriorityMatrixWidget({ data, onChange }: PriorityMatrixWidgetProps) {
-  const doFirstRef = useFieldAnchor('do_first_count')
-
   const setItem = (id: string, patch: Partial<MatrixItem>) =>
     onChange({ items: data.items.map((item) => (item.id === id ? { ...item, ...patch } : item)) })
 
@@ -39,9 +36,7 @@ export function PriorityMatrixWidget({ data, onChange }: PriorityMatrixWidgetPro
           <WidgetPanel
             key={q}
             grip={false}
-            ref={q === 0 ? doFirstRef : undefined}
-            island={`q${q}`}
-            sizing="fixed"
+            floor="rigid"
             className="group/quad flex min-h-0 flex-col p-2.5"
           >
             <div className="flex shrink-0 items-baseline justify-between pb-1">

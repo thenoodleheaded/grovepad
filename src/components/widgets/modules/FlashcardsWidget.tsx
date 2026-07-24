@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { ChevronLeft, ChevronRight, Plus, Trash2 } from 'lucide-react'
 import type { FlashcardsData } from '../../../types/spatial'
-import { useFieldAnchor } from '../../../hooks/useFieldAnchor'
 
 interface FlashcardsWidgetProps {
   data: FlashcardsData
@@ -13,7 +12,6 @@ export function FlashcardsWidget({ data, onChange }: FlashcardsWidgetProps) {
   const [flipped, setFlipped] = useState(false)
   const [dragX,setDragX]=useState(0)
   const [dragStart,setDragStart]=useState<number|null>(null)
-  const cardCountRef = useFieldAnchor<HTMLSpanElement>('card_count')
   const count = data.cards.length
   const index = Math.min(Math.max(0, data.current), Math.max(0, count - 1))
   const card = data.cards[index]
@@ -146,7 +144,7 @@ export function FlashcardsWidget({ data, onChange }: FlashcardsWidgetProps) {
             <ChevronLeft size={13} aria-hidden />
           </button>
           <span
-            ref={cardCountRef}
+
             className="min-w-9 text-center  text-[10px] tabular-nums text-neutral-500"
           >
             {index + 1}/{count}

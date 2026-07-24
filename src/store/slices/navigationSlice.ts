@@ -1,10 +1,10 @@
 import type { Connection } from '../../types/circuit'
 import type { HydratedPersistedBoard } from '../../types/persistence'
-import type { CanvasMeta, CanvasNodeData, Relation, Widget, WidgetGroup } from '../../types/spatial'
+import type { CanvasMeta, CanvasNodeData, Relation, Widget, WidgetGlue } from '../../types/spatial'
 import { useCanvasStore } from '../useCanvasStore'
 import { useToastStore } from '../useToastStore'
 import { planBoardCanvasEmbedding } from '../../utils/boardCanvasEmbedding'
-import { buildGroupIndex, computeBlockedWidgetIds } from '../widgetGraph'
+import { buildGlueIndex, computeBlockedWidgetIds } from '../widgetGraph'
 import { settleWidgetLayout } from '../widgetSettling'
 import type { WidgetStoreSlice, WidgetStoreSliceContext } from '../widgetStoreSliceContext'
 export function createNavigationSlice({ set, get, pushHistory, navigateToCanvas, markSpawned }: WidgetStoreSliceContext): WidgetStoreSlice {
@@ -101,10 +101,10 @@ export function createNavigationSlice({ set, get, pushHistory, navigateToCanvas,
         if (widgets[connection.fromId] && widgets[connection.toId]) connections[cid] = connection
       }
 
-      const groups: Record<string, WidgetGroup> = {}
-      for (const [gid, group] of Object.entries(current.groups)) {
-        const widgetIds = group.widgetIds.filter((wid) => widgets[wid])
-        if (widgetIds.length >= 2) groups[gid] = { ...group, widgetIds }
+      const glues: Record<string, WidgetGlue> = {}
+      for (const [gid, glue] of Object.entries(current.glues)) {
+        const widgetIds = glue.widgetIds.filter((wid) => widgets[wid])
+        if (widgetIds.length >= 2) glues[gid] = { ...glue, widgetIds }
       }
 
       const canvasViews = { ...current.canvasViews }
@@ -117,8 +117,8 @@ export function createNavigationSlice({ set, get, pushHistory, navigateToCanvas,
         widgetStructureVersion: current.widgetStructureVersion + 1,
         relations,
         connections,
-        groups,
-        widgetGroupIndex: buildGroupIndex(groups),
+        glues,
+        widgetGlueIndex: buildGlueIndex(glues),
         blockedWidgetIds: computeBlockedWidgetIds(relations),
         canvasViews,
         selectedIds: new Set<string>(),
@@ -173,6 +173,26 @@ export function createNavigationSlice({ set, get, pushHistory, navigateToCanvas,
     })
   },
 
+  updateCanvasSettings: (canvasId, settings) => {
+    set((state) => {
+      const canvas = state.canvases[canvasId]
+      if (!canvas) return state
+      const next = {
+        ...canvas,
+        ...(typeof settings.shared === 'boolean' ? { shared: settings.shared } : {}),
+        ...(typeof settings.gridIntensity === 'number' && Number.isFinite(settings.gridIntensity)
+          ? { gridIntensity: Math.min(100, Math.max(0, Math.round(settings.gridIntensity))) }
+          : {}),
+        ...(typeof settings.linksVisible === 'boolean'
+          ? { linksVisible: settings.linksVisible }
+          : {}),
+      }
+      return {
+        canvases: { ...state.canvases, [canvasId]: next },
+      }
+    })
+  },
+
   reparentCanvas: (canvasId, parentCanvasId) => {
     const state = get()
     const canvas = state.canvases[canvasId]
@@ -198,15 +218,15 @@ export function createNavigationSlice({ set, get, pushHistory, navigateToCanvas,
         [embedding.rootWidgetId],
       )
       const relations = { ...current.relations, ...embedding.relations }
-      const groups = { ...current.groups, ...embedding.groups }
+      const glues = { ...current.glues, ...embedding.glues }
       return {
         canvases: { ...current.canvases, ...embedding.canvases },
         widgets,
         widgetStructureVersion: current.widgetStructureVersion + 1,
         relations,
         connections: { ...current.connections, ...embedding.connections },
-        groups,
-        widgetGroupIndex: buildGroupIndex(groups),
+        glues,
+        widgetGlueIndex: buildGlueIndex(glues),
         blockedWidgetIds: computeBlockedWidgetIds(relations),
         activePacks: [...new Set([...current.activePacks, ...board.activePacks])],
         selectedIds: new Set([embedding.rootWidgetId]),

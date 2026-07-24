@@ -17,11 +17,8 @@ export interface SketchPointerSample {
 const clamp = (value: number, min: number, max: number) =>
   Math.min(max, Math.max(min, value))
 
-export function shouldStartSketchStroke(
-  pointerType: string,
-  focused: boolean,
-): boolean {
-  return focused && (pointerType === 'pen' || pointerType === 'mouse')
+export function shouldStartSketchStroke(pointerType: string): boolean {
+  return pointerType === 'pen' || pointerType === 'mouse'
 }
 
 export function normalizedSketchPressure(pointerType: string, pressure: number): number {
@@ -136,7 +133,7 @@ function distanceToSegment(
   return Math.hypot(pointX - (ax + dx * t), pointY - (ay + dy * t))
 }
 
-export function sketchStrokeHitsPoint(
+function sketchStrokeHitsPoint(
   stroke: SketchpadStroke,
   point: SketchpadPoint,
   radiusPx: number,

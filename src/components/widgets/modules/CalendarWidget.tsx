@@ -1,7 +1,6 @@
 import { useRef } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import type { CalendarData } from '../../../types/spatial'
-import { useFieldAnchor } from '../../../hooks/useFieldAnchor'
 
 interface CalendarWidgetProps {
   data: CalendarData
@@ -53,7 +52,6 @@ function buildGrid(year: number, month: number): Array<{ day: number; inMonth: b
 /** A month-view mini calendar — click a day to mark it. */
 export function CalendarWidget({ data, onChange }: CalendarWidgetProps) {
   const painting=useRef<boolean|null>(null)
-  const markedCountRef = useFieldAnchor('marked_count')
   const today = new Date()
   const todayIso = isoDate(today.getFullYear(), today.getMonth(), today.getDate())
   const marked = new Set(data.markedDates)
@@ -80,7 +78,7 @@ export function CalendarWidget({ data, onChange }: CalendarWidgetProps) {
 
   return (
     <div onPointerUp={()=>{painting.current=null}} onPointerLeave={()=>{painting.current=null}} className="flex h-full flex-col gap-1.5 select-none">
-      <div ref={markedCountRef} className="flex shrink-0 items-center justify-between">
+      <div className="flex shrink-0 items-center justify-between">
         <button
           type="button"
           aria-label="Previous month"

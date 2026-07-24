@@ -1,19 +1,11 @@
-import type { GroupColor, Relation, Widget, WidgetGroup } from '../types/spatial'
-import { GROUP_COLORS } from '../types/spatial'
+import type { Relation, Widget, WidgetGlue } from '../types/spatial'
 
-export function buildGroupIndex(groups: Record<string, WidgetGroup>): Record<string, string> {
+export function buildGlueIndex(glues: Record<string, WidgetGlue>): Record<string, string> {
   const index: Record<string, string> = {}
-  for (const [groupId, g] of Object.entries(groups)) {
-    for (const wid of g.widgetIds) index[wid] = groupId
+  for (const [glueId, glue] of Object.entries(glues)) {
+    for (const wid of glue.widgetIds) index[wid] = glueId
   }
   return index
-}
-
-let groupColorIndex = 0
-export function nextGroupColor(): GroupColor {
-  const color = GROUP_COLORS[groupColorIndex % GROUP_COLORS.length] ?? GROUP_COLORS[0]
-  groupColorIndex++
-  return color
 }
 
 export function computeBlockedWidgetIds(relations: Record<string, Relation>): Set<string> {

@@ -82,7 +82,7 @@ const OAUTH_PROVIDERS: Array<{
   { id: 'google', label: 'Google', Mark: GoogleMark, tint: 'text-neutral-100 hover:bg-white/5' },
   { id: 'apple', label: 'Apple', Mark: AppleMark, tint: 'bg-black/40 text-white', comingSoon: true },
   { id: 'azure', label: 'Microsoft', Mark: MicrosoftMark, tint: 'text-neutral-100 hover:bg-white/5' },
-  { id: 'facebook', label: 'Facebook', Mark: FacebookMark, tint: 'bg-[#1877F2]/20 text-white hover:bg-[#1877F2]/28' },
+  { id: 'facebook', label: 'Facebook', Mark: FacebookMark, tint: 'bg-[#1877F2]/20 text-white', comingSoon: true },
 ]
 
 /** Full-screen login gate — Supabase auth with a local-first guest exit. */
@@ -178,8 +178,12 @@ export function LoginPage() {
       {/* Ambient background bloom — two static radial glows, zero per-frame cost */}
       <div aria-hidden className="gp-login-glow pointer-events-none absolute inset-0" />
 
-      <div className="gp-pop gp-panel relative z-10 w-full max-w-md rounded-3xl p-9 shadow-2xl">
-        <div className="mb-7 flex flex-col items-center gap-2 text-center">
+      <div className="gp-login-shell gp-pop relative z-10 w-full max-w-md p-9">
+        <div
+          aria-hidden
+          className="gp-login-form-panel gp-panel pointer-events-none absolute inset-x-0 bottom-0 top-[8.25rem] -z-10 rounded-3xl shadow-2xl"
+        />
+        <div className="gp-login-brand mb-7 flex flex-col items-center gap-2 text-center">
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-emerald-400/25 bg-emerald-400/10 shadow-[0_0_28px_rgba(163,230,53,0.18)]">
             <Sparkles size={20} className="text-emerald-300" aria-hidden />
           </div>

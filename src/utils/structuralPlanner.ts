@@ -3,7 +3,6 @@ import { widgetDefinition } from '../widgets/registry'
 import { LOCAL_MODEL_PLAN_MAX_NODES } from '../services/local-ai/planProtocol'
 import {
   resolveWidgetMention,
-  type ProposedGroup,
   type ProposedNode,
   type ProposedRelation,
   type ThoughtPlan,
@@ -12,7 +11,7 @@ import {
 /**
  * Deterministic structural planner — the layer that executes quantified,
  * structural requests ("3 main topics, 5 subtopics each, attach a sketchpad
- * in a group to every subtopic") without any model involvement.
+ * to every subtopic") without any model involvement.
  *
  * Counts and repetition are arithmetic, not language understanding: a
  * request that states its own topology should be built by a loop, perfectly,
@@ -34,8 +33,6 @@ interface StructuralLevel {
 interface StructuralAttachment {
   /** Explicit widget type, or the first of the study rotation when vague. */
   type: ModuleType
-  /** Wrap the attachment and its host node in a real widget group. */
-  grouped: boolean
   /** Index into `levels` whose nodes receive the attachment (default: deepest). */
   levelIndex: number
   /** Vague "appropriate study widgets" — rotate through the subject set
@@ -133,8 +130,7 @@ function studyWidgetsForSubject(subject: string): ModuleType[] {
 }
 
 const VAGUE_STUDY_ATTACH = /\b(?:appropriate|suitable|useful|relevant)\s+widgets?\b|\bwidgets?\s+(?:for\s+(?:me|us)\s+)?to\s+(?:study|learn|practi[cs]e|revise)\b/i
-const ATTACH_CLAUSE = /\b(?:attach|add|include)\s+(?:a|an|the)?\s*([a-z][\w\s]{2,28}?)(?=\s+(?:in a group|to (?:each|every)|for (?:each|every)|per\b|widgets?\b)|\s*[,.;]|$)/gi
-const GROUP_DIRECTIVE = /\bin\s+(?:a\s+)?groups?\b|\bgroup(?:ed)?\s+(?:it\s+)?with\b/i
+const ATTACH_CLAUSE = /\b(?:attach|add|include)\s+(?:a|an|the)?\s*([a-z][\w\s]{2,28}?)(?=\s+(?:to (?:each|every)|for (?:each|every)|per\b|widgets?\b)|\s*[,.;]|$)/gi
 
 function attachmentLevelIndex(clause: string, levels: StructuralLevel[]): number {
   const deepest = levels.length - 1
@@ -145,7 +141,7 @@ function attachmentLevelIndex(clause: string, levels: StructuralLevel[]): number
 }
 
 /** The text one attach directive owns: from its verb up to the next attach
- *  verb or sentence boundary — so "in a group" scopes only its own widget. */
+ *  verb or sentence boundary — so level targeting scopes only its own widget. */
 function directiveClause(source: string, start: number): string {
   const rest = source.slice(start)
   let end = rest.length
@@ -168,7 +164,6 @@ function findAttachments(source: string, topic: string, levels: StructuralLevel[
     claimed.add(type)
     attachments.push({
       type,
-      grouped: GROUP_DIRECTIVE.test(clause),
       levelIndex: attachmentLevelIndex(clause, levels),
     })
   }
@@ -180,7 +175,6 @@ function findAttachments(source: string, topic: string, levels: StructuralLevel[
       const clause = directiveClause(source, vagueMatch.index!)
       attachments.unshift({
         type: rotation[0]!,
-        grouped: GROUP_DIRECTIVE.test(clause),
         levelIndex: attachmentLevelIndex(clause, levels),
         rotate: true,
       })
@@ -294,7 +288,6 @@ function buildStructuralPlan(spec: StructuralSpec, source: string): ThoughtPlan 
 
   const nodes: ProposedNode[] = []
   const relations: ProposedRelation[] = []
-  const groups: ProposedGroup[] = []
 
   const rootId = 's-root'
   nodes.push(makeNode(rootId, 'notes', spec.topic, source, 0))
@@ -319,10 +312,6 @@ function buildStructuralPlan(spec: StructuralSpec, source: string): ThoughtPlan 
     })
     parents = next
 
-    // A host with several grouped attachments gets ONE group holding all of
-    // them — overlapping two-member groups would steal members from each
-    // other at commit time.
-    const groupMembersByHost = new Map<string, { title: string; members: string[] }>()
     for (const attachment of spec.attachments) {
       if (attachment.levelIndex !== levelIndex) continue
       for (const host of next) {
@@ -335,19 +324,7 @@ function buildStructuralPlan(spec: StructuralSpec, source: string): ThoughtPlan 
         if (nodes.some((node) => node.temporaryId === attachmentId)) continue
         nodes.push(makeNode(attachmentId, type, `${widgetDefinition(type).label} ${host.ordinal}`, source, levelIndex + 2))
         relations.push({ fromTemporaryId: host.id, toTemporaryId: attachmentId, type: 'parent' })
-        if (attachment.grouped) {
-          const entry = groupMembersByHost.get(host.id) ?? { title: host.title, members: [host.id] }
-          entry.members.push(attachmentId)
-          groupMembersByHost.set(host.id, entry)
-        }
       }
-    }
-    for (const [hostId, entry] of groupMembersByHost) {
-      groups.push({
-        temporaryId: `g-${hostId}`,
-        memberTemporaryIds: entry.members,
-        label: entry.title,
-      })
     }
   })
 
@@ -356,7 +333,6 @@ function buildStructuralPlan(spec: StructuralSpec, source: string): ThoughtPlan 
     confidence: 0.95,
     nodes,
     relations,
-    groups,
     warnings,
   }
 }

@@ -1,6 +1,5 @@
 import { AtSign, Phone } from 'lucide-react'
 import type { ContactData } from '../../../types/spatial'
-import { useFieldAnchor } from '../../../hooks/useFieldAnchor'
 
 interface ContactWidgetProps {
   data: ContactData
@@ -18,8 +17,6 @@ function initialsOf(name: string): string {
 
 /** Lightweight person card — avatar initials, role, and reach-outs. */
 export function ContactWidget({ data, onChange }: ContactWidgetProps) {
-  const nameRef = useFieldAnchor<HTMLInputElement>('name')
-  const emailRef = useFieldAnchor<HTMLLabelElement>('email')
   return (
     <div className="flex h-full flex-col justify-between gap-2">
       <div className="flex items-center gap-3">
@@ -28,7 +25,7 @@ export function ContactWidget({ data, onChange }: ContactWidgetProps) {
         </div>
         <div className="min-w-0 flex-1">
           <input
-            ref={nameRef}
+
             value={data.name}
             placeholder="Name"
             aria-label="Name"
@@ -46,7 +43,7 @@ export function ContactWidget({ data, onChange }: ContactWidgetProps) {
       </div>
 
       <div className="flex flex-col gap-1">
-        <label ref={emailRef} className="flex h-7 items-center gap-2 rounded-lg border gp-hairline px-2">
+        <label className="flex h-7 items-center gap-2 rounded-lg border gp-hairline px-2">
           <AtSign size={11} className="shrink-0 text-neutral-600" aria-hidden />
           <input
             value={data.email}

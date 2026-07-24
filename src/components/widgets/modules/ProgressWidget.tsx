@@ -1,5 +1,4 @@
 import type { ProgressData } from '../../../types/spatial'
-import { useFieldAnchor } from '../../../hooks/useFieldAnchor'
 
 interface ProgressWidgetProps {
   data: ProgressData
@@ -15,8 +14,6 @@ function nudge(data: ProgressData, delta: number, onChange: (d: ProgressData) =>
 export function ProgressWidget({ data, onChange }: ProgressWidgetProps) {
   const percent = Math.min(100, Math.max(0, Number.isFinite(data.percent) ? data.percent : 0))
   // Field wires for `percent` anchor to the progress track row.
-  const percentRowRef = useFieldAnchor('percent')
-
   // Pick accent color based on how far along we are.
   const accentClass =
     percent === 100
@@ -54,7 +51,7 @@ export function ProgressWidget({ data, onChange }: ProgressWidgetProps) {
 
       {/* The liquid itself is the control: pointer drag and arrow keys both set it. */}
       <div
-        ref={percentRowRef}
+
         role="slider"
         tabIndex={0}
         aria-label="Progress percentage"

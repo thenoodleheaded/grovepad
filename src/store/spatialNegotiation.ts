@@ -45,10 +45,10 @@ export interface NegotiationResult {
   overflowIds: string[]
 }
 
-export const DISPLACEMENT_MIN_OVERLAP_RATIO = 1 / 3
+const DISPLACEMENT_MIN_OVERLAP_RATIO = 1 / 3
 export const DISPLACEMENT_CHAIN_DEPTH = 3
 /** Roughly three medium widgets' worth of area. */
-export const DISPLACEMENT_AREA_BUDGET = 160 * GRID_SIZE * GRID_SIZE
+const DISPLACEMENT_AREA_BUDGET = 160 * GRID_SIZE * GRID_SIZE
 
 function emptyResult(): NegotiationResult {
   return { offsets: {}, overflowIds: [] }

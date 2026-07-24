@@ -16,7 +16,6 @@ export const CounterWidget = lazy(async () => ({ default: (await import('../modu
 export const CountdownWidget = lazy(async () => ({ default: (await import('../modules/CountdownWidget')).CountdownWidget }))
 export const DecisionWidget = lazy(async () => ({ default: (await import('../modules/DecisionWidget')).DecisionWidget }))
 export const DialogWidget = lazy(async () => ({ default: (await import('../modules/DialogWidget')).DialogWidget }))
-export const DividerWidget = lazy(async () => ({ default: (await import('../modules/DividerWidget')).DividerWidget }))
 export const ExcalidrawWidget = lazy(async () => ({ default: (await import('../modules/excalidraw/ExcalidrawWidget')).ExcalidrawWidget }))
 export const FlashcardsWidget = lazy(async () => ({ default: (await import('../modules/FlashcardsWidget')).FlashcardsWidget }))
 export const GameTunerWidget = lazy(async () => ({ default: (await import('../modules/specialist/GameTunerWidget')).GameTunerWidget }))
@@ -65,7 +64,6 @@ export const CORE_WIDGET_MODULE_LOADERS: ReadonlyArray<() => Promise<unknown>> =
   () => import('../modules/CounterWidget'),
   () => import('../modules/DecisionWidget'),
   () => import('../modules/DialogWidget'),
-  () => import('../modules/DividerWidget'),
   () => import('../modules/FlashcardsWidget'),
   () => import('../modules/GoalTrackerWidget'),
   () => import('../modules/HabitWidget'),

@@ -11,22 +11,21 @@ const MUTATING_ACTIONS = [
   'renameCanvas', 'reparentCanvas', 'importBoardAsCanvas',
   'createWidget', 'commitThoughtPlan', 'moveWidget', 'snapWidgetToGrid',
   'settleWidgets', 'applyGhostDisplacement', 'untangleCanvas', 'autoScaleCanvas',
-  'resizeWidget', 'toggleWidgetCollapsed', 'setWidgetScaleState', 'setWidgetsCollapsed',
+  'resizeWidget', 'resizeWidgetFromEdge', 'setWidgetScaleState',
   'updateWidgetData', 'updateWidgetTitle', 'toggleWidgetLocked', 'toggleWidgetFavorite',
-  'setWidgetAccent', 'bringWidgetToFront', 'setWidgetHydration', 'updateWidgetMetadata',
+  'bringWidgetToFront', 'setWidgetHydration', 'updateWidgetMetadata',
   'nudgeSelection', 'addRelation', 'toggleResolveRelation', 'updateRelation', 'deleteRelation',
   'addConnection', 'updateConnection', 'deleteConnection', 'applyWireWrites',
-  'createGroup', 'dissolveGroup', 'renameGroup', 'toggleGroupFavorite', 'compactGroup',
-  'addToGroup', 'joinGroup', 'removeFromGroup', 'moveGroup',
-  'deleteWidget', 'deleteWidgets', 'duplicateWidget', 'duplicateWidgets', 'pasteWidgets',
+  'glueWidgets', 'unglueWidget',
+  'deleteWidget', 'deleteWidgets', 'duplicateWidgets', 'pasteWidgets',
   'importMindmap', 'togglePack', 'commitGhostTree',
 ] as const satisfies readonly (keyof WidgetStoreState)[]
 
 const STRING_RESULTS = new Set<keyof WidgetStoreState>([
-  'createWidget', 'addRelation', 'createGroup', 'duplicateWidget', 'importBoardAsCanvas',
+  'createWidget', 'addRelation', 'importBoardAsCanvas',
 ])
 const ARRAY_RESULTS = new Set<keyof WidgetStoreState>(['commitThoughtPlan', 'duplicateWidgets', 'pasteWidgets'])
-const BOOLEAN_RESULTS = new Set<keyof WidgetStoreState>(['compactGroup', 'removeFromGroup'])
+const BOOLEAN_RESULTS = new Set<keyof WidgetStoreState>(['unglueWidget'])
 
 function blockedResult(action: keyof WidgetStoreState): unknown {
   if (STRING_RESULTS.has(action)) return ''

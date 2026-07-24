@@ -100,9 +100,10 @@ export function curvedPath(start: Vector2D, end: Vector2D, axis: CurveAxis = 'au
 /**
  * Stable card-to-card route. Each endpoint first travels a short, bounded
  * distance along its card's outward normal, then the escaped points connect
- * with the ordinary dominant-axis curve. Unlike the old single radial cubic,
- * distant or reversed cards cannot pull controls hundreds of pixels backward
- * and create a seemingly random loop when an anchor changes sides.
+ * with a cubic whose endpoint tangents follow those same normals. Unlike the
+ * old single radial cubic, distant or reversed cards cannot pull controls
+ * hundreds of pixels backward and create a seemingly random loop when an
+ * anchor changes sides.
  */
 export function anchoredCurvePath(
   start: Vector2D,
@@ -116,7 +117,12 @@ export function anchoredCurvePath(
   const endNormal = unitAway(end, endCenter)
   const escapedStart = addScaled(start, startNormal, escape)
   const escapedEnd = addScaled(end, endNormal, escape)
-  const middle = boundedMiddleGeometry(escapedStart, escapedEnd)
+  const middle = boundedMiddleGeometry(
+    escapedStart,
+    escapedEnd,
+    startNormal,
+    endNormal,
+  )
   const startC1 = addScaled(start, startNormal, escape * 0.55)
   const startC2 = addScaled(escapedStart, startNormal, -escape * 0.18)
   const endC1 = addScaled(escapedEnd, endNormal, -escape * 0.18)
@@ -137,30 +143,30 @@ export function anchoredCurveMidpoint(
 ): Vector2D {
   const distance = Math.hypot(end.x - start.x, end.y - start.y)
   const escape = clamp(distance * 0.08, 10, 30)
-  const escapedStart = addScaled(start, unitAway(start, startCenter), escape)
-  const escapedEnd = addScaled(end, unitAway(end, endCenter), escape)
-  return pointOnCubic(boundedMiddleGeometry(escapedStart, escapedEnd), 0.5)
+  const startNormal = unitAway(start, startCenter)
+  const endNormal = unitAway(end, endCenter)
+  const escapedStart = addScaled(start, startNormal, escape)
+  const escapedEnd = addScaled(end, endNormal, escape)
+  return pointOnCubic(
+    boundedMiddleGeometry(escapedStart, escapedEnd, startNormal, endNormal),
+    0.5,
+  )
 }
 
-function boundedMiddleGeometry(start: Vector2D, end: Vector2D): CubicCurveGeometry {
-  const dx = end.x - start.x
-  const dy = end.y - start.y
-  if (Math.abs(dx) >= Math.abs(dy)) {
-    const reach = Math.min(Math.abs(dx) * 0.35, 120)
-    const direction = dx >= 0 ? 1 : -1
-    return {
-      start,
-      c1: { x: start.x + direction * reach, y: start.y },
-      c2: { x: end.x - direction * reach, y: end.y },
-      end,
-    }
-  }
-  const reach = Math.min(Math.abs(dy) * 0.35, 120)
-  const direction = dy >= 0 ? 1 : -1
+function boundedMiddleGeometry(
+  start: Vector2D,
+  end: Vector2D,
+  startNormal: Vector2D,
+  endNormal: Vector2D,
+): CubicCurveGeometry {
+  // Keep both joins tangent-continuous with the short endpoint escapes.
+  // Dominant-axis controls made the middle cubic turn abruptly at each join,
+  // which showed up as a small angular break beside the cards.
+  const reach = clamp(Math.hypot(end.x - start.x, end.y - start.y) * 0.3, 4, 120)
   return {
     start,
-    c1: { x: start.x, y: start.y + direction * reach },
-    c2: { x: end.x, y: end.y - direction * reach },
+    c1: addScaled(start, startNormal, reach),
+    c2: addScaled(end, endNormal, reach),
     end,
   }
 }

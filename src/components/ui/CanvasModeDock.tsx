@@ -16,7 +16,7 @@ export function CanvasModeDock() {
   return (
     <div
       data-canvas-ui
-      className="gp-canvas-mode-dock gp-toolbar gp-panel fixed left-1/2 z-30 -translate-x-1/2 items-center gap-1 rounded-2xl p-1 shadow-xl"
+      className="gp-canvas-ui-scale gp-canvas-mode-dock gp-toolbar gp-panel fixed left-1/2 z-30 -translate-x-1/2 items-center gap-1 rounded-2xl p-1 shadow-xl"
       role="toolbar"
       aria-label="Canvas interaction mode"
     >

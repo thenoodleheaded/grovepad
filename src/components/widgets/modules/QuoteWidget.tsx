@@ -1,5 +1,4 @@
 import type { QuoteData } from '../../../types/spatial'
-import { useFieldAnchor } from '../../../hooks/useFieldAnchor'
 
 interface QuoteWidgetProps {
   data: QuoteData
@@ -8,7 +7,6 @@ interface QuoteWidgetProps {
 
 /** A pull-quote card — oversized quotation mark, italic body, attribution. */
 export function QuoteWidget({ data, onChange }: QuoteWidgetProps) {
-  const textFieldRef = useFieldAnchor<HTMLTextAreaElement>('text')
   return (
     <div className="gp-bare-field relative flex h-full flex-col justify-between gap-2 pl-5">
       <span
@@ -18,7 +16,7 @@ export function QuoteWidget({ data, onChange }: QuoteWidgetProps) {
         “
       </span>
       <textarea
-        ref={textFieldRef}
+
         value={data.text}
         placeholder="A line worth keeping…"
         aria-label="Quote"

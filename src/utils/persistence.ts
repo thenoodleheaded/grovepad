@@ -543,14 +543,14 @@ export function initPersistence<
       state.widgets === prev.widgets &&
       state.relations === prev.relations &&
       state.connections === prev.connections &&
-      state.groups === prev.groups &&
+      state.glues === prev.glues &&
       state.activePacks === prev.activePacks &&
       state.workspaces === prev.workspaces &&
       state.canvases === prev.canvases &&
       state.persistenceUnknownFields === prev.persistenceUnknownFields &&
       state.persistenceUnknownRelations === prev.persistenceUnknownRelations &&
       state.persistenceUnknownConnections === prev.persistenceUnknownConnections &&
-      state.persistenceUnknownGroups === prev.persistenceUnknownGroups &&
+      state.persistenceUnknownGlues === prev.persistenceUnknownGlues &&
       state.persistenceRawActivePacks === prev.persistenceRawActivePacks
     )
     const deviceChanged =

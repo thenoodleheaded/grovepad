@@ -23,7 +23,7 @@ export const STUDY_WIDGET_DEFINITIONS = {
   flashcards: {
     type: 'flashcards',
     label: 'Study Deck',
-    description: 'Flashcard, vocabulary, and self-quiz modes',
+    description: 'Flashcard, vocabulary, and self-quiz skins',
     icon: Layers,
     category: 'notes',
     accent: '#c4b5fd',
@@ -35,16 +35,16 @@ export const STUDY_WIDGET_DEFINITIONS = {
       vocabulary: { terms: [{ id: uid(), term: '', definition: '', known: false }] },
       quiz: { prompt: '', options: [{ id: uid(), text: '', correct: true }, { id: uid(), text: '', correct: false }], picked: null },
     }),
-    modes: [
-      { value: 'flashcards', label: 'Flashcards', icon: Layers },
-      { value: 'vocabulary', label: 'Vocabulary', icon: Languages },
-      { value: 'quiz', label: 'Quiz', icon: BrainCircuit },
+    skins: [
+      { value: 'flashcards', label: 'Flashcards', icon: Layers, accent: '#c4b5fd' },
+      { value: 'vocabulary', label: 'Vocabulary', icon: Languages, accent: '#38bdf8' },
+      { value: 'quiz', label: 'Quiz', icon: BrainCircuit, accent: '#f472b6' },
     ],
   },
   goal_tracker: {
     type: 'goal_tracker',
     label: 'Goal',
-    description: 'Simple progress, milestones, study hours, and OKR modes',
+    description: 'Simple progress, milestones, study hours, and OKR skins',
     icon: Goal,
     category: 'tracking',
     accent: '#86efac',
@@ -57,11 +57,11 @@ export const STUDY_WIDGET_DEFINITIONS = {
       hours: { subject: '', targetHours: 10, loggedHours: 0 },
       okr: { objective: 'Meaningful objective', keyResults: [{ id: uid(), label: 'Key result', current: 0, target: 100, weight: 1 }] },
     }),
-    modes: [
-      { value: 'simple', label: 'Simple', icon: Target },
-      { value: 'milestones', label: 'Milestones', icon: Goal },
-      { value: 'hours', label: 'Study Hours', icon: Hourglass },
-      { value: 'okr', label: 'OKR', icon: Target },
+    skins: [
+      { value: 'simple', label: 'Simple', icon: Target, accent: '#86efac' },
+      { value: 'milestones', label: 'Milestones', icon: Goal, accent: '#fbbf24' },
+      { value: 'hours', label: 'Study Hours', icon: Hourglass, accent: '#38bdf8' },
+      { value: 'okr', label: 'OKR', icon: Target, accent: '#f472b6' },
     ],
   },
   stopwatch: {
@@ -134,7 +134,7 @@ export const STUDY_WIDGET_DEFINITIONS = {
   grade_calc: {
     type: 'grade_calc',
     label: 'Grades',
-    description: 'Weighted course grade and GPA modes',
+    description: 'Weighted course grade and GPA skins',
     icon: Calculator,
     category: 'study',
     accent: '#5eead4',
@@ -147,9 +147,9 @@ export const STUDY_WIDGET_DEFINITIONS = {
       mode: 'weighted',
       gpa: { courses: [{ id: uid(), name: '', credits: 3, points: 4 }] },
     }),
-    modes: [
-      { value: 'weighted', label: 'Weighted Grade', icon: Calculator },
-      { value: 'gpa', label: 'GPA', icon: GraduationCap },
+    skins: [
+      { value: 'weighted', label: 'Weighted Grade', icon: Calculator, accent: '#5eead4' },
+      { value: 'gpa', label: 'GPA', icon: GraduationCap, accent: '#a78bfa' },
     ],
   },
   gpa: {

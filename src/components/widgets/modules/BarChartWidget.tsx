@@ -1,6 +1,5 @@
 import { Plus, X } from 'lucide-react'
 import type { BarChartData } from '../../../types/spatial'
-import { useFieldAnchor } from '../../../hooks/useFieldAnchor'
 
 interface BarChartWidgetProps {
   data: BarChartData
@@ -11,8 +10,6 @@ interface BarChartWidgetProps {
 export function BarChartWidget({ data, onChange }: BarChartWidgetProps) {
   const max = Math.max(1, ...data.bars.map((b) => Math.abs(b.value)))
   const total = data.bars.reduce((sum, b) => sum + (Number.isFinite(b.value) ? b.value : 0), 0)
-  const totalRowRef = useFieldAnchor<HTMLSpanElement>('total')
-
   const setBar = (id: string, patch: Partial<BarChartData['bars'][number]>) =>
     onChange({
       ...data,
@@ -74,7 +71,7 @@ export function BarChartWidget({ data, onChange }: BarChartWidgetProps) {
           <Plus size={11} aria-hidden />
           Add bar
         </button>
-        <span ref={totalRowRef} className=" text-[11px] tabular-nums text-neutral-500">
+        <span className=" text-[11px] tabular-nums text-neutral-500">
           Σ {total}
         </span>
       </div>

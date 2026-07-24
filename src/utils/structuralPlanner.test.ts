@@ -4,7 +4,7 @@ import { detectStructuralRequest, planStructuralRequest } from './structuralPlan
 
 const CALCULUS_REQUEST =
   'make me a calculus 2 course topic tree, 3 main topics, 5 subtopics each. ' +
-  'attach appropriate widgets for me to study, also attach a sketchpad in a group to every subtopic node'
+  'attach appropriate widgets for me to study, also attach a sketchpad to every subtopic node'
 
 describe('structural planner detection', () => {
   it('parses the calculus acceptance example into a two-level spec with both attachments', () => {
@@ -17,8 +17,8 @@ describe('structural planner detection', () => {
     ])
     expect(spec?.attachments).toHaveLength(2)
     const [study, sketch] = spec!.attachments
-    expect(study).toMatchObject({ rotate: true, grouped: false, levelIndex: 1 })
-    expect(sketch).toMatchObject({ type: 'sketchpad', grouped: true, levelIndex: 1 })
+    expect(study).toMatchObject({ rotate: true, levelIndex: 1 })
+    expect(sketch).toMatchObject({ type: 'sketchpad', levelIndex: 1 })
   })
 
   it('parses number words and per-parent markers', () => {
@@ -46,7 +46,7 @@ describe('structural planner detection', () => {
 })
 
 describe('structural planner building', () => {
-  it('builds the calculus example fully connected, grouped, and within budget', () => {
+  it('builds the calculus example fully connected and within budget', () => {
     const plan = planStructuralRequest(CALCULUS_REQUEST)
     expect(plan).not.toBeNull()
     expect(plan!.nodes.length).toBeLessThanOrEqual(LOCAL_MODEL_PLAN_MAX_NODES)
@@ -80,15 +80,6 @@ describe('structural planner building', () => {
       expect(topics.some((topic) => topic.temporaryId === parentOf.get(subtopic.temporaryId))).toBe(true)
     }
 
-    // One group per subtopic, holding the subtopic and its sketchpad.
-    expect(plan!.groups).toHaveLength(12)
-    for (const group of plan!.groups) {
-      expect(group.memberTemporaryIds).toHaveLength(2)
-      const [host, attachment] = group.memberTemporaryIds
-      expect(subtopics.some((node) => node.temporaryId === host)).toBe(true)
-      expect(sketchpads.some((node) => node.temporaryId === attachment)).toBe(true)
-    }
-
     // Everything reachable from the root — no islands.
     const adjacent = new Map<string, string[]>(plan!.nodes.map((node) => [node.temporaryId, []]))
     for (const relation of plan!.relations) {
@@ -109,32 +100,15 @@ describe('structural planner building', () => {
     const plan = planStructuralRequest('a chemistry course tree, 2 topics, 3 subtopics each')
     expect(plan!.warnings).toEqual([])
     expect(plan!.nodes).toHaveLength(1 + 2 + 6)
-    expect(plan!.groups).toEqual([])
   })
 
-  it('scopes "in a group" to its own directive only', () => {
+  it('attaches multiple widget types to every host at the targeted level', () => {
     const plan = planStructuralRequest(
-      'a physics course tree, 2 topics, 2 subtopics each. attach a timer to every subtopic, also attach a sketchpad in a group to every subtopic',
+      'a physics course tree, 2 topics, 2 subtopics each. attach a timer to every subtopic, also attach a sketchpad to every subtopic',
     )
     const timers = plan!.nodes.filter((node) => node.widgetType === 'timekeeper')
     const sketchpads = plan!.nodes.filter((node) => node.widgetType === 'sketchpad')
     expect(timers).toHaveLength(4)
     expect(sketchpads).toHaveLength(4)
-    // Only the sketchpads are grouped; each group pairs host + sketchpad.
-    expect(plan!.groups).toHaveLength(4)
-    for (const group of plan!.groups) {
-      expect(group.memberTemporaryIds.some((id) => sketchpads.some((node) => node.temporaryId === id))).toBe(true)
-      expect(group.memberTemporaryIds.some((id) => timers.some((node) => node.temporaryId === id))).toBe(false)
-    }
-  })
-
-  it('merges multiple grouped attachments on one host into a single group', () => {
-    const plan = planStructuralRequest(
-      'a physics course tree, 2 topics, 2 subtopics each. attach a timer in a group to every subtopic, also attach a sketchpad in a group to every subtopic',
-    )
-    expect(plan!.groups).toHaveLength(4)
-    for (const group of plan!.groups) {
-      expect(group.memberTemporaryIds).toHaveLength(3)
-    }
   })
 })

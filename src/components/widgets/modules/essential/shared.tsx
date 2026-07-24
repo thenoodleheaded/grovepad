@@ -1,6 +1,5 @@
 import type { ReactNode } from 'react'
 import { Plus } from 'lucide-react'
-import { useFieldAnchor } from '../../../../hooks/useFieldAnchor'
 import { clamp } from './sharedPrimitives'
 
 /** Shared micro-components for the essential widget modules. Extracted verbatim from EssentialWidgets.tsx. */
@@ -52,15 +51,13 @@ export function Stat({
   label,
   value,
   accent = 'text-neutral-300',
-  anchor,
 }: {
   label: string
   value: string | number
   accent?: string
-  anchor?: ReturnType<typeof useFieldAnchor<HTMLDivElement>>
 }) {
   return (
-    <div ref={anchor} className="gp-well min-w-0 px-2 py-2">
+    <div className="gp-well min-w-0 px-2 py-2">
       <p className="gp-label truncate">{label}</p>
       <p className={`gp-value truncate ${accent}`}>{value}</p>
     </div>
@@ -81,4 +78,3 @@ export function ProgressBar({ value, color = '#34d399' }: { value: number; color
 // ---------------------------------------------------------------------------
 // Inputs and branch logic
 // ---------------------------------------------------------------------------
-

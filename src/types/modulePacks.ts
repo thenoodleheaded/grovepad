@@ -153,7 +153,6 @@ export const MODULE_PACK_REQUIREMENTS: Partial<Record<ModuleType, DomainPack>> =
   branch_builder: 'software_eng',
   relation_builder: 'software_eng',
   canvas_router: 'software_eng',
-  auto_grouper: 'software_eng',
   clone_branch: 'software_eng',
   template_instantiator: 'software_eng',
   archive_action: 'software_eng',

@@ -146,44 +146,13 @@ describe('local AI plan protocol', () => {
     expect(parseLocalAiPlan('{"v":1,"n":"wrong","r":[]}', 'Request')).toBeNull()
   })
 
-  it('documents the g field in the planner prompt', () => {
-    expect(buildLocalAiPlanSystemPrompt()).toContain('"g":[{"id":"g0","members":["n0","n1"]')
-  })
-
-  it('hydrates valid groups referencing real node ids', () => {
-    const plan = branchingPlan(4)
-    plan.g = [{ id: 'g0', members: ['n1', 'n2'], label: 'Study pair' }]
-    const hydrated = validateAndHydrateLocalAiPlan(plan, 'Request')
-    expect(hydrated?.groups).toEqual([
-      { temporaryId: 'g0', memberTemporaryIds: ['n1', 'n2'], label: 'Study pair' },
-    ])
-  })
-
-  it('drops a group referencing a nonexistent node without failing the plan', () => {
-    const plan = branchingPlan(4)
-    plan.g = [
-      { id: 'g0', members: ['n1', 'missing'] },
-      { id: 'g1', members: ['n2', 'n3'] },
-    ]
-    const hydrated = validateAndHydrateLocalAiPlan(plan, 'Request')
+  it('ignores a legacy g field and hydrates plans without it', () => {
+    const withLegacyGroups = branchingPlan(4)
+    withLegacyGroups.g = [{ id: 'g0', members: ['n1', 'n2'], label: 'Study pair' }]
+    const hydrated = validateAndHydrateLocalAiPlan(withLegacyGroups, 'Request')
     expect(hydrated).not.toBeNull()
-    expect(hydrated?.groups).toEqual([
-      { temporaryId: 'g1', memberTemporaryIds: ['n2', 'n3'] },
-    ])
-  })
+    expect(hydrated && 'groups' in hydrated).toBe(false)
 
-  it('keeps a widget in at most one group and hydrates plans without g', () => {
-    const overlapping = branchingPlan(4)
-    overlapping.g = [
-      { id: 'g0', members: ['n1', 'n2'] },
-      { id: 'g1', members: ['n2', 'n3'] },
-    ]
-    const hydrated = validateAndHydrateLocalAiPlan(overlapping, 'Request')
-    expect(hydrated?.groups).toEqual([
-      { temporaryId: 'g0', memberTemporaryIds: ['n1', 'n2'] },
-    ])
-
-    const withoutGroups = validateAndHydrateLocalAiPlan(branchingPlan(3), 'Request')
-    expect(withoutGroups?.groups).toEqual([])
+    expect(buildLocalAiPlanSystemPrompt()).not.toContain('"g":[')
   })
 })

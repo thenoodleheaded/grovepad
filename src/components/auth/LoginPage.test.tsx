@@ -24,7 +24,16 @@ describe('LoginPage field surfaces', () => {
     const markup = renderToStaticMarkup(<LoginPage />)
 
     expect(markup).toContain('max-w-md')
+    expect(markup).toMatch(/gp-login-form-panel gp-panel[\s\S]*gp-login-brand/)
+    expect(markup).not.toContain('gp-login-shell gp-pop gp-panel')
     expect(markup).not.toContain('Your infinite thinking canvas')
     expect(markup).not.toContain('Guest work saves')
+  })
+
+  it('shows Facebook sign-in as disabled until the provider is available', () => {
+    const markup = renderToStaticMarkup(<LoginPage />)
+
+    expect(markup).toContain('aria-label="Facebook sign-in is coming soon"')
+    expect(markup).toMatch(/aria-label="Facebook sign-in is coming soon"[^>]*disabled=""/)
   })
 })

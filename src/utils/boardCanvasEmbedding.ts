@@ -1,6 +1,6 @@
 import type { Connection } from '../types/circuit'
 import type { HydratedPersistedBoard, PersistedBoardState } from '../types/persistence'
-import type { CanvasMeta, CanvasNodeData, Relation, Vector2D, Widget, WidgetGroup } from '../types/spatial'
+import type { CanvasMeta, CanvasNodeData, Relation, Vector2D, Widget, WidgetGlue } from '../types/spatial'
 import { snapToGrid } from '../types/spatial'
 import { buildWidget } from '../store/widgetSizing'
 
@@ -10,7 +10,7 @@ export interface BoardCanvasEmbedding {
   widgets: Record<string, Widget>
   relations: Record<string, Relation>
   connections: Record<string, Connection>
-  groups: Record<string, WidgetGroup>
+  glues: Record<string, WidgetGlue>
 }
 
 interface EmbedOptions {
@@ -32,7 +32,7 @@ export function planBoardCanvasEmbedding(
     ...Object.keys(current.widgets),
     ...Object.keys(current.relations),
     ...Object.keys(current.connections),
-    ...Object.keys(current.groups),
+    ...Object.keys(current.glues),
   ])
   const nextId = () => {
     let id = idFactory()
@@ -137,16 +137,16 @@ export function planBoardCanvasEmbedding(
     connections[id] = { ...connection, id, fromId, toId }
   }
 
-  const groups: Record<string, WidgetGroup> = {}
-  for (const group of Object.values(imported.groups)) {
-    const widgetIds = group.widgetIds.flatMap((widgetId) => {
+  const glues: Record<string, WidgetGlue> = {}
+  for (const glue of Object.values(imported.glues)) {
+    const widgetIds = glue.widgetIds.flatMap((widgetId) => {
       const mapped = widgetMap.get(widgetId)
       return mapped ? [mapped] : []
     })
     if (widgetIds.length < 2) continue
     const id = nextId()
-    groups[id] = { ...group, id, widgetIds }
+    glues[id] = { ...glue, id, widgetIds }
   }
 
-  return { rootWidgetId, canvases, widgets, relations, connections, groups }
+  return { rootWidgetId, canvases, widgets, relations, connections, glues }
 }

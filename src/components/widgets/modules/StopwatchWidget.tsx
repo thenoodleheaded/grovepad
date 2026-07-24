@@ -1,106 +1,95 @@
 import { Flag, Pause, Play, RotateCcw } from 'lucide-react'
 import type { StopwatchData } from '../../../types/spatial'
-import { useFieldAnchor } from '../../../hooks/useFieldAnchor'
 import { useSharedClock } from '../../../hooks/useSharedClock'
+import { formatStopwatch } from '../../../utils/widgetClock'
+import { WidgetPanel } from '../WidgetPanel'
 
 interface StopwatchWidgetProps {
   data: StopwatchData
   onChange: (data: StopwatchData) => void
 }
 
-function formatMs(ms: number): string {
-  const total = Math.max(0, Math.floor(ms))
-  const m = Math.floor(total / 60000)
-  const s = Math.floor((total % 60000) / 1000)
-  const cs = Math.floor((total % 1000) / 10)
-  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}.${String(cs).padStart(2, '0')}`
-}
-
-/** Stopwatch with laps — persists only instants, never ticks the store. */
+/**
+ * Stopwatch — persists only instants, never ticks the store.
+ *
+ * The card's own outline is the dial (WidgetClockRing), so the time sits bare
+ * in the middle of it rather than inside a second nested frame. Transport is
+ * three equal icon keys on one island: no labels to re-read, no primary button
+ * stretching wider than its siblings.
+ */
 export function StopwatchWidget({ data, onChange }: StopwatchWidgetProps) {
   const isRunning = data.startedAt !== null
   const now = useSharedClock(50, isRunning)
   const elapsed = data.elapsedMs + (isRunning ? now - data.startedAt! : 0)
-  const runningRef = useFieldAnchor('running')
-
   const toggle = () => {
-    if (isRunning) {
-      onChange({ ...data, elapsedMs: elapsed, startedAt: null })
-    } else {
-      onChange({ ...data, startedAt: Date.now() })
-    }
+    if (isRunning) onChange({ ...data, elapsedMs: elapsed, startedAt: null })
+    else onChange({ ...data, startedAt: Date.now() })
   }
 
   const reset = () => onChange({ elapsedMs: 0, startedAt: null, laps: [] })
   const lap = () => onChange({ ...data, laps: [...data.laps, elapsed] })
 
+  const lastLap = data.laps.at(-1)
+
   return (
-    <div className="flex h-full flex-col gap-2">
-      <div ref={runningRef} className="flex shrink-0 flex-1 items-center justify-center">
+    <div className="gp-clock-body flex h-full flex-col items-center justify-center gap-2.5 px-1">
+      <div className="flex min-h-0 flex-1 flex-col items-center justify-center">
         <span
-          className={`gp-hero  transition-[color,opacity] duration-300 ${
-            isRunning ? '' : 'opacity-80'
+          className={`font-semibold leading-none tabular-nums transition-colors duration-300 ${
+            isRunning ? 'text-neutral-50' : 'text-neutral-400'
           }`}
+          style={{ fontSize: 'clamp(20px, 15cqmin, 44px)' }}
         >
-          {formatMs(elapsed)}
+          {formatStopwatch(elapsed)}
         </span>
+        {/* The most recent lap is the one reading a runner actually wants; the
+            full history stays in the card only while it is tall enough. */}
+        {lastLap !== undefined && (
+          <span className="mt-1.5 text-[10px] tabular-nums text-neutral-600">
+            Lap {data.laps.length} · {formatStopwatch(lastLap - (data.laps.at(-2) ?? 0))}
+          </span>
+        )}
       </div>
 
-      {data.laps.length > 0 && (
-        <div className="max-h-20 shrink-0 overflow-y-auto rounded-lg border gp-hairline px-2 py-1">
-          {data.laps.map((lapMs, i) => {
-            const prev = i === 0 ? 0 : data.laps[i - 1]!
-            return (
-              <div key={i} className="flex h-5 items-center justify-between  text-[10px] tabular-nums">
-                <span className="text-neutral-600">Lap {i + 1}</span>
-                <span className="text-neutral-500">+{formatMs(lapMs - prev)}</span>
-                <span className="text-neutral-300">{formatMs(lapMs)}</span>
-              </div>
-            )
-          })}
-        </div>
-      )}
-
-      <div className="flex h-8 shrink-0 items-center gap-1.5">
-        <button
-          type="button"
-          aria-label="Reset"
-          onClick={reset}
-          className="flex h-7 w-7 shrink-0 items-center justify-center rounded border gp-hairline text-neutral-500 transition-colors hover:border-neutral-600 hover:text-neutral-300"
-        >
-          <RotateCcw size={11} aria-hidden />
-        </button>
-        <button
-          type="button"
+      <WidgetPanel grip={false} floor="controls" className="flex shrink-0 items-center gap-1 p-1">
+        <StopwatchKey label="Reset" onClick={reset} disabled={elapsed === 0}>
+          <RotateCcw size={13} aria-hidden />
+        </StopwatchKey>
+        <StopwatchKey
+          label={isRunning ? 'Pause' : elapsed > 0 ? 'Resume' : 'Start'}
           onClick={toggle}
-          aria-label={isRunning ? 'Pause' : 'Start'}
-          style={
-            isRunning
-              ? {
-                  background: 'color-mix(in oklab, var(--gp-widget-accent), transparent 86%)',
-                  color: 'var(--gp-widget-accent)',
-                }
-              : undefined
-          }
-          className={`flex h-7 flex-1 items-center justify-center gap-1.5 rounded-lg text-[11px] font-semibold transition-colors ${
-            isRunning
-              ? ''
-              : 'bg-neutral-800 text-neutral-300 hover:bg-neutral-700'
-          }`}
+          accent
         >
-          {isRunning ? <Pause size={12} aria-hidden /> : <Play size={12} aria-hidden />}
-          {isRunning ? 'Pause' : elapsed > 0 ? 'Resume' : 'Start'}
-        </button>
-        <button
-          type="button"
-          aria-label="Lap"
-          disabled={!isRunning}
-          onClick={lap}
-          className="flex h-7 w-7 shrink-0 items-center justify-center rounded border gp-hairline text-neutral-500 transition-colors hover:border-neutral-600 hover:text-neutral-300 disabled:pointer-events-none disabled:opacity-30"
-        >
-          <Flag size={11} aria-hidden />
-        </button>
-      </div>
+          {isRunning ? <Pause size={14} aria-hidden /> : <Play size={14} aria-hidden />}
+        </StopwatchKey>
+        <StopwatchKey label="Lap" onClick={lap} disabled={!isRunning}>
+          <Flag size={13} aria-hidden />
+        </StopwatchKey>
+      </WidgetPanel>
     </div>
+  )
+}
+
+function StopwatchKey({ label, onClick, children, disabled = false, accent = false }: {
+  label: string
+  onClick: () => void
+  children: React.ReactNode
+  disabled?: boolean
+  accent?: boolean
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      title={label}
+      disabled={disabled}
+      onClick={onClick}
+      style={accent ? { color: 'var(--gp-widget-accent)' } : undefined}
+      className={`flex h-8 w-8 items-center justify-center rounded-full transition-all duration-150 active:scale-90 disabled:pointer-events-none disabled:opacity-25 ${
+        accent ? 'bg-white/[0.09] hover:bg-white/[0.14]' : 'text-neutral-400 hover:bg-white/[0.07] hover:text-neutral-100'
+      }`}
+    >
+      {children}
+    </button>
   )
 }

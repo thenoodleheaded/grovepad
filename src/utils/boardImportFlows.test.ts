@@ -37,7 +37,7 @@ function board(name: string): HydratedPersistedBoard {
     },
     relations: {},
     connections: {},
-    groups: {},
+    glues: {},
     activePacks: [],
     activeWorkspaceId: 'workspace',
     activeCanvasId: 'canvas',

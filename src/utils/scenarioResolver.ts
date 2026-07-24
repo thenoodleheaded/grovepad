@@ -835,7 +835,6 @@ function buildPlan(source: string, topic: string, direction: DirectionSpec, conf
       toTemporaryId: node.temporaryId,
       type: 'parent' as const,
     })),
-    groups: [],
     warnings: [],
   }
 }
@@ -1170,7 +1169,6 @@ export function resolveScenario(sourceText: string, context: ScenarioContext = {
       if (resolutions.length === parts.length) {
         const nodes: ProposedNode[] = []
         const relations: ThoughtPlan['relations'] = []
-        const groups: ThoughtPlan['groups'] = []
         resolutions.forEach((resolution, groupIndex) => {
           const plan = resolution.directions.find((entry) => entry.id === resolution.recommendedId)?.plan
           if (!plan) return
@@ -1181,14 +1179,9 @@ export function resolveScenario(sourceText: string, context: ScenarioContext = {
             fromTemporaryId: prefix + relation.fromTemporaryId,
             toTemporaryId: prefix + relation.toTemporaryId,
           })))
-          groups.push(...plan.groups.map((group) => ({
-            ...group,
-            temporaryId: prefix + group.temporaryId,
-            memberTemporaryIds: group.memberTemporaryIds.map((member) => prefix + member),
-          })))
         })
         const confidence = Math.min(...resolutions.map((resolution) => resolution.matchConfidence))
-        const combinedPlan: ThoughtPlan = { sourceText: source, confidence, nodes, relations, groups, warnings: [] }
+        const combinedPlan: ThoughtPlan = { sourceText: source, confidence, nodes, relations, warnings: [] }
         return {
           archetypeId: `compound:${resolutions.map((resolution) => resolution.archetypeId).join('+')}`,
           archetypeLabel: resolutions.map((resolution) => resolution.archetypeLabel).join(' + '),

@@ -1,7 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Dices, Plus, X } from 'lucide-react'
 import type { DecisionData } from '../../../types/spatial'
-import { useFieldAnchor } from '../../../hooks/useFieldAnchor'
 import { WidgetPanel } from '../WidgetPanel'
 
 interface DecisionWidgetProps {
@@ -17,7 +16,6 @@ export function DecisionWidget({ data, onChange, onHeightChange }: DecisionWidge
   const [flashIndex, setFlashIndex] = useState<number | null>(null)
   const timerRef = useRef<number | null>(null)
   const rootRef = useRef<HTMLDivElement>(null)
-  const pickedRef = useFieldAnchor<HTMLParagraphElement>('picked')
   const picked = data.pickedIndex !== null ? (data.options[data.pickedIndex] ?? '') : ''
 
   useEffect(() => () => {
@@ -70,7 +68,7 @@ export function DecisionWidget({ data, onChange, onHeightChange }: DecisionWidge
 
   return (
     <div ref={rootRef} className="flex h-full flex-col gap-1.5">
-      <WidgetPanel grip={false} island="options" sizing="free" className="flex min-h-0 flex-1 flex-col p-3">
+      <WidgetPanel grip={false} className="flex min-h-0 flex-1 flex-col p-3">
         <input
           value={data.question}
           placeholder="What are we deciding?"
@@ -144,7 +142,7 @@ export function DecisionWidget({ data, onChange, onHeightChange }: DecisionWidge
         </div>
       </WidgetPanel>
 
-      <WidgetPanel grip={false} island="controls" sizing="width" className="shrink-0 space-y-2 p-3">
+      <WidgetPanel grip={false} floor="controls" className="shrink-0 space-y-2 p-3">
         <button
           type="button"
           disabled={spinning || filled.length < 2}
@@ -156,7 +154,7 @@ export function DecisionWidget({ data, onChange, onHeightChange }: DecisionWidge
         </button>
 
         {picked && !spinning && (
-          <p ref={pickedRef} className="shrink-0 truncate text-center text-[10px] text-neutral-600">
+          <p className="shrink-0 truncate text-center text-[10px] text-neutral-600">
             Picked: <span className="text-emerald-400">{picked}</span>
           </p>
         )}

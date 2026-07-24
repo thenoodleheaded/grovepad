@@ -1,23 +1,29 @@
 import type { Connection } from '../types/circuit'
-import type { Relation, Vector2D, Widget, WidgetGroup } from '../types/spatial'
+import type { Relation, Vector2D, Widget, WidgetGlue } from '../types/spatial'
 
 export type CollaborationRole = 'owner' | 'editor' | 'commenter' | 'viewer'
 
 export interface CanvasCollaborationSnapshot {
   canvasId: string
-  canvas: { id: string; name: string }
+  canvas: {
+    id: string
+    name: string
+    gridIntensity?: number
+    linksVisible?: boolean
+    relationStrict?: boolean
+  }
   widgets: Record<string, Widget>
   relations: Record<string, Relation>
   connections: Record<string, Connection>
-  groups: Record<string, WidgetGroup>
+  glues: Record<string, WidgetGlue>
 }
 
-export interface CollaborationCursor {
+interface CollaborationCursor {
   x: number
   y: number
 }
 
-export interface CollaborationCamera {
+interface CollaborationCamera {
   pan: Vector2D
   zoom: number
 }

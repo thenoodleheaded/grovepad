@@ -17,7 +17,7 @@ Phases 0–6 of the original repair program are complete: the store is sliced by
 
 These patterns were audited and have a legitimate semantic job. Do not remove them because a scanner flags them:
 
-- **Timers** — toast auto-dismiss (`useToastStore`), fresh-spawn animation TTL (`useWidgetStore`), script-worker/model hard deadlines (`automationExecutor`, `webLlmAdapter`), touch long-press (`useCanvasEvents`), debounced saves with explicit flush (`persistence`), the shared visibility-aware clock (`useSharedClock`), presentation lifetimes with unmount cleanup (`DecisionWidget`, `QuickAddPreviewLayer`, `GroupPlate`, `ColorPaletteWidget`), and Quick Add's enrichment debounces with AbortController cleanup.
+- **Timers** — toast auto-dismiss (`useToastStore`), fresh-spawn animation TTL (`useWidgetStore`), script-worker/model hard deadlines (`automationExecutor`, `webLlmAdapter`), touch long-press (`useCanvasEvents`), debounced saves with explicit flush (`persistence`), the shared visibility-aware clock (`useSharedClock`), presentation lifetimes with unmount cleanup (`DecisionWidget`, `QuickAddPreviewLayer`, `ColorPaletteWidget`), and Quick Add's enrichment debounces with AbortController cleanup.
 - **Module-lifetime caches** — `recentlySpawnedIds` (spawn-animation window) and the in-memory widget clipboard in `CanvasViewport` are deliberately process-scoped.
 - **Dev hook** — `window.__grovepad` is gated behind `import.meta.env.DEV` and tree-shaken from production builds.
 

@@ -1,22 +1,18 @@
 import type { Vector2D } from '../types/spatial'
 import { GRID_SIZE, snapToGrid } from '../types/spatial'
-import { GROUP_PAD } from './groupGeometry'
 import type { ThoughtPlan } from './thoughtInterpreter'
 
 /**
  * Tidy-tree layout for a ThoughtPlan at commit time.
  *
- * Plans arrive as a graph (nodes + parent relations + groups); this turns
- * them into positions that read as a drawn mindmap instead of a grid dump:
+ * Plans arrive as a graph (nodes + parent relations); this turns them into
+ * positions that read as a drawn mindmap instead of a grid dump:
  *
  * - Parent edges define an org-chart tree: children in a row under their
  *   parent, each parent centered over its children, subtrees never
  *   overlapping (classic tidy-tree width accumulation).
- * - A plan group (host + attachments) is ONE layout block: members sit in a
- *   horizontal strip exactly one grid cell apart — the magnet arrangement —
- *   and the whole block reserves GROUP_PAD air for its band.
- * - Rows are sized by the tallest block at that depth, with enough gap for
- *   relation curves and the floating band pills.
+ * - Rows are sized by the tallest node at that depth, with enough gap for
+ *   relation curves and the floating name pills.
  *
  * Pure math over the plan — the caller applies the offsets to a world
  * origin. Every returned coordinate is grid-snapped.
@@ -27,56 +23,43 @@ export interface PlanNodeSize {
   height: number
 }
 
+export interface ParentGraph {
+  nodeIds: readonly string[]
+  parentRelations: ReadonlyArray<{ from: string; to: string }>
+}
+
 const SIBLING_GAP = GRID_SIZE * 2
 const ROOT_GAP = GRID_SIZE * 4
 const ROW_GAP = GRID_SIZE * 3
-const MEMBER_GAP = GRID_SIZE
 
-export function layoutThoughtPlan(
-  plan: ThoughtPlan,
+/**
+ * Shared tidy-tree geometry for any parent graph. Quick Add plans, document
+ * imports, and other graph producers adapt their own contracts at the edge;
+ * none of them owns a second layout algorithm.
+ */
+export function layoutParentGraph(
+  graph: ParentGraph,
   sizes: Record<string, PlanNodeSize>,
 ): Record<string, Vector2D> {
   const sizeOf = (id: string): PlanNodeSize => sizes[id] ?? { width: 320, height: 160 }
 
-  // --- Blocks: a grouped host absorbs its co-members into one strip -------
-  const strip = new Map<string, string[]>()
-  const absorbed = new Set<string>()
-  for (const group of plan.groups) {
-    const [host, ...rest] = group.memberTemporaryIds
-    if (!host || rest.length === 0 || absorbed.has(host)) continue
-    const members = rest.filter((id) => !absorbed.has(id) && id !== host)
-    if (members.length === 0) continue
-    strip.set(host, members)
-    for (const id of members) absorbed.add(id)
-  }
-
-  const blockSize = (id: string): PlanNodeSize => {
-    const members = [id, ...(strip.get(id) ?? [])]
-    const width = members.reduce((total, member) => total + sizeOf(member).width, 0) +
-      (members.length - 1) * MEMBER_GAP
-    const height = Math.max(...members.map((member) => sizeOf(member).height))
-    const pad = members.length > 1 ? GROUP_PAD : 0
-    return { width: width + pad * 2, height: height + pad * 2 }
-  }
+  const blockSize = (id: string): PlanNodeSize => sizeOf(id)
 
   // --- Tree assembly --------------------------------------------------------
-  const nodeIds = plan.nodes.map((node) => node.temporaryId)
+  const nodeIds = [...graph.nodeIds]
   const inPlan = new Set(nodeIds)
   const childrenOf = new Map<string, string[]>()
   const hasParent = new Set<string>()
-  for (const relation of plan.relations) {
-    if (relation.type !== 'parent') continue
-    const from = relation.fromTemporaryId
-    const to = relation.toTemporaryId
+  for (const relation of graph.parentRelations) {
+    const { from, to } = relation
     if (!inPlan.has(from) || !inPlan.has(to)) continue
-    if (absorbed.has(from) || absorbed.has(to)) continue
     if (hasParent.has(to) || from === to) continue
     hasParent.add(to)
     const list = childrenOf.get(from)
     if (list) list.push(to)
     else childrenOf.set(from, [to])
   }
-  const roots = nodeIds.filter((id) => !absorbed.has(id) && !hasParent.has(id))
+  const roots = nodeIds.filter((id) => !hasParent.has(id))
 
   // --- Subtree widths (memoized, cycle-guarded) -----------------------------
   const widths = new Map<string, number>()
@@ -121,21 +104,11 @@ export function layoutThoughtPlan(
   const placeBlock = (id: string, left: number, width: number) => {
     const depth = depthOf.get(id) ?? 0
     const block = blockSize(id)
-    const members = [id, ...(strip.get(id) ?? [])]
-    const pad = members.length > 1 ? GROUP_PAD : 0
     const rowHeight = rowHeights[depth] ?? block.height
     const blockLeft = left + (width - block.width) / 2
-    // Blocks top-align within the row; members center within the block.
+    // Blocks center within their row.
     const blockTop = (rowTops[depth] ?? 0) + (rowHeight - block.height) / 2
-    let x = blockLeft + pad
-    for (const member of members) {
-      const size = sizeOf(member)
-      positions[member] = {
-        x: snapToGrid(x),
-        y: snapToGrid(blockTop + pad + (block.height - pad * 2 - size.height) / 2),
-      }
-      x += size.width + MEMBER_GAP
-    }
+    positions[id] = { x: snapToGrid(blockLeft), y: snapToGrid(blockTop) }
   }
 
   const placed = new Set<string>()
@@ -161,8 +134,8 @@ export function layoutThoughtPlan(
     rootCursor += subtreeWidth(root) + ROOT_GAP
   }
 
-  // Anything unreachable (absorbed members are placed with their host; this
-  // catches malformed leftovers) lines up in a final row below the tree.
+  // Anything unreachable (malformed leftovers) lines up in a final row
+  // below the tree.
   let orphanX = 0
   const orphanTop = runningTop
   for (const id of nodeIds) {
@@ -173,6 +146,21 @@ export function layoutThoughtPlan(
   }
 
   return positions
+}
+
+export function layoutThoughtPlan(
+  plan: ThoughtPlan,
+  sizes: Record<string, PlanNodeSize>,
+): Record<string, Vector2D> {
+  return layoutParentGraph({
+    nodeIds: plan.nodes.map((node) => node.temporaryId),
+    parentRelations: plan.relations
+      .filter((relation) => relation.type === 'parent')
+      .map((relation) => ({
+        from: relation.fromTemporaryId,
+        to: relation.toTemporaryId,
+      })),
+  }, sizes)
 }
 
 /** Width of the laid-out plan — callers use it to center the tree. */

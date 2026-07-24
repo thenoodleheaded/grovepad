@@ -20,11 +20,10 @@ const stroke: SketchpadStroke = {
 }
 
 describe('Pencil sketch stroke policy', () => {
-  it('draws with Pencil or mouse only while its Sketchpad is focused', () => {
-    expect(shouldStartSketchStroke('pen', true)).toBe(true)
-    expect(shouldStartSketchStroke('mouse', true)).toBe(true)
-    expect(shouldStartSketchStroke('touch', true)).toBe(false)
-    expect(shouldStartSketchStroke('pen', false)).toBe(false)
+  it('draws with Pencil or mouse; fingers stay reserved for navigation', () => {
+    expect(shouldStartSketchStroke('pen')).toBe(true)
+    expect(shouldStartSketchStroke('mouse')).toBe(true)
+    expect(shouldStartSketchStroke('touch')).toBe(false)
   })
 
   it('normalizes coordinates and pressure safely', () => {

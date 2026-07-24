@@ -12,6 +12,7 @@ import {
   type PortSpec,
 } from '../../utils/portGeometry'
 import { pointerStayedWithinTapSlop } from '../../utils/pointerTap'
+import { useEffectiveWidget } from '../../hooks/useEffectiveWidget'
 
 // ---------------------------------------------------------------------------
 // Port rails — the quiet circuit affordance on every card.
@@ -25,7 +26,10 @@ import { pointerStayedWithinTapSlop } from '../../utils/pointerTap'
 // ---------------------------------------------------------------------------
 
 export const PortRail = memo(function PortRail({ widgetId }: { widgetId: string }) {
-  const widget = useWidgetStore((state) => state.widgets[widgetId])
+  // Rail geometry follows the on-screen footprint: on a resting tile, dots
+  // and wire endpoints sit on the tile's edge, not the dormant full card's;
+  // on an expanded card, on its centre-anchored spot rather than its stored one.
+  const widget = useEffectiveWidget(widgetId)
   const circuitMode = useCircuitStore((state) => state.circuitMode)
   const dragActive = useCircuitStore((state) => state.wireDrag !== null)
   const isDragSource = useCircuitStore((state) => state.wireDrag?.fromId === widgetId)
@@ -192,7 +196,7 @@ export const PortRail = memo(function PortRail({ widgetId }: { widgetId: string 
     <div
       role="group"
       aria-label={`Circuit ports for ${widget.title}`}
-      data-expanded={!widget.collapsed && !widget.iconified || undefined}
+      data-expanded={!widget.iconified || undefined}
       className="gp-port-rail pointer-events-none absolute inset-0 z-30"
     >
       {showOutputs &&

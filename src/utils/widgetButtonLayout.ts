@@ -5,9 +5,8 @@ import type { Widget } from '../types/spatial'
 // action buttons are active, whether they fit in the title row, and — the
 // piece other geometry needs — whether any of them overflow into the
 // vertical column past the card's right edge. WidgetCard's own hover
-// catch-all and the group silhouette (groupGeometry.ts) both need this same
-// answer, so it lives here instead of being recomputed (and risking drift)
-// in each place.
+// catch-all needs this answer, so it lives here instead of being recomputed
+// (and risking drift) in each place.
 // ---------------------------------------------------------------------------
 
 const BUTTON_CELL = 40
@@ -22,9 +21,7 @@ export function widgetActiveButtonCount(widget: Pick<Widget, 'type' | 'metadata'
   const m = widget.metadata
   let count = 0
   if (m.showDoneCheckbox ?? widget.type === 'checklist') count++
-  if (m.showPinButton || m.locked) count++
   if (m.showFavoriteButton !== false || m.favorite) count++
-  if (m.showFocusButton !== false) count++
   if (m.showDuplicateButton) count++
   if (m.showMarkdownButton) count++
   if (m.showDeleteButton !== false) count++
@@ -39,15 +36,14 @@ export function widgetTitleAreaWidth(title: string): number {
 
 /**
  * True when the card's title row can't fit every active button (plus the
- * detach button for grouped widgets, plus the trailing "+" customize
- * button) — the overflow buttons render in the vertical column past the
- * card's right edge, past its own hover-catch-all width.
+ * trailing "+" customize button) — the overflow buttons render in the
+ * vertical column past the card's right edge, past its own hover-catch-all
+ * width.
  */
 export function widgetHasButtonOverflow(
   widget: Pick<Widget, 'type' | 'metadata' | 'title' | 'size'>,
-  grouped: boolean,
 ): boolean {
-  const itemCount = widgetActiveButtonCount(widget) + (grouped ? 1 : 0) + 1 // + detach + plus
+  const itemCount = widgetActiveButtonCount(widget) + 1 // + plus
   const titleAreaWidth = widgetTitleAreaWidth(widget.title)
   const maxHorizontalSpace = widget.size.width - titleAreaWidth
   const maxHorizontalCount = Math.max(0, Math.floor(maxHorizontalSpace / BUTTON_CELL))

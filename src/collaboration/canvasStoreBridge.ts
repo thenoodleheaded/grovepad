@@ -1,6 +1,6 @@
 import * as Y from 'yjs'
 import { useWidgetStore } from '../store/useWidgetStore'
-import { buildGroupIndex, computeBlockedWidgetIds } from '../store/widgetGraph'
+import { buildGlueIndex, computeBlockedWidgetIds } from '../store/widgetGraph'
 import type { WidgetStoreState } from '../store/widgetStoreTypes'
 import type { CanvasCollaborationSnapshot } from './types'
 import {
@@ -15,7 +15,7 @@ type CollaborativeBoardState = Pick<
   | 'widgets'
   | 'relations'
   | 'connections'
-  | 'groups'
+  | 'glues'
   | 'selectedIds'
   | 'widgetStructureVersion'
   | 'canvases'
@@ -65,25 +65,34 @@ export function mergeCanvasIntoBoard(
     ),
     ...snapshot.connections,
   }
-  const groups = {
+  const glues = {
     ...Object.fromEntries(
-      Object.entries(state.groups).filter(([, group]) =>
-        !group.widgetIds.some((id) => relevantIds.has(id)),
+      Object.entries(state.glues).filter(([, glue]) =>
+        !glue.widgetIds.some((id) => relevantIds.has(id)),
       ),
     ),
-    ...snapshot.groups,
+    ...snapshot.glues,
   }
   const existingCanvas = state.canvases[snapshot.canvasId]
   const canvases = existingCanvas
-    ? { ...state.canvases, [snapshot.canvasId]: { ...existingCanvas, name: snapshot.canvas.name } }
+    ? {
+        ...state.canvases,
+        [snapshot.canvasId]: {
+          ...existingCanvas,
+          name: snapshot.canvas.name,
+          gridIntensity: snapshot.canvas.gridIntensity,
+          linksVisible: snapshot.canvas.linksVisible,
+          relationStrict: snapshot.canvas.relationStrict,
+        },
+      }
     : state.canvases
   return {
     canvases,
     widgets,
     relations,
     connections,
-    groups,
-    widgetGroupIndex: buildGroupIndex(groups),
+    glues,
+    widgetGlueIndex: buildGlueIndex(glues),
     blockedWidgetIds: computeBlockedWidgetIds(relations),
     selectedIds: new Set([...state.selectedIds].filter((id) => Boolean(widgets[id]))),
     widgetStructureVersion: state.widgetStructureVersion + 1,
@@ -117,7 +126,7 @@ export function createCanvasStoreBridge(options: CanvasStoreBridgeOptions): Canv
     doc.getMap('canvas'),
     doc.getMap('relations'),
     doc.getMap('connections'),
-    doc.getMap('groups'),
+    doc.getMap('glues'),
     doc.getMap('texts'),
   ]
   const undoManager = new Y.UndoManager(scopes, {
@@ -172,7 +181,7 @@ export function createCanvasStoreBridge(options: CanvasStoreBridgeOptions): Canv
       state.widgets === previous.widgets &&
       state.relations === previous.relations &&
       state.connections === previous.connections &&
-      state.groups === previous.groups &&
+      state.glues === previous.glues &&
       state.canvases === previous.canvases
     ) return
     if (!state.canvases[options.canvasId]) return

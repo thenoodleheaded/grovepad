@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Check, Plus, X } from 'lucide-react'
 import type { ColorPaletteData } from '../../../types/spatial'
-import { useFieldAnchor } from '../../../hooks/useFieldAnchor'
 
 interface ColorPaletteWidgetProps {
   data: ColorPaletteData
@@ -18,8 +17,6 @@ function randomColor(): string {
 export function ColorPaletteWidget({ data, onChange }: ColorPaletteWidgetProps) {
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null)
   const timeoutRef = useRef<number | null>(null)
-  const countRef = useFieldAnchor('count')
-
   useEffect(() => () => {
     if (timeoutRef.current !== null) window.clearTimeout(timeoutRef.current)
   }, [])
@@ -85,7 +82,7 @@ export function ColorPaletteWidget({ data, onChange }: ColorPaletteWidgetProps) 
         ))}
       </div>
 
-      <div ref={countRef} className="mt-auto flex h-8 items-center border-t gp-hairline">
+      <div className="mt-auto flex h-8 items-center border-t gp-hairline">
         <button
           type="button"
           onClick={addColor}

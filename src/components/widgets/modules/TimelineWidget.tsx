@@ -1,5 +1,4 @@
 import type { TimelineData } from '../../../types/spatial'
-import { useFieldAnchor } from '../../../hooks/useFieldAnchor'
 
 interface TimelineWidgetProps {
   data: TimelineData
@@ -18,8 +17,6 @@ const PHASE_STYLES = [
 /** Read-only horizontal phase chart. Each phase row is 40px (1 grid cell). */
 export function TimelineWidget({ data }: TimelineWidgetProps) {
   const total = Math.max(1, data.totalUnits)
-  const totalUnitsRef = useFieldAnchor('total_units')
-
   return (
     <div className="flex h-full flex-col gap-0">
       {/* Phase rows — 40px each */}
@@ -57,7 +54,7 @@ export function TimelineWidget({ data }: TimelineWidgetProps) {
       })}
 
       {/* Scale footer — 24px */}
-      <div ref={totalUnitsRef} className="mt-auto flex items-center pl-[4.5rem] pt-1">
+      <div className="mt-auto flex items-center pl-[4.5rem] pt-1">
         <span className=" text-[9px] text-neutral-700 select-none">0</span>
         <div className="mx-1.5 flex-1 border-t border-dashed gp-hairline" />
         <span className=" text-[9px] text-neutral-600 select-none">{total}u</span>

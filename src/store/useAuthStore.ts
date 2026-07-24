@@ -27,12 +27,47 @@ export interface AuthState {
   continueAsGuest: () => void
   /** Leave guest mode and show the login page again. */
   exitGuest: () => void
+  updateProfile: (profile: { displayName: string; profileColor: string }) => Promise<void>
   signOut: () => Promise<void>
+}
+
+const FALLBACK_PROFILE_COLORS = ['#34d399', '#60a5fa', '#a78bfa', '#fb7185', '#fbbf24', '#22d3ee'] as const
+
+export const PROFILE_COLORS = [
+  ...FALLBACK_PROFILE_COLORS,
+  '#2dd4bf',
+  '#a3e635',
+  '#fb923c',
+  '#f87171',
+  '#e879f9',
+  '#818cf8',
+] as const
+
+function fallbackProfileColor(userId: string): string {
+  let hash = 0
+  for (const character of userId) hash = Math.imul(hash ^ character.charCodeAt(0), 16_777_619)
+  return FALLBACK_PROFILE_COLORS[Math.abs(hash) % FALLBACK_PROFILE_COLORS.length]!
+}
+
+export function accountDisplayName(session: Session | null): string {
+  if (!session) return 'Guest'
+  const metadata = session.user.user_metadata
+  const named = metadata.full_name ?? metadata.name ?? metadata.user_name
+  if (typeof named === 'string' && named.trim()) return named.trim().slice(0, 60)
+  return session.user.email?.split('@')[0]?.slice(0, 60) || 'Grovepad user'
+}
+
+export function accountProfileColor(session: Session | null): string {
+  if (!session) return PROFILE_COLORS[0]
+  const color = session.user.user_metadata.profile_color
+  return typeof color === 'string' && (PROFILE_COLORS as readonly string[]).includes(color)
+    ? color
+    : fallbackProfileColor(session.user.id)
 }
 
 const initialGuest = loadGuestChoice()
 
-export const useAuthStore = create<AuthState>()((set) => ({
+export const useAuthStore = create<AuthState>()((set, get) => ({
   session: null,
   loading: supabaseConfigured && !initialGuest,
   isGuest: initialGuest,
@@ -54,6 +89,20 @@ export const useAuthStore = create<AuthState>()((set) => ({
     }
     set({ isGuest: false, loading: supabaseConfigured })
     if (supabaseConfigured) void ensureAuthInitialized()
+  },
+
+  updateProfile: async ({ displayName, profileColor }) => {
+    const name = displayName.trim().slice(0, 60)
+    if (!name) throw new Error('Enter a display name')
+    if (!(PROFILE_COLORS as readonly string[]).includes(profileColor)) throw new Error('Choose a profile color')
+    const client = await getSupabaseClient()
+    if (!client) throw new Error('Sign in to update your profile')
+    const { data, error } = await client.auth.updateUser({
+      data: { full_name: name, profile_color: profileColor },
+    })
+    if (error) throw error
+    const current = get().session
+    if (current && data.user) set({ session: { ...current, user: data.user } })
   },
 
   signOut: async () => {

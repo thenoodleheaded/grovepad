@@ -80,21 +80,88 @@
   filter: saturate(1.05);
 }
 
-/* Resize affordance: a rounded corner bracket that mirrors the card's own
-   corner, brightens with the card, and lights up in the accent on grab. */
-.gp-resize-handle {
-  border-right: 3px solid color-mix(in oklab, var(--gp-relation-outline), transparent 30%);
-  border-bottom: 3px solid color-mix(in oklab, var(--gp-relation-outline), transparent 30%);
-  border-bottom-right-radius: 8px;
+/* Resize affordance: the card's own outline. There is no separate grip — the
+   stretch of border nearest the pointer thickens in the card's accent, and
+   both stretches do where two sides meet, which is how a diagonal drag
+   announces itself. The band sits OUTSIDE the card — a negative inset of its
+   own width, with the radius grown to match so it stays concentric per Article
+   XIV. Thickening inward would have eaten into the content's padding box and
+   made an armed edge look like the card had shrunk. */
+.gp-resize-edge {
+  --gp-resize-edge-width: 3px;
+  position: absolute;
+  inset: calc(-1 * var(--gp-resize-edge-width));
+  border: 0 solid var(--gp-widget-accent);
+  border-radius: calc(var(--gp-widget-radius, 22px) + var(--gp-resize-edge-width));
   opacity: 0;
   transition:
     opacity var(--gp-duration-snap) var(--gp-ease-snap),
-    border-color var(--gp-duration-snap) var(--gp-ease-snap),
-    scale var(--gp-duration-snap) var(--gp-ease-spring);
+    border-width 220ms var(--gp-ease-spring);
 }
 
-.gp-widget-resize-target {
-  pointer-events: none;
+.gp-widget-card[data-resize-edge] .gp-resize-edge {
+  opacity: 0.9;
+}
+
+/* Letters are disjoint across the eight keys (t, b, l, r and the four
+   corners), so substring matching selects exactly the armed sides. */
+.gp-widget-card[data-resize-edge*='t'] .gp-resize-edge { border-top-width: var(--gp-resize-edge-width); }
+.gp-widget-card[data-resize-edge*='b'] .gp-resize-edge { border-bottom-width: var(--gp-resize-edge-width); }
+.gp-widget-card[data-resize-edge*='l'] .gp-resize-edge { border-left-width: var(--gp-resize-edge-width); }
+.gp-widget-card[data-resize-edge*='r'] .gp-resize-edge { border-right-width: var(--gp-resize-edge-width); }
+
+.gp-widget-card[data-locked='true'] .gp-resize-edge {
+  display: none;
+}
+
+/* The rubber band a gesture stretches past a limit. Transient and inline-only:
+   the stored model never holds an off-detent size, so an interrupted drag
+   cannot leave one behind.
+
+   It rides the CARD, never the positioning wrapper. The wrapper's world
+   position lives in a `transform`, and `transform` composes *before* the
+   independent `scale` property — a scale set there resolves about a point near
+   the world origin, so a distant card shoots off diagonally instead of
+   stretching in place. The card carries no transform of its own, so `transform`
+   here is local and safe; its hover/selection `scale` composes on top. */
+.gp-widget-card[data-elastic] {
+  /* Per-axis: only the pulled axis stretches. Held live by the gesture, so no
+     transition — the band must track the pointer with zero lag. */
+  transform: scale(var(--gp-elastic-x, 1), var(--gp-elastic-y, 1));
+  transform-origin: var(--gp-elastic-origin, 50% 50%);
+}
+
+/* Letting go of the band. The card springs back through a small
+   counter-overshoot — stretched past a limit it recoils slightly *inside*
+   its box before settling, crushed it puffs slightly out. The counter-bounce
+   is proportional to how far the band was stretched (the calc), which is what
+   sells rubber: a hard pull snaps back harder than a graze. Runs both on
+   plain release and on a mid-drag scale-state commit, where it overlaps the
+   layout glide to the new box. */
+@keyframes gp-elastic-release {
+  0% {
+    transform: scale(var(--gp-elastic-from-x, 1), var(--gp-elastic-from-y, 1));
+  }
+  55% {
+    transform: scale(
+      calc(1 + (1 - var(--gp-elastic-from-x, 1)) * 0.34),
+      calc(1 + (1 - var(--gp-elastic-from-y, 1)) * 0.34)
+    );
+  }
+  80% {
+    transform: scale(
+      calc(1 - (1 - var(--gp-elastic-from-x, 1)) * 0.12),
+      calc(1 - (1 - var(--gp-elastic-from-y, 1)) * 0.12)
+    );
+  }
+  100% {
+    transform: scale(1, 1);
+  }
+}
+
+.gp-widget-card[data-elastic-release] {
+  transform-origin: var(--gp-elastic-origin, 50% 50%);
+  animation: gp-elastic-release 340ms cubic-bezier(0.33, 0.7, 0.4, 1) both;
 }
 
 /* Article XIX: the action cluster above a card is invisible and inert at
@@ -112,47 +179,17 @@
   pointer-events: none;
 }
 
-/* Same discipline for the group plate's action cluster: the label capsule
- * stays as the group's identity, the buttons appear on plate hover/focus. */
-.gp-plate-action {
-  transition: opacity var(--gp-duration-snap) var(--gp-ease-snap);
-}
 
-.gp-group-backplate:not(:hover, :focus-within) .gp-plate-action {
-  opacity: 0;
-  pointer-events: none;
-}
 
-.gp-widget-card:hover .gp-widget-resize-target,
-.gp-widget-card[data-selected='true'] .gp-widget-resize-target {
-  pointer-events: auto;
-}
-
-.gp-widget-card:hover .gp-resize-handle {
-  opacity: 0.85;
-}
-
-.gp-widget-card[data-selected='true'] .gp-resize-handle {
-  opacity: 0.85;
-}
-
-.gp-widget-resize-target:hover .gp-resize-handle,
-.gp-widget-resize-target:active .gp-resize-handle {
-  border-color: var(--gp-widget-accent);
-  opacity: 1;
-  scale: 1.18;
-}
-
-.gp-widget-card[data-locked='true'] .gp-widget-resize-target {
-  display: none;
-}
-
-html:is([data-active-input='touch'], [data-active-input='pen']) .gp-widget-card[data-selected='true'] .gp-widget-resize-target,
-html[data-has-coarse-pointer='true'] .gp-widget-card[data-selected='true'] .gp-widget-resize-target {
-  width: var(--gp-touch-target);
-  height: var(--gp-touch-target);
-  right: -10px;
-  bottom: -10px;
+/* Coarse pointers never hover, so nothing is ever armed before the press. The
+   outline still resizes there — the press itself is hit-tested against a
+   doubled band — but it announces itself with a thicker, always-on outline on
+   the selected card instead of a hover response. */
+html:is([data-active-input='touch'], [data-active-input='pen']) .gp-widget-card[data-selected='true'] .gp-resize-edge,
+html[data-has-coarse-pointer='true'] .gp-widget-card[data-selected='true'] .gp-resize-edge {
+  --gp-resize-edge-width: 2px;
+  border-width: var(--gp-resize-edge-width);
+  opacity: 0.5;
 }
 
 html:is([data-active-input='touch'], [data-active-input='pen']) .gp-widget-card,
@@ -165,15 +202,63 @@ html[data-has-coarse-pointer='true'] .gp-widget-move-handle {
   cursor: grab !important;
 }
 
-html:is([data-active-input='touch'], [data-active-input='pen']) .gp-widget-card[data-selected='true'] .gp-widget-title-actions,
-html[data-has-coarse-pointer='true'] .gp-widget-card[data-selected='true'] .gp-widget-title-actions {
-  pointer-events: auto;
-  opacity: 1;
-}
-
-.gp-widget-layout-motion[data-detach-intent] .gp-widget-card {
+/* Option-drag pulling a glued widget free: past glue range from every
+ * clustermate the card wears a dashed outline — release now and it comes
+ * off the cluster. */
+.gp-widget-layout-motion[data-unglue-intent] .gp-widget-card {
   outline: 2px dashed color-mix(in oklab, var(--gp-widget-accent), white 18%);
   outline-offset: 7px;
+}
+
+/* The card an option-drag is about to weld onto: a soft solid halo so the
+ * weld target is unmistakable even when the thin seam preview is hard to spot
+ * against a dark face. */
+.gp-widget-layout-motion[data-glue-target] .gp-widget-card {
+  outline: 2px solid color-mix(in oklab, var(--gp-widget-accent), white 30%);
+  outline-offset: 6px;
+  box-shadow: 0 0 0 6px color-mix(in oklab, var(--gp-widget-accent) 22%, transparent);
+}
+
+/* -------------------------------------------------------------------------
+ * Glue welds — the gradient seams between glued widgets.
+ *
+ * Each weld fills the 0.3-cell gap between two facing cards with a smooth
+ * blend of their accent colours (bar for side-by-side, patch for a diagonal
+ * elbow). Deliberately quiet: low opacity, no border, no shadow — the cards
+ * stay the subject; the weld only says "these belong together".
+ * ------------------------------------------------------------------------- */
+.gp-glue-seam {
+  opacity: 0.85;
+  border-radius: 4px;
+  pointer-events: none;
+  transition: opacity var(--gp-duration-snap) var(--gp-ease-snap);
+}
+
+/* The weld an option-drag is about to commit: previewed at the exact snap
+ * position with a soft breathing pulse — widgets visibly about to merge. */
+.gp-glue-seam[data-glue-preview] {
+  animation: gp-glue-preview-pulse 1.1s var(--gp-ease-standard) infinite alternate;
+}
+
+@keyframes gp-glue-preview-pulse {
+  from { opacity: 0.6; }
+  to { opacity: 1; }
+}
+
+/* Welds to a member being pulled free let go visibly before the release. */
+.gp-glue-seam[data-glue-fading] {
+  opacity: 0.18;
+}
+
+[data-theme='light'] .gp-glue-seam {
+  opacity: 0.7;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gp-glue-seam[data-glue-preview] {
+    animation: none;
+    opacity: 0.9;
+  }
 }
 
 /* Text editing inside a card belongs to that card's hue: caret, focus ring,
@@ -205,8 +290,8 @@ html[data-has-coarse-pointer='true'] .gp-widget-card[data-selected='true'] .gp-w
  * The Widget Glass — one backplate, three elevations
  * (docs/widget-glass-constitution.md, Articles XIII–XV)
  *
- * E0 backplate: one gp-glass/gp-backplate surface. An ordinary widget owns
- *               it; grouped widgets share the GroupPlate's single backplate.
+ * E0 backplate: one gp-glass/gp-backplate surface. Every widget owns its
+ *               own — glued widgets keep theirs and join at gradient welds.
  * E1 island:    a content group raised on the backplate — lighter fill, 1px
  *               top catch-light, soft contact shadow, NO full border.
  * E−1 well:     a surface cut into an island — inverted light. Any island
@@ -217,8 +302,8 @@ html[data-has-coarse-pointer='true'] .gp-widget-card[data-selected='true'] .gp-w
 
 .gp-backplate {
   isolation: isolate;
-  border: 1px solid rgb(255 255 255 / .085);
-  border-radius: var(--gp-r0);
+  border: 1px solid rgb(255 255 255 / calc(var(--gp-tune-card-border, 8.5) / 100));
+  border-radius: var(--gp-tune-card-radius, var(--gp-r0));
   box-shadow:
     inset 0 1px 0 rgb(255 255 255 / .08),
     0 30px 70px rgb(0 0 0 / .5),
@@ -234,72 +319,16 @@ html[data-has-coarse-pointer='true'] .gp-widget-card[data-selected='true'] .gp-w
     linear-gradient(160deg, oklch(23.5% .006 250 / .97), oklch(11% .005 250 / .985));
 }
 
-.gp-group-backplate {
-  transition: transform var(--gp-motion-layout) var(--gp-ease-layout);
+/* A resting image face is the photograph itself — no glass paint, no plate
+   border. It keeps a soft contact shadow so it still floats off the canvas,
+   and the selection/link rings in index.css still win when active. */
+.gp-widget-card[data-rest-face='image'] {
+  border-color: transparent;
+  background: none !important;
 }
 
-.gp-group-backplate-visual {
-  transition: filter var(--gp-duration-snap) var(--gp-ease-snap);
-}
-
-/* Union-silhouette plate: clip-path carves the shared glass to the exact
- * union of member hover footprints. Clipping removes the box's own border,
- * radius, and box-shadow, so depth comes from drop-shadow filters (applied
- * after clipping, they follow the silhouette) and the hairline is stroked
- * by the sibling SVG outline along the same path. */
-.gp-group-plate-shape {
-  border: 0;
-  border-radius: 0;
-  box-shadow: none;
-  filter:
-    drop-shadow(0 18px 40px rgb(0 0 0 / 0.42))
-    drop-shadow(0 3px 10px rgb(0 0 0 / 0.28));
-}
-
-/* The plate must read without backdrop-filter (stripped at balanced/economy
- * quality): an explicit tint + accent wash keeps the group visible as one
- * surface on every quality tier, in both themes. */
-.gp-group-backplate .gp-group-plate-shape {
-  background:
-    radial-gradient(120% 85% at 12% -4%, color-mix(in oklab, var(--gp-widget-accent, #84cc16), transparent 84%), transparent 58%),
-    linear-gradient(165deg, rgb(255 255 255 / 0.05), rgb(255 255 255 / 0.02) 40%, transparent),
-    oklch(22% 0.008 250 / 0.6);
-}
-
-[data-theme='light'] .gp-group-plate-shape {
-  filter:
-    drop-shadow(0 14px 34px rgb(26 36 29 / 0.2))
-    drop-shadow(0 3px 8px rgb(26 36 29 / 0.12));
-}
-
-[data-theme='light'] .gp-group-backplate .gp-group-plate-shape {
-  background:
-    radial-gradient(120% 85% at 12% -4%, color-mix(in oklab, var(--gp-widget-accent, #84cc16), transparent 86%), transparent 58%),
-    oklch(97% 0.004 250 / 0.72);
-}
-
-.gp-group-plate-outline path {
-  fill: none;
-  stroke: color-mix(in oklab, var(--gp-widget-accent, rgb(255 255 255)), transparent 65%);
-  stroke-width: 1;
-  transition:
-    stroke var(--gp-duration-snap) var(--gp-ease-snap),
-    stroke-width var(--gp-duration-snap) var(--gp-ease-snap);
-}
-
-[data-theme='light'] .gp-group-plate-outline path {
-  stroke: color-mix(in oklab, var(--gp-widget-accent, rgb(26 36 29)), transparent 55%);
-}
-
-.gp-group-backplate[data-drop-target] .gp-group-plate-shape {
-  filter:
-    drop-shadow(0 0 22px color-mix(in oklab, var(--gp-widget-accent), transparent 70%))
-    drop-shadow(0 18px 40px rgb(0 0 0 / 0.42));
-}
-
-.gp-group-backplate[data-drop-target] .gp-group-plate-outline path {
-  stroke: color-mix(in oklab, var(--gp-widget-accent), transparent 40%);
-  stroke-width: 2;
+.gp-widget-card[data-rest-face='image']:not([data-selected='true']):not([data-link-source='true']) {
+  box-shadow: 0 6px 20px rgb(0 0 0 / 0.35);
 }
 
 [data-theme='light'] .gp-backplate {

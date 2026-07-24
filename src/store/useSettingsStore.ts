@@ -1,24 +1,21 @@
 import { create } from 'zustand'
 
-export type InterfaceScale = 1 | 1.15 | 1.3
-export type VisualQuality = 'full' | 'balanced' | 'economy'
+export type SettingsSection = 'general' | 'controls' | 'canvas' | 'account' | 'data'
 
 export interface AppPreferences {
-  interfaceScale: InterfaceScale
   reduceMotion: boolean
-  highContrast: boolean
   canvasAura: boolean
-  auraIntensity: number
   gridIntensity: number
   magneticHover: boolean
-  pencilHoverPreview: boolean
-  showMinimap: boolean
-  visualQuality: VisualQuality
+  /** Device-local opt-in for loopback access from MCP-capable AI clients. */
+  mcpConnector: boolean
 }
 
 interface SettingsState extends AppPreferences {
   open: boolean
-  setOpen: (open: boolean) => void
+  section: SettingsSection
+  setOpen: (open: boolean, section?: SettingsSection) => void
+  setSection: (section: SettingsSection) => void
   update: (next: Partial<AppPreferences>) => void
   reset: () => void
 }
@@ -26,18 +23,13 @@ interface SettingsState extends AppPreferences {
 const STORAGE_KEY = 'grovepad:settings:v1'
 
 export const DEFAULT_APP_PREFERENCES: AppPreferences = {
-  interfaceScale: 1.3,
   reduceMotion: false,
-  highContrast: false,
   canvasAura: true,
-  auraIntensity: 100,
   gridIntensity: 100,
   // Opt-in: the pointer-following lean makes cards wobble during ordinary
   // mouse travel, and hit geometry stops matching the stored layout.
   magneticHover: false,
-  pencilHoverPreview: true,
-  showMinimap: true,
-  visualQuality: 'balanced',
+  mcpConnector: false,
 }
 
 function clampPercent(value: unknown, fallback: number): number {
@@ -51,16 +43,11 @@ function loadPreferences(): AppPreferences {
   try {
     const raw = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}') as Partial<AppPreferences>
     return {
-      ...DEFAULT_APP_PREFERENCES,
-      ...raw,
-      interfaceScale: raw.interfaceScale === 1 || raw.interfaceScale === 1.15 || raw.interfaceScale === 1.3
-        ? raw.interfaceScale
-        : DEFAULT_APP_PREFERENCES.interfaceScale,
-      auraIntensity: clampPercent(raw.auraIntensity, DEFAULT_APP_PREFERENCES.auraIntensity),
+      reduceMotion: raw.reduceMotion ?? DEFAULT_APP_PREFERENCES.reduceMotion,
+      canvasAura: raw.canvasAura ?? DEFAULT_APP_PREFERENCES.canvasAura,
       gridIntensity: clampPercent(raw.gridIntensity, DEFAULT_APP_PREFERENCES.gridIntensity),
-      visualQuality: raw.visualQuality === 'full' || raw.visualQuality === 'balanced' || raw.visualQuality === 'economy'
-        ? raw.visualQuality
-        : DEFAULT_APP_PREFERENCES.visualQuality,
+      magneticHover: raw.magneticHover ?? DEFAULT_APP_PREFERENCES.magneticHover,
+      mcpConnector: raw.mcpConnector ?? DEFAULT_APP_PREFERENCES.mcpConnector,
     }
   } catch {
     return DEFAULT_APP_PREFERENCES
@@ -70,14 +57,12 @@ function loadPreferences(): AppPreferences {
 function applyPreferences(settings: AppPreferences): void {
   if (typeof document === 'undefined') return
   const root = document.documentElement
-  root.style.setProperty('--gp-ui-scale', String(settings.interfaceScale))
+  root.style.removeProperty('--gp-ui-scale')
   root.style.setProperty('--gp-grid-intensity', String(settings.gridIntensity / 100))
-  root.style.setProperty('--gp-aura-intensity', String(settings.auraIntensity / 100))
+  root.style.removeProperty('--gp-aura-intensity')
   root.dataset.motion = settings.reduceMotion ? 'reduced' : 'system'
-  root.dataset.contrast = settings.highContrast ? 'high' : 'standard'
+  delete root.dataset.contrast
   root.dataset.magneticHover = settings.magneticHover ? 'on' : 'off'
-  root.dataset.pencilHover = settings.pencilHoverPreview ? 'on' : 'off'
-  root.dataset.visualQuality = settings.visualQuality
   if (typeof window !== 'undefined') window.dispatchEvent(new Event('gp-settings-preferences'))
 }
 
@@ -87,19 +72,16 @@ applyPreferences(initial)
 export const useSettingsStore = create<SettingsState>()((set, get) => ({
   ...initial,
   open: false,
-  setOpen: (open) => set({ open }),
+  section: 'general',
+  setOpen: (open, section) => set(section ? { open, section } : { open }),
+  setSection: (section) => set({ section }),
   update: (next) => {
     const preferences: AppPreferences = {
-      interfaceScale: next.interfaceScale ?? get().interfaceScale,
       reduceMotion: next.reduceMotion ?? get().reduceMotion,
-      highContrast: next.highContrast ?? get().highContrast,
       canvasAura: next.canvasAura ?? get().canvasAura,
-      auraIntensity: clampPercent(next.auraIntensity, get().auraIntensity),
       gridIntensity: clampPercent(next.gridIntensity, get().gridIntensity),
       magneticHover: next.magneticHover ?? get().magneticHover,
-      pencilHoverPreview: next.pencilHoverPreview ?? get().pencilHoverPreview,
-      showMinimap: next.showMinimap ?? get().showMinimap,
-      visualQuality: next.visualQuality ?? get().visualQuality,
+      mcpConnector: next.mcpConnector ?? get().mcpConnector,
     }
     if (typeof localStorage !== 'undefined') localStorage.setItem(STORAGE_KEY, JSON.stringify(preferences))
     applyPreferences(preferences)

@@ -3,7 +3,7 @@ import {
   virtualKeyboardInset,
   virtualKeyboardIsOpen,
   visibleViewportFromWindow,
-} from '../utils/focusViewport'
+} from '../utils/visibleViewport'
 
 type MediaKey = 'coarse' | 'fine' | 'hover' | 'reducedMotion'
 

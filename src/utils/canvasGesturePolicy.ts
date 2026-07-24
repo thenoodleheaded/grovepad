@@ -1,6 +1,17 @@
 import type { InteractionMode } from './adaptiveInput'
 
 export type CanvasPointerIntent = 'pan' | 'select' | 'zoom-region' | 'none'
+const CANVAS_DRAG_THRESHOLD = 4
+
+export function canvasPressMoved(
+  start: { x: number; y: number },
+  current: { x: number; y: number },
+): boolean {
+  return (
+    Math.abs(current.x - start.x) >= CANVAS_DRAG_THRESHOLD ||
+    Math.abs(current.y - start.y) >= CANVAS_DRAG_THRESHOLD
+  )
+}
 
 interface CanvasPointerIntentInput {
   button: number

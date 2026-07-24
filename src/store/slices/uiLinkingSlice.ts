@@ -1,12 +1,13 @@
-import type { GhostTreeNode, ModuleType, SearchResult, Vector2D, WidgetGroup } from '../../types/spatial'
-import { GHOST_PITCH_Y, GHOST_SIBLINGS_PER_SIDE_MAX, MODULE_LABELS, snapToGrid } from '../../types/spatial'
+import type { GhostTreeNode, ModuleType, SearchResult, Vector2D } from '../../types/spatial'
+import { GHOST_PITCH_Y, GHOST_SIBLINGS_PER_SIDE_MAX, ICONIFIED_SIZE, MODULE_LABELS, snapToGrid } from '../../types/spatial'
 import { ghostGestureIds, ghostGestureState, gestureGhostId, layoutGhostTree } from '../widgetGhostLayout'
-import { buildGroupIndex, computeBlockedWidgetIds, nextGroupColor } from '../widgetGraph'
+import { computeBlockedWidgetIds } from '../widgetGraph'
 import { appendDraftRelation, relationKey } from '../widgetRelationDrafts'
 import { buildWidget, fuzzyScore } from '../widgetSizing'
 import { settleWidgetsByCanvas } from '../widgetSettling'
-import { applyWidgetPositions, compactGroupPositions } from '../widgetCollection'
+import { layoutCommittedTree } from '../treeCommitLayout'
 import { buildTreeRevealSchedule, registerTreeReveal } from '../treeReveal'
+import { relationDropEndpoints, usesStrictRelations } from '../../utils/relationPolicy'
 import type { WidgetStoreSlice, WidgetStoreSliceContext } from '../widgetStoreSliceContext'
 export function createUiLinkingSlice({ set, get, pushHistory, initialPacks }: WidgetStoreSliceContext): WidgetStoreSlice {
   return {
@@ -36,30 +37,20 @@ export function createUiLinkingSlice({ set, get, pushHistory, initialPacks }: Wi
   setImportOpen: (importOpen) =>
     set((state) => (state.importOpen === importOpen ? state : { importOpen })),
 
-  importMindmap: (widgets, groups, relations) => {
+  importMindmap: (widgets, relations) => {
     pushHistory()
     set((state) => {
       const nextWidgets = { ...state.widgets, ...widgets }
-      const nextGroups = { ...state.groups, ...groups }
-      
+
       const nextRelations = { ...state.relations }
       relations.forEach((r) => {
         nextRelations[r.id] = r
       })
 
-      const nextWidgetGroupIndex = { ...state.widgetGroupIndex }
-      Object.entries(groups).forEach(([groupId, g]) => {
-        g.widgetIds.forEach((wid) => {
-          nextWidgetGroupIndex[wid] = groupId
-        })
-      })
-
       return {
         widgets: nextWidgets,
         widgetStructureVersion: state.widgetStructureVersion + 1,
-        groups: nextGroups,
         relations: nextRelations,
-        widgetGroupIndex: nextWidgetGroupIndex,
       }
     })
   },
@@ -126,15 +117,9 @@ export function createUiLinkingSlice({ set, get, pushHistory, initialPacks }: Wi
     const source = state.widgets[linkDrag.sourceId]
     const target = state.widgets[targetId]
     if (!source || !target) return
-    // Whichever widget sits higher on the canvas becomes the parent —
-    // no picker, the drop position alone decides the relation.
-    const sourceCenterY = source.position.y + source.size.height / 2
-    const targetCenterY = target.position.y + target.size.height / 2
-    const [parentId, childId] =
-      sourceCenterY <= targetCenterY
-        ? [linkDrag.sourceId, targetId]
-        : [targetId, linkDrag.sourceId]
-    state.addRelation(parentId, childId, 'parent')
+    const strict = usesStrictRelations(state.canvases[source.canvasId])
+    const [fromId, toId] = relationDropEndpoints(source, target, strict)
+    state.addRelation(fromId, toId, 'parent')
   },
 
   childLinkSource: null,
@@ -171,6 +156,7 @@ export function createUiLinkingSlice({ set, get, pushHistory, initialPacks }: Wi
         originY,
         nodes: [{ id: crypto.randomUUID(), parentId: null, order: 0, x: originX, y: originY, widgetTypes: [] }],
       },
+      ghostSelectedNodeIds: new Set(),
     })
   },
 
@@ -295,12 +281,63 @@ export function createUiLinkingSlice({ set, get, pushHistory, initialPacks }: Wi
     })
   },
 
+  addWidgetTypesToGhostNodes: (nodeIds, widgetTypes) => {
+    const targetIds = new Set(nodeIds)
+    set((state) => {
+      const config = state.ghostConfig
+      if (!config) return state
+      let changed = false
+      const nodes = config.nodes.map((candidate) => {
+        if (!targetIds.has(candidate.id)) return candidate
+        const merged = [...new Set([...candidate.widgetTypes, ...widgetTypes])] as ModuleType[]
+        if (
+          merged.length === candidate.widgetTypes.length &&
+          candidate.widgetTypes.every((type, index) => type === merged[index])
+        ) return candidate
+        changed = true
+        return { ...candidate, widgetTypes: merged }
+      })
+      if (!changed) return state
+      return {
+        ghostConfig: {
+          ...config,
+          nodes: layoutGhostTree(nodes, config.originX, config.originY),
+        },
+      }
+    })
+  },
+
   cancelGhostShaper: () =>
     set((state) => {
       ghostGestureState.base = null
       ghostGestureIds.clear()
-      return state.ghostConfig === null ? state : { ghostConfig: null }
+      return state.ghostConfig === null
+        ? state
+        : { ghostConfig: null, ghostSelectedNodeIds: new Set() }
     }),
+
+  ghostSelectedNodeIds: new Set(),
+
+  toggleGhostNodeSelected: (nodeId) => {
+    set((state) => {
+      const next = new Set(state.ghostSelectedNodeIds)
+      if (next.has(nodeId)) next.delete(nodeId)
+      else next.add(nodeId)
+      return { ghostSelectedNodeIds: next }
+    })
+  },
+
+  addGhostNodesToSelection: (nodeIds) => {
+    set((state) => {
+      const next = new Set(state.ghostSelectedNodeIds)
+      for (const id of nodeIds) next.add(id)
+      if (next.size === state.ghostSelectedNodeIds.size) return state
+      return { ghostSelectedNodeIds: next }
+    })
+  },
+
+  clearGhostNodeSelection: () =>
+    set((state) => (state.ghostSelectedNodeIds.size === 0 ? state : { ghostSelectedNodeIds: new Set() })),
 
   commitGhostTree: () => {
     const state = get()
@@ -312,7 +349,6 @@ export function createUiLinkingSlice({ set, get, pushHistory, initialPacks }: Wi
 
     let widgets = { ...state.widgets }
     const relations = { ...state.relations }
-    const groups: Record<string, WidgetGroup> = { ...state.groups }
     const created: string[] = []
     const settleIds = new Set<string>()
     const relationKeys = new Set(
@@ -320,35 +356,55 @@ export function createUiLinkingSlice({ set, get, pushHistory, initialPacks }: Wi
         relationKey(relation.fromId, relation.toId, relation.type),
       ),
     )
+    // Every committed widget spawns in the icon scale state — the same 2×2
+    // tile the ghost preview drew, so the board the commit reveals is the
+    // board the user shaped. A new widget holds no real information yet;
+    // opening one (click) restores its full card, and once info is in it the
+    // widget lives the ordinary resting-face life: face with content, icon
+    // when empty. This is presentation, not data — some types (rating,
+    // number) have a legitimate zero-value face, so "start as an icon" can
+    // only be the user-authored icon state, never faked-empty data.
     const createWidgetForNode = (type: ModuleType, position: Vector2D) => {
       const id = crypto.randomUUID()
-      widgets[id] = buildWidget(id, type, MODULE_LABELS[type], state.activeCanvasId, position)
+      const built = buildWidget(id, type, MODULE_LABELS[type], state.activeCanvasId, position)
+      widgets[id] = {
+        ...built,
+        iconified: true,
+        expandedSize: built.size,
+        size: { ...ICONIFIED_SIZE },
+      }
       created.push(id)
       settleIds.add(id)
       return id
     }
 
+    // Lay the forest out from the sizes the widgets will actually occupy.
+    // The ghost preview is drawn from icon tiles, so its coordinates cannot
+    // say how much room the committed board needs; the previous fixed
+    // multipliers guessed, bundles overlapped, and overlap-settling then
+    // scattered the whole tree while only ever guaranteeing "not touching".
+    // Every spawned widget is an icon tile, so every node packs at icon size.
+    const placements = new Map(
+      layoutCommittedTree(
+        nodes.map((node) => ({
+          id: node.id,
+          parentId: node.parentId,
+          order: node.order,
+          widgetSizes: node.widgetTypes.map(() => ICONIFIED_SIZE),
+        })),
+        originX,
+        originY,
+      ).map((placement) => [placement.nodeId, placement.widgetPositions]),
+    )
+
     const ids = new Map<string, string[]>()
-    const groupIds = new Map<string, string>()
     const relationIds = new Map<string, string>()
     for (const node of nodes) {
-      const position = {
-        x: originX + (node.x - originX) * 3,
-        y: originY + (node.y - originY) * 2.5,
-      }
-      const nodeIds = node.widgetTypes.map((type) => createWidgetForNode(type, position))
+      const positions = placements.get(node.id) ?? []
+      const nodeIds = node.widgetTypes.map((type, index) =>
+        createWidgetForNode(type, positions[index] ?? { x: originX, y: originY }),
+      )
       ids.set(node.id, nodeIds)
-      if (nodeIds.length > 1) {
-        widgets = applyWidgetPositions(widgets, compactGroupPositions(widgets, nodeIds))
-        const groupId = crypto.randomUUID()
-        groups[groupId] = {
-          id: groupId,
-          label: 'Tree bundle',
-          widgetIds: nodeIds,
-          color: nextGroupColor(),
-        }
-        groupIds.set(node.id, groupId)
-      }
     }
     for (const node of nodes) {
       if (node.parentId) {
@@ -363,32 +419,30 @@ export function createUiLinkingSlice({ set, get, pushHistory, initialPacks }: Wi
             parentId,
             childId,
             'parent',
+            usesStrictRelations(state.canvases[widgets[parentId]!.canvasId]),
           )
           if (relationId) relationIds.set(node.id, relationId)
         }
       }
     }
 
-    const widgetGroupIndex = buildGroupIndex(groups)
     registerTreeReveal(buildTreeRevealSchedule(
       [...nodes]
         .sort((a, b) => a.y - b.y || a.x - b.x)
         .map((node) => ({
           widgetIds: ids.get(node.id) ?? [],
-          groupId: groupIds.get(node.id),
           relationId: relationIds.get(node.id),
         })),
     ))
 
     set({
-      widgets: settleWidgetsByCanvas(widgets, settleIds, widgetGroupIndex),
+      widgets: settleWidgetsByCanvas(widgets, settleIds),
       widgetStructureVersion: state.widgetStructureVersion + 1,
       relations,
-      groups,
-      widgetGroupIndex,
       blockedWidgetIds: computeBlockedWidgetIds(relations),
       selectedIds: new Set(created),
       ghostConfig: null,
+      ghostSelectedNodeIds: new Set(),
     })
   },
   }

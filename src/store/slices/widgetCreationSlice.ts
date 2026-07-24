@@ -3,9 +3,9 @@ import { snapToGrid } from '../../types/spatial'
 import { layoutThoughtPlan, layoutWidth } from '../../utils/planLayout'
 import { consolidateWidgetData } from '../../utils/consolidatedWidgetData'
 import { isWidgetTypePublic, publicWidgetTypeFor, widgetDefinition } from '../../widgets/registry'
+import { usesStrictRelations } from '../../utils/relationPolicy'
 import { useToastStore } from '../useToastStore'
-import { applyWidgetPositions, compactGroupPositions } from '../widgetCollection'
-import { buildGroupIndex, computeBlockedWidgetIds, nextGroupColor } from '../widgetGraph'
+import { computeBlockedWidgetIds } from '../widgetGraph'
 import { appendDraftRelation, relationKey } from '../widgetRelationDrafts'
 import { buildWidget, computeDataHeight } from '../widgetSizing'
 import { settleWidgetLayout, settleWidgetsByCanvas } from '../widgetSettling'
@@ -74,8 +74,7 @@ export function createWidgetCreationSlice({ set, get, pushHistory, markSpawned }
         relationKey(relation.fromId, relation.toId, relation.type),
       ),
     )
-    // Tidy-tree layout: children rows under centered parents, grouped
-    // attachments in a one-cell magnet strip beside their host. The tree is
+    // Tidy-tree layout: children rows under centered parents. The tree is
     // centered horizontally on the origin so commits land where the user
     // is looking instead of sprawling rightward off-screen.
     const nodeSizes: Record<string, { width: number; height: number }> = {}
@@ -147,6 +146,7 @@ export function createWidgetCreationSlice({ set, get, pushHistory, markSpawned }
           fromId,
           toId,
           relation.type,
+          usesStrictRelations(state.canvases[widgets[fromId]!.canvasId]),
         )
       }
     }
@@ -165,67 +165,19 @@ export function createWidgetCreationSlice({ set, get, pushHistory, markSpawned }
             parentId,
             childId,
             'parent',
+            usesStrictRelations(state.canvases[widgets[parentId]!.canvasId]),
           )
         }
       }
     }
 
-    // Materialize proposed groups as real widget groups (band + pill) in the
-    // same set() so the whole commit stays one undo step. Members already in
-    // a group are pulled out of it, mirroring createGroup's semantics.
-    let groups = state.groups
-    if (plan.groups.length > 0) {
-      const nextGroups = { ...groups }
-      const memberIndex = buildGroupIndex(nextGroups)
-      let changed = false
-      for (const proposed of plan.groups) {
-        const memberIds = [...new Set(
-          proposed.memberTemporaryIds
-            .map((temporaryId) => ids.get(temporaryId))
-            .filter((id): id is string => Boolean(id && widgets[id])),
-        )]
-        if (memberIds.length < 2) continue
-        for (const memberId of memberIds) {
-          const existingGroupId = memberIndex[memberId]
-          if (!existingGroupId || !nextGroups[existingGroupId]) continue
-          const remaining = nextGroups[existingGroupId].widgetIds.filter((id) => !memberIds.includes(id))
-          if (remaining.length < 2) delete nextGroups[existingGroupId]
-          else nextGroups[existingGroupId] = { ...nextGroups[existingGroupId], widgetIds: remaining }
-        }
-        const groupId = crypto.randomUUID()
-        nextGroups[groupId] = {
-          id: groupId,
-          label: proposed.label ?? 'Group',
-          widgetIds: memberIds,
-          color: nextGroupColor(),
-        }
-        for (const memberId of memberIds) memberIndex[memberId] = groupId
-        changed = true
-      }
-      if (changed) groups = nextGroups
-    }
-
     const selectedIds = new Set(created.length ? created : ids.values())
-    const widgetGroupIndex = buildGroupIndex(groups)
-    // A newly materialized thought group can contain nodes that were laid out
-    // in separate branches of the thought tree. Pack it *before* collision
-    // settling: otherwise its first rigid cluster bounds span the entire
-    // branch, and a single overlap can propel the whole group across the board.
-    for (const group of Object.values(groups)) {
-      const members = group.widgetIds.filter((id) => widgets[id]?.canvasId === state.activeCanvasId)
-      if (members.length >= 2) {
-        widgets = applyWidgetPositions(widgets, compactGroupPositions(widgets, members))
-        for (const memberId of members) settleIds.add(memberId)
-      }
-    }
     set({
-      widgets: settleWidgetsByCanvas(widgets, settleIds, widgetGroupIndex),
+      widgets: settleWidgetsByCanvas(widgets, settleIds),
       widgetStructureVersion:
         state.widgetStructureVersion + (created.length > 0 ? 1 : 0),
       canvases,
       relations,
-      groups,
-      widgetGroupIndex,
       blockedWidgetIds: computeBlockedWidgetIds(relations),
       selectedIds,
     })

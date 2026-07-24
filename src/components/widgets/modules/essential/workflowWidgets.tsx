@@ -11,7 +11,6 @@ import type {
   StatusData,
   WorkflowStatus,
 } from '../../../../types/spatial'
-import { useFieldAnchor } from '../../../../hooks/useFieldAnchor'
 import { SmallAction, AddButton, Stat, ProgressBar } from './shared'
 import { inputClass, panelClass, clamp, todayISO } from './sharedPrimitives'
 
@@ -30,9 +29,6 @@ export function StatusWidget({
   data: StatusData
   onChange: (data: StatusData) => void
 }) {
-  const statusRef = useFieldAnchor<HTMLDivElement>('status')
-  const progressRef = useFieldAnchor<HTMLDivElement>('progress')
-  const completeRef = useFieldAnchor<HTMLSpanElement>('complete')
   const current = STATUS_META.find((item) => item.value === data.value) ?? STATUS_META[0]!
   return (
     <div className="flex h-full flex-col gap-3">
@@ -43,12 +39,12 @@ export function StatusWidget({
           onChange={(event) => onChange({ ...data, label: event.target.value })}
           className={`${inputClass} flex-1 font-medium`}
         />
-        <span ref={completeRef} className="flex items-center gap-1  text-[9px] uppercase" style={{ color: current.color }}>
+        <span className="flex items-center gap-1  text-[9px] uppercase" style={{ color: current.color }}>
           <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: current.color }} />
           {current.label}
         </span>
       </div>
-      <div ref={statusRef} data-island="states" data-island-size="fixed" className="gp-status-states grid grid-cols-4 gap-2">
+      <div data-island="states" className="gp-status-states grid grid-cols-4 gap-2">
         {STATUS_META.map((item) => (
           <button
             key={item.value}
@@ -63,7 +59,7 @@ export function StatusWidget({
           </button>
         ))}
       </div>
-      <div ref={progressRef} data-island="progress" data-island-size="width" className="mt-auto space-y-1.5">
+      <div data-island="progress" className="mt-auto space-y-1.5">
         <div className="flex justify-between  text-[8px] uppercase text-neutral-700">
           <span>Progress signal</span><span>{current.progress}%</span>
         </div>
@@ -89,9 +85,6 @@ export function DatePickerWidget({
   data: DatePickerData
   onChange: (data: DatePickerData) => void
 }) {
-  const dateRef = useFieldAnchor<HTMLDivElement>('date')
-  const daysRef = useFieldAnchor<HTMLDivElement>('days_until')
-  const dueRef = useFieldAnchor<HTMLDivElement>('is_due')
   const days = daysUntil(data.date)
   const due = Boolean(data.date) && days <= 0
   return (
@@ -111,7 +104,7 @@ export function DatePickerWidget({
           Time
         </button>
       </div>
-      <div ref={dateRef} data-island="date" data-island-size="width" className={`${panelClass} gp-date-row flex items-center gap-2 px-3 py-2`}>
+      <div data-island="date" className={`${panelClass} gp-date-row flex items-center gap-2 px-3 py-2`}>
         <input
           aria-label="Target date"
           type="date"
@@ -129,11 +122,11 @@ export function DatePickerWidget({
           />
         )}
       </div>
-      <div data-island="summary" data-island-size="fixed" className="gp-date-summary grid grid-cols-2 gap-2">
-        <Stat anchor={daysRef} label="Days until" value={data.date ? days : '—'} accent={days < 0 ? 'text-red-300' : 'text-orange-300'} />
-        <Stat anchor={dueRef} label="Due state" value={!data.date ? 'Unset' : due ? 'Due' : 'Upcoming'} accent={due ? 'text-red-300' : 'text-emerald-300'} />
+      <div data-island="summary" className="gp-date-summary grid grid-cols-2 gap-2">
+        <Stat label="Days until" value={data.date ? days : '—'} accent={days < 0 ? 'text-red-300' : 'text-orange-300'} />
+        <Stat label="Due state" value={!data.date ? 'Unset' : due ? 'Due' : 'Upcoming'} accent={due ? 'text-red-300' : 'text-emerald-300'} />
       </div>
-      <div data-island="actions" data-island-size="fixed" className="mt-auto flex justify-end gap-1">
+      <div data-island="actions" className="mt-auto flex justify-end gap-1">
         <button type="button" onClick={() => onChange({ ...data, date: todayISO() })} className="rounded-md px-2 py-1 text-[9px] text-neutral-600 hover:bg-neutral-800 hover:text-neutral-300">Today</button>
         <button type="button" onClick={() => onChange({ ...data, date: '', time: '' })} className="rounded-md px-2 py-1 text-[9px] text-neutral-700 hover:bg-red-500/10 hover:text-red-400">Clear</button>
       </div>
@@ -165,8 +158,6 @@ export function OutlineWidget({
   data: OutlineData
   onChange: (data: OutlineData) => void
 }) {
-  const countRef = useFieldAnchor<HTMLSpanElement>('item_count')
-  const topLevelRef = useFieldAnchor<HTMLSpanElement>('top_level_count')
   const hidden = outlineHiddenIndices(data)
   const setItem = (id: string, patch: Partial<OutlineData['items'][number]>) =>
     onChange({ items: data.items.map((item) => (item.id === id ? { ...item, ...patch } : item)) })
@@ -181,14 +172,14 @@ export function OutlineWidget({
 
   return (
     <div className="flex h-full flex-col">
-      <div data-island="summary" data-island-size="fixed" className="mb-2 flex items-center justify-between">
+      <div data-island="summary" className="mb-2 flex items-center justify-between">
         <span className="text-[10px] font-semibold uppercase tracking-widest text-sky-300/70">Structured outline</span>
         <span className="flex gap-2  text-[9px] text-neutral-600">
-          <span ref={topLevelRef}>{topLevel} roots</span>
-          <span ref={countRef}>{data.items.length} items</span>
+          <span>{topLevel} roots</span>
+          <span>{data.items.length} items</span>
         </span>
       </div>
-      <div data-island="outline" data-island-size="free" data-island-min-h="96" className="min-h-0 flex-1 overflow-y-auto rounded-xl border gp-hairline bg-neutral-900/30 px-1.5 py-1">
+      <div data-island="outline" data-floor-min-h="96" className="min-h-0 flex-1 overflow-y-auto rounded-xl border gp-hairline bg-neutral-900/30 px-1.5 py-1">
         {data.items.map((item, index) => {
           if (hidden.has(index)) return null
           const nextDepth = data.items[index + 1]?.depth
@@ -230,7 +221,7 @@ export function OutlineWidget({
           )
         })}
       </div>
-      <div data-island="controls" data-island-size="width" className="mt-1 flex items-center justify-between">
+      <div data-island="controls" className="mt-1 flex items-center justify-between">
         <AddButton label="Add item" onClick={() => addAfter(data.items.length - 1)} />
         <span className=" text-[8px] text-neutral-700">Enter add · Tab indent</span>
       </div>
@@ -256,9 +247,6 @@ export function FormWidget({
   data: FormWidgetData
   onChange: (data: FormWidgetData) => void
 }) {
-  const filledRef = useFieldAnchor<HTMLDivElement>('filled_count')
-  const completeRef = useFieldAnchor<HTMLDivElement>('complete')
-  const firstRef = useFieldAnchor<HTMLDivElement>('first_value')
   const filled = data.fields.filter(formFieldFilled).length
   const complete = data.fields.length > 0 && data.fields.every((field) => !field.required || formFieldFilled(field))
   const setField = (id: string, patch: Partial<FormField>) =>
@@ -278,8 +266,8 @@ export function FormWidget({
         </span>
       </div>
       <div className="min-h-0 flex-1 space-y-1.5 overflow-y-auto">
-        {data.fields.map((field, index) => (
-          <div key={field.id} ref={index === 0 ? firstRef : undefined} data-island={field.id} data-island-size="width" className={`${panelClass} group/form px-2.5 py-2`}>
+        {data.fields.map((field) => (
+          <div key={field.id} data-island={field.id} className={`${panelClass} group/form px-2.5 py-2`}>
             <div className="mb-1 flex items-center gap-1.5">
               <input
                 value={field.label}
@@ -330,11 +318,11 @@ export function FormWidget({
           </div>
         ))}
       </div>
-      <div data-island="summary" data-island-size="fixed" className="flex items-end justify-between border-t gp-hairline pt-1.5">
+      <div data-island="summary" className="flex items-end justify-between border-t gp-hairline pt-1.5">
         <AddButton label="Add field" onClick={addField} />
         <div className="flex gap-1.5">
-          <Stat anchor={filledRef} label="Filled" value={`${filled}/${data.fields.length}`} />
-          <Stat anchor={completeRef} label="Complete" value={complete ? 'Yes' : 'No'} accent={complete ? 'text-emerald-300' : 'text-neutral-500'} />
+          <Stat label="Filled" value={`${filled}/${data.fields.length}`} />
+          <Stat label="Complete" value={complete ? 'Yes' : 'No'} accent={complete ? 'text-emerald-300' : 'text-neutral-500'} />
         </div>
       </div>
     </div>
@@ -348,9 +336,6 @@ export function DailyAgendaWidget({
   data: DailyAgendaData
   onChange: (data: DailyAgendaData) => void
 }) {
-  const doneRef = useFieldAnchor<HTMLDivElement>('done_count')
-  const allDoneRef = useFieldAnchor<HTMLDivElement>('all_done')
-  const nextRef = useFieldAnchor<HTMLDivElement>('next_item')
   const done = data.items.filter((item) => item.done).length
   const allDone = data.items.length > 0 && done === data.items.length
   const next = [...data.items].sort((a, b) => a.time.localeCompare(b.time)).find((item) => !item.done)
@@ -366,7 +351,7 @@ export function DailyAgendaWidget({
         <span className=" text-[9px] text-neutral-600">{done}/{data.items.length} complete</span>
       </div>
       <ProgressBar value={data.items.length ? (done / data.items.length) * 100 : 0} color="#38bdf8" />
-      <div data-island="agenda" data-island-size="free" data-island-min-h="96" className="min-h-0 flex-1 overflow-y-auto rounded-xl border gp-hairline bg-neutral-900/25 px-2 py-1">
+      <div data-island="agenda" data-floor-min-h="96" className="min-h-0 flex-1 overflow-y-auto rounded-xl border gp-hairline bg-neutral-900/25 px-2 py-1">
         {[...data.items].sort((a, b) => a.time.localeCompare(b.time)).map((item) => (
           <div key={item.id} className="group/agenda flex h-8 items-center gap-2 border-b gp-hairline last:border-0">
             <button type="button" role="checkbox" aria-label={item.title ? `Mark ${item.title} ${item.done ? 'not done' : 'done'}` : 'Toggle agenda item'} aria-checked={item.done} onClick={() => setItem(item.id, { done: !item.done })} className={`flex h-4 w-4 items-center justify-center rounded-full border ${item.done ? 'border-sky-400 bg-sky-400 text-neutral-950' : 'border-neutral-700 text-transparent'}`}><Check size={9} /></button>
@@ -376,12 +361,12 @@ export function DailyAgendaWidget({
           </div>
         ))}
       </div>
-      <div data-island="summary" data-island-size="fixed" className="flex items-end justify-between">
+      <div data-island="summary" className="flex items-end justify-between">
         <AddButton label="Add item" onClick={add} />
         <div className="grid grid-cols-3 gap-1">
-          <Stat anchor={doneRef} label="Done" value={done} />
-          <Stat anchor={allDoneRef} label="All done" value={allDone ? 'Yes' : 'No'} accent={allDone ? 'text-emerald-300' : 'text-neutral-500'} />
-          <Stat anchor={nextRef} label="Next" value={next?.title || '—'} accent="text-sky-300" />
+          <Stat label="Done" value={done} />
+          <Stat label="All done" value={allDone ? 'Yes' : 'No'} accent={allDone ? 'text-emerald-300' : 'text-neutral-500'} />
+          <Stat label="Next" value={next?.title || '—'} accent="text-sky-300" />
         </div>
       </div>
     </div>
@@ -401,9 +386,6 @@ export function ProcessWidget({
   data: ProcessData
   onChange: (data: ProcessData) => void
 }) {
-  const progressRef = useFieldAnchor<HTMLDivElement>('progress')
-  const completeRef = useFieldAnchor<HTMLDivElement>('complete')
-  const currentRef = useFieldAnchor<HTMLDivElement>('current_step')
   const done = data.steps.filter((step) => step.status === 'done').length
   const progress = data.steps.length ? Math.round((done / data.steps.length) * 100) : 0
   const complete = data.steps.length > 0 && done === data.steps.length
@@ -419,12 +401,12 @@ export function ProcessWidget({
 
   return (
     <div className="flex h-full flex-col gap-2">
-      <div data-island="progress" data-island-size="width" className="flex items-center gap-2">
+      <div data-island="progress" className="flex items-center gap-2">
         <span className="text-[10px] font-semibold uppercase tracking-widest text-lime-300/70">Procedure</span>
         <div className="flex-1"><ProgressBar value={progress} color="#a3e635" /></div>
         <span className=" text-[9px] text-neutral-500">{progress}%</span>
       </div>
-      <div data-island="steps" data-island-size="free" data-island-min-h="96" className="min-h-0 flex-1">
+      <div data-island="steps" data-floor-min-h="96" className="min-h-0 flex-1">
         {data.steps.map((step, index) => {
           const meta = PROCESS_META[step.status]
           return (
@@ -439,12 +421,12 @@ export function ProcessWidget({
           )
         })}
       </div>
-      <div data-island="summary" data-island-size="fixed" className="flex items-end justify-between border-t gp-hairline pt-1">
+      <div data-island="summary" className="flex items-end justify-between border-t gp-hairline pt-1">
         <div className="flex items-center gap-1"><AddButton label="Add step" onClick={add} /><button type="button" disabled={!current} onClick={advance} className="rounded-lg bg-lime-400/10 px-2 py-1.5 text-[10px] font-medium text-lime-300 disabled:opacity-30">Advance</button></div>
         <div className="grid grid-cols-3 gap-1">
-          <Stat anchor={progressRef} label="Progress" value={`${progress}%`} />
-          <Stat anchor={completeRef} label="Complete" value={complete ? 'Yes' : 'No'} accent={complete ? 'text-emerald-300' : 'text-neutral-500'} />
-          <Stat anchor={currentRef} label="Current" value={current?.label || '—'} accent="text-lime-300" />
+          <Stat label="Progress" value={`${progress}%`} />
+          <Stat label="Complete" value={complete ? 'Yes' : 'No'} accent={complete ? 'text-emerald-300' : 'text-neutral-500'} />
+          <Stat label="Current" value={current?.label || '—'} accent="text-lime-300" />
         </div>
       </div>
     </div>

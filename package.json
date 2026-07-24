@@ -9,10 +9,9 @@
     "typecheck": "tsc -b --pretty false",
     "lint": "oxlint",
     "test": "vitest run",
-    "test:focus": "vitest run src/utils/focusModeReorder.test.ts src/utils/focusModeSizing.test.ts",
+    "mcp:grovepad": "node scripts/grovepad-mcp.mjs",
     "docs:check": "node scripts/check-codebase-map.mjs",
     "db:check": "node scripts/check-supabase-migrations.mjs",
-    "bench:canvas": "node scripts/bench-canvas.mjs",
     "check": "npm run typecheck && npm run lint && npm run test && npm run docs:check && npm run db:check",
     "check:full": "npm run build && npm run lint && npm run test && npm run docs:check && npm run db:check",
     "preview": "vite preview",
@@ -29,16 +28,27 @@
   "dependencies": {
     "@excalidraw/excalidraw": "^0.18.1",
     "@mlc-ai/web-llm": "^0.2.84",
+    "@modelcontextprotocol/sdk": "1.29.0",
     "@supabase/supabase-js": "^2.110.2",
     "@tauri-apps/api": "^2.11.1",
-    "html-to-image": "^1.11.13",
     "lucide-react": "^1.23.0",
     "pdfjs-dist": "^6.1.200",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "y-protocols": "^1.0.7",
     "yjs": "^13.6.31",
+    "zod": "^4.4.3",
     "zustand": "^5.0.14"
+  },
+  "overrides": {
+    "@hono/node-server": "2.0.11",
+    "@excalidraw/excalidraw": {
+      "nanoid": "3.3.16"
+    },
+    "@excalidraw/mermaid-to-excalidraw": {
+      "nanoid": "5.1.16"
+    },
+    "lodash-es": "4.18.1"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.2",
@@ -50,7 +60,6 @@
     "fake-indexeddb": "^6.2.5",
     "oxlint": "^1.71.0",
     "pgsql-parser": "^17.9.16",
-    "playwright-core": "^1.55.0",
     "tailwindcss": "^4.3.2",
     "typescript": "~6.0.2",
     "vite": "^8.1.1",

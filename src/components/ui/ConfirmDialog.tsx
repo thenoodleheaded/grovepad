@@ -55,7 +55,7 @@ export function ConfirmDialog({
       aria-modal="true"
       aria-labelledby="gp-confirm-title"
       aria-describedby="gp-confirm-description"
-      className="gp-confirm-overlay fixed inset-0 z-[240] flex items-center justify-center p-5"
+      className="gp-confirm-overlay fixed inset-0 z-[300] flex items-center justify-center p-5"
     >
       <div
         role="presentation"
@@ -65,7 +65,7 @@ export function ConfirmDialog({
       <div
         ref={panelRef}
         tabIndex={-1}
-        className="gp-confirm-panel gp-dialog gp-pop gp-panel relative z-10 w-full max-w-sm overflow-hidden rounded-3xl p-5 shadow-2xl outline-none"
+        className="gp-confirm-panel gp-popup-surface gp-dialog gp-pop gp-panel relative z-10 w-full max-w-sm overflow-hidden rounded-3xl p-5 shadow-2xl outline-none"
       >
         <div className="flex gap-3.5">
           <span
@@ -92,7 +92,7 @@ export function ConfirmDialog({
             ref={cancelRef}
             type="button"
             onClick={onClose}
-            className="h-9 rounded-xl border gp-hairline px-3.5 text-xs font-medium text-neutral-300 transition-colors hover:bg-neutral-800 hover:text-white"
+            className="gp-popup-action"
           >
             {cancelLabel}
           </button>
@@ -103,7 +103,7 @@ export function ConfirmDialog({
                 onSecondary()
                 onClose()
               }}
-              className="h-9 rounded-xl border border-emerald-400/30 bg-emerald-400/10 px-3.5 text-xs font-medium text-emerald-300 transition-[background-color,transform] hover:bg-emerald-400/15 active:scale-[0.97]"
+              className="gp-popup-action"
             >
               {secondaryLabel}
             </button>
@@ -114,11 +114,8 @@ export function ConfirmDialog({
               onConfirm()
               onClose()
             }}
-            className={`h-9 rounded-xl px-3.5 text-xs font-semibold transition-[background-color,transform] active:scale-[0.97] ${
-              destructive
-                ? 'bg-red-500 text-white hover:bg-red-400'
-                : 'bg-emerald-400 text-neutral-950 hover:bg-emerald-300'
-            }`}
+            data-tone={destructive ? 'destructive' : 'primary'}
+            className="gp-popup-action"
           >
             {confirmLabel}
           </button>

@@ -1,3 +1,365 @@
+/* Collaboration is a compact control surface on desktop and a bottom sheet
+   on phones. Its cards expose connection, access, people, and comment state
+   without competing with the canvas itself. */
+.gp-collaboration-panel {
+  top: var(--gp-toolbar-row3-top);
+  right: calc(var(--gp-safe-right) + 12px);
+  /* The panel sits directly under the control chip and shares its right edge,
+     so growing from this corner reads as the chip itself expanding rather
+     than a separate card appearing next to it. */
+  transform-origin: top right;
+}
+
+/* Expanding and collapsing is one continuous movement: the whole panel swells
+   out of the chip while its three stacked surfaces follow each other a beat
+   apart. The cascade is what makes it read as liquid instead of three cards
+   popping at once, and it reverses on the way back in. */
+.gp-collaboration-panel[data-state='open'] {
+  animation: gp-collaboration-expand 380ms var(--gp-ease-spring) both;
+}
+
+.gp-collaboration-panel[data-state='closed'] {
+  pointer-events: none;
+  animation: gp-collaboration-collapse 240ms cubic-bezier(0.4, 0, 1, 1) both;
+}
+
+.gp-collaboration-panel[data-state='open'] > * {
+  animation: gp-collaboration-surface-in 320ms var(--gp-ease-spring) both;
+}
+
+.gp-collaboration-panel[data-state='closed'] > * {
+  animation: gp-collaboration-surface-out 160ms cubic-bezier(0.4, 0, 1, 1) both;
+}
+
+.gp-collaboration-panel[data-state='open'] > .gp-popup-nav-backplate {
+  animation-delay: 55ms;
+}
+
+.gp-collaboration-panel[data-state='open'] > .gp-collaboration-content {
+  animation-delay: 110ms;
+}
+
+/* Closing empties from the bottom up, so the chip is the last thing standing. */
+.gp-collaboration-panel[data-state='closed'] > .gp-popup-nav-backplate {
+  animation-delay: 40ms;
+}
+
+.gp-collaboration-panel[data-state='closed'] > .gp-collaboration-floating-header {
+  animation-delay: 80ms;
+}
+
+@keyframes gp-collaboration-expand {
+  from {
+    opacity: 0;
+    filter: blur(12px);
+    transform: translateY(-14px) scale(0.82);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes gp-collaboration-collapse {
+  from {
+    opacity: 1;
+    filter: blur(0);
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    filter: blur(9px);
+    transform: translateY(-10px) scale(0.9);
+  }
+}
+
+@keyframes gp-collaboration-surface-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes gp-collaboration-surface-out {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+
+/* The exit animation must still end so the panel can unmount, so reduced
+   motion collapses the duration rather than removing the animation. */
+@media (prefers-reduced-motion: reduce) {
+  .gp-collaboration-panel,
+  .gp-collaboration-panel > * {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
+  }
+}
+
+.gp-collaboration-backdrop {
+  border: 0;
+  background: transparent;
+}
+
+.gp-collaboration-backdrop[data-state='closed'] {
+  pointer-events: none;
+}
+
+.gp-collaboration-control {
+  background: color-mix(in oklab, var(--gp-surface-panel), transparent 4%);
+  transition: background-color var(--gp-duration-snap), border-color var(--gp-duration-snap);
+}
+
+.gp-collaboration-compact {
+  transform-origin: top right;
+  transition:
+    opacity 170ms var(--gp-ease-out),
+    filter 170ms var(--gp-ease-out),
+    transform 240ms var(--gp-ease-out);
+}
+
+.gp-collaboration-compact[data-state='hidden'] {
+  pointer-events: none;
+  opacity: 0;
+  filter: blur(6px);
+  transform: translateY(7px) scale(0.9);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gp-collaboration-compact {
+    transition-duration: 0.01ms !important;
+  }
+}
+
+.gp-collaboration-control:hover {
+  border-color: rgb(255 255 255 / 0.16);
+  background: var(--gp-surface-control-hover);
+}
+
+.gp-collaboration-summary,
+.gp-collaboration-card,
+.gp-collaboration-comment {
+  background:
+    linear-gradient(145deg, rgb(255 255 255 / 0.09), transparent 64%),
+    color-mix(in oklab, var(--gp-surface-control), white 7%);
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 0.1),
+    inset 0 1px 0 rgb(255 255 255 / 0.06);
+}
+
+.gp-collaboration-people {
+  background: rgb(0 0 0 / 0.12);
+  box-shadow: inset 0 0 0 1px var(--gp-hairline);
+}
+
+.gp-collaboration-summary-error {
+  background: rgb(244 63 94 / 0.055);
+  box-shadow: inset 0 0 0 1px rgb(251 113 133 / 0.2);
+}
+
+.gp-collaboration-person {
+  transition: background-color var(--gp-duration-snap);
+}
+
+.gp-collaboration-person + .gp-collaboration-person {
+  border-top: 1px solid rgb(255 255 255 / 0.055);
+}
+
+.gp-collaboration-person:hover {
+  background-color: rgb(255 255 255 / 0.035);
+}
+
+.gp-collaboration-nav {
+  background: rgb(0 0 0 / 0.12);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.045);
+}
+
+.gp-collaboration-tab-indicator {
+  position: absolute;
+  z-index: 1;
+  top: 4px;
+  bottom: 4px;
+  left: 4px;
+  width: calc((100% - 16px) / 3);
+  pointer-events: none;
+  transform: translateX(calc(var(--gp-collaboration-tab-index) * (100% + 4px)));
+  transition: transform 480ms cubic-bezier(0.2, 1.34, 0.32, 1);
+  will-change: transform;
+}
+
+.gp-collaboration-tab-lens {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 9px;
+  background:
+    radial-gradient(100% 180% at 50% 130%, rgb(56 189 248 / 0.14), transparent 62%),
+    linear-gradient(180deg, rgb(255 255 255 / 0.11), rgb(255 255 255 / 0.045));
+  box-shadow:
+    inset 0 0 0 1px rgb(125 211 252 / 0.17),
+    inset 0 1px 0 rgb(255 255 255 / 0.08),
+    0 5px 14px rgb(0 0 0 / 0.2);
+  backdrop-filter: blur(12px) saturate(1.18);
+  -webkit-backdrop-filter: blur(12px) saturate(1.18);
+}
+
+.gp-collaboration-tab {
+  display: inline-flex;
+  min-height: 30px;
+  align-items: center;
+  gap: 5px;
+  border-radius: 8px;
+  padding-inline: 8px;
+  color: var(--color-neutral-500);
+  font-size: 11px;
+  font-weight: 600;
+  transition: none;
+}
+
+.gp-collaboration-tab:hover {
+  color: var(--color-neutral-200);
+}
+
+.gp-collaboration-tab[aria-current='page'] {
+  color: rgb(186 230 253);
+}
+
+.gp-collaboration-input {
+  width: 100%;
+  min-height: 36px;
+  border: 1px solid rgb(255 255 255 / 0.09);
+  border-radius: 9px;
+  padding: 8px 10px;
+  color: var(--color-neutral-200);
+  background: rgb(0 0 0 / 0.2);
+  font-size: 11px;
+  outline: none;
+}
+
+.gp-collaboration-input:focus {
+  border-color: rgb(52 211 153 / 0.48);
+  box-shadow: 0 0 0 3px rgb(52 211 153 / 0.08);
+}
+
+.gp-collaboration-primary-action,
+.gp-collaboration-small-action,
+.gp-collaboration-icon-action,
+.gp-collaboration-send {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-weight: 600;
+  transition: none;
+}
+
+.gp-collaboration-icon-action {
+  display: inline-flex;
+  height: 28px;
+  width: 28px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  color: var(--color-neutral-500);
+  background: transparent;
+  transition: none;
+}
+
+.gp-collaboration-icon-action:hover {
+  color: white;
+  background: rgb(255 255 255 / 0.06);
+}
+
+.gp-collaboration-icon-action-active {
+  color: rgb(186 230 253);
+  background: rgb(56 189 248 / 0.11);
+}
+
+.gp-collaboration-primary-action {
+  min-height: 36px;
+  border-radius: 9px;
+  padding-inline: 12px;
+  color: rgb(209 250 229);
+  background:
+    linear-gradient(145deg, rgb(255 255 255 / 0.1), transparent 58%),
+    rgb(16 185 129 / 0.17);
+  box-shadow:
+    inset 0 0 0 1px rgb(52 211 153 / 0.24),
+    inset 0 1px 0 rgb(255 255 255 / 0.08);
+  font-size: 11px;
+}
+
+.gp-collaboration-primary-action:hover {
+  background: rgb(16 185 129 / 0.25);
+}
+
+.gp-collaboration-small-action {
+  min-height: 28px;
+  border-radius: 7px;
+  padding-inline: 8px;
+  color: var(--color-neutral-400);
+  background:
+    linear-gradient(145deg, rgb(255 255 255 / 0.08), transparent 58%),
+    color-mix(in oklab, var(--gp-surface-control), white 6%);
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 0.1),
+    inset 0 1px 0 rgb(255 255 255 / 0.05);
+  font-size: 9px;
+}
+
+.gp-collaboration-small-action:hover {
+  color: white;
+  background: rgb(255 255 255 / 0.07);
+}
+
+.gp-collaboration-send {
+  height: 34px;
+  width: 34px;
+  flex: 0 0 auto;
+  border-radius: 9px;
+  color: rgb(167 243 208);
+  background: rgb(16 185 129 / 0.14);
+}
+
+.gp-collaboration-primary-action:disabled,
+.gp-collaboration-small-action:disabled,
+.gp-collaboration-send:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+[data-theme='light'] .gp-collaboration-panel :is(.text-white, .text-neutral-200, .text-neutral-300) {
+  color: rgb(38 48 42);
+}
+
+[data-theme='light'] .gp-collaboration-panel :is(.text-neutral-500, .text-neutral-600) {
+  color: rgb(91 104 96);
+}
+
+[data-theme='light'] .gp-collaboration-summary,
+[data-theme='light'] .gp-collaboration-card,
+[data-theme='light'] .gp-collaboration-people,
+[data-theme='light'] .gp-collaboration-comment {
+  background: rgb(255 255 255 / 0.34);
+}
+
+[data-theme='light'] .gp-collaboration-input {
+  color: rgb(38 48 42);
+  background: rgb(255 255 255 / 0.5);
+  border-color: rgb(30 60 42 / 0.12);
+}
+
 /* Collaborative read-only roles can still select cards and pan the canvas,
    but interactive content cannot stage misleading local-only changes. */
 [data-collaboration-readonly='true'] .gp-widget-content :is(button, input, textarea, select, [contenteditable='true']) {
@@ -13,5 +375,36 @@
 @media (prefers-reduced-motion: reduce) {
   [data-canvas-viewport] .transition-transform {
     transition: none !important;
+  }
+}
+
+@media (max-width: 639px) {
+  .gp-collaboration-backdrop {
+    background: rgb(0 0 0 / 0.34);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+  }
+
+  .gp-collaboration-panel {
+    position: fixed;
+    top: auto;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    max-height: calc(100dvh - var(--gp-safe-top) - 24px);
+    padding-bottom: var(--gp-safe-bottom);
+  }
+
+  .gp-collaboration-content {
+    border-radius: 22px 22px 0 0;
+  }
+
+  .gp-collaboration-control {
+    max-width: min(72vw, 280px);
+  }
+
+  .gp-collaboration-control > span:nth-of-type(3) {
+    display: none;
   }
 }

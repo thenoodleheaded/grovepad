@@ -6,7 +6,6 @@ import {
   type ReactNode,
 } from 'react'
 import type { WorldRect } from '../../utils/canvasView'
-import type { EdgeDetail } from './canvasEdgePolicy'
 
 type CanvasEdgeVariant = 'relation' | 'dependency' | 'wire'
 
@@ -31,7 +30,6 @@ interface EdgeHitArea {
 interface CanvasEdgeProps {
   d: string
   variant: CanvasEdgeVariant
-  detail?: EdgeDetail
   connected?: boolean
   resolved?: boolean
   warning?: boolean
@@ -77,7 +75,6 @@ function EdgePath({
 export const CanvasEdge = memo(function CanvasEdge({
   d,
   variant,
-  detail = 'rich',
   connected = false,
   resolved = false,
   warning = false,
@@ -100,21 +97,21 @@ export const CanvasEdge = memo(function CanvasEdge({
       data-warning={warning || undefined}
       style={style}
     >
-      {highlight && detail !== 'minimal' && (
+      {highlight && (
         <EdgePath d={d} layer={highlight} className="gp-canvas-edge-highlight" />
       )}
-      {track && detail !== 'minimal' && (
+      {track && (
         <EdgePath d={d} layer={track} className="gp-canvas-edge-track" />
       )}
-      {halo && (detail === 'rich' || connected) && (
+      {halo && (
         <EdgePath d={d} layer={halo} className="gp-canvas-edge-halo" />
       )}
       <EdgePath d={d} layer={main} className="gp-canvas-edge-main" />
-      {flow && detail === 'rich' && (
+      {flow && (
         <EdgePath d={d} layer={flow} className="gp-canvas-edge-flow" />
       )}
       {children}
-      {hitArea && detail !== 'minimal' && (
+      {hitArea && (
         <path
           className="gp-canvas-edge-hit gp-route-motion"
           d={d}
@@ -132,17 +129,24 @@ export const CanvasEdge = memo(function CanvasEdge({
 })
 
 export function CanvasEdgeLayer({
-  visibleRect,
-  detail,
+  contentRect,
   className = '',
   dataCircuitLayer = false,
+  ariaHidden = false,
   defs,
   children,
 }: {
-  visibleRect: WorldRect
-  detail: EdgeDetail
+  /** A world rect that merely has to *contain* the edges — never the visible
+   * viewport. The layer already sits inside the camera-transformed world
+   * element, so tying this to the view made every pan frame rewrite
+   * layout properties and repaint the whole (viewport / zoom)-sized box. */
+  contentRect: WorldRect
   className?: string
   dataCircuitLayer?: boolean
+  /** Purely decorative routing (relations, dependencies) sets this so screen
+   * readers skip the unlabeled path nodes; the relationship itself is conveyed
+   * through widget content and the canvas tree outline. */
+  ariaHidden?: boolean
   defs?: ReactNode
   children: ReactNode
 }) {
@@ -150,16 +154,17 @@ export function CanvasEdgeLayer({
     <svg
       className={`absolute gp-canvas-edge-layer ${className}`}
       data-circuit-layer={dataCircuitLayer || undefined}
+      aria-hidden={ariaHidden || undefined}
       style={{
-        left: visibleRect.x,
-        top: visibleRect.y,
-        width: visibleRect.width,
-        height: visibleRect.height,
+        left: contentRect.x,
+        top: contentRect.y,
+        width: contentRect.width,
+        height: contentRect.height,
         pointerEvents: 'none',
         overflow: 'visible',
       }}
-      viewBox={`${visibleRect.x} ${visibleRect.y} ${visibleRect.width} ${visibleRect.height}`}
-      shapeRendering={detail === 'minimal' ? 'optimizeSpeed' : 'geometricPrecision'}
+      viewBox={`${contentRect.x} ${contentRect.y} ${contentRect.width} ${contentRect.height}`}
+      shapeRendering="geometricPrecision"
     >
       {defs && <defs>{defs}</defs>}
       {children}

@@ -19,7 +19,7 @@ function uniqueId(occupied: Set<string>, preferred: string, idFactory: () => str
 
 /**
  * Keep the base board intact and append every incoming workspace. Colliding
- * ids are remapped as one graph so canvases, cards, groups, and wires remain
+ * ids are remapped as one graph so canvases, cards, glue, and wires remain
  * connected. A colliding workspace is deliberately kept as a second entry:
  * sync conflicts must never silently discard either version.
  */
@@ -35,7 +35,7 @@ export function mergePersistedBoardWorkspaces(
   const widgetIds = new Set(Object.keys(base.widgets))
   const relationIds = new Set(Object.keys(base.relations))
   const connectionIds = new Set(Object.keys(base.connections))
-  const groupIds = new Set(Object.keys(base.groups))
+  const glueIds = new Set(Object.keys(base.glues))
   const workspaceMap = new Map<string, string>()
   const canvasMap = new Map<string, string>()
   const widgetMap = new Map<string, string>()
@@ -123,15 +123,15 @@ export function mergePersistedBoardWorkspaces(
     connections[id] = { ...connection, id, fromId, toId }
   }
 
-  const groups = { ...base.groups }
-  for (const group of Object.values(incoming.groups)) {
-    const mappedWidgetIds = group.widgetIds.flatMap((id) => {
+  const glues = { ...base.glues }
+  for (const glue of Object.values(incoming.glues)) {
+    const mappedWidgetIds = glue.widgetIds.flatMap((id) => {
       const mapped = widgetMap.get(id)
       return mapped ? [mapped] : []
     })
     if (mappedWidgetIds.length < 2) continue
-    const id = uniqueId(groupIds, group.id, idFactory)
-    groups[id] = { ...group, id, widgetIds: mappedWidgetIds }
+    const id = uniqueId(glueIds, glue.id, idFactory)
+    glues[id] = { ...glue, id, widgetIds: mappedWidgetIds }
   }
 
   return {
@@ -141,7 +141,7 @@ export function mergePersistedBoardWorkspaces(
     widgets,
     relations,
     connections,
-    groups,
+    glues,
     activePacks: [...new Set([...base.activePacks, ...incoming.activePacks])],
   }
 }

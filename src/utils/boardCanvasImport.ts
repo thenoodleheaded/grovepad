@@ -13,7 +13,7 @@ interface CanvasImportRequest {
   position?: Vector2D
 }
 
-export function canvasImportTitle(filename: string): string {
+function canvasImportTitle(filename: string): string {
   return filename.replace(/\.(grovepad|json)$/i, '').trim() || 'Imported board'
 }
 

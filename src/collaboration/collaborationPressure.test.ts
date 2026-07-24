@@ -22,7 +22,7 @@ describe('collaboration pressure', () => {
     const startedAt = performance.now()
     const seed = new Y.Doc()
     writeCanvasSnapshot(seed, {
-      canvasId, canvas: { id: canvasId, name: 'Pressure' }, widgets: { shared: note('shared', '') }, relations: {}, connections: {}, groups: {},
+      canvasId, canvas: { id: canvasId, name: 'Pressure' }, widgets: { shared: note('shared', '') }, relations: {}, connections: {}, glues: {},
     })
     const seedUpdate = Y.encodeStateAsUpdate(seed)
     const clients = Array.from({ length: 10 }, () => {
@@ -75,7 +75,7 @@ describe('collaboration pressure', () => {
   it('reconstructs the same state from a compact snapshot plus a later tail', () => {
     const source = new Y.Doc()
     writeCanvasSnapshot(source, {
-      canvasId, canvas: { id: canvasId, name: 'Pressure' }, widgets: { shared: note('shared', 'snapshot') }, relations: {}, connections: {}, groups: {},
+      canvasId, canvas: { id: canvasId, name: 'Pressure' }, widgets: { shared: note('shared', 'snapshot') }, relations: {}, connections: {}, glues: {},
     })
     const compactSnapshot = Y.encodeStateAsUpdate(source)
     const tail: Uint8Array[] = []

@@ -42,17 +42,30 @@ describe('anchored relation geometry', () => {
       expect(numbers[index + 1]).toBeGreaterThanOrEqual(minY)
       expect(numbers[index + 1]).toBeLessThanOrEqual(maxY)
     }
-    // The middle cubic must never reverse past its escaped endpoints. This is
-    // the close-widget case that previously folded a route over itself.
+    // The short endpoint escapes and the middle cubic must share a tangent.
+    // A direction change at either join renders as a small angular break
+    // immediately beside the widget.
+    const startEscapeC2 = { x: numbers[4]!, y: numbers[5]! }
     const escapedStart = { x: numbers[6]!, y: numbers[7]! }
     const middleC1 = { x: numbers[8]!, y: numbers[9]! }
     const middleC2 = { x: numbers[10]!, y: numbers[11]! }
     const escapedEnd = { x: numbers[12]!, y: numbers[13]! }
-    for (const control of [middleC1, middleC2]) {
-      expect(control.x).toBeGreaterThanOrEqual(Math.min(escapedStart.x, escapedEnd.x))
-      expect(control.x).toBeLessThanOrEqual(Math.max(escapedStart.x, escapedEnd.x))
-      expect(control.y).toBeGreaterThanOrEqual(Math.min(escapedStart.y, escapedEnd.y))
-      expect(control.y).toBeLessThanOrEqual(Math.max(escapedStart.y, escapedEnd.y))
+    const endEscapeC1 = { x: numbers[14]!, y: numbers[15]! }
+    const joins = [
+      [
+        { x: escapedStart.x - startEscapeC2.x, y: escapedStart.y - startEscapeC2.y },
+        { x: middleC1.x - escapedStart.x, y: middleC1.y - escapedStart.y },
+      ],
+      [
+        { x: escapedEnd.x - middleC2.x, y: escapedEnd.y - middleC2.y },
+        { x: endEscapeC1.x - escapedEnd.x, y: endEscapeC1.y - escapedEnd.y },
+      ],
+    ] as const
+    for (const [incoming, outgoing] of joins) {
+      const cross = incoming.x * outgoing.y - incoming.y * outgoing.x
+      const dot = incoming.x * outgoing.x + incoming.y * outgoing.y
+      expect(Math.abs(cross)).toBeLessThan(0.000_001)
+      expect(dot).toBeGreaterThan(0)
     }
   })
 })

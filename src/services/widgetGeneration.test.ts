@@ -17,7 +17,6 @@ const plan: ThoughtPlan = {
     metadata: { badges: [] },
   }],
   relations: [],
-  groups: [],
   warnings: [],
 }
 

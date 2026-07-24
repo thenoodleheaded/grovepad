@@ -4,18 +4,10 @@ import { clampZoom } from '../../types/spatial'
 // ---------------------------------------------------------------------------
 // Camera engine core (canvas engine contract §1).
 //
-// The one law: during a gesture frame the main thread does exactly one thing
-// — write the camera transform. This module owns that write. Camera state
-// lives here, outside React; the world element's transform is set
+// During a gesture frame this module writes the camera transform. Camera
+// state lives here, outside React; the world element's transform is set
 // imperatively the instant a frame arrives, and everything else (store
-// mirror, culling, minimap) observes through listeners that do their own
-// coalescing.
-//
-// The engine also owns the velocity signal: an exponential moving average of
-// screen-space camera speed classified into motion tiers with hysteresis.
-// `data-canvas-motion` on <html> exposes the tier to CSS (the governor's T1
-// effects-shed hangs off it); `subscribeCameraMotion` exposes the
-// active/idle boundary to deferred consumers (aura, minimap, zoom HUD).
+// mirror, minimap) observes through listeners.
 // ---------------------------------------------------------------------------
 
 export interface CameraFrame {
@@ -23,22 +15,6 @@ export interface CameraFrame {
   zoom: number
 }
 
-export type CameraMotionTier = 'idle' | 'moving' | 'fast'
-
-export interface CameraVelocitySample {
-  /** Combined screen-space speed in px/s (pan plus zoom-induced flow). */
-  speed: number
-  /** Smoothed screen-space pan velocity in px/s. The camera travels through
-   * the WORLD opposite to this: worldDirection = -panVelocity / zoom. */
-  panVelocity: Vector2D
-  tier: CameraMotionTier
-}
-
-const FAST_ENTER = 1400
-const FAST_EXIT = 700
-const MOVING_ENTER = 40
-const SETTLE_MS = 160
-const VELOCITY_ALPHA = 0.35
 /** Kinetic glide: speed halves roughly every 150ms; stops below 12 px/s. */
 const GLIDE_DECAY_MS = 220
 const GLIDE_STOP_SPEED = 12
@@ -50,13 +26,6 @@ let worldEl: HTMLElement | null = null
 let storeSink: ((frame: CameraFrame) => void) | null = null
 let historySink: ((canGoBack: boolean, canGoForward: boolean) => void) | null = null
 const frameListeners = new Set<(frame: CameraFrame) => void>()
-const motionListeners = new Set<(active: boolean) => void>()
-
-let emaSpeed = 0
-let emaPanVelocity: Vector2D = { x: 0, y: 0 }
-let lastFrameAt = 0
-let tier: CameraMotionTier = 'idle'
-let settleTimer: ReturnType<typeof setTimeout> | null = null
 
 let animationRaf = 0
 let glideRaf = 0
@@ -80,68 +49,11 @@ function applyTransform(): void {
   worldEl.style.transform = `translate3d(${frame.pan.x}px, ${frame.pan.y}px, 0) scale(${frame.zoom})`
 }
 
-function setTier(next: CameraMotionTier): void {
-  if (next === tier) return
-  const wasActive = tier !== 'idle'
-  tier = next
-  if (typeof document !== 'undefined') document.documentElement.dataset.canvasMotion = next
-  const isActive = next !== 'idle'
-  if (wasActive !== isActive) {
-    for (const listener of motionListeners) listener(isActive)
-  }
-}
-
-/** Pure tier classifier — exported for tests. Hysteresis: entering `fast`
- * requires more speed than staying in it, and `idle` only returns via the
- * settle timer, never directly from a speed reading. */
-export function classifyTier(previous: CameraMotionTier, speed: number): CameraMotionTier {
-  if (previous === 'fast') return speed >= FAST_EXIT ? 'fast' : 'moving'
-  if (speed >= FAST_ENTER) return 'fast'
-  if (speed >= MOVING_ENTER) return 'moving'
-  return previous === 'idle' ? 'idle' : 'moving'
-}
-
-function trackVelocity(previous: CameraFrame, next: CameraFrame): void {
-  const now = performance.now()
-  const rawGap = lastFrameAt === 0 ? 16.7 : now - lastFrameAt
-  const dt = Math.min(100, Math.max(1, rawGap))
-  lastFrameAt = now
-  const panDist = Math.hypot(next.pan.x - previous.pan.x, next.pan.y - previous.pan.y)
-  // Zoom motion moves every on-screen pixel; approximate its flow as the
-  // viewport half-diagonal scaled by the log-zoom step.
-  const zoomFlow =
-    Math.abs(Math.log(next.zoom / previous.zoom)) *
-    Math.hypot(viewportSize.width, viewportSize.height) * 0.5
-  const instant = ((panDist + zoomFlow) / dt) * 1000
-  emaSpeed = emaSpeed + (instant - emaSpeed) * VELOCITY_ALPHA
-  emaPanVelocity = {
-    x: emaPanVelocity.x + (((next.pan.x - previous.pan.x) / dt) * 1000 - emaPanVelocity.x) * VELOCITY_ALPHA,
-    y: emaPanVelocity.y + (((next.pan.y - previous.pan.y) / dt) * 1000 - emaPanVelocity.y) * VELOCITY_ALPHA,
-  }
-  setTier(classifyTier(tier, emaSpeed))
-
-  if (settleTimer !== null) clearTimeout(settleTimer)
-  // A starved main thread produces SLOW frames, not stopped input. The settle
-  // window scales with the observed frame gap so a throttled machine never
-  // flips to idle between two frames of one continuous gesture — which would
-  // unleash idle-only work (backfill, promotions, prefetch) into a spiral of
-  // ever-slower frames and ever-more fake idles.
-  const settleWindow = Math.max(SETTLE_MS, Math.min(1200, rawGap * 3))
-  settleTimer = setTimeout(() => {
-    settleTimer = null
-    emaSpeed = 0
-    emaPanVelocity = { x: 0, y: 0 }
-    setTier('idle')
-  }, settleWindow)
-}
-
 function commit(pan: Vector2D, zoom: number): void {
   const clamped = clampZoom(zoom)
   if (frame.pan.x === pan.x && frame.pan.y === pan.y && frame.zoom === clamped) return
-  const previous = frame
   frame = { pan: { x: pan.x, y: pan.y }, zoom: clamped }
   applyTransform()
-  trackVelocity(previous, frame)
   storeSink?.(frame)
   for (const listener of frameListeners) listener(frame)
 }
@@ -174,7 +86,6 @@ function pushHistoryEntry(): void {
 export const cameraEngine = {
   getFrame: (): CameraFrame => frame,
   getViewportSize: (): Size => viewportSize,
-  getVelocity: (): CameraVelocitySample => ({ speed: emaSpeed, panVelocity: emaPanVelocity, tier }),
 
   registerWorld(el: HTMLElement | null): void {
     worldEl = el
@@ -204,10 +115,8 @@ export const cameraEngine = {
   },
 
   setViewportSize(size: Size): void {
-    // A hidden or not-yet-laid-out host measures 0×0; accepting it would
-    // collapse every viewport-derived ring (residency, sprites, culling) to
-    // nothing, and an untouched board would stay empty until some other
-    // event fired. Keep the last known real size instead.
+    // A hidden or not-yet-laid-out host measures 0×0; keep the last known
+    // real size instead of collapsing every viewport-derived rect to nothing.
     if (size.width < 1 || size.height < 1) return
     viewportSize = size
   },
@@ -312,15 +221,4 @@ export const cameraEngine = {
     applyingHistory = false
     historySink?.(true, forwardStack.length > 0)
   },
-}
-
-/** Active while the camera is in motion (any tier above idle). Same contract
- * the old cameraMotionRuntime exposed, so deferred consumers keep working. */
-export function isCameraMotionActive(): boolean {
-  return tier !== 'idle'
-}
-
-export function subscribeCameraMotion(listener: (active: boolean) => void): () => void {
-  motionListeners.add(listener)
-  return () => motionListeners.delete(listener)
 }

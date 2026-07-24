@@ -32,7 +32,7 @@ function content(widget: Widget) {
     widgets: { [widget.id]: widget },
     relations: {},
     connections: {},
-    groups: {},
+    glues: {},
   }
 }
 
@@ -53,9 +53,15 @@ describe('Yjs canvas document', () => {
         outside: { id: 'outside', fromId: 'a', toId: 'b', type: 'parent', isResolved: false },
       },
       connections: {},
-      groups: {},
+      glues: {},
       canvases: {
-        [canvasId]: { id: canvasId, name: 'Canvas A' },
+        [canvasId]: {
+          id: canvasId,
+          name: 'Canvas A',
+          gridIntensity: 44,
+          linksVisible: false,
+          relationStrict: false,
+        },
         'canvas-b': { id: 'canvas-b', name: 'Canvas B' },
       },
     }, canvasId)

@@ -5,12 +5,19 @@ import { cameraEngine } from '../../engine/camera/cameraEngine'
 import { attachCanvasGestures } from '../../engine/camera/gestureEngine'
 import { useAiDebugStore } from '../../store/useAiDebugStore'
 import { useScaleDebugStore } from '../../store/useScaleDebugStore'
+import { usePerfDebugStore } from '../../store/usePerfDebugStore'
+import { useAuraTuningStore } from '../../store/useAuraTuningStore'
+import { useUiTuningStore } from '../../store/useUiTuningStore'
+import { useThemeStore } from '../../store/useThemeStore'
+import { applyCanvasColors } from './auraTuning'
 import { isOverlayOpen } from '../../store/useOverlayStore'
 import { useWidgetStore } from '../../store/useWidgetStore'
+import { useWidgetRestStore } from '../../store/useWidgetRestStore'
 import { useToastStore } from '../../store/useToastStore'
 import { GRID_SIZE, screenToWorld } from '../../types/spatial'
 import type { Widget } from '../../types/spatial'
 import { isStrictCanvasSurface } from '../../utils/canvasEventTarget'
+import { canvasPressMoved } from '../../utils/canvasGesturePolicy'
 import { boundsForWidgets } from '../../utils/widgetBounds'
 import { stagePendingImport } from '../../utils/pendingImport'
 import { writeMediaBlob } from '../../utils/boardDatabase'
@@ -19,6 +26,8 @@ import { importBoardFileOntoCanvas } from '../../utils/boardCanvasImport'
 import { startAppRuntime } from '../../runtime/appRuntime'
 import { GhostTreeShaper } from './GhostTreeShaper'
 import { QuickAddPreviewLayer } from './QuickAddPreviewLayer'
+import { McpPreviewLayer } from './McpPreviewLayer'
+import { useMcpConnectorStore } from '../../store/useMcpConnectorStore'
 import { CanvasAuraLayer } from './CanvasAuraLayer'
 import { GridLayer } from './GridLayer'
 import { RelationLines } from './RelationLines'
@@ -26,13 +35,11 @@ import { DependencyLines } from './DependencyLines'
 import { WireLayer } from './WireLayer'
 import { AutomationRuntime } from './AutomationRuntime'
 import { useCircuitStore } from '../../store/useCircuitStore'
-import { useFocusStore } from '../../store/useFocusStore'
-import { GroupLayer } from '../widgets/GroupLayer'
+import { GlueSeamLayer } from '../widgets/GlueSeamLayer'
 import { WidgetLayer } from '../widgets/WidgetLayer'
 import { CanvasContextMenu } from '../ui/CanvasContextMenu'
 import { CanvasToolbar } from '../ui/CanvasToolbar'
 import { SelectionActionBar } from '../ui/SelectionActionBar'
-import { CanvasModeDock } from '../ui/CanvasModeDock'
 import { ShaperHUD } from '../ui/ShaperHUD'
 import { TargetingBanner } from '../ui/TargetingBanner'
 import { WidgetContextMenu } from '../ui/WidgetContextMenu'
@@ -51,9 +58,7 @@ import { frameCanvas } from '../../utils/cameraFraming'
 import { SettingsPanel } from '../ui/SettingsPanel'
 import { useAdaptiveInputStore } from '../../store/useAdaptiveInputStore'
 import { useSettingsStore } from '../../store/useSettingsStore'
-import { FocusSessionBar } from '../ui/FocusSessionBar'
 import { canEditCollaborativeCanvas, useCollaborationStore } from '../../store/useCollaborationStore'
-import { useAuthStore } from '../../store/useAuthStore'
 
 const AddWidgetModal = lazy(() =>
   import('../ui/AddWidgetModal').then((module) => ({ default: module.AddWidgetModal })),
@@ -66,9 +71,6 @@ const ImportDocumentModal = lazy(() =>
 )
 const QuickAddSheet = lazy(() =>
   import('../ui/QuickAddSheet').then((module) => ({ default: module.QuickAddSheet })),
-)
-const ShortcutsOverlay = lazy(() =>
-  import('../ui/ShortcutsOverlay').then((module) => ({ default: module.ShortcutsOverlay })),
 )
 const CollaborationChrome = lazy(() =>
   import('../collaboration/CollaborationOverlays').then((module) => ({ default: module.CollaborationChrome })),
@@ -91,9 +93,26 @@ const ScaleDebugPanel = SCALE_DEBUG_ENABLED
       import('./ScaleDebugPanel').then((module) => ({ default: module.ScaleDebugPanel })),
     )
   : null
+const AURA_TUNING_ENABLED = import.meta.env.DEV
+const AuraTuningPanel = AURA_TUNING_ENABLED
+  ? lazy(() =>
+      import('./AuraTuningPanel').then((module) => ({ default: module.AuraTuningPanel })),
+    )
+  : null
+const PERF_DEBUG_ENABLED = import.meta.env.DEV
+const PerfDebugPanel = PERF_DEBUG_ENABLED
+  ? lazy(() =>
+      import('./PerfDebugPanel').then((module) => ({ default: module.PerfDebugPanel })),
+    )
+  : null
+// The owner-facing appearance tuner (G). Available in the shipped app, not just
+// dev, and lazily loaded so it costs nothing until first opened.
+const UiTuningPanel = lazy(() =>
+  import('../ui/UiTuningPanel').then((module) => ({ default: module.UiTuningPanel })),
+)
 
 if (import.meta.env.DEV) {
-  Object.assign(window, { __grovepad: { useWidgetStore, useCanvasStore, useAiDebugStore, useCircuitStore, useScaleDebugStore } })
+  Object.assign(window, { __grovepad: { useWidgetStore, useCanvasStore, useAiDebugStore, useCircuitStore, useScaleDebugStore, usePerfDebugStore, useWidgetRestStore, useAuraTuningStore, useMcpConnectorStore } })
 }
 
 /** In-memory clipboard — persists across interactions but not page reloads. */
@@ -120,7 +139,10 @@ function zoomFromKeyboard(factor: number): void {
 export function CanvasViewport() {
   const collaborationRole = useCollaborationStore((state) => state.role)
   const followingCollaborator = useCollaborationStore((state) => state.followingClientId !== null)
-  const collaborationEnabled = useAuthStore((state) => Boolean(state.session))
+  const activeCanvas = useWidgetStore((state) => state.canvases[state.activeCanvasId])
+  const canvasShared = activeCanvas?.shared === true
+  const canvasGridIntensity = activeCanvas?.gridIntensity ?? 100
+  const canvasLinksVisible = activeCanvas?.linksVisible ?? true
   useEffect(() => {
     // The canvas is a lazy route, so login never starts board persistence or
     // circuit listeners. StrictMode/HMR can tear this boundary down safely.
@@ -129,6 +151,11 @@ export function CanvasViewport() {
   }, [])
   const viewportRef = useRef<HTMLDivElement>(null)
   const worldRef = useRef<HTMLDivElement>(null)
+  const canvasBackgroundPressRef = useRef<{
+    pointerId: number
+    start: { x: number; y: number }
+    moved: boolean
+  } | null>(null)
 
   // Camera core wiring: the engine writes this element's transform
   // imperatively — React never re-renders for camera motion.
@@ -147,7 +174,6 @@ export function CanvasViewport() {
     paletteOpen,
     importOpen,
     quickAddOpen,
-    shortcutsOpen,
     workspaceTint,
   } = useWidgetStore(
     useShallow((state) => ({
@@ -155,14 +181,22 @@ export function CanvasViewport() {
       paletteOpen: state.paletteOpen,
       importOpen: state.importOpen,
       quickAddOpen: state.quickAddOpen,
-      shortcutsOpen: state.shortcutsOpen,
       workspaceTint: state.workspaces[state.activeWorkspaceId]?.tint ?? '#84cc16',
     })),
   )
   const aiDebugOpen = useAiDebugStore((state) => AI_DEBUG_ENABLED && state.isOpen)
   const scaleDebugOpen = useScaleDebugStore((state) => SCALE_DEBUG_ENABLED && state.isOpen)
-  const showMinimap = useSettingsStore((state) => state.showMinimap)
-
+  const perfDebugOpen = usePerfDebugStore((state) => PERF_DEBUG_ENABLED && state.isOpen)
+  const auraTuningOpen = useAuraTuningStore((state) => AURA_TUNING_ENABLED && state.isOpen)
+  const uiTuningOpen = useUiTuningStore((state) => state.isOpen)
+  const auraCanvasColors = useAuraTuningStore((state) => state.doc.canvas)
+  const auraTuningTheme = useThemeStore((state) => state.theme)
+  // Tuned canvas colours are pushed onto the document as inline custom properties
+  // and lifted again on teardown, so the stylesheet stays the production source.
+  useEffect(() => {
+    if (!AURA_TUNING_ENABLED) return
+    return applyCanvasColors(auraTuningTheme, auraCanvasColors[auraTuningTheme])
+  }, [auraTuningTheme, auraCanvasColors])
   useEffect(() => {
     const viewport = viewportRef.current
     if (!viewport) return
@@ -209,11 +243,33 @@ export function CanvasViewport() {
         useScaleDebugStore.getState().toggleOpen()
         return
       }
+      // Same shortcut pattern for the whole-board CPU/GPU/RAM readout.
+      if (
+        PERF_DEBUG_ENABLED &&
+        e.key.toLowerCase() === 'p' &&
+        !e.ctrlKey &&
+        !e.metaKey &&
+        !e.altKey
+      ) {
+        usePerfDebugStore.getState().toggleOpen()
+        return
+      }
+      // G opens the owner-facing appearance tuner (blur, shadows, motion…).
+      // Bare key, no modifiers. The advanced ambient-glow tuner is reached
+      // from a button inside this panel.
+      if (
+        e.key.toLowerCase() === 'g' &&
+        !e.ctrlKey &&
+        !e.metaKey &&
+        !e.altKey &&
+        !e.shiftKey
+      ) {
+        useUiTuningStore.getState().toggleOpen()
+        return
+      }
       // A modal, menu, or dropdown is open — its own listener owns Escape
       // and every other key; the canvas shortcut layer stays silent.
       if (isOverlayOpen()) return
-      // Focus mode owns the keyboard too (its capture listener eats Escape).
-      if (useFocusStore.getState().focusedWidgetId) return
       const state = useWidgetStore.getState()
       const mod = e.metaKey || e.ctrlKey
       const cameraLockedByFollow = useCollaborationStore.getState().followingClientId !== null
@@ -234,14 +290,6 @@ export function CanvasViewport() {
           e.preventDefault()
           if (e.shiftKey) state.redo()
           else state.undo()
-        } else if (key === 'g' && !e.shiftKey) {
-          e.preventDefault()
-          if (boardReadOnly) return
-          const ids = [...state.selectedIds]
-          if (ids.length >= 2) {
-            state.createGroup(ids)
-            state.clearSelection()
-          }
         } else if (key === 'd') {
           e.preventDefault()
           if (boardReadOnly) return
@@ -303,6 +351,11 @@ export function CanvasViewport() {
             state.clearDependencyLink()
             return
           }
+          if (useWidgetRestStore.getState().expandedWidgetId) {
+            e.preventDefault()
+            useWidgetRestStore.getState().collapseWidget()
+            return
+          }
           if (state.selectedIds.size > 0) {
             e.preventDefault()
             state.clearSelection()
@@ -354,7 +407,7 @@ export function CanvasViewport() {
           return
         case '?':
           e.preventDefault()
-          state.setShortcutsOpen(!state.shortcutsOpen)
+          useSettingsStore.getState().setOpen(true, 'controls')
           return
         case 'n':
         case 'N':
@@ -594,19 +647,48 @@ export function CanvasViewport() {
   }
 
   const handleCanvasPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
-    // Clear selection when clicking on empty canvas (not a widget, group, or UI)
-    if (e.shiftKey || e.button !== 0) return
+    // A second pointer means pinch/navigation, never a background click.
+    if (
+      canvasBackgroundPressRef.current &&
+      canvasBackgroundPressRef.current.pointerId !== e.pointerId
+    ) {
+      canvasBackgroundPressRef.current = null
+      return
+    }
+    if (e.shiftKey || e.button !== 0) {
+      canvasBackgroundPressRef.current = null
+      return
+    }
     if (
       e.target instanceof Element &&
       e.target.closest(
-        'article, svg, [data-widget-id], [data-group-id], [data-canvas-ui], button, input, textarea, select, [contenteditable="true"], [role="dialog"]',
+        'article, svg, [data-widget-id], [data-canvas-ui], button, input, textarea, select, [contenteditable="true"], [role="dialog"]',
       )
     ) {
+      canvasBackgroundPressRef.current = null
       return
     }
-    // Empty canvas means the user is navigating, not composing. Explicitly
-    // release the active editor so keystrokes cannot keep changing a hidden
-    // text field after they click away.
+    canvasBackgroundPressRef.current = {
+      pointerId: e.pointerId,
+      start: { x: e.clientX, y: e.clientY },
+      moved: false,
+    }
+  }
+
+  const handleCanvasPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    const press = canvasBackgroundPressRef.current
+    if (!press || press.pointerId !== e.pointerId || press.moved) return
+    press.moved = canvasPressMoved(press.start, { x: e.clientX, y: e.clientY })
+  }
+
+  const handleCanvasPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    const press = canvasBackgroundPressRef.current
+    if (!press || press.pointerId !== e.pointerId) return
+    canvasBackgroundPressRef.current = null
+    if (press.moved) return
+
+    // Only a completed, stationary background click dismisses the active
+    // editor. A camera pan that began on the same surface preserves it.
     const focused = document.activeElement
     if (
       focused instanceof HTMLElement &&
@@ -614,7 +696,16 @@ export function CanvasViewport() {
     ) {
       focused.blur()
     }
+    // Any in-progress edit above has already committed via its own change
+    // handlers; returning the expanded card to rest is purely visual.
+    useWidgetRestStore.getState().collapseWidget()
     useWidgetStore.getState().clearSelection()
+  }
+
+  const handleCanvasPointerCancel = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (canvasBackgroundPressRef.current?.pointerId === e.pointerId) {
+      canvasBackgroundPressRef.current = null
+    }
   }
 
   return (
@@ -624,10 +715,16 @@ export function CanvasViewport() {
       data-collaboration-readonly={collaborationRole !== null && !canEditCollaborativeCanvas(collaborationRole)}
       data-collaboration-following={followingCollaborator}
       tabIndex={0}
+      role="application"
+      aria-roledescription="Canvas board"
+      aria-label="Board canvas. Press question mark for keyboard shortcuts, or open the canvas tree to browse widgets."
       className="gp-canvas-shell relative h-dvh w-screen touch-none select-none overflow-clip"
       style={{ backgroundColor: `color-mix(in srgb, var(--gp-canvas-tint-base) 97%, ${workspaceTint})` }}
       onDoubleClick={handleDoubleClick}
       onPointerDown={handleCanvasPointerDown}
+      onPointerMove={handleCanvasPointerMove}
+      onPointerUp={handleCanvasPointerUp}
+      onPointerCancel={handleCanvasPointerCancel}
     >
       <CanvasAuraLayer />
       <div
@@ -637,22 +734,22 @@ export function CanvasViewport() {
       >
         <AutomationRuntime />
         <TimerTitleRuntime />
-        <GridLayer />
-        <RelationLines />
-        <DependencyLines />
-        <GroupLayer />
+        <GridLayer canvasIntensity={canvasGridIntensity} />
+        {canvasLinksVisible && <RelationLines />}
+        {canvasLinksVisible && <DependencyLines />}
+        <GlueSeamLayer />
         <WidgetLayer />
         {/* Wires render above cards: they anchor to card-edge ports and their
             delivery pulses must stay visible while crossing the board. */}
-        <WireLayer />
+        {canvasLinksVisible && <WireLayer />}
         <GhostTreeShaper />
         <QuickAddPreviewLayer />
-        {collaborationEnabled && <Suspense fallback={null}><CollaborationWorldOverlay /></Suspense>}
+        <McpPreviewLayer />
+        {canvasShared && <Suspense fallback={null}><CollaborationWorldOverlay /></Suspense>}
       </div>
-      {collaborationEnabled && <Suspense fallback={null}><RemoteCursorLayer /></Suspense>}
-      {collaborationEnabled && <Suspense fallback={null}><CollaborationChrome /></Suspense>}
+      {canvasShared && <Suspense fallback={null}><RemoteCursorLayer /></Suspense>}
+      {canvasShared && <Suspense fallback={null}><CollaborationChrome /></Suspense>}
       <CanvasToolbar />
-      <FocusSessionBar />
       <TargetingBanner />
       {paletteOpen && (
         <Suspense fallback={null}>
@@ -672,16 +769,25 @@ export function CanvasViewport() {
           <ScaleDebugPanel />
         </Suspense>
       )}
-      <ZoomControls />
-      {showMinimap && <CanvasNavigator />}
-      <CanvasTreeDrawer />
-      <SelectionActionBar />
-      <CanvasModeDock />
-      {shortcutsOpen && (
+      {PerfDebugPanel && perfDebugOpen && (
         <Suspense fallback={null}>
-          <ShortcutsOverlay />
+          <PerfDebugPanel />
         </Suspense>
       )}
+      {AuraTuningPanel && auraTuningOpen && (
+        <Suspense fallback={null}>
+          <AuraTuningPanel />
+        </Suspense>
+      )}
+      {uiTuningOpen && (
+        <Suspense fallback={null}>
+          <UiTuningPanel />
+        </Suspense>
+      )}
+      <ZoomControls />
+      <CanvasNavigator />
+      <CanvasTreeDrawer />
+      <SelectionActionBar />
       <ToastContainer />
       <WidgetDeletionDialog />
       <CloudConflictDialog />

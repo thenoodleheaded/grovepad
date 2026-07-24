@@ -1,6 +1,6 @@
 import type { SaveState, SyncState } from '../store/usePersistenceStatusStore'
 
-export type PersistenceStatusTone = 'error' | 'working' | 'synced' | 'offline' | 'local'
+type PersistenceStatusTone = 'error' | 'working' | 'synced' | 'offline' | 'local'
 
 export interface PersistenceStatusSummary {
   shortLabel: string

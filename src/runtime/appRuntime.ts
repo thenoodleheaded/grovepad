@@ -1,6 +1,5 @@
 import { initCircuitEngine } from '../engine/circuitEngine'
 import { initWidgetModulePrefetch } from '../engine/loader/idlePrefetch'
-import { isBenchMode } from '../bench/benchMode'
 import { useCanvasStore } from '../store/useCanvasStore'
 import { useWidgetStore } from '../store/useWidgetStore'
 import { initPersistence } from '../utils/persistence'
@@ -10,6 +9,7 @@ import { initNativeNoteWidgetSync } from './nativeNoteWidgetSync'
 import { initNetworkStatusRuntime, registerProductionOfflineShell } from './networkStatusRuntime'
 import { useAuthStore } from '../store/useAuthStore'
 import { useCollaborationStore } from '../store/useCollaborationStore'
+import { initMcpBridgeRuntime } from './mcpBridgeRuntime'
 
 /** Combine service disposers into one idempotent application boundary. */
 export function composeRuntimeDisposer(disposers: readonly (() => void)[]): () => void {
@@ -63,7 +63,7 @@ function initSignedInCollaboration(): () => void {
 const appRuntime = createRuntimeBoundary(() => [
   // Bench mode runs on a synthetic 2,000-widget board that must never be
   // written into real storage; everything else about the app stays live.
-  isBenchMode() ? () => {} : initPersistence(useWidgetStore, useCanvasStore),
+  initPersistence(useWidgetStore, useCanvasStore),
   initWidgetModulePrefetch(),
   initDeployVersionMonitor(),
   initCircuitEngine(),
@@ -74,6 +74,7 @@ const appRuntime = createRuntimeBoundary(() => [
       ? registerProductionOfflineShell
       : undefined,
   }),
+  initMcpBridgeRuntime(),
   initSignedInCollaboration(),
 ])
 

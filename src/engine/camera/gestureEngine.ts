@@ -1,9 +1,9 @@
 import { screenToWorld, type Vector2D } from '../../types/spatial'
-import { resolveCanvasPointerIntent } from '../../utils/canvasGesturePolicy'
+import { canvasPressMoved, resolveCanvasPointerIntent } from '../../utils/canvasGesturePolicy'
+import { ghostNodeGrid } from '../../utils/ghostTreePresentation'
 import { useAdaptiveInputStore } from '../../store/useAdaptiveInputStore'
 import { useCanvasStore } from '../../store/useCanvasStore'
 import { useCollaborationStore } from '../../store/useCollaborationStore'
-import { useFocusStore } from '../../store/useFocusStore'
 import { useWidgetStore } from '../../store/useWidgetStore'
 import { cameraEngine } from './cameraEngine'
 import { flingVelocity, trimSamples, type TimedPoint } from './glidePhysics'
@@ -26,7 +26,6 @@ import { flingVelocity, trimSamples, type TimedPoint } from './glidePhysics'
 
 const WHEEL_ZOOM_FACTOR = 0.0022
 const WHEEL_LINE_PX = 16
-const DRAG_THRESHOLD = 4
 
 type ActiveGesture = 'pan' | 'pinch' | 'select' | 'zoom-region' | null
 
@@ -44,7 +43,7 @@ function isEmptyCanvasTarget(root: HTMLElement, target: EventTarget | null): boo
   if (!(target instanceof Element)) return false
   if (target === root) return true
   return !target.closest(
-    'article, [data-widget-id], [data-group-id], [data-canvas-ui], button, input, textarea, select, [contenteditable="true"], [role="dialog"], svg [data-edge]',
+    'article, [data-widget-id], [data-canvas-ui], button, input, textarea, select, [contenteditable="true"], [role="dialog"], svg [data-edge]',
   )
 }
 
@@ -115,6 +114,21 @@ export function attachCanvasGestures(el: HTMLElement): () => void {
     longPressStart = null
   }
 
+  /**
+   * A deliberate camera gesture takes the view back from a followed
+   * collaborator. Swallowing the input instead (the previous behaviour) gave
+   * no feedback at all — scrolling simply did nothing, which reads as a frozen
+   * canvas rather than as "someone else is driving".
+   */
+  const releaseFollowForManualGesture = (): void => {
+    if (useCollaborationStore.getState().followingClientId === null) return
+    // Written straight to the store rather than through the collaboration
+    // controller: follow is local view state (it is never broadcast), and the
+    // controller is a no-op whenever the runtime is not registered — which
+    // would leave the camera locked with no way to take it back.
+    useCollaborationStore.setState({ followingClientId: null })
+  }
+
   const touchPair = () => {
     const points = [...touches.values()]
     if (points.length < 2) return null
@@ -129,11 +143,9 @@ export function attachCanvasGestures(el: HTMLElement): () => void {
     // The wheel always drives the camera — over widget content, inputs,
     // textareas, everywhere — the same convention as Figma/Miro/design
     // tools generally: a canvas full of cards is not a scrollable page, and
-    // an unfocused text field is not a scroll target. Only an ACTIVELY
-    // FOCUSED editable region (focus mode) or a followed collaborator's
-    // locked camera opt out.
-    if (useFocusStore.getState().focusedWidgetId) return
-    if (useCollaborationStore.getState().followingClientId !== null) return
+    // an unfocused text field is not a scroll target. Only a followed
+    // collaborator's locked camera opts out.
+    releaseFollowForManualGesture()
     event.preventDefault()
     const delta = normalizeWheelDelta(event)
     if (event.ctrlKey || event.metaKey) {
@@ -147,9 +159,7 @@ export function attachCanvasGestures(el: HTMLElement): () => void {
 
   const onPointerDown = (event: PointerEvent) => {
     cameraEngine.interrupt()
-    if (useFocusStore.getState().focusedWidgetId) return
-    const followingCollaborator = useCollaborationStore.getState().followingClientId !== null
-    if (followingCollaborator && event.pointerType === 'touch') return
+    if (event.pointerType === 'touch') releaseFollowForManualGesture()
     refreshOrigin()
 
     if (event.pointerType === 'touch') {
@@ -201,7 +211,7 @@ export function attachCanvasGestures(el: HTMLElement): () => void {
       isZHeld,
       isShiftHeld: event.shiftKey,
     })
-    if (followingCollaborator && (intent === 'pan' || intent === 'zoom-region')) return
+    if (intent === 'pan' || intent === 'zoom-region') releaseFollowForManualGesture()
 
     if (intent === 'select' || intent === 'zoom-region') {
       event.preventDefault()
@@ -275,11 +285,10 @@ export function attachCanvasGestures(el: HTMLElement): () => void {
 
     if (activeGesture === 'select' || activeGesture === 'zoom-region') {
       latestPoint = viewportPoint(event)
-      if (
-        !hasPassedThreshold &&
-        Math.abs(event.clientX - lastX) < DRAG_THRESHOLD &&
-        Math.abs(event.clientY - lastY) < DRAG_THRESHOLD
-      ) {
+      if (!hasPassedThreshold && !canvasPressMoved(
+        { x: lastX, y: lastY },
+        { x: event.clientX, y: event.clientY },
+      )) {
         return
       }
       hasPassedThreshold = true
@@ -364,6 +373,15 @@ export function attachCanvasGestures(el: HTMLElement): () => void {
         }
       }
       state.selectWidgets([...selected])
+      if (state.ghostConfig) {
+        const hitNodeIds = state.ghostConfig.nodes
+          .filter((node) => {
+            const grid = ghostNodeGrid(node.widgetTypes.length)
+            return intersects(selectionRect, { x: node.x, y: node.y, width: grid.width, height: grid.height })
+          })
+          .map((node) => node.id)
+        if (hitNodeIds.length > 0) state.addGhostNodesToSelection(hitNodeIds)
+      }
     } else if (activeGesture === 'zoom-region' && gestureStart && latestPoint && hasPassedThreshold) {
       const { pan, zoom } = cameraEngine.getFrame()
       const worldA = screenToWorld(gestureStart, { x: pan.x, y: pan.y, zoom })

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { Connection } from '../types/circuit'
 import { isValidConnectionShape, suggestTransform } from '../types/circuit'
-import type { ChecklistData, CounterData, ModuleData, ModuleType, ProgressData, Widget, WorldClockData } from '../types/spatial'
+import type { ChecklistData, CounterData, ModuleData, ModuleType, ProgressData, TextInputData, Widget, WorldClockData } from '../types/spatial'
 import { commandsFor, fieldDescriptor } from '../widgets/fields'
 import {
   buildConnectionIndex,
@@ -309,7 +309,7 @@ describe('trigger wires', () => {
   })
 
   it('delivers the source value as the command payload (single-wire add-item)', () => {
-    const source = widget('text_input', { label: '', value: '', placeholder: '' } as never)
+    const source = widget('text_input', { label: '', value: '', placeholder: '', multiline: false } as TextInputData)
     const checklist = widget('checklist', { items: [] } as ChecklistData)
     const connection = wire({
       fromId: source.id,
@@ -321,7 +321,7 @@ describe('trigger wires', () => {
     })
     const memory = new Map<string, DeliveryState>()
     waveOnce(record([source, checklist]), [connection], [source.id], memory) // baseline ""
-    const typed = { ...source, data: { label: '', value: 'Buy milk', placeholder: '' } }
+    const typed = { ...source, data: { label: '', value: 'Buy milk', placeholder: '', multiline: false } as TextInputData }
     const { result } = waveOnce(record([typed, checklist]), [connection], [source.id], memory)
     const written = result.writes.get(checklist.id) as ChecklistData
     expect(written.items).toHaveLength(1)
@@ -329,7 +329,7 @@ describe('trigger wires', () => {
   })
 
   it('applies the wire transform to the payload before the command reads it', () => {
-    const source = widget('text_input', { label: '', value: '', placeholder: '' } as never)
+    const source = widget('text_input', { label: '', value: '', placeholder: '', multiline: false } as TextInputData)
     const checklist = widget('checklist', { items: [] } as ChecklistData)
     const connection = wire({
       fromId: source.id,
@@ -342,7 +342,7 @@ describe('trigger wires', () => {
     })
     const memory = new Map<string, DeliveryState>()
     waveOnce(record([source, checklist]), [connection], [source.id], memory)
-    const typed = { ...source, data: { label: '', value: 'Buy milk', placeholder: '' } }
+    const typed = { ...source, data: { label: '', value: 'Buy milk', placeholder: '', multiline: false } as TextInputData }
     const { result } = waveOnce(record([typed, checklist]), [connection], [source.id], memory)
     const written = result.writes.get(checklist.id) as ChecklistData
     expect(written.items[0]?.label).toBe('[wired] Buy milk')

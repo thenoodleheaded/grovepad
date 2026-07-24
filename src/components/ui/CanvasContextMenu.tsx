@@ -1,5 +1,5 @@
 import { useEffect, useState, type RefObject } from 'react'
-import { Image, Layers, Network, SquarePlus } from 'lucide-react'
+import { Image, Network, SquarePlus } from 'lucide-react'
 import { useCanvasStore } from '../../store/useCanvasStore'
 import { useOverlayLifecycle } from '../../store/useOverlayStore'
 import { useWidgetStore } from '../../store/useWidgetStore'
@@ -64,27 +64,9 @@ export function CanvasContextMenu({ viewportRef }: CanvasContextMenuProps) {
       />
       <div
         data-canvas-ui
-        className="gp-menu gp-pop gp-panel fixed z-50 w-52 origin-top-left rounded-2xl p-1.5 shadow-2xl"
+        className="gp-popup-menu gp-menu gp-pop gp-panel fixed z-50 w-52 origin-top-left rounded-2xl p-1.5 shadow-2xl"
         style={{ left: position.x, top: position.y }}
       >
-        {menu.selectedCount >= 2 && (
-          <>
-            <button
-              type="button"
-              onClick={() => {
-                const { selectedIds, createGroup, clearSelection } = useWidgetStore.getState()
-                createGroup([...selectedIds])
-                clearSelection()
-                setMenu(null)
-              }}
-              className="gp-menu-item flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-neutral-300 hover:bg-neutral-700/60"
-            >
-              <Layers size={12} className="text-indigo-400" aria-hidden />
-              Group {menu.selectedCount} selected
-            </button>
-            <div className="my-1 border-t border-neutral-800" />
-          </>
-        )}
         <button
           type="button"
           onClick={() => {

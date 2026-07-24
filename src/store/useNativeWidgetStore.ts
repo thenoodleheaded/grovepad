@@ -2,7 +2,7 @@ import { create } from 'zustand'
 
 const STORAGE_KEY = 'grovepad:native-note-widget:v1'
 
-export type NativeWidgetSyncStatus = 'idle' | 'syncing' | 'synced' | 'unsupported' | 'error'
+type NativeWidgetSyncStatus = 'idle' | 'syncing' | 'synced' | 'unsupported' | 'error'
 
 interface NativeWidgetState {
   /** Device-local choice: native home-screen placement is not board data. */

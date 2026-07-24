@@ -51,7 +51,7 @@ function buildReport(entries: ScaleDebugEntry[], snapshot: ScaleDebugSnapshot[])
       `live=${s.liveSizing ? `${s.liveSizing.minWidth ?? '-'}x${s.liveSizing.minHeight ?? '-'}` : 'none'} ` +
       `dataFloor=${fmtSize(s.dataFloor)} dom=${fmtSize(s.domSizePx)} domDelta=${s.domStoreDeltaWorldPx ? fmtSize(s.domStoreDeltaWorldPx) : 'none'} ` +
       `natural=${s.naturalContentHeight ?? '-'} scrollH=${s.uiScrollHeight ?? '-'} clientH=${s.uiClientHeight ?? '-'} overflowY=${s.overflowY ?? '-'} ` +
-      `collapsed=${s.collapsed} iconified=${s.iconified} locked=${s.locked} mounted=${s.mounted} ` +
+      `iconified=${s.iconified} locked=${s.locked} mounted=${s.mounted} ` +
       `— [${s.anomalies.join(', ')}]`,
     )
   }
@@ -128,7 +128,7 @@ export function ScaleDebugPanel() {
   return (
     <div
       data-canvas-ui
-      className="gp-dialog gp-panel absolute right-4 top-28 z-10 flex w-[520px] max-w-[calc(100vw-2rem)] select-none flex-col overflow-hidden rounded-2xl shadow-xl"
+      className="gp-popup-surface gp-dialog gp-panel absolute right-4 top-28 z-10 flex w-[520px] max-w-[calc(100vw-2rem)] select-none flex-col overflow-hidden rounded-2xl shadow-xl"
     >
       <div className="flex items-center gap-2 border-b gp-hairline px-3 py-2  text-xs text-neutral-400">
         <Ruler size={13} className={anomalyCount > 0 ? 'text-red-400' : 'text-emerald-400'} aria-hidden />
@@ -201,7 +201,6 @@ export function ScaleDebugPanel() {
                   {s.mounted && <span>dom {fmtSize(s.domSizePx)}</span>}
                   {s.naturalContentHeight !== null && <span>natural {Math.round(s.naturalContentHeight)}</span>}
                   {s.overflowY !== null && s.overflowY > 0 && <span>overflowY {Math.round(s.overflowY)}</span>}
-                  {s.collapsed && <span>pill</span>}
                   {s.iconified && <span>icon</span>}
                   {s.locked && <span>locked</span>}
                   {!s.mounted && <span>unmounted</span>}

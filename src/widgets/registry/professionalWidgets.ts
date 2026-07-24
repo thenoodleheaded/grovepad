@@ -27,6 +27,7 @@ export const PROFESSIONAL_WIDGET_DEFINITIONS = {
     icon: List,
     category: 'notes',
     accent: '#60a5fa',
+    restingFace: true,
     defaultSize: { width: 360, height: C * 6 },
     defaultData: () => ({
       items: [{ id: uid(), text: 'First idea', depth: 0, collapsed: false }],
@@ -39,6 +40,7 @@ export const PROFESSIONAL_WIDGET_DEFINITIONS = {
     icon: ClipboardList,
     category: 'data',
     accent: '#2dd4bf',
+    restingFace: true,
     defaultSize: { width: 400, height: C * 7 },
     defaultData: () => ({
       title: 'Quick form',
@@ -52,6 +54,7 @@ export const PROFESSIONAL_WIDGET_DEFINITIONS = {
     icon: CalendarRange,
     category: 'planning',
     accent: '#7dd3fc',
+    restingFace: true,
     defaultSize: { width: 360, height: C * 7 },
     defaultData: () => ({
       date: todayISO(),
@@ -65,6 +68,7 @@ export const PROFESSIONAL_WIDGET_DEFINITIONS = {
     icon: Workflow,
     category: 'planning',
     accent: '#a3e635',
+    restingFace: true,
     defaultSize: { width: 360, height: C * 6 },
     defaultData: () => ({
       steps: [{ id: uid(), label: 'First step', status: 'active' }],
@@ -77,6 +81,7 @@ export const PROFESSIONAL_WIDGET_DEFINITIONS = {
     icon: ShieldAlert,
     category: 'planning',
     accent: '#fb7185',
+    restingFace: true,
     defaultSize: { width: 440, height: C * 6 },
     defaultData: () => ({
       items: [
@@ -98,6 +103,7 @@ export const PROFESSIONAL_WIDGET_DEFINITIONS = {
     icon: Grid2x2,
     category: 'planning',
     accent: '#c084fc',
+    restingFace: true,
     defaultSize: { width: 440, height: C * 6 },
     defaultData: () => ({
       criteria: [{ id: uid(), label: 'Value', weight: 1 }],
@@ -114,6 +120,7 @@ export const PROFESSIONAL_WIDGET_DEFINITIONS = {
     icon: Columns3,
     category: 'planning',
     accent: '#f59e0b',
+    restingFace: true,
     defaultSize: { width: 400, height: C * 6 },
     defaultData: () => ({ strengths: [''], weaknesses: [''], opportunities: [''], threats: [''] }),
   },
@@ -124,6 +131,7 @@ export const PROFESSIONAL_WIDGET_DEFINITIONS = {
     icon: Timer,
     category: 'tracking',
     accent: '#22d3ee',
+    restingFace: true,
     defaultSize: { width: 400, height: C * 6 },
     defaultData: () => ({
       currency: '$',
@@ -138,6 +146,7 @@ export const PROFESSIONAL_WIDGET_DEFINITIONS = {
     icon: Package,
     category: 'tracking',
     accent: '#facc15',
+    restingFace: true,
     defaultSize: { width: 400, height: C * 6 },
     defaultData: () => ({
       items: [{ id: uid(), name: 'Item', quantity: 1, minimum: 0, unit: 'pcs' }],
@@ -150,6 +159,7 @@ export const PROFESSIONAL_WIDGET_DEFINITIONS = {
     icon: BookMarked,
     category: 'notes',
     accent: '#94a3b8',
+    restingFace: true,
     defaultSize: { width: 360, height: C * 6 },
     defaultData: () => ({
       entries: [{ id: uid(), timestamp: new Date().toISOString(), text: 'First entry', level: 'note' }],
@@ -162,6 +172,7 @@ export const PROFESSIONAL_WIDGET_DEFINITIONS = {
     icon: ChartLine,
     category: 'data',
     accent: '#38bdf8',
+    restingFace: true,
     defaultSize: { width: 400, height: C * 6 },
     defaultData: () => ({
       title: 'Trend',
@@ -180,6 +191,7 @@ export const PROFESSIONAL_WIDGET_DEFINITIONS = {
     icon: ChartPie,
     category: 'data',
     accent: '#f472b6',
+    restingFace: true,
     defaultSize: { width: 360, height: C * 7 },
     defaultData: () => ({
       title: 'Breakdown',
@@ -197,6 +209,7 @@ export const PROFESSIONAL_WIDGET_DEFINITIONS = {
     icon: ArrowLeftRight,
     category: 'data',
     accent: '#34d399',
+    restingFace: true,
     defaultSize: { width: 320, height: C * 5 },
     defaultData: () => ({ category: 'length', value: 1, from: 'm', to: 'ft', precision: 2 }),
   },

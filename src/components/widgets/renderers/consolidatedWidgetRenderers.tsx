@@ -130,7 +130,7 @@ export const consolidatedWidgetRendererFamily: WidgetRendererFamily = {
         const diagram: ExcalidrawData = data.diagram ?? { elements: [], appState: {}, files: [], updatedAt: new Date().toISOString() }
         return <ExcalidrawWidget data={diagram} widgetId={widget.id} title={widget.title} onChange={(next) => onUpdate({ ...data, diagram: next } as ModuleData)} />
       }
-      return <SketchpadWidget widgetId={widget.id} data={data} onChange={(next) => onUpdate({ ...data, ...next, mode: data.mode ?? 'ink' } as ModuleData)} />
+      return <SketchpadWidget data={data} onChange={(next) => onUpdate({ ...data, ...next, mode: data.mode ?? 'ink' } as ModuleData)} />
     },
 
     goal_tracker: ({ widget, onUpdate }) => {

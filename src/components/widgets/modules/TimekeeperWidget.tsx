@@ -3,8 +3,8 @@ import { PomodoroWidget } from './PomodoroWidget'
 import { StopwatchWidget } from './StopwatchWidget'
 import { TimerWidget } from './TimerWidget'
 
-// Mode switching lives in the card's mode pill (WidgetModePill), not here —
-// this renderer only shows the sub-widget for the active mode.
+// Which skin a Timer wears is chosen from the card's title roller
+// (WidgetSkinRoller), not here — this renderer only shows the worn one.
 export function TimekeeperWidget({ data, onChange }: { data: TimekeeperData; onChange: (data: TimekeeperData) => void }) {
   return <div className="h-full">
     {data.mode==='countdown'&&<TimerWidget data={data.countdown} onChange={countdown=>onChange({...data,countdown})}/>}

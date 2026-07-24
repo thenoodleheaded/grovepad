@@ -1,9 +1,9 @@
 export const GHOST_ICON_SIZE = 28
-export const GHOST_ICON_GAP = 4
-export const GHOST_NODE_PADDING = 6
-export const GHOST_EMPTY_SIZE = 40
+const GHOST_ICON_GAP = 4
+const GHOST_NODE_PADDING = 6
+const GHOST_EMPTY_SIZE = 40
 
-export interface GhostIconPlacement {
+interface GhostIconPlacement {
   x: number
   y: number
 }

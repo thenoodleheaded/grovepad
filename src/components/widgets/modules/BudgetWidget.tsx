@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Plus, X } from 'lucide-react'
 import type { BudgetData } from '../../../types/spatial'
-import { useFieldAnchor } from '../../../hooks/useFieldAnchor'
 import { parseBudgetAmount } from '../../../utils/widgetValueValidation'
 
 interface BudgetWidgetProps {
@@ -54,7 +53,6 @@ function BudgetAmountInput({ id, label, value, onCommit }: { id: string; label: 
 
 export function BudgetWidget({ data, onChange }: BudgetWidgetProps) {
   const total = data.items.reduce((sum, item) => sum + item.amount, 0)
-  const totalRowRef = useFieldAnchor('total')
   const maxAmount = Math.max(...data.items.map((i) => Math.abs(i.amount)), 1)
 
   const setLabel = (id: string, label: string) =>
@@ -131,7 +129,7 @@ export function BudgetWidget({ data, onChange }: BudgetWidgetProps) {
 
       {/* Total row — 40px with strong accent. Field wires for `total`
           anchor here, so the wire points at the figure itself. */}
-      <div ref={totalRowRef} className="flex h-10 items-center justify-between border-t gp-hairline">
+      <div className="flex h-10 items-center justify-between border-t gp-hairline">
         <span className="text-[11px] font-medium uppercase tracking-wider text-neutral-600">
           Total
         </span>

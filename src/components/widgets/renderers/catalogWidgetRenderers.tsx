@@ -35,9 +35,12 @@ export const atlasWidgetRendererFamily: WidgetRendererFamily = {
     ...renderersForTypes(ATLAS_TYPES, (type: AtlasType, { widget, onUpdate }) => (
       <AtlasWidget type={type} data={widget.data as AtlasWidgetData} onChange={onUpdate} />
     )),
+    // The Tracker's skin — which Atlas preset it wears — is chosen from the
+    // card's title roller, exactly like every other widget. It has no
+    // in-card picker of its own.
     tracker: ({ widget, onUpdate }) => {
       const data = widget.data as AtlasWidgetData
-      return <AtlasWidget type={atlasModeFor(data)} data={data} onChange={onUpdate} showModePicker />
+      return <AtlasWidget type={atlasModeFor(data)} data={data} onChange={onUpdate} />
     },
   },
 }

@@ -82,7 +82,20 @@ export class SupabaseCollaborationRepository {
       .eq('canvas_id', canvasId)
       .single<{ canvas_id: string; name: string; owner_id: string }>()
     throwIfError(result.error)
-    return { canvasId: result.data!.canvas_id, name: result.data!.name, ownerId: result.data!.owner_id }
+    return {
+      canvasId: result.data!.canvas_id,
+      name: result.data!.name,
+      ownerId: result.data!.owner_id,
+    }
+  }
+
+  /**
+   * Owner-only. Cascades to members, CRDT document/updates, and comments, so
+   * everyone previously invited loses access. The local board is untouched.
+   */
+  async deleteCanvasCollaboration(canvasId: string): Promise<void> {
+    const result = await this.client.rpc('delete_canvas_collaboration', { p_canvas_id: canvasId })
+    throwIfError(result.error)
   }
 
   async fetchUpdates(canvasId: string, afterSequence: number): Promise<CollaborationBootstrap['updates']> {
@@ -187,8 +200,14 @@ export class SupabaseCollaborationRepository {
     throwIfError(result.error)
   }
 
-  channel(canvasId: string, presenceKey: string): RealtimeChannel {
+  channel(canvasId: string): RealtimeChannel {
     return this.client.channel(`canvas:${canvasId}`, {
+      config: { private: true, broadcast: { ack: true, self: false } },
+    })
+  }
+
+  awarenessChannel(canvasId: string, presenceKey: string): RealtimeChannel {
+    return this.client.channel(`awareness:${canvasId}`, {
       config: { private: true, broadcast: { ack: true, self: false }, presence: { key: presenceKey } },
     })
   }

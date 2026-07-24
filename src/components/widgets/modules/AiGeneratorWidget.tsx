@@ -4,7 +4,6 @@ import { generateWidgetOutput } from '../../../services/widgetGeneration'
 import { useWidgetStore } from '../../../store/useWidgetStore'
 import { useToastStore } from '../../../store/useToastStore'
 import type { AiGeneratorData } from '../../../types/spatial'
-import { useFieldAnchor } from '../../../hooks/useFieldAnchor'
 
 interface AiGeneratorWidgetProps {
   data: AiGeneratorData
@@ -33,9 +32,6 @@ export function AiGeneratorWidget({ data, widgetId, onChange }: AiGeneratorWidge
   const requestRef = useRef<AbortController | null>(null)
   const mountedRef = useRef(false)
   const [isGenerating, setIsGenerating] = useState(false)
-  const promptRef = useFieldAnchor<HTMLTextAreaElement>('prompt')
-  const doneRef = useFieldAnchor<HTMLButtonElement>('done')
-
   useEffect(() => {
     mountedRef.current = true
     return () => {
@@ -81,7 +77,7 @@ export function AiGeneratorWidget({ data, widgetId, onChange }: AiGeneratorWidge
     <div className="gp-bare-field flex h-full flex-col gap-2">
       {/* Multi-line prompt textarea */}
       <textarea
-        ref={promptRef}
+
         rows={3}
         value={data.prompt}
         placeholder="Describe what to generate…"
@@ -98,7 +94,7 @@ export function AiGeneratorWidget({ data, widgetId, onChange }: AiGeneratorWidge
 
       {/* Generate button — full-width, prominent */}
       <button
-        ref={doneRef}
+
         type="button"
         disabled={isGenerating || !data.prompt.trim()}
         onClick={() => void generate()}

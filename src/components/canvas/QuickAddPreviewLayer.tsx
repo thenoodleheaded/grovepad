@@ -1,9 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { ChevronLeft, ChevronRight, CornerDownLeft, Sparkles } from 'lucide-react'
 import { useQuickAddPreviewStore } from '../../store/useQuickAddPreviewStore'
-import type { ThoughtPlan } from '../../utils/thoughtInterpreter'
-import { layoutThoughtPlan, layoutWidth, type PlanNodeSize } from '../../utils/planLayout'
 import { widgetDefinition } from '../../widgets/registry'
+import {
+  buildPreviewScene,
+  PREVIEW_CHIP_HEIGHT,
+  PREVIEW_CHIP_WIDTH,
+  PREVIEW_PILL_GAP,
+  type PreviewChip,
+  type PreviewScene,
+} from './quickAddPreviewScene'
 
 /**
  * Blueprint preview — the living tree under the Quick Add bar.
@@ -20,152 +26,14 @@ import { widgetDefinition } from '../../widgets/registry'
  * so it pans and zooms with the board.
  */
 
-const CHIP_W = 208
-const CHIP_H = 64
-const PILL_GAP = 44
-
-interface ChipVisual {
-  key: string
-  temporaryId: string
-  title: string
-  widgetType: ThoughtPlan['nodes'][number]['widgetType']
-  x: number
-  y: number
-  depth: number
-  siblingIndex: number
-}
-
-interface RopeVisual {
-  key: string
-  d: string
-  blocker: boolean
-}
-
-interface BandVisual {
-  key: string
-  x: number
-  y: number
-  width: number
-  height: number
-  label?: string
-}
-
-interface Scene {
-  chips: ChipVisual[]
-  ropes: RopeVisual[]
-  bands: BandVisual[]
-  width: number
-  height: number
-}
-
-function chipKeys(plan: ThoughtPlan): Map<string, string> {
-  const seen = new Map<string, number>()
-  const keys = new Map<string, string>()
-  for (const node of plan.nodes) {
-    const base = `${node.widgetType}|${node.title.trim().toLowerCase()}`
-    const count = seen.get(base) ?? 0
-    seen.set(base, count + 1)
-    keys.set(node.temporaryId, count === 0 ? base : `${base}#${count}`)
-  }
-  return keys
-}
-
-function buildScene(plan: ThoughtPlan, anchor: { x: number; y: number }): Scene {
-  const sizes: Record<string, PlanNodeSize> = {}
-  for (const node of plan.nodes) sizes[node.temporaryId] = { width: CHIP_W, height: CHIP_H }
-  const positions = layoutThoughtPlan(plan, sizes)
-  const width = layoutWidth(positions, sizes)
-  const left = anchor.x - width / 2
-  const keys = chipKeys(plan)
-
-  const depthOf = new Map<string, number>()
-  const parentOf = new Map<string, string>()
-  for (const relation of plan.relations) {
-    if (relation.type === 'parent' && !parentOf.has(relation.toTemporaryId)) {
-      parentOf.set(relation.toTemporaryId, relation.fromTemporaryId)
-    }
-  }
-  const depthFor = (id: string, hops = 0): number => {
-    const cached = depthOf.get(id)
-    if (cached !== undefined) return cached
-    const parent = parentOf.get(id)
-    const depth = parent && parent !== id && hops < 12 ? depthFor(parent, hops + 1) + 1 : 0
-    depthOf.set(id, depth)
-    return depth
-  }
-
-  const siblingCounters = new Map<string, number>()
-  const chips: ChipVisual[] = plan.nodes.map((node) => {
-    const position = positions[node.temporaryId] ?? { x: 0, y: 0 }
-    const depth = depthFor(node.temporaryId)
-    const parent = parentOf.get(node.temporaryId) ?? '__root__'
-    const siblingIndex = siblingCounters.get(parent) ?? 0
-    siblingCounters.set(parent, siblingIndex + 1)
-    return {
-      key: keys.get(node.temporaryId)!,
-      temporaryId: node.temporaryId,
-      title: node.title,
-      widgetType: node.widgetType,
-      x: left + position.x,
-      y: anchor.y + position.y,
-      depth,
-      siblingIndex,
-    }
-  })
-  const chipByTempId = new Map(chips.map((chip) => [chip.temporaryId, chip]))
-
-  const ropes: RopeVisual[] = []
-  for (const relation of plan.relations) {
-    if (relation.type !== 'parent' && relation.type !== 'blocker') continue
-    const from = chipByTempId.get(relation.fromTemporaryId)
-    const to = chipByTempId.get(relation.toTemporaryId)
-    if (!from || !to) continue
-    const x1 = from.x + CHIP_W / 2
-    const y1 = from.y + CHIP_H
-    const x2 = to.x + CHIP_W / 2
-    const y2 = to.y
-    if (y2 <= y1) continue
-    const bend = Math.min(36, (y2 - y1) / 2)
-    ropes.push({
-      key: `${from.key}->${to.key}`,
-      d: `M ${x1} ${y1} C ${x1} ${y1 + bend}, ${x2} ${y2 - bend}, ${x2} ${y2}`,
-      blocker: relation.type === 'blocker',
-    })
-  }
-
-  const bands: BandVisual[] = []
-  for (const group of plan.groups) {
-    const members = group.memberTemporaryIds
-      .map((id) => chipByTempId.get(id))
-      .filter((chip): chip is ChipVisual => Boolean(chip))
-    if (members.length < 2) continue
-    const minX = Math.min(...members.map((chip) => chip.x))
-    const maxX = Math.max(...members.map((chip) => chip.x + CHIP_W))
-    const minY = Math.min(...members.map((chip) => chip.y))
-    const maxY = Math.max(...members.map((chip) => chip.y + CHIP_H))
-    bands.push({
-      key: `band:${members[0]!.key}`,
-      x: minX - 14,
-      y: minY - 14,
-      width: maxX - minX + 28,
-      height: maxY - minY + 28,
-      ...(group.label ? { label: group.label } : {}),
-    })
-  }
-
-  let maxY = anchor.y
-  for (const chip of chips) maxY = Math.max(maxY, chip.y + CHIP_H)
-  return { chips, ropes, bands, width, height: maxY - anchor.y }
-}
-
 /** Chips leaving the plan fold away instead of vanishing between frames. */
-function useLeavingChips(chips: ChipVisual[]): ChipVisual[] {
-  const previousRef = useRef<Map<string, ChipVisual>>(new Map())
-  const [leaving, setLeaving] = useState<ChipVisual[]>([])
+function useLeavingChips(chips: PreviewChip[]): PreviewChip[] {
+  const previousRef = useRef<Map<string, PreviewChip>>(new Map())
+  const [leaving, setLeaving] = useState<PreviewChip[]>([])
   const currentKeys = useMemo(() => new Set(chips.map((chip) => chip.key)), [chips])
 
   useEffect(() => {
-    const gone: ChipVisual[] = []
+    const gone: PreviewChip[] = []
     for (const [key, chip] of previousRef.current) {
       if (!currentKeys.has(key)) gone.push(chip)
     }
@@ -193,7 +61,7 @@ export function QuickAddPreviewLayer() {
 
   const candidate = candidates[index]
   const scene = useMemo(
-    () => (candidate && anchor ? buildScene(candidate.plan, anchor) : null),
+    () => (candidate && anchor ? buildPreviewScene(candidate.plan, anchor) : null),
     [candidate, anchor],
   )
   const leavingChips = useLeavingChips(scene?.chips ?? [])
@@ -208,7 +76,7 @@ export function QuickAddPreviewLayer() {
       {/* Header pill — names the template and how to commit it */}
       <div
         className="gp-bp-pill absolute flex items-center gap-2 whitespace-nowrap rounded-full border border-emerald-300/25 bg-neutral-950/85 py-1.5 pl-3 pr-3.5 text-[11px] text-neutral-300 shadow-xl backdrop-blur-sm"
-        style={{ left: anchor.x, top: anchor.y - PILL_GAP, transform: 'translateX(-50%)' }}
+        style={{ left: anchor.x, top: anchor.y - PREVIEW_PILL_GAP, transform: 'translateX(-50%)' }}
       >
         <Sparkles size={11} className={busy ? 'gp-bp-spin text-emerald-300' : 'text-emerald-300/90'} />
         <span className="max-w-64 truncate font-medium text-neutral-100">{candidate.label}</span>
@@ -238,21 +106,21 @@ export function QuickAddPreviewLayer() {
         )}
       </div>
 
-      {/* Group bands */}
-      {scene.bands.map((band) => (
-        <div
-          key={band.key}
-          className="gp-bp-band absolute rounded-2xl"
-          style={{ left: band.x, top: band.y, width: band.width, height: band.height }}
-        >
-          {band.label && (
-            <span className="absolute -top-2.5 left-3 rounded-full bg-neutral-950/90 px-2 text-[9px] font-medium text-emerald-300/70">
-              {band.label}
-            </span>
-          )}
-        </div>
-      ))}
+      <BlueprintSceneView scene={scene} leavingChips={leavingChips} busy={busy} />
+    </div>
+  )
+}
 
+/** Shared blueprint paint: connector ropes and dashed chips. Quick Add and
+ * the MCP connector preview both render proposed trees through this one
+ * component so ghost trees look identical regardless of source. */
+export function BlueprintSceneView({ scene, leavingChips = [], busy = false }: {
+  scene: PreviewScene
+  leavingChips?: PreviewChip[]
+  busy?: boolean
+}) {
+  return (
+    <>
       {/* Connector ropes */}
       <svg className="absolute overflow-visible" style={{ left: 0, top: 0 }}>
         {scene.ropes.map((rope) => (
@@ -279,8 +147,8 @@ export function QuickAddPreviewLayer() {
             style={{
               left: chip.x,
               top: chip.y,
-              width: CHIP_W,
-              height: CHIP_H,
+              width: PREVIEW_CHIP_WIDTH,
+              height: PREVIEW_CHIP_HEIGHT,
               animationDelay: closing ? '0ms' : `${Math.min(560, chip.depth * 90 + chip.siblingIndex * 45)}ms`,
             }}
           >
@@ -297,6 +165,6 @@ export function QuickAddPreviewLayer() {
           </div>
         )
       })}
-    </div>
+    </>
   )
 }

@@ -1,6 +1,5 @@
 import { CalendarClock, Plus, Users, X } from 'lucide-react'
 import type { MeetingNotesData } from '../../../types/spatial'
-import { useFieldAnchor } from '../../../hooks/useFieldAnchor'
 
 interface MeetingNotesWidgetProps {
   data: MeetingNotesData
@@ -9,8 +8,6 @@ interface MeetingNotesWidgetProps {
 
 /** Structured meeting record — date, attendees, notes, and action items. */
 export function MeetingNotesWidget({ data, onChange }: MeetingNotesWidgetProps) {
-  const actionsDoneRef = useFieldAnchor<HTMLParagraphElement>('actions_done')
-
   const setAction = (id: string, patch: Partial<MeetingNotesData['actions'][number]>) =>
     onChange({
       ...data,
@@ -61,7 +58,7 @@ export function MeetingNotesWidget({ data, onChange }: MeetingNotesWidgetProps) 
 
       <div className="shrink-0">
         <p
-          ref={actionsDoneRef}
+
           className="pb-1 text-[9px] font-semibold uppercase tracking-widest text-neutral-600"
         >
           Action items

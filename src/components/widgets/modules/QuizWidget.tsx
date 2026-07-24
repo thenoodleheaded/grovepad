@@ -1,6 +1,5 @@
 import { Check, Plus, RotateCcw, X } from 'lucide-react'
 import type { QuizData } from '../../../types/spatial'
-import { useFieldAnchor } from '../../../hooks/useFieldAnchor'
 
 interface QuizWidgetProps {
   data: QuizData
@@ -15,8 +14,6 @@ export function QuizWidget({ data, onChange }: QuizWidgetProps) {
   const answered = data.picked !== null
   const pickedOption = data.options.find((o) => o.id === data.picked)
   const gotItRight = pickedOption?.correct === true
-  const verdictRef = useFieldAnchor<HTMLDivElement>('correct')
-
   const setOption = (id: string, patch: Partial<QuizData['options'][number]>) =>
     onChange({ ...data, picked: null, options: data.options.map((o) => (o.id === id ? { ...o, ...patch } : o)) })
 
@@ -106,7 +103,7 @@ export function QuizWidget({ data, onChange }: QuizWidgetProps) {
         })}
       </div>
 
-      <div ref={verdictRef} className="flex h-8 shrink-0 items-center justify-between">
+      <div className="flex h-8 shrink-0 items-center justify-between">
         {answered ? (
           <>
             <span className={`text-[11px] font-semibold ${gotItRight ? 'text-emerald-400' : 'text-red-400'}`}>

@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { createPortal } from 'react-dom'
 import { CloudOff, History, LogIn, LogOut, Package, RefreshCw, Upload, UserRound } from 'lucide-react'
 import { supabaseConfigured } from '../../lib/supabase'
-import { useAuthStore } from '../../store/useAuthStore'
+import { accountDisplayName, accountProfileColor, useAuthStore } from '../../store/useAuthStore'
 import { useOverlayLifecycle } from '../../store/useOverlayStore'
 import { belowAnchor } from '../../utils/popoverPosition'
 import { useWidgetStore } from '../../store/useWidgetStore'
@@ -47,7 +47,9 @@ export function AccountChip() {
   }, [open])
 
   const email = session?.user.email ?? ''
-  const initial = email ? email[0]!.toUpperCase() : null
+  const profileName = accountDisplayName(session)
+  const profileColor = accountProfileColor(session)
+  const initial = session ? profileName[0]!.toUpperCase() : null
 
   const openMenu = () => {
     const rect = anchorRef.current?.getBoundingClientRect()
@@ -120,14 +122,11 @@ export function AccountChip() {
         aria-haspopup="menu"
         aria-expanded={open}
         onClick={() => (open ? setOpen(false) : openMenu())}
-        className={`gp-touch-target relative flex h-7 w-7 items-center justify-center rounded-full border text-[11px] font-semibold transition-all hover:scale-105 active:scale-95 ${
-          session
-            ? 'border-emerald-400/40 bg-emerald-400/15 text-emerald-300'
-            : 'border-neutral-600 bg-neutral-800/80 text-neutral-400 hover:text-neutral-200'
-        }`}
+        className="gp-canvas-frosted-control gp-touch-target relative my-1 flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-[11px] border-0 text-[11px] font-semibold transition-[background-color,color,transform] active:scale-[0.97]"
+        style={{ '--gp-frost-accent': profileColor } as CSSProperties}
       >
         {initial ?? <UserRound size={13} aria-hidden />}
-        <span aria-hidden className={`absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full border border-neutral-950 ${statusTone}`} />
+        <span aria-hidden className={`absolute bottom-1 right-1 h-2 w-2 rounded-full border border-neutral-950 ${statusTone}`} />
       </button>
       <span className="sr-only" role="status" aria-live="polite" aria-atomic="true">
         Storage status: {status.longLabel}
@@ -150,13 +149,14 @@ export function AccountChip() {
             />
             <div
               role="menu"
-              className="gp-account-menu gp-menu gp-pop gp-panel fixed z-[130] max-h-[80dvh] w-64 overflow-y-auto rounded-2xl p-1.5 shadow-2xl"
+              className="gp-account-menu gp-popup-menu gp-menu gp-pop gp-panel fixed z-[130] max-h-[80dvh] w-64 overflow-y-auto rounded-2xl p-1.5 shadow-2xl"
               style={{ left: anchor.x, top: anchor.y }}
             >
               <div className="px-3 py-2">
                 {session ? (
                   <>
-                    <p className="truncate text-xs font-medium text-neutral-200">{email}</p>
+                    <p className="truncate text-xs font-medium text-neutral-200">{profileName}</p>
+                    <p className="mt-0.5 truncate text-[9px] text-neutral-600">{email}</p>
                     <p className={`mt-0.5 flex items-center gap-1 text-[10px] ${status.tone === 'error' ? 'text-red-300' : status.tone === 'offline' ? 'text-amber-300' : status.tone === 'synced' ? 'text-emerald-400/90' : 'text-neutral-500'}`}>
                       <span aria-hidden className={`h-1.5 w-1.5 rounded-full ${statusTone}`} />
                       {status.longLabel} · {widgetCount} cards
@@ -212,17 +212,6 @@ export function AccountChip() {
                   <History size={12} aria-hidden />
                   Restore {snapshots[0].label ? `${snapshots[0].label} · ` : ''}{new Date(snapshots[0].createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </button>
-              )}
-              {session && supabaseConfigured && (
-                <label className="gp-touch-target mx-1.5 flex h-8 cursor-pointer items-center justify-between rounded-lg px-2 text-xs text-neutral-400 hover:bg-neutral-800 hover:text-neutral-200">
-                  Cloud sync
-                  <input
-                    type="checkbox"
-                    checked={syncEnabled}
-                    onChange={(event) => usePersistenceStatusStore.getState().setSyncEnabled(event.target.checked)}
-                    className="accent-emerald-400"
-                  />
-                </label>
               )}
               {session && supabaseConfigured && syncEnabled && (
                 <button

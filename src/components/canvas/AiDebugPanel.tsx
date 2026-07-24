@@ -67,7 +67,7 @@ export function AiDebugPanel() {
   return (
     <div
       data-canvas-ui
-      className="gp-dialog gp-panel absolute right-4 top-28 z-10 flex w-[400px] max-w-[calc(100vw-2rem)] select-none flex-col overflow-hidden rounded-2xl shadow-xl"
+      className="gp-popup-surface gp-dialog gp-panel absolute right-4 top-28 z-10 flex w-[400px] max-w-[calc(100vw-2rem)] select-none flex-col overflow-hidden rounded-2xl shadow-xl"
     >
       <div className="flex items-center gap-2 border-b gp-hairline px-3 py-2  text-xs text-neutral-400">
         <BrainCircuit size={13} className={pending > 0 ? 'text-amber-400' : 'text-emerald-400'} aria-hidden />

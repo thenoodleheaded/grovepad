@@ -1,12 +1,12 @@
 import type { NotesData, StickyNoteColor, Widget } from '../types/spatial'
 
-export const NATIVE_NOTE_WIDGET_SCHEMA_VERSION = 1 as const
-export const NATIVE_NOTE_WIDGET_TITLE_MAX = 120
+const NATIVE_NOTE_WIDGET_SCHEMA_VERSION = 1 as const
+const NATIVE_NOTE_WIDGET_TITLE_MAX = 120
 export const NATIVE_NOTE_WIDGET_TEXT_MAX = 4_096
 
 const NOTE_COLORS = new Set<StickyNoteColor>(['yellow', 'pink', 'blue', 'green', 'purple'])
 
-export interface NativeNoteWidgetNote {
+interface NativeNoteWidgetNote {
   id: string
   title: string
   text: string

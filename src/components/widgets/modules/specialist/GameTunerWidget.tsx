@@ -1,5 +1,4 @@
 import type { GameTunerData } from '../../../../types/spatial'
-import { useFieldAnchor } from '../../../../hooks/useFieldAnchor'
 
 interface GameTunerWidgetProps {
   data: GameTunerData
@@ -7,10 +6,6 @@ interface GameTunerWidgetProps {
 }
 
 export function GameTunerWidget({ data, onChange }: GameTunerWidgetProps) {
-  const gripRef = useFieldAnchor('grip')
-  const driftRef = useFieldAnchor('drift')
-  const stabilityRef = useFieldAnchor('stability')
-
   const updateAttribute = (key: keyof GameTunerData, value: number) => {
     onChange({ ...data, [key]: value })
   }
@@ -24,7 +19,7 @@ export function GameTunerWidget({ data, onChange }: GameTunerWidgetProps) {
 
       <div className="space-y-2.5">
         {/* Grip */}
-        <div ref={gripRef} className="space-y-1">
+        <div className="space-y-1">
           <div className="flex justify-between text-[11px]">
             <span className="text-neutral-400 font-medium">Grip Coefficient</span>
             <span className=" text-emerald-400">{data.grip}%</span>
@@ -41,7 +36,7 @@ export function GameTunerWidget({ data, onChange }: GameTunerWidgetProps) {
         </div>
 
         {/* Drift */}
-        <div ref={driftRef} className="space-y-1">
+        <div className="space-y-1">
           <div className="flex justify-between text-[11px]">
             <span className="text-neutral-400 font-medium">Drift Yaw Angle</span>
             <span className=" text-amber-400">{data.drift}°</span>
@@ -58,7 +53,7 @@ export function GameTunerWidget({ data, onChange }: GameTunerWidgetProps) {
         </div>
 
         {/* Stability */}
-        <div ref={stabilityRef} className="space-y-1">
+        <div className="space-y-1">
           <div className="flex justify-between text-[11px]">
             <span className="text-neutral-400 font-medium">Suspension Stability</span>
             <span className=" text-sky-400">{data.stability}%</span>

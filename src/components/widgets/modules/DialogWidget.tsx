@@ -1,6 +1,5 @@
 import { Plus, X } from 'lucide-react'
 import type { DialogData, DialogLine } from '../../../types/spatial'
-import { useFieldAnchor } from '../../../hooks/useFieldAnchor'
 
 interface DialogWidgetProps {
   data: DialogData
@@ -17,7 +16,6 @@ const CHAR_COLORS = [
 
 /** Screenplay-style character / cue blocks. */
 export function DialogWidget({ data, onChange }: DialogWidgetProps) {
-  const lineCountRef = useFieldAnchor('line_count')
   // Build a stable character → color map (by first appearance order)
   const charColorMap = new Map<string, string>()
   let colorIndex = 0
@@ -90,7 +88,7 @@ export function DialogWidget({ data, onChange }: DialogWidgetProps) {
       </div>
 
       {/* Add line */}
-      <div ref={lineCountRef} className="mt-auto flex items-center justify-center pt-2">
+      <div className="mt-auto flex items-center justify-center pt-2">
         <button
           type="button"
           onClick={addLine}

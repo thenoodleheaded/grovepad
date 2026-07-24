@@ -31,7 +31,6 @@ function supportsMagneticHover(sample: PointerSample): boolean {
     !window.matchMedia('(prefers-reduced-motion: reduce)').matches &&
     document.documentElement.dataset.motion !== 'reduced' &&
     document.documentElement.dataset.magneticHover !== 'off' &&
-    document.documentElement.dataset.visualQuality !== 'economy' &&
     !document.body.hasAttribute('data-widget-dragging') &&
     !document.body.hasAttribute('data-widget-resizing')
   )
@@ -162,6 +161,23 @@ export function useWidgetMagneticHover(
 
 
 
+  /**
+   * Pin the card where it currently sits. A press must never be invalidated
+   * by decorative motion: while the magnetic offset is still easing toward
+   * its target, a control under the cursor slides away between pointerdown
+   * and pointerup, the two land on different elements, and the browser fires
+   * `click` on their common ancestor — so the button silently does nothing.
+   * Freezing on press keeps whatever is under the finger under the finger.
+   */
+  const freeze = useCallback(() => {
+    const state = motion.current
+    if (!state.hovered && state.rafId === 0) return
+    cancelFrame()
+    state.targetX = state.currentX
+    state.targetY = state.currentY
+    cardRef.current?.removeAttribute('data-magnetic-active')
+  }, [cancelFrame, cardRef])
+
   const beginDrag = () => {
     const state = motion.current
     // Touch, coarse pointers, reduced motion, and a direct press that did not
@@ -181,6 +197,26 @@ export function useWidgetMagneticHover(
     card.setAttribute('data-magnetic-active', 'true')
     layout.setAttribute('data-magnetic-hover', 'true')
     layout.setAttribute('data-magnetic-drag', 'true')
+  }
+
+  /**
+   * Hold the lift exactly where it sits for the length of a gesture that is
+   * not a move — resizing, above all. Resetting instead snapped the card back
+   * to its unlifted position the moment a scale began, so the thing being
+   * scaled jumped out from under the pointer before it grew.
+   *
+   * Shares `dragging` with the move path deliberately: both mean "a gesture
+   * owns this card now, so stop steering the offset from pointer position".
+   */
+  const hold = () => {
+    const state = motion.current
+    if (disabled || !state.hovered) return
+    cancelFrame()
+    state.dragging = true
+    const card = cardRef.current
+    if (!card) return
+    card.style.translate = `${state.currentX.toFixed(2)}px ${state.currentY.toFixed(2)}px`
+    card.setAttribute('data-magnetic-active', 'true')
   }
 
   const endDrag = (sample?: PointerSample) => {
@@ -204,8 +240,7 @@ export function useWidgetMagneticHover(
     const onPreferences = () => {
       if (
         document.documentElement.dataset.motion === 'reduced' ||
-        document.documentElement.dataset.magneticHover === 'off' ||
-        document.documentElement.dataset.visualQuality === 'economy'
+        document.documentElement.dataset.magneticHover === 'off'
       ) {
         resetImmediately()
       }
@@ -223,6 +258,9 @@ export function useWidgetMagneticHover(
     leave,
     beginDrag,
     endDrag,
+    freeze,
+    hold,
+    release: endDrag,
     suspend: resetImmediately,
   }
 }

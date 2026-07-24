@@ -84,7 +84,7 @@ export function decisionWinner(data: DecisionMatrixData): { label: string; score
   return winner
 }
 
-export const CONVERSION_FACTORS = {
+const CONVERSION_FACTORS = {
   length: { mm: 0.001, cm: 0.01, m: 1, km: 1000, in: 0.0254, ft: 0.3048, yd: 0.9144, mi: 1609.344 },
   mass: { mg: 0.000001, g: 0.001, kg: 1, oz: 0.0283495, lb: 0.453592, t: 1000 },
   time: { ms: 0.001, s: 1, min: 60, h: 3600, day: 86400, week: 604800 },
@@ -103,4 +103,3 @@ export function convertedUnit(data: UnitConverterData): number {
   if (data.to === 'K') return celsius + 273.15
   return celsius
 }
-

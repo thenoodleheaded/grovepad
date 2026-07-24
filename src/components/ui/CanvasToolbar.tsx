@@ -10,26 +10,22 @@ import {
   ChevronsUpDown,
   CircuitBoard,
   Ellipsis,
-  FileUp,
-  Keyboard,
-  Moon,
-  Maximize2,
   Network,
   PanelLeft,
   Pencil,
   Plus,
+  Redo2,
   Search,
   Settings,
   SquarePlus,
-  Sun,
   Trash2,
-  Wind,
+  Undo2,
   Zap,
 } from 'lucide-react'
 import { useCanvasStore } from '../../store/useCanvasStore'
+import { useAdaptiveInputStore } from '../../store/useAdaptiveInputStore'
 import { useCircuitStore } from '../../store/useCircuitStore'
 import { useOverlayLifecycle } from '../../store/useOverlayStore'
-import { useThemeStore } from '../../store/useThemeStore'
 import { getCanvasPath, useWidgetStore } from '../../store/useWidgetStore'
 import { screenToWorld } from '../../types/spatial'
 import { IconButton } from './IconButton'
@@ -37,7 +33,6 @@ import { AccountChip } from './AccountChip'
 import { ConfirmDialog } from './ConfirmDialog'
 import { belowAnchor, clampPopover } from '../../utils/popoverPosition'
 import { useCanvasTreeStore } from '../../store/useCanvasTreeStore'
-import { useAdaptiveInputStore } from '../../store/useAdaptiveInputStore'
 import { useSettingsStore } from '../../store/useSettingsStore'
 import { canEditCollaborativeCanvas, useCollaborationStore } from '../../store/useCollaborationStore'
 
@@ -116,7 +111,7 @@ function WorkspaceDropdown() {
             />
             <div
               role="menu"
-              className="gp-workspace-menu gp-menu gp-pop gp-panel fixed z-[130] max-h-[min(70vh,420px)] w-64 origin-top-left overflow-y-auto rounded-2xl p-1.5 shadow-2xl"
+              className="gp-workspace-menu gp-popup-menu gp-menu gp-pop gp-panel fixed z-[130] max-h-[min(70vh,420px)] w-64 origin-top-left overflow-y-auto rounded-2xl p-1.5 shadow-2xl"
               style={{ left: anchor.x, top: anchor.y }}
             >
               <p className="px-3 pb-1 pt-1  text-[10px] uppercase tracking-widest text-neutral-500">
@@ -266,7 +261,7 @@ function WorkspaceDropdown() {
       <ConfirmDialog
         open={deleteTarget !== null}
         title={`Delete “${deleteTarget?.name ?? 'workspace'}”?`}
-        description="Every canvas, widget, connection, and group inside this workspace will be removed. You can immediately undo this from the confirmation toast."
+        description="Every canvas, widget, connection, and glue cluster inside this workspace will be removed. You can immediately undo this from the confirmation toast."
         confirmLabel="Delete workspace"
         destructive
         onClose={() => setDeleteTarget(null)}
@@ -335,11 +330,12 @@ function CanvasBreadcrumbs() {
 // Top bar
 // ---------------------------------------------------------------------------
 
-function ToolbarOverflow() {
+function ToolbarOverflow({ forceVisible = false }: { forceVisible?: boolean }) {
   const [open, setOpen] = useState(false)
   const anchorRef = useRef<HTMLButtonElement>(null)
   const [anchor, setAnchor] = useState({ x: 0, y: 0 })
-  const theme = useThemeStore((state) => state.theme)
+  const canUndo = useWidgetStore((state) => state.canUndo)
+  const canRedo = useWidgetStore((state) => state.canRedo)
 
   useOverlayLifecycle(open)
 
@@ -374,7 +370,9 @@ function ToolbarOverflow() {
         aria-haspopup="menu"
         aria-expanded={open}
         onClick={() => (open ? setOpen(false) : show())}
-        className="flex h-9 w-9 items-center justify-center rounded-xl text-neutral-400 transition-colors hover:bg-neutral-700/60 hover:text-white lg:hidden"
+        className={`h-9 w-9 items-center justify-center rounded-xl text-neutral-400 transition-colors hover:bg-neutral-700/60 hover:text-white ${
+          forceVisible ? 'flex' : 'flex md:hidden'
+        }`}
       >
         <Ellipsis size={16} aria-hidden />
       </button>
@@ -384,18 +382,9 @@ function ToolbarOverflow() {
             <div className="fixed inset-0 z-[120]" onPointerDown={() => setOpen(false)} />
             <div
               role="menu"
-              className="gp-menu gp-pop gp-panel fixed z-[130] w-52 overflow-hidden rounded-2xl p-1.5 shadow-2xl"
+              className="gp-popup-menu gp-menu gp-pop gp-panel fixed z-[130] w-52 overflow-hidden rounded-2xl p-1.5 shadow-2xl"
               style={{ left: anchor.x, top: anchor.y }}
             >
-              <button
-                type="button"
-                role="menuitem"
-                onClick={() => action(() => useCanvasTreeStore.getState().setOpen(true))}
-                className="flex h-9 w-full items-center gap-2.5 rounded-xl px-2.5 text-xs text-neutral-300 transition-colors hover:bg-neutral-800 sm:hidden"
-              >
-                <PanelLeft size={13} className="text-violet-300" aria-hidden />
-                Canvas tree
-              </button>
               <button
                 type="button"
                 role="menuitem"
@@ -409,63 +398,24 @@ function ToolbarOverflow() {
               <button
                 type="button"
                 role="menuitem"
-                onClick={() => action(() => useWidgetStore.getState().setImportOpen(true))}
-                className="flex h-9 w-full items-center gap-2.5 rounded-xl px-2.5 text-xs text-neutral-300 transition-colors hover:bg-neutral-800"
+                disabled={!canUndo}
+                onClick={() => action(() => useWidgetStore.getState().undo())}
+                className="flex h-9 w-full items-center gap-2.5 rounded-xl px-2.5 text-xs text-neutral-300 transition-colors hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-35"
               >
-                <FileUp size={13} className="text-emerald-300" aria-hidden />
-                Import document
+                <Undo2 size={13} aria-hidden />
+                Undo
               </button>
               <button
                 type="button"
                 role="menuitem"
-                onClick={() => action(() => {
-                  const next = !useCircuitStore.getState().circuitMode
-                  useCircuitStore.getState().setCircuitMode(next)
-                  useAdaptiveInputStore.getState().setInteractionMode(next ? 'connect' : 'navigate')
-                })}
-                className="flex h-9 w-full items-center gap-2.5 rounded-xl px-2.5 text-xs text-neutral-300 transition-colors hover:bg-neutral-800"
+                disabled={!canRedo}
+                onClick={() => action(() => useWidgetStore.getState().redo())}
+                className="flex h-9 w-full items-center gap-2.5 rounded-xl px-2.5 text-xs text-neutral-300 transition-colors hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-35"
               >
-                <CircuitBoard size={13} className="text-sky-400" aria-hidden />
-                Circuit mode
+                <Redo2 size={13} aria-hidden />
+                Redo
               </button>
               <div className="my-1 border-t gp-hairline" />
-              <button
-                type="button"
-                role="menuitem"
-                onClick={() => action(() => useWidgetStore.getState().untangleCanvas())}
-                className="flex h-9 w-full items-center gap-2.5 rounded-xl px-2.5 text-xs text-neutral-300 transition-colors hover:bg-neutral-800"
-              >
-                <Wind size={13} className="text-sky-400" aria-hidden />
-                Untangle layout
-              </button>
-              <button
-                type="button"
-                role="menuitem"
-                onClick={() => action(() => useWidgetStore.getState().autoScaleCanvas())}
-                className="flex h-9 w-full items-center gap-2.5 rounded-xl px-2.5 text-xs text-neutral-300 transition-colors hover:bg-neutral-800"
-              >
-                <Maximize2 size={13} className="text-amber-400" aria-hidden />
-                Auto-fit sizes
-              </button>
-              <div className="my-1 border-t gp-hairline" />
-              <button
-                type="button"
-                role="menuitem"
-                onClick={() => action(() => useThemeStore.getState().toggle())}
-                className="flex h-9 w-full items-center gap-2.5 rounded-xl px-2.5 text-xs text-neutral-300 transition-colors hover:bg-neutral-800"
-              >
-                {theme === 'dark' ? <Sun size={13} aria-hidden /> : <Moon size={13} aria-hidden />}
-                {theme === 'dark' ? 'Light theme' : 'Dark theme'}
-              </button>
-              <button
-                type="button"
-                role="menuitem"
-                onClick={() => action(() => useWidgetStore.getState().setShortcutsOpen(true))}
-                className="flex h-9 w-full items-center gap-2.5 rounded-xl px-2.5 text-xs text-neutral-300 transition-colors hover:bg-neutral-800"
-              >
-                <Keyboard size={13} aria-hidden />
-                Keyboard shortcuts
-              </button>
               <button
                 type="button"
                 role="menuitem"
@@ -485,26 +435,29 @@ function ToolbarOverflow() {
 
 /** Floating top bar: identity + navigation on the left, actions on the right. */
 export function CanvasToolbar() {
-  const circuitMode = useCircuitStore((state) => state.circuitMode)
-  const toggleCircuitMode = useCircuitStore((state) => state.toggleCircuitMode)
   const canGoBack = useCanvasStore((state) => state.canGoBack)
   const canGoForward = useCanvasStore((state) => state.canGoForward)
+  const viewportClass = useAdaptiveInputStore((state) => state.capabilities.viewportClass)
+  const circuitMode = useCircuitStore((state) => state.circuitMode)
   const collaborationRole = useCollaborationStore((state) => state.role)
   const canEdit = collaborationRole === null || canEditCollaborativeCanvas(collaborationRole)
-  const toggleCircuitExperience = () => {
+  const toggleCircuitMode = () => {
     const next = !useCircuitStore.getState().circuitMode
-    toggleCircuitMode()
+    useCircuitStore.getState().setCircuitMode(next)
     useAdaptiveInputStore.getState().setInteractionMode(next ? 'connect' : 'navigate')
   }
 
   return (
     <div
       data-canvas-ui
-      className="gp-safe-canvas-top pointer-events-none absolute z-30 flex items-start justify-between gap-2 sm:gap-3"
+      className="gp-canvas-ui-scale gp-safe-canvas-top pointer-events-none absolute z-30 flex items-start justify-between gap-2 sm:gap-3"
     >
-      {/* Left: account + identity + the one dropdown + breadcrumb trail */}
-      <div className="gp-toolbar gp-panel pointer-events-auto flex h-11 min-w-0 max-w-[calc(100vw-8.5rem)] select-none items-center gap-1 rounded-2xl px-1.5 shadow-xl sm:max-w-[calc(100vw-13rem)] sm:px-2 lg:max-w-[56vw]">
+      {/* Left: canvas tree + account + identity + workspace + breadcrumbs. */}
+      <div className="gp-toolbar gp-panel pointer-events-auto flex h-11 w-fit min-w-0 max-w-[calc(100vw-8.5rem)] flex-none select-none items-center gap-1 rounded-2xl px-1.5 shadow-xl sm:max-w-[calc(100vw-13rem)] sm:px-2 lg:max-w-[56vw]">
         <AccountChip />
+        <IconButton label="Open canvas tree" onClick={() => useCanvasTreeStore.getState().setOpen(true)}>
+          <PanelLeft size={13} aria-hidden />
+        </IconButton>
         <span className="hidden items-center gap-1.5 px-1.5 text-xs font-bold tracking-tight text-neutral-200 sm:inline-flex">
           <span
             aria-hidden
@@ -516,9 +469,7 @@ export function CanvasToolbar() {
             pad
           </span>
         </span>
-        <div className="hidden h-5 w-px bg-neutral-700/70 sm:block" aria-hidden />
         <WorkspaceDropdown />
-        <div className="hidden h-5 w-px bg-neutral-700/70 lg:block" aria-hidden />
         <div className="hidden items-center lg:flex">
           <IconButton label="Previous view (Alt+Left)" disabled={!canGoBack} onClick={() => useCanvasStore.getState().goBack()}>
             <ArrowLeft size={12} />
@@ -534,17 +485,12 @@ export function CanvasToolbar() {
 
       {/* Right: actions */}
       <div className="gp-toolbar gp-panel pointer-events-auto flex h-11 shrink-0 select-none items-center gap-0.5 rounded-2xl px-1 shadow-xl sm:gap-1 sm:px-1.5">
-        <span className="hidden sm:inline-flex">
-          <IconButton label="Open canvas tree" onClick={() => useCanvasTreeStore.getState().setOpen(true)}>
-            <PanelLeft size={13} aria-hidden />
-          </IconButton>
-        </span>
         <button
           type="button"
           disabled={!canEdit}
           onClick={() => useWidgetStore.getState().openAddWidget(viewCenterWorld())}
           title="Browse the widget library"
-          className="flex h-9 items-center gap-1.5 rounded-xl bg-gradient-to-br from-emerald-500/25 to-emerald-500/10 px-2.5 text-xs font-semibold text-emerald-300 shadow-[inset_0_0_0_1px_oklch(88%_0.31_136_/_0.28),0_0_16px_oklch(88%_0.31_136_/_0.10)] transition-[background-color,color,transform,box-shadow,scale] hover:from-emerald-500/35 hover:to-emerald-500/15 hover:text-emerald-200 hover:shadow-[inset_0_0_0_1px_oklch(88%_0.31_136_/_0.45),0_0_22px_oklch(88%_0.31_136_/_0.22)] active:scale-[0.96] disabled:cursor-not-allowed disabled:opacity-35"
+          className="gp-canvas-frosted-control flex h-9 items-center gap-1.5 rounded-xl border-0 px-2.5 text-xs font-semibold text-emerald-300 transition-[background-color,color,transform,scale] hover:text-emerald-200 active:scale-[0.96] disabled:cursor-not-allowed disabled:opacity-35"
         >
           <SquarePlus size={13} aria-hidden />
           <span className="hidden sm:inline">Widget</span>
@@ -573,17 +519,14 @@ export function CanvasToolbar() {
           <Network size={13} aria-hidden />
           <span className="hidden xl:inline">Shape</span>
         </button>
-        <div className="hidden h-5 w-px bg-neutral-700/70 lg:block" aria-hidden />
-        <span className="hidden lg:inline-flex">
-          <IconButton
-            label={circuitMode ? 'Exit Circuit mode (W)' : 'Enter Circuit mode (W)'}
-            pressed={circuitMode}
-            disabled={!canEdit}
-            onClick={toggleCircuitExperience}
-          >
-            <CircuitBoard size={14} className={circuitMode ? 'text-sky-400' : undefined} />
-          </IconButton>
-        </span>
+        <IconButton
+          label={circuitMode ? 'Exit Circuit mode (W)' : 'Enter Circuit mode (W)'}
+          pressed={circuitMode}
+          disabled={!canEdit}
+          onClick={toggleCircuitMode}
+        >
+          <CircuitBoard size={14} className={circuitMode ? 'text-sky-400' : undefined} />
+        </IconButton>
         <span className="hidden sm:inline-flex">
           <IconButton
             label="Search (⌘K)"
@@ -592,14 +535,7 @@ export function CanvasToolbar() {
             <Search size={14} />
           </IconButton>
         </span>
-        <div className="hidden h-5 w-px bg-neutral-700/70 lg:block" aria-hidden />
-        <span className="hidden lg:inline-flex">
-          <IconButton
-            label="Keyboard shortcuts (?)"
-            onClick={() => useWidgetStore.getState().setShortcutsOpen(true)}
-          >
-            <Keyboard size={14} />
-          </IconButton>
+        <span className="hidden md:inline-flex">
           <IconButton
             label="Settings"
             onClick={() => useSettingsStore.getState().setOpen(true)}
@@ -607,7 +543,7 @@ export function CanvasToolbar() {
             <Settings size={14} />
           </IconButton>
         </span>
-        <ToolbarOverflow />
+        <ToolbarOverflow forceVisible={viewportClass === 'tablet'} />
       </div>
     </div>
   )

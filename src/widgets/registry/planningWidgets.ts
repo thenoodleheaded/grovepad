@@ -21,17 +21,27 @@ export const PLANNING_WIDGET_DEFINITIONS = {
     icon: ListChecks,
     category: 'planning',
     accent: '#86efac',
-    defaultSize: { width: 440, height: C * 7 },
-    sizing: { minWidth: C * 7, autoHeight: true },
+    // A task list is a column of rows: narrow, and exactly as tall as it has
+    // tasks. The board/schedule/priority views are canvases, so they keep the
+    // handle and a wider floor.
+    defaultSize: { width: C * 7, height: C * 4 },
+    sizing: {
+      minWidth: C * 6,
+      autoHeight: true,
+      fixed: (data) => (data as { mode?: string } | null)?.mode !== 'board'
+        && (data as { mode?: string } | null)?.mode !== 'assignments'
+        && (data as { mode?: string } | null)?.mode !== 'schedule'
+        && (data as { mode?: string } | null)?.mode !== 'priority',
+    },
     defaultData: () => ({ mode: 'list', items: [{ id: uid(), label: 'New task', done: false, status: 'todo', due: '', day: 0, time: '09:00', start: 0, span: 1, quadrant: 0 }] }),
-    modes: [
-      { value: 'list', label: 'List', icon: ListChecks },
-      { value: 'board', label: 'Board', icon: Columns3 },
-      { value: 'assignments', label: 'Assignments', icon: ClipboardList },
-      { value: 'day', label: 'Day', icon: CalendarRange },
-      { value: 'week', label: 'Week', icon: CalendarRange },
-      { value: 'timeline', label: 'Timeline', icon: GalleryHorizontalEnd },
-      { value: 'matrix', label: 'Priority Matrix', icon: Grid2x2 },
+    skins: [
+      { value: 'list', label: 'List', icon: ListChecks, accent: '#86efac' },
+      { value: 'board', label: 'Board', icon: Columns3, accent: '#38bdf8' },
+      { value: 'assignments', label: 'Assignments', icon: ClipboardList, accent: '#c4b5fd' },
+      { value: 'day', label: 'Day', icon: CalendarRange, accent: '#fbbf24' },
+      { value: 'week', label: 'Week', icon: CalendarRange, accent: '#fb923c' },
+      { value: 'timeline', label: 'Timeline', icon: GalleryHorizontalEnd, accent: '#5eead4' },
+      { value: 'matrix', label: 'Priority Matrix', icon: Grid2x2, accent: '#f472b6' },
     ],
   },
   kanban: {
@@ -110,9 +120,9 @@ export const PLANNING_WIDGET_DEFINITIONS = {
     accent: '#f0abfc',
     defaultSize: { width: 300, height: C * 5 },
     defaultData: () => ({ question: '', options: ['', ''], pickedIndex: null, mode: 'simple', weights: [1, 1], history: [], lastRolledAt: null, noRepeatWindow: 1 }),
-    modes: [
-      { value: 'simple', label: 'Simple', icon: Dices },
-      { value: 'weighted', label: 'Weighted', icon: Scale },
+    skins: [
+      { value: 'simple', label: 'Simple', icon: Dices, accent: '#f0abfc' },
+      { value: 'weighted', label: 'Weighted', icon: Scale, accent: '#a78bfa' },
     ],
   },
   meeting_notes: {

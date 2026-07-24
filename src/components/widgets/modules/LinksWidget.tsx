@@ -1,6 +1,5 @@
 import { ExternalLink, Link2, Plus, X } from 'lucide-react'
 import type { LinksData } from '../../../types/spatial'
-import { useFieldAnchor } from '../../../hooks/useFieldAnchor'
 
 interface LinksWidgetProps {
   data: LinksData
@@ -17,8 +16,6 @@ function hostnameOf(url: string): string {
 
 /** Labelled external links — edit inline, click the arrow to open. */
 export function LinksWidget({ data, onChange }: LinksWidgetProps) {
-  const countRef = useFieldAnchor('count')
-
   const setItem = (id: string, patch: Partial<{ label: string; url: string }>) =>
     onChange({
       items: data.items.map((item) => (item.id === id ? { ...item, ...patch } : item)),
@@ -77,7 +74,7 @@ export function LinksWidget({ data, onChange }: LinksWidgetProps) {
         })}
       </div>
 
-      <div ref={countRef} className="mt-auto flex h-9 items-center border-t gp-hairline">
+      <div className="mt-auto flex h-9 items-center border-t gp-hairline">
         <button
           type="button"
           onClick={addItem}

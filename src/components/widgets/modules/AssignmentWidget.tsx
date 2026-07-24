@@ -1,6 +1,5 @@
 import { CalendarClock, Plus, X } from 'lucide-react'
 import type { AssignmentData, AssignmentStatus } from '../../../types/spatial'
-import { useFieldAnchor } from '../../../hooks/useFieldAnchor'
 
 interface AssignmentWidgetProps {
   data: AssignmentData
@@ -24,8 +23,6 @@ const MS_PER_DAY = 86_400_000
 /** Homework tracker — title, due date, and a tap-to-cycle status chip. */
 export function AssignmentWidget({ data, onChange }: AssignmentWidgetProps) {
   const doneCount = data.items.filter((i) => i.status === 'done').length
-  const doneCountRef = useFieldAnchor<HTMLSpanElement>('done_count')
-
   const setItem = (id: string, patch: Partial<AssignmentData['items'][number]>) =>
     onChange({ items: data.items.map((i) => (i.id === id ? { ...i, ...patch } : i)) })
 
@@ -110,7 +107,7 @@ export function AssignmentWidget({ data, onChange }: AssignmentWidgetProps) {
           Add assignment
         </button>
         <span
-          ref={doneCountRef}
+
           className={` text-[10px] tabular-nums transition-colors ${
             data.items.length > 0 && doneCount === data.items.length ? 'text-emerald-400' : 'text-neutral-600'
           }`}

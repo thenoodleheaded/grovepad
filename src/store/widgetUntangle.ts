@@ -1,7 +1,5 @@
-import type { Vector2D, Widget, WidgetGroup } from '../types/spatial'
+import type { Widget, WidgetGlue } from '../types/spatial'
 import { GRID_SIZE, snapToGrid } from '../types/spatial'
-import { DETACH_GAP } from './widgetLayoutConstants'
-import { groupBounds } from './widgetCollection'
 
 const UNTANGLE_GAP = GRID_SIZE * 2
 
@@ -33,10 +31,11 @@ function splitGridCells(totalPixels: number): [number, number] {
  * EXACTLY UNTANGLE_GAP (2×2 cells) of clearance between separate nodes —
  * without disturbing arrangements that are already clean.
  *
- * A group untangles AS A UNIT: its members form one rigid cluster (bounding
- * box of the members) that translates together, so their internal layout is
- * preserved and only whole groups are pushed off each other. Every ungrouped
- * widget is its own single-member cluster. Clusters are separated by
+ * A glue cluster untangles AS A UNIT: its members form one rigid cluster
+ * (bounding box of the members) that translates together, so their welded
+ * layout is preserved and only whole clusters are pushed off each other.
+ * Every unglued widget is its own single-member cluster. Clusters are
+ * separated by
  * iterative symmetric relaxation; every push is computed in whole grid cells
  * (`splitGridCells`) so the resulting gap between any two clusters that were
  * touching is exactly UNTANGLE_GAP, never a pixel more or less.
@@ -44,15 +43,15 @@ function splitGridCells(totalPixels: number): [number, number] {
 /** Exported for direct unit testing of the exact-gap guarantee — not part of the store's public action surface. */
 export function untangleCanvasLayout(
   widgets: Record<string, Widget>,
-  groups: Record<string, WidgetGroup>,
+  glues: Record<string, WidgetGlue>,
   canvasId: string,
 ): Record<string, Widget> {
   const onCanvas = (id: string) => widgets[id] && widgets[id]!.canvasId === canvasId
 
   const clusterMembers: string[][] = []
   const assigned = new Set<string>()
-  for (const group of Object.values(groups)) {
-    const members = group.widgetIds.filter(onCanvas)
+  for (const glue of Object.values(glues)) {
+    const members = glue.widgetIds.filter(onCanvas)
     if (members.length === 0) continue
     clusterMembers.push(members)
     for (const id of members) assigned.add(id)
@@ -139,36 +138,4 @@ export function untangleCanvasLayout(
     }
   }
   return changed ? next : widgets
-}
-
-export function detachPosition(
-  widgets: Record<string, Widget>,
-  groupWidgetIds: string[],
-  widgetId: string,
-): Vector2D | null {
-  const widget = widgets[widgetId]
-  const bounds = groupBounds(
-    widgets,
-    groupWidgetIds.filter((id) => id !== widgetId),
-  )
-  if (!widget || !bounds) return null
-
-  const widgetCenter = {
-    x: widget.position.x + widget.size.width / 2,
-    y: widget.position.y + widget.size.height / 2,
-  }
-  const horizontal = Math.abs(widgetCenter.x - bounds.center.x) >= Math.abs(widgetCenter.y - bounds.center.y)
-  if (horizontal) {
-    const toRight = widgetCenter.x >= bounds.center.x
-    return {
-      x: snapToGrid(toRight ? bounds.x + bounds.width + DETACH_GAP : bounds.x - widget.size.width - DETACH_GAP),
-      y: snapToGrid(Math.min(Math.max(widget.position.y, bounds.y), bounds.y + bounds.height)),
-    }
-  }
-
-  const below = widgetCenter.y >= bounds.center.y
-  return {
-    x: snapToGrid(Math.min(Math.max(widget.position.x, bounds.x), bounds.x + bounds.width)),
-    y: snapToGrid(below ? bounds.y + bounds.height + DETACH_GAP : bounds.y - widget.size.height - DETACH_GAP),
-  }
 }

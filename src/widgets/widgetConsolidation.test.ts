@@ -38,9 +38,9 @@ describe('consolidated widget modes',()=>{
     const canonical=['notes','bar_chart','decision','grade_calc','date_picker','sketchpad','goal_tracker','flashcards','checklist'] as const
     expect(canonical.every(isWidgetTypePublic)).toBe(true)
     expect(Object.keys(CONSOLIDATED_WIDGET_REPLACEMENTS).every(type=>!isWidgetTypePublic(type as keyof typeof WIDGET_REGISTRY))).toBe(true)
-    expect(WIDGET_REGISTRY.notes.modes?.map(mode=>mode.value)).toEqual(['plain','sticky','quote'])
-    expect(WIDGET_REGISTRY.bar_chart.modes?.map(mode=>mode.value)).toEqual(['bar','line','donut','pie'])
-    expect(WIDGET_REGISTRY.checklist.modes).toHaveLength(7)
+    expect(WIDGET_REGISTRY.notes.skins?.map(skin=>skin.value)).toEqual(['plain','sticky','quote'])
+    expect(WIDGET_REGISTRY.bar_chart.skins?.map(skin=>skin.value)).toEqual(['bar','line','donut','pie'])
+    expect(WIDGET_REGISTRY.checklist.skins).toHaveLength(7)
   })
 
   it('starts shared-view families with one canonical data source',()=>{

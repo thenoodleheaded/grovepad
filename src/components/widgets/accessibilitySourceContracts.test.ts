@@ -4,22 +4,21 @@ import { describe, expect, it } from 'vitest'
 
 const card = readFileSync(new URL('./WidgetCard.tsx', import.meta.url), 'utf8')
 const ports = readFileSync(new URL('./PortRail.tsx', import.meta.url), 'utf8')
-const focus = readFileSync(new URL('./FocusModeLayer.tsx', import.meta.url), 'utf8')
 const styles = readFileSync(new URL('../../index.css', import.meta.url), 'utf8')
 
 describe('shared widget accessibility source contracts', () => {
   it('hides dormant full-state chrome and content in compact states', () => {
-    expect(card).toContain('inert={collapsed || iconified ? true : undefined}')
-    expect(card).toContain('aria-hidden={collapsed || iconified || undefined}')
-    expect(card).toContain("!groupId && !collapsed && !iconified")
+    expect(card).toContain('inert={iconified ? true : undefined}')
+    expect(card).toContain('aria-hidden={iconified || undefined}')
+    // The resize affordance is the card's own outline, painted by an inert
+    // overlay the pointer passes straight through — there is no separate grip
+    // element to leave in the tab order or announce to a screen reader.
+    expect(card).toContain('<span aria-hidden className="gp-resize-edge pointer-events-none')
+    expect(card).not.toContain('gp-widget-resize-target')
   })
 
-  it('keeps Focus background cards inert and provides keyboard panel movement', () => {
-    expect(card).toContain('inert={isFocusBackground ? true : undefined}')
-    expect(focus).toContain('tabIndex={island.reorderable ? 0 : undefined}')
-    expect(focus).toContain('reorderWithKeyboard(island, -1)')
-    expect(focus).toContain('reorderWithKeyboard(island, 1)')
-    expect(focus).toContain('aria-live="polite"')
+  it('gives a scaled icon state a title, since its name capsule is hidden', () => {
+    expect(card).toContain('title={iconified || restIcon ? widget.title : undefined}')
   })
 
   it('exposes named Circuit buttons and keyboard start, target, and cancel paths', () => {

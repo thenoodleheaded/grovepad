@@ -57,7 +57,7 @@ function validBoard(): HydratedPersistedBoard {
     },
     relations: {},
     connections: {},
-    groups: {},
+    glues: {},
     activePacks: [],
     activeWorkspaceId: 'workspace',
     activeCanvasId: 'canvas',
@@ -100,6 +100,29 @@ describe('persisted board schema', () => {
     expect(parsed?.activeCanvasId).toBe('canvas')
   })
 
+  it('retires saved divider widgets and any edges that depended on them', () => {
+    const source = validBoard()
+    ;(source.widgets as Record<string, unknown>).divider = {
+      ...source.widgets.alpha,
+      id: 'divider',
+      type: 'divider',
+      title: 'Old section break',
+      data: { label: 'Section' },
+    }
+    source.relations.toDivider = {
+      id: 'toDivider',
+      fromId: 'alpha',
+      toId: 'divider',
+      type: 'parent',
+      isResolved: true,
+    }
+
+    const parsed = parsePersistedBoard(source)
+
+    expect(parsed?.widgets).not.toHaveProperty('divider')
+    expect(parsed?.relations).not.toHaveProperty('toDivider')
+  })
+
   it('grandfathers version-2 payloads written before embedded metadata existed', () => {
     const source: Record<string, unknown> = { ...validBoard() }
     Reflect.deleteProperty(source, 'format')
@@ -131,13 +154,16 @@ describe('persisted board schema', () => {
     expect(parsed!.relations.futureRelationKind).toBeUndefined()
     expect(parsed!.connections.futureConnectionKind).toBeUndefined()
     expect(parsed!.connections.futureTransform).toBeUndefined()
-    expect(parsed!.groups.futureGroup?.widgetIds).toEqual(['alpha', 'future'])
-    expect(parsed!.groups.futureColorGroup).toBeUndefined()
+    expect(parsed!.glues.futureGlue?.widgetIds).toEqual(['alpha', 'future'])
+    // A glue with too few surviving members is dropped, and legacy `groups`
+    // records are discarded entirely — grouping no longer exists.
+    expect(parsed!.glues.malformedGlue).toBeUndefined()
+    expect(parsed).not.toHaveProperty('groups')
+    expect(parsed!.persistenceUnknownFields).not.toHaveProperty('groups')
     expect(parsed!.activePacks).toEqual(['life'])
     expect(parsed!.persistenceUnknownRelations).toHaveProperty('futureRelationKind')
     expect(parsed!.persistenceUnknownConnections).toHaveProperty('futureConnectionKind')
     expect(parsed!.persistenceUnknownConnections).toHaveProperty('futureTransform')
-    expect(parsed!.persistenceUnknownGroups).toHaveProperty('futureColorGroup')
     expect(Object.keys(parsed!)).not.toContain('persistenceUnknownFields')
     expect(Object.keys(parsed!)).not.toContain('persistenceUnknownRelations')
 
@@ -147,7 +173,12 @@ describe('persisted board schema', () => {
       position: { x: 999, y: 999 },
     }
     const serialized = serializePersistedBoard(parsed!) as PersistedBoard & Record<string, unknown>
-    expect(serialized).toEqual(withoutEmbeddedDeviceState(fixture))
+    // The write boundary drops what parsing deliberately discarded: the
+    // legacy `groups` record and the malformed one-member glue.
+    const expected = withoutEmbeddedDeviceState(fixture)
+    Reflect.deleteProperty(expected, 'groups')
+    expected.glues = { futureGlue: (expected.glues as Record<string, unknown>).futureGlue }
+    expect(serialized).toEqual(expected)
     expect(serialized.futureBoardField).toEqual({ mode: 'tomorrow' })
 
     parsed!.activePacks = []
@@ -204,17 +235,15 @@ describe('persisted board schema', () => {
       type: 'parent',
       isResolved: false,
     }
-    source.groups.group = {
-      id: 'group',
-      label: 'Broken group',
+    source.glues.glue = {
+      id: 'glue',
       widgetIds: ['alpha', 'invalid'],
-      color: '#6366f1',
     }
 
     const parsed = parsePersistedBoard(source)
     expect(Object.keys(parsed?.widgets ?? {})).toEqual(['alpha', 'bravo'])
     expect(parsed?.relations).toEqual({})
-    expect(parsed?.groups).toEqual({})
+    expect(parsed?.glues).toEqual({})
   })
 
   it('clamps saved camera zoom during validation', () => {

@@ -83,7 +83,7 @@ A trigger wire carrying `execute` into an automation widget routes to the execut
 
 **Wire inspector** — click any wire: `Source·Field → Target·Field`, kind, transform picker with inline parameters (value wires), edge picker (trigger wires), enable/disable, delete, and the damping notice with one-tap re-arm.
 
-**Performance** — wire layer uses the same quantized-view culling and corridor tests as relation/dependency lines with a render budget; port rails render only for hovered/dragging/circuit-mode cards with primitive selectors; engine cost is O(changed connected sources); value chips render only in Circuit Mode under an edge budget.
+**Performance** — every wire on the active canvas renders; port rails render only for hovered/dragging/circuit-mode cards; engine cost is O(changed connected sources); value chips render only in Circuit Mode under an edge budget.
 
 ## Extending the engine
 

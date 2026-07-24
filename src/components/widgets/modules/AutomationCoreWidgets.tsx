@@ -19,7 +19,7 @@ export function AutomationCoreWidget({widgetId,type,data,onChange}:{widgetId:str
   const showConfig=['local_function','http_request','webhook_sender','widget_creator','branch_builder','relation_builder','focus_action','test_data_generator'].includes(type)
   if(unavailableReason)return <div role="status" className="rounded-xl border border-amber-400/30 bg-amber-300/5 p-4 text-sm leading-5 text-amber-100"><strong className="block text-amber-300">Unavailable in this beta</strong><span>{unavailableReason}</span></div>
   return <div className="space-y-3">
-    <div data-island="status" data-island-size="fixed" className="gp-island relative overflow-hidden p-3">
+    <div data-island="status" className="gp-island relative overflow-hidden p-3">
       <div className="absolute inset-y-0 left-0 w-1" style={{background:spec.accent}}/>
       <div className="flex items-center justify-between gap-3"><div className="min-w-0"><div className="truncate text-[9px] font-semibold uppercase tracking-[.14em] text-neutral-500">{spec.kind.replaceAll('_',' ')}</div><div className="truncate text-xs font-semibold text-neutral-200">{data.running?'Running':data.lastError?'Needs attention':data.count?`${data.count} runs`:'Ready'}</div></div><span className={`h-2.5 w-2.5 rounded-full ${data.running?'animate-pulse bg-sky-400':data.lastError?'bg-red-400':data.enabled?'bg-emerald-400':'bg-neutral-600'}`}/></div>
     </div>

@@ -15,7 +15,7 @@ The project owner is not a professional software engineer. Explain code, archite
 ## Sources of truth
 
 - Runtime behavior and types: source code.
-- Product and interaction rules: [widget constitution](docs/widget-constitution.md), [glass/focus constitution](docs/widget-glass-constitution.md), [circuit engine](docs/circuit-engine.md), [storage contract](docs/storage-format-plan.md).
+- Product and interaction rules: [widget constitution](docs/widget-constitution.md), [glass constitution](docs/widget-glass-constitution.md), [circuit engine](docs/circuit-engine.md), [storage contract](docs/storage-format-plan.md).
 - Task routing: [codebase map](docs/codebase-map.md). Cross-system architecture: [architecture map](docs/architecture-map.md).
 - Known live debt: [patch registry](docs/patch-registry.md) — observations, not authorization for unrelated cleanup.
 - Phase gate: [manual smoke checklist](docs/manual-smoke-checklist.md).
@@ -30,7 +30,7 @@ Coordination surfaces (`src/store/slices/*Slice.ts`, `src/widgets/fields.ts`, `s
 
 - `useWidgetStore` owns the canonical board model; domain actions live in `src/store/slices/`.
 - `useCanvasStore`/`useCanvasEvents` own camera and viewport interaction. Never mutate a partial camera object in a browser test; use public actions such as `setView`.
-- `useCircuitStore` and the circuit engine own transient wire execution state; `useFocusStore` owns focus entry/exit and camera locking.
+- `useCircuitStore` and the circuit engine own transient wire execution state.
 - Registry files own widget metadata/defaults/sizing; field files own ports/commands; renderer modules own visual content; neutral types live in `src/widgets/contracts/`.
 - Relation, dependency, and wire layers keep separate geometry/semantics and share paint through `CanvasEdge.tsx`/`canvasEdgePolicy.ts`.
 - Persistence validates unknown data before hydration; cloud or local-AI failure must not break local board work.
@@ -49,7 +49,6 @@ For UI testing, start from a known state, use public UI/store actions, and leave
 ## Verification ladder
 
 - Documentation/navigation only: `npm run docs:check`.
-- Focus-mode reorder logic: `npm run test:focus`.
 - Narrow TypeScript behavior: the closest Vitest file, then `npm run typecheck` and `npm run lint`.
 - Store, persistence, shared type, registry, field, or routing changes: `npm run check`.
 - Production bundling, global CSS, or phase completion: `npm run check:full`, then applicable manual smoke items.

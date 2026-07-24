@@ -4,7 +4,7 @@
 
 Signed-in users automatically connect the active canvas to a local-first Yjs document. Board edits remain immediate and usable when the network disappears. Supabase Realtime carries the low-latency hot path, while an append-only Postgres update log plus compact snapshots provides reliable cold starts and missed-message recovery.
 
-The collaboration button in the canvas's upper-right corner shows connection state and online people. Clicking another person's avatar follows their camera; clicking the follow banner stops. The panel copies an exact canvas link, lets an Owner grant access by an existing account email, and exposes comments/replies. A recipient must be granted a role before opening the link.
+The collaboration button in the canvas's upper-right corner shows connection state and online people. Clicking another person's avatar follows their camera; clicking the follow banner stops. The panel copies an exact canvas link, lets an Owner grant access by an existing account email, and exposes comments/replies. Private canvases require an invited role. An Owner may instead make a canvas Public in Canvas settings; then any signed-in link visitor joins as a read-only Viewer, while edit and comment rights still require an explicit invitation.
 
 Roles are intentionally narrow:
 
@@ -15,28 +15,28 @@ Roles are intentionally narrow:
 | Commenter | No | Yes | No | Yes |
 | Viewer | No | No | No | Yes |
 
-Guests remain fully local and never start collaboration transport.
+Guests remain fully local and never start collaboration transport. Public links still require sign-in so realtime presence has an accountable identity and the anonymous database role never receives canvas documents.
 
 ## Data and merge contract
 
 - One active canvas maps to one `Y.Doc`; other local canvases remain untouched.
-- Widgets, relations, circuit connections, and groups are nested Yjs maps, so unrelated properties merge independently.
+- Widgets, relations, circuit connections, and glue clusters are nested Yjs maps, so unrelated properties merge independently.
 - Every widget with a string `text` field (including Notes, Sticky Note, Quote, and Code) stores that field as `Y.Text`, preserving concurrent character edits. Other widget data remains validated JSON with deterministic last-writer resolution for the same property.
 - Every incoming document is bounded (10,000 records per entity kind, 2,000,000 note characters, 8,000,000 JSON characters) and passed through Grovepad's persisted-board parser before entering the canonical store.
 - Collaborative undo/redo tracks only local Yjs transactions. Remote work is never removed by another person's Undo.
-- Awareness contains cursor, selection, active editor, camera, display name, role, and color. It is ephemeral and not written to the board or CRDT log.
+- Awareness contains cursor, selection, active editor, camera, display name, role, and color. It is ephemeral and not written to the board or CRDT log. Presence publishes the participant's initial state once; changing awareness travels over a throttled Broadcast stream so pointer movement cannot exhaust Presence rate limits.
 
 ## Delivery and recovery
 
 Each local Yjs update receives one UUID. The runtime broadcasts it immediately, stores it in the dedicated `grovepad-collaboration` IndexedDB queue, and batch-appends queued rows to `canvas_crdt_updates`. Acknowledged IDs are removed locally. Duplicate delivery is harmless because Yjs updates and the `(canvas_id, update_id)` database key are idempotent.
 
-Cold start restores the browser's cached Yjs document (including its original CRDT history), then applies `canvas_crdt_documents.snapshot` and every update after `last_seq`. Reconnect repeats the durable tail query and drains the local queue. Preserving that local document history prevents reload-while-offline from duplicating a note's existing text when it later meets the server copy. Offline bursts over 100 queue records are merged into one equivalent Yjs update. Editors compact after 200 durable updates or 512 KiB: a transaction-level advisory lock atomically installs a full snapshot and deletes only log rows at or below its sequence.
+Cold start restores the browser's cached Yjs document (including its original CRDT history), then applies `canvas_crdt_documents.snapshot` and every update after `last_seq`. Reconnect repeats the durable tail query and drains the local queue. While connected, clients also sample that durable tail as a repair path, so a missed or rejected hot Broadcast catches up without reopening the share link. Preserving the local document history prevents reload-while-offline from duplicating a note's existing text when it later meets the server copy. Offline bursts over 100 queue records are merged into one equivalent Yjs update. Editors compact after 200 durable updates or 512 KiB: a transaction-level advisory lock atomically installs a full snapshot and deletes only log rows at or below its sequence.
 
 Local board persistence continues independently. A Supabase outage can change the collaboration indicator to offline/error, but it cannot stop local editing or local saves.
 
 ## Database deployment
 
-Apply migrations in timestamp order, including `20260719050000_realtime_collaboration.sql`. The migration creates:
+Apply migrations in timestamp order, including `20260719050000_realtime_collaboration.sql` and `20260722093000_realtime_awareness_channel.sql`. The migrations create:
 
 - `canvas_collaborations` and `canvas_members`;
 - `canvas_crdt_documents` and `canvas_crdt_updates`;
@@ -44,7 +44,7 @@ Apply migrations in timestamp order, including `20260719050000_realtime_collabor
 - owner-only invitation and editor-only compaction functions;
 - private-channel policies on `realtime.messages`.
 
-The channel topic is exactly `canvas:<canvas-id>` and clients set `private: true`. Members may receive messages and publish Presence. Only Owners and Editors may publish Broadcast updates. Table RLS separately prevents Commenters/Viewers from appending CRDT rows, prevents non-members from reading cold-start data, and limits comments to Owner/Editor/Commenter.
+The document topic is `canvas:<canvas-id>` and the participant topic is `awareness:<canvas-id>`; both use private Realtime channels with database authorization. Only Owners and Editors may publish CRDT Broadcast updates on the document topic. Members may publish low-frequency Presence and ephemeral awareness Broadcasts on the participant topic. Keeping the topics separate prevents a Viewer from gaining permission to publish board updates merely so they can share a cursor. Table RLS prevents Commenters/Viewers from appending CRDT rows, limits every cold-start read to members, and limits comments to Owner/Editor/Commenter. There is no public or link-only access tier: a canvas is readable only by its owner and the people they invited.
 
 Run the SQL policy tests against a disposable Supabase database after applying migrations:
 
@@ -70,7 +70,7 @@ Then run the collaboration entries in `docs/manual-smoke-checklist.md` with sepa
 
 ## Operational signals and limits
 
-- `connected`: private channel subscribed and presence publishing.
+- `connected`: private channel subscribed, initial presence publishing acknowledged, and the durable tail synchronized.
 - `reconnecting`: browser is online but the channel timed out or errored.
 - `offline`: browser network signal is offline; updates stay queued.
 - `error`: authentication, RLS, payload validation, or durable transport failed. The error is visible from the collaboration control tooltip/panel while the local board remains available.

@@ -678,7 +678,6 @@ export function ImportDocumentModal() {
   const [dragOver, setDragOver] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const panelRef = useRef<HTMLDivElement>(null)
-  const closeButtonRef = useRef<HTMLButtonElement>(null)
   const foregroundAbortRef = useRef<AbortController | null>(null)
 
   // API Key & Loading states
@@ -696,7 +695,7 @@ export function ImportDocumentModal() {
   }, [])
 
   useOverlayLifecycle(open)
-  useFocusTrap(open, panelRef, closeButtonRef)
+  useFocusTrap(open, panelRef, panelRef)
 
   useEffect(
     () => () => {
@@ -821,7 +820,7 @@ CONSTRAINTS:
 4. For every widget, supply the exact list of REF-X tags where the raw details live in the source documents ("sourceRefs": [] when the widget is driven by the user prompt or your own knowledge).
 5. Keep titles concise and specific (maximum 5 words); a title names its actual content, never a placeholder.
 6. If a widget draws information from different parts, include multiple tags in "sourceRefs".
-7. Default when the user does not dictate structure: 3-5 logical groups. Either way, map the semantic relations between widgets (parent, cousin, blocker) to show workflow direction or dependencies.
+7. Default when the user does not dictate structure: build 3-5 clear parent-led branches. Every non-root widget should have one parent relation; add cousin or blocker relations only when they carry additional meaning.
 
 You MUST respond strictly in the requested JSON schema. Do not output markdown code blocks or explanations outside of the JSON.`;
 
@@ -833,25 +832,13 @@ You MUST respond strictly in the requested JSON schema. Do not output markdown c
         promptSections.push(`USER PROMPT (instructions to follow, or raw data to digest — decide which):\n---\n${pastedText}\n---`)
       }
       promptSections.push(
-        `Map title: "${title || 'Ingested Map'}"\n\nBuild the widgets, groups, and relations topology now. Widget content is the actual subject matter — never commentary about this request.`,
+        `Map title: "${title || 'Ingested Map'}"\n\nBuild the widget and relation topology now. Widget content is the actual subject matter — never commentary about this request.`,
       )
       const userPrompt = promptSections.join('\n\n')
 
       const topologySchema = {
         type: 'object',
         properties: {
-          groups: {
-            type: 'array',
-            items: {
-              type: 'object',
-              properties: {
-                id: { type: 'string', description: 'Short identifier e.g. g1, g2' },
-                label: { type: 'string', description: 'Category name' },
-              },
-              required: ['id', 'label'],
-              additionalProperties: false,
-            },
-          },
           widgets: {
             type: 'array',
             items: {
@@ -860,7 +847,6 @@ You MUST respond strictly in the requested JSON schema. Do not output markdown c
                 id: { type: 'string', description: 'Short identifier e.g. w1, w2' },
                 type: { type: 'string', enum: [...IMPORT_SELECTABLE_TYPES] },
                 title: { type: 'string', description: 'Actionable widget title, maximum 5 words' },
-                groupId: { type: ['string', 'null'], description: 'Group ID it belongs to, or null' },
                 sourceRefs: {
                   type: 'array',
                   items: { type: 'string' },
@@ -871,7 +857,7 @@ You MUST respond strictly in the requested JSON schema. Do not output markdown c
                   description: 'Self-contained 1-2 sentence instruction for the content-filling pass: what this widget should contain, naming which user-prompt facts or knowledge to use. Empty string when the sourceRefs excerpts alone suffice.',
                 },
               },
-              required: ['id', 'type', 'title', 'groupId', 'sourceRefs', 'brief'],
+              required: ['id', 'type', 'title', 'sourceRefs', 'brief'],
               additionalProperties: false,
             },
           },
@@ -889,7 +875,7 @@ You MUST respond strictly in the requested JSON schema. Do not output markdown c
             },
           },
         },
-        required: ['groups', 'widgets', 'relations'],
+        required: ['widgets', 'relations'],
         additionalProperties: false,
       }
 
@@ -910,7 +896,7 @@ You MUST respond strictly in the requested JSON schema. Do not output markdown c
       const topology = JSON.parse(jsonText)
       
       // Calculate spatial positions & map ids to UUIDs
-      const { widgets, groups: laidGroups, relations, idMap } = layoutMindmap(topology, activeCanvasId)
+      const { widgets, relations, idMap } = layoutMindmap(topology, activeCanvasId)
 
       // Plan hydration (Phase 2) — each widget gets only the [REF-X] chunks
       // it cited, not the whole document again. Content-free widget types
@@ -956,7 +942,7 @@ You MUST respond strictly in the requested JSON schema. Do not output markdown c
       })
 
       // Bulk import to canvas
-      importMindmap(widgets, laidGroups, relations)
+      importMindmap(widgets, relations)
       const importedBounds = boundsForWidgets(Object.values(widgets))
       if (importedBounds) useCanvasStore.getState().fitRect(importedBounds, 140)
 
@@ -1060,8 +1046,8 @@ Return ONLY a JSON object that adheres strictly to the response schema for this 
     <div
       role="dialog"
       aria-modal="true"
-      aria-label="Import document"
-      className="gp-import-dialog fixed inset-0 z-[200] flex items-center justify-center"
+      aria-labelledby="gp-import-title"
+      className="gp-import-dialog fixed inset-0 z-[200] flex items-start justify-center px-4 pb-4 pt-[clamp(24px,10vh,80px)]"
     >
       <div
         role="presentation"
@@ -1071,38 +1057,30 @@ Return ONLY a JSON object that adheres strictly to the response schema for this 
       <div
         ref={panelRef}
         tabIndex={-1}
-        className="gp-import-panel gp-dialog gp-pop gp-panel relative z-10 flex max-h-[85vh] w-full max-w-lg flex-col overflow-hidden rounded-3xl shadow-2xl outline-none"
+        className="gp-import-shell gp-popup-focus-shell relative z-10 flex max-h-[calc(100dvh-24px)] w-full max-w-lg flex-col gap-2 outline-none"
       >
-        
-        {/* Loading overlay */}
-        {loading && (
-          <div className="absolute inset-0 z-50 flex flex-col items-center justify-center gap-3 bg-neutral-950/80 backdrop-blur-sm">
-            <Loader2 className="h-8 w-8 animate-spin text-emerald-400" />
-            <p className="text-xs text-neutral-300 font-medium animate-pulse">{loadingMessage}</p>
-          </div>
-        )}
-
-        <div className="flex items-start justify-between border-b gp-hairline px-5 py-4">
-          <div>
-            <h2 className="flex items-center gap-2 text-sm font-semibold text-neutral-200">
-              <FileUp size={14} className="text-emerald-400" aria-hidden />
-              Import document → mind map
-            </h2>
-            <p className="mt-1 text-[11px] leading-relaxed text-neutral-500">
-              Grove digests a document in two passes: a fast skeleton map first, then each card's
-              content fills in behind it.
-            </p>
+        <header className="flex min-h-9 shrink-0 items-center justify-between px-1">
+          <div className="gp-popup-title-pill gp-panel gp-pop flex h-9 items-center gap-2 rounded-full px-3.5">
+            <FileUp size={14} className="text-emerald-400" aria-hidden />
+            <h2 id="gp-import-title" className="text-[13px] font-semibold text-neutral-100">Import document</h2>
           </div>
           <button
-            ref={closeButtonRef}
             type="button"
             aria-label="Close"
             onClick={close}
-            className="gp-touch-target rounded-lg p-1 text-neutral-500 transition-colors hover:bg-neutral-800 hover:text-neutral-200"
+            className="gp-popup-close-naked gp-touch-target h-8 w-8"
           >
             <X size={15} aria-hidden />
           </button>
-        </div>
+        </header>
+
+        <div className="gp-import-panel gp-popup-surface gp-dialog gp-pop gp-panel relative flex min-h-0 max-h-[calc(100dvh-136px)] flex-col overflow-hidden rounded-[22px] shadow-2xl">
+          {loading && (
+            <div className="absolute inset-0 z-50 flex flex-col items-center justify-center gap-3 bg-neutral-950/80 backdrop-blur-sm">
+              <Loader2 className="h-8 w-8 animate-spin text-emerald-400" />
+              <p className="text-xs font-medium text-neutral-300 animate-pulse">{loadingMessage}</p>
+            </div>
+          )}
 
         <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-5 py-4">
           
@@ -1224,29 +1202,18 @@ Return ONLY a JSON object that adheres strictly to the response schema for this 
             type="button"
             role="switch"
             aria-checked={deepReasoning}
+            data-checked={deepReasoning ? '' : undefined}
             onClick={() => setDeepReasoning(!deepReasoning)}
-            className="flex w-full items-center justify-between rounded-xl border gp-hairline bg-neutral-900/40 px-3 py-2.5 transition-colors hover:border-neutral-600"
+            className="gp-popup-island flex w-full items-center rounded-xl px-3 py-3 text-left"
           >
             <span className="flex items-center gap-2 text-left">
-              <BrainCircuit size={14} className={deepReasoning ? 'text-emerald-300' : 'text-neutral-500'} aria-hidden />
+              <BrainCircuit size={20} className="gp-popup-island-icon text-neutral-400" aria-hidden />
               <span>
                 <span className="block text-xs font-medium text-neutral-200">Deep reasoning</span>
                 <span className="block text-[10px] text-neutral-500">
                   Stronger, slower model for big or messy documents
                 </span>
               </span>
-            </span>
-            <span
-              aria-hidden
-              className={`relative h-5 w-9 shrink-0 rounded-full transition-colors duration-200 ${
-                deepReasoning ? 'bg-emerald-500/80' : 'bg-neutral-700'
-              }`}
-            >
-              <span
-                className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform duration-200 ${
-                  deepReasoning ? 'translate-x-[18px]' : 'translate-x-0.5'
-                }`}
-              />
             </span>
           </button>
         </div>
@@ -1256,11 +1223,8 @@ Return ONLY a JSON object that adheres strictly to the response schema for this 
             type="button"
             onClick={handleImport}
             disabled={loading}
-            className={`flex h-10 w-full items-center justify-center gap-2 rounded-xl text-sm font-semibold transition-all ${
-              loading
-                ? 'bg-neutral-800 text-neutral-500 cursor-not-allowed'
-                : 'bg-emerald-500 text-neutral-950 hover:bg-emerald-400 active:scale-[0.98]'
-            }`}
+            data-tone="primary"
+            className="gp-popup-action w-full"
           >
             {loading ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -1269,9 +1233,7 @@ Return ONLY a JSON object that adheres strictly to the response schema for this 
             )}
             Import{hasContent ? ` ${files.length > 0 ? `${files.length} file${files.length === 1 ? '' : 's'}` : 'text'}` : ''}
           </button>
-          <p className="mt-2 text-center text-[10px] text-neutral-600">
-            Digests document context into logical grouped widgets and connects related streams.
-          </p>
+        </div>
         </div>
       </div>
     </div>,

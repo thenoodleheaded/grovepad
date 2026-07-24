@@ -2,8 +2,30 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 import {
   CanvasEdge,
+  CanvasEdgeLayer,
 } from './CanvasEdge'
-import { edgeCorridorIntersectsRect, edgeDetailFor } from './canvasEdgePolicy'
+
+const RECT = { x: 0, y: 0, width: 100, height: 100 }
+
+describe('CanvasEdgeLayer', () => {
+  it('hides decorative routing from the accessibility tree when asked', () => {
+    const hidden = renderToStaticMarkup(
+      <CanvasEdgeLayer contentRect={RECT} ariaHidden>
+        <path d="M 0 0 L 10 10" />
+      </CanvasEdgeLayer>,
+    )
+    expect(hidden).toContain('aria-hidden="true"')
+  })
+
+  it('leaves interactive layers (wires) announceable by default', () => {
+    const shown = renderToStaticMarkup(
+      <CanvasEdgeLayer contentRect={RECT} dataCircuitLayer>
+        <path d="M 0 0 L 10 10" />
+      </CanvasEdgeLayer>,
+    )
+    expect(shown).not.toContain('aria-hidden')
+  })
+})
 
 describe('CanvasEdge', () => {
   it('uses one paint stack for every semantic variant', () => {
@@ -27,52 +49,5 @@ describe('CanvasEdge', () => {
     expect(markup).toContain('gp-canvas-edge-main')
     expect(markup).toContain('gp-canvas-edge-flow')
     expect(markup).toContain('gp-canvas-edge-hit')
-  })
-
-  it('keeps minimal detail to the main stroke only', () => {
-    const markup = renderToStaticMarkup(
-      <CanvasEdge
-        d="M 0 0 L 20 20"
-        variant="relation"
-        detail="minimal"
-        highlight={{ stroke: '#34d399', width: 6 }}
-        track={{ stroke: '#fff', width: 6 }}
-        halo={{ stroke: '#fff', width: 7 }}
-        main={{ stroke: '#fff', width: 2 }}
-        flow={{ stroke: '#fff', width: 2 }}
-        hitArea={{ width: 14, cursor: 'pointer' }}
-      />,
-    )
-
-    expect(markup).toContain('gp-canvas-edge-main')
-    expect(markup).not.toContain('gp-canvas-edge-highlight')
-    expect(markup).not.toContain('gp-canvas-edge-track')
-    expect(markup).not.toContain('gp-canvas-edge-halo')
-    expect(markup).not.toContain('gp-canvas-edge-flow')
-    expect(markup).not.toContain('gp-canvas-edge-hit')
-  })
-})
-
-describe('shared edge policies', () => {
-  it('quantizes detail consistently', () => {
-    expect(edgeDetailFor(10)).toBe('rich')
-    expect(edgeDetailFor(500)).toBe('standard')
-    expect(edgeDetailFor(800)).toBe('minimal')
-  })
-
-  it('keeps crossing edges when both endpoints are offscreen', () => {
-    const viewport = { x: 0, y: 0, width: 200, height: 120 }
-    expect(edgeCorridorIntersectsRect(
-      { x: -100, y: 60 },
-      { x: 300, y: 60 },
-      viewport,
-      0,
-    )).toBe(true)
-    expect(edgeCorridorIntersectsRect(
-      { x: -100, y: -200 },
-      { x: -20, y: -120 },
-      viewport,
-      10,
-    )).toBe(false)
   })
 })

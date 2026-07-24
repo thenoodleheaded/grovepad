@@ -217,19 +217,16 @@ export function CanvasTreeDrawer() {
         aria-label="Canvas tree"
         aria-modal={modalDrawer || undefined}
         role={modalDrawer ? 'dialog' : undefined}
-        className="gp-canvas-tree gp-panel gp-pop fixed bottom-16 left-4 top-16 z-40 w-72 overflow-hidden rounded-2xl border gp-hairline shadow-2xl"
+        className="gp-canvas-tree gp-popup-surface gp-panel gp-pop fixed bottom-16 left-4 top-16 z-40 w-72 overflow-hidden rounded-2xl border gp-hairline shadow-2xl"
       >
         <header className="flex min-h-11 items-center justify-between border-b gp-hairline px-3">
-          <div>
-            <p className="text-xs font-semibold text-neutral-200">{workspace.name}</p>
-            <p className="text-[9px] text-neutral-600">Drag or use Move to reorganize</p>
-          </div>
+          <p className="text-xs font-semibold text-neutral-200">{workspace.name}</p>
           <button
             ref={closeRef}
             type="button"
             aria-label="Close canvas tree"
             onClick={() => useCanvasTreeStore.getState().setOpen(false)}
-            className="gp-touch-target flex h-8 w-8 items-center justify-center rounded-lg text-neutral-500 hover:bg-neutral-800 hover:text-white"
+            className="gp-popup-close-naked gp-touch-target h-8 w-8"
           >
             <X size={13} />
           </button>
@@ -255,13 +252,13 @@ export function CanvasTreeDrawer() {
             className="absolute inset-0 bg-black/65"
             onClick={() => setMovingCanvas(null)}
           />
-          <div className="gp-dialog gp-panel relative z-10 max-h-[70dvh] w-full max-w-sm overflow-hidden rounded-t-3xl p-2 shadow-2xl sm:rounded-3xl">
+          <div className="gp-popup-surface gp-dialog gp-panel relative z-10 max-h-[70dvh] w-full max-w-sm overflow-hidden rounded-t-3xl p-2 shadow-2xl sm:rounded-3xl">
             <div className="flex items-center justify-between px-2 py-2">
               <div>
                 <p className="text-sm font-semibold text-neutral-100">Move “{moving.name}”</p>
                 <p className="text-[11px] text-neutral-500">Choose its new parent canvas.</p>
               </div>
-              <button type="button" aria-label="Cancel moving canvas" onClick={() => setMovingCanvas(null)} className="gp-touch-target flex h-9 w-9 items-center justify-center rounded-xl text-neutral-500 hover:bg-neutral-800 hover:text-white"><X size={14} /></button>
+              <button type="button" aria-label="Cancel moving canvas" onClick={() => setMovingCanvas(null)} className="gp-popup-close-naked gp-touch-target h-9 w-9"><X size={14} /></button>
             </div>
             <div className="max-h-[55dvh] overflow-y-auto pb-[var(--gp-safe-bottom)]">
               {moveTargets.length === 0 && (

@@ -1,6 +1,5 @@
 import { Plus, Target, X } from 'lucide-react'
 import type { GoalTrackerData } from '../../../types/spatial'
-import { useFieldAnchor } from '../../../hooks/useFieldAnchor'
 
 interface GoalTrackerWidgetProps {
   data: GoalTrackerData
@@ -12,9 +11,6 @@ export function GoalTrackerWidget({ data, onChange }: GoalTrackerWidgetProps) {
   const total = data.milestones.length
   const done = data.milestones.filter((m) => m.done).length
   const percent = total === 0 ? 0 : Math.round((done / total) * 100)
-  const percentRingRef = useFieldAnchor('percent')
-  const completeRingRef = useFieldAnchor('complete')
-
   // SVG ring: r=15 → circumference ≈ 94.25
   const CIRC = 2 * Math.PI * 15
 
@@ -37,10 +33,6 @@ export function GoalTrackerWidget({ data, onChange }: GoalTrackerWidgetProps) {
     <div className="flex h-full flex-col gap-2">
       <div className="flex shrink-0 items-center gap-3">
         <div
-          ref={(el) => {
-            percentRingRef.current = el
-            completeRingRef.current = el
-          }}
           className="relative h-10 w-10 shrink-0"
         >
           <svg viewBox="0 0 36 36" className="h-full w-full -rotate-90">

@@ -1,6 +1,5 @@
 import type {
   InterpretationWarning,
-  ProposedGroup,
   ProposedNode,
   ProposedRelation,
   ThoughtPlan,
@@ -76,24 +75,6 @@ export const LOCAL_MODEL_PLAN_JSON_SCHEMA = {
         },
       },
     },
-    g: {
-      type: 'array',
-      items: {
-        type: 'object',
-        additionalProperties: false,
-        required: ['id', 'members'],
-        properties: {
-          id: { type: 'string', minLength: 1, maxLength: MAX_ID_CHARS },
-          members: {
-            type: 'array',
-            minItems: 2,
-            maxItems: LOCAL_MODEL_PLAN_MAX_NODES,
-            items: { type: 'string', minLength: 1, maxLength: MAX_ID_CHARS },
-          },
-          label: { type: 'string', maxLength: MAX_TITLE_CHARS },
-        },
-      },
-    },
     w: {
       type: 'array',
       items: {
@@ -135,10 +116,9 @@ export function buildLocalAiPlanSystemPrompt(skeleton?: ThoughtPlan, maxExtras =
     `Use at most ${LOCAL_MODEL_PLAN_MAX_NODES} nodes. Prefer fewer nodes unless the request explicitly needs a large workspace.`,
     'Every multi-node plan must be connected. Use parent for hierarchy, blocker for prerequisites, conflict for incompatibility, co-parent for shared ownership, and cousin for peer association.',
     'Use short stable ids such as n0, n1. Never invent widget types.',
-    'Compact output: {"v":1,"c":0..1,"n":[{"id":"n0","t":"widget_type","title":"short title","text":"source detail","c":0..1}],"r":[{"from":"n0","to":"n1","type":"parent","label":"optional"}],"g":[{"id":"g0","members":["n0","n1"],"label":"optional"}],"w":[{"code":"ambiguous|fallback|date|relationship","message":"short warning"}]}',
+    'Compact output: {"v":1,"c":0..1,"n":[{"id":"n0","t":"widget_type","title":"short title","text":"source detail","c":0..1}],"r":[{"from":"n0","to":"n1","type":"parent","label":"optional"}],"w":[{"code":"ambiguous|fallback|date|relationship","message":"short warning"}]}',
     'For one node, r must be an empty array. For multiple nodes, include enough relations to connect every node. Do not include widget data; Grovepad supplies safe defaults.',
     'Order sibling nodes by priority: the most urgent or foundational branch first. Use blocker relations for real prerequisites.',
-    'Use g only when the user asks for widgets grouped or banded together; each group lists 2+ existing node ids. Omit g otherwise.',
     ...skeletonInstruction,
     'Available widgets (type|label|purpose):',
     catalog,
@@ -427,38 +407,6 @@ function parseRelations(value: unknown, nodeIds: ReadonlySet<string>): ProposedR
   return relations
 }
 
-/**
- * Groups are convenience structure, not graph topology — a malformed group
- * (unknown member id, <2 valid members, duplicate id) is dropped on its own
- * rather than rejecting an otherwise valid plan.
- */
-function parseGroups(value: unknown, nodeIds: ReadonlySet<string>): ProposedGroup[] {
-  if (!Array.isArray(value) || value.length > LOCAL_MODEL_PLAN_MAX_NODES) return []
-  const groups: ProposedGroup[] = []
-  const seenIds = new Set<string>()
-  const groupedMembers = new Set<string>()
-  for (const item of value) {
-    if (!isRecord(item)) continue
-    const id = requiredString(firstDefined(item, 'id', 'temporaryId'), MAX_ID_CHARS)
-    const label = optionalString(item.label, MAX_TITLE_CHARS)
-    const rawMembers = firstDefined(item, 'members', 'memberTemporaryIds')
-    if (!id || label === null || seenIds.has(id) || !Array.isArray(rawMembers)) continue
-    const members: string[] = []
-    for (const member of rawMembers) {
-      if (typeof member !== 'string') continue
-      const trimmed = member.trim()
-      // A widget can belong to one group at most — first group wins.
-      if (!nodeIds.has(trimmed) || members.includes(trimmed) || groupedMembers.has(trimmed)) continue
-      members.push(trimmed)
-    }
-    if (members.length < 2) continue
-    seenIds.add(id)
-    for (const member of members) groupedMembers.add(member)
-    groups.push({ temporaryId: id, memberTemporaryIds: members, ...(label ? { label } : {}) })
-  }
-  return groups
-}
-
 function nodeDepths(nodeIds: ReadonlySet<string>, relations: readonly ProposedRelation[]): Map<string, number> | null {
   const parentByChild = new Map<string, string>()
   for (const relation of relations) {
@@ -502,7 +450,6 @@ export function validateAndHydrateLocalAiPlan(value: unknown, sourceText: string
     const ids = new Set(nodes.map((node) => node.id))
     const relations = parseRelations(firstDefined(value, 'r', 'relations'), ids)
     if (!relations) return null
-    const groups = parseGroups(firstDefined(value, 'g', 'groups'), ids)
     const depths = nodeDepths(ids, relations)
     if (!depths) return null
     const planConfidence = optionalConfidence(firstDefined(value, 'c', 'confidence'))
@@ -541,7 +488,6 @@ export function validateAndHydrateLocalAiPlan(value: unknown, sourceText: string
       confidence,
       nodes: hydratedNodes,
       relations,
-      groups,
       warnings,
     }
   } catch {

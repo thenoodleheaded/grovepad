@@ -31,9 +31,9 @@ function board(): HydratedPersistedBoard {
       cross: { id: 'cross', fromId: 'one', toId: 'three', type: 'blocker', isResolved: false },
     },
     connections: {},
-    groups: {
-      same: { id: 'same', label: 'Same', widgetIds: ['one', 'two'], color: '#6366f1' },
-      cross: { id: 'cross', label: 'Cross', widgetIds: ['one', 'three'], color: '#6366f1' },
+    glues: {
+      same: { id: 'same', widgetIds: ['one', 'two'] },
+      cross: { id: 'cross', widgetIds: ['one', 'three'] },
     },
     activePacks: ['life'],
     activeWorkspaceId: 'ws',
@@ -59,8 +59,8 @@ describe('cloud documents', () => {
     expect(Object.keys(split.canvases.b!.widgets)).toEqual(['three'])
     expect(Object.keys(split.canvases.a!.relations)).toEqual(['same'])
     expect(Object.keys(split.index.relations)).toEqual(['cross'])
-    expect(Object.keys(split.canvases.a!.groups)).toEqual(['same'])
-    expect(Object.keys(split.index.groups)).toEqual(['cross'])
+    expect(Object.keys(split.canvases.a!.glues)).toEqual(['same'])
+    expect(Object.keys(split.index.glues)).toEqual(['cross'])
     expect(split.index.extra).toEqual({ futureBoardField: { retained: true } })
     expect(split.index).not.toHaveProperty('activeCanvasId')
     expect(split.index).not.toHaveProperty('canvasViews')

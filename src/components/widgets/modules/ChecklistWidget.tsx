@@ -1,7 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Plus, X } from 'lucide-react'
 import type { ChecklistData } from '../../../types/spatial'
-import { useFieldAnchor } from '../../../hooks/useFieldAnchor'
 import { WidgetPanel } from '../WidgetPanel'
 import { withoutPanelItem } from '../panelRemoval'
 
@@ -12,19 +11,16 @@ interface ChecklistWidgetProps {
 }
 
 /**
- * Every task is its own glass subpanel chip; the add button is one more
- * panel. Chips size to their text and flow — resizing the card's width only
- * changes where chips wrap to new lines; the card's height always follows
- * the wrapped content (nothing is ever clipped away or padded out).
+ * One task, one island, one row — a checklist is read top to bottom, so two
+ * tasks never share a line and a new row always means a new task. The card is
+ * content-driven in both axes (`sizing.fixed`), so there is no handle to drag
+ * it out of agreement with its own list.
  */
 export function ChecklistWidget({ data, onChange, onHeightChange }: ChecklistWidgetProps) {
   const inputRefs = useRef(new Map<string, HTMLInputElement>())
   const pendingFocusId = useRef<string | null>(null)
   const rootRef = useRef<HTMLDivElement>(null)
   const [removingIds, setRemovingIds] = useState<ReadonlySet<string>>(new Set())
-  const doneCountRef = useFieldAnchor<HTMLSpanElement>('done_count')
-  const allDoneRef = useFieldAnchor<HTMLSpanElement>('all_done')
-
   useEffect(() => {
     if (!pendingFocusId.current) return
     inputRefs.current.get(pendingFocusId.current)?.focus()
@@ -84,15 +80,14 @@ export function ChecklistWidget({ data, onChange, onHeightChange }: ChecklistWid
   const totalCount = data.items.length
 
   return (
-    <div ref={rootRef} className="flex flex-wrap content-start items-start gap-1">
+    <div ref={rootRef} className="flex flex-col items-stretch gap-1">
       {data.items.map((item, index) => (
         <WidgetPanel
           key={item.id}
           removing={removingIds.has(item.id)}
           onExitComplete={() => finishRemove(item.id)}
-          island={item.id}
-          sizing="width"
-          className="group/row flex h-8 items-center gap-2 px-2.5 pr-4"
+          floor="controls"
+          className="group/row flex h-8 w-full items-center gap-2 px-2.5 pr-3"
         >
           <button
             type="button"
@@ -129,7 +124,7 @@ export function ChecklistWidget({ data, onChange, onHeightChange }: ChecklistWid
             placeholder="Task…"
             onChange={(e) => setLabel(item.id, e.target.value)}
             onKeyDown={(e) => onItemKeyDown(e, index)}
-            className={`gp-chip-input bg-transparent text-[13px] outline-none placeholder:text-neutral-700 transition-colors duration-150 ${
+            className={`gp-chip-input min-w-0 flex-1 bg-transparent text-[13px] outline-none placeholder:text-neutral-700 transition-colors duration-150 ${
               item.done
                 ? 'text-neutral-600 line-through decoration-neutral-600/50'
                 : 'text-neutral-200'
@@ -150,16 +145,12 @@ export function ChecklistWidget({ data, onChange, onHeightChange }: ChecklistWid
       <button
         type="button"
         onClick={() => insertAfter(data.items.length - 1)}
-        className="flex h-8 shrink-0 items-center gap-1.5 px-2.5 text-[11px] text-neutral-600 transition-colors hover:text-neutral-400"
+        className="flex h-7 shrink-0 items-center gap-1.5 self-start px-2.5 text-[11px] text-neutral-600 transition-colors hover:text-neutral-400"
       >
         <Plus size={11} />
         Add task
         {totalCount > 0 && (
           <span
-            ref={(el) => {
-              doneCountRef.current = el
-              allDoneRef.current = el
-            }}
             aria-label={`${doneCount} of ${totalCount} done`}
             className={`ml-1  text-[10px] tabular-nums transition-colors duration-300 ${
               doneCount === totalCount ? '' : 'text-neutral-600'

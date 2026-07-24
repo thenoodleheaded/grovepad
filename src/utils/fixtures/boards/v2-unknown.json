@@ -83,20 +83,23 @@
       "enabled": true
     }
   },
-  "groups": {
-    "futureGroup": {
-      "id": "futureGroup",
-      "label": "Mixed versions",
+  "glues": {
+    "futureGlue": {
+      "id": "futureGlue",
       "widgetIds": ["alpha", "future"],
-      "color": "#6366f1",
-      "futureGroupField": "kept"
+      "futureGlueField": "kept"
     },
-    "futureColorGroup": {
-      "id": "futureColorGroup",
-      "label": "Future color",
+    "malformedGlue": {
+      "id": "malformedGlue",
+      "widgetIds": ["alpha"]
+    }
+  },
+  "groups": {
+    "legacyGroup": {
+      "id": "legacyGroup",
+      "label": "Legacy grouping",
       "widgetIds": ["alpha", "future"],
-      "color": "aurora-gradient",
-      "futureGroupField": "kept"
+      "color": "#6366f1"
     }
   },
   "activePacks": ["life", "quantum_research"],

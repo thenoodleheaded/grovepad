@@ -26,12 +26,15 @@ export const MEDIA_INPUT_WIDGET_DEFINITIONS = {
     category: 'media',
     accent: '#f9a8d4',
     defaultSize: { width: 320, height: C * 5 },
+    // An image card may be genuinely small — its content scales, unlike
+    // control rows. The resting image face relies on this floor.
+    sizing: { minWidth: 120, minHeight: 80 },
     defaultData: () => ({ url: '', caption: '' }),
   },
   sketchpad: {
     type: 'sketchpad',
     label: 'Drawing',
-    description: 'Quick pressure-sensitive ink and full diagram modes',
+    description: 'Quick pressure-sensitive ink and full diagram skins',
     icon: PenTool,
     category: 'media',
     accent: '#fcd34d',
@@ -43,9 +46,9 @@ export const MEDIA_INPUT_WIDGET_DEFINITIONS = {
       mode: 'ink',
       diagram: { elements: [], appState: {}, files: [], updatedAt: new Date().toISOString() },
     }),
-    modes: [
-      { value: 'ink', label: 'Quick Ink', icon: PenTool },
-      { value: 'diagram', label: 'Diagram', icon: Shapes },
+    skins: [
+      { value: 'ink', label: 'Quick Ink', icon: PenTool, accent: '#fcd34d' },
+      { value: 'diagram', label: 'Diagram', icon: Shapes, accent: '#7dd3fc' },
     ],
   },
   excalidraw: {
@@ -94,6 +97,7 @@ export const MEDIA_INPUT_WIDGET_DEFINITIONS = {
     icon: TextCursorInput,
     category: 'data',
     accent: '#f472b6',
+    restingFace: true,
     defaultSize: { width: 280, height: C * 3 },
     defaultData: () => ({
       label: 'Input',
@@ -109,6 +113,7 @@ export const MEDIA_INPUT_WIDGET_DEFINITIONS = {
     icon: Hash,
     category: 'data',
     accent: '#38bdf8',
+    restingFace: true,
     defaultSize: { width: 280, height: C * 4 },
     defaultData: () => ({ label: 'Value', value: 0, min: 0, max: 100, step: 1 }),
   },
@@ -119,6 +124,7 @@ export const MEDIA_INPUT_WIDGET_DEFINITIONS = {
     icon: ToggleRight,
     category: 'data',
     accent: '#fbbf24',
+    restingFace: true,
     defaultSize: { width: 240, height: C * 3 },
     defaultData: () => ({ label: 'Condition', value: false }),
   },
@@ -129,6 +135,7 @@ export const MEDIA_INPUT_WIDGET_DEFINITIONS = {
     icon: Binary,
     category: 'structure',
     accent: '#a78bfa',
+    restingFace: true,
     defaultSize: { width: C * 7, height: C * 3 },
     sizing: { minWidth: C * 4, minHeight: C * 2 },
     defaultData: () => ({
@@ -146,6 +153,7 @@ export const MEDIA_INPUT_WIDGET_DEFINITIONS = {
     icon: FunctionSquare,
     category: 'data',
     accent: '#818cf8',
+    restingFace: true,
     defaultSize: { width: 320, height: C * 5 },
     defaultData: () => ({ label: 'Calculation', a: 0, b: 0, operator: 'add' }),
   },
@@ -156,6 +164,7 @@ export const MEDIA_INPUT_WIDGET_DEFINITIONS = {
     icon: Gauge,
     category: 'tracking',
     accent: '#34d399',
+    restingFace: true,
     defaultSize: { width: 280, height: C * 3 },
     defaultData: () => ({ label: 'Status', value: 'not_started' }),
   },
@@ -166,11 +175,12 @@ export const MEDIA_INPUT_WIDGET_DEFINITIONS = {
     icon: CalendarClock,
     category: 'planning',
     accent: '#fb923c',
+    restingFace: true,
     defaultSize: { width: 280, height: C * 4 },
     defaultData: () => ({ label: 'Target date', date: localDayKeyInDays(1), time: '', includeTime: false, mode: 'date_time' }),
-    modes: [
-      { value: 'date_time', label: 'Date & Time', icon: CalendarClock },
-      { value: 'countdown', label: 'Countdown', icon: CalendarClock },
+    skins: [
+      { value: 'date_time', label: 'Date & Time', icon: CalendarClock, accent: '#fb923c' },
+      { value: 'countdown', label: 'Countdown', icon: CalendarClock, accent: '#f472b6' },
     ],
   },
 } satisfies Record<string, WidgetDefinition>

@@ -1,6 +1,6 @@
 import type { Vector2D, Widget } from '../types/spatial'
 import { GRID_SIZE, snapToGrid } from '../types/spatial'
-import { GROUP_PAD } from '../utils/groupGeometry'
+import { restingFootprintWidget } from '../utils/widgetRest'
 import { LAYOUT_GAP, SETTLE_ITERATION_LIMIT } from './widgetLayoutConstants'
 import { rectCenter, rectsOverlap, uniqueExistingIds, type LayoutRect } from './widgetCollection'
 
@@ -18,44 +18,43 @@ function sameCellRange(a: CellRange, b: CellRange): boolean {
   return a.minCX === b.minCX && a.minCY === b.minCY && a.maxCX === b.maxCX && a.maxCY === b.maxCY
 }
 
-/** Group index read at call time — settle helpers are module functions, so
- *  callers inside a set() that also rewrites groups must pass the fresh
- *  index explicitly instead of relying on this fallback. */
-let groupIndexProvider: () => Record<string, string> = () => ({})
+/** Glue index read at call time — settle helpers are module functions, so
+ *  callers inside a set() that also rewrites glue clusters must pass the
+ *  fresh index explicitly instead of relying on this fallback. */
+let glueIndexProvider: () => Record<string, string> = () => ({})
 
-export function setGroupIndexProvider(provider: () => Record<string, string>): void {
-  groupIndexProvider = provider
+export function setGlueIndexProvider(provider: () => Record<string, string>): void {
+  glueIndexProvider = provider
 }
 
-function liveGroupIndex(): Record<string, string> {
-  return groupIndexProvider()
+function liveGlueIndex(): Record<string, string> {
+  return glueIndexProvider()
 }
 
 /**
  * Push overlapping neighbors apart until the layout is collision-free.
- * Collision is resolved at CLUSTER granularity: a widget group moves as one
- * rigid unit whose rect is inflated by GROUP_PAD (the band needs clear air),
- * and members of the same group never collide with each other — so the
- * group's internal one-cell magnet spacing survives every settle. Ungrouped
- * widgets are singleton clusters; their behavior is unchanged. Two groups
- * dragged into each other therefore displace like two widgets do, instead
- * of one tearing the other apart member by member.
+ * Collision is resolved at CLUSTER granularity: a glue cluster moves as one
+ * rigid unit, and members of the same cluster never collide with each
+ * other — so the 0.3-cell weld seams survive every settle. Unglued widgets
+ * are singleton clusters; their behavior is unchanged. Two clusters dragged
+ * into each other therefore displace like two widgets do, instead of one
+ * tearing the other apart member by member.
  */
 export function settleWidgetLayout(
   widgets: Record<string, Widget>,
   activeIds: string[],
-  groupIndexOverride?: Record<string, string>,
+  glueIndexOverride?: Record<string, string>,
 ): Record<string, Widget> {
   const requested = uniqueExistingIds(activeIds, widgets)
   if (requested.length === 0) return widgets
-  const groupIndex = groupIndexOverride ?? liveGroupIndex()
+  const glueIndex = glueIndexOverride ?? liveGlueIndex()
   // Overlap resolution is per-canvas: widgets on other canvases share world
   // coordinates but never collide visually, so they must not be pushed.
   const canvasId = widgets[requested[0]!]!.canvasId
   const allIds = Object.keys(widgets).filter((id) => widgets[id]!.canvasId === canvasId)
 
   const clusterOf = (id: string): string => {
-    const gid = groupIndex[id]
+    const gid = glueIndex[id]
     return gid ? `g:${gid}` : `w:${id}`
   }
   const memberIds = new Map<string, string[]>()
@@ -78,11 +77,34 @@ export function settleWidgetLayout(
   if (queue.length === 0) return widgets
 
   const positions: Record<string, Vector2D> = {}
+  // A multi-member glue cluster snaps RIGIDLY: one delta (from its top-left
+  // corner to the grid) applied to every member, so the 0.3-cell weld seams
+  // inside the cluster survive the snap exactly. Snapping each member on its
+  // own would round every 12px seam to 0 or a full cell.
+  const rigidSnapDelta = new Map<string, Vector2D>()
+  for (const [key, ids] of memberIds) {
+    if (!queued.has(key) || !key.startsWith('g:') || ids.length < 2) continue
+    let minX = Infinity
+    let minY = Infinity
+    for (const id of ids) {
+      minX = Math.min(minX, widgets[id]!.position.x)
+      minY = Math.min(minY, widgets[id]!.position.y)
+    }
+    rigidSnapDelta.set(key, { x: snapToGrid(minX) - minX, y: snapToGrid(minY) - minY })
+  }
   for (const id of allIds) {
     const widget = widgets[id]!
-    positions[id] = queued.has(clusterOf(id))
-      ? { x: snapToGrid(widget.position.x), y: snapToGrid(widget.position.y) }
-      : widget.position
+    const key = clusterOf(id)
+    const rigid = rigidSnapDelta.get(key)
+    // An icon's own edge is continuous (no detents, any 80-120 square), so
+    // its position already routinely sits off the 40px grid after a corner
+    // drag — forcing it back onto the grid here would re-round the sub-cell
+    // placement the drag chose for it.
+    positions[id] = rigid
+      ? { x: widget.position.x + rigid.x, y: widget.position.y + rigid.y }
+      : queued.has(key) && !widget.iconified
+        ? { x: snapToGrid(widget.position.x), y: snapToGrid(widget.position.y) }
+        : widget.position
   }
 
   const rectFor = (key: string): LayoutRect => {
@@ -94,18 +116,24 @@ export function settleWidgetLayout(
     for (const id of ids) {
       const widget = widgets[id]!
       const pos = positions[id]!
+      // Resting cards occupy their compact, content-derived tile on the
+      // board. Settling against the dormant full-card size can still leave
+      // those visible tiles intersecting because the two size systems choose
+      // different cheapest escape axes. Use the same idle footprint that
+      // glue geometry and rendering use so creation cannot produce a board
+      // that already needs Untangle.
+      const footprint = restingFootprintWidget(widget)
       minX = Math.min(minX, pos.x)
       minY = Math.min(minY, pos.y)
-      maxX = Math.max(maxX, pos.x + widget.size.width)
-      maxY = Math.max(maxY, pos.y + widget.size.height)
+      maxX = Math.max(maxX, pos.x + footprint.size.width)
+      maxY = Math.max(maxY, pos.y + footprint.size.height)
     }
-    const pad = key.startsWith('g:') && ids.length > 1 ? GROUP_PAD : 0
     return {
       id: key,
-      x: minX - pad,
-      y: minY - pad,
-      width: maxX - minX + pad * 2,
-      height: maxY - minY + pad * 2,
+      x: minX,
+      y: minY,
+      width: maxX - minX,
+      height: maxY - minY,
     }
   }
 
@@ -149,7 +177,7 @@ export function settleWidgetLayout(
   for (const key of memberIds.keys()) addToCells(key, rangeFor(key))
 
   /** Rigid move: every member shifts by the same grid-aligned delta, so a
-   *  displaced group keeps its exact internal arrangement. */
+   *  displaced glue cluster keeps its exact internal arrangement. */
   const displace = (key: string, dx: number, dy: number) => {
     for (const id of memberIds.get(key)!) {
       const pos = positions[id]!
@@ -163,6 +191,11 @@ export function settleWidgetLayout(
 
   while (cursor < queue.length && iterations < SETTLE_ITERATION_LIMIT) {
     const activeKey = queue[cursor++]!
+    // `queued` means "still scheduled", not "has ever been visited". A
+    // cluster can be displaced after its earlier pass by another neighbor;
+    // allowing it back onto the queue is what makes the final layout stable
+    // instead of leaving the last push overlapping a card we already checked.
+    queued.delete(activeKey)
     reindex(activeKey)
     const activeRect = rectFor(activeKey)
     const activeCenter = rectCenter(activeRect)
@@ -231,7 +264,7 @@ export function settleWidgetLayout(
 export function settleWidgetsByCanvas(
   widgets: Record<string, Widget>,
   activeIds: Iterable<string>,
-  groupIndexOverride?: Record<string, string>,
+  glueIndexOverride?: Record<string, string>,
 ): Record<string, Widget> {
   const idsByCanvas = new Map<string, string[]>()
   for (const id of activeIds) {
@@ -243,7 +276,6 @@ export function settleWidgetsByCanvas(
   }
 
   let next = widgets
-  for (const ids of idsByCanvas.values()) next = settleWidgetLayout(next, ids, groupIndexOverride)
+  for (const ids of idsByCanvas.values()) next = settleWidgetLayout(next, ids, glueIndexOverride)
   return next
 }
-

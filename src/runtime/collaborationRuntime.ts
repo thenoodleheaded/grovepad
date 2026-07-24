@@ -3,6 +3,7 @@ import { Awareness, applyAwarenessUpdate, encodeAwarenessUpdate, removeAwareness
 import * as Y from 'yjs'
 import { base64ToBytes, bytesToBase64 } from '../collaboration/binaryEncoding'
 import { registerCollaborationController } from '../collaboration/collaborationController'
+import { registerCanvasSharing, revokeCanvasSharing } from '../collaboration/canvasSharing'
 import { createCanvasStoreBridge, type CanvasStoreBridge } from '../collaboration/canvasStoreBridge'
 import {
   enqueuePendingUpdate,
@@ -11,12 +12,13 @@ import {
   removePendingUpdates,
   writeCachedCollaborationDocument,
 } from '../collaboration/offlineUpdateQueue'
+import { resolveFollowTarget } from '../collaboration/followTarget'
 import { installCollaborationPermissionGuards } from '../collaboration/permissionGuards'
 import { SupabaseCollaborationRepository } from '../collaboration/supabaseCollaboration'
 import type { CollaborationPresence, CollaborationRole } from '../collaboration/types'
 import { REMOTE_TRANSPORT_ORIGIN, writeCanvasSnapshot } from '../collaboration/yjsCanvas'
 import { getSupabaseClient } from '../lib/supabase'
-import { useAuthStore } from '../store/useAuthStore'
+import { accountDisplayName, accountProfileColor, useAuthStore } from '../store/useAuthStore'
 import { useCanvasStore } from '../store/useCanvasStore'
 import {
   INITIAL_COLLABORATION_STATE,
@@ -27,12 +29,15 @@ import {
 import { useWidgetStore } from '../store/useWidgetStore'
 
 const UPDATE_EVENT = 'y-update'
+const AWARENESS_EVENT = 'awareness'
 const PRESENCE_ORIGIN = Symbol('supabase-presence')
 const COMPACT_UPDATE_COUNT = 200
 const COMPACT_BYTE_COUNT = 512 * 1024
 const MAX_WIRE_UPDATE_BYTES = 8 * 1024 * 1024
 const DURABLE_BATCH_BYTES = 4 * 1024 * 1024
 const DURABLE_BATCH_ROWS = 50
+const DURABLE_REPAIR_INTERVAL_MS = 750
+const AWARENESS_BROADCAST_INTERVAL_MS = 50
 
 interface LocalPresenceState {
   userId: string
@@ -53,7 +58,9 @@ interface ActiveCollaboration {
   awareness: Awareness
   repository: SupabaseCollaborationRepository
   channel: RealtimeChannel
+  awarenessChannel: RealtimeChannel
   connected: boolean
+  awarenessConnected: boolean
   lastSequence: number
   updatesSinceCompaction: number
   bytesSinceCompaction: number
@@ -71,20 +78,6 @@ interface ActiveCollaboration {
 
 let active: ActiveCollaboration | null = null
 let generation = 0
-
-function userColor(userId: string): string {
-  const colors = ['#34d399', '#60a5fa', '#a78bfa', '#fb7185', '#fbbf24', '#22d3ee']
-  let hash = 0
-  for (const character of userId) hash = Math.imul(hash ^ character.charCodeAt(0), 16_777_619)
-  return colors[Math.abs(hash) % colors.length]!
-}
-
-function userName(session: Session): string {
-  const metadata = session.user.user_metadata
-  const named = metadata.full_name ?? metadata.name ?? metadata.user_name
-  if (typeof named === 'string' && named.trim()) return named.trim().slice(0, 80)
-  return session.user.email?.split('@')[0]?.slice(0, 80) || 'Collaborator'
-}
 
 function safePresence(clientId: number, value: unknown): CollaborationPresence | null {
   if (!value || typeof value !== 'object') return null
@@ -125,10 +118,17 @@ function publishParticipants(session: ActiveCollaboration): void {
   }
   participants.sort((left, right) => left.name.localeCompare(right.name) || left.clientId - right.clientId)
   useCollaborationStore.setState({ participants })
-  const followed = participants.find(
-    (participant) => participant.clientId === useCollaborationStore.getState().followingClientId,
-  )
-  if (followed?.camera) useCanvasStore.getState().setView(followed.camera.pan, followed.camera.zoom)
+  const previousFollow = useCollaborationStore.getState().followingClientId
+  const follow = resolveFollowTarget(participants, previousFollow)
+  if (follow.followingClientId !== previousFollow) {
+    useCollaborationStore.setState({ followingClientId: follow.followingClientId })
+  }
+  if (follow.camera) useCanvasStore.getState().setView(follow.camera.pan, follow.camera.zoom)
+}
+
+async function publishPendingUpdateCount(session: ActiveCollaboration): Promise<void> {
+  const pending = await listPendingUpdates(session.canvasId)
+  if (active === session) useCollaborationStore.setState({ pendingUpdates: pending.length })
 }
 
 async function flushPending(session: ActiveCollaboration): Promise<void> {
@@ -157,16 +157,18 @@ async function flushPending(session: ActiveCollaboration): Promise<void> {
       session.updatesSinceCompaction += batch.length
       session.bytesSinceCompaction += batchBytes
       if (session.connected) {
-        await Promise.all(batch.map((update) => {
+        await Promise.all(batch.map(async (update) => {
           if (session.broadcastUpdateIds.has(update.id)) return Promise.resolve()
-          return session.channel.send({
+          const response = await session.channel.send({
             type: 'broadcast', event: UPDATE_EVENT,
             payload: { id: update.id, data: bytesToBase64(update.payload) },
           })
+          if (response !== 'ok') throw new Error(`Realtime update ${response}`)
         }))
       }
       for (const update of batch) session.broadcastUpdateIds.delete(update.id)
       await removePendingUpdates(batch.map((update) => update.id))
+      await publishPendingUpdateCount(session)
     }
     if (persistedAny) await syncDurableUpdates(session)
   })().finally(() => {
@@ -226,10 +228,20 @@ function scheduleLocalUpdate(session: ActiveCollaboration, update: Uint8Array): 
     void session.channel.send({
       type: 'broadcast', event: UPDATE_EVENT,
       payload: { id: updateId, data: bytesToBase64(update) },
+    }).then((response) => {
+      if (response === 'ok') return
+      session.broadcastUpdateIds.delete(updateId)
+      if (active === session) useCollaborationStore.setState({
+        status: response === 'timed out' ? 'reconnecting' : 'error',
+        error: `Realtime update ${response}. Your edit is saved and will retry automatically.`,
+      })
     })
   }
   void enqueuePendingUpdate(session.canvasId, update, updateId)
-    .then(() => flushPending(session))
+    .then(async () => {
+      await publishPendingUpdateCount(session)
+      await flushPending(session)
+    })
     .then(() => compactIfNeeded(session))
     .catch((error: unknown) => {
       useCollaborationStore.setState({
@@ -270,12 +282,21 @@ function installPointerPresence(session: ActiveCollaboration): () => void {
   }
 }
 
-async function startCanvasSession(session: Session, canvasId: string, expectedGeneration: number): Promise<void> {
+async function startCanvasSession(
+  session: Session,
+  canvasId: string,
+  expectedGeneration: number,
+  initialRole: CollaborationRole | null = null,
+): Promise<void> {
   useCollaborationStore.setState({
-    ...INITIAL_COLLABORATION_STATE, status: navigator.onLine ? 'connecting' : 'offline', canvasId,
+    ...INITIAL_COLLABORATION_STATE,
+    status: navigator.onLine ? 'connecting' : 'offline',
+    canvasId,
+    role: initialRole,
   })
   const client = await getSupabaseClient()
-  if (!client || expectedGeneration !== generation) return
+  if (!client) throw new Error('Canvas sharing is unavailable on this build')
+  if (expectedGeneration !== generation) return
   await client.realtime.setAuth(session.access_token)
   const repository = new SupabaseCollaborationRepository(client)
   const canvasName = useWidgetStore.getState().canvases[canvasId]?.name ?? 'Shared canvas'
@@ -307,9 +328,11 @@ async function startCanvasSession(session: Session, canvasId: string, expectedGe
   if (hasRemoteState) bridge.applyDocumentToStore()
 
   const awareness = new Awareness(bridge.doc)
-  const channel = repository.channel(canvasId, session.user.id)
+  const channel = repository.channel(canvasId)
+  const awarenessChannel = repository.awarenessChannel(canvasId, session.user.id)
   const disposers: Array<() => void> = []
   let presenceTimer = 0
+  let durableRepairTimer = 0
   const updatePresence = (patch: Partial<LocalPresenceState>) => {
     const previous = awareness.getLocalState() as LocalPresenceState | null
     if (!previous) return
@@ -320,8 +343,8 @@ async function startCanvasSession(session: Session, canvasId: string, expectedGe
     if (active === currentSession) useCollaborationStore.setState({ comments })
   }
   currentSession = {
-    canvasId, role: bootstrap.role, bridge, awareness, repository, channel,
-    connected: false,
+    canvasId, role: bootstrap.role, bridge, awareness, repository, channel, awarenessChannel,
+    connected: false, awarenessConnected: false,
     lastSequence: Math.max(bootstrap.lastSequence, ...bootstrap.updates.map((update) => update.sequence)),
     updatesSinceCompaction: bootstrap.updates.length,
     bytesSinceCompaction: bootstrap.updates.reduce((total, update) => total + update.payload.byteLength, 0),
@@ -331,11 +354,12 @@ async function startCanvasSession(session: Session, canvasId: string, expectedGe
   }
   active = currentSession
   useCollaborationStore.setState({ role: bootstrap.role, localClientId: awareness.clientID, error: null })
+  void publishPendingUpdateCount(currentSession).catch(() => {})
 
   const localState: LocalPresenceState = {
     userId: session.user.id,
-    name: userName(session),
-    color: userColor(session.user.id),
+    name: accountDisplayName(session),
+    color: accountProfileColor(session),
     role: bootstrap.role,
     cursor: null,
     selectedWidgetIds: [...useWidgetStore.getState().selectedIds],
@@ -345,24 +369,55 @@ async function startCanvasSession(session: Session, canvasId: string, expectedGe
   }
   awareness.setLocalState(localState)
 
-  const publishPresence = () => {
-    if (!currentSession.connected) return
-    const encoded = encodeAwarenessUpdate(awareness, [awareness.clientID])
-    void channel.track({ clientId: awareness.clientID, awareness: bytesToBase64(encoded) })
+  const encodedLocalAwareness = () => bytesToBase64(
+    encodeAwarenessUpdate(awareness, [awareness.clientID]),
+  )
+  const publishPresence = async () => {
+    if (!currentSession.awarenessConnected) return
+    const response = await awarenessChannel.track({
+      clientId: awareness.clientID,
+      awareness: encodedLocalAwareness(),
+    })
+    if (response !== 'ok') throw new Error(`Realtime presence ${response}`)
+  }
+  const publishAwareness = async () => {
+    if (!currentSession.awarenessConnected) return
+    const response = await awarenessChannel.send({
+      type: 'broadcast',
+      event: AWARENESS_EVENT,
+      payload: { clientId: awareness.clientID, awareness: encodedLocalAwareness() },
+    })
+    if (response !== 'ok') throw new Error(`Realtime awareness ${response}`)
+  }
+  const markConnectedIfReady = () => {
+    if (
+      active === currentSession && currentSession.connected &&
+      currentSession.awarenessConnected && documentBootstrapped && presencePublished
+    ) useCollaborationStore.setState({ status: 'connected', error: null })
+  }
+  const reportRealtimeFailure = (error: unknown) => {
+    if (active !== currentSession) return
+    useCollaborationStore.setState({
+      status: navigator.onLine ? 'error' : 'offline',
+      error: `${error instanceof Error ? error.message : String(error)}. Local edits remain safe.`,
+    })
   }
   const schedulePresence = () => {
     if (presenceTimer) return
     presenceTimer = window.setTimeout(() => {
       presenceTimer = 0
-      publishPresence()
-    }, 16)
+      void publishAwareness().catch(reportRealtimeFailure)
+    }, AWARENESS_BROADCAST_INTERVAL_MS)
   }
-  const onAwareness = () => {
+  const onAwareness = (_changes: unknown, origin: unknown) => {
     publishParticipants(currentSession)
-    schedulePresence()
+    if (origin !== PRESENCE_ORIGIN) schedulePresence()
   }
   awareness.on('update', onAwareness)
   disposers.push(() => awareness.off('update', onAwareness))
+
+  let documentBootstrapped = false
+  let presencePublished = false
 
   let cacheTimer = 0
   const cacheDocument = () => writeCachedCollaborationDocument({
@@ -391,8 +446,15 @@ async function startCanvasSession(session: Session, canvasId: string, expectedGe
       })
     }
   })
-  channel.on('presence', { event: 'sync' }, () => {
-    const state = channel.presenceState() as Record<string, Array<{ clientId?: unknown; awareness?: unknown }>>
+  awarenessChannel.on('broadcast', { event: AWARENESS_EVENT }, ({ payload }) => {
+    if (typeof payload?.awareness !== 'string' || typeof payload?.clientId !== 'number') return
+    if (payload.clientId === awareness.clientID) return
+    try {
+      applyAwarenessUpdate(awareness, base64ToBytes(payload.awareness), PRESENCE_ORIGIN)
+    } catch { /* Ignore malformed awareness broadcasts. */ }
+  })
+  awarenessChannel.on('presence', { event: 'sync' }, () => {
+    const state = awarenessChannel.presenceState() as Record<string, Array<{ clientId?: unknown; awareness?: unknown }>>
     const liveRemoteIds = new Set<number>()
     for (const presences of Object.values(state)) {
       for (const presence of presences) {
@@ -407,20 +469,60 @@ async function startCanvasSession(session: Session, canvasId: string, expectedGe
     if (stale.length > 0) removeAwarenessStates(awareness, stale, PRESENCE_ORIGIN)
     publishParticipants(currentSession)
   })
-  channel.subscribe((status) => {
+  const scheduleDurableRepair = () => {
+    window.clearTimeout(durableRepairTimer)
+    if (active !== currentSession) return
+    durableRepairTimer = window.setTimeout(() => {
+      if (active !== currentSession) return
+      void syncDurableUpdates(currentSession)
+        .catch(() => {})
+        .finally(scheduleDurableRepair)
+    }, DURABLE_REPAIR_INTERVAL_MS)
+  }
+  channel.subscribe((status, subscriptionError) => {
     if (active !== currentSession) return
     if (status === 'SUBSCRIBED') {
       currentSession.connected = true
-      useCollaborationStore.setState({ status: 'connected', error: null })
-      publishPresence()
-      void syncDurableUpdates(currentSession).then(() => flushPending(currentSession)).catch((error: unknown) => {
-        useCollaborationStore.setState({ status: 'error', error: error instanceof Error ? error.message : String(error) })
-      })
+      // Broadcast remains the smooth hot path. The durable tail is also
+      // sampled so a dropped/rejected message repairs itself without reload.
+      scheduleDurableRepair()
+      void syncDurableUpdates(currentSession)
+        .then(() => flushPending(currentSession))
+        .then(() => {
+          if (active !== currentSession) return
+          documentBootstrapped = true
+          markConnectedIfReady()
+        })
+        .catch(reportRealtimeFailure)
     } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
       currentSession.connected = false
-      useCollaborationStore.setState({ status: navigator.onLine ? 'reconnecting' : 'offline' })
+      useCollaborationStore.setState({
+        status: navigator.onLine ? 'reconnecting' : 'offline',
+        error: subscriptionError?.message ?? null,
+      })
     } else if (status === 'CLOSED') {
       currentSession.connected = false
+    }
+  })
+  awarenessChannel.subscribe((status, subscriptionError) => {
+    if (active !== currentSession) return
+    if (status === 'SUBSCRIBED') {
+      currentSession.awarenessConnected = true
+      void publishPresence()
+        .then(() => {
+          if (active !== currentSession) return
+          presencePublished = true
+          markConnectedIfReady()
+        })
+        .catch(reportRealtimeFailure)
+    } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+      currentSession.awarenessConnected = false
+      useCollaborationStore.setState({
+        status: navigator.onLine ? 'reconnecting' : 'offline',
+        error: subscriptionError?.message ?? null,
+      })
+    } else if (status === 'CLOSED') {
+      currentSession.awarenessConnected = false
     }
   })
 
@@ -432,7 +534,7 @@ async function startCanvasSession(session: Session, canvasId: string, expectedGe
       writeCanvasSnapshot(bridge.doc, {
         canvasId,
         canvas: { id: canvasId, name: canvasName },
-        widgets: {}, relations: {}, connections: {}, groups: {},
+        widgets: {}, relations: {}, connections: {}, glues: {},
       }, REMOTE_TRANSPORT_ORIGIN)
       bridge.applyDocumentToStore()
     }
@@ -453,7 +555,9 @@ async function startCanvasSession(session: Session, canvasId: string, expectedGe
   })
   const disposePointer = installPointerPresence(currentSession)
   const onOnline = () => {
-    useCollaborationStore.setState({ status: currentSession.connected ? 'connected' : 'reconnecting' })
+    useCollaborationStore.setState({
+      status: currentSession.connected && currentSession.awarenessConnected ? 'connected' : 'reconnecting',
+    })
     void syncDurableUpdates(currentSession).then(() => flushPending(currentSession))
   }
   const onOffline = () => useCollaborationStore.setState({ status: 'offline' })
@@ -463,6 +567,7 @@ async function startCanvasSession(session: Session, canvasId: string, expectedGe
 
   currentSession.dispose = () => {
     window.clearTimeout(presenceTimer)
+    window.clearTimeout(durableRepairTimer)
     window.clearTimeout(cameraTimer)
     window.clearTimeout(cacheTimer)
     void cacheDocument()
@@ -473,8 +578,9 @@ async function startCanvasSession(session: Session, canvasId: string, expectedGe
     for (const dispose of disposers) dispose()
     window.removeEventListener('online', onOnline)
     window.removeEventListener('offline', onOffline)
-    void channel.untrack()
+    void awarenessChannel.untrack()
     void client.removeChannel(channel)
+    void client.removeChannel(awarenessChannel)
     awareness.destroy()
     bridge.destroy()
   }
@@ -488,13 +594,17 @@ function stopActiveSession(): void {
   useCollaborationStore.setState({ ...INITIAL_COLLABORATION_STATE })
 }
 
-function restartForCurrentCanvas(): void {
+function restartForCurrentCanvas(initialRole: CollaborationRole | null = null): void {
   stopActiveSession()
   const session = useAuthStore.getState().session
   if (!session) return
   const expectedGeneration = generation
-  const canvasId = useWidgetStore.getState().activeCanvasId
-  void startCanvasSession(session, canvasId, expectedGeneration).catch((error: unknown) => {
+  const board = useWidgetStore.getState()
+  const canvasId = board.activeCanvasId
+  // Sharing is opt-in per canvas. A private canvas never registers with the
+  // server and never uploads CRDT state, so it stays on this device entirely.
+  if (!board.canvases[canvasId]?.shared) return
+  void startCanvasSession(session, canvasId, expectedGeneration, initialRole).catch((error: unknown) => {
     if (expectedGeneration !== generation) return
     useCollaborationStore.setState({
       status: navigator.onLine ? 'error' : 'offline',
@@ -502,6 +612,21 @@ function restartForCurrentCanvas(): void {
       error: error instanceof Error ? error.message : String(error),
     })
   })
+}
+
+function startCollaborationForSession(session: Session): void {
+  if (!new URL(window.location.href).searchParams.has('collaborate')) {
+    restartForCurrentCanvas()
+    return
+  }
+  void joinCanvasFromUrl(session)
+    .then(() => restartForCurrentCanvas())
+    .catch((error: unknown) => {
+      useCollaborationStore.setState({
+        status: navigator.onLine ? 'error' : 'offline',
+        error: error instanceof Error ? error.message : String(error),
+      })
+    })
 }
 
 async function joinCanvasFromUrl(session: Session): Promise<boolean> {
@@ -527,10 +652,14 @@ async function joinCanvasFromUrl(session: Session): Promise<boolean> {
           name: metadata.name,
           workspaceId: workspace.id,
           parentCanvasId: workspace.rootCanvasId === canvasId ? null : workspace.rootCanvasId,
+          shared: true,
         },
       },
     })
   }
+  // Accepting an invitation is itself the opt-in, so an already-local copy of
+  // the canvas is marked shared before the session gate below runs.
+  useWidgetStore.getState().updateCanvasSettings(canvasId, { shared: true })
   if (useWidgetStore.getState().activeCanvasId !== canvasId) {
     useWidgetStore.getState().navigateToCanvas(canvasId)
   }
@@ -553,6 +682,49 @@ async function inviteCollaborator(email: string, role: CollaborationRole): Promi
   await active.repository.setMemberRole(active.canvasId, email, role)
 }
 
+/**
+ * Turning sharing off must revoke access, not just stop this client syncing,
+ * so it verifies ownership and deletes the server collaboration before changing
+ * the local flag. If startup never produced an active session, the repository
+ * rechecks the role instead of leaving the settings control permanently stuck.
+ */
+async function setCanvasShared(shared: boolean): Promise<void> {
+  const session = useAuthStore.getState().session
+  if (!session) throw new Error('Sign in to share a canvas')
+  const canvasId = useWidgetStore.getState().activeCanvasId
+  const canvasName = useWidgetStore.getState().canvases[canvasId]?.name ?? 'Shared canvas'
+  if (shared) {
+    const client = await getSupabaseClient()
+    if (!client) throw new Error('Canvas sharing is unavailable on this build')
+    await client.realtime.setAuth(session.access_token)
+    const repository = new SupabaseCollaborationRepository(client)
+    const role = await registerCanvasSharing(repository, canvasId, canvasName)
+    useWidgetStore.getState().updateCanvasSettings(canvasId, { shared: true })
+    // The user may navigate while registration is in flight. The intended
+    // canvas is still shared, but only restart the currently visible canvas.
+    if (useWidgetStore.getState().activeCanvasId === canvasId) restartForCurrentCanvas(role)
+    return
+  }
+  let repository: SupabaseCollaborationRepository
+  let knownRole: CollaborationRole | null = null
+  if (active?.canvasId === canvasId) {
+    repository = active.repository
+    knownRole = active.role
+  } else {
+    const client = await getSupabaseClient()
+    if (!client) throw new Error('Canvas sharing is unavailable on this build')
+    await client.realtime.setAuth(session.access_token)
+    repository = new SupabaseCollaborationRepository(client)
+    knownRole = await registerCanvasSharing(repository, canvasId, canvasName)
+    if (useWidgetStore.getState().activeCanvasId === canvasId) {
+      useCollaborationStore.setState({ canvasId, role: knownRole })
+    }
+  }
+  await revokeCanvasSharing(repository, canvasId, canvasName, knownRole)
+  useWidgetStore.getState().updateCanvasSettings(canvasId, { shared: false })
+  restartForCurrentCanvas()
+}
+
 async function postCollaborationComment(body: string, parentId?: string, widgetId?: string): Promise<void> {
   if (!active || !canCommentOnCollaborativeCanvas(active.role)) throw new Error('Your role cannot add comments')
   await active.repository.addComment(active.canvasId, body, { parentId, widgetId })
@@ -563,13 +735,25 @@ async function refreshCollaborationComments(): Promise<void> {
   await active?.refreshComments()
 }
 
+async function retryCurrentCollaboration(): Promise<void> {
+  const session = useAuthStore.getState().session
+  if (!session) throw new Error('Sign in to reconnect collaboration')
+  stopActiveSession()
+  if (new URL(window.location.href).searchParams.has('collaborate')) {
+    await joinCanvasFromUrl(session)
+  }
+  restartForCurrentCanvas()
+}
+
 export function initCollaborationRuntime(): () => void {
   const unregisterController = registerCollaborationController({
     setEditingWidget: setCollaborativeEditingWidget,
     follow: followCollaborator,
     invite: inviteCollaborator,
+    setShared: setCanvasShared,
     postComment: postCollaborationComment,
     refreshComments: refreshCollaborationComments,
+    retry: retryCurrentCollaboration,
   })
   let previousCanvasId = useWidgetStore.getState().activeCanvasId
   let previousSessionId = useAuthStore.getState().session?.user.id ?? null
@@ -582,25 +766,16 @@ export function initCollaborationRuntime(): () => void {
     const sessionId = state.session?.user.id ?? null
     if (sessionId === previousSessionId) return
     previousSessionId = sessionId
-    restartForCurrentCanvas()
+    if (state.session) startCollaborationForSession(state.session)
+    else restartForCurrentCanvas()
   })
   const retryOfflineStart = () => {
     if (!active && useAuthStore.getState().session) restartForCurrentCanvas()
   }
   window.addEventListener('online', retryOfflineStart)
   const initialSession = useAuthStore.getState().session
-  if (initialSession && new URL(window.location.href).searchParams.has('collaborate')) {
-    void joinCanvasFromUrl(initialSession)
-      .then(() => restartForCurrentCanvas())
-      .catch((error: unknown) => {
-        useCollaborationStore.setState({
-          status: 'error',
-          error: error instanceof Error ? error.message : String(error),
-        })
-      })
-  } else {
-    restartForCurrentCanvas()
-  }
+  if (initialSession) startCollaborationForSession(initialSession)
+  else restartForCurrentCanvas()
   return () => {
     unsubscribeBoard()
     unsubscribeAuth()

@@ -31,12 +31,20 @@ export function mergeWidgetSizing(
     ...live,
     minWidth: minWidth || undefined,
     minHeight: minHeight || undefined,
-    // A live floor is allowed to reach a static ceiling, but never silently
-    // replaces that ceiling. Content authors can raise the registry maximum
-    // when a composition genuinely needs a larger useful range.
-    maxWidth: fallback?.maxWidth,
-    maxHeight: fallback?.maxHeight,
+    // Tighten, never loosen — in both directions. A measured ceiling may pull
+    // a registry maximum *in* (a card of fixed-height rows cannot usefully be
+    // dragged taller than its own content), but may never push it out: only a
+    // content author raises a type's useful range. Whichever is smaller wins,
+    // and a floor above it still takes precedence below.
+    maxWidth: tighterMax(fallback?.maxWidth, live?.maxWidth),
+    maxHeight: tighterMax(fallback?.maxHeight, live?.maxHeight),
     autoHeight: fallback?.autoHeight,
   }
+}
+
+function tighterMax(fallback: number | undefined, live: number | undefined): number | undefined {
+  if (fallback === undefined) return live
+  if (live === undefined) return fallback
+  return Math.min(fallback, live)
 }
 

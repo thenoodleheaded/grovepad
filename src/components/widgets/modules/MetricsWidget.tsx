@@ -1,6 +1,5 @@
 import { Minus, Plus, TrendingDown, TrendingUp, X } from 'lucide-react'
 import type { MetricsData, MetricTrend } from '../../../types/spatial'
-import { useFieldAnchor } from '../../../hooks/useFieldAnchor'
 
 interface MetricsWidgetProps {
   data: MetricsData
@@ -24,8 +23,6 @@ function TrendIcon({ trend }: { trend: MetricTrend }) {
 /** KPI tile grid — value, unit, label, and a tap-to-cycle trend arrow. */
 export function MetricsWidget({ data, onChange }: MetricsWidgetProps) {
   // The first tile is the wireable KPI — pipe a number in to drive it live.
-  const value1Ref = useFieldAnchor('value_1')
-
   const setTile = (id: string, patch: Partial<MetricsData['tiles'][number]>) =>
     onChange({
       tiles: data.tiles.map((tile) => (tile.id === id ? { ...tile, ...patch } : tile)),
@@ -45,10 +42,9 @@ export function MetricsWidget({ data, onChange }: MetricsWidgetProps) {
   return (
     <div className="gp-flat-visual flex h-full flex-col">
       <div className="grid grid-cols-2 gap-1.5">
-        {data.tiles.map((tile, tileIndex) => (
+        {data.tiles.map((tile) => (
           <div
             key={tile.id}
-            ref={tileIndex === 0 ? value1Ref : undefined}
             className="group/tile relative rounded-xl border gp-hairline bg-neutral-900/50 p-2 transition-colors hover:border-neutral-600"
           >
             <button

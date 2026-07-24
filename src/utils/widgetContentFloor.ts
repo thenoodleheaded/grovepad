@@ -1,4 +1,5 @@
 import type { Size } from '../types/spatial'
+import { WIDGET_MAX_EDGE } from '../types/spatial'
 import type { WidgetSizing } from '../widgets/contracts/registry'
 
 export type PanelFloorClass = 'reflow' | 'rows' | 'rigid' | 'controls'
@@ -96,12 +97,6 @@ export function composePanelFloors(
       }
 }
 
-export function panelClassForIsland(sizing?: string): PanelFloorClass {
-  if (sizing === 'fixed' || sizing === 'aspect') return 'rigid'
-  if (sizing === 'width') return 'controls'
-  return 'reflow'
-}
-
 function visibleChildren(element: HTMLElement): HTMLElement[] {
   return Array.from(element.children).filter((child): child is HTMLElement => {
     if (!(child instanceof HTMLElement)) return false
@@ -138,9 +133,8 @@ function horizontalChrome(style: CSSStyleDeclaration): number {
 
 function explicitMinimum(element: HTMLElement, axis: 'w' | 'h'): number {
   const declared = Number(element.dataset[`floorMin${axis.toUpperCase()}` as 'floorMinW' | 'floorMinH'])
-  const island = Number(element.dataset[`islandMin${axis.toUpperCase()}` as 'islandMinW' | 'islandMinH'])
   const css = px(axis === 'w' ? getComputedStyle(element).minWidth : getComputedStyle(element).minHeight)
-  return Math.max(finite(declared), finite(island), css)
+  return Math.max(finite(declared), css)
 }
 
 function controlText(element: HTMLElement): string {
@@ -234,6 +228,39 @@ export interface ContentFloorMeasurement {
   growTo: Size
 }
 
+/**
+ * Whether anything inside the card grows to fill the height it is given.
+ *
+ * This is the question that decides whether a card can have a *void* at all.
+ * A stack of fixed-height pieces (rows, stat tiles, buttons) has one intrinsic
+ * height, so any card taller than that is showing empty space below its last
+ * control. A renderer with a stretching region — an internal scroll panel, a
+ * canvas, a chart that fills its box — has no intrinsic height: it uses
+ * whatever it is given, so there is no such thing as too tall.
+ *
+ * Only `flex-grow` is readable here: a computed style resolves every other way
+ * of saying "fill the box" (`height: 100%`, `inset-0`) to the pixels it
+ * currently occupies, which is indistinguishable from a fixed height. Those
+ * cases are caught by the measurement instead — a filling child reports the
+ * card's own height, so the derived ceiling sits above the card and never
+ * binds. This check exists for the flex case, where the same reasoning would
+ * otherwise pin a scroll panel to whatever height it happened to have.
+ */
+export function contentStretchesToFill(ui: HTMLElement): boolean {
+  for (const child of Array.from(ui.children)) {
+    const style = getComputedStyle(child)
+    if (style.position === 'absolute' || style.position === 'fixed') continue
+    if (px(style.flexGrow) > 0) return true
+  }
+  return false
+}
+
+/** Slack allowed above the content's own height before a card counts as
+ * holding a void. One grid cell — the same threshold the scale-debug pass
+ * already uses to flag `content-void`, so the resize gesture and the audit
+ * agree on what "too tall" means. */
+const CONTENT_CEILING_SLACK = 40
+
 /** Measure one mounted full card. Deleting content lowers the returned floor;
  * callers enforce the grow-only rule by applying growTo only when it expands. */
 export function measureWidgetContentFloor(
@@ -241,8 +268,11 @@ export function measureWidgetContentFloor(
   current: Size,
   fallback: WidgetSizing,
 ): ContentFloorMeasurement {
-  const maxWidth = fallback.maxWidth ?? Infinity
-  const maxHeight = fallback.maxHeight ?? Infinity
+  // A measured floor is still a size, so the absolute ceiling binds it: an
+  // unbounded floor could otherwise demand a card larger than any clamp would
+  // grant, leaving the grow pass permanently unsatisfied.
+  const maxWidth = Math.min(WIDGET_MAX_EDGE, fallback.maxWidth ?? WIDGET_MAX_EDGE)
+  const maxHeight = Math.min(WIDGET_MAX_EDGE, fallback.maxHeight ?? WIDGET_MAX_EDGE)
   const intrinsicWidth = intrinsicElementWidth(root) + CARD_INSET
   const minWidth = Math.min(maxWidth, ceilSubgrid(Math.max(fallback.minWidth ?? 0, intrinsicWidth)))
   const overflowY = largestHiddenVerticalOverflow(root)
@@ -250,8 +280,19 @@ export function measureWidgetContentFloor(
     maxHeight,
     verticalContentFloor(root.scrollHeight, overflowY, fallback.minHeight),
   )
+  // A card made only of fixed-height pieces has a real ceiling: past its own
+  // content plus a cell of slack it is just empty space below the last
+  // control. Publishing it as a live maximum is what stops a drag from
+  // opening that void in the first place — the gesture meets the same wall
+  // the store would clamp to, and the rubber band shows it.
+  const natural = naturalContentHeight(root)
+  const ceiling = !contentStretchesToFill(root) && natural > 0
+    ? Math.max(minHeight, Math.min(maxHeight, ceilSubgrid(natural + CARD_INSET) + CONTENT_CEILING_SLACK))
+    : undefined
   return {
-    sizing: { minWidth, minHeight },
+    sizing: ceiling === undefined
+      ? { minWidth, minHeight }
+      : { minWidth, minHeight, maxHeight: ceiling },
     growTo: {
       width: Math.max(current.width, minWidth),
       height: Math.max(current.height, minHeight),

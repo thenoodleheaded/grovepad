@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Minus, Plus } from 'lucide-react'
 import type { TableData } from '../../../types/spatial'
-import { useFieldAnchor } from '../../../hooks/useFieldAnchor'
 import { summarizeNumericColumn } from '../../../utils/widgetValueValidation'
 
 interface TableWidgetProps {
@@ -12,7 +11,6 @@ interface TableWidgetProps {
 export function TableWidget({ data, onChange }: TableWidgetProps) {
   const cellRefs = useRef(new Map<string, HTMLInputElement>())
   const pendingFocusKey = useRef<string | null>(null)
-  const rowCountRef = useFieldAnchor('row_count')
   const [selected,setSelected]=useState({row:0,col:0})
 
   useEffect(() => {
@@ -119,7 +117,7 @@ export function TableWidget({ data, onChange }: TableWidgetProps) {
       </div>
 
       {/* Footer controls — 28px, compact pill buttons */}
-      <div ref={rowCountRef} className="flex h-7 shrink-0 items-center gap-1 pt-1.5">
+      <div className="flex h-7 shrink-0 items-center gap-1 pt-1.5">
         <button
           type="button"
           onClick={addRow}

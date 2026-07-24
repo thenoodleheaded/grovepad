@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { resolveCanvasPointerIntent } from './canvasGesturePolicy'
+import { canvasPressMoved, resolveCanvasPointerIntent } from './canvasGesturePolicy'
 
 const base = {
   button: 0,
@@ -12,6 +12,13 @@ const base = {
 }
 
 describe('canvas pointer intent', () => {
+  it('distinguishes a stationary background click from a canvas drag', () => {
+    const start = { x: 100, y: 100 }
+    expect(canvasPressMoved(start, { x: 103, y: 97 })).toBe(false)
+    expect(canvasPressMoved(start, { x: 104, y: 100 })).toBe(true)
+    expect(canvasPressMoved(start, { x: 100, y: 106 })).toBe(true)
+  })
+
   it('uses empty-canvas touch for navigation by default', () => {
     expect(resolveCanvasPointerIntent(base)).toBe('pan')
   })
@@ -29,7 +36,6 @@ describe('canvas pointer intent', () => {
   it('does not let canvas navigation steal content or unfinished tool modes', () => {
     expect(resolveCanvasPointerIntent({ ...base, isEmptyCanvas: false })).toBe('none')
     expect(resolveCanvasPointerIntent({ ...base, interactionMode: 'connect' })).toBe('none')
-    expect(resolveCanvasPointerIntent({ ...base, interactionMode: 'edit' })).toBe('none')
   })
 
   it('always preserves middle-button panning', () => {

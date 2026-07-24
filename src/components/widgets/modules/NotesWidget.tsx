@@ -1,7 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { NotesData } from '../../../types/spatial'
-import { useFieldAnchor } from '../../../hooks/useFieldAnchor'
-import { setCollaborativeEditingWidget } from '../../../collaboration/collaborationController'
 import { useCollaborationStore } from '../../../store/useCollaborationStore'
 
 interface NotesWidgetProps {
@@ -13,7 +11,6 @@ interface NotesWidgetProps {
 
 export function NotesWidget({ data, onChange, onHeightChange, widgetId }: NotesWidgetProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null)
-  const textFieldRef = useFieldAnchor<HTMLTextAreaElement>('text')
   const [localText, setLocalText] = useState(data.text)
   const remoteEditor = useCollaborationStore((state) =>
     state.participants.find((participant) =>
@@ -50,14 +47,11 @@ export function NotesWidget({ data, onChange, onHeightChange, widgetId }: NotesW
       <textarea
         ref={(el) => {
           textareaRef.current = el
-          textFieldRef.current = el
         }}
         value={localText}
         rows={2}
         placeholder="Start writing…"
         onChange={handleChange}
-        onFocus={() => setCollaborativeEditingWidget(widgetId ?? null)}
-        onBlur={() => setCollaborativeEditingWidget(null)}
         data-collaboration-editing={Boolean(remoteEditor)}
         className="min-h-12 w-full resize-none bg-transparent text-[13px] leading-[1.65] text-neutral-100 outline-none placeholder:text-neutral-700 selection:bg-amber-500/20"
       />

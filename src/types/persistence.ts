@@ -5,7 +5,7 @@ import type {
   Relation,
   Vector2D,
   Widget,
-  WidgetGroup,
+  WidgetGlue,
   Workspace,
 } from './spatial'
 
@@ -36,7 +36,7 @@ export interface PersistedBoardDocumentState {
   relations: Record<string, Relation>
   /** Circuit wires. Absent in older payloads and normalized to an empty record. */
   connections: Record<string, Connection>
-  groups: Record<string, WidgetGroup>
+  glues: Record<string, WidgetGlue>
   activePacks: DomainPack[]
   /**
    * Reader-owned sidecar for future top-level fields. It is non-enumerable on
@@ -46,7 +46,7 @@ export interface PersistedBoardDocumentState {
   /** Unsupported-but-well-formed semantic records quarantined from this runtime. */
   persistenceUnknownRelations?: Record<string, Record<string, unknown>>
   persistenceUnknownConnections?: Record<string, Record<string, unknown>>
-  persistenceUnknownGroups?: Record<string, Record<string, unknown>>
+  persistenceUnknownGlues?: Record<string, Record<string, unknown>>
   /** Original pack ordering, including string values introduced by newer builds. */
   persistenceRawActivePacks?: string[]
 }

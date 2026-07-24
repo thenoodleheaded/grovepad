@@ -4,6 +4,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type CSSProperties,
 } from 'react'
 import { createPortal } from 'react-dom'
 import { ChevronRight, Layers, Search, SquarePlus, X, Zap } from 'lucide-react'
@@ -11,6 +12,7 @@ import { useFocusTrap } from '../../hooks/useFocusTrap'
 import { useCanvasStore } from '../../store/useCanvasStore'
 import { isOverlayOpen, useOverlayLifecycle } from '../../store/useOverlayStore'
 import { useWidgetStore } from '../../store/useWidgetStore'
+import { useSettingsStore } from '../../store/useSettingsStore'
 import {
   MODULE_LABELS,
   MODULE_PACK_REQUIREMENTS,
@@ -79,7 +81,7 @@ const PALETTE_ACTIONS: ActionItem[] = [
     subtitle: 'Show every shortcut and gesture (?)',
     run: () => {
       useWidgetStore.getState().setPaletteOpen(false)
-      useWidgetStore.getState().setShortcutsOpen(true)
+      useSettingsStore.getState().setOpen(true, 'controls')
     },
   },
   {
@@ -96,7 +98,7 @@ const PALETTE_ACTIONS: ActionItem[] = [
   {
     id: 'action-untangle',
     title: 'Untangle Layout',
-    subtitle: 'Spread overlapping nodes apart; groups move as a unit',
+    subtitle: 'Spread overlapping nodes apart; glued widgets move as a unit',
     run: () => {
       useWidgetStore.getState().untangleCanvas()
       useWidgetStore.getState().setPaletteOpen(false)
@@ -471,6 +473,8 @@ export function CommandPalette() {
 
   if (!open) return null
 
+  const activeTabIndex = TABS.findIndex((tab) => tab.id === category)
+
   return createPortal(
     <div
       role="dialog"
@@ -490,7 +494,7 @@ export function CommandPalette() {
       <div
         ref={panelRef}
         tabIndex={-1}
-        className="gp-command-panel gp-dialog gp-pop gp-panel relative z-10 flex w-full max-w-2xl flex-col overflow-hidden rounded-3xl shadow-2xl outline-none"
+        className="gp-command-panel gp-popup-surface gp-dialog gp-pop gp-panel relative z-10 flex w-full max-w-2xl flex-col overflow-hidden rounded-3xl shadow-2xl outline-none"
       >
         {/* Search input */}
         <div className="flex items-center gap-3 border-b border-neutral-800 px-4 py-3">
@@ -510,31 +514,32 @@ export function CommandPalette() {
             type="button"
             aria-label="Close palette"
             onClick={() => useWidgetStore.getState().setPaletteOpen(false)}
-            className="gp-touch-target flex h-6 w-6 items-center justify-center rounded text-neutral-500 hover:bg-neutral-800 hover:text-white"
+            className="gp-popup-close-naked gp-touch-target h-7 w-7"
           >
             <X size={13} />
           </button>
         </div>
 
         {/* Category tabs */}
-        <div className="flex items-center gap-1 border-b border-neutral-800 px-3 py-1.5">
+        <div
+          className="gp-command-tabs relative mx-3 my-1.5 flex items-center gap-1 rounded-xl p-1"
+          style={{ '--gp-command-tab-index': activeTabIndex } as CSSProperties}
+        >
+          <span aria-hidden className="gp-command-tab-indicator"><span className="gp-command-tab-lens" /></span>
           {TABS.map((tab) => (
             <button
               key={tab.id}
               type="button"
               onClick={() => setCategory(tab.id)}
-              className={`gp-touch-target rounded px-2.5 py-1 text-xs font-medium transition-colors ${
+              className={`gp-touch-target relative z-10 flex-1 rounded-lg px-2.5 py-1 text-xs font-medium ${
                 category === tab.id
-                  ? 'bg-neutral-800 text-neutral-100'
+                  ? 'text-emerald-100'
                   : 'text-neutral-500 hover:text-neutral-300'
               }`}
             >
               {tab.label}
             </button>
           ))}
-          <span className="gp-command-key-hint ml-auto text-[10px] text-neutral-700">
-            ↑↓ navigate · Enter to select
-          </span>
         </div>
 
         {/* Split pane body */}

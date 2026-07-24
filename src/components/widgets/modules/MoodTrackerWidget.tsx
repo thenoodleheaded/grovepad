@@ -1,5 +1,4 @@
 import type { MoodTrackerData } from '../../../types/spatial'
-import { useFieldAnchor } from '../../../hooks/useFieldAnchor'
 
 interface MoodTrackerWidgetProps {
   data: MoodTrackerData
@@ -20,7 +19,6 @@ const MOOD_RING = [
 export function MoodTrackerWidget({ data, onChange }: MoodTrackerWidgetProps) {
   const days = data.days.length === 7 ? data.days : [...data.days, ...Array(7).fill(null)].slice(0, 7)
   const loggedCount = days.filter((d) => d !== null).length
-  const loggedCountRef = useFieldAnchor<HTMLSpanElement>('logged_count')
   const latestMood = [...days].reverse().find((mood) => mood !== null) ?? 2
 
   const cycleDay = (index: number) => {
@@ -34,7 +32,7 @@ export function MoodTrackerWidget({ data, onChange }: MoodTrackerWidgetProps) {
       <div className="flex items-center justify-between gap-2">
         <span className="text-[12px] text-neutral-300">How’s the weather inside?</span>
         <span
-          ref={loggedCountRef}
+
           className="shrink-0 rounded-full border gp-hairline px-2 py-0.5  text-[10px] tabular-nums text-neutral-500"
         >
           {loggedCount}/7 logged

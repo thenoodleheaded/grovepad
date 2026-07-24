@@ -1,6 +1,5 @@
 import { Delete } from 'lucide-react'
 import type { CalculatorData } from '../../../types/spatial'
-import { useFieldAnchor } from '../../../hooks/useFieldAnchor'
 
 interface CalculatorWidgetProps {
   data: CalculatorData
@@ -90,7 +89,6 @@ function formatResult(n: number): string {
 
 /** A pocket calculator — type or tap, evaluated with a tiny local parser. */
 export function CalculatorWidget({ data, onChange }: CalculatorWidgetProps) {
-  const resultRef = useFieldAnchor<HTMLSpanElement>('result')
   const setExpression = (expression: string) => {
     let result = data.result
     try {
@@ -122,7 +120,7 @@ export function CalculatorWidget({ data, onChange }: CalculatorWidgetProps) {
           className="gp-input--bare w-full text-right  text-[13px] text-neutral-400 outline-none placeholder:text-neutral-700"
         />
         <span
-          ref={resultRef}
+
           className="gp-hero w-full truncate text-right "
         >
           {data.result || '0'}

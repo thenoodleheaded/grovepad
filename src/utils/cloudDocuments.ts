@@ -4,7 +4,7 @@ import {
   PERSISTED_BOARD_VERSION,
   type PersistedBoard,
 } from '../types/persistence'
-import type { Relation, Widget, WidgetGroup } from '../types/spatial'
+import type { Relation, Widget, WidgetGlue } from '../types/spatial'
 
 export const CLOUD_INDEX_FORMAT = 'grovepad-board-index' as const
 const CLOUD_INDEX_VERSION = 1 as const
@@ -21,7 +21,7 @@ export interface CloudBoardIndexDocument {
   activePacks: PersistedBoard['activePacks']
   relations: PersistedBoard['relations']
   connections: PersistedBoard['connections']
-  groups: PersistedBoard['groups']
+  glues: PersistedBoard['glues']
   extra: Record<string, unknown>
 }
 
@@ -32,7 +32,7 @@ export interface CloudCanvasDocument {
   widgets: PersistedBoard['widgets']
   relations: PersistedBoard['relations']
   connections: PersistedBoard['connections']
-  groups: PersistedBoard['groups']
+  glues: PersistedBoard['glues']
 }
 
 export interface SplitCloudBoard {
@@ -56,6 +56,8 @@ const CORE_BOARD_FIELDS = new Set([
   'widgets',
   'relations',
   'connections',
+  'glues',
+  // Legacy grouping records — dropped at the split boundary.
   'groups',
   'activePacks',
   // Legacy device fields are intentionally discarded at the split boundary.
@@ -73,10 +75,10 @@ function endpointCanvas(
   return fromCanvas && fromCanvas === widgets[toId]?.canvasId ? fromCanvas : null
 }
 
-function groupCanvas(widgets: Record<string, Widget>, group: WidgetGroup): string | null {
-  const first = widgets[group.widgetIds[0]!]?.canvasId
+function glueCanvas(widgets: Record<string, Widget>, glue: WidgetGlue): string | null {
+  const first = widgets[glue.widgetIds[0]!]?.canvasId
   if (!first) return null
-  return group.widgetIds.every((widgetId) => widgets[widgetId]?.canvasId === first)
+  return glue.widgetIds.every((widgetId) => widgets[widgetId]?.canvasId === first)
     ? first
     : null
 }
@@ -91,7 +93,7 @@ export function splitCloudBoard(board: PersistedBoard): SplitCloudBoard {
       widgets: {},
       relations: {},
       connections: {},
-      groups: {},
+      glues: {},
     } satisfies CloudCanvasDocument]),
   ) as Record<string, CloudCanvasDocument>
   for (const [widgetId, widget] of Object.entries(board.widgets)) {
@@ -115,12 +117,12 @@ export function splitCloudBoard(board: PersistedBoard): SplitCloudBoard {
     else indexConnections[connectionId] = connection
   }
 
-  const indexGroups: Record<string, WidgetGroup> = {}
-  for (const [groupId, group] of Object.entries(board.groups)) {
-    const canvasId = groupCanvas(board.widgets, group)
+  const indexGlues: Record<string, WidgetGlue> = {}
+  for (const [glueId, glue] of Object.entries(board.glues)) {
+    const canvasId = glueCanvas(board.widgets, glue)
     const canvas = canvasId ? canvases[canvasId] : undefined
-    if (canvas) canvas.groups[groupId] = group
-    else indexGroups[groupId] = group
+    if (canvas) canvas.glues[glueId] = glue
+    else indexGlues[glueId] = glue
   }
 
   const extra = Object.fromEntries(
@@ -137,7 +139,7 @@ export function splitCloudBoard(board: PersistedBoard): SplitCloudBoard {
       activePacks: board.activePacks,
       relations: indexRelations,
       connections: indexConnections,
-      groups: indexGroups,
+      glues: indexGlues,
       extra,
     },
     canvases,
@@ -159,7 +161,9 @@ export function isCloudBoardIndex(value: unknown): value is CloudBoardIndexDocum
     Array.isArray(value.activePacks) &&
     isRecord(value.relations) &&
     isRecord(value.connections) &&
-    isRecord(value.groups) &&
+    // Accept legacy documents that carry `groups` instead — their grouping
+    // records are ignored on join, but the document itself remains readable.
+    (isRecord(value.glues) || isRecord(value.groups)) &&
     isRecord(value.extra)
 }
 
@@ -171,7 +175,7 @@ export function isCloudCanvasDocument(value: unknown): value is CloudCanvasDocum
     isRecord(value.widgets) &&
     isRecord(value.relations) &&
     isRecord(value.connections) &&
-    isRecord(value.groups)
+    (isRecord(value.glues) || isRecord(value.groups))
 }
 
 /** Reassemble transport documents; the board parser performs domain validation next. */
@@ -182,13 +186,13 @@ export function joinCloudBoard(
   const widgets: PersistedBoard['widgets'] = {}
   const relations: PersistedBoard['relations'] = { ...index.relations }
   const connections: PersistedBoard['connections'] = { ...index.connections }
-  const groups: PersistedBoard['groups'] = { ...index.groups }
+  const glues: PersistedBoard['glues'] = { ...(index.glues ?? {}) }
   for (const canvas of canvasDocuments) {
     if (!index.canvases[canvas.canvasId]) continue
     Object.assign(widgets, canvas.widgets)
     Object.assign(relations, canvas.relations)
     Object.assign(connections, canvas.connections)
-    Object.assign(groups, canvas.groups)
+    Object.assign(glues, canvas.glues ?? {})
   }
   return {
     ...index.extra,
@@ -199,7 +203,7 @@ export function joinCloudBoard(
     widgets,
     relations,
     connections,
-    groups,
+    glues,
     activePacks: index.activePacks,
   }
 }

@@ -167,30 +167,27 @@ describe('LocalAiService hybrid planning',()=>{
     expect(result.predictions.some(prediction=>prediction.id==='local-model')).toBe(false)
   })
 
-  it('accepts a deep plan with a valid group and drops groups pointing at missing nodes',async()=>{
+  it('accepts a deep plan and ignores a legacy g field entirely',async()=>{
     const payload=JSON.stringify({v:1,c:.9,
       n:[{id:'n0',t:'notes',title:'Root'},{id:'n1',t:'notes',title:'Board'},{id:'n2',t:'flashcards',title:'Drills'}],
       r:[{from:'n0',to:'n1',type:'parent'},{from:'n0',to:'n2',type:'parent'}],
-      g:[{id:'g0',members:['n1','n2'],label:'Study pair'},{id:'g1',members:['n2','ghost']}]})
+      g:[{id:'g0',members:['n1','n2'],label:'Study pair'}]})
     const service=new LocalAiService({runtime,storage:null,enabled:true,adapterFactory:()=>fakeAdapter(payload)})
-    const result=await service.predictThoughtCandidates('a study root with a grouped board and drills',{}, {allowModel:true,mode:'deep'})
+    const result=await service.predictThoughtCandidates('a study root with a board and drills',{}, {allowModel:true,mode:'deep'})
     expect(result.predictions[0]?.id).toBe('local-model')
-    expect(result.predictions[0]?.plan.groups).toEqual([
-      {temporaryId:'g0',memberTemporaryIds:['n1','n2'],label:'Study pair'},
-    ])
+    expect(result.predictions[0] && 'groups' in result.predictions[0].plan).toBe(false)
   })
 
   it('builds quantified structural requests deterministically with AI fully disabled',async()=>{
     const service=new LocalAiService({runtime,storage:null,enabled:false})
     const result=await service.predictThoughtCandidates(
-      'make me a calculus 2 course topic tree, 3 main topics, 5 subtopics each. attach appropriate widgets for me to study, also attach a sketchpad in a group to every subtopic node',
+      'make me a calculus 2 course topic tree, 3 main topics, 5 subtopics each. attach appropriate widgets for me to study, also attach a sketchpad to every subtopic node',
       {},{allowModel:false})
     const top=result.predictions[0]!
     expect(top.id).toBe('structural')
     expect(result.recommendedId).toBe('structural')
     expect(top.plan.nodes.filter(node=>/^Topic \d+$/.test(node.title))).toHaveLength(3)
     expect(top.plan.nodes.filter(node=>node.widgetType==='sketchpad')).toHaveLength(12)
-    expect(top.plan.groups).toHaveLength(12)
     expect(top.plan.warnings.some(warning=>warning.message.includes('Reduced to 4 subtopics'))).toBe(true)
   })
 
@@ -198,7 +195,7 @@ describe('LocalAiService hybrid planning',()=>{
     const service=new LocalAiService({runtime,storage:null,enabled:true,adapterFactory:()=>fakeAdapter(
       '{"titles":[{"id":"s-1","title":"Integration Techniques"},{"id":"ghost","title":"Injected"},{"id":"s-root","title":"Calculus 2 Mastery"}]}',
     )})
-    const request='a calculus course tree, 2 topics, 2 subtopics each. attach a sketchpad in a group to every subtopic'
+    const request='a calculus course tree, 2 topics, 2 subtopics each. attach a sketchpad to every subtopic'
     const deterministic=await service.predictThoughtCandidates(request,{}, {allowModel:false})
     const enriched=await service.predictThoughtCandidates(request,{}, {allowModel:true,mode:'fast'})
     const before=deterministic.predictions[0]!.plan
@@ -208,7 +205,6 @@ describe('LocalAiService hybrid planning',()=>{
     expect(after.nodes.find(node=>node.temporaryId==='s-root')?.title).toBe('Calculus 2 Mastery')
     expect(after.nodes.map(node=>node.temporaryId)).toEqual(before.nodes.map(node=>node.temporaryId))
     expect(after.relations).toEqual(before.relations)
-    expect(after.groups.map(group=>group.memberTemporaryIds)).toEqual(before.groups.map(group=>group.memberTemporaryIds))
     expect(after.nodes.some(node=>node.title==='Injected')).toBe(false)
   })
 
@@ -222,29 +218,4 @@ describe('LocalAiService hybrid planning',()=>{
     expect(generateCalls).toBe(0)
   })
 
-  it('commits plan groups as real widget groups in one undo step',async()=>{
-    const payload=JSON.stringify({v:1,c:.9,
-      n:[{id:'n0',t:'notes',title:'Root'},{id:'n1',t:'notes',title:'Board'},{id:'n2',t:'flashcards',title:'Drills'}],
-      r:[{from:'n0',to:'n1',type:'parent'},{from:'n0',to:'n2',type:'parent'}],
-      g:[{id:'g0',members:['n1','n2'],label:'Study pair'}]})
-    const service=new LocalAiService({runtime,storage:null,enabled:true,adapterFactory:()=>fakeAdapter(payload)})
-    const result=await service.predictThoughtCandidates('a study root with a grouped board and drills',{}, {allowModel:true,mode:'deep'})
-    const plan=result.predictions[0]!.plan
-    const beforeGroupIds=new Set(Object.keys(useWidgetStore.getState().groups))
-    try{
-      const created=useWidgetStore.getState().commitThoughtPlan(plan,{x:20000,y:20000})
-      const after=useWidgetStore.getState()
-      const newGroups=Object.values(after.groups).filter(group=>!beforeGroupIds.has(group.id))
-      expect(newGroups).toHaveLength(1)
-      expect(newGroups[0]?.label).toBe('Study pair')
-      expect(newGroups[0]?.widgetIds).toHaveLength(2)
-      for(const widgetId of newGroups[0]!.widgetIds){
-        expect(created).toContain(widgetId)
-        expect(after.widgetGroupIndex[widgetId]).toBe(newGroups[0]!.id)
-      }
-    }finally{
-      useWidgetStore.getState().undo()
-    }
-    expect(Object.keys(useWidgetStore.getState().groups)).toEqual([...beforeGroupIds])
-  })
 })

@@ -5,7 +5,6 @@ import type {
   RiskRegisterData,
   SwotData,
 } from '../../../../types/spatial'
-import { useFieldAnchor } from '../../../../hooks/useFieldAnchor'
 import { WidgetPanel } from '../../WidgetPanel'
 import { SmallAction, AddButton, Stat } from './shared'
 import { inputClass, numericClass, panelClass, finite, clamp } from './sharedPrimitives'
@@ -22,9 +21,6 @@ export function RiskRegisterWidget({
   data: RiskRegisterData
   onChange: (data: RiskRegisterData) => void
 }) {
-  const openRef = useFieldAnchor<HTMLDivElement>('open_count')
-  const highRef = useFieldAnchor<HTMLDivElement>('highest_score')
-  const resolvedRef = useFieldAnchor<HTMLDivElement>('all_resolved')
   const open = data.items.filter((item) => item.status === 'open')
   const highest = open.reduce((max, item) => Math.max(max, riskScore(item.likelihood, item.impact)), 0)
   const allResolved = data.items.length > 0 && open.length === 0
@@ -34,17 +30,17 @@ export function RiskRegisterWidget({
 
   return (
     <div className="flex h-full flex-col gap-2">
-      <div data-island="summary" data-island-size="fixed" className="grid grid-cols-3 gap-2">
-        <Stat anchor={openRef} label="Open" value={open.length} accent={open.length ? 'text-rose-300' : 'text-emerald-300'} />
-        <Stat anchor={highRef} label="Highest score" value={highest} accent={highest >= 15 ? 'text-rose-300' : highest >= 8 ? 'text-amber-300' : 'text-neutral-300'} />
-        <Stat anchor={resolvedRef} label="All resolved" value={allResolved ? 'Yes' : 'No'} accent={allResolved ? 'text-emerald-300' : 'text-neutral-500'} />
+      <div data-island="summary" className="grid grid-cols-3 gap-2">
+        <Stat label="Open" value={open.length} accent={open.length ? 'text-rose-300' : 'text-emerald-300'} />
+        <Stat label="Highest score" value={highest} accent={highest >= 15 ? 'text-rose-300' : highest >= 8 ? 'text-amber-300' : 'text-neutral-300'} />
+        <Stat label="All resolved" value={allResolved ? 'Yes' : 'No'} accent={allResolved ? 'text-emerald-300' : 'text-neutral-500'} />
       </div>
       <div className="min-h-0 flex-1 space-y-1.5 overflow-y-auto">
         {sorted.map((item) => {
           const score = riskScore(item.likelihood, item.impact)
           const scoreColor = score >= 15 ? 'text-rose-300 bg-rose-400/10' : score >= 8 ? 'text-amber-300 bg-amber-400/10' : 'text-emerald-300 bg-emerald-400/10'
           return (
-            <div key={item.id} data-island={item.id} data-island-size="width" className={`${panelClass} group/risk px-2.5 py-2 ${item.status === 'resolved' ? 'opacity-50' : ''}`}>
+            <div key={item.id} data-island={item.id} className={`${panelClass} group/risk px-2.5 py-2 ${item.status === 'resolved' ? 'opacity-50' : ''}`}>
               <div className="flex items-center gap-2">
                 <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg  text-[11px] font-bold ${scoreColor}`}>{score}</span>
                 <input value={item.risk} placeholder="Describe the risk…" onChange={(event) => setItem(item.id, { risk: event.target.value })} className={`${inputClass} flex-1 font-medium ${item.status === 'resolved' ? 'line-through' : ''}`} />
@@ -82,8 +78,6 @@ export function DecisionMatrixWidget({
   data: DecisionMatrixData
   onChange: (data: DecisionMatrixData) => void
 }) {
-  const winnerRef = useFieldAnchor<HTMLDivElement>('winner')
-  const scoreRef = useFieldAnchor<HTMLDivElement>('winner_score')
   const scores = data.options.map((_, index) => decisionScore(data, index))
   const winnerIndex = scores.length ? scores.reduce((best, score, index) => score > scores[best]! ? index : best, 0) : -1
   const winner = data.options[winnerIndex]
@@ -95,11 +89,11 @@ export function DecisionMatrixWidget({
 
   return (
     <div className="flex h-full flex-col gap-2">
-      <div data-island="summary" data-island-size="fixed" className="grid grid-cols-2 gap-2">
-        <Stat anchor={winnerRef} label="Leading option" value={winner?.label || '—'} accent="text-violet-300" />
-        <Stat anchor={scoreRef} label="Weighted score" value={winnerIndex >= 0 ? Math.round(scores[winnerIndex]! * 100) / 100 : 0} accent="text-violet-300" />
+      <div data-island="summary" className="grid grid-cols-2 gap-2">
+        <Stat label="Leading option" value={winner?.label || '—'} accent="text-violet-300" />
+        <Stat label="Weighted score" value={winnerIndex >= 0 ? Math.round(scores[winnerIndex]! * 100) / 100 : 0} accent="text-violet-300" />
       </div>
-      <div data-island="matrix" data-island-size="free" data-island-min-w="240" data-island-min-h="96" className="min-h-0 flex-1 overflow-auto rounded-xl border gp-hairline">
+      <div data-island="matrix" data-floor-min-w="240" data-floor-min-h="96" className="min-h-0 flex-1 overflow-auto rounded-xl border gp-hairline">
         <table className="w-full min-w-[360px] border-collapse text-[10px]">
           <thead className="sticky top-0 z-10 bg-neutral-900/95">
             <tr>
@@ -131,7 +125,7 @@ export function DecisionMatrixWidget({
           </tbody>
         </table>
       </div>
-      <div data-island="actions" data-island-size="width" className="flex items-center justify-between"><AddButton label="Add option" onClick={addOption} /><AddButton label="Add criterion" onClick={addCriterion} /></div>
+      <div data-island="actions" className="flex items-center justify-between"><AddButton label="Add option" onClick={addOption} /><AddButton label="Add criterion" onClick={addCriterion} /></div>
     </div>
   )
 }
@@ -149,16 +143,14 @@ function SwotQuadrant({
   color,
   items,
   onChange,
-  anchor,
 }: {
   label: string
   color: string
   items: string[]
   onChange: (items: string[]) => void
-  anchor: ReturnType<typeof useFieldAnchor<HTMLDivElement>>
 }) {
   return (
-    <WidgetPanel ref={anchor} grip={false} island={label.toLowerCase()} sizing="fixed" className="group/swot flex min-h-0 flex-col p-3">
+    <WidgetPanel grip={false} floor="rigid" className="group/swot flex min-h-0 flex-col p-3">
       <div className="mb-1 flex items-center justify-between"><span className="text-[9px] font-semibold uppercase tracking-widest" style={{ color }}>{label}</span><span className=" text-[8px] text-neutral-700">{items.filter((item) => item.trim()).length}</span></div>
       <div className="min-h-0 flex-1 overflow-y-auto">
         {items.map((item, index) => (
@@ -175,15 +167,10 @@ function SwotQuadrant({
 }
 
 export function SwotWidget({ data, onChange }: { data: SwotData; onChange: (data: SwotData) => void }) {
-  const strengthRef = useFieldAnchor<HTMLDivElement>('strength_count')
-  const weaknessRef = useFieldAnchor<HTMLDivElement>('weakness_count')
-  const opportunityRef = useFieldAnchor<HTMLDivElement>('opportunity_count')
-  const threatRef = useFieldAnchor<HTMLDivElement>('threat_count')
-  const anchors = [strengthRef, weaknessRef, opportunityRef, threatRef]
   return (
     <div className="gp-swot-grid grid h-full grid-cols-2 grid-rows-2 gap-2">
-      {SWOT_META.map((meta, index) => (
-        <SwotQuadrant key={meta.key} label={meta.label} color={meta.color} items={data[meta.key]} anchor={anchors[index]!} onChange={(items) => onChange({ ...data, [meta.key]: items })} />
+      {SWOT_META.map((meta) => (
+        <SwotQuadrant key={meta.key} label={meta.label} color={meta.color} items={data[meta.key]} onChange={(items) => onChange({ ...data, [meta.key]: items })} />
       ))}
     </div>
   )

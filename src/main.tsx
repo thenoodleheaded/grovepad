@@ -4,12 +4,6 @@ import './index.css'
 import './styles/product.css'
 import App from './App.tsx'
 import { ErrorBoundary } from './components/ErrorBoundary'
-import { isBenchMode } from './bench/benchMode'
-
-// Bench harness (?bench=1): code-split so normal sessions never fetch it.
-if (isBenchMode()) {
-  void import('./bench/installCanvasBench').then((module) => module.installCanvasBench())
-}
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
