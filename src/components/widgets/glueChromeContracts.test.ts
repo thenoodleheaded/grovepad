@@ -204,7 +204,7 @@ describe('the cluster group frame', () => {
     // a weld now unglues, and the freed card falls through to the normal
     // snap-and-settle path.
     expect(card).toContain('} else if (state.widgetGlueIndex[draggedId]) {')
-    expect(card).toContain("state.unglueWidget(draggedId, { skipHistory: true })")
+    expect(card).toContain("state.unglueWidget(draggedId, { skipHistory: true, heldByPointer: true })")
     // ...and the gesture resolves the SAME way when it is cancelled rather
     // than released. A pointer-cancel that only dropped the intents left
     // exactly the half-out card this rule exists to forbid, and a touch or pen
@@ -212,7 +212,7 @@ describe('the cluster group frame', () => {
     const cancelPath = card.slice(card.indexOf('const onPointerCancel'), card.indexOf('const onContextMenu'))
     expect(cancelPath).toContain('if (moved && wasGlueDrag) {')
     expect(cancelPath).toContain('state.commitGlue()')
-    expect(cancelPath).toContain('state.unglueWidget(draggedId, { skipHistory: true })')
+    expect(cancelPath).toContain('state.unglueWidget(draggedId, { skipHistory: true, heldByPointer: true })')
   })
 
   it('the group frame rides the same ghost displacement its cards do', () => {

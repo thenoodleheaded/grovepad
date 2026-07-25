@@ -83,6 +83,43 @@ describe('every geometry-changing action runs the overlap check', () => {
     expect(w(b).position).toEqual(start)
   })
 
+  it('a data edit that DOES grow the card holds that card still and moves the neighbour', () => {
+    // The other half of the same fix: when the size really changes the settle
+    // runs, and it must be anchored on the edited card. Unanchored it would
+    // grid-snap and shove the very card being typed in.
+    // A table's height is a pure function of its row count, so a data edit can
+    // grow the card without the DOM measurement a note would need.
+    const store = useWidgetStore.getState()
+    const a = store.createWidget('Grow', { x: 90_000, y: 90_000 }, 'table')
+    const b = store.createWidget('Below', { x: 90_000, y: 92_000 }, 'notes')
+    for (const id of [a, b]) {
+      const s = useWidgetStore.getState()
+      useWidgetStore.setState({
+        widgets: {
+          ...s.widgets,
+          [id]: { ...s.widgets[id]!, metadata: { ...s.widgets[id]!.metadata, pinned: true } },
+        },
+      })
+    }
+    // Off the grid on purpose: an unanchored settle would snap it back.
+    place(a, 90_007, 90_007)
+    place(b, 90_007, 90_007 + w(a).size.height + 40)
+    const edited = { ...w(a).position }
+    const neighbour = { ...w(b).position }
+    const heightBefore = w(a).size.height
+    const rows = Array.from({ length: 12 }, () => ['a', 'b'])
+
+    useWidgetStore.getState().updateWidgetData(a, { rows })
+
+    // Only meaningful if the edit actually grew the card into its neighbour.
+    expect(w(a).size.height).toBeGreaterThan(heightBefore + 40)
+    // The point of the fix: the edited card is the anchor, so it keeps the
+    // off-grid position it had. Unanchored, this settle snapped it to the grid.
+    expect(w(a).position).toEqual(edited)
+    // ...and the settle really ran, so the neighbour gave way.
+    expect(w(b).position.y).toBeGreaterThan(neighbour.y)
+  })
+
   it('a LIVE resize frame does not disturb anything', () => {
     // snap:false is one animation frame of a drag — settling here would shove
     // neighbours around under the pointer.

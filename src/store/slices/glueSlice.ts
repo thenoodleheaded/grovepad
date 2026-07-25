@@ -145,15 +145,18 @@ export function createGlueSlice({ set, get, pushHistory }: WidgetStoreSliceConte
       // The member just released (and any survivor a dissolve left behind) is
       // no longer part of a folded set, so it must not stay a 1×1 icon.
       widgets = unfoldReleasedFoldedMembers(widgets, state.glues, reconciled)
-      // Settle around the surviving block, whatever released the member. A
-      // restore lands a folded member back at its pre-fold spot, which the
-      // board may have grown into since. And an unglue from the CONTEXT MENU
-      // has no drag behind it: the freed card is still standing between its
-      // former clustermates, so the ranks closing above would slide them
-      // straight over it and commit the overlap. Only the option-drag path was
-      // ever rescued, by WidgetCard's own settle after the gesture.
+      // Settle around whichever side the user actually placed. An unglue from
+      // the CONTEXT MENU has no drag behind it: the freed card is still
+      // standing between its former clustermates, so the ranks closing above
+      // would slide them straight over it — the survivors hold and the freed
+      // card is pushed clear. But on an option-drag RELEASE the freed card is
+      // the acting widget, under the pointer, at the spot the preview
+      // promised; anchoring the survivors there would shove it somewhere the
+      // user never dropped it, breaking "the preview must always equal the
+      // drop". So the acting widget holds its ground and the cluster makes
+      // room around it, exactly as every other release does.
       const settled = settleWidgetsByCanvas(widgets, glue.widgetIds, buildGlueIndex(reconciled), {
-        anchorIds: remaining,
+        anchorIds: options?.heldByPointer ? [widgetId] : remaining,
       })
       return {
         widgets: settled,

@@ -183,7 +183,7 @@ describe('option-drag owns gluing', () => {
     expect(card).toContain('state.commitGlue()')
     // The drag's first move already opened the history step; the pull-off
     // must not open a second one.
-    expect(card).toContain('state.unglueWidget(draggedId, { skipHistory: true })')
+    expect(card).toContain('state.unglueWidget(draggedId, { skipHistory: true, heldByPointer: true })')
   })
 
   it('clears every glue intent on release and on cancellation', () => {

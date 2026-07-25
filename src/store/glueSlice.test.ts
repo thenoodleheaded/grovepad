@@ -376,6 +376,30 @@ describe('dragging glued widgets', () => {
     ).toBe(0)
   })
 
+  it('an option-drag pull-off lands exactly where it was released', () => {
+    // The freed card is the acting widget: under the pointer, at the spot the
+    // preview promised. The cluster makes room around it — anchoring the
+    // survivors instead would shove the card somewhere the user never dropped
+    // it, which is the drop-does-not-equal-the-preview bug in reverse.
+    const [a, b] = createPair(0)
+    useWidgetStore.getState().glueWidgets(b, a)
+    const wb = widget(b)
+    const c = useWidgetStore
+      .getState()
+      .createWidget('Glue C', { x: wb.position.x + 2_000, y: wb.position.y }, 'notes')
+    pin(c)
+    place(c, wb.position.x + wb.size.width, wb.position.y)
+    useWidgetStore.getState().glueWidgets(c, b)
+
+    // An ⌥-drag arms no displacement, so a short pull-off is released still
+    // overlapping the clustermate it came from — welding nothing.
+    place(c, widget(b).position.x + 20, widget(b).position.y + 7)
+    const released = { ...widget(c).position }
+    useWidgetStore.getState().unglueWidget(c, { skipHistory: true, heldByPointer: true })
+
+    expect(useWidgetStore.getState().widgets[c]!.position).toEqual(released)
+  })
+
   it('does not bury a card unglued from the context menu under its former clustermates', () => {
     // The menu path has no drag: the freed card is still standing where it
     // was, so the survivors closing ranks would slide straight through it.
@@ -652,6 +676,14 @@ describe('dragging glued widgets', () => {
 
     const state = useWidgetStore.getState()
     const survivors = [a, c].filter((id) => state.widgetGlueIndex[id])
+    // Assert the group SURVIVED before measuring it. Without this the loop
+    // below runs zero times when the record has been destroyed, and the test
+    // passes green on exactly the outcome the fix exists to prevent.
+    expect(survivors).toHaveLength(2)
+    expect(state.glues[state.widgetGlueIndex[a]!]?.widgetIds).toHaveLength(2)
+    expect(
+      glueSeparation(glueBoxRect(state.widgets[a]!), glueBoxRect(state.widgets[c]!)),
+    ).toBe(0)
     for (const id of survivors) {
       const mates = state.glues[state.widgetGlueIndex[id]!]!.widgetIds.filter((m) => m !== id)
       for (const mate of mates) {

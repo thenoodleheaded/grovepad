@@ -572,19 +572,26 @@ export function createWidgetLayoutSlice({ set, get, pushHistory }: WidgetStoreSl
 
 
   nudgeSelection: (dx, dy) => {
-    if (get().selectedIds.size === 0) return
+    const current = get()
+    if (current.selectedIds.size === 0) return
+    // A keyboard nudge is a move like any other, so it passes through the one
+    // moves-together closure: without it a strict holder nudged by an arrow key
+    // left its whole parent-linked family standing where it was. Glue clusters
+    // only survived by accident, because selectWidget already expands a click
+    // to every member.
+    const expanded = expandMovedWidgetIds(
+      uniqueExistingIds([...current.selectedIds], current.widgets),
+      current,
+    )
+    const ids = uniqueExistingIds(expanded, current.widgets).filter(
+      (widgetId) => !current.widgets[widgetId]?.metadata.locked,
+    )
+    // Resolved BEFORE the history snapshot: a selection of nothing but locked
+    // widgets moves nothing, and must not leave an undo step that undoes
+    // nothing.
+    if (ids.length === 0) return
     pushHistory('nudge')
     set((state) => {
-      // A keyboard nudge is a move like any other, so it passes through the one
-      // moves-together closure: without it a strict holder nudged by an arrow
-      // key left its whole parent-linked family standing where it was. Glue
-      // clusters only survived by accident, because selectWidget already
-      // expands a click to every member.
-      const expanded = expandMovedWidgetIds(uniqueExistingIds([...state.selectedIds], state.widgets), state)
-      const ids = uniqueExistingIds(expanded, state.widgets).filter(
-        (widgetId) => !state.widgets[widgetId]?.metadata.locked,
-      )
-      if (ids.length === 0) return state
       const widgets = applyWidgetDelta(state.widgets, ids, { x: dx, y: dy })
       if (widgets === state.widgets) return state
       // Anchored on what was nudged, exactly as every other deliberate

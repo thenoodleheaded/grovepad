@@ -176,8 +176,15 @@ export interface WidgetStoreState {
   /** Weld two widgets (and whatever clusters they already belong to) into one
    *  glue cluster. Rides the in-flight drag's history step. */
   glueWidgets: (draggedId: string, targetId: string) => void
-  /** Pull one widget off its cluster; dissolves a cluster left with < 2. */
-  unglueWidget: (widgetId: string, options?: { skipHistory?: boolean }) => boolean
+  /** Pull one widget off its cluster; dissolves a cluster left with < 2.
+   *  `heldByPointer` marks a release the USER placed: the freed card holds
+   *  exactly where it was dropped and the cluster gives way around it. Without
+   *  it — the context-menu path, where nothing moved — the survivors hold their
+   *  ground and the freed card is the one pushed clear of them. */
+  unglueWidget: (
+    widgetId: string,
+    options?: { skipHistory?: boolean; heldByPointer?: boolean },
+  ) => boolean
   /** Dissolve a whole cluster back into free widgets (the group frame's
    *  Ungroup button). No widget is deleted; only the weld is removed. */
   unglueCluster: (glueId: string) => void

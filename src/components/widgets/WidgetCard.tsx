@@ -577,7 +577,7 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
         if (state.glueIntent?.draggedId === draggedId) {
           state.commitGlue()
         } else if (state.widgetGlueIndex[draggedId]) {
-          state.unglueWidget(draggedId, { skipHistory: true })
+          state.unglueWidget(draggedId, { skipHistory: true, heldByPointer: true })
         }
       }
       const settled = useWidgetStore.getState()
@@ -625,7 +625,7 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
       if (state.glueIntent?.draggedId === draggedId) {
         state.commitGlue()
       } else if (state.widgetGlueIndex[draggedId]) {
-        state.unglueWidget(draggedId, { skipHistory: true })
+        state.unglueWidget(draggedId, { skipHistory: true, heldByPointer: true })
       }
     }
     state.setGlueIntent(null)

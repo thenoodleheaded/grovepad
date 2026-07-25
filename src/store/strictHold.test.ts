@@ -189,6 +189,31 @@ describe('strict hold in the store', () => {
     expect(after.widgets[childId]!.position).toEqual({ x: childBefore.x + 1, y: childBefore.y })
   })
 
+  it('a nudge of nothing but locked widgets moves nothing and leaves no undo step', () => {
+    // The locked filter can empty the move, and the history snapshot is taken
+    // before the store is touched — so the order matters: an undo entry that
+    // undoes nothing is worse than no entry at all.
+    const { parentId, childId } = createFamily()
+    useWidgetStore.getState().updateWidgetsMetadata([parentId], { locked: true })
+
+    // A real edit first, under a DIFFERENT history tag — nudges coalesce with
+    // each other, so only an unrelated action exposes a stray nudge entry.
+    const titleBefore = useWidgetStore.getState().widgets[childId]!.title
+    useWidgetStore.getState().updateWidgetTitle(childId, 'Renamed')
+    expect(useWidgetStore.getState().widgets[childId]!.title).toBe('Renamed')
+
+    // Now nudge a selection of nothing but locked widgets: it moves nothing.
+    useWidgetStore.getState().selectWidget(parentId, false)
+    const lockedBefore = { ...useWidgetStore.getState().widgets[parentId]!.position }
+    useWidgetStore.getState().nudgeSelection(40, 0)
+    expect(useWidgetStore.getState().widgets[parentId]!.position).toEqual(lockedBefore)
+
+    // One undo must reach the rename. If the no-op nudge had recorded a history
+    // entry, this undo would spend itself restoring nothing.
+    useWidgetStore.getState().undo()
+    expect(useWidgetStore.getState().widgets[childId]!.title).toBe(titleBefore)
+  })
+
   it('option-drag breaks the coupling for that drag without touching the relation', () => {
     const { parentId, childId } = createFamily()
     useWidgetStore.getState().updateWidgetsMetadata([parentId], { strictHold: true })
