@@ -183,18 +183,16 @@ export function createGlueSlice({ set, get, pushHistory }: WidgetStoreSliceConte
       // icons across the board — restore every member to the state it was
       // folded from, then settle the newly full cards against their neighbours.
       let widgets = unfoldReleasedFoldedMembers(state.widgets, state.glues, glues)
-      if (cluster.collapsed === true) {
-        if (widgets !== state.widgets) {
-          widgets = settleWidgetsByCanvas(widgets, cluster.widgetIds, buildGlueIndex(glues))
-        }
-      } else {
-        // A split must be PHYSICAL: the record is gone, so the cards push each
-        // other a clear cell apart — left stored touching, they would keep
-        // reading (and settling) as one welded object that never came apart.
-        widgets = spreadClusterMembers(widgets, cluster.widgetIds)
-        if (widgets !== state.widgets) {
-          widgets = settleWidgetsByCanvas(widgets, cluster.widgetIds, buildGlueIndex(glues))
-        }
+      // A split must be PHYSICAL: the record is gone, so the cards push each
+      // other a clear cell apart — left stored touching, they would keep
+      // reading (and settling) as one welded object that never came apart.
+      // This holds however the group was ungrouped. A COLLAPSED group restores
+      // its members to the welded positions it folded them from, so skipping
+      // the spread there left them stored flush and the split invisible: the
+      // cards looked exactly as grouped as before, minus the frame.
+      widgets = spreadClusterMembers(widgets, cluster.widgetIds)
+      if (widgets !== state.widgets) {
+        widgets = settleWidgetsByCanvas(widgets, cluster.widgetIds, buildGlueIndex(glues))
       }
       const dissolved = new Set(cluster.widgetIds)
       return {
@@ -280,11 +278,21 @@ export function createGlueSlice({ set, get, pushHistory }: WidgetStoreSliceConte
         delete nextGlue.collapsed
         delete nextGlue.restore
         delete nextGlue.foldedAt
+        // Members open at their remembered spots, and those can no longer be
+        // adjacent — a member unglued while the group was folded leaves a hole
+        // in the restore map. Close ranks, then re-derive membership from what
+        // actually touches. Without this, collapse/expand was the one
+        // footprint-changing action that never reconciled, so a record could
+        // survive with cards hundreds of pixels apart still dragging as one.
+        widgets = closeClusterGaps(widgets, memberIds)
       }
 
+      const reconciled = reconcileGlueClusters(widgets, { ...state.glues, [glueId]: nextGlue })
+      const glueIndex = buildGlueIndex(reconciled)
       return {
-        widgets: settleWidgetsByCanvas(widgets, memberIds, state.widgetGlueIndex),
-        glues: { ...state.glues, [glueId]: nextGlue },
+        widgets: settleWidgetsByCanvas(widgets, memberIds, glueIndex),
+        glues: reconciled,
+        widgetGlueIndex: glueIndex,
         widgetStructureVersion: state.widgetStructureVersion + 1,
       }
     })

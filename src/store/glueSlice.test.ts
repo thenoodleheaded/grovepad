@@ -610,6 +610,58 @@ describe('dragging glued widgets', () => {
     expect(after.widgets[b]!.position).toEqual({ x: beforeB.x + shift.x, y: beforeB.y + shift.y })
   })
 
+  it('spreads the cards apart when a COLLAPSED group is ungrouped', () => {
+    // Ungrouping is a physical split whichever state the group was in. A
+    // collapsed group restores its members to the welded positions it folded
+    // them from, so skipping the spread left them stored flush — looking
+    // exactly as grouped as before, minus the frame.
+    const [a, b] = createPair(0)
+    useWidgetStore.getState().glueWidgets(b, a)
+    const glueId = useWidgetStore.getState().widgetGlueIndex[a]!
+    useWidgetStore.getState().setClusterCollapsed(glueId, true)
+
+    useWidgetStore.getState().unglueCluster(glueId)
+
+    const state = useWidgetStore.getState()
+    expect(state.widgetGlueIndex[a]).toBeUndefined()
+    expect(state.widgetGlueIndex[b]).toBeUndefined()
+    expect(
+      glueSeparation(glueBoxRect(state.widgets[a]!), glueBoxRect(state.widgets[b]!)),
+    ).toBeGreaterThan(0)
+  })
+
+  it('re-derives membership when a group is expanded', () => {
+    // Collapse/expand was the one footprint-changing action that never
+    // reconciled. A member unglued while the group was folded leaves a hole in
+    // the restore map, so the survivors open far apart — and without a
+    // reconcile they keep dragging as one object across that gap.
+    const [a, b] = createPair(0)
+    useWidgetStore.getState().glueWidgets(b, a)
+    const wb = widget(b)
+    const c = useWidgetStore
+      .getState()
+      .createWidget('Glue C', { x: wb.position.x + 2_000, y: wb.position.y }, 'notes')
+    pin(c)
+    place(c, wb.position.x + wb.size.width, wb.position.y)
+    useWidgetStore.getState().glueWidgets(c, b)
+    const glueId = useWidgetStore.getState().widgetGlueIndex[a]!
+    useWidgetStore.getState().setClusterCollapsed(glueId, true)
+    useWidgetStore.getState().unglueWidget(b)
+
+    useWidgetStore.getState().setClusterCollapsed(glueId, false)
+
+    const state = useWidgetStore.getState()
+    const survivors = [a, c].filter((id) => state.widgetGlueIndex[id])
+    for (const id of survivors) {
+      const mates = state.glues[state.widgetGlueIndex[id]!]!.widgetIds.filter((m) => m !== id)
+      for (const mate of mates) {
+        expect(
+          glueSeparation(glueBoxRect(state.widgets[id]!), glueBoxRect(state.widgets[mate]!)),
+        ).toBeLessThanOrEqual(GLUE_RANGE)
+      }
+    }
+  })
+
   it('never pastes a folded group as sub-floor icons', () => {
     // The clipboard carries widget records, not glue records, so a pasted
     // member of a collapsed group belongs to no cluster — and a 1×1 icon

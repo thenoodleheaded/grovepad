@@ -3,6 +3,7 @@ import { useShallow } from 'zustand/react/shallow'
 import { Check, Group, Maximize2, Minimize2, Star, Trash2, Ungroup } from 'lucide-react'
 import { useWidgetStore } from '../../store/useWidgetStore'
 import { useWidgetRestStore } from '../../store/useWidgetRestStore'
+import { useDragDisplacementStore } from '../../store/dragDisplacement'
 import { requestWidgetDeletion } from '../../store/useWidgetDeletionDialogStore'
 import { clusterEnvelope, GLUE_FRAME_BAND } from '../../utils/glueGeometry'
 import type { WorldRect } from '../../utils/canvasView'
@@ -89,8 +90,21 @@ const ClusterFrame = memo(function ClusterFrame({ glueId }: { glueId: string }) 
     }),
   )
 
+  // A displacing drag pushes a whole cluster by a live ghost offset that never
+  // touches stored positions until the drop. The member cards read it and
+  // slide; the frame drew itself from stored geometry alone, so the group's
+  // own boundary and title row stayed behind while the cards walked out of
+  // them. `publish` writes ONE shared Vector2D to every member of a cluster,
+  // so the first member's offset is the cluster's offset.
+  const firstMemberId = useWidgetStore((state) => state.glues[glueId]?.widgetIds[0])
+  const ghostOffset = useDragDisplacementStore((state) =>
+    firstMemberId ? state.offsets[firstMemberId] : undefined,
+  )
+
   if (view.hidden) return null
-  const { x: envX, y: envY, width: envWidth, height: envHeight, name, collapsed } = view
+  const { width: envWidth, height: envHeight, name, collapsed } = view
+  const envX = view.x + (ghostOffset?.x ?? 0)
+  const envY = view.y + (ghostOffset?.y ?? 0)
 
   const topLineY = envY - LINE_BAND
   const bottomLineY = envY + envHeight

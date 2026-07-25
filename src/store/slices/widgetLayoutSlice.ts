@@ -514,7 +514,16 @@ export function createWidgetLayoutSlice({ set, get, pushHistory }: WidgetStoreSl
           },
         )
         widgets = { ...state.widgets, [widgetId]: { ...w, data, size } }
-        if (size !== w.size) widgets = settleWidgetLayout(widgets, [widgetId])
+        // Compare DIMENSIONS, not references: clampFullSize returns a fresh
+        // object every time, so `size !== w.size` was always true and a
+        // full-canvas settle ran on every keystroke. Anchored on the edited
+        // card for the same reason every other size change here is — otherwise
+        // the settle grid-snaps and can displace the card being typed in.
+        if (size.width !== w.size.width || size.height !== w.size.height) {
+          widgets = settleWidgetLayout(widgets, [widgetId], state.widgetGlueIndex, {
+            anchorIds: [widgetId],
+          })
+        }
       }
 
       return { widgets }
@@ -563,13 +572,29 @@ export function createWidgetLayoutSlice({ set, get, pushHistory }: WidgetStoreSl
 
 
   nudgeSelection: (dx, dy) => {
-    const ids = [...get().selectedIds]
-    if (ids.length === 0) return
+    if (get().selectedIds.size === 0) return
     pushHistory('nudge')
     set((state) => {
+      // A keyboard nudge is a move like any other, so it passes through the one
+      // moves-together closure: without it a strict holder nudged by an arrow
+      // key left its whole parent-linked family standing where it was. Glue
+      // clusters only survived by accident, because selectWidget already
+      // expands a click to every member.
+      const expanded = expandMovedWidgetIds(uniqueExistingIds([...state.selectedIds], state.widgets), state)
+      const ids = uniqueExistingIds(expanded, state.widgets).filter(
+        (widgetId) => !state.widgets[widgetId]?.metadata.locked,
+      )
+      if (ids.length === 0) return state
       const widgets = applyWidgetDelta(state.widgets, ids, { x: dx, y: dy })
       if (widgets === state.widgets) return state
-      return { widgets: settleWidgetLayout(widgets, ids) }
+      // Anchored on what was nudged, exactly as every other deliberate
+      // placement in this file is. Unanchored, the settle grid-snapped the very
+      // cards the user just moved — so ⌥+Arrow, the one-pixel fine nudge, was
+      // undone by its own settle and full cards could not be fine-positioned
+      // at all.
+      return {
+        widgets: settleWidgetLayout(widgets, ids, state.widgetGlueIndex, { anchorIds: ids }),
+      }
     })
   },
   }

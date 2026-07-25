@@ -64,6 +64,25 @@ describe('every geometry-changing action runs the overlap check', () => {
     expect(w(b).position.x).not.toBe(start)
   })
 
+  it('typing into a card whose size does not change disturbs nothing', () => {
+    // updateWidgetData compared a freshly built size object against the stored
+    // one by REFERENCE, so the guard was always true and a full-board settle
+    // ran on every keystroke — shoving neighbours around while you type, and
+    // grid-snapping the card being typed in because the pass was unanchored.
+    const [a, b] = pair(40)
+    // Park them deliberately overlapping: a settle would have to pull them
+    // apart, so if nothing moves, no settle ran.
+    place(b, w(a).position.x + 20, w(a).position.y + 20)
+    expect(overlaps(a, b)).toBe(true)
+    const start = { ...w(b).position }
+    const size = { ...w(a).size }
+
+    useWidgetStore.getState().updateWidgetData(a, { text: 'typing' })
+
+    expect(w(a).size).toEqual(size)
+    expect(w(b).position).toEqual(start)
+  })
+
   it('a LIVE resize frame does not disturb anything', () => {
     // snap:false is one animation frame of a drag — settling here would shove
     // neighbours around under the pointer.

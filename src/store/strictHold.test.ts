@@ -170,6 +170,25 @@ describe('strict hold in the store', () => {
     })
   })
 
+  it('a keyboard nudge carries the strict family too, and keeps the distance it moved', () => {
+    // The strict-hold law names expandMovedWidgetIds the single owner of what
+    // moves together — "store moves, release settling, and the displacement
+    // preview must all pass through it". A nudge is a store move: without the
+    // closure the family stays behind, and without anchoring the nudge the
+    // settle grid-snaps the card straight back to where it started.
+    const { parentId, childId } = createFamily()
+    useWidgetStore.getState().updateWidgetsMetadata([parentId], { strictHold: true })
+    useWidgetStore.getState().selectWidget(parentId, false)
+    const parentBefore = useWidgetStore.getState().widgets[parentId]!.position
+    const childBefore = useWidgetStore.getState().widgets[childId]!.position
+
+    useWidgetStore.getState().nudgeSelection(1, 0)
+
+    const after = useWidgetStore.getState()
+    expect(after.widgets[parentId]!.position.x).toBe(parentBefore.x + 1)
+    expect(after.widgets[childId]!.position).toEqual({ x: childBefore.x + 1, y: childBefore.y })
+  })
+
   it('option-drag breaks the coupling for that drag without touching the relation', () => {
     const { parentId, childId } = createFamily()
     useWidgetStore.getState().updateWidgetsMetadata([parentId], { strictHold: true })

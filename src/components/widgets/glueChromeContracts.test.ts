@@ -215,6 +215,17 @@ describe('the cluster group frame', () => {
     expect(cancelPath).toContain('state.unglueWidget(draggedId, { skipHistory: true })')
   })
 
+  it('the group frame rides the same ghost displacement its cards do', () => {
+    // A displacing drag pushes a cluster by a live offset that never touches
+    // stored positions until the drop. The cards read it; the frame drew from
+    // stored geometry alone, so the boundary lines and title row stayed put
+    // while their own cards slid out of them.
+    const chrome = readFileSync(new URL('./GlueClusterChrome.tsx', import.meta.url), 'utf8')
+    expect(chrome).toContain("import { useDragDisplacementStore } from '../../store/dragDisplacement'")
+    expect(chrome).toContain('const envX = view.x + (ghostOffset?.x ?? 0)')
+    expect(chrome).toContain('const envY = view.y + (ghostOffset?.y ?? 0)')
+  })
+
   it('makes every folded member inert — the collection is the only target', () => {
     expect(card).toContain('const hoverInert = backgrounded || inFoldedCluster')
     expect(card).toContain('data-cluster-collapsed={inFoldedCluster || undefined}')
