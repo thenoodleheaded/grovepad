@@ -205,6 +205,14 @@ describe('the cluster group frame', () => {
     // snap-and-settle path.
     expect(card).toContain('} else if (state.widgetGlueIndex[draggedId]) {')
     expect(card).toContain("state.unglueWidget(draggedId, { skipHistory: true })")
+    // ...and the gesture resolves the SAME way when it is cancelled rather
+    // than released. A pointer-cancel that only dropped the intents left
+    // exactly the half-out card this rule exists to forbid, and a touch or pen
+    // drag loses capture to any system gesture.
+    const cancelPath = card.slice(card.indexOf('const onPointerCancel'), card.indexOf('const onContextMenu'))
+    expect(cancelPath).toContain('if (moved && wasGlueDrag) {')
+    expect(cancelPath).toContain('state.commitGlue()')
+    expect(cancelPath).toContain('state.unglueWidget(draggedId, { skipHistory: true })')
   })
 
   it('makes every folded member inert — the collection is the only target', () => {

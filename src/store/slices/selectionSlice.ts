@@ -3,6 +3,7 @@ import { GRID_SIZE, snapToGrid } from '../../types/spatial'
 import { clampIconEdge } from '../../utils/widgetScale'
 import { getOpaqueWidgetType } from '../../utils/persistedBoardSchema'
 import {
+  COLLAPSED_MEMBER_SIZE,
   closeClusterGaps,
   reconcileGlueClusters,
   refoldCollapsedCluster,
@@ -294,6 +295,21 @@ export function createSelectionSlice({ set, get, pushHistory, markSpawned }: Wid
         },
         data: structuredClone(src.data),
         metadata: structuredClone(src.metadata),
+      }
+      // A member of a COLLAPSED cluster is a 1×1 icon only because its group is
+      // folded, and the clipboard carries widget records with no glue record
+      // behind them. Pasted as-is it lands below the 2×2 aim-at floor in no
+      // cluster at all: no group frame, no Expand button, nothing to click —
+      // the single carve-out from the floor is a member of a folded group, and
+      // this is not one. Same restore the release paths perform.
+      if (
+        clone.iconified === true &&
+        clone.size.width === COLLAPSED_MEMBER_SIZE.width &&
+        clone.size.height === COLLAPSED_MEMBER_SIZE.height
+      ) {
+        clone.iconified = false
+        clone.size = clone.expandedSize ?? clone.size
+        clone.expandedSize = undefined
       }
       // Pasted canvas nodes get fresh empty backing canvases.
       if (clone.type === 'canvas_node') {

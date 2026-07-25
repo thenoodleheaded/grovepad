@@ -165,7 +165,14 @@ describe('option-drag owns gluing', () => {
 
   it('previews the weld or the pull-off continuously during the drag', () => {
     expect(card).toContain('findGlueSnap(dragged, state.widgets)')
-    expect(card).toContain('pulledFreeOfCluster(dragged, members, state.widgets)')
+    // The preview arms on EXACTLY the condition the release acts on: no weld
+    // found, and the card belongs to a cluster. Arming it only once the card
+    // was a full cell clear of every clustermate left a silent band in between
+    // — nothing lit, nothing dashed — where a release still tore the member
+    // out of its group unannounced.
+    expect(card).toContain(
+      'state.setUnglueIntentWidgetId(!snap && members.length > 0 ? dragged.id : null)',
+    )
     // A welding gesture never arms displacement: every other card holds
     // perfectly still while a seam is being aimed.
     expect(card).toContain('if (!glueDragRef.current) beginDragDisplacement()')

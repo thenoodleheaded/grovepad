@@ -8,12 +8,7 @@ import { requestWidgetDeletion } from '../../store/useWidgetDeletionDialogStore'
 import type { ModuleData } from '../../types/spatial'
 import { GRID_SIZE, WIDGET_MAX_EDGE } from '../../types/spatial'
 import { WIDGET_HOVER_RIGHT, WIDGET_HOVER_TOP } from '../../utils/widgetBounds'
-import {
-  findGlueSnap,
-  foldedMemberInsets,
-  glueMemberInsets,
-  pulledFreeOfCluster,
-} from '../../utils/glueGeometry'
+import { findGlueSnap, foldedMemberInsets, glueMemberInsets } from '../../utils/glueGeometry'
 import { resolveLinkTargetAt } from '../../utils/linkTarget'
 import { PointerDragSession } from '../../utils/pointerDrag'
 import {
@@ -516,11 +511,18 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
               }
             : null,
         )
+        // The preview must equal the drop. Release ungues whenever the drop
+        // welds nothing (see onPointerUp), so the pull-off must be ARMED on
+        // exactly that condition — not on the stricter "a full cell clear of
+        // every clustermate". Between the two lay a silent band: no weld
+        // target lit, no dashed pull-off shown, and a release there tore the
+        // member out of its group with no warning. The band is real estate a
+        // hand passes through constantly, because `findGlueSnap` also needs
+        // half a cell of FACING overlap — slide a card along its neighbour and
+        // the weld dies while the distance never changes.
         const glueId = state.widgetGlueIndex[dragged.id]
         const members = glueId ? state.glues[glueId]?.widgetIds ?? [] : []
-        const pullingFree =
-          !snap && members.length > 0 && pulledFreeOfCluster(dragged, members, state.widgets)
-        state.setUnglueIntentWidgetId(pullingFree ? dragged.id : null)
+        state.setUnglueIntentWidgetId(!snap && members.length > 0 ? dragged.id : null)
       }
     }
   }
@@ -610,18 +612,35 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
     cancelDragDisplacement()
     const draggedId = activeDragWidgetId.current
     const state = useWidgetStore.getState()
+    const wasGlueDrag = glueDragRef.current
+    const moved = session.end()
+    // A cancelled option-drag resolves EXACTLY as a release does. The card has
+    // already been moved by the gesture, so simply dropping the intents left a
+    // member on the cluster's books welded to nothing — off-seam, off-grid,
+    // framed by and dragging with a group it no longer touches: the half-out
+    // state the release path exists to prevent. Pointer-cancel is not rare; a
+    // touch or pen drag loses capture to any system gesture. Same history step,
+    // same two outcomes, no third one.
+    if (moved && wasGlueDrag) {
+      if (state.glueIntent?.draggedId === draggedId) {
+        state.commitGlue()
+      } else if (state.widgetGlueIndex[draggedId]) {
+        state.unglueWidget(draggedId, { skipHistory: true })
+      }
+    }
     state.setGlueIntent(null)
     state.setUnglueIntentWidgetId(null)
     glueDragRef.current = false
-    if (!session.end()) {
+    if (!moved) {
       magneticHover.endDrag()
       return
     }
+    const settled = useWidgetStore.getState()
     const ids =
-      state.selectedIds.has(draggedId) && state.selectedIds.size > 1
-        ? [...state.selectedIds]
+      !wasGlueDrag && settled.selectedIds.has(draggedId) && settled.selectedIds.size > 1
+        ? [...settled.selectedIds]
         : [draggedId]
-    state.settleWidgets(ids)
+    settled.settleWidgets(ids)
     magneticHover.endDrag()
   }
 

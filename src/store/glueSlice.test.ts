@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { buildBoardSnapshot } from '../utils/persistence'
 import { parsePersistedBoard } from '../utils/persistedBoardSchema'
-import { GRID_SIZE } from '../types/spatial'
+import { GRID_SIZE, ICON_MIN_EDGE } from '../types/spatial'
 import {
   COLLAPSED_MEMBER_SIZE,
   GLUE_GAP,
@@ -608,6 +608,29 @@ describe('dragging glued widgets', () => {
     const after = useWidgetStore.getState()
     expect(after.widgets[a]!.position).toEqual({ x: beforeA.x + shift.x, y: beforeA.y + shift.y })
     expect(after.widgets[b]!.position).toEqual({ x: beforeB.x + shift.x, y: beforeB.y + shift.y })
+  })
+
+  it('never pastes a folded group as sub-floor icons', () => {
+    // The clipboard carries widget records, not glue records, so a pasted
+    // member of a collapsed group belongs to no cluster — and a 1×1 icon
+    // outside a folded cluster is below the aim-at floor with nothing to
+    // click. It comes back as a real card instead.
+    const [a, b] = createPair(0)
+    useWidgetStore.getState().glueWidgets(b, a)
+    const glueId = useWidgetStore.getState().widgetGlueIndex[a]!
+    useWidgetStore.getState().setClusterCollapsed(glueId, true)
+    expect(widget(a).size).toEqual(COLLAPSED_MEMBER_SIZE)
+
+    const pasted = useWidgetStore.getState().pasteWidgets([widget(a), widget(b)])
+
+    const state = useWidgetStore.getState()
+    expect(pasted).toHaveLength(2)
+    for (const id of pasted) {
+      const w = state.widgets[id]!
+      expect(state.widgetGlueIndex[id]).toBeUndefined()
+      expect(w.iconified).toBe(false)
+      expect(Math.min(w.size.width, w.size.height)).toBeGreaterThanOrEqual(ICON_MIN_EDGE)
+    }
   })
 
   it('welds an external widget into a collapsed group — it joins, folds, and re-stacks', () => {
