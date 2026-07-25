@@ -159,7 +159,13 @@ describe('the cluster group frame', () => {
     expect(geometry).toContain('export function refoldCollapsedCluster')
     expect(geometry).toContain('collapsedClusterLayout(present.length)')
     expect(geometry).toContain('size: { ...COLLAPSED_MEMBER_SIZE }')
-    expect(slice).toContain('refoldCollapsedCluster(state.widgets, memberIds, cluster.restore)')
+    // Every refold also carries the record's PREVIOUS fold anchor, because the
+    // restore map it re-emits was written in that anchor's frame: a fresh
+    // anchor without it makes the block's recorded travel read zero, and the
+    // group rewinds to wherever it was first folded.
+    expect(slice).toContain(
+      'refoldCollapsedCluster(state.widgets, memberIds, cluster.restore, cluster.foldedAt)',
+    )
     // The old fold packed dormant 2×2 icons with the tree's card packer.
     expect(slice).not.toContain('ICONIFIED_SIZE')
     expect(slice).not.toContain('clusterLayout(')
@@ -172,7 +178,9 @@ describe('the cluster group frame', () => {
     // map across the merge and re-stacks, instead of minting a fresh record that
     // silently drops both.
     expect(slice).toContain('const collapsed = targetGlue?.collapsed === true || draggedGlue?.collapsed === true')
-    expect(slice).toContain('refoldCollapsedCluster(s.widgets, merged, mergedRestore)')
+    expect(slice).toContain(
+      'refoldCollapsedCluster(s.widgets, merged, mergedRestore, previousFoldedAt)',
+    )
     // Every path that can release a folded member restores it so it is never
     // stranded below the 2×2 aim-at floor.
     expect(geometry).toContain('export function unfoldReleasedFoldedMembers')
@@ -183,7 +191,9 @@ describe('the cluster group frame', () => {
     // block re-stacks) BEFORE membership is re-derived, so the group survives
     // the loss of its connecting member instead of splitting.
     expect(selection).toContain('closeClusterGaps(repacked, survivors)')
-    expect(selection).toContain('refoldCollapsedCluster(repacked, survivors, glue.restore)')
+    expect(selection).toContain(
+      'refoldCollapsedCluster(repacked, survivors, glue.restore, glue.foldedAt)',
+    )
   })
 
   it('a glue-drag release that welds nothing pulls the member off — never half-out', () => {

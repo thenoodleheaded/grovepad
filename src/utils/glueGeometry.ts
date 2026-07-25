@@ -497,24 +497,9 @@ export function refoldCollapsedCluster(
   widgets: Record<string, Widget>,
   memberIds: readonly string[],
   existingRestore: Record<string, GlueRestoreEntry> | undefined,
+  previousFoldedAt?: Vector2D,
 ): { widgets: Record<string, Widget>; restore: Record<string, GlueRestoreEntry>; anchor: Vector2D } {
   const present = memberIds.filter((id) => widgets[id])
-  const restore: Record<string, GlueRestoreEntry> = {}
-  for (const id of present) {
-    const saved = existingRestore?.[id]
-    if (saved) {
-      restore[id] = saved
-      continue
-    }
-    const w = widgets[id]!
-    restore[id] = {
-      x: w.position.x,
-      y: w.position.y,
-      width: w.size.width,
-      height: w.size.height,
-      iconified: w.iconified === true,
-    }
-  }
 
   // Anchor on the already-folded members (the standing block) when there are
   // any, so a merge re-stacks in place; otherwise on all of them (first fold).
@@ -528,6 +513,33 @@ export function refoldCollapsedCluster(
   }
   anchorX = snapToGrid(Number.isFinite(anchorX) ? anchorX : 0)
   anchorY = snapToGrid(Number.isFinite(anchorY) ? anchorY : 0)
+
+  // The anchor we return becomes the record's new `foldedAt`, and a later
+  // expand measures the block's travel against it. Carried-over restore
+  // entries were written in the frame of the PREVIOUS anchor, so they have to
+  // ride the distance the block has already travelled — otherwise the fresh
+  // anchor makes `foldedBlockShift` read zero and every survivor rewinds to
+  // wherever the group was first folded, hundreds of pixels away. A member
+  // being recorded for the first time is already in the current frame.
+  const rebaseX = previousFoldedAt ? anchorX - previousFoldedAt.x : 0
+  const rebaseY = previousFoldedAt ? anchorY - previousFoldedAt.y : 0
+
+  const restore: Record<string, GlueRestoreEntry> = {}
+  for (const id of present) {
+    const saved = existingRestore?.[id]
+    if (saved) {
+      restore[id] = { ...saved, x: saved.x + rebaseX, y: saved.y + rebaseY }
+      continue
+    }
+    const w = widgets[id]!
+    restore[id] = {
+      x: w.position.x,
+      y: w.position.y,
+      width: w.size.width,
+      height: w.size.height,
+      iconified: w.iconified === true,
+    }
+  }
 
   const layout = collapsedClusterLayout(present.length)
   const next = { ...widgets }
@@ -738,6 +750,7 @@ export function pulledFreeOfCluster(
 export function connectedGlueComponents(
   memberIds: readonly string[],
   widgets: Record<string, Widget>,
+  reach: number = GLUE_RANGE,
 ): string[][] {
   const ids = memberIds.filter((id) => widgets[id])
   const boxes = new Map(ids.map((id) => [id, glueBoxRect(widgets[id]!)]))
@@ -753,7 +766,7 @@ export function connectedGlueComponents(
       component.push(current)
       for (const other of ids) {
         if (seen.has(other)) continue
-        if (glueSeparation(boxes.get(current)!, boxes.get(other)!) <= GLUE_RANGE) {
+        if (glueSeparation(boxes.get(current)!, boxes.get(other)!) <= reach) {
           seen.add(other)
           queue.push(other)
         }
@@ -766,12 +779,22 @@ export function connectedGlueComponents(
 
 /**
  * Pull the surviving members of a cluster back together after one of them was
- * removed: any component that no longer touches the rest slides toward the
- * standing block until the envelopes meet, so deleting the middle card of a
- * stack closes the gap and the survivors re-weld as ONE group instead of the
- * record splitting into fragments that drift apart. Removal always shrinks the
- * cluster inward, so the pull can never create a new overlap with the rest of
- * the board. Pure; returns the same reference when nothing had separated.
+ * removed, or after one shrank: any component that no longer touches the rest
+ * slides toward the standing block until the envelopes meet, so deleting the
+ * middle card of a stack closes the gap and the survivors re-weld as ONE group
+ * instead of the record splitting into fragments that drift apart. Removal and
+ * shrinkage both pull the cluster inward, so the close can never create a new
+ * overlap with the rest of the board. Pure; returns the same reference when
+ * nothing had separated.
+ *
+ * Connectedness here is measured at `GLUE_GAP` — the carved seam's own width —
+ * NOT at the option-drag `GLUE_RANGE`. Members up to a seam apart still READ as
+ * welded, so nothing needs closing; anything wider is a hole the eye sees. At
+ * `GLUE_RANGE` the check was blind to every sub-cell hole: the record stayed
+ * whole so no reconcile would split it, nothing else would close it, and the
+ * seam insets (`edgeInsets`) had already stopped drawing — cards left visibly
+ * adrift inside a frame that still enclosed them. A one-cell shrink is the
+ * commonest shrink there is, because committed resizes snap to the grid.
  */
 export function closeClusterGaps(
   widgets: Record<string, Widget>,
@@ -779,7 +802,7 @@ export function closeClusterGaps(
 ): Record<string, Widget> {
   const present = memberIds.filter((id) => widgets[id])
   if (present.length < 2) return widgets
-  const components = connectedGlueComponents(present, widgets)
+  const components = connectedGlueComponents(present, widgets, GLUE_GAP)
   if (components.length < 2) return widgets
   const next = { ...widgets }
   const merged: string[] = [...components[0]!]

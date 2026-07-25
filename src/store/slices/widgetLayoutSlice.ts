@@ -356,11 +356,19 @@ export function createWidgetLayoutSlice({ set, get, pushHistory }: WidgetStoreSl
       set((state) => ({ widgets: withWidget(state.widgets, id, (w) => ({ ...w, position })) }))
     }
     // One overlap check for the whole committed change — new size AND new
-    // origin together.
+    // origin together. An inward edge drag shrinks the card, so the cluster
+    // closes ranks here exactly as it does on the plain resize path: this
+    // branch runs INSTEAD of resizeWidget's own settle, not after it.
     if (snap) {
-      set((state) => ({
-        widgets: settleWidgetLayout(state.widgets, [id], state.widgetGlueIndex, { anchorIds: [id] }),
-      }))
+      set((state) => {
+        let settled = settleWidgetLayout(state.widgets, [id], state.widgetGlueIndex, {
+          anchorIds: [id],
+        })
+        const glueId = state.widgetGlueIndex[id]
+        const cluster = glueId ? state.glues[glueId] : undefined
+        if (cluster) settled = closeClusterGaps(settled, cluster.widgetIds)
+        return { widgets: settled }
+      })
     }
   },
 

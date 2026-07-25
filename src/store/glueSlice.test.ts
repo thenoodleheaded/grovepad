@@ -376,6 +376,78 @@ describe('dragging glued widgets', () => {
     ).toBe(0)
   })
 
+  it('does not bury a card unglued from the context menu under its former clustermates', () => {
+    // The menu path has no drag: the freed card is still standing where it
+    // was, so the survivors closing ranks would slide straight through it.
+    // WidgetCard's own settle rescues the option-drag path; the menu has none.
+    const [a, b] = createPair(0)
+    useWidgetStore.getState().glueWidgets(b, a)
+    const wb = widget(b)
+    const c = useWidgetStore
+      .getState()
+      .createWidget('Glue C', { x: wb.position.x + 2_000, y: wb.position.y }, 'notes')
+    pin(c)
+    place(c, wb.position.x + wb.size.width, wb.position.y)
+    useWidgetStore.getState().glueWidgets(c, b)
+
+    useWidgetStore.getState().unglueWidget(b)
+
+    const state = useWidgetStore.getState()
+    const freed = glueBoxRect(state.widgets[b]!)
+    for (const otherId of [a, c]) {
+      const other = glueBoxRect(state.widgets[otherId]!)
+      const overlapX =
+        Math.min(freed.x + freed.width, other.x + other.width) - Math.max(freed.x, other.x)
+      const overlapY =
+        Math.min(freed.y + freed.height, other.y + other.height) - Math.max(freed.y, other.y)
+      expect(Math.min(overlapX, overlapY)).toBeLessThanOrEqual(0)
+    }
+  })
+
+  it('closes the weld when a glued member shrinks by a single cell', () => {
+    // The hole a shrink opens is measured against what RENDERS as welded, not
+    // against the option-drag reach: a one-cell hole leaves the record intact,
+    // so nothing else was ever going to close it, and the pair stopped drawing
+    // its seam while the group frame still enclosed both.
+    const [a, b] = createPair(0)
+    useWidgetStore.getState().glueWidgets(b, a)
+    const glueId = useWidgetStore.getState().widgetGlueIndex[a]!
+    const wa = widget(a)
+    useWidgetStore
+      .getState()
+      .resizeWidget(a, { width: wa.size.width - GRID_SIZE, height: wa.size.height })
+    const state = useWidgetStore.getState()
+    expect(state.widgetGlueIndex[a]).toBe(glueId)
+    expect(state.widgetGlueIndex[b]).toBe(glueId)
+    expect(
+      glueSeparation(glueBoxRect(state.widgets[a]!), glueBoxRect(state.widgets[b]!)),
+    ).toBe(0)
+  })
+
+  it('closes the weld when a glued member is shrunk from its outline edge', () => {
+    // The edge-drag path suppresses resizeWidget's own settle and runs its
+    // own, so it has to close the cluster itself — otherwise dragging a
+    // member's edge inward detaches it from the group it still belongs to.
+    const [a, b] = createPair()
+    useWidgetStore.getState().glueWidgets(b, a)
+    const glueId = useWidgetStore.getState().widgetGlueIndex[a]!
+    const wa = widget(a)
+    useWidgetStore
+      .getState()
+      .resizeWidgetFromEdge(
+        a,
+        { width: wa.size.width - GRID_SIZE * 3, height: wa.size.height },
+        { x: 1, y: 0 },
+        true,
+      )
+    const state = useWidgetStore.getState()
+    expect(state.widgetGlueIndex[a]).toBe(glueId)
+    expect(state.widgetGlueIndex[b]).toBe(glueId)
+    expect(
+      glueSeparation(glueBoxRect(state.widgets[a]!), glueBoxRect(state.widgets[b]!)),
+    ).toBe(0)
+  })
+
   it('drops a member that no longer touches from the record at settle time', () => {
     // However a member ended up visually free of its group, the next settle
     // reconciles the record — so a card that touches nothing can never keep
@@ -500,6 +572,39 @@ describe('dragging glued widgets', () => {
       place(id, w.position.x + shift.x, w.position.y + shift.y)
     }
     useWidgetStore.getState().setClusterCollapsed(glueId, false)
+    const after = useWidgetStore.getState()
+    expect(after.widgets[a]!.position).toEqual({ x: beforeA.x + shift.x, y: beforeA.y + shift.y })
+    expect(after.widgets[b]!.position).toEqual({ x: beforeB.x + shift.x, y: beforeB.y + shift.y })
+  })
+
+  it('keeps a dragged folded block in place when a member leaves before the expand', () => {
+    // Re-folding after a membership change writes a FRESH fold anchor from the
+    // survivors' current positions. The restore map was written in the old
+    // anchor's frame, so unless it rides the same travel the block's recorded
+    // shift reads zero and every survivor rewinds to where the group was first
+    // folded — a group dragged across the board teleports back on expand.
+    const [a, b] = createPair(0)
+    useWidgetStore.getState().glueWidgets(b, a)
+    const wb = widget(b)
+    const c = useWidgetStore
+      .getState()
+      .createWidget('Glue C', { x: wb.position.x + 2_000, y: wb.position.y }, 'notes')
+    pin(c)
+    place(c, wb.position.x + wb.size.width, wb.position.y)
+    useWidgetStore.getState().glueWidgets(c, b)
+    const glueId = useWidgetStore.getState().widgetGlueIndex[a]!
+    const beforeA = { ...widget(a).position }
+    const beforeB = { ...widget(b).position }
+    useWidgetStore.getState().setClusterCollapsed(glueId, true)
+
+    const shift = { x: 10 * GRID_SIZE, y: 3 * GRID_SIZE }
+    for (const id of [a, b, c]) {
+      const w = widget(id)
+      place(id, w.position.x + shift.x, w.position.y + shift.y)
+    }
+    useWidgetStore.getState().unglueWidget(c)
+    useWidgetStore.getState().setClusterCollapsed(glueId, false)
+
     const after = useWidgetStore.getState()
     expect(after.widgets[a]!.position).toEqual({ x: beforeA.x + shift.x, y: beforeA.y + shift.y })
     expect(after.widgets[b]!.position).toEqual({ x: beforeB.x + shift.x, y: beforeB.y + shift.y })

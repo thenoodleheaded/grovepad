@@ -73,7 +73,12 @@ export function createGlueSlice({ set, get, pushHistory }: WidgetStoreSliceConte
 
       if (collapsed) {
         const mergedRestore = { ...(draggedGlue?.restore ?? {}), ...(targetGlue?.restore ?? {}) }
-        const folded = refoldCollapsedCluster(s.widgets, merged, mergedRestore)
+        // The collapsed side owns the frame those restore entries were written
+        // in, so its fold anchor is what the merge rebases against.
+        const previousFoldedAt =
+          (targetGlue?.collapsed === true ? targetGlue.foldedAt : undefined) ??
+          (draggedGlue?.collapsed === true ? draggedGlue.foldedAt : undefined)
+        const folded = refoldCollapsedCluster(s.widgets, merged, mergedRestore, previousFoldedAt)
         glue.collapsed = true
         glue.restore = folded.restore
         glue.foldedAt = folded.anchor
@@ -111,7 +116,7 @@ export function createGlueSlice({ set, get, pushHistory }: WidgetStoreSliceConte
       } else if (wasCollapsed) {
         // The collection stays folded, minus one — re-stack the survivors so
         // the block closes its gap, and trim the restore map to who is left.
-        const folded = refoldCollapsedCluster(widgets, remaining, glue.restore)
+        const folded = refoldCollapsedCluster(widgets, remaining, glue.restore, glue.foldedAt)
         widgets = folded.widgets
         glues[glueId] = {
           ...glue,
@@ -140,13 +145,16 @@ export function createGlueSlice({ set, get, pushHistory }: WidgetStoreSliceConte
       // The member just released (and any survivor a dissolve left behind) is
       // no longer part of a folded set, so it must not stay a 1×1 icon.
       widgets = unfoldReleasedFoldedMembers(widgets, state.glues, reconciled)
-      // A restore lands a member back at its pre-fold spot, which the board may
-      // have grown into since — settle those around the surviving block.
-      const settled = wasCollapsed
-        ? settleWidgetsByCanvas(widgets, glue.widgetIds, buildGlueIndex(reconciled), {
-            anchorIds: remaining,
-          })
-        : widgets
+      // Settle around the surviving block, whatever released the member. A
+      // restore lands a folded member back at its pre-fold spot, which the
+      // board may have grown into since. And an unglue from the CONTEXT MENU
+      // has no drag behind it: the freed card is still standing between its
+      // former clustermates, so the ranks closing above would slide them
+      // straight over it and commit the overlap. Only the option-drag path was
+      // ever rescued, by WidgetCard's own settle after the gesture.
+      const settled = settleWidgetsByCanvas(widgets, glue.widgetIds, buildGlueIndex(reconciled), {
+        anchorIds: remaining,
+      })
       return {
         widgets: settled,
         glues: reconciled,
@@ -239,7 +247,7 @@ export function createGlueSlice({ set, get, pushHistory }: WidgetStoreSliceConte
         // each member's pre-fold state and re-stacks them into one grid-aligned
         // block. Its members go below the 2×2 floor that governs icons you can
         // actually aim at, because the folded collection is one pointer target.
-        const folded = refoldCollapsedCluster(state.widgets, memberIds, cluster.restore)
+        const folded = refoldCollapsedCluster(state.widgets, memberIds, cluster.restore, cluster.foldedAt)
         widgets = folded.widgets
         nextGlue.collapsed = true
         nextGlue.restore = folded.restore

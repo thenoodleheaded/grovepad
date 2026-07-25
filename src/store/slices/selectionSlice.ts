@@ -117,7 +117,7 @@ export function createSelectionSlice({ set, get, pushHistory, markSpawned }: Wid
         const survivors = glue.widgetIds.filter((id) => repacked[id])
         if (survivors.length === glue.widgetIds.length || survivors.length < 2) continue
         if (glue.collapsed === true) {
-          const folded = refoldCollapsedCluster(repacked, survivors, glue.restore)
+          const folded = refoldCollapsedCluster(repacked, survivors, glue.restore, glue.foldedAt)
           repacked = folded.widgets
           if (glueRecords === state.glues) glueRecords = { ...state.glues }
           glueRecords[glue.id] = {
