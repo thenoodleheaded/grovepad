@@ -54,6 +54,10 @@ export function createUiLinkingSlice({ set, get, pushHistory, initialPacks }: Wi
         widgets: nextWidgets,
         widgetStructureVersion: state.widgetStructureVersion + 1,
         relations: nextRelations,
+        // Derived from relations, so it has to be rebuilt in the same set() as
+        // every other writer does. Imported blockers arrive unresolved, and
+        // nothing later in the import flow recomputes this.
+        blockedWidgetIds: computeBlockedWidgetIds(nextRelations),
       }
     })
   },
