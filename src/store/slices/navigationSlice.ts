@@ -209,7 +209,7 @@ export function createNavigationSlice({ set, get, pushHistory, navigateToCanvas,
 
   importBoardAsCanvas: (board: HydratedPersistedBoard, title, position) => {
     const state = get()
-    if (!state.canvases[state.activeCanvasId] || !state.workspaces[state.activeWorkspaceId]) return ''
+    if (!state.canvases[state.activeCanvasId] || !state.workspaces[state.activeWorkspaceId]) return null
     const embedding = planBoardCanvasEmbedding(state, board, { title, position })
     pushHistory('board-canvas-import')
     set((current) => {
@@ -233,7 +233,7 @@ export function createNavigationSlice({ set, get, pushHistory, navigateToCanvas,
       }
     })
     markSpawned(embedding.rootWidgetId)
-    return embedding.rootWidgetId
+    return { rootWidgetId: embedding.rootWidgetId, widgetIdMap: embedding.widgetIdMap }
   },
   }
 }

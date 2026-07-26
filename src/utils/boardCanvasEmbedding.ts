@@ -11,6 +11,10 @@ export interface BoardCanvasEmbedding {
   relations: Record<string, Relation>
   connections: Record<string, Connection>
   glues: Record<string, WidgetGlue>
+  /** Imported widget id -> minted id. Excalidraw blob keys embed the widget id
+   * and are re-derived at read time, so the importer needs this map to write
+   * package blobs under keys the imported copies can actually find. */
+  widgetIdMap: ReadonlyMap<string, string>
 }
 
 interface EmbedOptions {
@@ -148,5 +152,5 @@ export function planBoardCanvasEmbedding(
     glues[id] = { ...glue, id, widgetIds }
   }
 
-  return { rootWidgetId, canvases, widgets, relations, connections, glues }
+  return { rootWidgetId, canvases, widgets, relations, connections, glues, widgetIdMap: widgetMap }
 }

@@ -22,7 +22,7 @@ const MUTATING_ACTIONS = [
 ] as const satisfies readonly (keyof WidgetStoreState)[]
 
 const STRING_RESULTS = new Set<keyof WidgetStoreState>([
-  'createWidget', 'addRelation', 'importBoardAsCanvas',
+  'createWidget', 'addRelation',
 ])
 const ARRAY_RESULTS = new Set<keyof WidgetStoreState>(['commitThoughtPlan', 'duplicateWidgets', 'pasteWidgets'])
 const BOOLEAN_RESULTS = new Set<keyof WidgetStoreState>(['unglueWidget'])
@@ -31,7 +31,7 @@ function blockedResult(action: keyof WidgetStoreState): unknown {
   if (STRING_RESULTS.has(action)) return ''
   if (ARRAY_RESULTS.has(action)) return []
   if (BOOLEAN_RESULTS.has(action)) return false
-  if (action === 'addConnection') return null
+  if (action === 'addConnection' || action === 'importBoardAsCanvas') return null
   return undefined
 }
 

@@ -61,12 +61,15 @@ export interface WidgetStoreState {
     settings: Partial<Pick<CanvasMeta, 'shared' | 'gridIntensity' | 'linksVisible'>>,
   ) => void
   reparentCanvas: (canvasId: string, parentCanvasId: string) => void
-  /** Embed an imported board behind one Canvas card without replacing local work. */
+  /** Embed an imported board behind one Canvas card without replacing local work.
+   * Returns the minted-id map alongside the root so the importer can write
+   * widget-id-derived blob keys (Excalidraw) the imported copies can find;
+   * null when the active canvas/workspace is missing or the write is blocked. */
   importBoardAsCanvas: (
     board: HydratedPersistedBoard,
     title: string,
     position: Vector2D,
-  ) => string
+  ) => { rootWidgetId: string; widgetIdMap: ReadonlyMap<string, string> } | null
 
   createWidget: (title: string, position: Vector2D, type: ModuleType) => string
   /** Commit an interpreted thought as one reversible, collision-safe operation. */

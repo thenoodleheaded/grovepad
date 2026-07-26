@@ -15,6 +15,7 @@ import {
   type PersistedBoardState,
 } from '../types/persistence'
 import { readMediaBlob } from './boardDatabase'
+import { mediaBlobKeysForWidget } from './widgetMediaKeys'
 import {
   canonicalJson,
   isCloudBoardIndex,
@@ -94,6 +95,7 @@ function extensionForType(type: string): string {
   if (type === 'image/jpeg') return 'jpg'
   if (type === 'image/gif') return 'gif'
   if (type === 'image/svg+xml') return 'svg'
+  if (type === 'application/pdf') return 'pdf'
   return 'bin'
 }
 
@@ -130,10 +132,14 @@ export async function buildGrovepadPackage(
 
   const media: PackageMediaEntry[] = []
   const storedPaths = new Set<string>()
-  for (const widget of Object.values(board.widgets)) {
-    if (widget.type !== 'media') continue
-    const key = (widget.data as { localBlobKey?: unknown }).localBlobKey
-    if (typeof key !== 'string' || !key) continue
+  const packagedKeys = new Set<string>()
+  // Every family that stores blobs, not just media widgets: Excalidraw scenes
+  // and annotation backgrounds live in the same store under their own key
+  // shapes, and a backup that omits them restores those widgets blank.
+  const pendingKeys = Object.values(board.widgets).flatMap(mediaBlobKeysForWidget)
+  for (const key of pendingKeys) {
+    if (packagedKeys.has(key)) continue
+    packagedKeys.add(key)
     const blob = await loadMedia(key)
     if (!blob) continue
     const bytes = new Uint8Array(await blob.arrayBuffer())
