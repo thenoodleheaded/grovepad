@@ -270,6 +270,26 @@ type CloudConflictChoice = 'local' | 'cloud' | 'merge'
 let conflictResolver: ((choice: CloudConflictChoice) => void) | null = null
 let activePersistenceDispose: (() => void) | null = null
 let runtimeSyncTrigger: ((force: boolean) => void) | null = null
+/**
+ * Settles once the startup IndexedDB read has settled: after loadBoard has
+ * hydrated the store for a returning user, after the seed write attempt on a
+ * proven-empty disk, or after the write-block latch on a failed read. Already
+ * resolved when persistence never started (unit tests, guest shells), and it
+ * never rejects. Deliberately NOT reset on dispose: between dispose and the
+ * next init, "settled" is the correct answer — no further hydration is coming.
+ */
+let localBoardHydration: Promise<void> = Promise.resolve()
+
+/**
+ * The store seeds synchronously at module scope and hydrates later from
+ * IndexedDB. Anything that diffs or publishes board state (collaboration
+ * session start) must wait for this seam, or it reads the seed/stale board —
+ * and a live shared doc diffed against that copy publishes deletions of
+ * collaborators' work.
+ */
+export function whenLocalBoardHydrated(): Promise<void> {
+  return localBoardHydration
+}
 
 export function resolveCloudConflict(choice: CloudConflictChoice): void {
   conflictResolver?.(choice)
@@ -366,6 +386,11 @@ export function initPersistence<
         )
       }
     })
+
+  // Never rejects even if a future edit changes the catch above: collaboration
+  // awaits this seam before starting sessions, and a rejection there would be
+  // an unhandled break of session start rather than a hydration signal.
+  localBoardHydration = localReady.then(() => undefined, () => undefined)
 
   let storageToastShown = false
   let lastSnapshotAt = 0

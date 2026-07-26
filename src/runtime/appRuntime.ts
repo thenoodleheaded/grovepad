@@ -61,6 +61,11 @@ function initSignedInCollaboration(): () => void {
 }
 
 const appRuntime = createRuntimeBoundary(() => [
+  // ORDER CONTRACT: initPersistence must start before initSignedInCollaboration.
+  // Collaboration session start awaits persistence's hydration seam
+  // (whenLocalBoardHydrated), which is default-resolved until initPersistence
+  // arms it — inverting the order silently disarms the wait and lets a session
+  // diff a live shared doc against the pre-hydration seed board.
   initPersistence(useWidgetStore, useCanvasStore),
   initWidgetModulePrefetch(),
   initDeployVersionMonitor(),

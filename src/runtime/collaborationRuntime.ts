@@ -18,6 +18,7 @@ import { SupabaseCollaborationRepository } from '../collaboration/supabaseCollab
 import type { CollaborationPresence, CollaborationRole } from '../collaboration/types'
 import { REMOTE_TRANSPORT_ORIGIN, writeCanvasSnapshot } from '../collaboration/yjsCanvas'
 import { getSupabaseClient } from '../lib/supabase'
+import { whenLocalBoardHydrated } from '../utils/persistence'
 import { accountDisplayName, accountProfileColor, useAuthStore } from '../store/useAuthStore'
 import { useCanvasStore } from '../store/useCanvasStore'
 import {
@@ -596,20 +597,31 @@ function stopActiveSession(): void {
 
 function restartForCurrentCanvas(initialRole: CollaborationRole | null = null): void {
   stopActiveSession()
-  const session = useAuthStore.getState().session
-  if (!session) return
   const expectedGeneration = generation
-  const board = useWidgetStore.getState()
-  const canvasId = board.activeCanvasId
-  // Sharing is opt-in per canvas. A private canvas never registers with the
-  // server and never uploads CRDT state, so it stays on this device entirely.
-  if (!board.canvases[canvasId]?.shared) return
-  void startCanvasSession(session, canvasId, expectedGeneration, initialRole).catch((error: unknown) => {
+  // The store seeds synchronously at module scope and hydrates later from
+  // IndexedDB. Reading the shared flag or active canvas before hydration
+  // lands is wrong in both directions: a session started against the seed
+  // board lets the bridge diff a live shared doc against stale content and
+  // publish deletions of collaborators' work, and a shared canvas whose id
+  // survives from the seed fails the gate below and then never connects,
+  // because hydration does not change activeCanvasId and no trigger re-fires.
+  // The seam always settles, even when the startup read fails.
+  void whenLocalBoardHydrated().then(() => {
     if (expectedGeneration !== generation) return
-    useCollaborationStore.setState({
-      status: navigator.onLine ? 'error' : 'offline',
-      canvasId,
-      error: error instanceof Error ? error.message : String(error),
+    const session = useAuthStore.getState().session
+    if (!session) return
+    const board = useWidgetStore.getState()
+    const canvasId = board.activeCanvasId
+    // Sharing is opt-in per canvas. A private canvas never registers with the
+    // server and never uploads CRDT state, so it stays on this device entirely.
+    if (!board.canvases[canvasId]?.shared) return
+    void startCanvasSession(session, canvasId, expectedGeneration, initialRole).catch((error: unknown) => {
+      if (expectedGeneration !== generation) return
+      useCollaborationStore.setState({
+        status: navigator.onLine ? 'error' : 'offline',
+        canvasId,
+        error: error instanceof Error ? error.message : String(error),
+      })
     })
   })
 }
@@ -630,6 +642,10 @@ function startCollaborationForSession(session: Session): void {
 }
 
 async function joinCanvasFromUrl(session: Session): Promise<boolean> {
+  // Joining mutates the store (create canvas, mark shared, navigate); done
+  // before hydration those writes are silently erased by loadBoard and the
+  // invite is lost. Wait for the persisted board before touching anything.
+  await whenLocalBoardHydrated()
   const url = new URL(window.location.href)
   const canvasId = url.searchParams.get('collaborate')
   if (!canvasId || canvasId.length > 256) return false
