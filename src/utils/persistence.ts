@@ -297,6 +297,11 @@ export function initPersistence<
   let unsubscribeSyncPref: (() => void) | null = null
   let syncWhenActive: (() => void) | null = null
   let localWritesBlocked = futureVersionWriteLock
+  // Set only once the read has come back and PROVED the record absent. It is
+  // what separates "we never learned what is on disk" from "there is nothing
+  // on disk to protect", which the shared catch below cannot otherwise tell
+  // apart — the seed write it also covers lives inside the same `.then`.
+  let diskProvenEmpty = false
   let runtimeConflictResolver: ((choice: CloudConflictChoice) => void) | null = null
   const view = loadPersistedView()
   if (view) canvasStore.getState().setView(view.pan, view.zoom)
@@ -326,6 +331,7 @@ export function initPersistence<
       if (board) {
         widgetStore.getState().loadBoard(board, { restorePersistedDeviceState: true })
       } else if (!localWritesBlocked) {
+        diskProvenEmpty = true
         const initialBoard = buildBoardSnapshot(widgetStore.getState())
         if (pendingLegacyMigrationSource !== null) {
           await writeMigratedBoardDatabase(pendingLegacyMigrationSource, 1, initialBoard)
@@ -336,14 +342,27 @@ export function initPersistence<
       }
     })
     .catch(() => {
-      if (pendingLegacyMigrationSource === null) return
+      // The seed write lives inside the `.then` above, so it lands here too.
+      // That one case is safe to let through: the read succeeded and proved
+      // the record absent, so there is nothing to overwrite and the debounced
+      // saver retries it like any other write failure.
+      if (diskProvenEmpty) return
       // Never let a later debounced save bypass the source-snapshot contract
-      // after an IndexedDB read or atomic migration transaction fails.
+      // after an IndexedDB read or atomic migration transaction fails. This
+      // used to return early unless a legacy migration was pending, which is
+      // never true on a modern install — so an ordinary failed read was
+      // swallowed, and the starter board the store seeds at module scope was
+      // written over the user's real record on their very first edit.
       localWritesBlocked = true
       if (!disposed) {
         usePersistenceStatusStore.getState().setLocalSave('error')
         useToastStore.getState().addToast(
-          'Legacy board migration could not be protected — saving is paused; export a backup now',
+          pendingLegacyMigrationSource !== null
+            ? 'Legacy board migration could not be protected — saving is paused; export a backup now'
+            // Not "export a backup": the store is holding the starter board at
+            // this point, so an export here would capture seed widgets, not the
+            // record we failed to read.
+            : 'Your saved board could not be opened — saving is paused so it is not overwritten. Reload to try again.',
         )
       }
     })
@@ -410,6 +429,14 @@ export function initPersistence<
       usePersistenceStatusStore.getState().setCloudSync('saving')
       try {
         await localReady
+        // A board we refuse to write to disk must not reach the cloud either.
+        // pushCloudBoard DELETES remote canvas rows absent from what it is
+        // handed, so pushing the seeded starter board over a real cloud record
+        // destroys more than the local overwrite would.
+        if (localWritesBlocked) {
+          usePersistenceStatusStore.getState().setCloudSync('error')
+          return
+        }
         const { fetchCloudBoard, pushCloudBoard } = await loadCloudSync()
         const cloudResult = await fetchCloudBoard(userId)
         if (disposed || token !== reconcileToken) return // a newer session superseded this fetch
@@ -534,7 +561,10 @@ export function initPersistence<
     writeStorage(DEVICE_KEY, serializePersistedDeviceState(widgetStore.getState()))
   })
   void localReady.then(() => {
-    if (!disposed) deviceSaver.schedule()
+    // Same rule as the board: with the read failed, the device state in memory
+    // is the seed's, not the user's, so scheduling this would overwrite their
+    // saved canvas/camera position while saving is supposedly paused.
+    if (!disposed && !localWritesBlocked) deviceSaver.schedule()
   })
 
   let gestureDirty = false
@@ -610,7 +640,11 @@ export function initPersistence<
   }
   window.addEventListener('pagehide', flushAll)
   const warnBeforeUnload = (event: BeforeUnloadEvent) => {
-    if (!gestureDirty && usePersistenceStatusStore.getState().localSave !== 'saving') return
+    const { localSave } = usePersistenceStatusStore.getState()
+    // 'error' means writes are paused to protect a record we could not read,
+    // so nothing from this session has reached disk. Closing without a prompt
+    // would lose all of it silently.
+    if (!gestureDirty && localSave !== 'saving' && localSave !== 'error') return
     event.preventDefault()
   }
   const flushWhenHidden = () => {
