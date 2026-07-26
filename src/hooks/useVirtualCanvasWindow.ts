@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useCanvasStore } from '../store/useCanvasStore'
 import {
   RESTING_FACE_INTERACTION_ZOOM,
@@ -40,34 +40,51 @@ export function useVirtualCanvasWindow(): VirtualCanvasWindow {
   const windowRef = useRef(virtualWindow)
   const frameRef = useRef(0)
 
-  useEffect(() => useCanvasStore.subscribe((state, previous) => {
-    const cameraChanged =
-      state.pan !== previous.pan ||
-      state.zoom !== previous.zoom ||
-      state.viewportSize !== previous.viewportSize
-    if (!cameraChanged) return
+  useLayoutEffect(() => {
+    const refreshForCamera = (
+      nextCamera: CameraViewport,
+      previousZoom: number,
+      immediate = false,
+    ) => {
+      const crossedDetailLine =
+        (nextCamera.zoom < RESTING_FACE_INTERACTION_ZOOM) !==
+        (previousZoom < RESTING_FACE_INTERACTION_ZOOM)
+      const viewportNeedsWindow = !rectContains(
+        windowRef.current.retainedRect,
+        worldRectForViewport(nextCamera, WIDGET_WINDOW_REPLAN_PX),
+      )
+      if (!crossedDetailLine && !viewportNeedsWindow) return
 
-    const nextCamera: CameraViewport = {
-      pan: state.pan,
-      zoom: state.zoom,
-      viewportSize: state.viewportSize,
+      const apply = () => {
+        const next = makeWindow()
+        windowRef.current = next
+        setVirtualWindow(next)
+      }
+      cancelAnimationFrame(frameRef.current)
+      if (immediate) apply()
+      else frameRef.current = requestAnimationFrame(apply)
     }
-    const crossedDetailLine =
-      (state.zoom < RESTING_FACE_INTERACTION_ZOOM) !==
-      (previous.zoom < RESTING_FACE_INTERACTION_ZOOM)
-    const viewportNeedsWindow = !rectContains(
-      windowRef.current.retainedRect,
-      worldRectForViewport(nextCamera, WIDGET_WINDOW_REPLAN_PX),
-    )
-    if (!crossedDetailLine && !viewportNeedsWindow) return
 
-    cancelAnimationFrame(frameRef.current)
-    frameRef.current = requestAnimationFrame(() => {
-      const next = makeWindow()
-      windowRef.current = next
-      setVirtualWindow(next)
+    const unsubscribe = useCanvasStore.subscribe((state, previous) => {
+      const cameraChanged =
+        state.pan !== previous.pan ||
+        state.zoom !== previous.zoom ||
+        state.viewportSize !== previous.viewportSize
+      if (!cameraChanged) return
+      refreshForCamera({
+        pan: state.pan,
+        zoom: state.zoom,
+        viewportSize: state.viewportSize,
+      }, previous.zoom)
     })
-  }), [])
+
+    // Persistence can restore a saved camera between the initial render and
+    // this subscription. Re-read it before paint so opening a board never
+    // waits for the first gesture to wake the virtual window.
+    const currentCamera = readCamera()
+    refreshForCamera(currentCamera, windowRef.current.camera.zoom, true)
+    return unsubscribe
+  }, [])
 
   useEffect(() => () => cancelAnimationFrame(frameRef.current), [])
 

@@ -6,6 +6,7 @@ import {
   rectContains,
   usesLightweightWidgetImage,
   virtualWidgetCandidates,
+  withEagerPreviewBatch,
   worldRectForViewport,
 } from './widgetVirtualization'
 
@@ -71,6 +72,16 @@ describe('widget viewport virtualization', () => {
 })
 
 describe('progressive widget hydration', () => {
+  it('shows a bounded preview batch before idle hydration starts', () => {
+    const candidates = Array.from({ length: 80 }, (_, index) => `w${index}`)
+    expect(withEagerPreviewBatch(new Set(), candidates)).toEqual(candidates.slice(0, 64))
+    expect(withEagerPreviewBatch(new Set(['resident']), candidates, 2)).toEqual([
+      'resident',
+      'w0',
+      'w1',
+    ])
+  })
+
   it('loads only one bounded batch while urgent widgets bypass that budget', () => {
     const targets = Array.from({ length: 20 }, (_, index) => `w${index}`)
     const step = nextProgressiveMountStep(new Set(), targets, ['w19'], 4, 6)

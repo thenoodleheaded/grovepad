@@ -11,6 +11,7 @@ import {
   WIDGET_PREVIEW_RELEASE_BATCH,
   usesLightweightWidgetImage,
   virtualWidgetCandidates,
+  withEagerPreviewBatch,
 } from '../../utils/widgetVirtualization'
 import {
   expansionOffsetFor,
@@ -100,7 +101,10 @@ export function WidgetLayer() {
     [candidates],
   )
   const renderIds = useMemo(() => {
-    const ids = [...residentIds]
+    // The cheap first batch is synchronous. Waiting for requestIdleCallback
+    // here left a newly opened canvas visually empty until another browser
+    // event (commonly the first wheel gesture) gave residency a chance to run.
+    const ids = withEagerPreviewBatch(residentIds, candidateIds)
     const seen = new Set(ids)
     const widgets = useWidgetStore.getState().widgets
     // A full card can hydrate before the cheap resident-image pass reaches it,
@@ -110,7 +114,7 @@ export function WidgetLayer() {
       if (!seen.has(id) && widgets[id]?.canvasId === activeCanvasId) ids.push(id)
     }
     return ids.filter((id) => widgets[id]?.canvasId === activeCanvasId)
-  }, [activeCanvasId, liveIds, residentIds])
+  }, [activeCanvasId, candidateIds, liveIds, residentIds])
   const previewCount = useMemo(
     () => renderIds.reduce((count, id) => count + Number(!liveIds.has(id)), 0),
     [liveIds, renderIds],

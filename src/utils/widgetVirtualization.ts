@@ -91,6 +91,28 @@ export interface VirtualWidgetCandidate {
 }
 
 /**
+ * Keeps the nearest cheap previews in the very first canvas paint while the
+ * progressive resident set catches up during idle time.
+ */
+export function withEagerPreviewBatch(
+  residentIds: ReadonlySet<string>,
+  candidateIds: readonly string[],
+  batchSize = WIDGET_PREVIEW_BATCH,
+): string[] {
+  const ids = [...residentIds]
+  const seen = new Set(ids)
+  let added = 0
+  for (const id of candidateIds) {
+    if (seen.has(id)) continue
+    ids.push(id)
+    seen.add(id)
+    added += 1
+    if (added >= batchSize) break
+  }
+  return ids
+}
+
+/**
  * Finds only the widgets inside the retained camera window and orders them
  * centre-first, so previews near the user's attention hydrate before the rim.
  */
