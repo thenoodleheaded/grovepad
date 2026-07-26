@@ -159,6 +159,42 @@ describe('option-drag owns gluing', () => {
     expect(card).toContain('glueDragRef.current = e.altKey')
   })
 
+  it('captures it inside the one drag funnel, where no press path can forget', () => {
+    // Two surfaces start a widget move — the card face and the floating name
+    // row — and the row stops propagation, so it never reaches the face's
+    // handler. While each press path captured ⌥ for itself, the row simply
+    // did not, and an option-drag from the card's own name silently became an
+    // ordinary drag: displacement armed, the whole cluster and strict family
+    // came along, and no weld or pull-off ever ran. A whole-file `toContain`
+    // could not see that, because the face's own capture satisfied it. So the
+    // capture belongs to startDrag, and these assertions pin it there.
+    const startDragBody = card.slice(
+      card.indexOf('const startDrag = ('),
+      card.indexOf('new PointerDragSession('),
+    )
+    expect(startDragBody, 'startDrag was renamed; this contract needs rewriting').not.toBe('')
+
+    // A link drag returns before the move path begins, so a capture parked in
+    // that branch would arm nothing at all — the shape a careless fix takes.
+    const linkBranch = startDragBody.slice(
+      startDragBody.indexOf('if (isLink) {'),
+      startDragBody.indexOf('magneticHover.beginDrag()'),
+    )
+    const moveBranch = startDragBody.slice(startDragBody.indexOf('magneticHover.beginDrag()'))
+    expect(moveBranch).toContain('glueDragRef.current = e.altKey && !inFoldedCluster')
+    expect(linkBranch).not.toContain('glueDragRef.current =')
+    expect(moveBranch.indexOf('glueDragRef.current = e.altKey'))
+      .toBeLessThan(moveBranch.indexOf('if (!glueDragRef.current) beginDragDisplacement()'))
+
+    // Exactly one place may arm the gesture, and exactly one place may open a
+    // drag session — together those make a fourth press path inherit the
+    // capture instead of having to remember it.
+    const armsGlueDrag = (card.match(/glueDragRef\.current[ \t]*=(?!=)[ \t]*[^\n;]+/g) ?? [])
+      .filter((write) => !/=[ \t]*false\b/.test(write))
+    expect(armsGlueDrag).toHaveLength(1)
+    expect(card.match(/new PointerDragSession\(/g)).toHaveLength(1)
+  })
+
   it('moves the grabbed widget alone while its cluster stays put', () => {
     expect(card).toContain("glueDragRef.current ? { soloGlued: true, moveSelection: false } : undefined")
   })

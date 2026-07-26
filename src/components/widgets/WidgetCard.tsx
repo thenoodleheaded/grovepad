@@ -351,6 +351,16 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
       return
     }
     magneticHover.beginDrag()
+    // The press decides the gesture — reading e.altKey per move event would
+    // flip it mid-drag when the key is let go to steady the hand. It is
+    // captured here, in the one funnel every widget move passes through,
+    // rather than at each press path: the card body and the floating name row
+    // both start a move, and a path that forgot would silently downgrade a
+    // weld into a whole-cluster drag.
+    // No pulling one icon out of a folded collection: while a cluster is
+    // collapsed it is a single object, so ⌥-drag moves it whole like any
+    // other drag rather than unwelding whichever icon was under the pointer.
+    glueDragRef.current = e.altKey && !inFoldedCluster
     // An option-drag is a precision welding gesture: neighbors must hold
     // perfectly still while a seam is being aimed, so it never arms the
     // displacement system at all.
@@ -463,10 +473,6 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
     } else {
       const state = useWidgetStore.getState()
       activeSelectionAdditive.current = additive
-      // No pulling one icon out of a folded collection: while a cluster is
-      // collapsed it is a single object, so ⌥-drag moves it whole like any
-      // other drag rather than unwelding whichever icon was under the pointer.
-      glueDragRef.current = e.altKey && !inFoldedCluster
       if (!additive && !state.selectedIds.has(widgetId)) state.selectWidget(widgetId, false)
       startDrag(e, false)
     }
