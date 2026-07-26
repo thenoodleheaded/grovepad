@@ -799,7 +799,10 @@ function hydratedData(type: ModuleType, source: string, title: string): ModuleDa
   const amount = money ? Number(money.replace(/[^\d.-]/g, '')) : null
   const email = source.match(/[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}/)?.[0]
   const mention = source.match(/@([\w.-]+)/)?.[1]
-  const urls = source.match(/https?:\/\/[^\s)]+/g) ?? []
+  // Exclude angle brackets like thoughtInterpreter's URL regex does: pasted
+  // text routinely wraps links as <https://…> (plain-text email, raw Slack,
+  // markdown autolinks), and a trailing '>' is a forbidden host code point.
+  const urls = source.match(/https?:\/\/[^\s<>)]+/g) ?? []
 
   if (type === 'countdown' && date) return { ...defaults, label: title, targetDate: date } as ModuleData
   if (type === 'date_picker' && date) return { ...defaults, label: title, date } as ModuleData
@@ -809,8 +812,21 @@ function hydratedData(type: ModuleType, source: string, title: string): ModuleDa
   }
   if (type === 'goal_tracker' && amount !== null) return { ...defaults, goal: `${title} — target ${money}` } as unknown as ModuleData
   if (type === 'contact' && (mention || email)) return { ...defaults, name: titleCase(mention ?? ''), email: email ?? '' } as ModuleData
-  if (type === 'links' && urls.length) return { ...defaults, items: urls.map((url) => ({ id: crypto.randomUUID(), label: new URL(url).hostname, url })) } as ModuleData
+  if (type === 'links' && urls.length) return { ...defaults, items: urls.map((url) => ({ id: crypto.randomUUID(), label: linkLabel(url), url })) } as ModuleData
   return defaults as unknown as ModuleData
+}
+
+/** Hostname when the URL parses; thoughtInterpreter's never-throwing fallback
+ * otherwise. Pasted text can hold hosts WHATWG URL rejects ("https://foo|bar",
+ * an empty host), and this runs inside QuickAddSheet's render with no error
+ * boundary between the sheet and the app root — a throw here unmounts the
+ * whole app. buildScaffold's contract is "never throws" for the same reason. */
+function linkLabel(url: string): string {
+  try {
+    return new URL(url).hostname
+  } catch {
+    return url.replace(/^https?:\/\//, '').split('/')[0]!
+  }
 }
 
 function buildPlan(source: string, topic: string, direction: DirectionSpec, confidence: number): ThoughtPlan {

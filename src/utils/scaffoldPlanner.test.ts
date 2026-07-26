@@ -60,3 +60,12 @@ describe('buildScaffold', () => {
     expect(root.title.length).toBeLessThanOrEqual(56)
   })
 })
+
+describe('pasted URLs never crash the scaffold', () => {
+  it('honours the never-throws contract for angle-bracketed links', () => {
+    // The vague-thought path materializes archetypes whose directions carry
+    // links widgets; this used to throw TypeError: Invalid URL from render.
+    expect(() => buildScaffold('paperwork for the visa <https://embassy.example.com>')).not.toThrow()
+    expect(buildScaffold('paperwork for the visa <https://embassy.example.com>')).not.toBeNull()
+  })
+})

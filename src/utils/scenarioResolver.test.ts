@@ -121,3 +121,27 @@ describe('scenario catalogue', () => {
     expect(candidates).toEqual(expect.arrayContaining(['goal_tracker', 'process']))
   })
 })
+
+describe('pasted URLs never crash resolution', () => {
+  // hydratedData runs inside QuickAddSheet's render with no error boundary
+  // between the sheet and the app root, so a throw here unmounts the whole
+  // app and discards the typed thought. Angle-bracketed links are how URLs
+  // arrive from plain-text email, raw Slack pastes, and markdown autolinks.
+  it('resolves a thought carrying an angle-bracketed link', () => {
+    const resolution = resolveScenario('planning a trip to Japan <https://jal.co.jp>')
+    expect(resolution).not.toBeNull()
+    const linkItems = resolution!.directions
+      .flatMap((direction) => direction.plan.nodes)
+      .filter((node) => node.widgetType === 'links')
+      .flatMap((node) => (node.data as { items: { label: string; url: string }[] }).items)
+    // The bracket is excluded from the match, so the parsed host labels the link.
+    expect(linkItems.some((item) => item.label === 'jal.co.jp')).toBe(true)
+    expect(linkItems.every((item) => !item.url.includes('>'))).toBe(true)
+  })
+
+  it('labels a host WHATWG URL rejects without throwing', () => {
+    // Even the stricter regex admits hosts new URL() refuses ('|' is a
+    // forbidden host code point); the label must degrade, never throw.
+    expect(() => resolveScenario('compare vendors https://foo|bar today')).not.toThrow()
+  })
+})
