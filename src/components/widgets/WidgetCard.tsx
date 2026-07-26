@@ -1100,15 +1100,26 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
                   e.preventDefault()
                   e.stopPropagation()
                   if (tryCompleteTargetedLink()) return
+                  // This row is a second press path — the stopPropagation above
+                  // means the card face's handler never runs for it — so it has
+                  // to answer "does this press add to the selection?" itself.
+                  // Hardcoding no made Shift on a card's name do the opposite of
+                  // Shift on its face: it threw the selection away instead of
+                  // toggling this card, and selection is not in undo history, so
+                  // there was no way back. Only the Shift half of
+                  // usesAdditiveWidgetSelection is adopted here; its
+                  // touch/pen-in-Select-mode branch would change what the sole
+                  // touchscreen drag handle does, which is a product call.
+                  const additive = e.shiftKey
                   if (widget.metadata.locked) {
-                    useWidgetStore.getState().selectWidget(widgetId, false)
+                    useWidgetStore.getState().selectWidget(widgetId, additive)
                     return
                   }
                   useWidgetStore.getState().bringWidgetToFront(widgetId)
-                  if (!useWidgetStore.getState().selectedIds.has(widgetId)) {
+                  if (!additive && !useWidgetStore.getState().selectedIds.has(widgetId)) {
                     useWidgetStore.getState().selectWidget(widgetId, false)
                   }
-                  activeSelectionAdditive.current = false
+                  activeSelectionAdditive.current = additive
                   startDrag(e, false)
                 }}
                 onPointerMove={(e) => onPointerMove(e)}

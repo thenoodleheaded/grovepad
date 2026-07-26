@@ -241,6 +241,52 @@ describe('option-drag owns gluing', () => {
   })
 })
 
+describe('the name row answers a press like the card face', () => {
+  // The row calls e.stopPropagation(), so the face's onPointerDown — which owns
+  // every press decision — never runs for it, and anything the row does not work
+  // out for itself is simply lost. It forgot the ⌥ capture once; that now lives
+  // in startDrag where no path can forget it. This is the other piece, and it
+  // cannot follow ⌥ there: the pre-select guard has to read it BEFORE the drag
+  // opens. Selection is not in undo history, so getting this wrong is not
+  // recoverable — the user rebuilds the selection by hand.
+  const rowStart = card.indexOf('gp-widget-move-handle')
+  const pressStart = card.indexOf('onPointerDown={(e) => {', rowStart)
+  const pressEnd = card.indexOf('onPointerMove={(e) => onPointerMove(e)}', rowStart)
+  const row = rowStart < 0 || pressStart < 0 || pressEnd < 0 ? '' : card.slice(pressStart, pressEnd)
+
+  it('works out whether the press is additive instead of assuming it is not', () => {
+    expect(row, 'the name row press handler moved; this contract needs rewriting').not.toBe('')
+    expect(row).toContain('startDrag(e, false)')
+    expect(row).toMatch(/const additive = e\.shiftKey/)
+    // The release reads this ref back; a constant here was the original defect.
+    expect(row).toContain('activeSelectionAdditive.current = additive')
+    expect(row).not.toMatch(/activeSelectionAdditive\.current = (?:true|false)\b/)
+  })
+
+  it('never replaces the selection except behind that answer', () => {
+    // Exactly one exclusive select, and it must sit after the guard. An ungated
+    // one anywhere in this handler wipes the selection before the guard is even
+    // reached — which is precisely what a half-applied fix leaves behind.
+    expect(row.match(/selectWidget\(widgetId, false\)/g) ?? []).toHaveLength(1)
+    const guard = row.indexOf('if (!additive && !useWidgetStore.getState().selectedIds.has(widgetId))')
+    expect(guard).toBeGreaterThanOrEqual(0)
+    expect(row.indexOf('selectWidget(widgetId, false)')).toBeGreaterThan(guard)
+  })
+
+  it('carries the answer into the locked-card branch as well', () => {
+    // A locked card resolves to a plain select on the face, additive included.
+    // Leaving this branch hardcoded keeps Shift inverted for locked cards.
+    expect(row.slice(row.indexOf('if (widget.metadata.locked)')))
+      .toContain('selectWidget(widgetId, additive)')
+  })
+
+  it('still hands it to the release that reads it back', () => {
+    expect(card).toContain(
+      'useWidgetStore.getState().selectWidget(draggedId, activeSelectionAdditive.current)',
+    )
+  })
+})
+
 describe('the armed outline thickens outward', () => {
   it('insets the band by its own width so the border lands outside the card', () => {
     expect(controls).toContain('inset: calc(-1 * var(--gp-resize-edge-width))')
