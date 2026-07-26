@@ -1,4 +1,4 @@
-import { screenToWorld, type Vector2D } from '../../types/spatial'
+import { clampZoom, screenToWorld, type Vector2D } from '../../types/spatial'
 import { canvasPressMoved, resolveCanvasPointerIntent } from '../../utils/canvasGesturePolicy'
 import { ghostNodeGrid } from '../../utils/ghostTreePresentation'
 import { useAdaptiveInputStore } from '../../store/useAdaptiveInputStore'
@@ -266,7 +266,11 @@ export function attachCanvasGestures(el: HTMLElement): () => void {
         event.preventDefault()
         const pair = touchPair()
         if (!pair) return
-        const nextZoom = pinchStart.zoom * (pair.distance / pinchStart.distance)
+        // Clamp BEFORE deriving the pan, the way zoomAtPoint does. commit()
+        // clamps the zoom but keeps the pan it is handed, so anchoring against
+        // the raw ratio slides the board out from under the fingers by
+        // world * (raw - clamped) once the gesture passes a zoom limit.
+        const nextZoom = clampZoom(pinchStart.zoom * (pair.distance / pinchStart.distance))
         const worldAtStart = {
           x: (pinchStart.midpoint.x - pinchStart.pan.x) / pinchStart.zoom,
           y: (pinchStart.midpoint.y - pinchStart.pan.y) / pinchStart.zoom,
