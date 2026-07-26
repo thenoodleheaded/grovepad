@@ -1,0 +1,709 @@
+/*
+ * Purpose-built Canvas-node skins.
+ *
+ * A Canvas card is a doorway, not a second board editor. Each skin exposes a
+ * different view of the same child canvas while keeping one clear navigation
+ * action and the widget's single E0 glass backplate.
+ */
+
+.gp-widget-card[data-auto-height] .gp-widget-ui[data-widget-type='canvas_node'] {
+  container-type: inline-size;
+}
+
+.gp-canvas-node {
+  position: relative;
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  color: var(--gp-widget-ink, #f5f5f5);
+}
+
+.gp-canvas-node button,
+.gp-canvas-node input,
+.gp-canvas-node textarea {
+  color: inherit;
+}
+
+.gp-canvas-node button:focus-visible,
+.gp-canvas-node input:focus-visible,
+.gp-canvas-node textarea:focus-visible {
+  outline: 1px solid color-mix(in oklab, var(--gp-widget-accent), transparent 24%);
+  outline-offset: 2px;
+}
+
+.gp-canvas-node-heading {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.gp-canvas-node-heading > span:nth-child(2) {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.08rem;
+}
+
+.gp-canvas-node-heading small,
+.gp-canvas-cover-eyebrow {
+  color: color-mix(in oklab, var(--gp-widget-accent), white 8%);
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.115em;
+  line-height: 1.25;
+  text-transform: uppercase;
+}
+
+.gp-canvas-node-heading strong {
+  overflow: hidden;
+  font-size: 12.5px;
+  font-weight: 650;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gp-canvas-node-icon {
+  display: grid;
+  width: 29px;
+  height: 29px;
+  place-items: center;
+  border-radius: var(--gp-r2, 8px);
+  color: color-mix(in oklab, var(--gp-widget-accent), white 10%);
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 88%);
+  box-shadow: inset 0 1px 0 color-mix(in oklab, white, transparent 91%);
+}
+
+.gp-canvas-node-open {
+  display: inline-flex;
+  min-height: 30px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.38rem 0.15rem 0.2rem;
+  border: 0;
+  border-top: 1px solid color-mix(in oklab, var(--gp-widget-accent), transparent 84%);
+  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 30%);
+  background: transparent;
+  font-size: 10.5px;
+  font-weight: 650;
+  transition:
+    color var(--gp-duration-snap) var(--gp-ease-snap),
+    border-color var(--gp-duration-snap) var(--gp-ease-snap);
+}
+
+.gp-canvas-node-open svg {
+  color: var(--gp-widget-accent);
+  transition: transform var(--gp-duration-snap) var(--gp-ease-snap);
+}
+
+.gp-canvas-node-open:hover,
+.gp-canvas-node-open:focus-visible {
+  border-color: color-mix(in oklab, var(--gp-widget-accent), transparent 58%);
+  color: var(--gp-widget-ink, #fff);
+}
+
+.gp-canvas-node-open:hover svg,
+.gp-canvas-node-open:focus-visible svg {
+  transform: translateX(2px);
+}
+
+/* Portal — one immediate, generous doorway. */
+
+.gp-canvas-node-portal {
+  min-height: 56px;
+  justify-content: center;
+}
+
+.gp-canvas-portal-link {
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0;
+  border: 0;
+  text-align: left;
+  background: transparent;
+}
+
+.gp-canvas-portal-glyph {
+  position: relative;
+  display: grid;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: var(--gp-r1, 10px);
+  color: color-mix(in oklab, var(--gp-widget-accent), white 12%);
+  background:
+    radial-gradient(circle at 28% 16%, color-mix(in oklab, white, transparent 84%), transparent 48%),
+    color-mix(in oklab, var(--gp-widget-accent), transparent 85%);
+  box-shadow:
+    inset 0 1px 0 color-mix(in oklab, white, transparent 88%),
+    0 8px 18px color-mix(in oklab, var(--gp-widget-accent), transparent 89%);
+}
+
+.gp-canvas-portal-glyph > span {
+  position: absolute;
+  right: 7px;
+  bottom: 6px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--gp-widget-accent);
+  box-shadow: 0 0 9px color-mix(in oklab, var(--gp-widget-accent), transparent 24%);
+}
+
+.gp-canvas-portal-copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.06rem;
+}
+
+.gp-canvas-portal-copy small {
+  color: color-mix(in oklab, var(--gp-widget-accent), white 8%);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.gp-canvas-portal-copy strong {
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: 675;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gp-canvas-portal-copy > span {
+  overflow: hidden;
+  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 62%);
+  font-size: 9.5px;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gp-canvas-portal-arrow {
+  display: grid;
+  width: 27px;
+  height: 27px;
+  place-items: center;
+  border-radius: 50%;
+  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 52%);
+  background: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 95%);
+  transition:
+    color var(--gp-duration-snap) var(--gp-ease-snap),
+    transform var(--gp-duration-snap) var(--gp-ease-snap);
+}
+
+.gp-canvas-portal-link:hover .gp-canvas-portal-arrow,
+.gp-canvas-portal-link:focus-visible .gp-canvas-portal-arrow {
+  color: var(--gp-widget-accent);
+  transform: translate(1px, -1px);
+}
+
+.gp-canvas-portal-complete {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  align-self: flex-start;
+  margin: 0.28rem 0 0 3rem;
+  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 62%);
+  font-size: 8.5px;
+}
+
+/* Cover — editorial title card with editable context. */
+
+.gp-canvas-node-cover {
+  min-height: 164px;
+  justify-content: flex-end;
+  gap: 0.42rem;
+  overflow: hidden;
+  padding: 0.25rem 0.18rem 0;
+}
+
+.gp-canvas-cover-orbit {
+  position: absolute;
+  top: -70px;
+  right: -34px;
+  width: 168px;
+  height: 168px;
+  pointer-events: none;
+  border: 1px solid color-mix(in oklab, var(--gp-widget-accent), transparent 86%);
+  border-radius: 50%;
+}
+
+.gp-canvas-cover-orbit::before,
+.gp-canvas-cover-orbit::after {
+  position: absolute;
+  border: 1px solid color-mix(in oklab, var(--gp-widget-accent), transparent 90%);
+  border-radius: inherit;
+  content: '';
+  inset: 19px;
+}
+
+.gp-canvas-cover-orbit::after {
+  inset: 41px;
+}
+
+.gp-canvas-cover-orbit span {
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--gp-widget-accent);
+  box-shadow: 0 0 11px color-mix(in oklab, var(--gp-widget-accent), transparent 20%);
+}
+
+.gp-canvas-cover-orbit span:nth-child(1) { top: 33px; left: 12px; }
+.gp-canvas-cover-orbit span:nth-child(2) { right: 31px; bottom: 15px; opacity: 0.64; }
+.gp-canvas-cover-orbit span:nth-child(3) { right: 55px; bottom: 50px; opacity: 0.36; }
+
+.gp-canvas-cover-eyebrow,
+.gp-canvas-cover-subtitle {
+  position: relative;
+  z-index: 1;
+  width: min(80%, 300px);
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+}
+
+.gp-canvas-cover-eyebrow::placeholder,
+.gp-canvas-cover-subtitle::placeholder {
+  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 72%);
+}
+
+.gp-canvas-node-cover h2 {
+  position: relative;
+  z-index: 1;
+  max-width: 82%;
+  margin: 0;
+  overflow: hidden;
+  font-size: clamp(20px, 10cqw, 32px);
+  font-weight: 680;
+  letter-spacing: -0.035em;
+  line-height: 1.02;
+  text-overflow: ellipsis;
+  text-wrap: balance;
+}
+
+.gp-canvas-cover-subtitle {
+  min-height: 36px;
+  resize: none;
+  overflow: hidden;
+  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 42%);
+  font-size: 10.5px;
+  line-height: 1.45;
+}
+
+.gp-canvas-cover-footer {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  min-height: 30px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 0.1rem;
+  padding-top: 0.38rem;
+  border-top: 1px solid color-mix(in oklab, var(--gp-widget-accent), transparent 84%);
+  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 60%);
+  font-size: 8.5px;
+}
+
+.gp-canvas-cover-footer button {
+  display: grid;
+  width: 26px;
+  height: 26px;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  color: var(--gp-widget-accent);
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 87%);
+  transition:
+    color var(--gp-duration-snap) var(--gp-ease-snap),
+    transform var(--gp-duration-snap) var(--gp-ease-snap);
+}
+
+.gp-canvas-cover-footer button:hover,
+.gp-canvas-cover-footer button:focus-visible {
+  color: color-mix(in oklab, var(--gp-widget-accent), white 22%);
+  transform: translate(1px, -1px);
+}
+
+/* Live Thumbnail — a deliberately non-interactive miniature. */
+
+.gp-canvas-node-thumbnail {
+  min-height: 190px;
+  gap: 0.58rem;
+}
+
+.gp-canvas-live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--gp-widget-accent);
+  box-shadow: 0 0 10px color-mix(in oklab, var(--gp-widget-accent), transparent 22%);
+}
+
+.gp-canvas-preview {
+  position: relative;
+  height: 116px;
+  overflow: hidden;
+  border-radius: var(--gp-r1, 10px);
+  background:
+    linear-gradient(color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 96%) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 96%) 1px, transparent 1px),
+    color-mix(in oklab, var(--gp-surface-panel, #111), black 12%);
+  background-size: 20px 20px;
+  box-shadow:
+    inset 0 1.5px 4px rgb(0 0 0 / 0.4),
+    inset 0 -1px 0 color-mix(in oklab, white, transparent 95%);
+}
+
+.gp-canvas-preview::after {
+  position: absolute;
+  pointer-events: none;
+  content: '';
+  background: radial-gradient(circle, color-mix(in oklab, var(--gp-widget-accent), transparent 84%), transparent 68%);
+  inset: -25%;
+}
+
+.gp-canvas-preview-card {
+  position: absolute;
+  z-index: 1;
+  top: var(--gp-preview-y);
+  left: var(--gp-preview-x);
+  width: var(--gp-preview-width);
+  height: var(--gp-preview-height);
+  min-width: 4px;
+  min-height: 4px;
+  border-radius: clamp(2px, 1.5cqw, 5px);
+  background: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 78%);
+  box-shadow:
+    inset 0 1px 0 color-mix(in oklab, white, transparent 84%),
+    0 2px 5px rgb(0 0 0 / 0.22);
+  animation: gp-canvas-preview-arrive 360ms var(--gp-ease-enter) both;
+  animation-delay: var(--gp-preview-delay);
+}
+
+.gp-canvas-preview-card[data-completed] {
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 44%);
+}
+
+.gp-canvas-preview-grid {
+  position: absolute;
+  z-index: 2;
+  right: 8px;
+  bottom: 7px;
+  width: 14px;
+  height: 1px;
+  background: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 65%);
+}
+
+.gp-canvas-preview-empty {
+  position: absolute;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.38rem;
+  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 64%);
+  font-size: 9px;
+  inset: 0;
+}
+
+.gp-canvas-preview-empty svg {
+  color: var(--gp-widget-accent);
+}
+
+.gp-canvas-node-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 64%);
+  font-size: 8.5px;
+}
+
+.gp-canvas-node-footer .gp-canvas-node-open {
+  min-width: 92px;
+}
+
+/* Dashboard Door — progress is the one hero; everything else stays quiet. */
+
+.gp-canvas-node-dashboard {
+  min-height: 214px;
+  gap: 0.58rem;
+}
+
+.gp-canvas-dashboard-hero {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding-top: 0.15rem;
+}
+
+.gp-canvas-dashboard-hero strong {
+  color: var(--gp-widget-accent);
+  font-size: 27px;
+  font-weight: 650;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+.gp-canvas-dashboard-hero span {
+  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 58%);
+  font-size: 8.5px;
+  text-align: right;
+}
+
+.gp-canvas-dashboard-progress {
+  height: 3px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 92%);
+}
+
+.gp-canvas-dashboard-progress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--gp-widget-accent);
+  box-shadow: 0 0 10px color-mix(in oklab, var(--gp-widget-accent), transparent 38%);
+  transition: width var(--gp-duration-settle) var(--gp-ease-enter);
+}
+
+.gp-canvas-dashboard-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 0;
+  padding: 0.48rem 0;
+  border-top: 1px solid color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 91%);
+  border-bottom: 1px solid color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 91%);
+}
+
+.gp-canvas-dashboard-metrics > div {
+  min-width: 0;
+  padding: 0 0.55rem;
+  border-right: 1px solid color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 91%);
+}
+
+.gp-canvas-dashboard-metrics > div:first-child { padding-left: 0; }
+.gp-canvas-dashboard-metrics > div:last-child {
+  padding-right: 0;
+  border-right: 0;
+}
+
+.gp-canvas-dashboard-metrics dt {
+  overflow: hidden;
+  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 68%);
+  font-size: 7.5px;
+  font-weight: 650;
+  letter-spacing: 0.07em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.gp-canvas-dashboard-metrics dd {
+  margin: 0.12rem 0 0;
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 650;
+}
+
+.gp-canvas-dashboard-metrics [data-attention] dd {
+  color: #fb7185;
+}
+
+.gp-canvas-dashboard-types {
+  display: flex;
+  min-width: 0;
+  gap: 0.35rem;
+  overflow: hidden;
+}
+
+.gp-canvas-dashboard-types span {
+  overflow: hidden;
+  padding: 0.2rem 0.36rem;
+  border-radius: var(--gp-r2, 8px);
+  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 56%);
+  background: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 95%);
+  font-size: 7.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gp-canvas-dashboard-types b {
+  color: color-mix(in oklab, var(--gp-widget-accent), white 8%);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Folder Index — one ledger surface, with divider-separated rows. */
+
+.gp-canvas-node-index {
+  min-height: 176px;
+  gap: 0.58rem;
+}
+
+.gp-canvas-index-count {
+  display: grid;
+  min-width: 25px;
+  height: 25px;
+  place-items: center;
+  border-radius: 50%;
+  color: color-mix(in oklab, var(--gp-widget-accent), white 12%);
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 88%);
+  font-size: 9px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.gp-canvas-index-list {
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+  border-radius: var(--gp-r1, 10px);
+  background: linear-gradient(
+    180deg,
+    color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 95%),
+    color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 97%)
+  );
+  box-shadow:
+    inset 0 1px 0 color-mix(in oklab, white, transparent 92%),
+    0 8px 18px rgb(0 0 0 / 0.1);
+  list-style: none;
+}
+
+.gp-canvas-index-list li + li {
+  border-top: 1px solid color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 92%);
+}
+
+.gp-canvas-index-list button {
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  grid-template-columns: 24px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.42rem 0.55rem;
+  border: 0;
+  text-align: left;
+  background: transparent;
+  transition: background var(--gp-duration-snap) var(--gp-ease-snap);
+}
+
+.gp-canvas-index-list button:hover,
+.gp-canvas-index-list button:focus-visible {
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 92%);
+}
+
+.gp-canvas-index-order {
+  color: color-mix(in oklab, var(--gp-widget-accent), white 6%);
+  font-size: 8px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.gp-canvas-index-name {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.gp-canvas-index-name strong {
+  overflow: hidden;
+  font-size: 10px;
+  font-weight: 625;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gp-canvas-index-name small {
+  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 68%);
+  font-size: 7.5px;
+}
+
+.gp-canvas-index-list svg {
+  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 68%);
+}
+
+.gp-canvas-index-empty {
+  display: flex;
+  min-height: 80px;
+  align-items: center;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.2rem;
+  border-radius: var(--gp-r1, 10px);
+  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 64%);
+  background: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 96%);
+  text-align: center;
+}
+
+.gp-canvas-index-empty svg {
+  margin-bottom: 0.2rem;
+  color: var(--gp-widget-accent);
+}
+
+.gp-canvas-index-empty strong {
+  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 34%);
+  font-size: 9.5px;
+}
+
+.gp-canvas-index-empty span {
+  max-width: 180px;
+  font-size: 8px;
+  line-height: 1.35;
+}
+
+@keyframes gp-canvas-preview-arrive {
+  from {
+    opacity: 0;
+    transform: scale(0.86);
+  }
+}
+
+@container (max-width: 235px) {
+  .gp-canvas-node-heading strong { font-size: 11px; }
+  .gp-canvas-cover-orbit { right: -72px; }
+  .gp-canvas-node-cover h2 { max-width: 94%; }
+  .gp-canvas-dashboard-types span:nth-child(3) { display: none; }
+  .gp-canvas-dashboard-metrics > div { padding-inline: 0.32rem; }
+  .gp-canvas-portal-complete { margin-left: 0; }
+}
+
+@container (max-width: 175px) {
+  .gp-canvas-node-icon { display: none; }
+  .gp-canvas-portal-arrow { display: none; }
+  .gp-canvas-portal-link { grid-template-columns: auto minmax(0, 1fr); }
+  .gp-canvas-dashboard-hero { align-items: flex-start; flex-direction: column; gap: 0.2rem; }
+  .gp-canvas-dashboard-hero span { text-align: left; }
+  .gp-canvas-dashboard-types { display: none; }
+  .gp-canvas-dashboard-metrics dt { letter-spacing: 0; text-transform: none; }
+  .gp-canvas-node-footer { align-items: stretch; flex-direction: column; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gp-canvas-preview-card {
+    animation: none;
+  }
+
+  .gp-canvas-node :where(button, svg, span) {
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -8,7 +8,8 @@ import type { ModuleType,
   ToggleData,
 } from '../../types/spatial'
 import type { FieldDescriptor } from '../contracts/fields'
-import { num, text, bool, formulaValue, daysUntil } from './valueHelpers'
+import { num, text, bool, daysUntil } from './valueHelpers'
+import { formulaValue } from '../../components/widgets/modules/formulaSkinModel'
 
 /** Input and logic widget fields (text_input … date_picker). Extracted verbatim from fields.ts; field order IS port-slot order — never reorder within an entry. */
 export const INPUT_LOGIC_FIELDS = {
@@ -80,6 +81,10 @@ export const INPUT_LOGIC_FIELDS = {
       get: (d) => (d as FormulaData).b,
       set: (d, v) => ({ ...(d as FormulaData), b: num(v) }),
     },
+    // The published answer is whatever the worn skin asks of A and B — a sum,
+    // a percent, a weighted score. One owner computes it for the card, the
+    // resting tile, and this port, so what a reader sees and what a wire
+    // carries can never be two different numbers.
     {
       key: 'result',
       label: 'Result',

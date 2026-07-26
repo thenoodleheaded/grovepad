@@ -107,13 +107,22 @@ function setValue(field:AtlasFieldSpec,data:AtlasWidgetData,value:FieldValue):At
   return {...data,[slot]:numberValue(value)}
 }
 
+const COMMON_ATLAS_FIELDS: readonly FieldDescriptor[] = [
+  {key:'current',label:'Current',valueType:'number',get:raw=>asData(raw).primary,set:(raw,value)=>({...asData(raw),primary:numberValue(value)})},
+  {key:'target',label:'Target',valueType:'number',get:raw=>asData(raw).target,set:(raw,value)=>({...asData(raw),target:numberValue(value)})},
+  {key:'active',label:'Active',valueType:'boolean',get:raw=>asData(raw).enabled,set:(raw,value)=>({...asData(raw),enabled:boolValue(value)})},
+]
+
 export const ATLAS_FIELDS:Partial<Record<ModuleType,FieldDescriptor[]>>=Object.fromEntries(
-  ATLAS_TYPES.map(type=>[type,ATLAS_CATALOG[type].fields.map(field=>({
-    key:field.key,label:field.label,valueType:field.valueType,timeSensitive:field.timeSensitive,
-    unit:inferUnit(field.key,field.valueType),
-    get:(raw:ModuleData)=>getValue(type,field,asData(raw)),
-    ...(field.writable?{set:(raw:ModuleData,value:FieldValue)=>setValue(field,asData(raw),value)}:{}),
-  } satisfies FieldDescriptor))]),
+  ATLAS_TYPES.map(type=>[type,[
+    ...ATLAS_CATALOG[type].fields.map(field=>({
+      key:field.key,label:field.label,valueType:field.valueType,timeSensitive:field.timeSensitive,
+      unit:inferUnit(field.key,field.valueType),
+      get:(raw:ModuleData)=>getValue(type,field,asData(raw)),
+      ...(field.writable?{set:(raw:ModuleData,value:FieldValue)=>setValue(field,asData(raw),value)}:{}),
+    } satisfies FieldDescriptor)),
+    ...COMMON_ATLAS_FIELDS,
+  ]]),
 )
 
 function runAtlasCommand(_type:AtlasType,key:string,data:AtlasWidgetData):AtlasWidgetData {

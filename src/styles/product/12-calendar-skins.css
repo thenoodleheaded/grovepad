@@ -1,0 +1,990 @@
+/*
+ * Purpose-built Calendar skins.
+ *
+ * Dates remain one shared marked-day set. Specialist views keep availability,
+ * rota, and occasion data in their own skin state. Each layout uses one quiet
+ * working surface; controls are painted into it instead of stacking glass.
+ */
+
+.gp-widget-ui[data-widget-type='calendar'] {
+  container-type: inline-size;
+}
+
+.gp-calendar-skin {
+  --gp-calendar-ink-soft: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 66%);
+  --gp-calendar-ink-faint: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 82%);
+  --gp-calendar-rule: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 91%);
+  width: 100%;
+  height: 100%;
+  min-height: 240px;
+  color: var(--gp-widget-ink, #f5f5f5);
+  font-variant-numeric: tabular-nums;
+  user-select: none;
+}
+
+.gp-calendar-skin > div {
+  display: flex;
+  height: 100%;
+  min-height: 0;
+  flex-direction: column;
+}
+
+.gp-calendar-skin button,
+.gp-calendar-skin input,
+.gp-calendar-skin select {
+  font: inherit;
+}
+
+.gp-calendar-skin button:focus-visible,
+.gp-calendar-skin input:focus-visible,
+.gp-calendar-skin select:focus-visible {
+  outline: 1px solid color-mix(in oklab, var(--gp-widget-accent), transparent 22%);
+  outline-offset: 2px;
+}
+
+.gp-calendar-heading {
+  display: grid;
+  min-height: 34px;
+  flex: 0 0 auto;
+  grid-template-columns: 30px minmax(0, 1fr) 30px;
+  align-items: center;
+  gap: 0.25rem;
+  margin-bottom: 0.45rem;
+}
+
+.gp-calendar-heading > button {
+  display: grid;
+  width: 27px;
+  height: 27px;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  color: var(--gp-calendar-ink-soft);
+  background: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 96%);
+  transition:
+    color var(--gp-duration-snap) var(--gp-ease-snap),
+    background var(--gp-duration-snap) var(--gp-ease-snap),
+    transform var(--gp-duration-snap) var(--gp-ease-snap);
+}
+
+.gp-calendar-heading > button:last-child {
+  justify-self: end;
+}
+
+.gp-calendar-heading > button:hover {
+  color: color-mix(in oklab, var(--gp-widget-accent), white 12%);
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 88%);
+  transform: translateY(-1px);
+}
+
+.gp-calendar-heading > span {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1.15;
+}
+
+.gp-calendar-heading strong {
+  overflow: hidden;
+  max-width: 100%;
+  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 8%);
+  font-size: 11.5px;
+  font-weight: 680;
+  letter-spacing: -0.015em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gp-calendar-heading small {
+  margin-top: 0.16rem;
+  color: var(--gp-calendar-ink-soft);
+  font-size: 7.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.gp-calendar-section-heading {
+  display: flex;
+  min-height: 27px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.45rem;
+}
+
+.gp-calendar-section-heading > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.38rem;
+  color: color-mix(in oklab, var(--gp-widget-accent), white 10%);
+  font-size: 9px;
+  font-weight: 720;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.gp-calendar-section-heading small {
+  color: var(--gp-calendar-ink-soft);
+  font-size: 8px;
+}
+
+.gp-calendar-tip {
+  margin: 0.42rem 0 0;
+  color: var(--gp-calendar-ink-soft);
+  font-size: 8px;
+  line-height: 1.35;
+  text-align: center;
+}
+
+/* Month */
+
+.gp-calendar-month-grid {
+  display: grid;
+  min-height: 0;
+  flex: 1 1 auto;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  grid-template-rows: 18px repeat(6, minmax(27px, 1fr));
+  align-items: center;
+  border-radius: var(--gp-r1, 10px);
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 95%),
+      color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 97%)
+    );
+  box-shadow:
+    inset 0 1px 0 color-mix(in oklab, white, transparent 94%),
+    0 9px 20px rgb(0 0 0 / 0.1);
+}
+
+.gp-calendar-weekday {
+  color: var(--gp-calendar-ink-soft);
+  font-size: 7.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-align: center;
+}
+
+.gp-calendar-month-grid > button {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  min-height: 27px;
+  place-items: center;
+  border: 0;
+  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 25%);
+  background: transparent;
+}
+
+.gp-calendar-month-grid > button > span {
+  display: grid;
+  width: clamp(22px, 8cqw, 28px);
+  height: clamp(22px, 8cqw, 28px);
+  place-items: center;
+  border: 1px solid transparent;
+  border-radius: 50%;
+  font-size: 9.5px;
+  transition:
+    color var(--gp-duration-snap) var(--gp-ease-snap),
+    border var(--gp-duration-snap) var(--gp-ease-snap),
+    background var(--gp-duration-snap) var(--gp-ease-snap),
+    transform var(--gp-duration-snap) var(--gp-ease-snap);
+}
+
+.gp-calendar-month-grid > button:hover > span {
+  color: var(--gp-widget-ink, #fff);
+  background: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 91%);
+  transform: translateY(-1px);
+}
+
+.gp-calendar-month-grid > button[data-outside] > span {
+  color: var(--gp-calendar-ink-faint);
+}
+
+.gp-calendar-month-grid > button[data-today] > span {
+  border-color: color-mix(in oklab, var(--gp-widget-accent), transparent 35%);
+  color: color-mix(in oklab, var(--gp-widget-accent), white 10%);
+  font-weight: 720;
+}
+
+.gp-calendar-month-grid > button[data-marked] > span {
+  border-color: color-mix(in oklab, var(--gp-widget-accent), white 8%);
+  color: color-mix(in oklab, var(--gp-widget-accent), black 82%);
+  background:
+    radial-gradient(circle at 32% 22%, rgb(255 255 255 / 0.28), transparent 35%),
+    var(--gp-widget-accent);
+  box-shadow: 0 5px 12px color-mix(in oklab, var(--gp-widget-accent), transparent 68%);
+  font-weight: 760;
+}
+
+.gp-calendar-month-footer {
+  display: flex;
+  min-height: 29px;
+  flex: 0 0 auto;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: 0.3rem 0.2rem 0;
+}
+
+.gp-calendar-month-footer > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: var(--gp-calendar-ink-soft);
+  font-size: 7.5px;
+}
+
+.gp-calendar-month-footer i {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--gp-widget-accent);
+  box-shadow: 0 0 7px color-mix(in oklab, var(--gp-widget-accent), transparent 45%);
+}
+
+.gp-calendar-month-footer button {
+  border: 0;
+  color: color-mix(in oklab, var(--gp-widget-accent), white 8%);
+  background: transparent;
+  font-size: 8px;
+  font-weight: 650;
+}
+
+/* Week */
+
+.gp-calendar-week-grid {
+  display: grid;
+  min-height: 0;
+  flex: 1 1 auto;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  overflow: hidden;
+  border-radius: var(--gp-r1, 10px);
+  background: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 96%);
+  box-shadow:
+    inset 0 1px 0 color-mix(in oklab, white, transparent 94%),
+    0 9px 22px rgb(0 0 0 / 0.1);
+}
+
+.gp-calendar-week-lane {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.18rem;
+  padding: 0.48rem 0.12rem 0.35rem;
+  border: 0;
+  border-left: 1px solid var(--gp-calendar-rule);
+  color: var(--gp-calendar-ink-soft);
+  background: transparent;
+  transition: background var(--gp-duration-snap) var(--gp-ease-snap);
+}
+
+.gp-calendar-week-lane:first-child {
+  border-left: 0;
+}
+
+.gp-calendar-week-lane:hover {
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 94%);
+}
+
+.gp-calendar-week-lane[data-today] {
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 95%);
+}
+
+.gp-calendar-week-day {
+  font-size: 7px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.gp-calendar-week-lane > strong {
+  display: grid;
+  width: 23px;
+  height: 23px;
+  place-items: center;
+  border-radius: 50%;
+  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 16%);
+  font-size: 10px;
+}
+
+.gp-calendar-week-lane[data-today] > strong {
+  color: color-mix(in oklab, var(--gp-widget-accent), white 10%);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--gp-widget-accent), transparent 38%);
+}
+
+.gp-calendar-all-day {
+  width: calc(100% - 5px);
+  overflow: hidden;
+  padding: 0.17rem 0.05rem;
+  border-radius: 4px;
+  color: var(--gp-calendar-ink-faint);
+  background: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 95%);
+  font-size: 6.5px;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gp-calendar-week-lane[data-marked] .gp-calendar-all-day {
+  color: color-mix(in oklab, var(--gp-widget-accent), white 24%);
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 82%);
+}
+
+.gp-calendar-time-rail {
+  position: relative;
+  width: 100%;
+  min-height: 0;
+  flex: 1 1 auto;
+  margin-top: 0.2rem;
+  background:
+    linear-gradient(var(--gp-calendar-rule) 1px, transparent 1px);
+  background-size: 100% 25%;
+}
+
+.gp-calendar-time-rail i {
+  position: absolute;
+  inset: calc(var(--gp-time) * 100%) auto auto 3px;
+  color: var(--gp-calendar-ink-faint);
+  font-size: 5.5px;
+  font-style: normal;
+}
+
+.gp-calendar-time-rail b {
+  position: absolute;
+  inset: 18% 4px 34%;
+  border-radius: 4px;
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in oklab, var(--gp-widget-accent), white 5%),
+      color-mix(in oklab, var(--gp-widget-accent), black 12%)
+    );
+  box-shadow: 0 5px 12px color-mix(in oklab, var(--gp-widget-accent), transparent 72%);
+  opacity: 0.82;
+}
+
+/* Agenda */
+
+.gp-calendar-agenda-add {
+  display: grid;
+  flex: 0 0 auto;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.4rem;
+  margin-bottom: 0.55rem;
+}
+
+.gp-calendar-agenda-add input,
+.gp-calendar-occasion-form input,
+.gp-calendar-occasion-form select,
+.gp-calendar-rota-person input {
+  min-width: 0;
+  height: 29px;
+  padding: 0 0.52rem;
+  border: 1px solid var(--gp-calendar-rule);
+  border-radius: 7px;
+  outline: 0;
+  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 12%);
+  background: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 96%);
+  font-size: 9px;
+}
+
+.gp-calendar-agenda-add button {
+  display: inline-flex;
+  height: 29px;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0 0.58rem;
+  border: 0;
+  border-radius: 7px;
+  color: color-mix(in oklab, var(--gp-widget-accent), white 18%);
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 84%);
+  font-size: 8.5px;
+  font-weight: 680;
+}
+
+.gp-calendar-agenda-add button:disabled,
+.gp-calendar-occasion-form button:disabled {
+  opacity: 0.35;
+}
+
+.gp-calendar-agenda-list,
+.gp-calendar-occasion-list {
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow-x: hidden;
+  overflow-y: auto;
+  border-radius: var(--gp-r1, 10px);
+  background: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 96%);
+  scrollbar-width: thin;
+}
+
+.gp-calendar-agenda-row {
+  position: relative;
+  display: grid;
+  min-height: 52px;
+  grid-template-columns: 37px minmax(0, 1fr) 25px;
+  align-items: center;
+  gap: 0.48rem;
+  padding: 0.35rem 0.45rem;
+}
+
+.gp-calendar-agenda-row + .gp-calendar-agenda-row {
+  border-top: 1px solid var(--gp-calendar-rule);
+}
+
+.gp-calendar-agenda-row > time {
+  display: flex;
+  height: 38px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  color: color-mix(in oklab, var(--gp-widget-accent), white 10%);
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 88%);
+}
+
+.gp-calendar-agenda-row > time span {
+  font-size: 6.5px;
+  font-weight: 720;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.gp-calendar-agenda-row > time strong {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.gp-calendar-agenda-row > span {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.gp-calendar-agenda-row > span strong {
+  overflow: hidden;
+  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 14%);
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gp-calendar-agenda-row > span small {
+  overflow: hidden;
+  margin-top: 0.12rem;
+  color: var(--gp-calendar-ink-soft);
+  font-size: 7.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gp-calendar-agenda-row > button,
+.gp-calendar-occasion-row > button {
+  display: grid;
+  width: 22px;
+  height: 22px;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  color: var(--gp-calendar-ink-faint);
+  background: transparent;
+  opacity: 0;
+  transition:
+    opacity var(--gp-duration-snap) var(--gp-ease-snap),
+    color var(--gp-duration-snap) var(--gp-ease-snap),
+    background var(--gp-duration-snap) var(--gp-ease-snap);
+}
+
+.gp-calendar-agenda-row:hover > button,
+.gp-calendar-agenda-row:focus-within > button,
+.gp-calendar-occasion-row:hover > button,
+.gp-calendar-occasion-row:focus-within > button {
+  opacity: 1;
+}
+
+.gp-calendar-agenda-row > button:hover,
+.gp-calendar-occasion-row > button:hover {
+  color: #fb7185;
+  background: color-mix(in oklab, #fb7185, transparent 88%);
+}
+
+.gp-calendar-agenda-row[data-past] {
+  opacity: 0.5;
+}
+
+.gp-calendar-empty {
+  display: flex;
+  height: 100%;
+  min-height: 120px;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  color: var(--gp-calendar-ink-faint);
+  text-align: center;
+}
+
+.gp-calendar-empty strong {
+  margin-top: 0.42rem;
+  color: var(--gp-calendar-ink-soft);
+  font-size: 9.5px;
+}
+
+.gp-calendar-empty span {
+  margin-top: 0.15rem;
+  font-size: 7.5px;
+}
+
+/* Year heatmap */
+
+.gp-calendar-year-grid {
+  display: grid;
+  min-height: 0;
+  flex: 1 1 auto;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-rows: repeat(4, minmax(0, 1fr));
+  gap: 0.38rem;
+}
+
+.gp-calendar-mini-month {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  flex-direction: column;
+  gap: 0.18rem;
+  padding: 0.3rem;
+  border-radius: 7px;
+  background: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 96%);
+}
+
+.gp-calendar-mini-month > strong {
+  color: var(--gp-calendar-ink-soft);
+  font-size: 6.5px;
+  font-weight: 720;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.gp-calendar-mini-month > div {
+  display: grid;
+  min-height: 0;
+  flex: 1 1 auto;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  grid-template-rows: repeat(6, minmax(0, 1fr));
+  gap: 1px;
+}
+
+.gp-calendar-mini-month button {
+  min-width: 0;
+  min-height: 3px;
+  padding: 0;
+  border: 0;
+  border-radius: 1.5px;
+  background: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 91%);
+}
+
+.gp-calendar-mini-month button:disabled {
+  visibility: hidden;
+}
+
+.gp-calendar-mini-month button:hover:not(:disabled) {
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 54%);
+}
+
+.gp-calendar-mini-month button[data-level='today'] {
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--gp-widget-accent), transparent 30%);
+}
+
+.gp-calendar-mini-month button[data-level='marked'] {
+  background: var(--gp-widget-accent);
+  box-shadow: 0 0 5px color-mix(in oklab, var(--gp-widget-accent), transparent 42%);
+}
+
+.gp-calendar-heat-legend {
+  display: flex;
+  min-height: 22px;
+  flex: 0 0 auto;
+  align-items: flex-end;
+  justify-content: flex-end;
+  gap: 0.18rem;
+  color: var(--gp-calendar-ink-soft);
+  font-size: 6.5px;
+}
+
+.gp-calendar-heat-legend i {
+  width: 6px;
+  height: 6px;
+  border-radius: 1px;
+  background: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 90%);
+}
+
+.gp-calendar-heat-legend i:nth-of-type(2) {
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 65%);
+}
+
+.gp-calendar-heat-legend i[data-active] {
+  background: var(--gp-widget-accent);
+}
+
+/* Availability */
+
+.gp-calendar-availability-key {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.25rem;
+  margin: -0.18rem 0 0.42rem;
+  color: var(--gp-calendar-ink-soft);
+  font-size: 6.5px;
+}
+
+.gp-calendar-availability-key i {
+  width: 7px;
+  height: 7px;
+  border-radius: 2px;
+  background: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 91%);
+}
+
+.gp-calendar-availability-key i[data-busy] {
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 28%);
+}
+
+.gp-calendar-availability-grid {
+  display: grid;
+  min-height: 0;
+  flex: 1 1 auto;
+  grid-template-columns: 37px repeat(7, minmax(0, 1fr));
+  grid-template-rows: 36px repeat(3, minmax(48px, 1fr));
+  overflow: hidden;
+  border-radius: var(--gp-r1, 10px);
+  background: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 96%);
+}
+
+.gp-calendar-availability-grid > time {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  border-left: 1px solid var(--gp-calendar-rule);
+  color: var(--gp-calendar-ink-soft);
+}
+
+.gp-calendar-availability-grid > time span {
+  font-size: 6px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.gp-calendar-availability-grid > time strong {
+  margin-top: 0.05rem;
+  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 25%);
+  font-size: 9px;
+}
+
+.gp-calendar-availability-grid > time[data-today] strong {
+  color: color-mix(in oklab, var(--gp-widget-accent), white 12%);
+}
+
+.gp-calendar-availability-row {
+  display: contents;
+}
+
+.gp-calendar-availability-row > span {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  padding-left: 0.35rem;
+  border-top: 1px solid var(--gp-calendar-rule);
+  color: var(--gp-calendar-ink-soft);
+  font-size: 6.5px;
+}
+
+.gp-calendar-availability-row > button {
+  position: relative;
+  display: grid;
+  min-width: 0;
+  place-items: center;
+  border: 0;
+  border-top: 1px solid var(--gp-calendar-rule);
+  border-left: 1px solid var(--gp-calendar-rule);
+  color: var(--gp-calendar-ink-faint);
+  background: transparent;
+}
+
+.gp-calendar-availability-row > button::before {
+  position: absolute;
+  inset: 6px 4px;
+  border-radius: 5px;
+  content: '';
+  background: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 95%);
+  transition:
+    background var(--gp-duration-snap) var(--gp-ease-snap),
+    transform var(--gp-duration-snap) var(--gp-ease-snap);
+}
+
+.gp-calendar-availability-row > button:hover::before {
+  transform: scale(1.04);
+}
+
+.gp-calendar-availability-row > button[data-busy]::before {
+  background:
+    repeating-linear-gradient(
+      135deg,
+      color-mix(in oklab, var(--gp-widget-accent), transparent 68%) 0 3px,
+      color-mix(in oklab, var(--gp-widget-accent), transparent 80%) 3px 6px
+    );
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--gp-widget-accent), transparent 62%);
+}
+
+.gp-calendar-availability-row > button span {
+  position: relative;
+  z-index: 1;
+  overflow: hidden;
+  max-width: 100%;
+  font-size: 5.5px;
+  font-weight: 650;
+  text-overflow: clip;
+}
+
+.gp-calendar-availability-row > button[data-busy] span {
+  color: color-mix(in oklab, var(--gp-widget-accent), white 12%);
+}
+
+/* Shift rota */
+
+.gp-calendar-rota-person {
+  display: grid;
+  flex: 0 0 auto;
+  grid-template-columns: 28px minmax(0, 1fr) minmax(0, 0.78fr);
+  align-items: center;
+  gap: 0.35rem;
+  margin-bottom: 0.48rem;
+}
+
+.gp-calendar-rota-person > span {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border-radius: 8px;
+  color: color-mix(in oklab, var(--gp-widget-accent), white 12%);
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 88%);
+}
+
+.gp-calendar-rota-grid {
+  display: grid;
+  min-height: 0;
+  flex: 1 1 auto;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  overflow: hidden;
+  border-radius: var(--gp-r1, 10px);
+  background: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 96%);
+}
+
+.gp-calendar-rota-day {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  flex-direction: column;
+  padding: 0.45rem 0.12rem;
+  border: 0;
+  border-left: 1px solid var(--gp-calendar-rule);
+  color: var(--gp-calendar-ink-soft);
+  background: transparent;
+}
+
+.gp-calendar-rota-day:first-child {
+  border-left: 0;
+}
+
+.gp-calendar-rota-day:hover {
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 95%);
+}
+
+.gp-calendar-rota-day time {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+}
+
+.gp-calendar-rota-day time span {
+  font-size: 6px;
+  font-weight: 720;
+  letter-spacing: 0.04em;
+}
+
+.gp-calendar-rota-day time strong {
+  margin-top: 0.08rem;
+  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 20%);
+  font-size: 10px;
+}
+
+.gp-calendar-rota-day > i {
+  width: 7px;
+  height: 46%;
+  min-height: 55px;
+  margin: 0.45rem 0;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 92%);
+  box-shadow: inset 0 0 0 1px var(--gp-calendar-rule);
+  transition:
+    height var(--gp-duration-snap) var(--gp-ease-snap),
+    background var(--gp-duration-snap) var(--gp-ease-snap);
+}
+
+.gp-calendar-rota-day[data-shift='morning'] > i {
+  background: linear-gradient(#facc15, #fb923c);
+  box-shadow: 0 4px 10px rgb(250 204 21 / 0.22);
+}
+
+.gp-calendar-rota-day[data-shift='evening'] > i {
+  background: linear-gradient(#fb7185, #a78bfa);
+  box-shadow: 0 4px 10px rgb(167 139 250 / 0.22);
+}
+
+.gp-calendar-rota-day[data-shift='night'] > i {
+  background: linear-gradient(#818cf8, #38bdf8);
+  box-shadow: 0 4px 10px rgb(56 189 248 / 0.2);
+}
+
+.gp-calendar-rota-day > span {
+  overflow: hidden;
+  max-width: 100%;
+  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 23%);
+  font-size: 6.5px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  text-transform: capitalize;
+}
+
+.gp-calendar-rota-day > small {
+  margin-top: 0.15rem;
+  color: var(--gp-calendar-ink-faint);
+  font-size: 5.5px;
+}
+
+/* Birthdays & anniversaries */
+
+.gp-calendar-occasion-form {
+  display: grid;
+  flex: 0 0 auto;
+  grid-template-columns: minmax(0, 1fr) minmax(93px, 0.9fr) 29px;
+  gap: 0.35rem;
+  margin-bottom: 0.5rem;
+}
+
+.gp-calendar-occasion-form select {
+  grid-column: 1 / 3;
+}
+
+.gp-calendar-occasion-form button {
+  display: grid;
+  width: 29px;
+  height: 29px;
+  grid-column: 3;
+  grid-row: 1 / 3;
+  place-items: center;
+  align-self: center;
+  border: 0;
+  border-radius: 8px;
+  color: color-mix(in oklab, var(--gp-widget-accent), white 18%);
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 82%);
+}
+
+.gp-calendar-occasion-row {
+  display: grid;
+  min-height: 50px;
+  grid-template-columns: 30px minmax(0, 1fr) auto 22px;
+  align-items: center;
+  gap: 0.42rem;
+  padding: 0.35rem 0.45rem;
+}
+
+.gp-calendar-occasion-row + .gp-calendar-occasion-row {
+  border-top: 1px solid var(--gp-calendar-rule);
+}
+
+.gp-calendar-occasion-row > span:first-child {
+  display: grid;
+  width: 29px;
+  height: 29px;
+  place-items: center;
+  border-radius: 9px;
+  color: #f9a8d4;
+  background: color-mix(in oklab, #f472b6, transparent 86%);
+}
+
+.gp-calendar-occasion-row > span:first-child[data-kind='anniversary'] {
+  color: #fda4af;
+  background: color-mix(in oklab, #fb7185, transparent 86%);
+}
+
+.gp-calendar-occasion-row > span:nth-child(2) {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.gp-calendar-occasion-row > span:nth-child(2) strong {
+  overflow: hidden;
+  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 12%);
+  font-size: 9.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gp-calendar-occasion-row > span:nth-child(2) small {
+  overflow: hidden;
+  margin-top: 0.12rem;
+  color: var(--gp-calendar-ink-soft);
+  font-size: 7px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gp-calendar-occasion-row > time {
+  padding: 0.24rem 0.36rem;
+  border-radius: 999px;
+  color: color-mix(in oklab, var(--gp-widget-accent), white 12%);
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 89%);
+  font-size: 7.5px;
+  font-weight: 680;
+}
+
+@container (max-width: 245px) {
+  .gp-calendar-week-day,
+  .gp-calendar-rota-day time span {
+    font-size: 0;
+  }
+
+  .gp-calendar-week-day::first-letter,
+  .gp-calendar-rota-day time span::first-letter {
+    font-size: 6px;
+  }
+
+  .gp-calendar-time-rail i,
+  .gp-calendar-availability-row > button span,
+  .gp-calendar-rota-day > small {
+    display: none;
+  }
+
+  .gp-calendar-year-grid {
+    gap: 0.22rem;
+  }
+
+  .gp-calendar-mini-month {
+    padding: 0.2rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gp-calendar-skin *,
+  .gp-calendar-skin *::before,
+  .gp-calendar-skin *::after {
+    transition-duration: 0.01ms !important;
+  }
+}

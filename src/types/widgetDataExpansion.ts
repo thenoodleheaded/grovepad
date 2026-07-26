@@ -101,7 +101,18 @@ export interface AtlasWidgetData {
   modeStates?: Record<string, Omit<AtlasWidgetData, 'modeStates'>>
 }
 
-type TimekeeperMode = 'countdown' | 'pomodoro' | 'stopwatch'
+export type TimekeeperMode =
+  | 'countdown'
+  | 'pomodoro'
+  | 'stopwatch'
+  | 'deadline'
+  | 'world_clock'
+  | 'hourglass'
+  | 'intervals'
+  | 'tabata'
+  | 'chess_clock'
+  | 'lap_timer'
+  | 'multi_stage_timer'
 
 /** One card with independent saved state for each timekeeping mode. */
 export interface TimekeeperData {
@@ -109,6 +120,26 @@ export interface TimekeeperData {
   countdown: TimerData
   pomodoro: PomodoroData
   stopwatch: StopwatchData
+  deadline?: CountdownData
+  worldClock?: WorldClockData
+  /** Specialist timer settings are isolated so changing views never resets them. */
+  skinStates?: Record<string, Record<string, unknown>>
+}
+
+/** A reusable place source for maps, schedules, weather, and travel circuits. */
+export interface LocationData {
+  label: string
+  address: string
+  latitude: number | null
+  longitude: number | null
+  timezone: string
+  accuracyMeters: number | null
+  capturedAt: number | null
+  /** Which way of using this place the card wears. Appearance only: every
+   *  skin reads and writes the same coordinates, address, and timezone. */
+  skin?: 'pin' | 'coordinates' | 'local_time' | 'compass' | 'geofence' | 'route'
+  /** Optional specialist state is isolated by skin so switching never loses it. */
+  skinStates?: Record<string, Record<string, unknown>>
 }
 
 interface AutomationCoreItem {
@@ -134,5 +165,10 @@ export interface AutomationCoreData {
   lastError: string
   items: AutomationCoreItem[]
 }
-import type { StopwatchData, TimerData } from './widgetDataCore'
+import type {
+  CountdownData,
+  StopwatchData,
+  TimerData,
+  WorldClockData,
+} from './widgetDataCore'
 import type { PomodoroData } from './widgetDataEducation'

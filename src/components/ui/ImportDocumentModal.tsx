@@ -4,6 +4,8 @@ import { useWidgetStore } from '../../store/useWidgetStore'
 import { useCanvasStore } from '../../store/useCanvasStore'
 import { boundsForWidgets } from '../../utils/widgetBounds'
 import { useToastStore } from '../../store/useToastStore'
+import { useCollaborationStore } from '../../store/useCollaborationStore'
+import { documentImportAvailable } from '../../utils/commandPaletteAvailability'
 import { useAiDebugStore, type AiCallPhase } from '../../store/useAiDebugStore'
 import { extractFileContent } from '../../utils/documentReader'
 import { layoutMindmap } from '../../utils/mindmapLayout'
@@ -665,9 +667,11 @@ function formatHydrationData(type: string, rawData: any) {
 export function ImportDocumentModal() {
   const open = useWidgetStore((state) => state.importOpen)
   const activeCanvasId = useWidgetStore((state) => state.activeCanvasId)
-  const importMindmap = useWidgetStore((state) => state.importMindmap)
-  const setWidgetHydration = useWidgetStore((state) => state.setWidgetHydration)
-  const updateWidgetData = useWidgetStore((state) => state.updateWidgetData)
+  // These three board writes are read from the store at call time, never
+  // captured per render. An import runs for many seconds, and if a
+  // collaboration session starts during it, the permission guards replace
+  // these actions — a captured reference would still hold the unwrapped
+  // original and write widgets that can never be uploaded.
 
   const [title, setTitle] = useState('')
   const [extraText, setExtraText] = useState('')
@@ -746,6 +750,16 @@ export function ImportDocumentModal() {
   const hasContent = files.length > 0 || extraText.trim() !== ''
 
   const handleImport = async () => {
+    // Refuse before spending anything. Every write this flow performs is
+    // wrapped by the collaboration permission guard, and a blocked call is a
+    // silent no-op — so without this a read-only collaborator pays for a
+    // topology request plus one hydration request per card and gets nothing,
+    // while the UI reports success. Read the role at call time, not per render.
+    if (!documentImportAvailable(useCollaborationStore.getState().role)) {
+      useToastStore.getState().addToast('Your role on this shared canvas cannot import documents')
+      return
+    }
+
     const apiKey = openaiApiKey || (import.meta.env.VITE_OPENAI_API_KEY as string) || ''
     if (!apiKey) {
       useToastStore.getState().addToast('Please provide an OpenAI API Key')
@@ -932,7 +946,24 @@ You MUST respond strictly in the requested JSON schema. Do not output markdown c
       })
 
       // Bulk import to canvas
-      importMindmap(widgets, relations)
+      useWidgetStore.getState().importMindmap(widgets, relations)
+
+      // importMindmap returns void whether it ran or a guard swallowed it, so
+      // the only honest signal is whether the cards actually reached the store.
+      // This covers the window the entry guard cannot see: a role that changes
+      // during the multi-second topology request. Worded around the outcome
+      // rather than the cause, because a session ENDING mid-import lands here
+      // too. An empty topology has nothing to probe for and must not be
+      // mistaken for a refusal.
+      const [probeId] = Object.keys(widgets)
+      if (probeId !== undefined && !(probeId in useWidgetStore.getState().widgets)) {
+        if (foregroundAbortRef.current === controller) foregroundAbortRef.current = null
+        setLoading(false)
+        setLoadingMessage('')
+        useToastStore.getState().addToast('Nothing was imported — no cards were added to this canvas')
+        return
+      }
+
       const importedBounds = boundsForWidgets(Object.values(widgets))
       if (importedBounds) useCanvasStore.getState().fitRect(importedBounds, 140)
 
@@ -1022,13 +1053,13 @@ Return ONLY a JSON object that adheres strictly to the response schema for this 
       const rawData = JSON.parse(jsonText)
       const formatted = formatHydrationData(type, rawData)
       
-      updateWidgetData(widgetId, formatted)
+      useWidgetStore.getState().updateWidgetData(widgetId, formatted)
     } catch (err) {
       if (err instanceof DOMException && err.name === 'AbortError') return
       console.error(`Failed to hydrate details for widget ${title}:`, err)
       useToastStore.getState().addToast(`Failed to load details for "${title}"`)
     } finally {
-      setWidgetHydration(widgetId, false)
+      useWidgetStore.getState().setWidgetHydration(widgetId, false)
     }
   }
 

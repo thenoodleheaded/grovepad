@@ -23,7 +23,8 @@ import type { ModuleType, SearchResult } from '../../types/spatial'
 import { boundsForWidgets } from '../../utils/widgetBounds'
 import { getCanvasPath } from '../../store/useWidgetStore'
 import { isWidgetTypePublic } from '../../widgets/registry'
-import { historyPaletteActionIds } from '../../utils/commandPaletteAvailability'
+import { documentImportAvailable, historyPaletteActionIds } from '../../utils/commandPaletteAvailability'
+import { useCollaborationStore } from '../../store/useCollaborationStore'
 
 // ---------------------------------------------------------------------------
 // Static action registry
@@ -126,6 +127,9 @@ const PALETTE_ACTIONS: ActionItem[] = [
     id: 'action-import-document',
     title: 'Import Document',
     subtitle: 'Turn files or pasted text into a connected widget map',
+    // The drop and paste routes already refuse a read-only role; this palette
+    // entry was the one remaining door into the importer.
+    available: () => documentImportAvailable(useCollaborationStore.getState().role),
     run: () => {
       useWidgetStore.getState().setPaletteOpen(false)
       useWidgetStore.getState().setImportOpen(true)

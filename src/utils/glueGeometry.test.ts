@@ -339,20 +339,17 @@ describe('the group boundary is a frame plus its own title row', () => {
   const wide = { a: widget('a', 0, 0, 600, 160), b: widget('b', 0, 160, 600, 160) }
   const ids = ['a', 'b']
 
-  it('grows the frame by the band on every side — and claims no title headroom', () => {
-    // Plain members hand their names to the group frame and float no rows.
-    const plain = {
-      a: { ...wide.a, metadata: { badges: [] } },
-      b: { ...wide.b, metadata: { badges: [] } },
-    }
-    const env = clusterFrameEnvelope(ids, plain)!
+  it('stands the frame a band clear of everything the members occupy', () => {
+    const env = clusterFrameEnvelope(ids, wide)!
     expect(env.x).toBe(-GLUE_FRAME_BAND)
-    expect(env.y).toBe(-GLUE_FRAME_BAND)
     expect(env.width).toBe(600 + GLUE_FRAME_BAND * 2)
-    expect(env.height).toBe(320 + GLUE_FRAME_BAND * 2)
-    // A PINNED top member floats its own title row, and that strip is real
-    // occupied space — the frame stands clear of it too.
-    expect(clusterFrameEnvelope(ids, wide)!.y).toBe(-GLUE_FRAME_BAND - WIDGET_TITLE_ROW)
+    // These members are pinned, so each floats its own title row — real
+    // occupied space the frame has to stand clear of, above the top card.
+    expect(env.y).toBe(-GLUE_FRAME_BAND - WIDGET_TITLE_ROW)
+    expect(env.height).toBe(320 + WIDGET_TITLE_ROW + GLUE_FRAME_BAND * 2)
+    // The frame itself claims no title-row headroom of its OWN: the group's
+    // name row is a separate, bounded rect, not a full-width band.
+    expect(env.y).toBeGreaterThan(-GLUE_TITLE_HEADROOM - WIDGET_TITLE_ROW)
   })
 
   it('bounds the title row to the icon, name, and buttons — never the full width', () => {

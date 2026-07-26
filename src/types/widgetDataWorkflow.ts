@@ -1,8 +1,14 @@
 export interface TextInputData {
   label: string
+  /** The one canonical string. Every skin reads and writes exactly this. */
   value: string
   placeholder: string
+  /** Kept in step with the worn skin; only Multiline is a paragraph. */
   multiline: boolean
+  /** Which way of asking for the string this card wears. */
+  skin?: 'single_line' | 'multiline' | 'search' | 'url' | 'email' | 'tags' | 'command'
+  /** Optional specialist state is isolated by skin so switching never loses it. */
+  skinStates?: Record<string, Record<string, unknown>>
 }
 
 export interface NumberInputData {
@@ -15,7 +21,12 @@ export interface NumberInputData {
 
 export interface ToggleData {
   label: string
+  /** The one canonical boolean. Every skin reads and writes exactly this. */
   value: boolean
+  /** Which on/off presentation this card wears. Catalogued skins persist here. */
+  skin?: 'switch' | 'checkbox' | 'power' | 'segment' | 'availability' | 'tri_state'
+  /** Optional specialist state is isolated by skin so switching never loses it. */
+  skinStates?: Record<string, Record<string, unknown>>
 }
 
 export interface BranchGateData {
@@ -32,9 +43,23 @@ export type FormulaOperator = 'add' | 'subtract' | 'multiply' | 'divide' | 'modu
 
 export interface FormulaData {
   label: string
+  /** The two canonical operands. Every skin keeps both editable, and a wire
+   *  writes exactly these. */
   a: number
   b: number
   operator: FormulaOperator
+  /** Which question this card asks of A and B. Absent means the original
+   *  two-operand card, so boards made before skins read identically. */
+  skin?:
+    | 'two_input'
+    | 'percent_change'
+    | 'ratio'
+    | 'growth'
+    | 'expression'
+    | 'weighted_score'
+    | 'conditional'
+  /** Optional specialist state is isolated by skin so switching never loses it. */
+  skinStates?: Record<string, Record<string, unknown>>
 }
 
 export type WorkflowStatus = 'not_started' | 'in_progress' | 'blocked' | 'done'

@@ -85,11 +85,15 @@ export const CONSOLIDATED_WIDGET_REPLACEMENTS: Partial<Record<ModuleType, Module
   quote: 'notes',
   line_chart: 'bar_chart',
   pie_chart: 'bar_chart',
+  progress: 'goal_tracker',
+  timer: 'timekeeper',
+  pomodoro: 'timekeeper',
+  stopwatch: 'timekeeper',
+  countdown: 'timekeeper',
+  world_clock: 'timekeeper',
+  excalidraw: 'sketchpad',
   random_picker: 'decision',
   gpa: 'grade_calc',
-  countdown: 'date_picker',
-  excalidraw: 'sketchpad',
-  progress: 'goal_tracker',
   study_goal: 'goal_tracker',
   okr: 'goal_tracker',
   vocab: 'flashcards',
@@ -104,10 +108,13 @@ export const CONSOLIDATED_WIDGET_REPLACEMENTS: Partial<Record<ModuleType, Module
 
 export const CONSOLIDATED_WIDGET_MODES: Partial<Record<ModuleType, string>> = {
   sticky_note: 'sticky', quote: 'quote', line_chart: 'line', pie_chart: 'donut',
-  random_picker: 'weighted', gpa: 'gpa', countdown: 'countdown', excalidraw: 'diagram',
-  progress: 'simple', study_goal: 'hours', okr: 'okr', vocab: 'vocabulary', quiz: 'quiz',
-  kanban: 'board', assignment: 'assignments', daily_agenda: 'day', weekly_planner: 'week',
-  timeline: 'timeline', priority_matrix: 'matrix',
+  progress: 'simple', timer: 'countdown', pomodoro: 'pomodoro',
+  stopwatch: 'stopwatch', countdown: 'deadline', world_clock: 'world_clock',
+  excalidraw: 'diagram',
+  random_picker: 'weighted', gpa: 'gpa', study_goal: 'hours', okr: 'okr',
+  vocab: 'vocabulary', quiz: 'quiz',
+  kanban: 'board', assignment: 'assignments', daily_agenda: 'day',
+  weekly_planner: 'week', timeline: 'timeline', priority_matrix: 'matrix',
 }
 
 export function publicWidgetTypeFor(type:ModuleType):ModuleType {

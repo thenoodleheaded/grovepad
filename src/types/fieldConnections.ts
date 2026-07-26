@@ -34,4 +34,4 @@ export type FieldCommand =
   | 'claim_dish'|'give_star'|'redeem'|'log_feed'|'log_walk'|'log_weight'|'log_entry'|'log_exit'|'pack_item'|'advance_night'|'spend'|'add_cash'
   | 'advance_stage'|'deliver'|'mark_posted'
   | 'execute'|'enqueue'|'dequeue'|'approve'|'reject'|'acquire'|'release'|'clear'|'test'
-  | 'add_zone'
+  | 'add_zone'|'add_node'|'next'|'previous'|'reverse'|'remove_current'|'head'

@@ -125,8 +125,22 @@ function activeClockData(widget: Pick<Widget, 'type' | 'data'>): {
   if (widget.type === 'stopwatch') return { data, kind: 'stopwatch' }
   if (widget.type === 'timekeeper') {
     if (data.mode === 'countdown') return { data: record(data.countdown), kind: 'timer' }
+    if (data.mode === 'hourglass') return { data: record(data.countdown), kind: 'timer' }
     if (data.mode === 'pomodoro') return { data: record(data.pomodoro), kind: 'pomodoro' }
     if (data.mode === 'stopwatch') return { data: record(data.stopwatch), kind: 'stopwatch' }
+    if (data.mode === 'lap_timer') return { data: record(data.stopwatch), kind: 'stopwatch' }
+    if (data.mode === 'intervals' || data.mode === 'tabata' || data.mode === 'multi_stage_timer') {
+      const stored = record(record(data.skinStates)[String(data.mode)])
+      const fallback = data.mode === 'tabata' ? 20 : data.mode === 'multi_stage_timer' ? 60 : 300
+      return {
+        data: {
+          remainingSeconds: fallback,
+          durationSeconds: fallback,
+          ...stored,
+        },
+        kind: 'timer',
+      }
+    }
   }
   return null
 }

@@ -86,6 +86,7 @@ describe('scenario catalogue', () => {
     ['creat a cheklist widget', 'checklist'],
     ['make a tasklist', 'checklist'],
     ['add a buget widget', 'budget'],
+    // Kanban is a Tasks board skin, not its own card, so a typo lands on Tasks.
     ['make a kanben', 'checklist'],
   ])('tolerates direct-widget typos in %s', (source, expected) => {
     expect(interpretThoughtCandidates(source).predictions[0]?.primaryTypes[0]).toBe(expected)

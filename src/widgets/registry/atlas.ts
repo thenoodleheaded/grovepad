@@ -11,7 +11,6 @@ export const ATLAS_WIDGET_DEFINITIONS = Object.fromEntries(
       type,label:spec.label,description:spec.description,icon:spec.icon,category:spec.category,
       accent:spec.accent,defaultSize:{width:taller?400:360,height:GRID_SIZE*(taller?7:6)},
       defaultData:()=>defaultAtlasData(type),...(spec.pack?{pack:spec.pack}:{}),
-      availability:'existing-only',unavailableReason:'This preset now lives inside the Tracker widget.',
     }
     return [type,definition]
   }),
@@ -21,4 +20,5 @@ export const TRACKER_WIDGET_DEFINITION: WidgetDefinition = {
   type:'tracker',label:'Tracker',description:'One flexible tracker with skins for logs, routines, status, and planning',
   icon:ATLAS_CATALOG.price_book.icon,category:'tracking',accent:'#34d399',
   defaultSize:{width:360,height:GRID_SIZE*7},defaultData:()=>defaultAtlasData('price_book'),
+  availability:'existing-only',unavailableReason:'Each Tracker system is now its own searchable widget.',
 }

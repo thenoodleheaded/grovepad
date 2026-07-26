@@ -84,6 +84,11 @@ export interface WidgetDefinition {
    * changing appearance can never alter circuit behavior.
    */
   skinField?: 'mode' | 'skin'
+  /**
+   * Schema-extension skins whose renderer provides a purpose-built editor.
+   * The generic key/value details overlay stays hidden for these values.
+   */
+  rendererOwnedSkinDetails?: readonly string[]
   /** Present when the type is gated behind a domain pack. */
   pack?: DomainPack
   /** Existing-only types hydrate safely but are not offered for new work. */

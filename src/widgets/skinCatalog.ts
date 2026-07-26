@@ -49,7 +49,9 @@ const PRESENTATION_ICONS: Record<SkinPresentation, LucideIcon> = {
  * Existing skins stay first because their renderer contracts predate the
  * generated catalogue. A matching value is never duplicated. The generated
  * file deliberately contains no React components; this small seam adds the
- * shared visual vocabulary when the registry is assembled.
+ * shared visual vocabulary when the registry is assembled. The separate
+ * ownership ledger is planning guidance only: it must never hide a catalogue
+ * choice that was already available to people.
  */
 export function installCataloguedSkins(
   registry: Record<ModuleType, WidgetDefinition>,
@@ -82,6 +84,10 @@ export function installCataloguedSkins(
 }
 
 export function cataloguedSkinCount(): number {
+  return cataloguedOpportunityCount()
+}
+
+export function cataloguedOpportunityCount(): number {
   return Object.values(WIDGET_SKIN_BLUEPRINTS).reduce(
     (total, skins) => total + skins.length,
     0,

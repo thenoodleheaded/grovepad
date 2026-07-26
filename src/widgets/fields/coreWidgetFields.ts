@@ -5,6 +5,7 @@ import type { ModuleType,
   CounterData,
   GoalTrackerData,
   HabitData,
+  LinkedListData,
   NotesData,
   PollData,
   ProgressData,
@@ -17,7 +18,13 @@ import type { ModuleType,
   AtlasWidgetData,
 } from '../../types/spatial'
 import type { FieldDescriptor } from '../contracts/fields'
-import { num, text, bool } from './valueHelpers'
+import { num, text, bool, primaryZoneTime } from './valueHelpers'
+import {
+  linkedListNodes,
+  linkedNodeIndex,
+  selectedLinkedNodeId,
+  writeCurrentLinkedValue,
+} from '../../components/widgets/modules/linkedListSkinModel'
 
 /** Everyday widget fields (notes … tracker). Extracted verbatim from fields.ts; field order IS port-slot order — never reorder within an entry. */
 export const CORE_WIDGET_FIELDS = {
@@ -28,6 +35,44 @@ export const CORE_WIDGET_FIELDS = {
       valueType: 'text',
       get: (d) => (d as NotesData).text,
       set: (d, v) => ({ ...(d as NotesData), text: text(v) }),
+    },
+  ],
+  linked_list: [
+    {
+      key: 'head',
+      label: 'Head value',
+      valueType: 'text',
+      get: (d) => linkedListNodes((d as LinkedListData).nodes)[0]?.value ?? '',
+    },
+    {
+      key: 'tail',
+      label: 'Tail value',
+      valueType: 'text',
+      get: (d) => linkedListNodes((d as LinkedListData).nodes).at(-1)?.value ?? '',
+    },
+    {
+      key: 'current',
+      label: 'Current value',
+      valueType: 'text',
+      get: (d) => {
+        const data = d as LinkedListData
+        const nodes = linkedListNodes(data.nodes)
+        return nodes[linkedNodeIndex(nodes, selectedLinkedNodeId(nodes, data.selectedId))]?.value ?? ''
+      },
+      set: (d, value) => writeCurrentLinkedValue(d as LinkedListData, text(value)),
+    },
+    {
+      key: 'length',
+      label: 'Node count',
+      valueType: 'number',
+      unit: 'count',
+      get: (d) => linkedListNodes((d as LinkedListData).nodes).length,
+    },
+    {
+      key: 'empty',
+      label: 'Is empty',
+      valueType: 'boolean',
+      get: (d) => linkedListNodes((d as LinkedListData).nodes).length === 0,
     },
   ],
   sticky_note: [
@@ -181,6 +226,17 @@ export const CORE_WIDGET_FIELDS = {
         ) || 0,
       timeSensitive: true,
     },
+    {
+      key: 'days_until',
+      label: 'Days until',
+      valueType: 'number',
+      unit: 'count',
+      get: (d) =>
+        Math.ceil(
+          (new Date((d as CountdownData).targetDate).getTime() - Date.now()) / 86_400_000,
+        ) || 0,
+      timeSensitive: true,
+    },
   ],
   stopwatch: [
     {
@@ -197,6 +253,7 @@ export const CORE_WIDGET_FIELDS = {
       valueType: 'boolean',
       get: (d) => (d as TimerData).endAt !== null,
     },
+    { key:'mode',label:'Mode',valueType:'text',get:()=> 'countdown' },
   ],
   timekeeper: [
     {
@@ -207,10 +264,67 @@ export const CORE_WIDGET_FIELDS = {
         const value=d as TimekeeperData
         if(value.mode==='pomodoro')return value.pomodoro.endAt!==null
         if(value.mode==='stopwatch')return value.stopwatch.startedAt!==null
+        if(value.mode==='lap_timer')return value.stopwatch.startedAt!==null
+        if(value.mode==='intervals'||value.mode==='tabata'||value.mode==='multi_stage_timer') {
+          return typeof value.skinStates?.[value.mode]?.endAt === 'number'
+        }
+        if(value.mode==='deadline'||value.mode==='world_clock'||value.mode==='chess_clock')return false
         return value.countdown.endAt!==null
       },
     },
     { key:'mode',label:'Mode',valueType:'text',get:(d)=>(d as TimekeeperData).mode },
+    {
+      key: 'days_left',
+      label: 'Days left',
+      valueType: 'number',
+      unit: 'count',
+      timeSensitive: true,
+      get: (d) => {
+        const target = (d as TimekeeperData).deadline?.targetDate
+        if (!target) return 0
+        return Math.ceil((new Date(`${target}T00:00:00`).getTime() - Date.now()) / 86_400_000) || 0
+      },
+    },
+    {
+      key: 'days_until',
+      label: 'Days until',
+      valueType: 'number',
+      unit: 'count',
+      timeSensitive: true,
+      get: (d) => {
+        const target = (d as TimekeeperData).deadline?.targetDate
+        if (!target) return 0
+        return Math.ceil((new Date(`${target}T00:00:00`).getTime() - Date.now()) / 86_400_000) || 0
+      },
+    },
+    {
+      key: 'sessions_done',
+      label: 'Sessions done',
+      valueType: 'number',
+      unit: 'count',
+      get: (d) => (d as TimekeeperData).pomodoro.completed,
+    },
+    {
+      key: 'completed',
+      label: 'Completed sessions',
+      valueType: 'number',
+      unit: 'count',
+      get: (d) => (d as TimekeeperData).pomodoro.completed,
+    },
+    {
+      key: 'primary_time',
+      label: 'Primary time',
+      valueType: 'text',
+      timeSensitive: true,
+      get: (d) => primaryZoneTime((d as TimekeeperData).worldClock?.zones ?? []),
+    },
+    {
+      key: 'zone_count',
+      label: 'Time zones',
+      valueType: 'number',
+      unit: 'count',
+      get: (d) => (d as TimekeeperData).worldClock?.zones.length ?? 0,
+    },
   ],
   tracker: [
     { key:'current',label:'Current',valueType:'number',get:(d)=>(d as AtlasWidgetData).primary,set:(d,v)=>({...d as AtlasWidgetData,primary:num(v)}) },

@@ -1,0 +1,685 @@
+/*
+ * Purpose-built Text Input skins.
+ *
+ * A Text Input is a wiring card before it is a form field: whatever shape the
+ * skin gives it, the string a wire would carry stays on screen. Everything
+ * here paints on the card's one backplate — every wrapper that holds a text
+ * control carries `gp-bare-field`, so the auto field-island detector in
+ * 06-field-islands.css never manufactures a second pane of glass, and the
+ * skins that want a shaped surface (the search pill, the command prompt) paint
+ * it through a pseudo-element instead of a background the escape hatch clears.
+ */
+
+.gp-input {
+  --gp-input-ink: var(--gp-widget-ink, #f5f5f5);
+  --gp-input-dim: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 56%);
+  --gp-input-faint: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 78%);
+  --gp-input-rule: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 88%);
+  --gp-input-tint: color-mix(in oklab, var(--gp-widget-accent), transparent 88%);
+  --gp-input-warn: #f0b429;
+  container-type: size;
+  display: flex;
+  height: 100%;
+  min-height: 0;
+  flex-direction: column;
+  gap: 0.55rem;
+  color: var(--gp-input-ink);
+}
+
+/* The generated presentation families paint dashboard and diagram furniture
+   behind whatever they wrap. A field is a field: no grid, no gutter. */
+.gp-widget-ui[data-widget-type='text_input'][data-skin-presentation] {
+  background-image: none;
+  padding-inline-start: 0;
+}
+
+.gp-widget-ui[data-widget-type='text_input'][data-skin-presentation]::before {
+  content: none;
+}
+
+/* The `dashboard` family repaints every <strong> in the widget's accent, which
+   would erase the valid/invalid colour a URL or Email verdict carries. */
+.gp-widget-ui[data-widget-type='text_input'][data-skin-presentation] :where(strong, output) {
+  color: inherit;
+}
+
+/* ------------------------------------------------------------------- head */
+
+.gp-input-head {
+  display: flex;
+  min-height: 20px;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.gp-input-name {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+}
+
+.gp-input-name input {
+  width: 100%;
+  min-width: 0;
+  min-height: 20px;
+  padding-inline: 0;
+  border: 0;
+  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 34%);
+  background: transparent;
+  font-size: 9.5px;
+  font-weight: 650;
+  letter-spacing: 0.085em;
+  outline: 0;
+  text-transform: uppercase;
+}
+
+.gp-input-name input::placeholder {
+  color: var(--gp-input-faint);
+}
+
+.gp-input-name:focus-within {
+  box-shadow: inset 0 -1px 0 color-mix(in oklab, var(--gp-widget-accent), transparent 58%);
+}
+
+/* Emitting or not is the one thing a wired card must say at a glance. */
+.gp-input-lamp {
+  width: 6px;
+  height: 6px;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: var(--gp-input-rule);
+  transition:
+    background var(--gp-duration-snap) var(--gp-ease-snap),
+    box-shadow var(--gp-duration-snap) var(--gp-ease-snap);
+}
+
+.gp-input-lamp[data-on] {
+  background: var(--gp-widget-accent);
+  box-shadow: 0 0 8px color-mix(in oklab, var(--gp-widget-accent), transparent 40%);
+}
+
+/* ------------------------------------------------------------------- foot */
+
+.gp-input-foot {
+  display: flex;
+  min-height: 14px;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: auto;
+  overflow: hidden;
+  color: var(--gp-input-dim);
+  font-size: 9.5px;
+  font-weight: 650;
+  letter-spacing: 0.085em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.gp-input-foot[data-empty] {
+  color: var(--gp-input-faint);
+}
+
+.gp-input-foot > span {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.4rem;
+  overflow: hidden;
+}
+
+.gp-input-foot code {
+  min-width: 0;
+  overflow: hidden;
+  border-radius: 4px;
+  padding: 1px 5px;
+  color: color-mix(in oklab, var(--gp-widget-accent), white 20%);
+  background: var(--gp-input-tint);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-overflow: ellipsis;
+  text-transform: none;
+  white-space: nowrap;
+}
+
+.gp-input-foot em {
+  color: var(--gp-input-faint);
+  font-size: 9px;
+  font-style: normal;
+  letter-spacing: 0.05em;
+  text-transform: none;
+}
+
+/* ------------------------------------------------------------ single line */
+
+/* The rule is the value's own signature line, so the box hugs the text and
+   the free space goes above and below it rather than between them. */
+.gp-input-line {
+  position: relative;
+  display: flex;
+  min-height: 0;
+  flex: 0 0 auto;
+  align-items: center;
+  margin-block: auto;
+}
+
+/* It fades out before the right edge: a full-width rule under a short value
+   reads as an empty table row rather than a line somebody signs. */
+.gp-input-line::after {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 1px;
+  content: '';
+  background: linear-gradient(
+    90deg,
+    color-mix(in oklab, var(--gp-widget-accent), transparent 62%),
+    transparent 82%
+  );
+  opacity: 0.5;
+  transition: opacity var(--gp-duration-snap) var(--gp-ease-snap);
+}
+
+.gp-input-line:focus-within::after {
+  opacity: 1;
+}
+
+.gp-input-line input {
+  width: 100%;
+  min-width: 0;
+  min-height: 34px;
+  padding-inline: 0;
+  padding-block: 0.2rem;
+  border: 0;
+  color: var(--gp-input-ink);
+  background: transparent;
+  caret-color: var(--gp-widget-accent);
+  font-size: 17px;
+  font-weight: 560;
+  letter-spacing: -0.012em;
+  outline: 0;
+}
+
+.gp-input-line input::placeholder {
+  color: var(--gp-input-faint);
+  font-weight: 480;
+  letter-spacing: -0.005em;
+}
+
+/* -------------------------------------------------------------- multiline */
+
+.gp-input-page {
+  position: relative;
+  min-height: 0;
+  flex: 1;
+  overflow-y: auto;
+  padding-left: 0.6rem;
+}
+
+/* The rail is the writing margin, and it only exists while somebody writes. */
+.gp-input-page::before {
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  left: 0;
+  width: 2px;
+  border-radius: 999px;
+  content: '';
+  background: linear-gradient(
+    color-mix(in oklab, var(--gp-widget-accent), transparent 45%),
+    color-mix(in oklab, var(--gp-widget-accent), transparent 92%)
+  );
+  opacity: 0;
+  transition: opacity var(--gp-duration-snap) var(--gp-ease-snap);
+}
+
+.gp-input-page:focus-within::before {
+  opacity: 1;
+}
+
+.gp-input-page textarea {
+  width: 100%;
+  min-height: 64px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  resize: none;
+  color: var(--gp-input-ink);
+  background: transparent;
+  caret-color: var(--gp-widget-accent);
+  font-size: 13px;
+  font-weight: 450;
+  line-height: 1.7;
+  outline: 0;
+}
+
+.gp-input-page textarea::placeholder {
+  color: var(--gp-input-faint);
+}
+
+/* --------------------------------------------------- pill (search/url/mail) */
+
+/* The field and its verdict are one group, centred in whatever room the card
+   has: a pill pinned to the top of a tall card reads as a mistake, not as a
+   field. */
+.gp-input-body {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.gp-input-pill,
+.gp-input-prompt {
+  position: relative;
+  display: grid;
+  min-height: 38px;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.5rem;
+  padding-inline: 0.7rem;
+}
+
+.gp-input-pill::before,
+.gp-input-prompt::before {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  content: '';
+  background: linear-gradient(180deg, rgb(255 255 255 / 0.07), rgb(255 255 255 / 0.028));
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.10),
+    inset 0 0 0 1px rgb(255 255 255 / 0.06),
+    0 1px 2px rgb(0 0 0 / 0.24);
+  transition: box-shadow var(--gp-duration-snap) var(--gp-ease-snap);
+}
+
+.gp-input-pill:focus-within::before,
+.gp-input-prompt:focus-within::before {
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.12),
+    inset 0 0 0 1px color-mix(in oklab, var(--gp-widget-accent), transparent 52%),
+    0 0 0 3px color-mix(in oklab, var(--gp-widget-accent), transparent 90%);
+}
+
+.gp-input-pill > *,
+.gp-input-prompt > * {
+  position: relative;
+  z-index: 1;
+}
+
+.gp-input-pill input,
+.gp-input-prompt input {
+  width: 100%;
+  min-width: 0;
+  min-height: 34px;
+  padding-inline: 0;
+  border: 0;
+  color: var(--gp-input-ink);
+  background: transparent;
+  caret-color: var(--gp-widget-accent);
+  font-size: 13px;
+  font-weight: 520;
+  outline: 0;
+}
+
+.gp-input-pill input::placeholder,
+.gp-input-prompt input::placeholder {
+  color: var(--gp-input-faint);
+  font-weight: 450;
+}
+
+.gp-input-lead {
+  color: var(--gp-input-faint);
+  transition: color var(--gp-duration-snap) var(--gp-ease-snap);
+}
+
+.gp-input-pill:focus-within .gp-input-lead,
+.gp-input-prompt:focus-within .gp-input-lead {
+  color: color-mix(in oklab, var(--gp-widget-accent), white 12%);
+}
+
+.gp-input-clear,
+.gp-input-open,
+.gp-input-run {
+  display: inline-flex;
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+  min-height: 24px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 999px !important;
+  color: var(--gp-input-dim);
+  transition:
+    color var(--gp-duration-snap) var(--gp-ease-snap),
+    background-color var(--gp-duration-snap) var(--gp-ease-snap);
+}
+
+.gp-input-clear:hover,
+.gp-input-run:not(:disabled):hover {
+  color: var(--gp-input-ink);
+  background-color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 88%) !important;
+}
+
+.gp-input-open {
+  color: color-mix(in oklab, var(--gp-widget-accent), white 16%);
+}
+
+.gp-input-open:hover {
+  background-color: var(--gp-input-tint) !important;
+}
+
+.gp-input-run:not(:disabled) {
+  color: color-mix(in oklab, var(--gp-widget-accent), white 16%);
+}
+
+.gp-input-run:disabled {
+  cursor: default;
+  opacity: 0.32;
+}
+
+.gp-input-clear:focus-visible,
+.gp-input-open:focus-visible,
+.gp-input-run:focus-visible,
+.gp-input-chips button:focus-visible,
+.gp-input-history button:focus-visible {
+  outline: 1px solid color-mix(in oklab, var(--gp-widget-accent), transparent 28%);
+  outline-offset: 2px;
+}
+
+.gp-input-hint {
+  display: inline-flex;
+  width: 24px;
+  height: 24px;
+  align-items: center;
+  justify-content: center;
+  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 86%);
+}
+
+.gp-input-tick {
+  display: inline-flex;
+  width: 22px;
+  height: 22px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  color: #0c1210;
+  background: #34d399;
+}
+
+/* ---------------------------------------------------------------- verdict */
+
+.gp-input-verdict {
+  display: flex;
+  min-height: 20px;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--gp-input-dim);
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.gp-input-verdict strong {
+  min-width: 0;
+  overflow: hidden;
+  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 12%);
+  font-size: 11.5px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gp-input-verdict[data-tone='warn'] {
+  color: var(--gp-input-warn);
+}
+
+.gp-input-verdict[data-tone='idle'] {
+  color: var(--gp-input-faint);
+}
+
+.gp-input-chip {
+  flex: 0 0 auto;
+  border-radius: 999px;
+  padding: 2px 7px;
+  color: color-mix(in oklab, var(--gp-widget-accent), white 22%);
+  background: var(--gp-input-tint);
+  font-size: 9px;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* ------------------------------------------------------------------- tags */
+
+.gp-input-tagfield {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.5rem;
+  overflow-y: auto;
+}
+
+.gp-input-chips {
+  display: flex;
+  margin: 0;
+  padding: 0;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  list-style: none;
+}
+
+.gp-input-chips li {
+  display: inline-flex;
+  min-width: 0;
+  height: 24px;
+  align-items: center;
+  gap: 0.15rem;
+  border-radius: 999px;
+  padding-left: 0.55rem;
+  padding-right: 0.15rem;
+  color: color-mix(in oklab, var(--gp-widget-accent), white 26%);
+  background: var(--gp-input-tint);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--gp-widget-accent), transparent 78%);
+  font-size: 11px;
+  font-weight: 560;
+}
+
+.gp-input-chips li > span {
+  max-width: 11rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gp-input-chips button {
+  display: inline-flex;
+  width: 18px;
+  height: 18px;
+  min-width: 18px;
+  min-height: 18px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 999px !important;
+  color: color-mix(in oklab, var(--gp-widget-accent), white 26%);
+  opacity: 0.55;
+  transition:
+    opacity var(--gp-duration-snap) var(--gp-ease-snap),
+    background-color var(--gp-duration-snap) var(--gp-ease-snap);
+}
+
+.gp-input-chips button:hover {
+  background-color: color-mix(in oklab, var(--gp-widget-accent), transparent 74%) !important;
+  opacity: 1;
+}
+
+.gp-input-tagadd {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  box-shadow: inset 0 -1px 0 var(--gp-input-rule);
+  transition: box-shadow var(--gp-duration-snap) var(--gp-ease-snap);
+}
+
+.gp-input-tagadd:focus-within {
+  box-shadow: inset 0 -1px 0 color-mix(in oklab, var(--gp-widget-accent), transparent 46%);
+}
+
+.gp-input-tagadd input {
+  width: 100%;
+  min-width: 0;
+  min-height: 28px;
+  padding-inline: 0;
+  border: 0;
+  color: var(--gp-input-ink);
+  background: transparent;
+  caret-color: var(--gp-widget-accent);
+  font-size: 12px;
+  outline: 0;
+}
+
+.gp-input-tagadd input::placeholder {
+  color: var(--gp-input-faint);
+}
+
+/* ---------------------------------------------------------------- command */
+
+.gp-input-prompt::before {
+  border-radius: var(--gp-r1);
+}
+
+/* One typeface across the whole app, so a prompt reads as a prompt through
+   even figures and open tracking rather than a second font family. */
+.gp-input-prompt input {
+  font-size: 12px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+}
+
+.gp-input-history {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.gp-input-history li + li {
+  border-top: 1px solid var(--gp-input-rule);
+}
+
+.gp-input-history button {
+  display: flex;
+  width: 100%;
+  min-height: 26px;
+  align-items: center;
+  gap: 0.4rem;
+  border: 0;
+  padding-inline: 0.35rem;
+  color: var(--gp-input-dim);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.03em;
+  text-align: left;
+  transition:
+    color var(--gp-duration-snap) var(--gp-ease-snap),
+    background-color var(--gp-duration-snap) var(--gp-ease-snap);
+}
+
+.gp-input-history button > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gp-input-history button svg {
+  flex: 0 0 auto;
+  opacity: 0.5;
+}
+
+.gp-input-history button:hover {
+  color: var(--gp-input-ink);
+  background-color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 92%) !important;
+}
+
+/* The line the card is emitting right now is the one that matters. */
+.gp-input-history li[data-current] button {
+  color: color-mix(in oklab, var(--gp-widget-accent), white 22%);
+  box-shadow: inset 2px 0 0 var(--gp-widget-accent);
+}
+
+.gp-input-history li[data-current] button svg {
+  opacity: 0.9;
+}
+
+.gp-input-empty {
+  margin: 0;
+  padding: 0.35rem 0.1rem;
+  color: var(--gp-input-faint);
+  font-size: 10px;
+  line-height: 1.5;
+  text-wrap: balance;
+}
+
+/* ----------------------------------------------------------------- narrow */
+
+/* A short card drops the commentary before it drops the field. */
+@container (max-height: 118px) {
+  .gp-input-foot,
+  .gp-input-empty {
+    display: none;
+  }
+}
+
+@container (max-height: 92px) {
+  .gp-input-verdict {
+    display: none;
+  }
+}
+
+/* Teaching text is the first thing a small card gives up: it explains a field
+   that is already on screen, while a verdict about the typed value is not
+   recoverable from anywhere else. */
+@container (max-width: 236px) {
+  .gp-input-verdict[data-tone='idle'],
+  .gp-input-empty {
+    display: none;
+  }
+}
+
+@container (max-width: 200px) {
+  .gp-input-line input {
+    font-size: 15px;
+  }
+
+  .gp-input-pill,
+  .gp-input-prompt {
+    padding-inline: 0.55rem;
+  }
+
+  .gp-input-chips li > span {
+    max-width: 7rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gp-input *,
+  .gp-input-pill::before,
+  .gp-input-prompt::before,
+  .gp-input-page::before {
+    transition-duration: 0.01ms !important;
+  }
+}

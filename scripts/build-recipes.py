@@ -29,6 +29,18 @@ OUT = ROOT / 'src' / 'utils' / 'recipes' / 'recipeData.ts'
 
 COL, ROW = 400, 300
 
+TIME_WIDGET_SKINS = {
+    'timer': 'countdown',
+    'pomodoro': 'pomodoro',
+    'stopwatch': 'stopwatch',
+    'countdown': 'deadline',
+    'world_clock': 'world_clock',
+}
+
+DRAWING_WIDGET_SKINS = {
+    'excalidraw': 'diagram',
+}
+
 
 def document_lines() -> list[str]:
     """The document's paragraphs as plain text, in order."""
@@ -167,6 +179,19 @@ def resolve(inventory: dict, templates: list[dict], atlas: dict) -> list[dict]:
                     skin = atlas.get(skin_label)
                 if skin is None:
                     sys.exit(f'unknown skin in {t["id"]}: {widget_type}/{skin_label!r}')
+
+            if widget_type == 'tracker':
+                widget_type, skin = skin or 'price_book', None
+            elif widget_type == 'date_picker' and skin == 'countdown':
+                widget_type, skin = 'timekeeper', 'deadline'
+            elif widget_type in TIME_WIDGET_SKINS:
+                widget_type, skin = 'timekeeper', TIME_WIDGET_SKINS[widget_type]
+            elif widget_type == 'timekeeper':
+                skin = skin or 'countdown'
+            elif widget_type in DRAWING_WIDGET_SKINS:
+                widget_type, skin = 'sketchpad', DRAWING_WIDGET_SKINS[widget_type]
+            elif widget_type == 'sketchpad':
+                skin = skin or 'ink'
 
             slots.append({'slot': letter, 'type': widget_type, 'skin': skin, 'title': title})
 

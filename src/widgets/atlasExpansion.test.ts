@@ -55,8 +55,8 @@ describe('50-widget atlas contracts', () => {
     ['braai', 'potluck_matrix'],
     ['90 in 180', 'visa_runway'],
     ['artist queue', 'commission_queue'],
-  ] as const)('discovers %s as the %s Tracker mode without cloud inference', (phrase, type) => {
-    expect(resolveWidgetMention(phrase)).toBe('tracker')
+  ] as const)('discovers %s as the %s widget without cloud inference', (phrase, type) => {
+    expect(resolveWidgetMention(phrase)).toBe(type)
     expect(atlasTypeForPhrase(phrase)).toBe(type)
   })
 })

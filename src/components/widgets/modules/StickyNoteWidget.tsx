@@ -1,6 +1,5 @@
 import { useLayoutEffect, useRef } from 'react'
 import type { StickyNoteColor, StickyNoteData } from '../../../types/spatial'
-import { WidgetPanel } from '../WidgetPanel'
 import { useCollaborationStore } from '../../../store/useCollaborationStore'
 
 interface StickyNoteWidgetProps {
@@ -10,31 +9,24 @@ interface StickyNoteWidgetProps {
   widgetId?: string
 }
 
-/* Text stays on the theme-aware neutral scale (readable in dark AND light
-   mode); the color lives in the panel tint, caret, and swatch. */
-const COLOR_STYLES: Record<StickyNoteColor, { panel: string; swatch: string; caret: string }> = {
+const COLOR_STYLES: Record<StickyNoteColor, { swatch: string; caret: string }> = {
   yellow: {
-    panel: 'border-amber-400/25 bg-amber-400/10',
     swatch: 'bg-amber-400',
     caret: 'caret-amber-400',
   },
   pink: {
-    panel: 'border-pink-400/25 bg-pink-400/10',
     swatch: 'bg-pink-400',
     caret: 'caret-pink-400',
   },
   blue: {
-    panel: 'border-sky-400/25 bg-sky-400/10',
     swatch: 'bg-sky-400',
     caret: 'caret-sky-400',
   },
   green: {
-    panel: 'border-emerald-400/25 bg-emerald-400/10',
     swatch: 'bg-emerald-400',
     caret: 'caret-emerald-400',
   },
   purple: {
-    panel: 'border-violet-400/25 bg-violet-400/10',
     swatch: 'bg-violet-400',
     caret: 'caret-violet-400',
   },
@@ -42,11 +34,7 @@ const COLOR_STYLES: Record<StickyNoteColor, { panel: string; swatch: string; car
 
 const COLOR_ORDER: StickyNoteColor[] = ['yellow', 'pink', 'blue', 'green', 'purple']
 
-/**
- * A sticky note is two glued subdivisions: the tinted text plate (notes
- * behavior — it grows with the text, never hiding or padding), and a color
- * chooser panel beneath it that decides the plate's tint.
- */
+/** A quiet full-card tint with controls cut directly into the one backplate. */
 export function StickyNoteWidget({ data, onChange, onHeightChange, widgetId }: StickyNoteWidgetProps) {
   const style = COLOR_STYLES[data.color] ?? COLOR_STYLES.yellow
   const rootRef = useRef<HTMLDivElement>(null)
@@ -67,42 +55,43 @@ export function StickyNoteWidget({ data, onChange, onHeightChange, widgetId }: S
   }, [data.text, onHeightChange])
 
   return (
-    <div ref={rootRef} className="flex flex-col gap-1">
-      <div>
-        <WidgetPanel className={`p-2.5 ${style.panel}`}>
-          <textarea
-            ref={textareaRef}
-            value={data.text}
-            rows={2}
-            placeholder="Jot something down…"
-            aria-label="Sticky note text"
-            onChange={(e) => onChange({ ...data, text: e.target.value })}
-            data-collaboration-editing={Boolean(remoteEditor)}
-            className={`w-full resize-none bg-transparent text-[13px] leading-[1.6] text-neutral-100 outline-none placeholder:text-neutral-600 ${style.caret}`}
-          />
-          {remoteEditor && (
-            <span className="text-[9px] font-medium" style={{ color: remoteEditor.color }}>
-              {remoteEditor.name} is editing
-            </span>
-          )}
-        </WidgetPanel>
+    <div ref={rootRef} className="gp-note-sticky gp-bare-field" data-note-color={data.color}>
+      <span aria-hidden className="gp-note-sticky-tape" />
+      {/* The ruling is painted on this sheet, not on the textarea: a text
+          control never paints a fill of its own (06-field-islands.css). */}
+      <div className="gp-note-sticky-sheet gp-bare-field">
+        <textarea
+          ref={textareaRef}
+          value={data.text}
+          rows={3}
+          placeholder="Jot something down…"
+          aria-label="Sticky note text"
+          onChange={(e) => onChange({ ...data, text: e.target.value })}
+          data-collaboration-editing={Boolean(remoteEditor)}
+          className={`gp-note-sticky-editor ${style.caret}`}
+        />
       </div>
-      <WidgetPanel className="flex h-8 items-center gap-1.5 px-2.5 pr-5">
+      <footer className="gp-note-sticky-footer">
+        <span className="gp-note-sticky-swatches" aria-label="Sticky note color">
         {COLOR_ORDER.map((color) => (
           <button
             key={color}
             type="button"
+            title={`${color[0]!.toUpperCase()}${color.slice(1)}`}
             aria-label={`${color} note`}
             aria-pressed={data.color === color}
             onClick={() => onChange({ ...data, color })}
-            className={`h-3.5 w-3.5 shrink-0 rounded-full ${COLOR_STYLES[color].swatch} transition-transform ${
-              data.color === color
-                ? 'scale-100 ring-2 ring-neutral-100 ring-offset-2 ring-offset-transparent'
-                : 'scale-90 opacity-60 hover:scale-100 hover:opacity-100'
-            }`}
+            className={`rounded-full ${COLOR_STYLES[color].swatch}`}
           />
         ))}
-      </WidgetPanel>
+        </span>
+        {remoteEditor && (
+          <span className="gp-note-collaborator" style={{ color: remoteEditor.color }}>
+            <span aria-hidden style={{ backgroundColor: remoteEditor.color }} />
+            {remoteEditor.name}
+          </span>
+        )}
+      </footer>
     </div>
   )
 }

@@ -1,4 +1,4 @@
-import type { ModuleType,
+import type { ModuleData, ModuleType,
   AiGeneratorData,
   AudioPlayerData,
   BarChartData,
@@ -21,16 +21,107 @@ import type { ModuleType,
   PriorityMatrixData,
   ProsConsData,
   ReadingListData,
+  SketchpadData,
   TableData,
   TimelineData,
   WeeklyPlannerData,
 } from '../../types/spatial'
-import type { FieldDescriptor } from '../contracts/fields'
+import type { FieldDescriptor, FieldValue } from '../contracts/fields'
 import { localDayKey } from '../../utils/localDate'
 import { num, text } from './valueHelpers'
+import {
+  namedVariables,
+  variableBindings,
+  evaluateExpression,
+  safeResult,
+  VARIABLE_LIMIT,
+} from '../../components/widgets/modules/calculatorSkinModel'
+
+/**
+ * One writable slot per named-value position on the Calculator's Named
+ * Variables skin. Writing a slot re-evaluates the expression in the same step,
+ * so `result` — the field every other card reads — is never one write stale.
+ */
+function calculatorVariableFields(): FieldDescriptor[] {
+  return Array.from({ length: VARIABLE_LIMIT }, (_unused, index) => ({
+    key: `variable_${index + 1}`,
+    label: `Named value ${index + 1}`,
+    valueType: 'number' as const,
+    get: (d: ModuleData) => {
+      const data = d as CalculatorData
+      return namedVariables(data.skinStates?.named_variables?.variables)[index]?.value ?? 0
+    },
+    set: (d: ModuleData, value: FieldValue) => {
+      const data = d as CalculatorData
+      const state = data.skinStates?.named_variables ?? {}
+      const variables = namedVariables(state.variables)
+      const target = variables[index]
+      if (!target) return d
+      const next = variables.map((variable, position) => (
+        position === index ? { ...variable, value: num(value) } : variable
+      ))
+      return {
+        ...data,
+        result: data.expression.trim() === ''
+          ? ''
+          : safeResult(() => evaluateExpression(data.expression, {
+            variables: variableBindings(next),
+          })),
+        skinStates: {
+          ...data.skinStates,
+          named_variables: { ...state, variables: next },
+        },
+      } as ModuleData
+    },
+  }))
+}
 
 /** Data, board, and media widget fields (bar_chart … audio_player). Extracted verbatim from fields.ts; field order IS port-slot order — never reorder within an entry. */
 export const DATA_MEDIA_FIELDS = {
+  sketchpad: [
+    {
+      key: 'mode',
+      label: 'Drawing mode',
+      valueType: 'text',
+      get: (d) => (d as SketchpadData).mode ?? 'ink',
+    },
+    {
+      key: 'mark_count',
+      label: 'Marks',
+      valueType: 'number',
+      unit: 'count',
+      get: (d) => {
+        const value = d as SketchpadData
+        if (value.mode === 'diagram') return value.diagram?.elements.length ?? 0
+        if (value.mode === 'storyboard') {
+          const state = value.skinStates?.storyboard
+          const frames = Array.isArray(state?.frames) ? state.frames : []
+          return frames.reduce((total, frame) => {
+            if (!frame || typeof frame !== 'object') return total
+            const strokes = (frame as { strokes?: unknown }).strokes
+            return total + (Array.isArray(strokes) ? strokes.length : 0)
+          }, 0)
+        }
+        return value.strokes?.length ?? 0
+      },
+    },
+    {
+      key: 'has_content',
+      label: 'Has content',
+      valueType: 'boolean',
+      get: (d) => {
+        const value = d as SketchpadData
+        if (value.mode === 'diagram') return (value.diagram?.elements.length ?? 0) > 0
+        if (value.mode === 'storyboard') {
+          const frames = value.skinStates?.storyboard?.frames
+          return Array.isArray(frames) && frames.some((frame) =>
+            Boolean(frame && typeof frame === 'object' && Array.isArray((frame as { strokes?: unknown }).strokes) && (frame as { strokes: unknown[] }).strokes.length > 0),
+          )
+        }
+        return (value.strokes?.length ?? 0) > 0
+      },
+    },
+  ],
   bar_chart: [
     {
       key: 'total',
@@ -77,6 +168,11 @@ export const DATA_MEDIA_FIELDS = {
       valueType: 'number',
       get: (d) => num((d as CalculatorData).result),
     },
+    // The Named Variables skin exists so a circuit can feed an expression.
+    // Ports are static per widget type, so there are exactly as many writable
+    // slots as that skin offers named values, and each one addresses the
+    // variable in that position rather than a name the wire cannot know.
+    ...calculatorVariableFields(),
   ],
   weekly_planner: [
     {
@@ -227,6 +323,7 @@ export const DATA_MEDIA_FIELDS = {
         const first = md.tiles[0]
         if (!first) return md
         return {
+          ...md,
           tiles: md.tiles.map((t, i) => (i === 0 ? { ...t, value: String(num(v)) } : t)),
         }
       },

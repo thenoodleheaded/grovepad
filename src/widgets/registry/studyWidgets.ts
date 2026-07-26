@@ -73,8 +73,6 @@ export const STUDY_WIDGET_DEFINITIONS = {
     accent: '#fde047',
     defaultSize: { width: 240, height: C * 4 },
     defaultData: () => ({ elapsedMs: 0, startedAt: null, laps: [] }),
-    availability: 'existing-only',
-    unavailableReason: 'Stopwatch now lives inside the Timer widget.',
   },
   reading_list: {
     type: 'reading_list',
@@ -116,8 +114,6 @@ export const STUDY_WIDGET_DEFINITIONS = {
       remainingSeconds: 25 * 60,
       completed: 0,
     }),
-    availability: 'existing-only',
-    unavailableReason: 'Pomodoro now lives inside the Timer widget.',
   },
   vocab: {
     type: 'vocab',

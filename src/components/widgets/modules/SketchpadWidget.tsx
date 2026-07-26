@@ -3,6 +3,7 @@ import {
   useRef,
   useState,
   type PointerEvent as ReactPointerEvent,
+  type ReactNode,
 } from 'react'
 import { Eraser, Pen, Redo2, Trash2, Undo2 } from 'lucide-react'
 import { useWidgetStore } from '../../../store/useWidgetStore'
@@ -19,15 +20,20 @@ import {
   sketchPointFromPointer,
   sketchStrokeWidth,
 } from '../../../utils/sketchpadStroke'
+import { drawingDisplayColor } from './drawingSkinModel'
 
 interface SketchpadWidgetProps {
   data: SketchpadData
   onChange: (data: SketchpadData) => void
+  surface?: 'ink' | 'whiteboard' | 'graph_paper' | 'dot_grid' | 'storyboard' | 'annotation'
+  background?: ReactNode
+  ariaLabel?: string
 }
 
 type Tool = 'pen' | 'eraser'
 
-const COLORS = ['#f8fafc', '#fde047', '#38bdf8', '#fb7185'] as const
+const DARK_COLORS = ['#f8fafc', '#fde047', '#38bdf8', '#fb7185'] as const
+const PAPER_COLORS = ['#172033', '#2563eb', '#dc2626', '#15803d'] as const
 const SIZES = [2, 4, 7] as const
 
 function strokeId(): string {
@@ -78,7 +84,13 @@ function drawStroke(
  * in refs and one requestAnimationFrame loop; React/store update only when a
  * complete stroke (or erase gesture) is committed.
  */
-export function SketchpadWidget({ data, onChange }: SketchpadWidgetProps) {
+export function SketchpadWidget({
+  data,
+  onChange,
+  surface = 'ink',
+  background,
+  ariaLabel = 'Sketch drawing surface',
+}: SketchpadWidgetProps) {
   const canUndo = useWidgetStore((state) => state.canUndo)
   const canRedo = useWidgetStore((state) => state.canRedo)
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -90,7 +102,8 @@ export function SketchpadWidget({ data, onChange }: SketchpadWidgetProps) {
   const paintFrameRef = useRef(0)
   const dataRef = useRef(data)
   const [activeTool, setActiveTool] = useState<Tool>('pen')
-  const [color, setColor] = useState<(typeof COLORS)[number]>(COLORS[0])
+  const colors = surface === 'ink' ? DARK_COLORS : PAPER_COLORS
+  const [color, setColor] = useState<string>(colors[0])
   const [size, setSize] = useState<(typeof SIZES)[number]>(SIZES[1])
 
   dataRef.current = data
@@ -111,9 +124,24 @@ export function SketchpadWidget({ data, onChange }: SketchpadWidgetProps) {
     }
     context.setTransform(ratio, 0, 0, ratio, 0, 0)
     context.clearRect(0, 0, rect.width, rect.height)
-    for (const stroke of strokesRef.current) drawStroke(context, stroke, rect.width, rect.height)
+    for (const stroke of strokesRef.current) {
+      drawStroke(
+        context,
+        { ...stroke, color: drawingDisplayColor(stroke.color, surface) },
+        rect.width,
+        rect.height,
+      )
+    }
     if (activeStrokeRef.current) {
-      drawStroke(context, activeStrokeRef.current, rect.width, rect.height)
+      drawStroke(
+        context,
+        {
+          ...activeStrokeRef.current,
+          color: drawingDisplayColor(activeStrokeRef.current.color, surface),
+        },
+        rect.width,
+        rect.height,
+      )
     }
   }
 
@@ -284,8 +312,8 @@ export function SketchpadWidget({ data, onChange }: SketchpadWidgetProps) {
   ]
 
   return (
-    <div className="flex h-full flex-col gap-2">
-      <div className="flex shrink-0 flex-wrap items-center gap-1" role="toolbar" aria-label="Sketch tools">
+    <div className="gp-drawing-editor flex h-full flex-col gap-2" data-drawing-surface={surface}>
+      <div className="gp-drawing-toolbar flex shrink-0 flex-wrap items-center gap-1" role="toolbar" aria-label="Drawing tools">
         {tools.map(({ id, Icon, label }) => (
           <button
             key={id}
@@ -293,10 +321,10 @@ export function SketchpadWidget({ data, onChange }: SketchpadWidgetProps) {
             aria-pressed={activeTool === id}
             aria-label={label}
             onClick={() => setActiveTool(id)}
-            className={`gp-touch-target flex h-8 items-center gap-1.5 rounded-lg px-2 text-[11px] font-medium transition-colors ${
+            className={`gp-drawing-tool gp-touch-target flex h-8 items-center gap-1.5 rounded-lg px-2 text-[11px] font-medium transition-colors ${
               activeTool === id
-                ? 'bg-neutral-700/80 text-neutral-100'
-                : 'text-neutral-500 hover:bg-neutral-800/60 hover:text-neutral-300'
+                ? 'is-active'
+                : ''
             }`}
           >
             <Icon size={12} aria-hidden />
@@ -304,18 +332,18 @@ export function SketchpadWidget({ data, onChange }: SketchpadWidgetProps) {
           </button>
         ))}
         <span className="mx-0.5 h-5 w-px bg-white/10" aria-hidden />
-        {COLORS.map((choice) => (
+        {colors.map((choice) => (
           <button
             key={choice}
             type="button"
             aria-label={`Ink ${choice}`}
             aria-pressed={color === choice}
             onClick={() => { setColor(choice); setActiveTool('pen') }}
-            className="gp-touch-target flex h-8 w-8 items-center justify-center rounded-lg"
+            className="gp-drawing-swatch gp-touch-target flex h-8 w-8 items-center justify-center rounded-lg"
           >
             <span
               aria-hidden
-              className={`h-3.5 w-3.5 rounded-full ${color === choice ? 'ring-2 ring-white/70 ring-offset-2 ring-offset-neutral-900' : ''}`}
+              className={`h-3.5 w-3.5 rounded-full ${color === choice ? 'is-active' : ''}`}
               style={{ backgroundColor: choice }}
             />
           </button>
@@ -324,28 +352,29 @@ export function SketchpadWidget({ data, onChange }: SketchpadWidgetProps) {
           aria-label="Ink width"
           value={size}
           onChange={(event) => setSize(Number(event.target.value) as (typeof SIZES)[number])}
-          className="gp-touch-target h-8 rounded-lg bg-neutral-800/70 px-2 text-[11px] text-neutral-300"
+          className="gp-drawing-width gp-touch-target h-8 rounded-lg px-2 text-[11px]"
         >
           {SIZES.map((choice) => <option key={choice} value={choice}>{choice}px</option>)}
         </select>
         <span className="ml-auto flex items-center gap-0.5">
-          <button type="button" aria-label="Undo" disabled={!canUndo} onClick={() => useWidgetStore.getState().undo()} className="gp-touch-target flex h-8 w-8 items-center justify-center rounded-lg text-neutral-500 hover:bg-neutral-800 hover:text-white disabled:opacity-30"><Undo2 size={12} /></button>
-          <button type="button" aria-label="Redo" disabled={!canRedo} onClick={() => useWidgetStore.getState().redo()} className="gp-touch-target flex h-8 w-8 items-center justify-center rounded-lg text-neutral-500 hover:bg-neutral-800 hover:text-white disabled:opacity-30"><Redo2 size={12} /></button>
-          <button type="button" aria-label="Clear sketch" disabled={(data.strokes?.length ?? 0) === 0} onClick={() => commit([])} className="gp-touch-target flex h-8 w-8 items-center justify-center rounded-lg text-neutral-500 hover:bg-red-400/10 hover:text-red-300 disabled:opacity-30"><Trash2 size={12} /></button>
+          <button type="button" aria-label="Undo" disabled={!canUndo} onClick={() => useWidgetStore.getState().undo()} className="gp-drawing-tool gp-touch-target flex h-8 w-8 items-center justify-center rounded-lg disabled:opacity-30"><Undo2 size={12} /></button>
+          <button type="button" aria-label="Redo" disabled={!canRedo} onClick={() => useWidgetStore.getState().redo()} className="gp-drawing-tool gp-touch-target flex h-8 w-8 items-center justify-center rounded-lg disabled:opacity-30"><Redo2 size={12} /></button>
+          <button type="button" aria-label="Clear drawing" disabled={(data.strokes?.length ?? 0) === 0} onClick={() => commit([])} className="gp-drawing-tool gp-drawing-tool--danger gp-touch-target flex h-8 w-8 items-center justify-center rounded-lg disabled:opacity-30"><Trash2 size={12} /></button>
         </span>
       </div>
-      <div className="gp-sketch-surface relative min-h-0 flex-1 overflow-hidden rounded-xl border gp-hairline bg-neutral-950/35">
+      <div className="gp-sketch-surface relative min-h-0 flex-1 overflow-hidden rounded-[18px]">
+        {background}
         <canvas
           ref={canvasRef}
           data-widget-interactive="true"
-          aria-label="Sketch drawing surface"
+          aria-label={ariaLabel}
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
           onPointerUp={(event) => finishGesture(event, false)}
           onPointerCancel={(event) => finishGesture(event, true)}
           onLostPointerCapture={(event) => finishGesture(event, true)}
           onPointerLeave={() => { if (hoverRef.current) hoverRef.current.hidden = true }}
-          className="block h-full w-full touch-none cursor-crosshair"
+          className="relative z-[2] block h-full w-full touch-none cursor-crosshair"
         />
         <div
           ref={hoverRef}

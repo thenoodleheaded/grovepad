@@ -1,0 +1,536 @@
+/*
+ * Purpose-built Toggle skins.
+ *
+ * A Toggle is a logic card before it is a control: whatever a skin calls the
+ * state, the boolean it emits is on screen. Everything here paints on the
+ * card's one backplate — the label input's wrapper carries `gp-bare-field`,
+ * and the controls are shaped surfaces (a track, a box, a ring), never a
+ * second pane of glass around the card's own content.
+ */
+
+.gp-toggle {
+  --gp-toggle-off: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 88%);
+  --gp-toggle-on: var(--gp-widget-accent);
+  /* `inline-size`, never `size`. Toggle is an autoHeight card (see
+     sizingProfiles.ts), so `.gp-widget-content` is content-sized: a `size`
+     container here would be laid out as if it had no contents, collapse to
+     0px, and leave the switch overflowing a tall empty card — while the
+     0px reading also matched a `max-height` query and hid the state line. */
+  container-type: inline-size;
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  color: var(--gp-widget-ink, #f5f5f5);
+}
+
+/* The generated presentation families paint dashboard and diagram furniture
+   that has nothing to do with a switch. */
+.gp-widget-ui[data-widget-type='toggle'][data-skin-presentation] {
+  background-image: none;
+  padding-inline-start: 0;
+}
+
+.gp-widget-ui[data-widget-type='toggle'][data-skin-presentation]::before {
+  content: none;
+}
+
+/* The `dashboard` family repaints every <strong> in the widget's accent. On
+   Availability that overrode the status colour, so a busy card said "Busy" in
+   the card's own hue instead of amber. A purpose-built skin owns its colour. */
+.gp-widget-ui[data-widget-type='toggle'][data-skin-presentation] :where(strong, output) {
+  color: inherit;
+}
+
+/* ------------------------------------------------------------------ label */
+
+.gp-toggle-label {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+}
+
+.gp-toggle-label input {
+  width: 100%;
+  min-width: 0;
+  min-height: 22px;
+  padding-inline: 0;
+  border: 0;
+  color: var(--gp-widget-ink, #f5f5f5);
+  background: transparent;
+  font-size: 13px;
+  font-weight: 560;
+  letter-spacing: -0.01em;
+  outline: 0;
+  text-align: center;
+}
+
+.gp-toggle-label[data-align='start'] input {
+  text-align: left;
+}
+
+.gp-toggle-label input::placeholder {
+  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 58%);
+  font-weight: 480;
+}
+
+.gp-toggle-label:focus-within {
+  box-shadow: inset 0 -1px 0 color-mix(in oklab, var(--gp-widget-accent), transparent 52%);
+}
+
+/* ------------------------------------------------------------------ state */
+
+.gp-toggle-state {
+  display: flex;
+  min-height: 14px;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  margin: 0;
+  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 56%);
+  font-size: 9.5px;
+  font-weight: 650;
+  letter-spacing: 0.085em;
+  text-transform: uppercase;
+}
+
+.gp-toggle-state[data-on] {
+  color: color-mix(in oklab, var(--gp-widget-accent), white 14%);
+}
+
+/* The emitted boolean, never dressed up as the skin's own language. */
+.gp-toggle-state code {
+  border-radius: 4px;
+  padding: 1px 4px;
+  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 52%);
+  background: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 92%);
+  font-size: 8.5px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+
+.gp-toggle-state[data-on] code {
+  color: color-mix(in oklab, var(--gp-widget-accent), white 20%);
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 88%);
+}
+
+.gp-toggle-note {
+  max-width: 22rem;
+  margin: 0;
+  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 56%);
+  font-size: 9.5px;
+  line-height: 1.5;
+  text-align: center;
+  text-wrap: balance;
+}
+
+.gp-toggle-note code {
+  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 32%);
+  font-size: 0.95em;
+}
+
+/* ----------------------------------------------------------------- switch */
+
+.gp-toggle-track {
+  position: relative;
+  display: flex;
+  width: 74px;
+  height: 34px;
+  flex: 0 0 auto;
+  align-items: center;
+  border: 0;
+  border-radius: 999px !important;
+  padding: 3px;
+  background-color: var(--gp-toggle-off) !important;
+  box-shadow: inset 0 1px 3px rgb(0 0 0 / 0.34);
+  transition: background-color var(--gp-duration-snap) var(--gp-ease-snap);
+}
+
+.gp-toggle-track[aria-checked='true'] {
+  background-color: color-mix(in oklab, var(--gp-toggle-on), transparent 62%) !important;
+}
+
+.gp-toggle-knob {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 62%);
+  box-shadow: 0 2px 5px rgb(0 0 0 / 0.42);
+  /* A switch has weight: it overshoots a touch before it settles. */
+  transition:
+    transform 220ms cubic-bezier(0.34, 1.42, 0.5, 1),
+    background var(--gp-duration-snap) var(--gp-ease-snap),
+    box-shadow var(--gp-duration-snap) var(--gp-ease-snap);
+}
+
+.gp-toggle-track[aria-checked='true'] .gp-toggle-knob {
+  background: var(--gp-toggle-on);
+  box-shadow:
+    0 2px 6px rgb(0 0 0 / 0.42),
+    0 0 14px color-mix(in oklab, var(--gp-toggle-on), transparent 52%);
+  transform: translateX(40px);
+}
+
+.gp-toggle-track:focus-visible {
+  outline: 1px solid color-mix(in oklab, var(--gp-widget-accent), transparent 26%);
+  outline-offset: 3px;
+}
+
+/* --------------------------------------------------------------- checkbox */
+
+.gp-toggle-checkbox {
+  justify-content: center;
+  gap: 0.65rem;
+}
+
+.gp-toggle-check-row {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.gp-toggle-box {
+  display: flex;
+  width: 30px;
+  height: 30px;
+  min-width: 30px;
+  min-height: 30px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 9px !important;
+  color: transparent;
+  background-color: var(--gp-toggle-off) !important;
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 84%);
+  transition:
+    background-color var(--gp-duration-snap) var(--gp-ease-snap),
+    color var(--gp-duration-snap) var(--gp-ease-snap);
+}
+
+.gp-toggle-box[aria-checked='true'] {
+  color: #0b0d0c;
+  background-color: color-mix(in oklab, var(--gp-toggle-on), white 6%) !important;
+  box-shadow: 0 0 16px color-mix(in oklab, var(--gp-toggle-on), transparent 66%);
+}
+
+/* The tick draws itself in rather than blinking on. */
+.gp-toggle-box svg {
+  stroke-dasharray: 24;
+  stroke-dashoffset: 24;
+  transition: stroke-dashoffset 200ms var(--gp-ease-snap);
+}
+
+.gp-toggle-box[aria-checked='true'] svg {
+  stroke-dashoffset: 0;
+}
+
+.gp-toggle-box:focus-visible {
+  outline: 1px solid color-mix(in oklab, var(--gp-widget-accent), transparent 26%);
+  outline-offset: 3px;
+}
+
+.gp-toggle-checkbox .gp-toggle-label input {
+  font-size: 14px;
+}
+
+.gp-toggle-checkbox .gp-toggle-state {
+  width: 100%;
+  justify-content: flex-start;
+}
+
+/* ------------------------------------------------------------------ power */
+
+.gp-toggle-power {
+  gap: 0.45rem;
+}
+
+.gp-toggle-power-button {
+  position: relative;
+  display: flex;
+  width: 58px;
+  height: 58px;
+  min-width: 58px;
+  min-height: 58px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 999px !important;
+  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 62%);
+  background-color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 93%) !important;
+  box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.4);
+  transition:
+    color var(--gp-duration-snap) var(--gp-ease-snap),
+    transform var(--gp-duration-snap) var(--gp-ease-snap);
+}
+
+.gp-toggle-power-button:active {
+  transform: scale(0.94);
+}
+
+.gp-toggle-power-ring {
+  position: absolute;
+  inset: -3px;
+  border-radius: 999px;
+  box-shadow: inset 0 0 0 2px color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 88%);
+  transition: box-shadow var(--gp-duration-snap) var(--gp-ease-snap);
+}
+
+.gp-toggle-power-button[aria-checked='true'] {
+  color: color-mix(in oklab, var(--gp-toggle-on), white 22%);
+}
+
+.gp-toggle-power-button[aria-checked='true'] .gp-toggle-power-ring {
+  box-shadow:
+    inset 0 0 0 2px color-mix(in oklab, var(--gp-toggle-on), transparent 30%),
+    0 0 22px color-mix(in oklab, var(--gp-toggle-on), transparent 62%);
+}
+
+.gp-toggle-power-button:focus-visible {
+  outline: 1px solid color-mix(in oklab, var(--gp-widget-accent), transparent 26%);
+  outline-offset: 5px;
+}
+
+/* --------------------------------------------------- segment & tri-state */
+
+.gp-toggle-segment,
+.gp-toggle-tri {
+  align-items: stretch;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.gp-toggle-segment-head {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.gp-toggle-rename {
+  display: inline-flex;
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+  min-height: 24px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: var(--gp-r2) !important;
+  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 62%);
+  transition: color var(--gp-duration-snap) var(--gp-ease-snap);
+}
+
+.gp-toggle-rename:hover,
+.gp-toggle-rename[aria-expanded='true'] {
+  color: var(--gp-widget-ink, #fff);
+}
+
+/* One track, one sliding marker — not two buttons that each paint a fill. */
+.gp-toggle-segments {
+  position: relative;
+  display: grid;
+  min-height: 34px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: stretch;
+  border-radius: var(--gp-r1);
+  padding: 3px;
+  background: var(--gp-toggle-off);
+  box-shadow: inset 0 1px 3px rgb(0 0 0 / 0.3);
+}
+
+.gp-toggle-segments--three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.gp-toggle-segment-marker {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  left: 3px;
+  width: calc(50% - 3px);
+  border-radius: calc(var(--gp-r1) - 3px);
+  background: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 88%);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.34);
+  transition:
+    transform 220ms cubic-bezier(0.34, 1.32, 0.5, 1),
+    background var(--gp-duration-snap) var(--gp-ease-snap);
+}
+
+.gp-toggle-segments[data-on] .gp-toggle-segment-marker {
+  background: color-mix(in oklab, var(--gp-toggle-on), transparent 54%);
+  transform: translateX(100%);
+}
+
+.gp-toggle-segments--three .gp-toggle-segment-marker {
+  width: calc(33.3333% - 2px);
+}
+
+.gp-toggle-segments--three[data-position='unset'] .gp-toggle-segment-marker {
+  transform: translateX(100%);
+}
+
+.gp-toggle-segments--three[data-position='on'] .gp-toggle-segment-marker {
+  background: color-mix(in oklab, var(--gp-toggle-on), transparent 54%);
+  transform: translateX(200%);
+}
+
+.gp-toggle-segments button {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  min-width: 0;
+  min-height: 28px;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 0;
+  border-radius: calc(var(--gp-r1) - 3px) !important;
+  padding: 0 0.35rem;
+  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 54%);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: color var(--gp-duration-snap) var(--gp-ease-snap);
+}
+
+.gp-toggle-segments button[aria-pressed='true'],
+.gp-toggle-segments button[aria-checked='true'] {
+  color: var(--gp-widget-ink, #fff);
+}
+
+.gp-toggle-segments button:focus-visible {
+  outline: 1px solid color-mix(in oklab, var(--gp-widget-accent), transparent 26%);
+  outline-offset: -1px;
+}
+
+.gp-toggle-names {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.4rem;
+}
+
+.gp-toggle-names input {
+  width: 100%;
+  min-width: 0;
+  min-height: 24px;
+  padding-inline: 0;
+  border: 0;
+  border-bottom: 1px solid color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 86%);
+  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 22%);
+  background: transparent;
+  font-size: 10.5px;
+  outline: 0;
+  text-align: center;
+}
+
+.gp-toggle-names input:focus {
+  border-bottom-color: color-mix(in oklab, var(--gp-widget-accent), transparent 46%);
+}
+
+.gp-toggle-names input::placeholder {
+  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 66%);
+}
+
+/* ----------------------------------------------------------- availability */
+
+.gp-toggle-availability {
+  align-items: stretch;
+  justify-content: center;
+  gap: 0.4rem;
+}
+
+.gp-toggle-presence {
+  display: flex;
+  min-height: 32px;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.5rem;
+  border: 0;
+  border-radius: var(--gp-r1) !important;
+  padding: 0;
+  color: var(--gp-toggle-status);
+  text-align: left;
+}
+
+.gp-toggle-presence strong {
+  font-size: 17px;
+  font-weight: 640;
+  letter-spacing: -0.02em;
+}
+
+.gp-toggle-presence:focus-visible {
+  outline: 1px solid color-mix(in oklab, var(--gp-widget-accent), transparent 26%);
+  outline-offset: 3px;
+}
+
+.gp-toggle-dot {
+  position: relative;
+  width: 11px;
+  height: 11px;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: var(--gp-toggle-status);
+  box-shadow: 0 0 10px color-mix(in oklab, var(--gp-toggle-status), transparent 46%);
+}
+
+/* Present means present: the halo keeps a slow pulse only while available. */
+.gp-toggle-dot[data-live]::after {
+  position: absolute;
+  inset: -4px;
+  border-radius: 999px;
+  content: '';
+  box-shadow: 0 0 0 1.5px var(--gp-toggle-status);
+  animation: gp-toggle-pulse 2.4s var(--gp-ease-snap) infinite;
+}
+
+@keyframes gp-toggle-pulse {
+  0% { opacity: 0.55; transform: scale(0.8); }
+  70% { opacity: 0; transform: scale(1.35); }
+  100% { opacity: 0; transform: scale(1.35); }
+}
+
+.gp-toggle-availability .gp-toggle-label input {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 40%);
+}
+
+.gp-toggle-availability .gp-toggle-state {
+  justify-content: flex-start;
+}
+
+/* ----------------------------------------------------------------- narrow */
+
+/* There is deliberately no `max-height` query here. A height query needs a
+   `size` container, and Toggle's card owns its height from its content, so
+   the card is never shorter than the control plus its language — the rule
+   could only ever fire on the degenerate 0px reading it was written to
+   survive. Width is the one axis the card really can be squeezed on. */
+
+@container (max-width: 190px) {
+  .gp-toggle-presence strong {
+    font-size: 15px;
+  }
+
+  .gp-toggle-segments button {
+    font-size: 10px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gp-toggle *,
+  .gp-toggle-dot[data-live]::after {
+    animation: none !important;
+    transition-duration: 0.01ms !important;
+  }
+}

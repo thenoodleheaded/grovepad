@@ -52,17 +52,20 @@ export function ExcalidrawWidget({ data, widgetId, title, onChange }: Excalidraw
         type="button"
         onClick={() => setOpen(true)}
         aria-label={hasContent ? `Open ${title} in fullscreen` : `Start drawing in ${title}`}
-        className="group relative flex h-full w-full flex-col overflow-hidden rounded-xl border gp-hairline bg-neutral-950/40 text-left"
+        className="gp-excalidraw-launcher group relative flex h-full w-full flex-col overflow-hidden text-left"
       >
-        <div ref={previewRef} aria-hidden className="h-full w-full [&_svg]:mx-auto" />
+        <div className="gp-excalidraw-grid" aria-hidden />
+        <div ref={previewRef} aria-hidden className="gp-excalidraw-preview h-full w-full [&_svg]:mx-auto" />
         {!hasContent && (
-          <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-1.5 text-neutral-700">
-            <Shapes size={18} aria-hidden />
-            <span className="text-[11px]">Open to start drawing</span>
+          <div className="gp-excalidraw-empty pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+            <span className="gp-excalidraw-empty__icon"><Shapes size={20} aria-hidden /></span>
+            <strong>Open the infinite canvas</strong>
+            <span>Shapes · arrows · text · freehand</span>
           </div>
         )}
-        <span className="pointer-events-none absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-md border gp-hairline bg-neutral-900/80 text-neutral-400 opacity-0 shadow-sm transition-opacity group-hover:opacity-100">
-          <Maximize2 size={12} aria-hidden />
+        <span className="gp-excalidraw-open pointer-events-none absolute bottom-3 right-3">
+          <Maximize2 size={13} aria-hidden />
+          {hasContent ? 'Edit canvas' : 'Start drawing'}
         </span>
       </button>
       <ExcalidrawFullscreen

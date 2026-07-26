@@ -1,8 +1,8 @@
 import type { ModuleType } from './moduleTypes'
-import type { AiGeneratorData, AudioPlayerData, BarChartData, BudgetData, BulletsData, CalculatorData, CalendarData, CanvasNodeData, ChecklistData, CodeData, ColorPaletteData, ContactData, CountdownData, CounterData, DecisionData, DialogData, ExcalidrawData, FlashcardsData, GameTunerData, GoalTrackerData, HabitData, KanbanData, LinksData, MediaData, MeetingNotesData, MetricsData, MoodTrackerData, NotesData, PollData, PriorityMatrixData, ProgressData, ProsConsData, QuoteData, RatingData, ReadingListData, SketchpadData, StickyNoteData, StopwatchData, TableData, TimelineData, TimerData, WeeklyPlannerData, WorldClockData } from './widgetDataCore'
+import type { AiGeneratorData, AudioPlayerData, BarChartData, BudgetData, BulletsData, CalculatorData, CalendarData, CanvasNodeData, ChecklistData, CodeData, ColorPaletteData, ContactData, CountdownData, CounterData, DecisionData, DialogData, ExcalidrawData, FlashcardsData, GameTunerData, GoalTrackerData, HabitData, KanbanData, LinkedListData, LinksData, MediaData, MeetingNotesData, MetricsData, MoodTrackerData, NotesData, PollData, PriorityMatrixData, ProgressData, ProsConsData, QuoteData, RatingData, ReadingListData, SketchpadData, StickyNoteData, StopwatchData, TableData, TimelineData, TimerData, WeeklyPlannerData, WorldClockData } from './widgetDataCore'
 import type { AssignmentData, CitationData, CornellData, FormulaSheetData, GpaData, GradeCalcData, PomodoroData, QuizData, StudyGoalData, VocabData } from './widgetDataEducation'
 import type { BranchGateData, DailyAgendaData, DatePickerData, DecisionMatrixData, FormWidgetData, FormulaData, InventoryData, LineChartData, LogbookData, NumberInputData, OutlineData, PieChartData, ProcessData, RiskRegisterData, StatusData, SwotData, TextInputData, TimesheetData, ToggleData } from './widgetDataWorkflow'
-import type { AggregatorData, AtlasWidgetData, AutomationCoreData, ChoreRotationData, ClockPulseData, ComparatorData, DebtPayoffData, DecisionJournalData, ExpenseSplitData, GiftsOccasionsData, GuestListData, HomeMaintenanceData, InvoicesData, JobApplicationsData, KeepInTouchData, LatchData, MealPlannerData, MedicationsData, NotifierData, OkrData, RandomPickerData, RangeMapperData, RecipeData, RecorderData, RenewalsVaultData, SequencerData, SnippetLibraryData, SubscriptionsData, TemplateData, TimekeeperData, TripItineraryData, UnitConverterData, WeeklyReviewData, WorkoutPlanData } from './widgetDataExpansion'
+import type { AggregatorData, AtlasWidgetData, AutomationCoreData, ChoreRotationData, ClockPulseData, ComparatorData, DebtPayoffData, DecisionJournalData, ExpenseSplitData, GiftsOccasionsData, GuestListData, HomeMaintenanceData, InvoicesData, JobApplicationsData, KeepInTouchData, LatchData, LocationData, MealPlannerData, MedicationsData, NotifierData, OkrData, RandomPickerData, RangeMapperData, RecipeData, RecorderData, RenewalsVaultData, SequencerData, SnippetLibraryData, SubscriptionsData, TemplateData, TimekeeperData, TripItineraryData, UnitConverterData, WeeklyReviewData, WorkoutPlanData } from './widgetDataExpansion'
 
 /** Maps every module type to its data schema. */
 export interface ModuleDataMap {
@@ -24,6 +24,7 @@ export interface ModuleDataMap {
   countdown: CountdownData
   habit: HabitData
   links: LinksData
+  linked_list: LinkedListData
   code: CodeData
   quote: QuoteData
   poll: PollData
@@ -51,6 +52,7 @@ export interface ModuleDataMap {
   priority_matrix: PriorityMatrixData
   decision: DecisionData
   world_clock: WorldClockData
+  location: LocationData
   pomodoro: PomodoroData
   vocab: VocabData
   grade_calc: GradeCalcData

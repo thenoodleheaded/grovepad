@@ -35,7 +35,11 @@ export function WidgetRenderer({ widget, onUpdate, onHeightChange }: WidgetRende
     )
   }
 
-  const skin = currentSkin(widget, widgetDefinition(widget.type))
+  const definition = widgetDefinition(widget.type)
+  const skin = currentSkin(widget, definition)
+  const rendererOwnsSkinDetails = Boolean(
+    skin && definition.rendererOwnedSkinDetails?.includes(skin.value),
+  )
 
   return (
     <Suspense
@@ -59,7 +63,7 @@ export function WidgetRenderer({ widget, onUpdate, onHeightChange }: WidgetRende
         }
       >
         {renderFromFamilies(WIDGET_RENDERER_FAMILIES, { widget, onUpdate, onHeightChange })}
-        {skin?.implementation === 'schema-extension' && (
+        {skin?.implementation === 'schema-extension' && !rendererOwnsSkinDetails && (
           <WidgetSkinDetails data={widget.data} skin={skin} onUpdate={onUpdate} />
         )}
       </div>

@@ -1,10 +1,11 @@
 import type { ReactNode } from 'react'
+import { locationSkinMode } from '../modules/locationSkinModel'
 import type { ModuleType } from '../../../types/moduleTypes'
-import type { AtlasWidgetData, AutomationCoreData } from '../../../types/widgetDataExpansion'
+import type { AtlasWidgetData, AutomationCoreData, LocationData } from '../../../types/widgetDataExpansion'
 import { ATLAS_TYPES, atlasModeFor, type AtlasType } from '../../../widgets/atlasCatalog'
 import { AUTOMATION_CORE_TYPES, type AutomationCoreType } from '../../../widgets/automationCoreCatalog'
 import type { WidgetContentRenderer, WidgetRendererFamily } from './contracts'
-import { AtlasWidget, AutomationCoreWidget, ExpansionWidget } from './lazyCatalogWidgets'
+import { AtlasWidget, AutomationCoreWidget, ExpansionWidget, LocationWidget } from './lazyCatalogWidgets'
 
 type ExpansionType = Extract<ModuleType,
   'clock_pulse'|'comparator'|'aggregator'|'range_mapper'|'latch'|'random_picker'|'sequencer'|'template'|'recorder'|'notifier'|
@@ -54,7 +55,15 @@ export const automationWidgetRendererFamily: WidgetRendererFamily = {
 
 export const expansionWidgetRendererFamily: WidgetRendererFamily = {
   id: 'expansion',
-  renderers: renderersForTypes(EXPANSION_TYPES, (type: ExpansionType, { widget, onUpdate }) => (
-    <ExpansionWidget type={type} data={widget.data} onChange={onUpdate} />
-  )),
+  renderers: {
+    ...renderersForTypes(EXPANSION_TYPES, (type: ExpansionType, { widget, onUpdate }) => (
+      <ExpansionWidget type={type} data={widget.data} onChange={onUpdate} />
+    )),
+    // Location left the generic expansion grid when it gained purpose-built
+    // skins: each one is its own instrument over the same coordinates.
+    location: ({ widget, onUpdate }) => {
+      const data = widget.data as LocationData
+      return <LocationWidget data={data} skin={locationSkinMode(data.skin)} onChange={onUpdate} />
+    },
+  },
 }

@@ -19,6 +19,8 @@ import type {
   TimesheetData,
   ToggleData,
 } from '../../../types/widgetDataWorkflow'
+import { formulaSkinMode } from '../modules/formulaSkinModel'
+import { textInputSkinMode } from '../modules/textInputSkinModel'
 import type { WidgetRendererFamily } from './contracts'
 import {
   BranchGateWidget, DailyAgendaWidget, DecisionMatrixWidget,
@@ -31,11 +33,32 @@ import {
 export const workflowWidgetRendererFamily: WidgetRendererFamily = {
   id: 'workflow',
   renderers: {
-    text_input: ({ widget, onUpdate }) => <TextInputWidget data={widget.data as TextInputData} onChange={onUpdate} />,
+    text_input: ({ widget, onUpdate }) => {
+      const data = widget.data as TextInputData
+      return (
+        <TextInputWidget
+          data={data}
+          skin={textInputSkinMode(data.skin, data.multiline)}
+          onChange={onUpdate}
+        />
+      )
+    },
     number_input: ({ widget, onUpdate }) => <NumberInputWidget data={widget.data as NumberInputData} onChange={onUpdate} />,
-    toggle: ({ widget, onUpdate }) => <ToggleWidget data={widget.data as ToggleData} onChange={onUpdate} />,
+    toggle: ({ widget, onUpdate }) => (
+      <ToggleWidget
+        data={widget.data as ToggleData}
+        skin={(widget.data as ToggleData).skin}
+        onChange={onUpdate}
+      />
+    ),
     branch_gate: ({ widget, onUpdate }) => <BranchGateWidget data={widget.data as BranchGateData} onChange={onUpdate} />,
-    formula: ({ widget, onUpdate }) => <FormulaWidget data={widget.data as FormulaData} onChange={onUpdate} />,
+    formula: ({ widget, onUpdate }) => (
+      <FormulaWidget
+        data={widget.data as FormulaData}
+        skin={formulaSkinMode((widget.data as FormulaData).skin)}
+        onChange={onUpdate}
+      />
+    ),
     status: ({ widget, onUpdate }) => <StatusWidget data={widget.data as StatusData} onChange={onUpdate} />,
     outline: ({ widget, onUpdate }) => <OutlineWidget data={widget.data as OutlineData} onChange={onUpdate} />,
     form: ({ widget, onUpdate }) => <FormWidget data={widget.data as FormWidgetData} onChange={onUpdate} />,

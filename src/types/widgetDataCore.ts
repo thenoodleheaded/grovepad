@@ -6,21 +6,35 @@ import type { ExcalidrawElement } from '@excalidraw/excalidraw/element/types'
 
 export interface NotesData {
   text: string
-  mode?: 'plain' | 'sticky' | 'quote'
+  mode?:
+    | 'plain'
+    | 'sticky'
+    | 'quote'
+    | 'daily_log'
+    | 'markdown_page'
+    | 'typewriter'
+    | 'callout'
+    | 'versioned_note'
   color?: StickyNoteColor
   attribution?: string
+  /** Optional specialist state is isolated by skin so switching never loses it. */
+  skinStates?: Record<string, Record<string, unknown>>
 }
 
-interface BulletItem {
+export interface BulletItem {
   id: string
   text: string
 }
 
 export interface BulletsData {
   items: BulletItem[]
+  /** Presentation worn by this list. Missing means the classic dotted list. */
+  skin?: 'dots' | 'numbered' | 'compact_chips' | 'two_column' | 'nested_outline' | 'rolling_log'
+  /** Optional specialist state is isolated by skin so switching never loses it. */
+  skinStates?: Record<string, Record<string, unknown>>
 }
 
-interface ChecklistItem {
+export interface ChecklistItem {
   id: string
   label: string
   done: boolean
@@ -35,13 +49,40 @@ interface ChecklistItem {
 
 export interface ChecklistData {
   items: ChecklistItem[]
-  /** Alternate views over the same task collection. Missing on legacy cards. */
-  mode?: 'list' | 'board' | 'assignments' | 'day' | 'week' | 'timeline' | 'matrix'
+  /** The arrangement worn by this one task collection. Missing on legacy cards. */
+  mode?:
+    | 'list'
+    | 'inbox'
+    | 'shopping'
+    | 'assignments'
+    | 'day'
+    | 'week'
+    | 'board'
+    | 'timeline'
+    | 'matrix'
+    | 'recurring'
+    | 'sprint'
+    | 'dependencies'
+    | 'routine'
+  /** Optional specialist state is isolated by skin so switching never loses it. */
+  skinStates?: Record<string, Record<string, unknown>>
 }
 
 /** Row-major cell matrix; the first row renders as the header. */
 export interface TableData {
   rows: string[][]
+  /** Alternate presentations over the same row matrix. Missing on legacy cards. */
+  skin?:
+    | 'grid'
+    | 'compact_ledger'
+    | 'cards'
+    | 'database'
+    | 'kanban'
+    | 'gallery'
+    | 'form_view'
+    | 'pivot'
+  /** Specialist view settings stay isolated from the shared cells. */
+  skinStates?: Record<string, Record<string, unknown>>
 }
 
 export interface SketchpadPoint {
@@ -60,13 +101,24 @@ export interface SketchpadStroke {
   points: readonly SketchpadPoint[]
 }
 
+export type DrawingMode =
+  | 'ink'
+  | 'whiteboard'
+  | 'graph_paper'
+  | 'dot_grid'
+  | 'storyboard'
+  | 'annotation'
+  | 'diagram'
+
 export interface SketchpadData {
   height: number
   /** Optional for backwards compatibility with pre-drawing Sketchpad cards. */
   strokes?: readonly SketchpadStroke[]
-  /** Quick ink and diagram scenes are saved independently in one Drawing card. */
-  mode?: 'ink' | 'diagram'
+  /** Every drawing surface lives in one card; native ink and Excalidraw scenes stay independent. */
+  mode?: DrawingMode
   diagram?: ExcalidrawData
+  /** Specialist modes keep their own optional state without changing the shared ink schema. */
+  skinStates?: Record<string, Record<string, unknown>>
 }
 
 /** Metadata for one embedded image; the actual bytes live in the local blob store, never inline. */
@@ -149,6 +201,10 @@ export interface AudioPlayerData {
 export interface CanvasNodeData {
   /** Id of the canvas this node opens. */
   canvasId: string
+  /** Presentation worn by this canvas card. Missing means the classic portal. */
+  skin?: 'portal' | 'cover' | 'live_thumbnail' | 'dashboard_door' | 'folder_index'
+  /** Optional settings owned by an individual presentation. */
+  skinStates?: Record<string, Record<string, unknown>>
 }
 
 export interface KanbanCard {
@@ -189,6 +245,29 @@ export interface LinksData {
   items: LinkItem[]
 }
 
+export interface LinkedListNode {
+  /** Stable identity: pointers and selection never depend on the editable value. */
+  id: string
+  value: string
+}
+
+export interface LinkedListData {
+  /** Canonical head-to-tail order. Every skin derives its pointers from this. */
+  nodes: LinkedListNode[]
+  /** The node exposed as `current` to circuits and focus-oriented skins. */
+  selectedId?: string | null
+  skin?:
+    | 'chain'
+    | 'vertical'
+    | 'compact'
+    | 'focus'
+    | 'doubly_linked'
+    | 'circular'
+    | 'memory_map'
+  /** Reserved for future per-skin preferences without contaminating node data. */
+  skinStates?: Record<string, Record<string, unknown>>
+}
+
 export interface CodeData {
   language: string
   code: string
@@ -224,6 +303,17 @@ export interface MediaData {
   altText?: string
   /** Large pasted images live outside the synced board JSON. */
   localBlobKey?: string
+  /** Which media presentation this card wears. Catalogued skins persist here. */
+  skin?:
+    | 'image'
+    | 'video'
+    | 'audio'
+    | 'document_preview'
+    | 'before_after'
+    | 'gallery'
+    | 'moodboard'
+  /** Optional specialist state is isolated by skin so switching never loses it. */
+  skinStates?: Record<string, Record<string, unknown>>
 }
 
 export type MetricTrend = 'up' | 'down' | 'flat'
@@ -238,6 +328,17 @@ interface MetricTile {
 
 export interface MetricsData {
   tiles: MetricTile[]
+  /** Alternate KPI presentations over the same canonical tile collection. */
+  skin?:
+    | 'kpi_tiles'
+    | 'big_number'
+    | 'scoreboard'
+    | 'traffic_lights'
+    | 'delta'
+    | 'target'
+    | 'executive_strip'
+  /** Specialist comparisons, goals, and ownership stay isolated per skin. */
+  skinStates?: Record<string, Record<string, unknown>>
 }
 
 export type StickyNoteColor = 'yellow' | 'pink' | 'blue' | 'green' | 'purple'
@@ -254,6 +355,17 @@ export interface CalendarData {
   month: number
   /** ISO dates (yyyy-mm-dd) marked with a dot. */
   markedDates: string[]
+  /** Presentation worn by this calendar. Missing means the month grid. */
+  skin?:
+    | 'month'
+    | 'week'
+    | 'agenda'
+    | 'year_heatmap'
+    | 'availability'
+    | 'shift_rota'
+    | 'birthday_and_anniversary'
+  /** Optional specialist state is isolated by skin so switching never loses it. */
+  skinStates?: Record<string, Record<string, unknown>>
 }
 
 export interface TimerData {
@@ -283,8 +395,21 @@ export interface MoodTrackerData {
 }
 
 export interface CalculatorData {
+  /** The readable record of how `result` was reached. */
   expression: string
+  /** The one canonical output. Every skin writes it; the circuit reads it. */
   result: string
+  /** Which calculator this card wears. Catalogued skins persist here. */
+  skin?:
+    | 'basic'
+    | 'scientific'
+    | 'tape'
+    | 'finance'
+    | 'programmer'
+    | 'date_math'
+    | 'named_variables'
+  /** Optional specialist state is isolated by skin so switching never loses it. */
+  skinStates?: Record<string, Record<string, unknown>>
 }
 
 interface BarChartItem {
@@ -298,8 +423,21 @@ export interface BarChartData {
   title: string
   bars: BarChartItem[]
   /** All chart modes render this same series instead of maintaining copies. */
-  mode?: 'bar' | 'line' | 'donut' | 'pie'
+  mode?:
+    | 'bar'
+    | 'line'
+    | 'donut'
+    | 'pie'
+    | 'area'
+    | 'sparkline'
+    | 'gauge'
+    | 'progress_ring'
+    | 'heatmap'
+    | 'scatter'
+    | 'stacked'
   unit?: string
+  /** Advanced visualization state stays isolated by skin. */
+  skinStates?: Record<string, Record<string, unknown>>
 }
 
 export interface CounterData {

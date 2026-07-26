@@ -1,0 +1,1016 @@
+/*
+ * Purpose-built Note skins.
+ *
+ * These are editorial arrangements painted directly on the widget's one E0
+ * backplate. Interior structure is typography, rules, and flat tint — never a
+ * second glass card.
+ *
+ * Article XIX ("a lone full-card text control has no second island") is the
+ * governing law here: every skin whose body IS one text control carries
+ * `.gp-bare-field`, so the auto field-island detector in 06-field-islands.css
+ * leaves the backplate alone. Because that escape hatch also clears
+ * background/radius/shadow with `!important`, each skin paints its own tint
+ * through a pseudo-element instead of the root's own background.
+ */
+
+.gp-note-skin,
+.gp-note-sticky,
+.gp-note-quote {
+  --gp-note-rule: color-mix(in oklab, var(--gp-widget-accent), transparent 74%);
+  --gp-note-rule-soft: color-mix(in oklab, var(--gp-widget-accent), transparent 86%);
+  --gp-note-eyebrow-ink: color-mix(in oklab, var(--gp-widget-accent), white 14%);
+  container-type: inline-size;
+  position: relative;
+  min-height: 92px;
+  color: var(--gp-widget-ink, #f5f5f5);
+}
+
+/* Generated presentation shells default to two-axis size containment. Notes
+   are content-height cards, so containing the block axis makes their auto
+   height collapse to zero and paints the editor outside its own card. */
+.gp-widget-ui[data-widget-type='notes'] {
+  container-type: inline-size;
+}
+
+/* A Note is a writing surface, so the generated presentation families never
+   paint their diagram furniture behind the text. The catalogue assigns these
+   families by keyword — "Version History" landed on `matrix`, whose crosshair
+   rules were being drawn straight through the editor. */
+.gp-widget-ui[data-widget-type='notes'][data-skin-presentation] {
+  background-image: none;
+  padding-inline-start: 0;
+}
+
+.gp-widget-ui[data-widget-type='notes'][data-skin-presentation]::before {
+  content: none;
+}
+
+.gp-note-skin {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+/* A lone full-card text control sits on the backplate, so its writing lands
+   on the card's own content column — the same line the eyebrow, hairline, and
+   footer use. The 12px inset belongs to a manufactured field island, and
+   these skins deliberately have none. */
+.gp-note-editor,
+.gp-note-sticky-editor,
+.gp-note-quote-editor,
+.gp-note-quote-attribution {
+  width: 100%;
+  padding-inline: 0;
+  border: 0;
+  outline: 0;
+  color: var(--gp-widget-ink, #f5f5f5);
+  background: transparent;
+}
+
+.gp-note-editor,
+.gp-note-sticky-editor,
+.gp-note-quote-editor {
+  min-height: 72px;
+  resize: none;
+  overflow: hidden;
+  font-size: 13px;
+  line-height: 1.7;
+  caret-color: var(--gp-widget-accent);
+}
+
+.gp-note-editor::selection,
+.gp-note-sticky-editor::selection,
+.gp-note-quote-editor::selection,
+.gp-note-quote-attribution::selection {
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 66%);
+}
+
+.gp-note-editor::placeholder,
+.gp-note-sticky-editor::placeholder,
+.gp-note-quote-editor::placeholder,
+.gp-note-quote-attribution::placeholder {
+  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 62%);
+}
+
+.gp-note-editor:focus-visible,
+.gp-note-sticky-editor:focus-visible,
+.gp-note-quote-editor:focus-visible,
+.gp-note-quote-attribution:focus-visible {
+  outline: none;
+}
+
+.gp-note-status {
+  display: flex;
+  min-height: 13px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 66%);
+  font-size: 9.5px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.06em;
+}
+
+.gp-note-collaborator {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.35rem;
+  overflow: hidden;
+  font-size: 9.5px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gp-note-collaborator > span {
+  width: 5px;
+  height: 5px;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  box-shadow: 0 0 8px currentColor;
+}
+
+.gp-note-toolbar {
+  display: flex;
+  min-height: 26px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid var(--gp-note-rule-soft);
+}
+
+/* One label voice, matching the catalog-wide 9.5px/.085em uppercase label. */
+.gp-note-eyebrow {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.38rem;
+  overflow: hidden;
+  color: var(--gp-note-eyebrow-ink);
+  font-size: 9.5px;
+  font-weight: 650;
+  letter-spacing: 0.085em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.gp-note-toolbar button,
+.gp-note-daily-header button,
+.gp-note-callout-tones button,
+.gp-note-history button {
+  border: 0;
+  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 48%);
+  background: transparent;
+  transition:
+    color var(--gp-duration-snap) var(--gp-ease-snap),
+    background-color var(--gp-duration-snap) var(--gp-ease-snap),
+    opacity var(--gp-duration-snap) var(--gp-ease-snap);
+}
+
+.gp-note-toolbar button:hover:not(:disabled),
+.gp-note-toolbar button:focus-visible,
+.gp-note-daily-header button:hover:not(:disabled),
+.gp-note-daily-header button:focus-visible,
+.gp-note-history button:hover:not(:disabled),
+.gp-note-history button:focus-visible {
+  color: var(--gp-widget-ink, #fff);
+}
+
+.gp-note-toolbar button:focus-visible,
+.gp-note-daily-header button:focus-visible,
+.gp-note-callout-tones button:focus-visible,
+.gp-note-history button:focus-visible,
+.gp-note-sticky-swatches button:focus-visible,
+.gp-note-daily-date:focus-within {
+  outline: 1px solid color-mix(in oklab, var(--gp-widget-accent), transparent 28%);
+  outline-offset: 2px;
+}
+
+/* The catalog-wide ghost-button rule strips every button background with
+   `!important`, which silently erased the selected state of the segmented,
+   tone, and version controls. These are selection pills, not actions, so
+   they win their fill back at the same weight. */
+.gp-note-skin :where(button)[aria-pressed='true'] {
+  background-color: color-mix(in oklab, var(--gp-widget-accent), transparent 86%) !important;
+}
+
+/* Plain */
+
+.gp-note-plain {
+  min-height: 84px;
+  padding-left: 0.55rem;
+}
+
+.gp-note-plain::before {
+  position: absolute;
+  top: 2px;
+  bottom: 20px;
+  left: 0;
+  width: 2px;
+  border-radius: 999px;
+  content: '';
+  background: linear-gradient(
+    color-mix(in oklab, var(--gp-widget-accent), transparent 45%),
+    color-mix(in oklab, var(--gp-widget-accent), transparent 92%)
+  );
+  opacity: 0;
+  transition: opacity var(--gp-duration-snap) var(--gp-ease-snap);
+}
+
+.gp-note-plain:focus-within::before {
+  opacity: 1;
+}
+
+/* Sticky */
+
+.gp-note-sticky {
+  --gp-note-sticky: #f7c948;
+  display: flex;
+  min-height: 116px;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-top: 0.5rem;
+}
+
+.gp-note-sticky[data-note-color='pink'] { --gp-note-sticky: #f472b6; }
+.gp-note-sticky[data-note-color='blue'] { --gp-note-sticky: #38bdf8; }
+.gp-note-sticky[data-note-color='green'] { --gp-note-sticky: #34d399; }
+.gp-note-sticky[data-note-color='purple'] { --gp-note-sticky: #a78bfa; }
+
+/* The pad's adhesive strip. A top band never shares a corner with the card's
+   curve, which the old peel-fold triangle did at every radius. */
+.gp-note-sticky-tape {
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  left: 50%;
+  width: min(46%, 7rem);
+  height: 2px;
+  border-radius: 999px;
+  pointer-events: none;
+  background: color-mix(in oklab, var(--gp-note-sticky), transparent 62%);
+  mask-image: linear-gradient(90deg, transparent, #000 24% 76%, transparent);
+  transform: translateX(-50%);
+}
+
+.gp-note-sticky-editor,
+.gp-note-sticky-footer {
+  position: relative;
+  z-index: 1;
+}
+
+/* Ruled paper is what carries the note-pad character now that the skin no
+   longer manufactures a second glass surface to tint — a ruling has no edges
+   to clip, and it fades out before it reaches any of them. The 22px
+   line-height is deliberate: the ruling is locked to it. */
+.gp-note-sticky-sheet {
+  position: relative;
+  flex: 1;
+}
+
+.gp-note-sticky-sheet::before {
+  position: absolute;
+  inset: 8px 0 0;
+  pointer-events: none;
+  content: '';
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0 21px,
+    color-mix(in oklab, var(--gp-note-sticky), transparent 76%) 21px 22px
+  );
+  mask-image: linear-gradient(90deg, transparent, #000 5% 95%, transparent);
+}
+
+.gp-note-sticky-editor {
+  position: relative;
+  height: 100%;
+  font-size: 13px;
+  line-height: 22px;
+}
+
+.gp-note-sticky-editor::placeholder {
+  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 52%);
+}
+
+.gp-note-sticky-footer {
+  display: flex;
+  min-height: 26px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding-top: 0.4rem;
+  border-top: 1px solid color-mix(in oklab, var(--gp-note-sticky), transparent 82%);
+}
+
+.gp-note-sticky-swatches {
+  display: flex;
+  align-items: center;
+  gap: 0.1rem;
+}
+
+/* An empty colour swatch keeps its visual object (it IS the meaning) but gets
+   a full-size pointer target around it, so a 13px dot is never a 13px hit. */
+.gp-note-sticky-swatches button {
+  width: 24px;
+  height: 24px;
+  border: 0;
+  border-radius: 999px;
+  background-clip: content-box !important;
+  padding: 5px;
+  opacity: 0.5;
+  transition:
+    opacity var(--gp-duration-snap) var(--gp-ease-snap),
+    box-shadow var(--gp-duration-snap) var(--gp-ease-snap);
+}
+
+.gp-note-sticky-swatches button:hover {
+  opacity: 0.92;
+}
+
+.gp-note-sticky-swatches button[aria-pressed='true'] {
+  box-shadow: inset 0 0 0 1.5px color-mix(in oklab, var(--gp-note-sticky), transparent 40%);
+  opacity: 1;
+}
+
+/* Quote */
+
+.gp-note-quote {
+  display: flex;
+  min-height: 116px;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding-left: 1.5rem;
+}
+
+.gp-note-quote::before {
+  position: absolute;
+  top: 26px;
+  bottom: 2px;
+  left: 3px;
+  width: 2px;
+  border-radius: 999px;
+  content: '';
+  background: linear-gradient(
+    color-mix(in oklab, var(--gp-widget-accent), transparent 52%),
+    color-mix(in oklab, var(--gp-widget-accent), transparent 92%)
+  );
+}
+
+/* The old mark was a 58px glyph on a negative offset: it hung outside the
+   content box and the card clipped it. The glyph now lives in a fixed box
+   that sits entirely inside the padding, and the box does the clipping. */
+.gp-note-quote-mark {
+  position: absolute;
+  top: 0;
+  left: 0;
+  color: color-mix(in oklab, var(--gp-widget-accent), transparent 46%);
+  font-size: 30px;
+  font-style: normal;
+  line-height: 0.78;
+  pointer-events: none;
+  user-select: none;
+}
+
+.gp-note-quote-mark::before {
+  content: '\201C';
+}
+
+/* `flex: 1` here zeroed the flex basis, so the auto-grow height the editor sets
+   on itself was thrown away and the quote was clipped to the skin's own
+   `min-height` — a long pull-quote lost its last lines with no scrollbar to
+   say so. A text control that measures itself must keep its own base size. */
+.gp-note-quote-editor {
+  min-height: 66px;
+  flex: 0 0 auto;
+  font-size: 15px;
+  font-style: italic;
+  line-height: 1.62;
+}
+
+.gp-note-quote-footer {
+  display: grid;
+  min-height: 22px;
+  grid-template-columns: 14px minmax(0, 1fr);
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.gp-note-quote-footer > span {
+  height: 1px;
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 48%);
+  opacity: 0;
+  transition: opacity var(--gp-duration-snap) var(--gp-ease-snap);
+}
+
+.gp-note-quote-footer[data-attributed] > span,
+.gp-note-quote-footer:focus-within > span {
+  opacity: 1;
+}
+
+.gp-note-quote-attribution {
+  min-width: 0;
+  font-size: 9.5px;
+  font-weight: 650;
+  letter-spacing: 0.085em;
+  text-transform: uppercase;
+}
+
+/* Daily log */
+
+.gp-note-daily {
+  gap: 0.6rem;
+}
+
+.gp-note-daily-header {
+  display: flex;
+  min-height: 28px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding-bottom: 0.42rem;
+  border-bottom: 1px solid var(--gp-note-rule-soft);
+}
+
+.gp-note-daily-header > span {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+/* The whole date reads as the control: the native picker is stretched over
+   its own label instead of sitting beside it as an 18px transparent sliver. */
+.gp-note-daily-date {
+  position: relative;
+  border-radius: var(--gp-r2);
+  padding: 0.1rem 0.3rem;
+  color: var(--gp-note-eyebrow-ink);
+  cursor: pointer;
+  transition: background-color var(--gp-duration-snap) var(--gp-ease-snap);
+}
+
+.gp-note-daily-date:hover {
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 90%);
+}
+
+.gp-note-daily-date strong {
+  overflow: hidden;
+  font-size: 11px;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gp-note-daily-date input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  min-height: 0;
+  border: 0;
+  padding: 0;
+  color: transparent;
+  background: transparent;
+  color-scheme: dark;
+  cursor: pointer;
+  opacity: 0;
+}
+
+.gp-note-daily-header button {
+  display: inline-flex;
+  height: 26px;
+  align-items: center;
+  gap: 0.28rem;
+  border-radius: var(--gp-r2);
+  padding: 0 0.4rem;
+  font-size: 9.5px;
+  letter-spacing: 0.06em;
+}
+
+.gp-note-daily-header button:hover {
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 90%) !important;
+}
+
+.gp-note-daily-body {
+  position: relative;
+  display: grid;
+  grid-template-columns: 5px minmax(0, 1fr);
+  gap: 0.65rem;
+}
+
+/* A 1px rail cannot hold a 2px dot: the old repeating radial was sliced to a
+   sliver and read as a broken orange smear. The rail is now as wide as the
+   marks it carries, with the hairline drawn behind them. */
+.gp-note-daily-rail {
+  position: relative;
+  width: 5px;
+  height: 100%;
+  justify-self: center;
+}
+
+.gp-note-daily-rail::before {
+  position: absolute;
+  top: 7px;
+  bottom: 2px;
+  left: 2px;
+  width: 1px;
+  content: '';
+  background: linear-gradient(
+    color-mix(in oklab, var(--gp-widget-accent), transparent 62%),
+    transparent
+  );
+}
+
+.gp-note-daily-rail::after {
+  position: absolute;
+  top: 4px;
+  left: 0;
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  content: '';
+  background: var(--gp-widget-accent);
+  box-shadow: 0 0 6px color-mix(in oklab, var(--gp-widget-accent), transparent 40%);
+  opacity: 0.85;
+}
+
+.gp-note-daily .gp-note-editor {
+  min-height: 86px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Markdown */
+
+.gp-note-segmented {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+}
+
+/* A toolbar action names itself on one line. Letting "Save version" wrap put
+   its second line straight through the eyebrow beside it on a narrow card. */
+.gp-note-segmented button,
+.gp-note-focus-toggle,
+.gp-note-save-version {
+  display: inline-flex;
+  height: 24px;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.28rem;
+  border-radius: var(--gp-r2);
+  padding: 0 0.45rem;
+  font-size: 9.5px;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.gp-note-segmented button[aria-pressed='true'],
+.gp-note-focus-toggle[aria-pressed='true'] {
+  color: var(--gp-note-eyebrow-ink);
+}
+
+.gp-note-segmented button:disabled,
+.gp-note-save-version:disabled {
+  cursor: default;
+  opacity: 0.3;
+}
+
+.gp-note-markdown-source {
+  min-height: 104px;
+  font-size: 12px;
+  line-height: 1.72;
+}
+
+.gp-note-markdown-preview {
+  min-height: 104px;
+  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 8%);
+  font-size: 12px;
+  line-height: 1.68;
+  overflow-wrap: anywhere;
+}
+
+.gp-note-markdown-preview > :first-child { margin-top: 0; }
+.gp-note-markdown-preview > :last-child { margin-bottom: 0; }
+
+.gp-note-markdown-preview h1,
+.gp-note-markdown-preview h2,
+.gp-note-markdown-preview h3 {
+  color: var(--gp-widget-ink, #fff);
+  font-weight: 680;
+  letter-spacing: -0.025em;
+}
+
+.gp-note-markdown-preview h1 {
+  margin: 0.8rem 0 0.5rem;
+  font-size: 18px;
+  line-height: 1.24;
+}
+
+.gp-note-markdown-preview h2 {
+  margin: 0.7rem 0 0.4rem;
+  font-size: 14.5px;
+}
+
+.gp-note-markdown-preview h3 {
+  margin: 0.6rem 0 0.35rem;
+  color: var(--gp-note-eyebrow-ink);
+  font-size: 10.5px;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.gp-note-markdown-preview p,
+.gp-note-markdown-preview ul,
+.gp-note-markdown-preview ol,
+.gp-note-markdown-preview blockquote,
+.gp-note-markdown-preview pre {
+  margin: 0.45rem 0;
+}
+
+/* Tailwind's preflight strips list markers globally, so a rendered Markdown
+   list arrived as unindented plain lines with no bullets at all. */
+.gp-note-markdown-preview ul {
+  padding-left: 1.15rem;
+  list-style: disc;
+}
+
+.gp-note-markdown-preview ol {
+  padding-left: 1.3rem;
+  list-style: decimal;
+}
+
+.gp-note-markdown-preview li {
+  margin: 0.14rem 0;
+}
+
+.gp-note-markdown-preview li::marker,
+.gp-note-markdown-preview a {
+  color: var(--gp-widget-accent);
+}
+
+.gp-note-markdown-preview a {
+  display: inline;
+  min-width: 0;
+  min-height: 0;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in oklab, var(--gp-widget-accent), transparent 58%);
+  text-underline-offset: 2px;
+}
+
+.gp-note-markdown-preview blockquote {
+  padding-left: 0.75rem;
+  border-left: 2px solid color-mix(in oklab, var(--gp-widget-accent), transparent 52%);
+  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 26%);
+  font-style: italic;
+}
+
+.gp-note-markdown-preview code {
+  border-radius: 4px;
+  padding: 0.08rem 0.26rem;
+  color: color-mix(in oklab, var(--gp-widget-accent), white 22%);
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 90%);
+  font-size: 0.9em;
+}
+
+.gp-note-markdown-preview pre {
+  overflow-x: auto;
+  padding: 0.6rem 0.7rem;
+  border-left: 2px solid color-mix(in oklab, var(--gp-widget-accent), transparent 62%);
+  background: rgb(0 0 0 / 0.16);
+}
+
+.gp-note-markdown-preview pre code {
+  padding: 0;
+  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 12%);
+  background: transparent;
+}
+
+.gp-note-markdown-preview hr {
+  height: 1px;
+  margin: 0.75rem 0;
+  border: 0;
+  background: linear-gradient(90deg, transparent, var(--gp-note-rule), transparent);
+}
+
+/* Typewriter */
+
+.gp-note-typewriter-paper {
+  position: relative;
+  width: min(100%, 30rem);
+  align-self: center;
+  padding: 0.8rem clamp(0.15rem, 4cqi, 1.1rem);
+}
+
+/* One rule, not two: the toolbar already draws a full-width hairline directly
+   above the paper, and a second centred line 10px below it read as a stray
+   double rule rather than the end of a page. */
+.gp-note-typewriter-paper::after {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: min(82%, 19rem);
+  height: 1px;
+  content: '';
+  background: linear-gradient(90deg, transparent, var(--gp-widget-accent), transparent);
+  opacity: 0.34;
+  transform: translateX(-50%);
+}
+
+.gp-note-typewriter .gp-note-editor {
+  min-height: 88px;
+  font-size: 13px;
+  line-height: 1.9;
+  letter-spacing: 0.01em;
+}
+
+.gp-note-typewriter[data-focus-mode='true'] .gp-note-toolbar,
+.gp-note-typewriter[data-focus-mode='true'] .gp-note-status {
+  opacity: 0.4;
+  transition: opacity var(--gp-duration-snap) var(--gp-ease-snap);
+}
+
+.gp-note-typewriter[data-focus-mode='true']:focus-within .gp-note-toolbar,
+.gp-note-typewriter[data-focus-mode='true']:focus-within .gp-note-status,
+.gp-note-typewriter[data-focus-mode='true']:hover .gp-note-toolbar,
+.gp-note-typewriter[data-focus-mode='true']:hover .gp-note-status {
+  opacity: 0.78;
+}
+
+/* Callout */
+
+.gp-note-callout {
+  --gp-note-callout: #60a5fa;
+  min-height: 108px;
+  padding-left: 0.8rem;
+}
+
+.gp-note-callout[data-callout-tone='tip'] { --gp-note-callout: #34d399; }
+.gp-note-callout[data-callout-tone='warning'] { --gp-note-callout: #f59e0b; }
+.gp-note-callout[data-callout-tone='decision'] { --gp-note-callout: #a78bfa; }
+.gp-note-callout[data-callout-tone='important'] { --gp-note-callout: #f472b6; }
+
+.gp-note-callout::after {
+  position: absolute;
+  z-index: 0;
+  inset: -4px -6px -6px -10px;
+  pointer-events: none;
+  content: '';
+  background: radial-gradient(
+    90% 80% at 0% 0%,
+    color-mix(in oklab, var(--gp-note-callout), transparent 88%),
+    transparent 68%
+  );
+}
+
+/* The bar clears the card's curve at both ends rather than running into it. */
+.gp-note-callout::before {
+  position: absolute;
+  z-index: 1;
+  top: 4px;
+  bottom: 4px;
+  left: 0;
+  width: 2px;
+  border-radius: 999px;
+  content: '';
+  background: linear-gradient(
+    var(--gp-note-callout),
+    color-mix(in oklab, var(--gp-note-callout), transparent 72%)
+  );
+  box-shadow: 0 0 10px color-mix(in oklab, var(--gp-note-callout), transparent 58%);
+}
+
+.gp-note-callout > * {
+  position: relative;
+  z-index: 1;
+}
+
+.gp-note-callout-header {
+  display: flex;
+  min-height: 26px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.gp-note-callout-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: color-mix(in oklab, var(--gp-note-callout), white 16%);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.085em;
+  text-transform: uppercase;
+}
+
+.gp-note-callout-tones {
+  display: flex;
+  gap: 0.05rem;
+}
+
+.gp-note-callout-tones button {
+  display: flex;
+  width: 24px;
+  height: 24px;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--gp-r2);
+  opacity: 0.55;
+}
+
+.gp-note-callout-tones button:hover {
+  color: var(--gp-widget-ink, #fff);
+  opacity: 1;
+}
+
+.gp-note-callout-tones button[aria-pressed='true'] {
+  color: color-mix(in oklab, var(--gp-note-callout), white 20%);
+  background-color: color-mix(in oklab, var(--gp-note-callout), transparent 82%) !important;
+  opacity: 1;
+}
+
+.gp-note-callout .gp-note-editor {
+  min-height: 68px;
+  font-size: 13px;
+  line-height: 1.66;
+  caret-color: var(--gp-note-callout);
+}
+
+/* Versioned note */
+
+.gp-note-versioned {
+  gap: 0.5rem;
+}
+
+.gp-note-save-version {
+  color: var(--gp-note-eyebrow-ink) !important;
+}
+
+.gp-note-save-version:disabled {
+  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 48%) !important;
+}
+
+.gp-note-versioned > .gp-note-editor {
+  min-height: 86px;
+}
+
+.gp-note-history {
+  display: grid;
+  gap: 0.45rem;
+  padding-top: 0.45rem;
+  border-top: 1px solid var(--gp-note-rule-soft);
+}
+
+.gp-note-history-rail {
+  display: flex;
+  gap: 0.25rem;
+  overflow-x: auto;
+  padding: 0.1rem 0 0.25rem;
+  overscroll-behavior-inline: contain;
+  scrollbar-width: thin;
+}
+
+.gp-note-history-rail button {
+  display: inline-flex;
+  height: 24px;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0 0.5rem;
+  font-size: 9.5px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.gp-note-history-rail button[aria-pressed='true'] {
+  color: var(--gp-note-eyebrow-ink);
+}
+
+.gp-note-history-detail {
+  display: grid;
+  gap: 0.35rem;
+  padding-left: 0.6rem;
+  border-left: 2px solid color-mix(in oklab, var(--gp-widget-accent), transparent 68%);
+}
+
+.gp-note-history-detail > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.gp-note-history-detail strong {
+  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 14%);
+  font-size: 9.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.gp-note-history-detail > div > span {
+  display: flex;
+  gap: 0.4rem;
+  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 62%);
+  font-size: 9.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.gp-note-diff-added { color: #6ee7b7; }
+.gp-note-diff-removed { color: #fda4af; }
+
+.gp-note-history-detail p {
+  display: -webkit-box;
+  overflow: hidden;
+  margin: 0;
+  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 40%);
+  font-size: 10px;
+  line-height: 1.5;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.gp-note-history-detail > div:last-child {
+  justify-content: flex-start;
+  gap: 0.15rem;
+}
+
+.gp-note-history-detail > div:last-child button {
+  display: inline-flex;
+  height: 24px;
+  align-items: center;
+  gap: 0.28rem;
+  border-radius: var(--gp-r2);
+  padding: 0 0.42rem;
+  font-size: 9.5px;
+  letter-spacing: 0.05em;
+}
+
+.gp-note-history-detail > div:last-child button:first-child {
+  color: var(--gp-note-eyebrow-ink);
+}
+
+.gp-note-history-detail > div:last-child button:last-child:hover {
+  color: #fda4af;
+}
+
+/* The empty history is the history section, so it opens on the same hairline
+   the saved-version rail would. Without it the sentence floated in the middle
+   of the card looking like stray body copy. */
+.gp-note-history-empty {
+  margin: 0;
+  padding: 0.5rem 0.2rem 0.1rem;
+  border-top: 1px solid var(--gp-note-rule-soft);
+  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 54%);
+  font-size: 10px;
+  line-height: 1.5;
+  text-align: center;
+  text-wrap: balance;
+}
+
+@container (max-width: 250px) {
+  .gp-note-toolbar,
+  .gp-note-daily-header,
+  .gp-note-callout-header {
+    align-items: flex-start;
+  }
+
+  .gp-note-daily-header,
+  .gp-note-callout-header {
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  .gp-note-callout-tones {
+    align-self: stretch;
+    justify-content: space-between;
+  }
+
+  .gp-note-history-detail > div:first-child {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+
+  .gp-note-sticky-footer {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+}
+
+[data-theme='light'] .gp-note-daily-date input {
+  color-scheme: light;
+}
+
+[data-theme='light'] .gp-note-markdown-preview pre {
+  background: rgb(255 255 255 / 0.1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gp-note-skin *,
+  .gp-note-sticky *,
+  .gp-note-quote * {
+    transition-duration: 0.01ms !important;
+  }
+}

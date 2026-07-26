@@ -9,16 +9,16 @@
 
 .gp-widget-ui[data-skin-presentation] {
   --gp-skin-rule: color-mix(in oklab, var(--gp-widget-accent), transparent 72%);
-  container-type: size;
+  /* `inline-size`, never `size`. `.gp-widget-ui` is `h-full`, and on an
+     autoHeight card (`sizingProfiles.ts`) its parent is content-sized, so
+     that 100% resolves to auto — and a `size` container laid out as if it
+     had no contents then collapses the whole card body to 0px. Nothing in
+     the skin sheets queries height, so containing it only ever cost us. */
+  container-type: inline-size;
 }
 
 .gp-widget-ui[data-skin-presentation='terminal'] {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   letter-spacing: -0.015em;
-}
-
-.gp-widget-ui[data-skin-presentation='terminal'] :where(input, textarea, select, button, code) {
-  font-family: inherit;
 }
 
 .gp-widget-ui[data-skin-presentation='compact'] {

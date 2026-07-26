@@ -1,8 +1,8 @@
 import {
-  Activity, Bell, CalendarSync, ChartSpline, ChefHat, CircleGauge, ContactRound,
-  CreditCard, Dices, Dumbbell, Equal, FileClock, Gift, HeartHandshake,
-  ListRestart, MapPinned, Pill, ReceiptText, Repeat2, Scale, ScanLine, Sigma,
-  Split, Subtitles, Target, Utensils, WalletCards, Wrench,
+  Activity, Bell, CalendarSync, ChartSpline, ChefHat, CircleGauge, Clock3, Compass,
+  ContactRound, CreditCard, Crosshair, Dices, Dumbbell, Equal, FileClock, Gift,
+  HeartHandshake, ListRestart, MapPin, MapPinned, Pill, Radar, ReceiptText, Repeat2,
+  Route, Scale, ScanLine, Sigma, Split, Subtitles, Target, Utensils, WalletCards, Wrench,
 } from 'lucide-react'
 import type { ModuleType } from '../../types/spatial'
 import { GRID_SIZE } from '../../types/spatial'
@@ -15,7 +15,7 @@ const today = () => localDayKey()
 const inDays = (days: number) => localDayKeyInDays(days)
 
 type ExpansionType = Extract<ModuleType,
-  'clock_pulse'|'comparator'|'aggregator'|'range_mapper'|'latch'|'random_picker'|'sequencer'|'template'|'recorder'|'notifier'|
+  'clock_pulse'|'comparator'|'aggregator'|'range_mapper'|'latch'|'random_picker'|'sequencer'|'template'|'recorder'|'notifier'|'location'|
   'subscriptions'|'debt_payoff'|'expense_split'|'invoices'|'meal_planner'|'recipe'|'home_maintenance'|'chore_rotation'|'renewals_vault'|'medications'|'workout_plan'|'job_applications'|'okr'|'decision_journal'|'weekly_review'|'snippet_library'|'keep_in_touch'|'gifts_occasions'|'trip_itinerary'|'guest_list'
 >
 
@@ -30,6 +30,82 @@ export const EXPANSION_WIDGET_DEFINITIONS: Record<ExpansionType, WidgetDefinitio
   template: { type:'template', label:'Text Composer', description:'Compose live values into sentences', icon:Subtitles, category:'automation', accent:'#34d399', defaultSize:{width:320,height:C*5}, defaultData:()=>({template:'You have {a} tasks and {b} left',slotA:'3',slotB:'$42',slotC:'',slotD:''}) },
   recorder: { type:'recorder', label:'Recorder', description:'Turn any number into history', icon:ChartSpline, category:'automation', accent:'#4ade80', defaultSize:{width:320,height:C*5}, defaultData:()=>({label:'History',input:0,samples:[],mode:'on_change',lastRecordedAt:null}) },
   notifier: { type:'notifier', label:'Notifier', description:'Send a toast or browser reminder', icon:Bell, category:'automation', accent:'#f97316', defaultSize:{width:320,height:C*5}, defaultData:()=>({label:'Reminder',message:'Something needs your attention',channel:'toast',cooldownMinutes:60,armed:false,lastFiredAt:null,fireCount:0,pendingFireAt:null}) },
+  location: {
+    type: 'location',
+    label: 'Location',
+    description: 'One place, used as a pin, a clock, a compass, a fence, or a route',
+    icon: MapPin,
+    category: 'data',
+    accent: '#2dd4bf',
+    // Compass and Geofence draw a dial the width of the card, and Route needs
+    // room for a stop list; the old 6-cell box cropped both.
+    defaultSize: { width: 340, height: C * 7 },
+    // At the narrow floor the coordinate pair stacks and the action row wraps,
+    // so five cells of height clipped the last control; six holds every skin.
+    sizing: { minWidth: C * 6, minHeight: C * 6 },
+    defaultData: () => ({ label:'My location', address:'', latitude:null, longitude:null, timezone:Intl.DateTimeFormat().resolvedOptions().timeZone, accuracyMeters:null, capturedAt:null }),
+    rendererOwnedSkinDetails: ['coordinates', 'geofence', 'route'],
+    // Declared by hand so each skin wears its own icon and hue. `skinField`
+    // must stay 'skin': `LocationData` has no `mode`, and latitude/longitude
+    // are the circuit's canonical output — appearance may never touch them.
+    skinField: 'skin',
+    skins: [
+      {
+        value: 'pin',
+        label: 'Pin',
+        description: 'The place itself — name, address, and coordinates you can capture or type.',
+        implementation: 'renderer-ready',
+        presentation: 'standard',
+        icon: MapPin,
+        accent: '#2dd4bf',
+      },
+      {
+        value: 'coordinates',
+        label: 'Coordinates',
+        description: 'A precise readout in decimal, degrees-minutes-seconds, or a geo link, ready to copy.',
+        implementation: 'schema-extension',
+        presentation: 'standard',
+        icon: Crosshair,
+        accent: '#60a5fa',
+      },
+      {
+        value: 'local_time',
+        label: 'Local Time',
+        description: 'The clock at this place, how far it is from yours, and its sunrise and sunset.',
+        implementation: 'renderer-ready',
+        presentation: 'time',
+        icon: Clock3,
+        accent: '#c084fc',
+      },
+      {
+        value: 'compass',
+        label: 'Compass',
+        description: 'Live bearing and straight-line distance from wherever you are to this place.',
+        implementation: 'renderer-ready',
+        presentation: 'standard',
+        icon: Compass,
+        accent: '#f59e0b',
+      },
+      {
+        value: 'geofence',
+        label: 'Geofence',
+        description: 'A radius around the place that tells you whether you are inside it.',
+        implementation: 'schema-extension',
+        presentation: 'standard',
+        icon: Radar,
+        accent: '#34d399',
+      },
+      {
+        value: 'route',
+        label: 'Route',
+        description: 'Stops after this one, with the distance of every leg and the whole trip.',
+        implementation: 'schema-extension',
+        presentation: 'steps',
+        icon: Route,
+        accent: '#818cf8',
+      },
+    ],
+  },
 
   subscriptions: { type:'subscriptions', label:'Subscriptions', description:'Recurring charges and renewal pressure', icon:CreditCard, category:'life', accent:'#f472b6', defaultSize:{width:360,height:C*6}, defaultData:()=>({rows:[{id:uid(),name:'Streaming',cost:12,cycle:'monthly',renewsOn:inDays(5),active:true}] }), pack:'life' },
   debt_payoff: { type:'debt_payoff', label:'Debt Payoff', description:'Balances payoff date and interest', icon:WalletCards, category:'life', accent:'#fb7185', defaultSize:{width:380,height:C*7}, defaultData:()=>({debts:[{id:uid(),name:'Card',balance:2500,apr:19.9,minPayment:75}],extraPayment:100,strategy:'avalanche'}), pack:'life' },

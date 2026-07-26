@@ -26,7 +26,7 @@ describe('beta report store regressions', () => {
       useWidgetStore.getState().createWidget('Calculator', origin, 'calculator'),
       useWidgetStore.getState().createWidget('Number Input', origin, 'number_input'),
       useWidgetStore.getState().createWidget('Table', origin, 'table'),
-      useWidgetStore.getState().createWidget('Timer', origin, 'timekeeper'),
+      useWidgetStore.getState().createWidget('Timer', origin, 'timer'),
     ]
     const widgets = ids.map((id) =>
       restingFootprintWidget(useWidgetStore.getState().widgets[id]!),

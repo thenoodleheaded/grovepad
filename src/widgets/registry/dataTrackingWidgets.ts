@@ -1,8 +1,14 @@
 import {
   BarChart3,
+  Binary,
   Calculator,
   CalendarClock,
   CalendarDays,
+  CalendarRange,
+  Percent,
+  ReceiptText,
+  Sigma,
+  Variable,
   ChartNoAxesColumn,
   CircleDollarSign,
   Coffee,
@@ -20,6 +26,12 @@ import {
   Vote,
   ChartLine,
   ChartPie,
+  Dumbbell,
+  Globe2,
+  ListRestart,
+  Repeat2,
+  Swords,
+  TimerReset,
 } from 'lucide-react'
 import type { WidgetDefinition } from '../contracts/registry'
 import { localDayKey } from '../../utils/localDate'
@@ -37,8 +49,9 @@ export const DATA_TRACKING_WIDGET_DEFINITIONS = {
     defaultSize: { width: 280, height: C * 6 },
     defaultData: () => {
       const now = new Date()
-      return { year: now.getFullYear(), month: now.getMonth(), markedDates: [] }
+      return { year: now.getFullYear(), month: now.getMonth(), markedDates: [], skin: 'month' }
     },
+    rendererOwnedSkinDetails: ['shift_rota', 'birthday_and_anniversary'],
   },
   countdown: {
     type: 'countdown',
@@ -95,12 +108,88 @@ export const DATA_TRACKING_WIDGET_DEFINITIONS = {
   calculator: {
     type: 'calculator',
     label: 'Calculator',
-    description: 'A pocket calculator — type or tap',
+    description: 'Pocket, scientific, tape, finance, and programmer calculators in one card',
     icon: Calculator,
     category: 'data',
     accent: '#a7f3d0',
-    defaultSize: { width: 240, height: C * 7 },
+    // Scientific carries a function strip above the number block and
+    // Programmer four base readouts above its keypad. Every key keeps the
+    // catalog's 28px target floor, so the card has to be tall enough to hold
+    // them all rather than the keys shrinking to fit the old 240×280 box.
+    defaultSize: { width: 280, height: C * 9 },
+    sizing: { minWidth: C * 6, minHeight: C * 7 },
     defaultData: () => ({ expression: '', result: '' }),
+    rendererOwnedSkinDetails: ['date_math', 'named_variables'],
+    // Declared by hand so each skin wears its own icon: every one of these is
+    // the `standard` presentation, so the catalogue merge would have given all
+    // seven the same sparkle. `skinField` must stay 'skin' — `CalculatorData`
+    // has no `mode`, and `result` is the circuit's canonical output.
+    skinField: 'skin',
+    skins: [
+      {
+        value: 'basic',
+        label: 'Basic',
+        description: 'The current four-operation keypad.',
+        implementation: 'renderer-ready',
+        presentation: 'standard',
+        icon: Calculator,
+        accent: '#a7e472',
+      },
+      {
+        value: 'scientific',
+        label: 'Scientific',
+        description: 'Functions, constants, parentheses, and memory.',
+        implementation: 'renderer-ready',
+        presentation: 'standard',
+        icon: Sigma,
+        accent: '#e48c72',
+      },
+      {
+        value: 'tape',
+        label: 'Tape',
+        description: 'A visible running calculation history like an adding machine.',
+        implementation: 'renderer-ready',
+        presentation: 'standard',
+        icon: ReceiptText,
+        accent: '#72e4ab',
+      },
+      {
+        value: 'finance',
+        label: 'Finance',
+        description: 'Percent change, margin, markup, tax, and compound-growth shortcuts.',
+        implementation: 'renderer-ready',
+        presentation: 'standard',
+        icon: Percent,
+        accent: '#72e4a1',
+      },
+      {
+        value: 'programmer',
+        label: 'Programmer',
+        description: 'Binary, octal, hexadecimal, and bitwise operations.',
+        implementation: 'renderer-ready',
+        presentation: 'standard',
+        icon: Binary,
+        accent: '#bce472',
+      },
+      {
+        value: 'date_math',
+        label: 'Date Math',
+        description: 'Calculates differences, offsets, and working days between dates.',
+        implementation: 'schema-extension',
+        presentation: 'standard',
+        icon: CalendarRange,
+        accent: '#8772e4',
+      },
+      {
+        value: 'named_variables',
+        label: 'Named Variables',
+        description: 'Lets circuit inputs populate named values inside an expression.',
+        implementation: 'schema-extension',
+        presentation: 'standard',
+        icon: Variable,
+        accent: '#a572e4',
+      },
+    ],
   },
   bar_chart: {
     type: 'bar_chart',
@@ -126,6 +215,7 @@ export const DATA_TRACKING_WIDGET_DEFINITIONS = {
       { value: 'donut', label: 'Donut', icon: ChartPie, accent: '#fbbf24' },
       { value: 'pie', label: 'Pie', icon: ChartPie, accent: '#fb923c' },
     ],
+    rendererOwnedSkinDetails: ['heatmap', 'scatter', 'stacked'],
   },
   table: {
     type: 'table',
@@ -134,8 +224,9 @@ export const DATA_TRACKING_WIDGET_DEFINITIONS = {
     icon: Table2,
     category: 'data',
     accent: '#94a3b8',
-    defaultSize: { width: 360, height: C * 4 },
-    sizing: { minWidth: 320, maxWidth: 720 },
+    restingFace: true,
+    defaultSize: { width: 440, height: C * 5 },
+    sizing: { minWidth: 340, minHeight: C * 5, maxWidth: 840 },
     defaultData: () => ({
       rows: [
         ['Item', 'Owner', 'Status'],
@@ -143,6 +234,7 @@ export const DATA_TRACKING_WIDGET_DEFINITIONS = {
         ['', '', ''],
       ],
     }),
+    rendererOwnedSkinDetails: ['database', 'kanban', 'gallery', 'form_view', 'pivot'],
   },
   budget: {
     type: 'budget',
@@ -167,13 +259,16 @@ export const DATA_TRACKING_WIDGET_DEFINITIONS = {
     icon: ChartNoAxesColumn,
     category: 'data',
     accent: '#67e8f9',
-    defaultSize: { width: 320, height: C * 4 },
+    restingFace: true,
+    defaultSize: { width: 400, height: C * 7 },
+    sizing: { minWidth: 320, minHeight: C * 6, maxWidth: 720 },
     defaultData: () => ({
       tiles: [
         { id: uid(), label: 'Users', value: '128', unit: '', trend: 'up' },
         { id: uid(), label: 'Revenue', value: '3.2', unit: 'k', trend: 'flat' },
       ],
     }),
+    rendererOwnedSkinDetails: ['delta', 'target', 'executive_strip'],
   },
   timer: {
     type: 'timer',
@@ -184,32 +279,45 @@ export const DATA_TRACKING_WIDGET_DEFINITIONS = {
     accent: '#86efac',
     defaultSize: { width: 240, height: C * 4 },
     defaultData: () => ({ label: 'Timer', durationSeconds: 300, remainingSeconds: 300, endAt: null }),
-    availability: 'existing-only',
-    unavailableReason: 'Countdown now lives inside the Timer widget.',
   },
   timekeeper: {
     type: 'timekeeper',
-    label: 'Timer',
-    description: 'Countdown, Pomodoro, and Stopwatch in one mode-switching timer',
+    label: 'Time',
+    description: 'Timers, focus cycles, deadlines, clocks, and lap tracking in one card',
     icon: Timer,
     category: 'tracking',
     accent: '#86efac',
     // A dial is square: the clock ring rides the card's own outline, so the
     // card stays between 4×4 and 7×7 cells and never stretches into a bar
     // that would make the ring read as a border instead of a bezel.
-    defaultSize: { width: C * 5, height: C * 5 },
-    sizing: { minWidth: C * 4, minHeight: C * 4, maxWidth: C * 7, maxHeight: C * 7 },
+    restingFace: true,
+    defaultSize: { width: C * 6, height: C * 6 },
+    sizing: { minWidth: C * 5, minHeight: C * 5, maxWidth: C * 8, maxHeight: C * 8 },
     defaultData: () => ({
       mode: 'countdown',
       countdown: { label: 'Timer', durationSeconds: 300, remainingSeconds: 300, endAt: null },
       pomodoro: { label: 'Focus', workMinutes: 25, breakMinutes: 5, phase: 'work', endAt: null, remainingSeconds: 25 * 60, completed: 0 },
       stopwatch: { elapsedMs: 0, startedAt: null, laps: [] },
+      deadline: {
+        label: 'Launch day',
+        targetDate: localDayKey(Date.now() + 14 * 86_400_000),
+      },
+      worldClock: { zones: ['America/New_York', 'Europe/London', 'Asia/Tokyo'] },
     }),
     skins: [
-      { value: 'countdown', label: 'Countdown', icon: Timer, accent: '#86efac' },
+      { value: 'countdown', label: 'Timer', icon: Timer, accent: '#86efac' },
       { value: 'pomodoro', label: 'Pomodoro', icon: Coffee, accent: '#fb7185' },
       { value: 'stopwatch', label: 'Stopwatch', icon: Hourglass, accent: '#7dd3fc' },
+      { value: 'deadline', label: 'Deadline', icon: CalendarClock, accent: '#fb923c' },
+      { value: 'world_clock', label: 'World Clock', icon: Globe2, accent: '#67e8f9' },
+      { value: 'hourglass', label: 'Hourglass', description: 'A calm visual countdown with minimal controls.', implementation: 'renderer-ready', presentation: 'time', icon: Hourglass, accent: '#89e472' },
+      { value: 'intervals', label: 'Intervals', description: 'Alternates configurable work and recovery segments.', implementation: 'schema-extension', presentation: 'terminal', icon: Repeat2, accent: '#83e472' },
+      { value: 'tabata', label: 'Tabata', description: 'Runs repeated high-intensity and rest rounds.', implementation: 'schema-extension', presentation: 'standard', icon: Dumbbell, accent: '#72e0e4' },
+      { value: 'chess_clock', label: 'Chess Clock', description: 'Maintains two mutually exclusive running clocks.', implementation: 'schema-extension', presentation: 'time', icon: Swords, accent: '#e4a772' },
+      { value: 'lap_timer', label: 'Lap Timer', description: 'Records named laps and split differences.', implementation: 'schema-extension', presentation: 'time', icon: TimerReset, accent: '#e4a772' },
+      { value: 'multi_stage_timer', label: 'Multi-stage Timer', description: 'Runs several named timed phases in sequence.', implementation: 'schema-extension', presentation: 'time', icon: ListRestart, accent: '#e4a772' },
     ],
+    rendererOwnedSkinDetails: ['intervals', 'tabata', 'chess_clock', 'multi_stage_timer'],
   },
   mood_tracker: {
     type: 'mood_tracker',

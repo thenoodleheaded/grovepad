@@ -1,7 +1,6 @@
 import type {
   DecisionMatrixData,
   FormField,
-  FormulaData,
   UnitConverterData,
 } from '../../types/spatial'
 import type { FieldValue } from '../contracts/fields'
@@ -24,16 +23,6 @@ export function bool(v: FieldValue): boolean {
   if (typeof v === 'boolean') return v
   if (typeof v === 'number') return v >= 1
   return v === 'true' || v === '1' || v === 'yes' || v === 'on'
-}
-
-export function formulaValue(data: FormulaData): number {
-  const a = Number.isFinite(data.a) ? data.a : 0
-  const b = Number.isFinite(data.b) ? data.b : 0
-  if (data.operator === 'add') return a + b
-  if (data.operator === 'subtract') return a - b
-  if (data.operator === 'multiply') return a * b
-  if (data.operator === 'divide') return b === 0 ? 0 : a / b
-  return b === 0 ? 0 : a % b
 }
 
 export function primaryZoneTime(zones: string[]): string {

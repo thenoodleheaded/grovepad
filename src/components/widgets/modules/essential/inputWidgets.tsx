@@ -1,70 +1,17 @@
-import { Copy, Minus, Plus } from 'lucide-react'
+import { Minus, Plus } from 'lucide-react'
 import type {
   BranchGateData,
-  FormulaData,
-  FormulaOperator,
   NumberInputData,
-  TextInputData,
-  ToggleData,
 } from '../../../../types/spatial'
 import { WidgetPanel } from '../../WidgetPanel'
 import { SmallAction } from './shared'
-import { inputClass, numericClass, panelClass, finite, clamp } from './sharedPrimitives'
+import { numericClass, panelClass, finite, clamp } from './sharedPrimitives'
 
-/** Input and logic widgets: TextInput, NumberInput, Toggle, BranchGate, Formula. Extracted verbatim from EssentialWidgets.tsx. */
-export function TextInputWidget({
-  data,
-  onChange,
-}: {
-  data: TextInputData
-  onChange: (data: TextInputData) => void
-}) {
-  const control = data.multiline ? (
-    <textarea
-      value={data.value}
-      placeholder={data.placeholder}
-      rows={3}
-      onChange={(event) => onChange({ ...data, value: event.target.value })}
-      className={`${inputClass} flex-1 resize-none leading-relaxed`}
-    />
-  ) : (
-    <input
-      value={data.value}
-      placeholder={data.placeholder}
-      onChange={(event) => onChange({ ...data, value: event.target.value })}
-      className={`${inputClass} text-[15px] font-medium`}
-    />
-  )
-
-  return (
-    <div className="flex h-full flex-col gap-2">
-      <div className="gp-text-input-header flex items-center gap-2">
-        <input
-          value={data.label}
-          placeholder="Label"
-          onChange={(event) => onChange({ ...data, label: event.target.value })}
-          className="gp-input--bare min-w-0 flex-1 text-[10px] font-semibold uppercase tracking-widest text-neutral-500 outline-none"
-        />
-        <button
-          type="button"
-          onClick={() => onChange({ ...data, multiline: !data.multiline })}
-          className="rounded-md border gp-hairline px-1.5 py-0.5  text-[8px] uppercase text-neutral-600 hover:text-neutral-300"
-        >
-          {data.multiline ? 'Wrap' : 'Single'}
-        </button>
-        <span
-
-          title={data.value.trim() ? 'Has a value' : 'Empty'}
-          className={`h-1.5 w-1.5 rounded-full ${data.value.trim() ? 'bg-emerald-400' : 'bg-neutral-700'}`}
-        />
-      </div>
-      <div data-island="value" className={`${panelClass} flex min-h-0 flex-1 px-3 py-2`}>
-        {control}
-      </div>
-    </div>
-  )
-}
-
+/**
+ * Input and logic widgets: NumberInput and BranchGate. Extracted verbatim from
+ * EssentialWidgets.tsx. Text Input and Formula each moved to their own module
+ * when they grew a skin family — see TextInputWidget.tsx and FormulaWidget.tsx.
+ */
 export function NumberInputWidget({
   data,
   onChange,
@@ -130,61 +77,6 @@ export function NumberInputWidget({
             />
           </label>
         ))}
-      </div>
-    </div>
-  )
-}
-
-export function ToggleWidget({
-  data,
-  onChange,
-}: {
-  data: ToggleData
-  onChange: (data: ToggleData) => void
-}) {
-  return (
-    <div className="flex h-full flex-col justify-between gap-3">
-      <input
-        aria-label="Toggle label"
-        value={data.label}
-        placeholder="Condition"
-        onChange={(event) => onChange({ ...data, label: event.target.value })}
-        className={`${inputClass} text-center text-[14px] font-medium`}
-      />
-      <div data-island="switch" className={`${panelClass} flex flex-col gap-2 px-3 py-2`}>
-      <button
-
-        type="button"
-        role="switch"
-        aria-label={data.label || 'Toggle value'}
-        aria-checked={data.value}
-        onClick={() => onChange({ ...data, value: !data.value })}
-        className={`mx-auto flex h-10 w-20 items-center !rounded-full border p-1 transition-all duration-200 ${
-          data.value ? '' : 'border-neutral-700 bg-neutral-900/70'
-        }`}
-        style={
-          data.value
-            ? {
-                borderColor: 'color-mix(in oklab, var(--gp-widget-accent), transparent 50%)',
-                background: 'color-mix(in oklab, var(--gp-widget-accent), transparent 85%)',
-                boxShadow: '0 0 18px color-mix(in oklab, var(--gp-widget-accent), transparent 88%)',
-              }
-            : undefined
-        }
-      >
-        <span
-          className={`h-7 w-7 rounded-full shadow-lg transition-transform duration-200 ${
-            data.value ? 'translate-x-10' : 'translate-x-0 bg-neutral-600'
-          }`}
-          style={data.value ? { background: 'var(--gp-widget-accent)' } : undefined}
-        />
-      </button>
-      <p
-        className={`text-center  text-[9px] uppercase tracking-widest ${data.value ? '' : 'text-neutral-600'}`}
-        style={data.value ? { color: 'var(--gp-widget-accent)' } : undefined}
-      >
-        {data.value ? 'On · true' : 'Off · false'}
-      </p>
       </div>
     </div>
   )
@@ -262,84 +154,6 @@ export function BranchGateWidget({
     <div className="gp-branch-gate grid grid-cols-2 gap-2">
       {side(true)}
       {side(false)}
-    </div>
-  )
-}
-
-const FORMULA_LABELS: Record<FormulaOperator, string> = {
-  add: '+',
-  subtract: '−',
-  multiply: '×',
-  divide: '÷',
-  modulo: '%',
-}
-
-function formulaResult(data: FormulaData): number {
-  const a = finite(data.a)
-  const b = finite(data.b)
-  if (data.operator === 'add') return a + b
-  if (data.operator === 'subtract') return a - b
-  if (data.operator === 'multiply') return a * b
-  if (data.operator === 'divide') return b === 0 ? 0 : a / b
-  return b === 0 ? 0 : a % b
-}
-
-export function FormulaWidget({
-  data,
-  onChange,
-}: {
-  data: FormulaData
-  onChange: (data: FormulaData) => void
-}) {
-  const result = formulaResult(data)
-  return (
-    <div className="flex h-full flex-col gap-3">
-      <input
-        aria-label="Formula label"
-        value={data.label}
-        onChange={(event) => onChange({ ...data, label: event.target.value })}
-        className="bg-transparent text-center text-[11px] font-medium text-neutral-500 outline-none"
-      />
-      <div data-island="operands" className="gp-formula-operands grid grid-cols-[1fr_52px_1fr] items-center gap-2">
-        {/* Operands are visually equal alternatives — fixed by the symmetry rule. */}
-        <label className={`${panelClass} px-2 py-2 text-center`}>
-          <span className="block  text-[8px] uppercase text-neutral-700">A</span>
-          <input
-            type="number"
-            value={finite(data.a)}
-            onChange={(event) => onChange({ ...data, a: Number(event.target.value) })}
-            className={`${numericClass} w-full text-center text-lg font-semibold`}
-          />
-        </label>
-        <select
-          value={data.operator}
-          aria-label="Formula operator"
-          onChange={(event) => onChange({ ...data, operator: event.target.value as FormulaOperator })}
-          className="h-10 text-center text-lg font-semibold text-neutral-200 outline-none"
-        >
-          {Object.entries(FORMULA_LABELS).map(([key, label]) => (
-            <option key={key} value={key}>{label}</option>
-          ))}
-        </select>
-        <label className={`${panelClass} px-2 py-2 text-center`}>
-          <span className="block  text-[8px] uppercase text-neutral-700">B</span>
-          <input
-            type="number"
-            value={finite(data.b)}
-            onChange={(event) => onChange({ ...data, b: Number(event.target.value) })}
-            className={`${numericClass} w-full text-center text-lg font-semibold`}
-          />
-        </label>
-      </div>
-      <div data-island="result" className="gp-well flex flex-1 items-center justify-between gap-2 px-4 py-2">
-        <span className="gp-label mb-0">Result</span>
-        <strong className="gp-hero min-w-0 truncate">
-          {Math.round(result * 1e8) / 1e8}
-        </strong>
-        <SmallAction label="Copy result" onClick={() => void navigator.clipboard?.writeText(String(result))}>
-          <Copy size={11} />
-        </SmallAction>
-      </div>
     </div>
   )
 }

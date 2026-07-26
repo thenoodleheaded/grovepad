@@ -16,6 +16,7 @@ import type {
   GameTunerData,
   HabitData,
   KanbanData,
+  LinkedListData,
   LinksData,
   MediaData,
   MeetingNotesData,
@@ -42,7 +43,7 @@ import {
   CalculatorWidget, CalendarWidget, CanvasNodeWidget, CodeWidget,
   ColorPaletteWidget, ContactWidget, CounterWidget, CountdownWidget,
   DialogWidget, ExcalidrawWidget, GameTunerWidget,
-  HabitWidget, KanbanWidget, LinksWidget, MediaWidget, MeetingNotesWidget, MetricsWidget,
+  HabitWidget, KanbanWidget, LinkedListWidget, LinksWidget, MediaWidget, MeetingNotesWidget, MetricsWidget,
   MoodTrackerWidget, PollWidget, PriorityMatrixWidget, ProgressWidget,
   ProsConsWidget, QuoteWidget, RatingWidget, ReadingListWidget,
   StickyNoteWidget, StopwatchWidget, TableWidget, TimekeeperWidget, TimelineWidget, TimerWidget,
@@ -52,8 +53,21 @@ import {
 export const coreWidgetRendererFamily: WidgetRendererFamily = {
   id: 'core',
   renderers: {
-    bullets: ({ widget, onUpdate, onHeightChange }) => <BulletsWidget data={widget.data as BulletsData} onChange={onUpdate} onHeightChange={onHeightChange} />,
-    table: ({ widget, onUpdate }) => <TableWidget data={widget.data as TableData} onChange={onUpdate} />,
+    bullets: ({ widget, onUpdate, onHeightChange }) => (
+      <BulletsWidget
+        data={widget.data as BulletsData}
+        skin={(widget.data as BulletsData).skin}
+        onChange={(data) => onUpdate(data)}
+        onHeightChange={onHeightChange}
+      />
+    ),
+    table: ({ widget, onUpdate }) => (
+      <TableWidget
+        data={widget.data as TableData}
+        skin={(widget.data as TableData).skin}
+        onChange={onUpdate}
+      />
+    ),
     excalidraw: ({ widget, onUpdate }) => (
       <ExcalidrawWidget data={widget.data as ExcalidrawData} widgetId={widget.id} title={widget.title} onChange={onUpdate} />
     ),
@@ -64,25 +78,63 @@ export const coreWidgetRendererFamily: WidgetRendererFamily = {
     dialog: ({ widget, onUpdate }) => <DialogWidget data={widget.data as DialogData} onChange={onUpdate} />,
     game_tuner: ({ widget, onUpdate }) => <GameTunerWidget data={widget.data as GameTunerData} onChange={onUpdate} />,
     audio_player: ({ widget, onUpdate }) => <AudioPlayerWidget data={widget.data as AudioPlayerData} onChange={onUpdate} />,
-    canvas_node: ({ widget }) => <CanvasNodeWidget data={widget.data as CanvasNodeData} />,
+    canvas_node: ({ widget, onUpdate, onHeightChange }) => (
+      <CanvasNodeWidget
+        data={widget.data as CanvasNodeData}
+        skin={(widget.data as CanvasNodeData).skin}
+        onChange={(data) => onUpdate(data)}
+        onHeightChange={onHeightChange}
+      />
+    ),
     kanban: ({ widget, onUpdate }) => <KanbanWidget data={widget.data as KanbanData} onChange={onUpdate} />,
     countdown: ({ widget, onUpdate }) => <CountdownWidget data={widget.data as CountdownData} onChange={onUpdate} />,
     habit: ({ widget, onUpdate }) => <HabitWidget data={widget.data as HabitData} onChange={onUpdate} />,
+    linked_list: ({ widget, onUpdate }) => (
+      <LinkedListWidget
+        data={widget.data as LinkedListData}
+        skin={(widget.data as LinkedListData).skin}
+        onChange={onUpdate}
+      />
+    ),
     links: ({ widget, onUpdate }) => <LinksWidget data={widget.data as LinksData} onChange={onUpdate} />,
     code: ({ widget, onUpdate }) => <CodeWidget data={widget.data as CodeData} onChange={onUpdate} />,
     quote: ({ widget, onUpdate }) => <QuoteWidget data={widget.data as QuoteData} onChange={onUpdate} />,
     poll: ({ widget, onUpdate }) => <PollWidget data={widget.data as PollData} onChange={onUpdate} />,
     contact: ({ widget, onUpdate }) => <ContactWidget data={widget.data as ContactData} onChange={onUpdate} />,
-    media: ({ widget, onUpdate }) => <MediaWidget data={widget.data as MediaData} onChange={onUpdate} />,
-    metrics: ({ widget, onUpdate }) => <MetricsWidget data={widget.data as MetricsData} onChange={onUpdate} />,
+    media: ({ widget, onUpdate }) => (
+      <MediaWidget
+        data={widget.data as MediaData}
+        skin={(widget.data as MediaData).skin}
+        onChange={onUpdate}
+      />
+    ),
+    metrics: ({ widget, onUpdate }) => (
+      <MetricsWidget
+        data={widget.data as MetricsData}
+        skin={(widget.data as MetricsData).skin}
+        onChange={onUpdate}
+      />
+    ),
     sticky_note: ({ widget, onUpdate, onHeightChange }) => <StickyNoteWidget widgetId={widget.id} data={widget.data as StickyNoteData} onChange={onUpdate} onHeightChange={onHeightChange} />,
-    calendar: ({ widget, onUpdate }) => <CalendarWidget data={widget.data as CalendarData} onChange={onUpdate} />,
+    calendar: ({ widget, onUpdate }) => (
+      <CalendarWidget
+        data={widget.data as CalendarData}
+        skin={(widget.data as CalendarData).skin}
+        onChange={onUpdate}
+      />
+    ),
     timer: ({ widget, onUpdate }) => <TimerWidget data={widget.data as TimerData} onChange={onUpdate} />,
     timekeeper: ({ widget, onUpdate }) => <TimekeeperWidget data={widget.data as import('../../../types/widgetDataExpansion').TimekeeperData} onChange={onUpdate} />,
     rating: ({ widget, onUpdate }) => <RatingWidget data={widget.data as RatingData} onChange={onUpdate} />,
     color_palette: ({ widget, onUpdate }) => <ColorPaletteWidget data={widget.data as ColorPaletteData} onChange={onUpdate} />,
     mood_tracker: ({ widget, onUpdate }) => <MoodTrackerWidget data={widget.data as MoodTrackerData} onChange={onUpdate} />,
-    calculator: ({ widget, onUpdate }) => <CalculatorWidget data={widget.data as CalculatorData} onChange={onUpdate} />,
+    calculator: ({ widget, onUpdate }) => (
+      <CalculatorWidget
+        data={widget.data as CalculatorData}
+        skin={(widget.data as CalculatorData).skin}
+        onChange={onUpdate}
+      />
+    ),
     counter: ({ widget, onUpdate }) => <CounterWidget data={widget.data as CounterData} onChange={onUpdate} />,
     pros_cons: ({ widget, onUpdate }) => <ProsConsWidget data={widget.data as ProsConsData} onChange={onUpdate} />,
     weekly_planner: ({ widget, onUpdate }) => <WeeklyPlannerWidget data={widget.data as WeeklyPlannerData} onChange={onUpdate} />,

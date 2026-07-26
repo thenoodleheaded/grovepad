@@ -21,6 +21,7 @@ export type ModuleType =
   | 'countdown'
   | 'habit'
   | 'links'
+  | 'linked_list'
   | 'code'
   | 'quote'
   | 'poll'
@@ -48,6 +49,7 @@ export type ModuleType =
   | 'priority_matrix'
   | 'decision'
   | 'world_clock'
+  | 'location'
   | 'pomodoro'
   | 'vocab'
   | 'grade_calc'
@@ -147,6 +149,7 @@ export const MODULE_TYPES: readonly ModuleType[] = [
   'countdown',
   'habit',
   'links',
+  'linked_list',
   'code',
   'quote',
   'poll',
@@ -174,6 +177,7 @@ export const MODULE_TYPES: readonly ModuleType[] = [
   'priority_matrix',
   'decision',
   'world_clock',
+  'location',
   'pomodoro',
   'vocab',
   'grade_calc',

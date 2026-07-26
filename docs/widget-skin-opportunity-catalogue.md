@@ -1,6 +1,8 @@
 # Grovepad skin opportunity catalogue
 
 > Product proposal, not a shipped-capability contract. Generated from the live public widget registry, skin catalogue, field descriptors, and command descriptors on 25 July 2026.
+>
+> This is the broad idea inventory. The stricter, current ownership decision—skin vs control vs preset vs capability vs separate widget—is in [widget-skin-reorganization.md](widget-skin-reorganization.md).
 
 ## Outcome
 

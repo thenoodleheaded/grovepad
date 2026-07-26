@@ -14,12 +14,16 @@ import type {
   QuoteData,
   RandomPickerData,
   StickyNoteData,
+  StopwatchData,
   StudyGoalData,
+  TimerData,
   TimelineData,
   VocabData,
   QuizData,
   WeeklyPlannerData,
   DailyAgendaData,
+  WorldClockData,
+  PomodoroData,
 } from '../types/spatial'
 import { CONSOLIDATED_WIDGET_MODES, publicWidgetTypeFor, widgetDefinition } from '../widgets/registry'
 
@@ -40,7 +44,11 @@ export function consolidateWidgetData(type:ModuleType,data:ModuleData):{type:Mod
     case 'pie_chart': { const value=data as PieChartData; patch={mode:value.mode,title:value.title,bars:value.segments}; break }
     case 'random_picker': { const value=data as RandomPickerData; patch={mode,question:value.label,options:value.options.map(item=>item.text),weights:value.options.map(item=>item.weight),pickedIndex:value.pick?value.options.findIndex(item=>item.text===value.pick):null,history:value.history,lastRolledAt:value.lastRolledAt,noRepeatWindow:value.noRepeatWindow}; break }
     case 'gpa': patch={mode,gpa:data as GpaData}; break
-    case 'countdown': { const value=data as CountdownData; patch={mode,label:value.label,date:value.targetDate}; break }
+    case 'countdown': patch={mode,deadline:data as CountdownData}; break
+    case 'timer': patch={mode,countdown:data as TimerData}; break
+    case 'pomodoro': patch={mode,pomodoro:data as PomodoroData}; break
+    case 'stopwatch': patch={mode,stopwatch:data as StopwatchData}; break
+    case 'world_clock': patch={mode,worldClock:data as WorldClockData}; break
     case 'excalidraw': patch={mode,diagram:data as ExcalidrawData}; break
     case 'progress': patch={mode,simple:data as ProgressData}; break
     case 'study_goal': patch={mode,hours:data as StudyGoalData}; break

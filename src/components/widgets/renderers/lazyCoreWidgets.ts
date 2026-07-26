@@ -8,7 +8,6 @@ export const BulletsWidget = lazy(async () => ({ default: (await import('../modu
 export const CalculatorWidget = lazy(async () => ({ default: (await import('../modules/CalculatorWidget')).CalculatorWidget }))
 export const CalendarWidget = lazy(async () => ({ default: (await import('../modules/CalendarWidget')).CalendarWidget }))
 export const CanvasNodeWidget = lazy(async () => ({ default: (await import('../modules/CanvasNodeWidget')).CanvasNodeWidget }))
-export const ChecklistWidget = lazy(async () => ({ default: (await import('../modules/ChecklistWidget')).ChecklistWidget }))
 export const CodeWidget = lazy(async () => ({ default: (await import('../modules/CodeWidget')).CodeWidget }))
 export const ColorPaletteWidget = lazy(async () => ({ default: (await import('../modules/ColorPaletteWidget')).ColorPaletteWidget }))
 export const ContactWidget = lazy(async () => ({ default: (await import('../modules/ContactWidget')).ContactWidget }))
@@ -16,12 +15,14 @@ export const CounterWidget = lazy(async () => ({ default: (await import('../modu
 export const CountdownWidget = lazy(async () => ({ default: (await import('../modules/CountdownWidget')).CountdownWidget }))
 export const DecisionWidget = lazy(async () => ({ default: (await import('../modules/DecisionWidget')).DecisionWidget }))
 export const DialogWidget = lazy(async () => ({ default: (await import('../modules/DialogWidget')).DialogWidget }))
+export const DrawingWidget = lazy(async () => ({ default: (await import('../modules/DrawingWidget')).DrawingWidget }))
 export const ExcalidrawWidget = lazy(async () => ({ default: (await import('../modules/excalidraw/ExcalidrawWidget')).ExcalidrawWidget }))
 export const FlashcardsWidget = lazy(async () => ({ default: (await import('../modules/FlashcardsWidget')).FlashcardsWidget }))
 export const GameTunerWidget = lazy(async () => ({ default: (await import('../modules/specialist/GameTunerWidget')).GameTunerWidget }))
 export const GoalTrackerWidget = lazy(async () => ({ default: (await import('../modules/GoalTrackerWidget')).GoalTrackerWidget }))
 export const HabitWidget = lazy(async () => ({ default: (await import('../modules/HabitWidget')).HabitWidget }))
 export const KanbanWidget = lazy(async () => ({ default: (await import('../modules/KanbanWidget')).KanbanWidget }))
+export const LinkedListWidget = lazy(async () => ({ default: (await import('../modules/LinkedListWidget')).LinkedListWidget }))
 export const LinksWidget = lazy(async () => ({ default: (await import('../modules/LinksWidget')).LinksWidget }))
 export const MediaWidget = lazy(async () => ({ default: (await import('../modules/MediaWidget')).MediaWidget }))
 export const MeetingNotesWidget = lazy(async () => ({ default: (await import('../modules/MeetingNotesWidget')).MeetingNotesWidget }))
@@ -39,6 +40,7 @@ export const SketchpadWidget = lazy(async () => ({ default: (await import('../mo
 export const StickyNoteWidget = lazy(async () => ({ default: (await import('../modules/StickyNoteWidget')).StickyNoteWidget }))
 export const StopwatchWidget = lazy(async () => ({ default: (await import('../modules/StopwatchWidget')).StopwatchWidget }))
 export const TableWidget = lazy(async () => ({ default: (await import('../modules/TableWidget')).TableWidget }))
+export const TasksWidget = lazy(async () => ({ default: (await import('../modules/TasksWidget')).TasksWidget }))
 export const TimelineWidget = lazy(async () => ({ default: (await import('../modules/TimelineWidget')).TimelineWidget }))
 export const TimerWidget = lazy(async () => ({ default: (await import('../modules/TimerWidget')).TimerWidget }))
 export const TimekeeperWidget = lazy(async () => ({ default: (await import('../modules/TimekeeperWidget')).TimekeeperWidget }))
@@ -56,7 +58,6 @@ export const CORE_WIDGET_MODULE_LOADERS: ReadonlyArray<() => Promise<unknown>> =
   () => import('../modules/CalculatorWidget'),
   () => import('../modules/CalendarWidget'),
   () => import('../modules/CanvasNodeWidget'),
-  () => import('../modules/ChecklistWidget'),
   () => import('../modules/CodeWidget'),
   () => import('../modules/ColorPaletteWidget'),
   () => import('../modules/ContactWidget'),
@@ -64,10 +65,12 @@ export const CORE_WIDGET_MODULE_LOADERS: ReadonlyArray<() => Promise<unknown>> =
   () => import('../modules/CounterWidget'),
   () => import('../modules/DecisionWidget'),
   () => import('../modules/DialogWidget'),
+  () => import('../modules/DrawingWidget'),
   () => import('../modules/FlashcardsWidget'),
   () => import('../modules/GoalTrackerWidget'),
   () => import('../modules/HabitWidget'),
   () => import('../modules/KanbanWidget'),
+  () => import('../modules/LinkedListWidget'),
   () => import('../modules/LinksWidget'),
   () => import('../modules/MediaWidget'),
   () => import('../modules/MeetingNotesWidget'),
@@ -85,6 +88,7 @@ export const CORE_WIDGET_MODULE_LOADERS: ReadonlyArray<() => Promise<unknown>> =
   () => import('../modules/StickyNoteWidget'),
   () => import('../modules/StopwatchWidget'),
   () => import('../modules/TableWidget'),
+  () => import('../modules/TasksWidget'),
   () => import('../modules/TimekeeperWidget'),
   () => import('../modules/TimelineWidget'),
   () => import('../modules/TimerWidget'),

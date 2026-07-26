@@ -1,0 +1,1085 @@
+/*
+ * Purpose-built Location skins.
+ *
+ * One place, six instruments over it: a pin, a coordinate readout, the clock
+ * there, a compass to it, a fence around it, and a route on from it. Every
+ * skin paints on the card's one backplate (Article XIII) — readouts are
+ * genuine wells because they show computed values, the dial, ring, and day
+ * arc are flat visuals that own their paint, and every wrapper holding a text
+ * control carries `gp-bare-field` so the auto field-island detector never
+ * manufactures a second pane of glass.
+ */
+
+.gp-loc {
+  --gp-loc-ink: var(--gp-widget-ink, #f5f5f5);
+  --gp-loc-quiet: color-mix(in oklab, var(--gp-loc-ink), transparent 55%);
+  --gp-loc-faint: color-mix(in oklab, var(--gp-loc-ink), transparent 74%);
+  --gp-loc-rule: color-mix(in oklab, var(--gp-loc-ink), transparent 90%);
+  --gp-loc-surface: color-mix(in oklab, var(--gp-loc-ink), transparent 94%);
+  container-type: inline-size;
+  display: flex;
+  height: 100%;
+  min-height: 0;
+  flex-direction: column;
+  gap: 0.45rem;
+  color: var(--gp-loc-ink);
+}
+
+/* The generated presentation families paint dashboard and step furniture that
+   has nothing to do with a map. Each of these skins owns its own anatomy. */
+.gp-widget-ui[data-widget-type='location'] {
+  container-type: inline-size;
+}
+
+.gp-widget-ui[data-widget-type='location'][data-skin-presentation] {
+  background-image: none;
+  padding-inline-start: 0;
+}
+
+.gp-widget-ui[data-widget-type='location'][data-skin-presentation]::before {
+  content: none;
+}
+
+.gp-widget-ui[data-widget-type='location'][data-skin-presentation] :where(strong, output, em) {
+  color: inherit;
+}
+
+.gp-loc-sr {
+  position: absolute;
+  overflow: hidden;
+  width: 1px;
+  height: 1px;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ------------------------------------------------------------------- head */
+
+.gp-loc-head,
+.gp-loc-route-head {
+  display: flex;
+  min-width: 0;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+/* The one badge on the card: it names the instrument being worn. */
+.gp-loc-glyph {
+  display: inline-flex;
+  width: 22px;
+  height: 22px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border-radius: 7px;
+  color: color-mix(in oklab, var(--gp-widget-accent), white 8%);
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 86%);
+  box-shadow: inset 0 1px 0 color-mix(in oklab, white, transparent 88%);
+}
+
+.gp-loc-name {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.gp-loc-name input {
+  width: 100%;
+  min-width: 0;
+  min-height: 22px;
+  padding-inline: 0;
+  border: 0;
+  color: var(--gp-loc-ink);
+  background: transparent;
+  font-size: 14px;
+  font-weight: 570;
+  letter-spacing: -0.012em;
+  outline: 0;
+}
+
+.gp-loc-name[data-size='small'] input {
+  font-size: 12px;
+  font-weight: 550;
+  color: color-mix(in oklab, var(--gp-loc-ink), transparent 22%);
+}
+
+.gp-loc-name input::placeholder,
+.gp-loc-address input::placeholder {
+  color: var(--gp-loc-faint);
+  font-weight: 470;
+}
+
+.gp-loc-name:focus-within,
+.gp-loc-address:focus-within {
+  box-shadow: inset 0 -1px 0 color-mix(in oklab, var(--gp-widget-accent), transparent 52%);
+}
+
+.gp-loc-address {
+  display: flex;
+  min-width: 0;
+  flex: 0 0 auto;
+}
+
+.gp-loc-address input {
+  width: 100%;
+  min-width: 0;
+  min-height: 20px;
+  padding-inline: 0;
+  border: 0;
+  color: var(--gp-loc-quiet);
+  background: transparent;
+  font-size: 11.5px;
+  font-weight: 480;
+  outline: 0;
+}
+
+.gp-loc-chip {
+  flex: 0 0 auto;
+  border-radius: 999px;
+  padding: 2px 7px;
+  color: color-mix(in oklab, var(--gp-widget-accent), white 10%);
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 88%);
+  font-size: 9.5px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.03em;
+}
+
+/* ------------------------------------------------------------ coordinates */
+
+.gp-loc-coords {
+  display: grid;
+  min-width: 0;
+  flex: 0 0 auto;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  overflow: hidden;
+  border-radius: var(--gp-r2);
+  background: var(--gp-loc-rule);
+  box-shadow:
+    inset 0 1.5px 3px rgb(0 0 0 / 0.34),
+    0 1px 0 color-mix(in oklab, white, transparent 95%);
+}
+
+.gp-loc-coord {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 1px;
+  padding: 5px 9px 6px;
+  background: rgb(0 0 0 / 0.24);
+}
+
+.gp-loc-coord-label {
+  color: var(--gp-loc-faint);
+  font-size: 8.5px;
+  font-weight: 650;
+  letter-spacing: 0.085em;
+  text-transform: uppercase;
+}
+
+.gp-loc-coord input {
+  width: 100%;
+  min-width: 0;
+  min-height: 20px;
+  padding-inline: 0;
+  border: 0;
+  color: var(--gp-loc-ink);
+  background: transparent;
+  font-size: 13px;
+  font-weight: 560;
+  font-variant-numeric: tabular-nums;
+  outline: 0;
+}
+
+.gp-loc-coord input::placeholder {
+  color: var(--gp-loc-faint);
+}
+
+/* Spinners steal width a six-decimal coordinate needs. */
+.gp-loc-coord input::-webkit-outer-spin-button,
+.gp-loc-coord input::-webkit-inner-spin-button {
+  margin: 0;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.gp-loc-coord input[type='number'] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+.gp-loc-coord:focus-within {
+  background: color-mix(in oklab, var(--gp-widget-accent), rgb(0 0 0 / 0.24) 88%);
+}
+
+.gp-loc-coord:focus-within .gp-loc-coord-label {
+  color: color-mix(in oklab, var(--gp-widget-accent), transparent 24%);
+}
+
+/* --------------------------------------------------------------- controls */
+
+.gp-loc-actions {
+  display: flex;
+  min-width: 0;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem;
+  margin-top: auto;
+}
+
+/* Ghost by default (Article XIX: a button inside the card paints no glass of
+   its own); the primary action borrows a whisper of the card's accent. */
+.gp-widget-ui .gp-loc-btn {
+  display: inline-flex;
+  min-height: 28px;
+  align-items: center;
+  gap: 0.32rem;
+  border: 0;
+  border-radius: var(--gp-r2);
+  padding: 0 9px;
+  color: var(--gp-loc-quiet);
+  background: transparent;
+  font-size: 10.5px;
+  font-weight: 620;
+  letter-spacing: 0.01em;
+  text-decoration: none;
+  transition: background-color 140ms ease, color 140ms ease;
+}
+
+.gp-widget-ui .gp-loc-btn:hover {
+  color: var(--gp-loc-ink);
+  background: var(--gp-loc-surface);
+}
+
+.gp-widget-ui .gp-loc-btn:active {
+  transform: scale(0.97);
+}
+
+.gp-widget-ui .gp-loc-btn:focus-visible {
+  outline: 1px solid color-mix(in oklab, var(--gp-widget-accent), transparent 30%);
+  outline-offset: 1px;
+}
+
+.gp-widget-ui .gp-loc-btn--primary {
+  color: color-mix(in oklab, var(--gp-widget-accent), white 12%);
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 90%);
+}
+
+.gp-widget-ui .gp-loc-btn--primary:hover {
+  color: color-mix(in oklab, var(--gp-widget-accent), white 20%);
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 82%);
+}
+
+.gp-widget-ui .gp-loc-btn[aria-pressed='true'] {
+  color: color-mix(in oklab, var(--gp-widget-accent), white 18%);
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 78%);
+}
+
+.gp-widget-ui .gp-loc-btn:disabled {
+  opacity: 0.42;
+  pointer-events: none;
+}
+
+.gp-widget-ui .gp-loc-btn[data-pending] {
+  color: color-mix(in oklab, var(--gp-widget-accent), transparent 26%);
+}
+
+.gp-loc-notice {
+  flex: 0 0 auto;
+  margin: 0;
+  color: #fda4af;
+  font-size: 10px;
+  font-weight: 520;
+  line-height: 1.35;
+}
+
+.gp-loc-hint {
+  flex: 0 0 auto;
+  margin: 0;
+  color: var(--gp-loc-faint);
+  font-size: 10.5px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.gp-loc-provenance,
+.gp-loc-clock-sub {
+  display: flex;
+  min-width: 0;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0;
+  overflow: hidden;
+  color: var(--gp-loc-faint);
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.055em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* A sentence, not a banner: the waiting line wraps and drops the uppercase
+   tracking it would only need as a one-word status. */
+.gp-loc-clock-sub[data-wrap] {
+  justify-content: center;
+  letter-spacing: 0.01em;
+  text-align: center;
+  text-transform: none;
+  white-space: normal;
+}
+
+.gp-loc-dot {
+  width: 2px;
+  height: 2px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.55;
+}
+
+.gp-loc-empty {
+  display: flex;
+  min-height: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.5rem;
+  color: var(--gp-loc-faint);
+  text-align: center;
+}
+
+.gp-loc-empty p {
+  max-width: 30ch;
+  margin: 0;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.45;
+}
+
+/* Pin holds little: on a tall card its coordinates centre in the space
+   between the address and the actions instead of leaving one dead gap. */
+.gp-loc--pin .gp-loc-coords {
+  margin-top: auto;
+}
+
+.gp-loc--pin .gp-loc-provenance {
+  margin-bottom: auto;
+}
+
+.gp-loc--pin .gp-loc-actions {
+  margin-top: 0;
+}
+
+/* ------------------------------------------------------- coordinates skin */
+
+.gp-loc-notations {
+  display: grid;
+  flex: 0 0 auto;
+  grid-auto-columns: 1fr;
+  grid-auto-flow: column;
+  gap: 2px;
+  border-radius: var(--gp-r2);
+  padding: 2px;
+  background: rgb(0 0 0 / 0.22);
+  box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.3);
+}
+
+.gp-widget-ui .gp-loc-notations button {
+  min-height: 24px;
+  border: 0;
+  border-radius: 6px;
+  padding: 0 6px;
+  color: var(--gp-loc-faint);
+  background: transparent;
+  font-size: 9.5px;
+  font-weight: 640;
+  letter-spacing: 0.04em;
+  transition: background-color 140ms ease, color 140ms ease;
+}
+
+.gp-widget-ui .gp-loc-notations button:hover {
+  color: var(--gp-loc-ink);
+}
+
+.gp-widget-ui .gp-loc-notations button[aria-pressed='true'] {
+  color: color-mix(in oklab, var(--gp-widget-accent), white 14%);
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 84%);
+  box-shadow: inset 0 1px 0 color-mix(in oklab, white, transparent 88%);
+}
+
+/* The hero of this skin: the numbers themselves, in a true well. */
+.gp-loc-readout {
+  display: flex;
+  min-width: 0;
+  flex: 0 0 auto;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  border-radius: var(--gp-r2);
+  padding: 8px 10px;
+  background: rgb(0 0 0 / 0.26);
+  box-shadow:
+    inset 0 1.5px 3px rgb(0 0 0 / 0.42),
+    inset 0 -1px 0 color-mix(in oklab, white, transparent 94%);
+  /* One typeface, app-wide: alignment comes from tabular figures, never from
+     a borrowed monospace family. */
+  font-size: 13.5px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+.gp-loc-readout span {
+  display: flex;
+  min-width: 0;
+  align-items: baseline;
+  gap: 0.5rem;
+  overflow: hidden;
+  color: color-mix(in oklab, var(--gp-widget-accent), white 18%);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gp-loc-readout em {
+  flex: 0 0 auto;
+  width: 26px;
+  color: var(--gp-loc-faint);
+  font-family: inherit;
+  font-size: 8.5px;
+  font-style: normal;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.gp-loc-readout[data-notation='dms'],
+.gp-loc-readout[data-notation='geo'] {
+  font-size: 11.5px;
+}
+
+.gp-loc-readout[data-empty] span {
+  color: var(--gp-loc-faint);
+  font-size: 11.5px;
+  font-weight: 500;
+}
+
+/* -------------------------------------------------------- local time skin */
+
+.gp-loc--time .gp-loc-clock {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.28rem;
+  padding-top: 0.1rem;
+}
+
+.gp-loc--time .gp-loc-clock strong {
+  color: color-mix(in oklab, var(--gp-widget-accent), white 12%);
+  font-size: 34px;
+  font-weight: 640;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.035em;
+  line-height: 1;
+}
+
+.gp-loc-clock-seconds {
+  color: var(--gp-loc-faint);
+  font-size: 13px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+.gp-loc--time .gp-loc-clock-sub {
+  justify-content: center;
+}
+
+.gp-loc-zone {
+  display: flex;
+  min-width: 0;
+  flex: 0 0 auto;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.gp-loc-zone input {
+  width: 100%;
+  min-width: 0;
+  min-height: 22px;
+  padding-inline: 0;
+  border: 0;
+  color: var(--gp-loc-quiet);
+  background: transparent;
+  font-size: 11.5px;
+  font-weight: 520;
+  outline: 0;
+}
+
+.gp-loc-zone input[data-invalid] {
+  color: #fda4af;
+}
+
+.gp-loc-zone:focus-within {
+  box-shadow: inset 0 -1px 0 color-mix(in oklab, var(--gp-widget-accent), transparent 52%);
+}
+
+/* The horizon: the sun's own path across this place's day. */
+.gp-loc-arc {
+  display: flex;
+  min-height: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 1px;
+  color: color-mix(in oklab, var(--gp-widget-accent), white 6%);
+}
+
+/* The direct child only: the sunrise and sunset glyphs in the row below are
+   also svgs, and a descendant selector blew them up to fill the card. */
+.gp-loc-arc > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 56px;
+  flex: 1 1 auto;
+}
+
+.gp-loc-arc-horizon {
+  stroke: color-mix(in oklab, var(--gp-loc-ink), transparent 84%);
+}
+
+.gp-loc-arc-halo {
+  fill: color-mix(in oklab, var(--gp-widget-accent), transparent 76%);
+}
+
+.gp-loc-arc-core {
+  fill: color-mix(in oklab, var(--gp-widget-accent), white 22%);
+}
+
+.gp-loc-arc-body[data-night] .gp-loc-arc-halo {
+  fill: color-mix(in oklab, var(--gp-loc-ink), transparent 88%);
+}
+
+.gp-loc-arc-body[data-night] .gp-loc-arc-core {
+  fill: color-mix(in oklab, var(--gp-loc-ink), transparent 42%);
+}
+
+.gp-loc-arc-ends {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--gp-loc-faint);
+  font-size: 9px;
+  font-weight: 640;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.05em;
+}
+
+.gp-loc-arc-ends span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+/* ----------------------------------------------------------- compass skin */
+
+.gp-loc--compass {
+  align-items: center;
+}
+
+.gp-loc--compass .gp-loc-head,
+.gp-loc--compass .gp-loc-actions,
+.gp-loc--compass .gp-loc-name {
+  width: 100%;
+}
+
+.gp-loc--compass .gp-loc-actions {
+  justify-content: center;
+}
+
+.gp-loc--compass .gp-loc-name input {
+  text-align: center;
+}
+
+/* The dial and the fence ring fill whatever box the card leaves them and
+   centre themselves inside it: `meet` scaling keeps a circle a circle
+   whatever shape the card is pulled into. Absolute positioning is what makes
+   the percentage height resolve — a flex child's own `height: 100%` does not. */
+.gp-loc-dial,
+.gp-loc-ring {
+  position: relative;
+  min-height: 78px;
+  flex: 1 1 auto;
+  width: 100%;
+}
+
+.gp-loc-dial > svg,
+.gp-loc-ring > svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.gp-loc-dial-face {
+  fill: rgb(0 0 0 / 0.2);
+}
+
+.gp-loc-dial-rim {
+  fill: none;
+  stroke: color-mix(in oklab, var(--gp-loc-ink), transparent 88%);
+  stroke-width: 1;
+}
+
+.gp-loc-tick {
+  stroke: color-mix(in oklab, var(--gp-loc-ink), transparent 88%);
+  stroke-linecap: round;
+  stroke-width: 1;
+}
+
+.gp-loc-tick--major {
+  stroke: color-mix(in oklab, var(--gp-loc-ink), transparent 72%);
+  stroke-width: 1.4;
+}
+
+.gp-loc-dial-cardinal {
+  fill: color-mix(in oklab, var(--gp-loc-ink), transparent 52%);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-anchor: middle;
+}
+
+.gp-loc-dial-pivot {
+  fill: color-mix(in oklab, var(--gp-loc-ink), transparent 60%);
+}
+
+/* The needle is the card's one moving part; it eases to a new bearing rather
+   than snapping, and holds perfectly still when motion is reduced. */
+.gp-loc-needle {
+  transform-origin: 60px 60px;
+  transition: transform 520ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.gp-loc-needle-head {
+  fill: color-mix(in oklab, var(--gp-widget-accent), white 10%);
+}
+
+.gp-loc-needle-tail {
+  fill: color-mix(in oklab, var(--gp-loc-ink), transparent 82%);
+}
+
+.gp-loc-hero {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.28rem;
+}
+
+.gp-loc-hero strong {
+  color: color-mix(in oklab, var(--gp-widget-accent), white 12%);
+  font-size: 27px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+}
+
+.gp-loc-hero--waiting {
+  font-size: 15px !important;
+  font-weight: 560 !important;
+  letter-spacing: -0.01em !important;
+  color: var(--gp-loc-faint) !important;
+}
+
+.gp-loc-hero-unit {
+  color: var(--gp-loc-quiet);
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+/* ---------------------------------------------------------- geofence skin */
+
+.gp-loc--fence .gp-loc-hint {
+  text-align: center;
+}
+
+.gp-loc-ring-fence {
+  fill: color-mix(in oklab, var(--gp-widget-accent), transparent 94%);
+  stroke: color-mix(in oklab, var(--gp-widget-accent), transparent 48%);
+  stroke-dasharray: 3 4;
+  stroke-width: 1.2;
+}
+
+.gp-loc-ring-inner {
+  fill: none;
+  stroke: color-mix(in oklab, var(--gp-loc-ink), transparent 90%);
+  stroke-width: 1;
+}
+
+.gp-loc-ring-centre {
+  fill: color-mix(in oklab, var(--gp-widget-accent), white 14%);
+}
+
+.gp-loc-ring-you-halo {
+  fill: color-mix(in oklab, var(--gp-widget-accent), transparent 78%);
+}
+
+.gp-loc-ring-you-core {
+  fill: color-mix(in oklab, var(--gp-widget-accent), white 20%);
+}
+
+.gp-loc-ring-you[data-outside] .gp-loc-ring-you-halo {
+  fill: rgb(251 191 36 / 0.2);
+}
+
+.gp-loc-ring-you[data-outside] .gp-loc-ring-you-core {
+  fill: #fbbf24;
+}
+
+.gp-loc-verdict {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.45rem;
+}
+
+.gp-loc-verdict strong {
+  color: #fbbf24;
+  font-size: 15px;
+  font-weight: 660;
+  letter-spacing: -0.01em;
+}
+
+.gp-loc-verdict[data-inside] strong {
+  color: color-mix(in oklab, var(--gp-widget-accent), white 12%);
+}
+
+.gp-loc-verdict span {
+  color: var(--gp-loc-faint);
+  font-size: 10px;
+  font-weight: 560;
+  font-variant-numeric: tabular-nums;
+}
+
+.gp-loc-radius {
+  display: flex;
+  min-width: 0;
+  flex: 0 0 auto;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.gp-loc-radius-slider {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.gp-widget-ui .gp-loc-radius-slider input[type='range'] {
+  width: 100%;
+  height: 18px;
+  accent-color: var(--gp-widget-accent);
+  background: transparent;
+}
+
+.gp-loc-presets {
+  display: grid;
+  grid-auto-columns: 1fr;
+  grid-auto-flow: column;
+  gap: 2px;
+  border-radius: var(--gp-r2);
+  padding: 2px;
+  background: rgb(0 0 0 / 0.22);
+  box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.3);
+}
+
+.gp-widget-ui .gp-loc-presets button {
+  min-height: 24px;
+  border: 0;
+  border-radius: 6px;
+  padding: 0 4px;
+  color: var(--gp-loc-faint);
+  background: transparent;
+  font-size: 9.5px;
+  font-weight: 640;
+  font-variant-numeric: tabular-nums;
+  transition: background-color 140ms ease, color 140ms ease;
+}
+
+.gp-widget-ui .gp-loc-presets button:hover {
+  color: var(--gp-loc-ink);
+}
+
+.gp-widget-ui .gp-loc-presets button[aria-pressed='true'] {
+  color: color-mix(in oklab, var(--gp-widget-accent), white 14%);
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 84%);
+  box-shadow: inset 0 1px 0 color-mix(in oklab, white, transparent 88%);
+}
+
+/* ------------------------------------------------------------- route skin */
+
+.gp-loc-route-head {
+  display: grid;
+  grid-template-areas:
+    'glyph total'
+    'glyph sub';
+  grid-template-columns: 22px 1fr;
+  align-items: center;
+  gap: 0 0.45rem;
+}
+
+.gp-loc-route-head .gp-loc-glyph {
+  grid-area: glyph;
+}
+
+.gp-loc-hero--inline {
+  grid-area: total;
+  justify-content: flex-start;
+}
+
+.gp-loc-hero--inline strong {
+  font-size: 21px;
+}
+
+.gp-loc-route-sub {
+  grid-area: sub;
+  margin: 0;
+  overflow: hidden;
+  color: var(--gp-loc-faint);
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* One list surface, divided by hairlines — never a pane of glass per stop. */
+.gp-loc-stops {
+  display: flex;
+  min-height: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  border-radius: var(--gp-r2);
+  background: rgb(0 0 0 / 0.16);
+  list-style: none;
+  scrollbar-width: thin;
+}
+
+.gp-loc-stop {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: 20px 1fr;
+  gap: 0.4rem;
+  padding: 6px 8px;
+}
+
+.gp-loc-stop + .gp-loc-stop {
+  box-shadow: inset 0 1px 0 var(--gp-loc-rule);
+}
+
+/* The rail: a dot per stop, joined by the line the legs are measured along. */
+.gp-loc-stop-rail {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 3px;
+  color: color-mix(in oklab, var(--gp-widget-accent), transparent 30%);
+}
+
+.gp-loc-stop-rail::before {
+  content: '';
+  position: absolute;
+  top: 18px;
+  bottom: -12px;
+  width: 1px;
+  background: linear-gradient(
+    to bottom,
+    color-mix(in oklab, var(--gp-widget-accent), transparent 72%),
+    color-mix(in oklab, var(--gp-widget-accent), transparent 92%)
+  );
+}
+
+.gp-loc-stop:last-child .gp-loc-stop-rail::before {
+  content: none;
+}
+
+.gp-loc-stop-node {
+  width: 7px;
+  height: 7px;
+  margin-top: 4px;
+  border-radius: 50%;
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 36%);
+  box-shadow: 0 0 0 2px rgb(0 0 0 / 0.24);
+}
+
+.gp-loc-stop-body {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.gp-loc-stop-row {
+  display: flex;
+  min-width: 0;
+  align-items: baseline;
+  gap: 0.4rem;
+}
+
+.gp-loc-stop-name {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.gp-loc-stop-name input {
+  width: 100%;
+  min-width: 0;
+  min-height: 20px;
+  padding-inline: 0;
+  border: 0;
+  color: var(--gp-loc-ink);
+  background: transparent;
+  font-size: 12px;
+  font-weight: 540;
+  outline: 0;
+}
+
+.gp-loc-stop-name input::placeholder {
+  color: var(--gp-loc-faint);
+  font-weight: 470;
+}
+
+.gp-loc-stop-name:focus-within {
+  box-shadow: inset 0 -1px 0 color-mix(in oklab, var(--gp-widget-accent), transparent 52%);
+}
+
+.gp-loc-stop-leg {
+  flex: 0 0 auto;
+  color: color-mix(in oklab, var(--gp-widget-accent), white 8%);
+  font-size: 10.5px;
+  font-weight: 640;
+  font-variant-numeric: tabular-nums;
+}
+
+.gp-loc-stop-meta {
+  flex: 0 0 auto;
+  margin: 0;
+  color: var(--gp-loc-faint);
+  font-size: 9px;
+  font-weight: 620;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.gp-loc-stop-coords {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: 1fr 1fr auto;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.gp-loc-stop-coords .gp-loc-coord {
+  border-radius: 6px;
+  padding: 2px 6px 3px;
+  background: rgb(0 0 0 / 0.2);
+}
+
+.gp-loc-stop-coords .gp-loc-coord input {
+  min-height: 18px;
+  font-size: 11px;
+  font-weight: 520;
+}
+
+/* Always present, never hover-revealed: invisible-but-live chrome is what
+   makes the cursor flicker as the pointer crosses a row (Article XIX). */
+.gp-loc-stop-tools {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 1px;
+}
+
+.gp-widget-ui .gp-loc-stop-tools button {
+  display: inline-flex;
+  width: 22px;
+  height: 22px;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 6px;
+  color: var(--gp-loc-faint);
+  background: transparent;
+  transition: background-color 140ms ease, color 140ms ease;
+}
+
+.gp-widget-ui .gp-loc-stop-tools button:hover {
+  color: var(--gp-loc-ink);
+  background: var(--gp-loc-surface);
+}
+
+.gp-widget-ui .gp-loc-stop-tools button:last-child:hover {
+  color: #fda4af;
+}
+
+.gp-widget-ui .gp-loc-stop-tools button:disabled {
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+/* ------------------------------------------------------- narrow and quiet */
+
+@container (max-width: 210px) {
+  .gp-loc-coords {
+    grid-template-columns: 1fr;
+  }
+
+  .gp-loc-stop-coords {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .gp-loc-stop-tools {
+    grid-column: 1 / -1;
+    justify-content: flex-end;
+  }
+
+  .gp-loc-notations {
+    grid-auto-flow: row;
+  }
+}
+
+@container (max-height: 190px) {
+  .gp-loc-dial > svg,
+  .gp-loc-ring > svg {
+    min-height: 0;
+  }
+
+  .gp-loc--time .gp-loc-clock strong {
+    font-size: 26px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gp-loc-needle {
+    transition: none;
+  }
+
+  .gp-widget-ui .gp-loc-btn:active {
+    transform: none;
+  }
+}

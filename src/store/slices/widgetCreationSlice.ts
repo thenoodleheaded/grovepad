@@ -46,7 +46,7 @@ export function createWidgetCreationSlice({ set, get, pushHistory, markSpawned }
         workspaceId: state.activeWorkspaceId,
         parentCanvasId: state.activeCanvasId,
       }
-      widget.data = { canvasId: subCanvasId }
+      widget.data = { ...widget.data, canvasId: subCanvasId }
     }
     set((current) => ({
       widgets: settleWidgetLayout({ ...current.widgets, [id]: widget }, [id]),
@@ -117,7 +117,7 @@ export function createWidgetCreationSlice({ set, get, pushHistory, markSpawned }
             parentCanvasId: state.activeCanvasId,
           },
         }
-        widget.data = { canvasId: subCanvasId }
+        widget.data = { ...widget.data, canvasId: subCanvasId }
       } else {
         const height = computeDataHeight(consolidated.type, consolidated.data)
         widget.data = consolidated.data

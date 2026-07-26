@@ -6,12 +6,12 @@ import { ATLAS_TYPES, atlasTypeForPhrase, switchAtlasMode } from './atlasCatalog
 import { CONSOLIDATED_WIDGET_MODES, CONSOLIDATED_WIDGET_REPLACEMENTS, isWidgetTypePublic, WIDGET_REGISTRY } from './registry'
 
 describe('consolidated widget modes',()=>{
-  it('offers one Tracker while preserving legacy atlas types for old boards',()=>{
-    expect(isWidgetTypePublic('tracker')).toBe(true)
-    expect(ATLAS_TYPES.every(type=>!isWidgetTypePublic(type))).toBe(true)
+  it('offers each Atlas system as a widget while preserving Tracker for old boards',()=>{
+    expect(isWidgetTypePublic('tracker')).toBe(false)
+    expect(ATLAS_TYPES.every(isWidgetTypePublic)).toBe(true)
     expect((WIDGET_REGISTRY.tracker.defaultData() as AtlasWidgetData).trackerMode).toBe('price_book')
     expect(atlasTypeForPhrase('help me water my houseplants')).toBe('plant_care')
-    expect(resolveWidgetMention('plant care')).toBe('tracker')
+    expect(resolveWidgetMention('plant care')).toBe('plant_care')
   })
 
   it('restores edited Tracker state after visiting another mode',()=>{
@@ -24,13 +24,15 @@ describe('consolidated widget modes',()=>{
     expect(restored.modeStates?.hydration?.primary).toBe(1200)
   })
 
-  it('offers one Timer with independent state for each specialized mode',()=>{
+  it('offers one Time widget while preserving former standalone clocks for old boards',()=>{
     const data=WIDGET_REGISTRY.timekeeper.defaultData() as TimekeeperData
     expect(isWidgetTypePublic('timekeeper')).toBe(true)
-    expect(['timer','pomodoro','stopwatch'].every(type=>!isWidgetTypePublic(type as 'timer'|'pomodoro'|'stopwatch'))).toBe(true)
+    expect(['timer','pomodoro','stopwatch','countdown','world_clock'].every(type=>!isWidgetTypePublic(type as 'timer'|'pomodoro'|'stopwatch'|'countdown'|'world_clock'))).toBe(true)
     expect(data.mode).toBe('countdown')
     expect(data.pomodoro.workMinutes).toBe(25)
     expect(data.stopwatch.laps).toEqual([])
+    expect(data.deadline?.targetDate).toBeTruthy()
+    expect(data.worldClock?.zones).toHaveLength(3)
     expect(resolveWidgetMention('pomodoro timer')).toBe('timekeeper')
   })
 
@@ -41,6 +43,10 @@ describe('consolidated widget modes',()=>{
     expect(WIDGET_REGISTRY.notes.skins?.map(skin=>skin.value)).toEqual(expect.arrayContaining(['plain','sticky','quote']))
     expect(WIDGET_REGISTRY.bar_chart.skins?.map(skin=>skin.value)).toEqual(expect.arrayContaining(['bar','line','donut','pie']))
     expect(WIDGET_REGISTRY.checklist.skins?.map(skin=>skin.value)).toEqual(expect.arrayContaining(['list','board','assignments','day','week','timeline','matrix']))
+    expect(WIDGET_REGISTRY.flashcards.skins?.map(skin=>skin.value)).toEqual(expect.arrayContaining(['flashcards','vocabulary','quiz']))
+    expect(WIDGET_REGISTRY.goal_tracker.skins?.map(skin=>skin.value)).toEqual(expect.arrayContaining(['simple','hours','okr']))
+    expect(WIDGET_REGISTRY.grade_calc.skins?.map(skin=>skin.value)).toEqual(expect.arrayContaining(['weighted','gpa']))
+    expect(WIDGET_REGISTRY.decision.skins?.map(skin=>skin.value)).toEqual(expect.arrayContaining(['simple','weighted']))
   })
 
   it('starts shared-view families with one canonical data source',()=>{
@@ -64,11 +70,11 @@ describe('consolidated widget modes',()=>{
 
   it.each([
     ['sticky note','notes'],['quote','notes'],['line chart','bar_chart'],['pie chart','bar_chart'],
-    ['random picker','decision'],['gpa tracker','grade_calc'],['date & time','date_picker'],
-    ['excalidraw','sketchpad'],['progress','goal_tracker'],['study goal','goal_tracker'],
-    ['okrs','goal_tracker'],['vocabulary','flashcards'],['quiz','flashcards'],['kanban','checklist'],
-    ['assignments','checklist'],['daily agenda','checklist'],['week planner','checklist'],
-    ['timeline','checklist'],['priority matrix','checklist'],
+    ['progress','goal_tracker'],['excalidraw','sketchpad'],
+    ['random picker','decision'],['gpa','grade_calc'],
+    ['study goal','goal_tracker'],['okrs','goal_tracker'],['vocabulary','flashcards'],['quiz','flashcards'],
+    ['kanban','checklist'],['assignments','checklist'],['daily agenda','checklist'],
+    ['week planner','checklist'],['timeline','checklist'],['priority matrix','checklist'],
   ] as const)('routes %s to its consolidated widget', (mention,expected)=>{
     expect(resolveWidgetMention(mention)).toBe(expected)
   })

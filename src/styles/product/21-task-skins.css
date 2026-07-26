@@ -1,0 +1,1188 @@
+/*
+ * Purpose-built Tasks skins.
+ *
+ * Thirteen arrangements of one task collection. The laws they share:
+ *
+ * - One backplate. Rows, cards, and columns are shaded regions of a single
+ *   list surface, never a second sheet of glass floating on the card.
+ * - One completion mark. Every skin's checkbox is the same object at the same
+ *   weight, so "done" reads identically in a queue, a board, and a matrix.
+ * - The accent belongs to the card. Structural rules are ink-based hairlines;
+ *   colour is spent only on state that means something — done, blocked,
+ *   overdue, the step you are on.
+ */
+
+.gp-widget-card[data-auto-height] .gp-widget-ui[data-widget-type='checklist'] {
+  container-type: inline-size;
+}
+
+/* The generated presentation families paint diagram furniture (grid rules, a
+   timeline spine) behind whatever they wrap. Every Tasks skin draws its own
+   structure, so that second layer is cleared here. */
+.gp-widget-ui[data-widget-type='checklist'][data-skin-presentation] {
+  background-image: none;
+  padding-inline-start: 0;
+}
+
+.gp-widget-ui[data-widget-type='checklist'][data-skin-presentation]::before {
+  content: none;
+}
+
+.gp-tasks-skin {
+  --gp-task-rule: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 92%);
+  --gp-task-rule-strong: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 86%);
+  --gp-task-quiet: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 62%);
+  --gp-task-done: #4ade80;
+  --gp-task-late: #fb7185;
+  container-type: inline-size;
+  display: flex;
+  min-height: 74px;
+  flex-direction: column;
+  gap: 0.5rem;
+  color: var(--gp-widget-ink, #f5f5f5);
+}
+
+/* Heading ---------------------------------------------------------------- */
+
+.gp-tasks-heading {
+  display: flex;
+  min-height: 20px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+}
+
+.gp-tasks-heading > span {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.36rem;
+  overflow: hidden;
+  color: color-mix(in oklab, var(--gp-widget-accent), white 10%);
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.095em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.gp-tasks-heading small {
+  flex: 0 0 auto;
+  color: var(--gp-task-quiet);
+  font-size: 8.5px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+}
+
+.gp-tasks-heading small[data-tone='overdue'] {
+  color: var(--gp-task-late);
+  font-weight: 700;
+}
+
+/* A hairline that fills left to right as the list closes out. It is the only
+   place the accent is spent on progress, so the number and the bar never
+   compete for the same glance. */
+.gp-task-meter {
+  overflow: hidden;
+  height: 2px;
+  border-radius: 999px;
+  background: var(--gp-task-rule);
+}
+
+.gp-task-meter > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(
+    90deg,
+    color-mix(in oklab, var(--gp-widget-accent), transparent 30%),
+    var(--gp-widget-accent)
+  );
+  transition: width 260ms var(--gp-ease-snap);
+}
+
+/* The one list surface ---------------------------------------------------- */
+
+.gp-task-ledger,
+.gp-task-agenda {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: var(--gp-r1, 10px);
+  background: linear-gradient(
+    180deg,
+    color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 95%),
+    color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 97%)
+  );
+  box-shadow:
+    inset 0 1px 0 color-mix(in oklab, white, transparent 93%),
+    0 7px 16px rgb(0 0 0 / 0.1);
+}
+
+/* Rows borrow the ledger's surface. WidgetPanel stays only as the owner of the
+   stable entry/exit lifecycle — it is not a nested pane of glass here. */
+.gp-tasks-skin .gp-task-row.gp-subpanel,
+.gp-tasks-skin .gp-task-card.gp-subpanel,
+.gp-tasks-skin .gp-task-phase.gp-subpanel {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  min-height: 32px;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0.34rem 0.55rem;
+  border-radius: 0 !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  transition:
+    background-color var(--gp-duration-snap) var(--gp-ease-snap),
+    opacity 130ms var(--gp-ease-snap),
+    scale 130ms var(--gp-ease-snap);
+}
+
+.gp-task-ledger > .gp-task-row + .gp-task-row,
+.gp-task-agenda > .gp-task-row + .gp-task-row {
+  border-top: 1px solid var(--gp-task-rule);
+}
+
+.gp-tasks-skin .gp-task-row:hover {
+  background-color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 96%) !important;
+}
+
+.gp-task-input {
+  min-width: 0;
+  flex: 1 1 auto;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 10%);
+  background: transparent;
+  font-size: 11.5px;
+  line-height: 1.4;
+  caret-color: var(--gp-widget-accent);
+  text-overflow: ellipsis;
+}
+
+.gp-task-input::placeholder {
+  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 76%);
+}
+
+.gp-task-row:focus-within .gp-task-input,
+.gp-task-card:focus-within .gp-task-input {
+  color: var(--gp-widget-ink, #fff);
+}
+
+/* Finished work stays legible but stops asking for attention: the strike is
+   the signal, the fade is the volume. */
+.gp-task-done .gp-task-input {
+  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 58%);
+  text-decoration: line-through;
+  text-decoration-color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 74%);
+  text-decoration-thickness: 1px;
+}
+
+/* The completion mark ----------------------------------------------------- */
+
+.gp-task-check {
+  display: grid;
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 74%);
+  border-radius: 50%;
+  color: transparent;
+  background: transparent;
+  transition:
+    border-color var(--gp-duration-snap) var(--gp-ease-snap),
+    background-color var(--gp-duration-snap) var(--gp-ease-snap),
+    color var(--gp-duration-snap) var(--gp-ease-snap);
+}
+
+.gp-task-check[data-shape='square'] {
+  width: 21px;
+  height: 21px;
+  border-radius: 7px;
+}
+
+.gp-task-check:hover {
+  border-color: color-mix(in oklab, var(--gp-task-done), transparent 40%);
+  color: color-mix(in oklab, var(--gp-task-done), transparent 55%);
+}
+
+.gp-task-check[aria-checked='true'] {
+  border-color: color-mix(in oklab, var(--gp-task-done), transparent 45%);
+  color: var(--gp-task-done);
+  background-color: color-mix(in oklab, var(--gp-task-done), transparent 84%) !important;
+}
+
+/* An unsorted capture shows a dashed ring rather than an empty one — the glyph
+   itself says "not triaged yet". */
+.gp-tasks-skin[data-tasks-skin='inbox'] .gp-task-check[aria-checked='false'] {
+  border-color: transparent;
+  color: color-mix(in oklab, var(--gp-widget-accent), transparent 40%);
+}
+
+.gp-task-remove {
+  display: grid;
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 74%);
+  background: transparent;
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    color var(--gp-duration-snap) var(--gp-ease-snap),
+    background-color var(--gp-duration-snap) var(--gp-ease-snap),
+    opacity var(--gp-duration-snap) var(--gp-ease-snap);
+}
+
+.gp-task-row:hover .gp-task-remove,
+.gp-task-row:focus-within .gp-task-remove,
+.gp-task-card:hover .gp-task-remove,
+.gp-task-card:focus-within .gp-task-remove,
+.gp-task-phase:hover .gp-task-remove,
+.gp-task-phase:focus-within .gp-task-remove {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.gp-task-remove:hover,
+.gp-task-remove:focus-visible {
+  color: var(--gp-task-late);
+  background-color: color-mix(in oklab, var(--gp-task-late), transparent 88%) !important;
+}
+
+.gp-tasks-skin :where(button, input, select):focus-visible {
+  outline: 1px solid color-mix(in oklab, var(--gp-widget-accent), transparent 26%);
+  outline-offset: 2px;
+}
+
+.gp-task-add {
+  display: inline-flex;
+  min-height: 25px;
+  align-items: center;
+  gap: 0.35rem;
+  align-self: flex-start;
+  padding: 0.15rem 0.3rem;
+  border: 0;
+  color: var(--gp-task-quiet);
+  background: transparent;
+  font-size: 9px;
+  font-weight: 600;
+  transition:
+    color var(--gp-duration-snap) var(--gp-ease-snap),
+    transform var(--gp-duration-snap) var(--gp-ease-snap);
+}
+
+.gp-task-add:hover,
+.gp-task-add:focus-visible {
+  color: color-mix(in oklab, var(--gp-widget-accent), white 10%);
+  transform: translateX(1px);
+}
+
+.gp-tasks-empty,
+.gp-tasks-note {
+  margin: 0;
+  padding: 0.5rem 0.6rem;
+  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 66%);
+  font-size: 9.5px;
+  line-height: 1.5;
+  text-wrap: balance;
+}
+
+.gp-tasks-empty {
+  text-align: center;
+}
+
+/* Shopping ---------------------------------------------------------------- */
+
+.gp-tasks-skin .gp-task-row-large.gp-subpanel {
+  min-height: 40px;
+  gap: 0.6rem;
+  padding: 0.42rem 0.6rem;
+}
+
+.gp-task-row-large .gp-task-input {
+  font-size: 12.5px;
+}
+
+.gp-task-stepper {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.05rem;
+  border-radius: 999px;
+  padding: 0.1rem;
+  background: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 94%);
+}
+
+.gp-task-stepper button {
+  display: grid;
+  width: 20px;
+  height: 20px;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  color: var(--gp-task-quiet);
+  background: transparent;
+}
+
+.gp-task-stepper button:hover:not(:disabled) {
+  color: var(--gp-widget-ink, #fff);
+  background-color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 88%) !important;
+}
+
+.gp-task-stepper button:disabled {
+  opacity: 0.28;
+}
+
+.gp-task-stepper output {
+  min-width: 15px;
+  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 22%);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 650;
+  text-align: center;
+}
+
+.gp-task-basket {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.gp-task-basket h3 {
+  margin: 0;
+  padding-left: 0.15rem;
+  color: color-mix(in oklab, var(--gp-task-done), white 6%);
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.095em;
+  text-transform: uppercase;
+}
+
+.gp-task-basket .gp-task-ledger {
+  opacity: 0.72;
+}
+
+/* Assignments ------------------------------------------------------------- */
+
+/* The date reads as the control: the native picker is stretched invisibly over
+   its own label rather than sitting beside it as a sliver of browser chrome. */
+.gp-task-due {
+  position: relative;
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.25rem;
+  border-radius: var(--gp-r2, 8px);
+  padding: 0.12rem 0.34rem;
+  color: var(--gp-task-quiet);
+  background: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 95%);
+  font-size: 8.5px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 650;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    color var(--gp-duration-snap) var(--gp-ease-snap),
+    background-color var(--gp-duration-snap) var(--gp-ease-snap);
+}
+
+.gp-task-due:hover,
+.gp-task-due:focus-within {
+  color: var(--gp-widget-ink, #fff);
+  background: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 90%);
+}
+
+.gp-task-due[data-tone='overdue'] {
+  color: var(--gp-task-late);
+  background: color-mix(in oklab, var(--gp-task-late), transparent 90%);
+}
+
+.gp-task-due[data-tone='today'] {
+  color: color-mix(in oklab, var(--gp-widget-accent), white 12%);
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 88%);
+}
+
+.gp-task-due[data-tone='none'] {
+  opacity: 0.55;
+}
+
+.gp-task-due input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  min-height: 0;
+  border: 0;
+  padding: 0;
+  color: transparent;
+  background: transparent;
+  color-scheme: dark;
+  cursor: pointer;
+  opacity: 0;
+}
+
+/* Day --------------------------------------------------------------------- */
+
+.gp-tasks-skin .gp-task-row-agenda.gp-subpanel {
+  gap: 0.55rem;
+  padding-left: 0.5rem;
+}
+
+.gp-task-slot {
+  position: relative;
+  display: inline-flex;
+  width: 66px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.45rem;
+  cursor: pointer;
+}
+
+.gp-task-slot time {
+  color: var(--gp-task-quiet);
+  font-size: 9px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+
+.gp-task-slot:hover time,
+.gp-task-slot:focus-within time {
+  color: var(--gp-widget-ink, #fff);
+}
+
+.gp-task-slot input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  min-height: 0;
+  border: 0;
+  padding: 0;
+  color: transparent;
+  background: transparent;
+  color-scheme: dark;
+  cursor: pointer;
+  opacity: 0;
+}
+
+/* The rail is drawn per row rather than as one absolute line, so it can never
+   fall out of register with the rows it is threading. */
+.gp-task-slot-dot {
+  position: relative;
+  width: 5px;
+  height: 5px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 45%);
+}
+
+.gp-task-slot-dot::before,
+.gp-task-slot-dot::after {
+  position: absolute;
+  left: 2px;
+  width: 1px;
+  content: '';
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 84%);
+}
+
+.gp-task-slot-dot::before { bottom: 100%; height: 14px; }
+.gp-task-slot-dot::after { top: 100%; height: 14px; }
+
+.gp-task-agenda > .gp-task-row:first-child .gp-task-slot-dot::before,
+.gp-task-agenda > .gp-task-row:last-child .gp-task-slot-dot::after {
+  content: none;
+}
+
+.gp-task-done .gp-task-slot-dot {
+  background: color-mix(in oklab, var(--gp-task-done), transparent 45%);
+}
+
+/* Recurring --------------------------------------------------------------- */
+
+.gp-task-repeat-group {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.28rem;
+}
+
+.gp-task-repeat {
+  display: inline-flex;
+  min-height: 20px;
+  align-items: center;
+  gap: 0.25rem;
+  border: 0;
+  border-radius: var(--gp-r2, 8px);
+  padding: 0.1rem 0.36rem;
+  color: var(--gp-task-quiet);
+  background: transparent;
+  font-size: 8.5px;
+  font-weight: 650;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+  transition:
+    color var(--gp-duration-snap) var(--gp-ease-snap),
+    background-color var(--gp-duration-snap) var(--gp-ease-snap);
+}
+
+.gp-task-repeat:hover {
+  color: var(--gp-widget-ink, #fff);
+  background-color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 92%) !important;
+}
+
+.gp-task-repeat[data-active] {
+  color: color-mix(in oklab, var(--gp-widget-accent), white 12%);
+  background-color: color-mix(in oklab, var(--gp-widget-accent), transparent 88%) !important;
+}
+
+/* Dependencies ------------------------------------------------------------ */
+
+.gp-task-row-blocked {
+  background-image: repeating-linear-gradient(
+    135deg,
+    transparent 0 6px,
+    color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 97%) 6px 7px
+  ) !important;
+}
+
+.gp-task-row-blocked .gp-task-input {
+  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 52%);
+}
+
+.gp-task-lock {
+  display: grid;
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 50%;
+  color: color-mix(in oklab, #fbbf24, transparent 20%);
+  background: color-mix(in oklab, #fbbf24, transparent 88%);
+}
+
+.gp-task-blocker {
+  display: inline-flex;
+  max-width: 44%;
+  flex: 0 1 auto;
+  align-items: center;
+  gap: 0.22rem;
+  border-radius: var(--gp-r2, 8px);
+  padding: 0.1rem 0.3rem;
+  color: var(--gp-task-quiet);
+  background: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 95%);
+  cursor: pointer;
+}
+
+.gp-task-blocker:hover,
+.gp-task-blocker:focus-within {
+  color: var(--gp-widget-ink, #fff);
+}
+
+.gp-task-blocker select {
+  min-width: 0;
+  max-width: 100%;
+  border: 0;
+  padding: 0;
+  color: inherit;
+  background: transparent;
+  font-size: 8.5px;
+  font-weight: 650;
+  letter-spacing: 0.03em;
+  text-overflow: ellipsis;
+}
+
+.gp-task-blocker option {
+  color: #111;
+}
+
+/* Routine ----------------------------------------------------------------- */
+
+.gp-task-step-marker {
+  display: grid;
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid var(--gp-task-rule-strong);
+  border-radius: 50%;
+  color: var(--gp-task-quiet);
+  font-size: 8px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.gp-task-step-marker[data-current] {
+  border-color: color-mix(in oklab, var(--gp-widget-accent), transparent 40%);
+  color: color-mix(in oklab, var(--gp-widget-accent), white 14%);
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 86%);
+  box-shadow: 0 0 8px color-mix(in oklab, var(--gp-widget-accent), transparent 74%);
+}
+
+.gp-task-done .gp-task-step-marker {
+  border-color: color-mix(in oklab, var(--gp-task-done), transparent 55%);
+  color: var(--gp-task-done);
+}
+
+.gp-task-step-toggle {
+  flex: 0 0 auto;
+  border: 0;
+  border-radius: var(--gp-r2, 8px);
+  padding: 0.12rem 0.4rem;
+  color: var(--gp-task-quiet);
+  background: transparent;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.075em;
+  text-transform: uppercase;
+}
+
+.gp-task-row-step:hover .gp-task-step-toggle,
+.gp-task-row-step:focus-within .gp-task-step-toggle {
+  color: var(--gp-widget-ink, #fff);
+  background-color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 92%) !important;
+}
+
+.gp-task-runbar {
+  display: flex;
+  min-height: 24px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding-top: 0.4rem;
+  border-top: 1px solid var(--gp-task-rule);
+  color: var(--gp-task-quiet);
+  font-size: 9px;
+}
+
+.gp-task-runbar button {
+  display: inline-flex;
+  min-height: 22px;
+  align-items: center;
+  gap: 0.28rem;
+  border: 0;
+  border-radius: var(--gp-r2, 8px);
+  padding: 0.1rem 0.38rem;
+  color: color-mix(in oklab, var(--gp-widget-accent), white 10%);
+  background: transparent;
+  font-size: 8.5px;
+  font-weight: 650;
+}
+
+.gp-task-runbar button:hover:not(:disabled) {
+  background-color: color-mix(in oklab, var(--gp-widget-accent), transparent 90%) !important;
+}
+
+.gp-task-runbar button:disabled {
+  color: var(--gp-task-quiet);
+  opacity: 0.4;
+}
+
+/* Board, Sprint, Week ----------------------------------------------------- */
+
+.gp-task-board,
+.gp-task-week {
+  display: grid;
+  min-height: 0;
+  gap: 0.4rem;
+}
+
+.gp-task-board { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.gp-task-week { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+
+.gp-task-column,
+.gp-task-day-column,
+.gp-task-quadrant {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.3rem;
+  overflow: hidden;
+  border-radius: var(--gp-r1, 10px);
+  padding-bottom: 0.2rem;
+  background: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 96%);
+  box-shadow: inset 0 1px 0 color-mix(in oklab, white, transparent 94%);
+}
+
+.gp-task-column > header,
+.gp-task-day-column > header,
+.gp-task-quadrant > header {
+  display: flex;
+  min-height: 22px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.35rem;
+  padding: 0.34rem 0.5rem 0.28rem;
+  border-bottom: 1px solid var(--gp-task-rule);
+}
+
+.gp-task-column > header > span,
+.gp-task-day-column > header > span,
+.gp-task-quadrant > header > span {
+  overflow: hidden;
+  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 26%);
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.085em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.gp-task-column > header small,
+.gp-task-day-column > header small,
+.gp-task-quadrant > header small {
+  flex: 0 0 auto;
+  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 68%);
+  font-size: 8px;
+  font-variant-numeric: tabular-nums;
+}
+
+.gp-task-quadrant > header small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-transform: lowercase;
+  white-space: nowrap;
+}
+
+/* One shaded head-band per column tells To do from Doing from Done without
+   colouring every card in it. */
+.gp-task-column[data-status='doing'] > header { background: color-mix(in oklab, var(--gp-widget-accent), transparent 92%); }
+.gp-task-column[data-status='done'] > header { background: color-mix(in oklab, var(--gp-task-done), transparent 93%); }
+
+.gp-task-column-body {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+}
+
+/* Every Tasks card is content-height (`sizing.autoHeight`), so a board grows
+   to exactly the tallest column and never floats a short stack over a field of
+   empty glass. The columns are deliberately NOT stretched to a card height —
+   there is no card height to stretch to. */
+
+.gp-tasks-skin .gp-task-card.gp-subpanel {
+  min-height: 30px;
+  gap: 0.4rem;
+  padding: 0.3rem 0.45rem;
+}
+
+.gp-task-column-body > .gp-task-card + .gp-task-card {
+  border-top: 1px solid var(--gp-task-rule);
+}
+
+.gp-tasks-skin .gp-task-card:hover {
+  background-color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 95%) !important;
+}
+
+.gp-task-card .gp-task-input {
+  font-size: 10.5px;
+}
+
+.gp-task-column-add {
+  display: flex;
+  min-height: 24px;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 82%);
+  background: transparent;
+  transition:
+    color var(--gp-duration-snap) var(--gp-ease-snap),
+    background-color var(--gp-duration-snap) var(--gp-ease-snap);
+}
+
+.gp-task-column-add:hover,
+.gp-task-column-add:focus-visible {
+  color: color-mix(in oklab, var(--gp-widget-accent), white 10%);
+  background-color: color-mix(in oklab, var(--gp-widget-accent), transparent 92%) !important;
+}
+
+.gp-task-status-dot {
+  width: 8px;
+  height: 8px;
+  flex: 0 0 auto;
+  border: 1px solid color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 72%);
+  border-radius: 50%;
+  background: transparent;
+  transition:
+    border-color var(--gp-duration-snap) var(--gp-ease-snap),
+    background-color var(--gp-duration-snap) var(--gp-ease-snap),
+    box-shadow var(--gp-duration-snap) var(--gp-ease-snap);
+}
+
+.gp-task-status-dot[data-status='doing'] {
+  border-color: color-mix(in oklab, var(--gp-widget-accent), transparent 30%);
+  background-color: color-mix(in oklab, var(--gp-widget-accent), transparent 45%) !important;
+  box-shadow: 0 0 7px color-mix(in oklab, var(--gp-widget-accent), transparent 55%);
+}
+
+.gp-task-status-dot[data-status='done'] {
+  border-color: color-mix(in oklab, var(--gp-task-done), transparent 40%);
+  background-color: color-mix(in oklab, var(--gp-task-done), transparent 40%) !important;
+}
+
+.gp-task-sprint-name {
+  min-width: 0;
+  max-width: 55%;
+  border: 0;
+  padding: 0;
+  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 32%);
+  background: transparent;
+  font-size: 8.5px;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-align: right;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+}
+
+.gp-task-sprint-meta {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.22rem;
+}
+
+/* The owner is an initials chip that becomes a name field when you reach for
+   it — a two-letter target costs nothing until it is being edited. */
+.gp-task-owner {
+  position: relative;
+  display: grid;
+  width: 19px;
+  height: 19px;
+  place-items: center;
+  border-radius: 50%;
+  color: color-mix(in oklab, var(--gp-widget-accent), white 14%);
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 87%);
+  font-size: 7.5px;
+  font-weight: 700;
+  cursor: text;
+}
+
+.gp-task-owner input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  min-height: 0;
+  border: 0;
+  padding: 0;
+  color: transparent;
+  background: transparent;
+  opacity: 0;
+}
+
+.gp-task-owner:focus-within {
+  width: 74px;
+  border-radius: 999px;
+}
+
+.gp-task-owner:focus-within > span { display: none; }
+
+.gp-task-owner:focus-within input {
+  padding-inline: 0.4rem;
+  color: var(--gp-widget-ink, #fff);
+  font-size: 9px;
+  opacity: 1;
+}
+
+.gp-task-points {
+  width: 22px;
+  border: 0;
+  border-radius: 5px;
+  padding: 0.05rem 0;
+  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 34%);
+  background: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 94%);
+  font-size: 8.5px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  text-align: center;
+  -moz-appearance: textfield;
+}
+
+.gp-task-points::-webkit-inner-spin-button,
+.gp-task-points::-webkit-outer-spin-button {
+  margin: 0;
+  -webkit-appearance: none;
+}
+
+/* Timeline ---------------------------------------------------------------- */
+
+.gp-task-timeline {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: var(--gp-r1, 10px);
+  background: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 96%);
+  box-shadow: inset 0 1px 0 color-mix(in oklab, white, transparent 94%);
+}
+
+.gp-task-timeline-scale {
+  display: grid;
+  grid-template-columns: 40% repeat(var(--gp-task-units), minmax(0, 1fr));
+  padding: 0.3rem 0.5rem 0.26rem;
+  border-bottom: 1px solid var(--gp-task-rule);
+  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 76%);
+  font-size: 7px;
+  font-variant-numeric: tabular-nums;
+}
+
+.gp-task-timeline-scale > span {
+  grid-column: auto;
+  text-align: center;
+}
+
+.gp-task-timeline-scale > span:first-child { grid-column: 2; }
+
+.gp-tasks-skin .gp-task-phase.gp-subpanel {
+  display: grid;
+  grid-template-columns: 40% minmax(0, 1fr);
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.3rem 0.5rem;
+}
+
+.gp-task-timeline > .gp-task-phase + .gp-task-phase {
+  border-top: 1px solid var(--gp-task-rule);
+}
+
+.gp-task-phase-label {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.gp-task-phase-track {
+  position: relative;
+  display: block;
+  height: 16px;
+  border-radius: 999px;
+  background: repeating-linear-gradient(
+    90deg,
+    color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 94%) 0 1px,
+    transparent 1px calc(100% / var(--gp-task-units))
+  );
+}
+
+.gp-task-phase-bar {
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  left: calc(var(--gp-task-start) / var(--gp-task-units) * 100%);
+  display: flex;
+  width: calc(var(--gp-task-span) / var(--gp-task-units) * 100%);
+  align-items: center;
+  justify-content: space-between;
+  border-radius: 999px;
+  padding: 0 1px;
+  background: linear-gradient(
+    90deg,
+    color-mix(in oklab, var(--gp-widget-accent), transparent 42%),
+    color-mix(in oklab, var(--gp-widget-accent), transparent 66%)
+  );
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--gp-widget-accent), transparent 66%);
+  transition:
+    left var(--gp-duration-snap) var(--gp-ease-snap),
+    width var(--gp-duration-snap) var(--gp-ease-snap);
+}
+
+.gp-task-done .gp-task-phase-bar {
+  background: linear-gradient(
+    90deg,
+    color-mix(in oklab, var(--gp-task-done), transparent 55%),
+    color-mix(in oklab, var(--gp-task-done), transparent 76%)
+  );
+}
+
+.gp-task-phase-span {
+  display: inline-flex;
+  align-items: center;
+}
+
+.gp-task-phase-bar button {
+  display: grid;
+  width: 13px;
+  height: 12px;
+  place-items: center;
+  border: 0;
+  border-radius: 4px;
+  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 24%);
+  background: transparent;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--gp-duration-snap) var(--gp-ease-snap);
+}
+
+.gp-task-phase:hover .gp-task-phase-bar button,
+.gp-task-phase:focus-within .gp-task-phase-bar button {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.gp-task-phase-bar button:disabled { opacity: 0.2 !important; pointer-events: none; }
+
+.gp-task-phase-bar button:hover {
+  background-color: rgb(255 255 255 / 0.18) !important;
+}
+
+/* Matrix ------------------------------------------------------------------ */
+
+.gp-task-matrix {
+  display: grid;
+  gap: 0.4rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.gp-task-quadrant[data-quadrant='0'] > header { background: color-mix(in oklab, var(--gp-task-late), transparent 92%); }
+.gp-task-quadrant[data-quadrant='1'] > header { background: color-mix(in oklab, #60a5fa, transparent 92%); }
+.gp-task-quadrant[data-quadrant='2'] > header { background: color-mix(in oklab, #fbbf24, transparent 92%); }
+
+.gp-task-move {
+  display: grid;
+  width: 19px;
+  height: 19px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 0;
+  border-radius: 5px;
+  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 74%);
+  background: transparent;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--gp-duration-snap) var(--gp-ease-snap);
+}
+
+.gp-task-card:hover .gp-task-move,
+.gp-task-card:focus-within .gp-task-move {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.gp-task-move:hover {
+  color: var(--gp-widget-accent);
+  background-color: color-mix(in oklab, var(--gp-widget-accent), transparent 90%) !important;
+}
+
+/* Narrow cards ------------------------------------------------------------ */
+
+/* Seven columns need real width before a task name survives them. Under it the
+   week stops pretending to be a grid and becomes seven labelled day rows —
+   the same information, read down instead of across, with room for the words.
+   Squeezing to four then two columns only bought narrower truncation. */
+@container (max-width: 700px) {
+  .gp-task-week {
+    overflow: hidden;
+    gap: 0;
+    border-radius: var(--gp-r1, 10px);
+    grid-template-columns: minmax(0, 1fr);
+    background: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 96%);
+    box-shadow: inset 0 1px 0 color-mix(in oklab, white, transparent 94%);
+  }
+
+  .gp-task-week .gp-task-day-column {
+    flex-direction: row;
+    gap: 0;
+    border-radius: 0;
+    padding-bottom: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .gp-task-week .gp-task-day-column + .gp-task-day-column {
+    border-top: 1px solid var(--gp-task-rule);
+  }
+
+  .gp-task-week .gp-task-day-column > header {
+    width: 58px;
+    flex: 0 0 auto;
+    align-items: flex-start;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.1rem;
+    padding: 0.34rem 0.5rem;
+    border-right: 1px solid var(--gp-task-rule);
+    border-bottom: 0;
+  }
+
+  .gp-task-week .gp-task-column-body { flex: 1; min-width: 0; }
+
+  .gp-task-week .gp-task-column-add { justify-content: flex-start; padding-left: 0.5rem; }
+
+  /* Seven standing "+" buttons down a week is six too many. A day that already
+     has something in it keeps its add affordance folded away until you reach
+     for the day; an empty day keeps it, because it has nothing else to press. */
+  .gp-task-week .gp-task-day-column:has(.gp-task-card) .gp-task-column-add {
+    min-height: 0;
+    height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition:
+      height var(--gp-duration-snap) var(--gp-ease-snap),
+      opacity var(--gp-duration-snap) var(--gp-ease-snap);
+  }
+
+  .gp-task-week .gp-task-day-column:hover .gp-task-column-add,
+  .gp-task-week .gp-task-day-column:focus-within .gp-task-column-add {
+    height: 22px;
+    opacity: 1;
+  }
+}
+
+/* A sprint card carries an owner and an estimate as well as a name, so three
+   columns need more room than a plain board before the names start vanishing. */
+@container (max-width: 560px) {
+  .gp-tasks-skin[data-tasks-skin='sprint'] .gp-task-board {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Three board columns below ~400px are three truncated columns. */
+@container (max-width: 400px) {
+  .gp-task-board { grid-template-columns: minmax(0, 1fr); }
+}
+
+@container (max-width: 300px) {
+  .gp-task-matrix { grid-template-columns: minmax(0, 1fr); }
+
+  .gp-tasks-skin .gp-task-phase.gp-subpanel { grid-template-columns: minmax(0, 1fr); }
+
+  .gp-task-timeline-scale { display: none; }
+
+  .gp-task-slot { width: 54px; }
+
+  .gp-task-blocker { max-width: 38%; }
+}
+
+@container (max-width: 220px) {
+  .gp-tasks-heading > span svg,
+  .gp-task-due svg,
+  .gp-task-repeat svg { display: none; }
+
+  .gp-task-step-toggle { display: none; }
+}
+
+[data-theme='light'] .gp-task-due input,
+[data-theme='light'] .gp-task-slot input {
+  color-scheme: light;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gp-tasks-skin :where(button, input, select, .gp-subpanel, .gp-task-meter > span) {
+    animation: none;
+    transition-duration: 0.01ms !important;
+  }
+}

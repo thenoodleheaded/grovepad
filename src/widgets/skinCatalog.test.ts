@@ -7,22 +7,27 @@ import {
   skinsFor,
 } from '../utils/widgetSkins'
 import { WIDGET_SKIN_BLUEPRINTS } from './skinBlueprints.generated'
-import { cataloguedSkinCount } from './skinCatalog'
-import { isWidgetTypePublic, WIDGET_REGISTRY } from './registry'
+import { cataloguedOpportunityCount, cataloguedSkinCount } from './skinCatalog'
+import { WIDGET_SKIN_OWNERSHIP } from './skinOwnership.generated'
+import { WIDGET_REGISTRY } from './registry'
 
 describe('complete widget skin catalogue', () => {
-  it('installs all 610 implementable proposals on their public widgets', () => {
+  it('installs all 610 catalogue choices without letting planning labels hide them', () => {
+    expect(cataloguedOpportunityCount()).toBe(610)
     expect(cataloguedSkinCount()).toBe(610)
 
     for (const [untypedType, blueprints] of Object.entries(WIDGET_SKIN_BLUEPRINTS)) {
       const type = untypedType as ModuleType
-      expect(isWidgetTypePublic(type), `${type} should be public`).toBe(true)
       const definition = WIDGET_REGISTRY[type]
       const installed = new Map(
         skinsFor({ type }, definition).map((skin) => [skin.value, skin]),
       )
 
       for (const blueprint of blueprints) {
+        const ownership = WIDGET_SKIN_OWNERSHIP[type as keyof typeof WIDGET_SKIN_OWNERSHIP]?.[
+          blueprint.value as never
+        ] as { kind: string } | undefined
+        expect(ownership, `${type}.${blueprint.value} ownership`).toBeDefined()
         expect(installed.get(blueprint.value), `${type}.${blueprint.value}`).toMatchObject(
           blueprint,
         )
@@ -30,11 +35,9 @@ describe('complete widget skin catalogue', () => {
     }
   })
 
-  it('gives every public widget a real skin choice without duplicate values', () => {
+  it('keeps installed skin lists duplicate-free and presentation-complete', () => {
     for (const type of Object.keys(WIDGET_REGISTRY) as ModuleType[]) {
-      if (!isWidgetTypePublic(type)) continue
       const skins = skinsFor({ type }, WIDGET_REGISTRY[type])
-      expect(skins.length, type).toBeGreaterThan(1)
       expect(new Set(skins.map((skin) => skin.value)).size, type).toBe(skins.length)
       expect(
         skins.every(
@@ -94,5 +97,16 @@ describe('complete widget skin catalogue', () => {
     })
     expect(skinStateFor(withBirthday, 'month')).toEqual({})
     expect(withBirthday).toMatchObject(original as ModuleData)
+  })
+
+  it('removes empty advanced state without leaving persistence debris', () => {
+    const original = WIDGET_REGISTRY.table.defaultData()
+    const withDetail = dataWithSkinState(original, 'database', {
+      details: [{ id: 'one', name: 'Owner', value: 'Ada' }],
+    })
+    const cleaned = dataWithSkinState(withDetail, 'database', {})
+
+    expect(cleaned).not.toHaveProperty('skinStates')
+    expect(cleaned).toEqual(original)
   })
 })

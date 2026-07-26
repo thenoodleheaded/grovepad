@@ -1,5 +1,16 @@
-import type { ModuleType, Size, Widget } from '../types/spatial'
+import type { FormulaData, ModuleType, Size, Widget } from '../types/spatial'
 import { GRID_SIZE, ICON_MIN_EDGE } from '../types/spatial'
+import {
+  formulaReading,
+  formulaResultWord,
+  formulaSkinMode,
+} from '../components/widgets/modules/formulaSkinModel'
+import { locationPoint, placeName } from '../components/widgets/modules/locationSkinModel'
+import { linkedListNodes } from '../components/widgets/modules/linkedListSkinModel'
+import {
+  toggleSkinMode,
+  toggleStateLabel,
+} from '../components/widgets/modules/toggleSkinModel'
 import { titleCapsuleWidth } from './titleCapsuleWidth'
 import { clamp01 } from './math'
 
@@ -283,6 +294,46 @@ function specialModel(type: ModuleType, data: Record<string, unknown>): RestingF
     return { kind: 'chart', stats: chartStats(series, typeof data.unit === 'string' ? data.unit : '') }
   }
   if (type === 'calendar') return { kind: 'week' }
+  // A folded place says where it is. Without coordinates there is nothing to
+  // report yet, so it rests as its icon rather than as an empty row.
+  if (type === 'location') {
+    const point = locationPoint({
+      latitude: finite(data.latitude),
+      longitude: finite(data.longitude),
+    })
+    if (!point) return { kind: 'icon' }
+    const name = placeName(
+      typeof data.label === 'string' ? data.label : '',
+      typeof data.address === 'string' ? data.address : '',
+    )
+    return {
+      kind: 'rows',
+      rows: [{
+        key: 'place',
+        label: compact(name, 24),
+        value: `${point.latitude.toFixed(3)}, ${point.longitude.toFixed(3)}`,
+      }],
+      overflow: 0,
+    }
+  }
+  if (type === 'linked_list') {
+    const nodes = linkedListNodes(data.nodes)
+    if (nodes.length === 0) return { kind: 'icon' }
+    const visible = nodes.length <= 3
+      ? nodes
+      : [nodes[0]!, nodes[1]!, nodes.at(-1)!]
+    return {
+      kind: 'rows',
+      rows: visible.map((node, index) => ({
+        key: node.id,
+        label: index === 0
+          ? 'Head'
+          : index === visible.length - 1 ? 'Tail' : `#${index + 1}`,
+        value: compact(node.value || 'Empty node', 24),
+      })),
+      overflow: Math.max(0, nodes.length - visible.length),
+    }
+  }
   if (type === 'rating') return { kind: 'stars', value: finite(data.value) ?? 0 }
   if (type === 'color_palette') {
     const colors = Array.isArray(data.colors) ? paletteColors(data.colors) : null
@@ -291,13 +342,48 @@ function specialModel(type: ModuleType, data: Record<string, unknown>): RestingF
   if (type === 'toggle' || type === 'branch_gate') {
     const enabled = data.value === true
     const activeLabel = enabled ? data.trueLabel : data.falseLabel
-    return {
-      kind: 'boolean',
-      label: typeof activeLabel === 'string' && activeLabel.trim()
-        ? compact(activeLabel, 24)
-        : enabled ? 'On' : 'Off',
-      active: enabled,
+    if (typeof activeLabel === 'string' && activeLabel.trim()) {
+      return { kind: 'boolean', label: compact(activeLabel, 24), active: enabled }
     }
+    // A Toggle's skin owns the language for its own state, so a folded
+    // Availability card rests as "Busy" rather than the generic "Off".
+    if (type === 'toggle') {
+      const skin = toggleSkinMode(data.skin)
+      const states = data.skinStates as Record<string, Record<string, unknown>> | undefined
+      return {
+        kind: 'boolean',
+        label: compact(toggleStateLabel(skin, enabled, states?.[skin] ?? {}), 24),
+        active: enabled,
+      }
+    }
+    return { kind: 'boolean', label: enabled ? 'On' : 'Off', active: enabled }
+  }
+  if (type === 'timekeeper' && data.mode === 'deadline') {
+    const deadline = data.deadline as Record<string, unknown> | undefined
+    const targetDate = typeof deadline?.targetDate === 'string' ? deadline.targetDate : ''
+    const target = new Date(`${targetDate}T00:00:00`)
+    const days = Number.isNaN(target.getTime())
+      ? '—'
+      : String(Math.ceil((target.getTime() - Date.now()) / 86_400_000))
+    return { kind: 'metric', primary: days, secondary: 'Days left' }
+  }
+  if (type === 'timekeeper' && data.mode === 'world_clock') {
+    const worldClock = data.worldClock as Record<string, unknown> | undefined
+    const zones = Array.isArray(worldClock?.zones) ? worldClock.zones : []
+    const zone = typeof zones[0] === 'string' ? zones[0] : 'UTC'
+    try {
+      const time = new Intl.DateTimeFormat('en-GB', {
+        hour: '2-digit',
+        minute: '2-digit',
+        timeZone: zone,
+      }).format(new Date())
+      return { kind: 'metric', primary: time, secondary: zone.split('/').at(-1)?.replaceAll('_', ' ') ?? zone }
+    } catch {
+      return { kind: 'metric', primary: '--:--', secondary: 'World clock' }
+    }
+  }
+  if (type === 'timekeeper' && data.mode === 'chess_clock') {
+    return { kind: 'metric', primary: 'Chess', secondary: 'Clock' }
   }
   if (type === 'timer' || type === 'stopwatch' || type === 'pomodoro' || type === 'timekeeper') {
     // The dial is the face: the card's own outline carries the marks, so the
@@ -308,13 +394,15 @@ function specialModel(type: ModuleType, data: Record<string, unknown>): RestingF
     const a = finite(data.a)
     const b = finite(data.b)
     if (a === null || b === null) return null
-    const operator = typeof data.operator === 'string' ? data.operator : 'add'
-    const result = operator === 'subtract' ? a - b
-      : operator === 'multiply' ? a * b
-        : operator === 'divide' ? (b === 0 ? 0 : a / b)
-          : operator === 'modulo' ? (b === 0 ? 0 : a % b)
-            : a + b
-    return { kind: 'metric', primary: formatRestNumber(result), secondary: 'Result' }
+    // The same calculation the card and the wire use, so a folded Percent
+    // Change tile shows the percent rather than a sum nobody asked for.
+    const skin = formulaSkinMode(data.skin)
+    const reading = formulaReading(data as unknown as FormulaData)
+    return {
+      kind: 'metric',
+      primary: `${formatRestNumber(reading.value)}${reading.suffix}`,
+      secondary: formulaResultWord(skin),
+    }
   }
   if (type === 'notes' || type === 'sticky_note' || type === 'quote' || type === 'code' || type === 'meeting_notes') {
     const text = typeof data.text === 'string' ? data.text
@@ -327,6 +415,16 @@ function specialModel(type: ModuleType, data: Record<string, unknown>): RestingF
       text: compact(text, TEXT_CLAMP),
       ...(type === 'sticky_note' && typeof data.color === 'string' ? { tint: data.color } : {}),
     }
+  }
+  /**
+   * A Text Input's content is the string it emits, and `value` is not one of
+   * the generic content keys — so a card holding a real address, query, or
+   * command rested as a blank icon and hid the only thing it had to say.
+   */
+  if (type === 'text_input') {
+    const value = typeof data.value === 'string' ? data.value.trim() : ''
+    if (!value) return { kind: 'icon' }
+    return { kind: 'text', text: compact(value, TEXT_CLAMP) }
   }
   if (type === 'table') {
     const rows = Array.isArray(data.rows) ? data.rows : []

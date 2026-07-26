@@ -1,0 +1,479 @@
+/*
+ * Purpose-built Bullets skins.
+ *
+ * Every presentation edits the same item array. Dots, numbered, columns, and
+ * outline use one divider-separated list surface; chips are intentionally
+ * small controls, and the rolling log uses one continuous timeline.
+ */
+
+.gp-widget-card[data-auto-height] .gp-widget-ui[data-widget-type='bullets'] {
+  container-type: inline-size;
+}
+
+.gp-bullets-skin {
+  display: flex;
+  min-height: 70px;
+  flex-direction: column;
+  gap: 0.52rem;
+  color: var(--gp-widget-ink, #f5f5f5);
+}
+
+.gp-bullets-list {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.gp-bullets-heading,
+.gp-bullets-log-heading {
+  display: flex;
+  min-height: 20px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 66%);
+}
+
+.gp-bullets-heading > span,
+.gp-bullets-log-heading > span {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.35rem;
+  color: color-mix(in oklab, var(--gp-widget-accent), white 9%);
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.095em;
+  text-transform: uppercase;
+}
+
+.gp-bullets-heading small {
+  font-size: 8px;
+  font-variant-numeric: tabular-nums;
+}
+
+.gp-bullets-ledger,
+.gp-bullet-column-grid {
+  overflow: hidden;
+  border-radius: var(--gp-r1, 10px);
+  background: linear-gradient(
+    180deg,
+    color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 95%),
+    color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 97%)
+  );
+  box-shadow:
+    inset 0 1px 0 color-mix(in oklab, white, transparent 93%),
+    0 7px 16px rgb(0 0 0 / 0.1);
+}
+
+/* Rows borrow the list's one surface. WidgetPanel remains only as the owner of
+   the stable entry/exit lifecycle, not as a nested pane of glass. */
+.gp-bullets-skin .gp-bullet-row.gp-subpanel {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  min-height: 34px;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0.35rem 0.58rem;
+  border-radius: 0 !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+.gp-bullets-ledger > .gp-bullet-row + .gp-bullet-row,
+.gp-bullets-log-list > .gp-bullet-row + .gp-bullet-row {
+  border-top: 1px solid color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 92%);
+}
+
+.gp-bullet-input {
+  min-width: 0;
+  flex: 1 1 auto;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 12%);
+  background: transparent;
+  font-size: 11.5px;
+  line-height: 1.4;
+  caret-color: var(--gp-widget-accent);
+}
+
+.gp-bullet-input::placeholder {
+  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 76%);
+}
+
+.gp-bullet-row:focus-within .gp-bullet-input {
+  color: var(--gp-widget-ink, #fff);
+}
+
+.gp-bullet-remove {
+  display: grid;
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 74%);
+  background: transparent;
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    color var(--gp-duration-snap) var(--gp-ease-snap),
+    background var(--gp-duration-snap) var(--gp-ease-snap),
+    opacity var(--gp-duration-snap) var(--gp-ease-snap);
+}
+
+.gp-bullet-row:hover .gp-bullet-remove,
+.gp-bullet-row:focus-within .gp-bullet-remove {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.gp-bullet-remove:hover,
+.gp-bullet-remove:focus-visible {
+  color: #fb7185;
+  background: color-mix(in oklab, #fb7185, transparent 88%);
+}
+
+.gp-bullets-skin button:focus-visible,
+.gp-bullet-input:focus-visible {
+  outline: 1px solid color-mix(in oklab, var(--gp-widget-accent), transparent 26%);
+  outline-offset: 2px;
+}
+
+.gp-bullet-add {
+  display: inline-flex;
+  min-height: 25px;
+  align-items: center;
+  gap: 0.35rem;
+  align-self: flex-start;
+  padding: 0.15rem 0.3rem;
+  border: 0;
+  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 66%);
+  background: transparent;
+  font-size: 9px;
+  font-weight: 600;
+  transition:
+    color var(--gp-duration-snap) var(--gp-ease-snap),
+    transform var(--gp-duration-snap) var(--gp-ease-snap);
+}
+
+.gp-bullet-add:hover,
+.gp-bullet-add:focus-visible {
+  color: color-mix(in oklab, var(--gp-widget-accent), white 10%);
+  transform: translateX(1px);
+}
+
+/* Dots */
+
+.gp-bullet-dot {
+  width: 6px;
+  height: 6px;
+  flex: 0 0 auto;
+  border: 1px solid color-mix(in oklab, var(--gp-widget-accent), white 12%);
+  border-radius: 50%;
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 68%);
+  box-shadow: 0 0 8px color-mix(in oklab, var(--gp-widget-accent), transparent 68%);
+}
+
+.gp-bullets-dots .gp-bullet-row:focus-within .gp-bullet-dot {
+  background: var(--gp-widget-accent);
+}
+
+/* Numbered */
+
+.gp-bullets-numbered .gp-bullets-ledger {
+  counter-reset: gp-bullet-step;
+}
+
+.gp-bullet-number {
+  display: inline-flex;
+  width: 25px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  align-self: stretch;
+  border-right: 1px solid color-mix(in oklab, var(--gp-widget-accent), transparent 84%);
+  color: color-mix(in oklab, var(--gp-widget-accent), white 8%);
+  font-size: 8px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+/* Compact Chips */
+
+.gp-bullet-chip-cloud {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.38rem;
+}
+
+.gp-bullets-skin .gp-bullet-chip.gp-subpanel {
+  width: auto;
+  max-width: 100%;
+  min-height: 29px;
+  flex: 0 0 auto;
+  gap: 0.28rem;
+  padding: 0.28rem 0.38rem;
+  border-radius: 999px !important;
+  background-color: color-mix(in oklab, var(--gp-widget-accent), transparent 91%) !important;
+  background-image: none !important;
+  box-shadow:
+    inset 0 1px 0 color-mix(in oklab, white, transparent 92%),
+    inset 0 0 0 1px color-mix(in oklab, var(--gp-widget-accent), transparent 88%) !important;
+  transition:
+    background var(--gp-duration-snap) var(--gp-ease-snap),
+    box-shadow var(--gp-duration-snap) var(--gp-ease-snap),
+    opacity 130ms var(--gp-ease-snap),
+    scale 130ms var(--gp-ease-snap);
+}
+
+.gp-bullets-skin .gp-bullet-chip.gp-subpanel:focus-within {
+  background-color: color-mix(in oklab, var(--gp-widget-accent), transparent 85%) !important;
+  box-shadow:
+    inset 0 1px 0 color-mix(in oklab, white, transparent 90%),
+    inset 0 0 0 1px color-mix(in oklab, var(--gp-widget-accent), transparent 68%) !important;
+}
+
+.gp-bullet-chip .gp-bullet-input {
+  width: clamp(38px, 14cqw, 100px);
+  flex: 0 1 auto;
+  font-size: 10px;
+}
+
+.gp-bullet-chip .gp-bullet-remove {
+  width: 15px;
+  height: 15px;
+  opacity: 0.55;
+  pointer-events: auto;
+}
+
+.gp-bullet-chip-dot {
+  width: 4px;
+  height: 4px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--gp-widget-accent);
+}
+
+/* Two Column */
+
+.gp-bullet-column-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.gp-bullet-column-grid > .gp-bullet-row {
+  border-bottom: 1px solid color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 92%);
+}
+
+.gp-bullet-column-grid > .gp-bullet-row:nth-child(odd) {
+  border-right: 1px solid color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 92%);
+}
+
+.gp-bullet-column-number {
+  display: grid;
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 50%;
+  color: color-mix(in oklab, var(--gp-widget-accent), white 8%);
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 90%);
+  font-size: 7px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+/* Nested Outline */
+
+.gp-bullet-outline-row {
+  position: relative;
+  padding-left: calc(0.58rem + var(--gp-bullet-level) * 18px) !important;
+}
+
+.gp-bullet-outline-row::before {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(0.72rem + var(--gp-bullet-level) * 18px - 9px);
+  width: 1px;
+  content: '';
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 88%);
+  opacity: clamp(0, var(--gp-bullet-level), 1);
+}
+
+.gp-bullet-disclosure {
+  display: grid;
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 0;
+  border-radius: 5px;
+  color: color-mix(in oklab, var(--gp-widget-accent), white 8%);
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 91%);
+}
+
+.gp-bullet-outline-dot {
+  width: 5px;
+  height: 5px;
+  flex: 0 0 auto;
+  margin-inline: 6px 7px;
+  border-radius: 50%;
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 40%);
+}
+
+.gp-bullet-indent-controls {
+  display: inline-flex;
+  flex: 0 0 auto;
+  opacity: 0.42;
+  pointer-events: auto;
+  transition: opacity var(--gp-duration-snap) var(--gp-ease-snap);
+}
+
+.gp-bullet-outline-row:hover .gp-bullet-indent-controls,
+.gp-bullet-outline-row:focus-within .gp-bullet-indent-controls {
+  opacity: 1;
+}
+
+.gp-bullet-indent-controls button {
+  display: grid;
+  width: 19px;
+  height: 19px;
+  place-items: center;
+  border: 0;
+  border-radius: 5px;
+  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 62%);
+  background: transparent;
+}
+
+.gp-bullet-indent-controls button:hover,
+.gp-bullet-indent-controls button:focus-visible {
+  color: var(--gp-widget-accent);
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 91%);
+}
+
+.gp-bullet-indent-controls button:disabled {
+  opacity: 0.18;
+}
+
+/* Rolling Log */
+
+.gp-bullets-log-heading {
+  padding-bottom: 0.34rem;
+  border-bottom: 1px solid color-mix(in oklab, var(--gp-widget-accent), transparent 84%);
+}
+
+.gp-bullets-log-heading > button {
+  display: inline-flex;
+  min-height: 23px;
+  align-items: center;
+  gap: 0.28rem;
+  padding: 0.18rem 0.4rem;
+  border: 0;
+  border-radius: var(--gp-r2, 8px);
+  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 54%);
+  background: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 95%);
+  font-size: 8px;
+}
+
+.gp-bullets-log-heading > button:hover,
+.gp-bullets-log-heading > button:focus-visible {
+  color: var(--gp-widget-accent);
+}
+
+.gp-bullets-log-list {
+  position: relative;
+  overflow: hidden;
+}
+
+.gp-bullets-log-list::before {
+  position: absolute;
+  z-index: 1;
+  top: 17px;
+  bottom: 17px;
+  left: 51px;
+  width: 1px;
+  pointer-events: none;
+  content: '';
+  background: linear-gradient(
+    transparent,
+    color-mix(in oklab, var(--gp-widget-accent), transparent 70%) 12%,
+    color-mix(in oklab, var(--gp-widget-accent), transparent 82%) 88%,
+    transparent
+  );
+}
+
+.gp-bullet-log-row time {
+  width: 36px;
+  flex: 0 0 auto;
+  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 64%);
+  font-size: 7.5px;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.gp-bullet-log-dot {
+  position: relative;
+  z-index: 2;
+  width: 7px;
+  height: 7px;
+  flex: 0 0 auto;
+  border: 2px solid color-mix(in oklab, var(--gp-surface-panel, #111), black 4%);
+  border-radius: 50%;
+  background: var(--gp-widget-accent);
+  box-shadow: 0 0 7px color-mix(in oklab, var(--gp-widget-accent), transparent 48%);
+}
+
+@container (max-width: 200px) {
+  .gp-bullet-column-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .gp-bullet-column-grid > .gp-bullet-row:nth-child(odd) {
+    border-right: 0;
+  }
+
+  .gp-bullet-outline-row {
+    padding-left: calc(0.42rem + var(--gp-bullet-level) * 11px) !important;
+  }
+
+  .gp-bullet-outline-row::before {
+    left: calc(0.56rem + var(--gp-bullet-level) * 11px - 6px);
+  }
+}
+
+@container (max-width: 190px) {
+  .gp-bullets-heading > span svg,
+  .gp-bullets-log-heading > span svg {
+    display: none;
+  }
+
+  .gp-bullet-indent-controls {
+    display: none;
+  }
+
+  .gp-bullet-log-row time {
+    width: 30px;
+    font-size: 7px;
+  }
+
+  .gp-bullets-log-list::before {
+    left: 45px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gp-bullets-skin :where(button, input, .gp-subpanel) {
+    animation: none;
+    transition-duration: 0.01ms !important;
+  }
+}

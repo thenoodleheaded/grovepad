@@ -1,6 +1,6 @@
 import type { ModuleData, ModuleType, RelationType, WidgetMetadata } from '../types/spatial'
 import { CONSOLIDATED_WIDGET_REPLACEMENTS, WIDGET_REGISTRY, widgetDefinition } from '../widgets/registry'
-import { ATLAS_CATALOG, ATLAS_TYPES, ATLAS_TYPE_SET, atlasTypeForPhrase, defaultAtlasData } from '../widgets/atlasCatalog'
+import { ATLAS_CATALOG, ATLAS_TYPES, atlasTypeForPhrase, defaultAtlasData } from '../widgets/atlasCatalog'
 import { AUTOMATION_CORE_CATALOG, AUTOMATION_CORE_TYPES } from '../widgets/automationCoreCatalog'
 import { localDayKey } from './localDate'
 import { buildVocabulary, fuzzyPhraseMatch, normalizeLanguage, tokenCoverage, type NormalizedLanguage } from './languageNormalization'
@@ -100,7 +100,7 @@ const INTENT_PATTERNS: Partial<Record<ModuleType, RegExp>> = {
   bullets: /\b(bullet(?: point)?s?|unordered list)\b/i,
   checklist: /\b(checklist|to-?do|task list|steps? to complete)\b/i,
   table: /\b(table|rows? and columns?|tabular)\b/i,
-  sketchpad: /\b(sketch|draw|doodle|whiteboard)\b/i,
+  sketchpad: /\b(sketch|draw|doodle|whiteboard|graph paper|dot grid|storyboard|annotat(?:e|ion)|excalidraw|flowchart)\b/i,
   budget: /\b(budget|cost breakdown|expenses?)\b/i,
   progress: /\b(progress|completion|percent complete)\b/i,
   ai_generator: /\b(ai generator|generate with ai|ai prompt)\b/i,
@@ -112,6 +112,7 @@ const INTENT_PATTERNS: Partial<Record<ModuleType, RegExp>> = {
   countdown: /\b(countdown|days? until)\b/i,
   habit: /\b(habit(?: tracker)?|streak|daily habit)\b/i,
   links: /\b(link list|bookmarks?|urls?)\b/i,
+  linked_list: /\b(linked list|node chain|pointer chain|doubly linked|circular list)\b/i,
   code: /\b(code snippet|source code|function|class)\b/i,
   quote: /\b(quote|quotation|said by)\b/i,
   poll: /\b(poll|vote|survey choice)\b/i,
@@ -228,6 +229,7 @@ const SEMANTIC_EXAMPLES: Partial<Record<ModuleType, string>> = {
   contact: 'person details how to reach them phone email company',
   logbook: 'record what happened chronological events incidents observations',
   form: 'collect answers details questions fields people fill out',
+  linked_list: 'ordered nodes head tail next previous pointers singly doubly circular traversal',
 }
 
 const WIDGET_LANGUAGE_VOCABULARY = buildVocabulary(
@@ -241,7 +243,7 @@ const WIDGET_LANGUAGE_VOCABULARY = buildVocabulary(
 function uid(): string { return crypto.randomUUID() }
 
 function isConsolidatedLegacyType(type:ModuleType):boolean {
-  return ATLAS_TYPE_SET.has(type)||type==='timer'||type==='pomodoro'||type==='stopwatch'||Boolean(CONSOLIDATED_WIDGET_REPLACEMENTS[type])
+  return type==='tracker'||Boolean(CONSOLIDATED_WIDGET_REPLACEMENTS[type])
 }
 
 function cleanTitle(text: string): string {
@@ -370,8 +372,10 @@ function escapeRegex(value: string): string {
 export function resolveWidgetMention(phrase: string): ModuleType | null {
   const cleaned = phrase.trim().toLowerCase().replace(/\s+widgets?$/, '').trim()
   if (cleaned.length < 3) return null
-  if (atlasTypeForPhrase(cleaned)) return 'tracker'
-  if (/^(?:timer|countdown timer|pomodoro(?: timer)?|focus timer|stopwatch)$/.test(cleaned)) return 'timekeeper'
+  const atlasType=atlasTypeForPhrase(cleaned)
+  if (atlasType) return atlasType
+  if (/^(?:time|timer|countdown timer|pomodoro(?: timer)?|focus timer|stopwatch|world clock|deadline countdown)$/.test(cleaned)) return 'timekeeper'
+  if (/^(?:drawing|sketchpad|excalidraw|whiteboard|graph paper|dot grid|storyboard|annotation)$/.test(cleaned)) return 'sketchpad'
   for (const [legacyType, replacementType] of Object.entries(CONSOLIDATED_WIDGET_REPLACEMENTS) as Array<[ModuleType, ModuleType]>) {
     const definition = WIDGET_REGISTRY[legacyType]
     const label = definition.label.toLowerCase()
@@ -403,7 +407,10 @@ function dataFor(type: ModuleType, source: string, lines: ParsedLine[]): ModuleD
     case 'tracker': return defaultAtlasData(atlasTypeForPhrase(source)??'price_book')
     case 'timekeeper': {
       const current=defaults as import('../types/widgetDataExpansion').TimekeeperData
-      const mode=/pomodoro|focus session|work break/i.test(source)?'pomodoro':/stopwatch|lap time/i.test(source)?'stopwatch':'countdown'
+      const mode=/world clock|time zones?|cities/i.test(source)?'world_clock'
+        :/deadline|days? (?:left|until)|target date/i.test(source)?'deadline'
+          :/pomodoro|focus session|work break/i.test(source)?'pomodoro'
+            :/stopwatch|lap time/i.test(source)?'stopwatch':'countdown'
       return {...current,mode}
     }
     case 'checklist': {
@@ -430,7 +437,16 @@ function dataFor(type: ModuleType, source: string, lines: ParsedLine[]): ModuleD
     case 'bar_chart': return { ...defaultRecord, mode: /line|trend/i.test(source) ? 'line' : /donut/i.test(source) ? 'donut' : /pie/i.test(source) ? 'pie' : 'bar', bars: lines.slice(1).map((line, index) => ({ id: uid(), label: line.text.replace(/[:=]\s*-?\d+(?:\.\d+)?\s*$/, ''), value: numbers[index] ?? 0, color: ['#38bdf8', '#a3e635', '#f472b6', '#fbbf24'][index % 4]! })) } as ModuleData
     case 'grade_calc': return { ...defaultRecord, mode: /gpa/i.test(source) ? 'gpa' : 'weighted' } as ModuleData
     case 'date_picker': return { ...defaultRecord, label: cleanTitle(lines[0]?.text ?? 'Target date'), date: detectDate(source) ?? defaultRecord.date, mode: /countdown|days until/i.test(source) ? 'countdown' : 'date_time' } as ModuleData
-    case 'sketchpad': return { ...defaultRecord, mode: /diagram|flowchart|excalidraw|whiteboard/i.test(source) ? 'diagram' : 'ink' } as ModuleData
+    case 'sketchpad': {
+      const mode = /excalidraw|flowchart|diagram/i.test(source) ? 'diagram'
+        : /storyboard|shot list/i.test(source) ? 'storyboard'
+          : /annotat|mark up|markup/i.test(source) ? 'annotation'
+            : /graph paper|square grid/i.test(source) ? 'graph_paper'
+              : /dot grid|dotted/i.test(source) ? 'dot_grid'
+                : /whiteboard/i.test(source) ? 'whiteboard'
+                  : 'ink'
+      return { ...defaultRecord, mode } as ModuleData
+    }
     case 'goal_tracker': return { ...defaultRecord, mode: /okr|key result/i.test(source) ? 'okr' : /study|hours/i.test(source) ? 'hours' : /milestone/i.test(source) ? 'milestones' : 'simple' } as ModuleData
     case 'flashcards': return { ...defaultRecord, mode: /vocab|term|definition/i.test(source) ? 'vocabulary' : /quiz|question/i.test(source) ? 'quiz' : 'flashcards', cards: lines.map((line) => { const [front, ...back] = line.text.split(/\s*[:—-]\s*/); return { id: uid(), front: front || line.text, back: back.join(' ') || '' } }), current: 0 } as ModuleData
     case 'sticky_note': return { ...defaultRecord, text: source } as ModuleData
