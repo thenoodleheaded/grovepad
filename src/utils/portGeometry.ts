@@ -1,13 +1,16 @@
 import type { ModuleType, Vector2D, Widget } from '../types/spatial'
 import type { FieldValueType, SemanticUnit } from '../types/fieldConnections'
 import { commandsFor, fieldsFor } from '../widgets/fields'
+import { widgetWithEffectiveSize, type WidgetRestContext } from './widgetRest'
 
 // ---------------------------------------------------------------------------
 // Port geometry — the single source of truth for where a widget's circuit
 // ports live. Pure math over widget state: the wire layer, the port rail
 // overlay, and drop hit-testing all call these functions, so they agree on
-// coordinates without any DOM measurement (the same discipline relation
-// lines follow).
+// coordinates (the same discipline relation lines follow). The math itself
+// measures nothing; callers that hit-test against what is painted pass a
+// rest context, and the resting tile it resolves comes from `restingFace`,
+// which does measure text for content-sized faces.
 //
 // Layout: output ports (every readable field) stack on the RIGHT rail;
 // input ports (settable fields first, then commands) stack on the LEFT rail.
@@ -134,19 +137,30 @@ export interface WireTargetHit {
   port: PortSpec | null
 }
 
-/** The widget/port under a world point — ports win over card bodies. */
+/**
+ * The widget/port under a world point — ports win over card bodies.
+ *
+ * `rest` makes the hit-test read the on-screen footprint (a resting tile, or
+ * an expanded card's centre-anchored spot) instead of the dormant stored box,
+ * so a drop resolves against the same geometry the rail paints. Omit it and
+ * the stored box is used unchanged — never default it to
+ * `{ expandedWidgetId: null }`, which would silently shrink every
+ * rest-eligible widget to its tile for a caller that never asked for that.
+ */
 export function findWireTarget(
   world: Vector2D,
   widgets: Record<string, Widget>,
   activeCanvasId: string,
   excludeId: string,
+  rest?: WidgetRestContext,
 ): WireTargetHit | null {
   let portHit: WireTargetHit | null = null
   let bodyHit: WireTargetHit | null = null
   let bodyZ = -Infinity
-  for (const widget of Object.values(widgets)) {
-    if (widget.canvasId !== activeCanvasId || widget.id === excludeId) continue
-    if (inputPortsFor(widget.type).length === 0) continue
+  for (const stored of Object.values(widgets)) {
+    if (stored.canvasId !== activeCanvasId || stored.id === excludeId) continue
+    if (inputPortsFor(stored.type).length === 0) continue
+    const widget = rest ? widgetWithEffectiveSize(stored, rest) : stored
     const port = hitTestInputPort(widget, world)
     if (port) portHit = { widgetId: widget.id, port }
     const inside =

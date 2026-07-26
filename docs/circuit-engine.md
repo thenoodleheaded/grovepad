@@ -75,7 +75,7 @@ A trigger wire carrying `execute` into an automation widget routes to the execut
 **Quiet by default, summoned by intent.** The engine must never tax the note-taking experience:
 
 - **Rest state: zero pixels, zero cost.** Port rails don't mount until a card is hovered, a wire drag is in flight, or Circuit Mode is on.
-- **Hover a card** → ports fade in. Right rail = outputs, left rail = inputs (settable fields as circles, commands as rose diamonds). Geometry is pure math (`src/utils/portGeometry.ts`) shared by rail, wire layer, and drop hit-testing — a wire always lands exactly on its dot, at any zoom, with no DOM measurement.
+- **Hover a card** → ports fade in. Right rail = outputs, left rail = inputs (settable fields as circles, commands as rose diamonds). Geometry is pure math (`src/utils/portGeometry.ts`) shared by rail, wire layer, and drop hit-testing — a wire always lands exactly on its dot, at any zoom, because all three resolve against the same on-screen footprint (`widgetWithEffectiveSize`) rather than the dormant stored box.
 - **Drag from an output** → live ghost wire; compatible inputs glow. Drop on a port to bind; drop on a card for the field picker; drop on canvas to cancel.
 - **`W` / toolbar ⚡ = Circuit Mode.** The live graph illuminates: ports labeled, wires at full strength, live value chips at midpoints, cards slightly desaturated.
 

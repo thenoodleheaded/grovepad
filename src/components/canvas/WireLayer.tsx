@@ -161,10 +161,15 @@ const Wire = memo(function Wire({
 function GhostWire() {
   const drag = useCircuitStore((state) => state.wireDrag)
   const source = useWidgetStore((state) => (drag ? state.widgets[drag.fromId] : undefined))
+  const expandedWidgetId = useWidgetRestStore((state) => state.expandedWidgetId)
+  const expandedOffset = useWidgetRestStore((state) => state.expandedOffset)
   if (!drag || !source) return null
   const port = findOutputPort(source.type, drag.fromField)
   if (!port) return null
-  const start = portWorldPosition(source, 'out', port.index, outputPortsFor(source.type).length)
+  // The ghost has to leave the dot that was actually grabbed, so it starts on
+  // the on-screen footprint — the same substitution settled wires make below.
+  const from = widgetWithEffectiveSize(source, { expandedWidgetId, expandedOffset })
+  const start = portWorldPosition(from, 'out', port.index, outputPortsFor(source.type).length)
   const { d } = flowCurve(start, drag.cursorWorld)
   const color = VALUE_TYPE_COLORS[drag.valueType]
   return (

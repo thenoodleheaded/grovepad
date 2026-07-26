@@ -13,6 +13,7 @@ import {
 } from '../../utils/portGeometry'
 import { pointerStayedWithinTapSlop } from '../../utils/pointerTap'
 import { useEffectiveWidget } from '../../hooks/useEffectiveWidget'
+import { useWidgetRestStore } from '../../store/useWidgetRestStore'
 
 // ---------------------------------------------------------------------------
 // Port rails — the quiet circuit affordance on every card.
@@ -24,6 +25,13 @@ import { useEffectiveWidget } from '../../hooks/useEffectiveWidget'
 // portGeometry.ts, the same pure math the wire layer uses, so a wire always
 // lands exactly on its dot.
 // ---------------------------------------------------------------------------
+
+/** The footprint context a drop must resolve against — the same pair the rail
+ *  itself is drawn with, so an aimed dot and its hit target never diverge. */
+function restContext() {
+  const { expandedWidgetId, expandedOffset } = useWidgetRestStore.getState()
+  return { expandedWidgetId, expandedOffset }
+}
 
 export const PortRail = memo(function PortRail({ widgetId }: { widgetId: string }) {
   // Rail geometry follows the on-screen footprint: on a resting tile, dots
@@ -151,7 +159,7 @@ export const PortRail = memo(function PortRail({ widgetId }: { widgetId: string 
       const { pan, zoom } = useCanvasStore.getState()
       const world = screenToWorld({ x: clientX, y: clientY }, { x: pan.x, y: pan.y, zoom })
       const state = useWidgetStore.getState()
-      const hit = findWireTarget(world, state.widgets, state.activeCanvasId, widgetId)
+      const hit = findWireTarget(world, state.widgets, state.activeCanvasId, widgetId, restContext())
       circuit.updateWireDrag(
         world,
         hit?.port ? { widgetId: hit.widgetId, portKey: hit.port.key, portKind: hit.port.kind } : null,
@@ -175,7 +183,7 @@ export const PortRail = memo(function PortRail({ widgetId }: { widgetId: string 
     const { pan, zoom } = useCanvasStore.getState()
     const world = screenToWorld({ x: event.clientX, y: event.clientY }, { x: pan.x, y: pan.y, zoom })
     const state = useWidgetStore.getState()
-    const hit = findWireTarget(world, state.widgets, state.activeCanvasId, widgetId)
+    const hit = findWireTarget(world, state.widgets, state.activeCanvasId, widgetId, restContext())
     if (!hit) { circuit.endWireDrag(); return }
     if (hit.port) {
       connectToPort(hit.widgetId, hit.port)

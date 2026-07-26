@@ -16,8 +16,10 @@ import {
   hitTestInputPort,
   inputPortsFor,
   outputPortsFor,
+  portRailOffset,
   portWorldPosition,
 } from '../utils/portGeometry'
+import { widgetWithEffectiveSize } from '../utils/widgetRest'
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -431,6 +433,53 @@ describe('engine support', () => {
       'someone-else',
     )
     expect(hit?.widgetId).toBe(progress.id)
+  })
+
+  it('resolves a wire drop against the box the port dots are drawn on', () => {
+    // PortRail paints its dots on the on-screen box (useEffectiveWidget), so
+    // drop resolution has to hit-test that same box. An aggregator resting at
+    // its 80x80 icon tile stacks six input dots inside 28px; against the
+    // dormant 280x200 card those dots sit 29.6px apart, so the dot being aimed
+    // at is several ports away from the one the stored box resolves to.
+    const target = widget('aggregator', { label: 'Combine', mode: 'avg', slots: [0, 0, 0, 0, 0, 0] } as ModuleData, 1000, 1000)
+    const rest = { expandedWidgetId: null }
+    const effective = widgetWithEffectiveSize(target, rest)
+    expect(effective.size).not.toEqual(target.size)
+
+    const ins = inputPortsFor('aggregator')
+    const aimed = ins[ins.length - 1]!
+    const aim = portWorldPosition(effective, 'in', aimed.index, ins.length)
+
+    expect(findWireTarget(aim, record([target]), 'canvas-1', 'source', rest)?.port?.key).toBe(aimed.key)
+    // Not vacuous: the stored box resolves that same point to a different port.
+    expect(findWireTarget(aim, record([target]), 'canvas-1', 'source')?.port?.key).not.toBe(aimed.key)
+
+    // The dormant card must not swallow body drops the visible tile never covers.
+    const ghost = { x: target.position.x + target.size.width - 10, y: target.position.y + target.size.height - 10 }
+    expect(ghost.x).toBeGreaterThan(target.position.x + effective.size.width)
+    expect(findWireTarget(ghost, record([target]), 'canvas-1', 'source', rest)).toBeNull()
+    expect(findWireTarget(ghost, record([target]), 'canvas-1', 'source')?.widgetId).toBe(target.id)
+  })
+
+  it('a collapsed rail resolves drops to the port it paints on top', () => {
+    // A used counter rests as a single 40px row, where portRailOffset has no
+    // room to separate its four inputs and every dot lands on one point. Drag
+    // now resolves that point the way the painted rail and tap-to-connect
+    // already do — the last port — instead of disagreeing with both. Which
+    // port a stack of coincident dots should mean is a rail-layout question,
+    // not one this hit-test can answer.
+    const counter = widget('counter', { label: 'Reps', count: 3, step: 1 } as ModuleData, 2000, 2000)
+    const rest = { expandedWidgetId: null }
+    const effective = widgetWithEffectiveSize(counter, rest)
+    expect(effective.size.height).toBe(40)
+
+    const ins = inputPortsFor('counter')
+    const offsets = new Set(ins.map((port) => portRailOffset(effective.size.height, port.index, ins.length)))
+    expect(offsets.size).toBe(1) // the rail really is collapsed
+
+    const aim = portWorldPosition(effective, 'in', 0, ins.length)
+    expect(findWireTarget(aim, record([counter]), 'canvas-1', 'source', rest)?.port?.key)
+      .toBe(ins[ins.length - 1]!.key)
   })
 
   it('every registered field key resolves through fieldDescriptor', () => {
