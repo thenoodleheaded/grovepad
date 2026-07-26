@@ -1,8 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import type { HydratedPersistedBoard, PersistedBoard } from '../types/persistence'
+import type { Widget } from '../types/spatial'
 import { makeWidget } from '../test/factories'
 import { planBoardCanvasEmbedding } from './boardCanvasEmbedding'
 import { mergePersistedBoardWorkspaces } from './boardWorkspaceMerge'
+import {
+  getOpaqueWidgetType,
+  parsePersistedBoard,
+  serializePersistedBoard,
+} from './persistedBoardSchema'
 
 function board(name: string): HydratedPersistedBoard {
   return {
@@ -40,6 +46,31 @@ function board(name: string): HydratedPersistedBoard {
 function ids(): () => string {
   let index = 0
   return () => `fresh-${++index}`
+}
+
+/** A package from a newer build: one known widget plus one unknown type. */
+function senderBoardWithFutureWidget(): HydratedPersistedBoard {
+  const sender = board('Sender')
+  sender.widgets.future = {
+    id: 'future',
+    canvasId: 'canvas',
+    type: 'quantum_planner',
+    title: 'Quantum planner',
+    position: { x: 40, y: 40 },
+    size: { width: 320, height: 200 },
+    data: { horizon: 12 },
+    metadata: { badges: [] },
+  } as unknown as Widget
+
+  return sender
+}
+
+function transported<T>(value: T): unknown {
+  return JSON.parse(JSON.stringify(value))
+}
+
+function opaqueTypes(widgets: Record<string, Widget>): (string | null)[] {
+  return Object.values(widgets).map(getOpaqueWidgetType).filter(Boolean)
 }
 
 describe('board import flows', () => {
@@ -81,6 +112,39 @@ describe('board import flows', () => {
     expect(Object.values(embedding.widgets).some((widget) => (
       widget.title === 'Imported note' && widget.canvasId === importedCanvasId
     ))).toBe(true)
+  })
+
+  it('keeps an imported future-type widget alive across the next save and reload', () => {
+    const current = board('Current')
+    const imported = parsePersistedBoard(transported(senderBoardWithFutureWidget()))
+    expect(imported).not.toBeNull()
+    expect(opaqueTypes(imported!.widgets)).toEqual(['quantum_planner'])
+
+    const embedding = planBoardCanvasEmbedding(current, imported!, {
+      title: 'Sender archive',
+      position: { x: 0, y: 0 },
+      idFactory: ids(),
+    })
+    const saved = serializePersistedBoard({
+      ...current,
+      canvases: { ...current.canvases, ...embedding.canvases },
+      widgets: { ...current.widgets, ...embedding.widgets },
+      relations: embedding.relations,
+      connections: embedding.connections,
+      glues: embedding.glues,
+    })
+
+    // Relocating a placeholder must not leave its persisted record pointing at
+    // the sender's ids: the reader drops any row that disagrees with its key.
+    for (const [id, widget] of Object.entries(saved.widgets)) {
+      expect(widget.id).toBe(id)
+      expect(saved.canvases[widget.canvasId]).toBeDefined()
+    }
+
+    const reloaded = parsePersistedBoard(transported(saved))
+    expect(reloaded).not.toBeNull()
+    expect(Object.keys(reloaded!.widgets)).toHaveLength(Object.keys(saved.widgets).length)
+    expect(opaqueTypes(reloaded!.widgets)).toEqual(['quantum_planner'])
   })
 
   it('puts every workspace in a multi-workspace package behind the wrapper Canvas', () => {

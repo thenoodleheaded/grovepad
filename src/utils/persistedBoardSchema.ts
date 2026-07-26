@@ -690,7 +690,17 @@ export function serializePersistedBoard(state: PersistedBoardState): PersistedBo
   const widgets = Object.fromEntries(
     Object.entries(state.widgets).map(([id, widget]) => {
       const opaqueSource = getOpaqueWidgetSource(widget)
-      return [id, opaqueSource ? opaqueSource as unknown as Widget : normalizeWidgetData(widget)]
+      // The stashed source is the newer client's record verbatim, but its
+      // envelope goes stale as soon as an import or merge relocates the
+      // placeholder: `{ ...widget, id, canvasId }` copies the symbol along with
+      // the old ids. Re-stamp the two fields the reader owns, so the record can
+      // never disagree with its own map key or name a canvas that is not there.
+      return [
+        id,
+        opaqueSource
+          ? { ...opaqueSource, id, canvasId: widget.canvasId } as unknown as Widget
+          : normalizeWidgetData(widget),
+      ]
     }),
   )
   const unknownRelations = retainOpaqueEdges(state.persistenceUnknownRelations, state.widgets)
