@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import {
-  auraBlobRadius,
+  auraBufferSize,
+  auraScreenPool,
   DEFAULT_AURA_DOCUMENT,
   DEFAULT_AURA_TUNING,
-  advanceAnchor,
   auraNumericBounds,
   resolveAccent,
   sanitizeAuraDocument,
@@ -21,15 +21,13 @@ describe('sanitizeAuraDocument', () => {
 
   it('clamps every numeric knob into range', () => {
     const doc = sanitizeAuraDocument({
-      aura: { dark: { alpha: 99, reach: -5, maxEmitters: 1000, midStop: 0 } },
+      aura: { dark: { alpha: 99, reach: -5, maxEmitters: 1000 } },
     })
     const [alphaMin, alphaMax] = auraNumericBounds('alpha')
     expect(doc.aura.dark.alpha).toBeLessThanOrEqual(alphaMax)
     expect(doc.aura.dark.alpha).toBeGreaterThanOrEqual(alphaMin)
-    expect(doc.aura.dark.reach).toBeGreaterThan(0)
+    expect(doc.aura.dark.reach).toBeGreaterThanOrEqual(0)
     expect(doc.aura.dark.maxEmitters).toBeLessThanOrEqual(auraNumericBounds('maxEmitters')[1])
-    // A zero midStop would collapse the gradient onto the core stop.
-    expect(doc.aura.dark.midStop).toBeGreaterThan(0)
   })
 
   it('rejects non-finite numbers that would throw out of createRadialGradient', () => {
@@ -69,57 +67,6 @@ describe('sanitizeAuraDocument', () => {
       accents: { notes: { dark: '#abcdef', light: '#123456' } },
     })
     expect(sanitizeAuraDocument(JSON.parse(JSON.stringify(tuned)))).toEqual(tuned)
-  })
-})
-
-describe('advanceAnchor', () => {
-  const blobAt = (anchor: number, target: number, changedAt: number) => ({
-    anchorX: anchor,
-    anchorY: 0,
-    targetX: target,
-    targetY: 0,
-    targetChangedAt: changedAt,
-  })
-
-  it('holds the light still while the widget is being dragged', () => {
-    const blob = blobAt(100, 100, 0)
-    // Each drag frame moves the widget and restamps the change time.
-    for (let frame = 1; frame <= 10; frame += 1) {
-      blob.targetX = 100 + frame * 20
-      blob.targetChangedAt = frame * 16
-      expect(advanceAnchor(blob, frame * 16, 220, 0.06, false)).toBe(false)
-    }
-    expect(blob.anchorX).toBe(100)
-  })
-
-  it('glides toward the target once the widget has rested', () => {
-    const blob = blobAt(100, 300, 0)
-    expect(advanceAnchor(blob, 100, 220, 0.06, false)).toBe(false)
-    expect(blob.anchorX).toBe(100)
-    expect(advanceAnchor(blob, 300, 220, 0.06, false)).toBe(true)
-    expect(blob.anchorX).toBeGreaterThan(100)
-    expect(blob.anchorX).toBeLessThan(300)
-  })
-
-  it('converges exactly instead of easing forever', () => {
-    const blob = blobAt(100, 300, 0)
-    for (let i = 0; i < 500 && (blob.anchorX !== blob.targetX); i += 1) {
-      advanceAnchor(blob, 10_000, 220, 0.06, false)
-    }
-    expect(blob.anchorX).toBe(300)
-    expect(advanceAnchor(blob, 10_000, 220, 0.06, false)).toBe(false)
-  })
-
-  it('jumps straight there under reduced motion, even mid-drag', () => {
-    const blob = blobAt(100, 300, 9_999)
-    expect(advanceAnchor(blob, 10_000, 220, 0.06, true)).toBe(true)
-    expect(blob.anchorX).toBe(300)
-  })
-
-  it('treats a zero settle delay as follow-immediately', () => {
-    const blob = blobAt(100, 300, 10_000)
-    expect(advanceAnchor(blob, 10_000, 0, 0.06, false)).toBe(true)
-    expect(blob.anchorX).toBeGreaterThan(100)
   })
 })
 
@@ -165,45 +112,44 @@ describe('aura accent source', () => {
   })
 })
 
-describe('the aura pool that replaced the weld seam', () => {
+describe('screen-space aura geometry', () => {
   const dark = DEFAULT_AURA_TUNING.dark
-  const BUFFER = 128
-  const VIEWPORT = 1280
+  const VIEWPORT_WIDTH = 1280
+  const VIEWPORT_HEIGHT = 720
 
-  it('keeps a 1×1 icon a small local pool instead of inflating it to a wash', () => {
-    // An 80px icon is the size a glued/collapsed member wears. Its pool must
-    // stay a tight bright spot: the old 0.1 floor forced it to a tenth of the
-    // whole viewport, which read as fog rather than as light off that card.
-    const icon = auraBlobRadius(80, 1, VIEWPORT, BUFFER, dark)
-    const iconViewportFraction = icon / BUFFER
-    expect(iconViewportFraction).toBeLessThan(0.09)
-    // And it is genuinely derived from the widget, not pinned at the floor.
-    expect(icon).toBeGreaterThan(BUFFER * dark.minRadius)
+  it('keeps the halo soft and local around a compact visible tile', () => {
+    const icon = auraScreenPool(80, 80, 1, VIEWPORT_WIDTH, VIEWPORT_HEIGHT, dark)
+    expect(icon.halo).toBeGreaterThan(VIEWPORT_HEIGHT * dark.minRadius)
+    expect(icon.halo).toBeLessThan(VIEWPORT_HEIGHT * dark.maxRadius)
+    expect(icon.radiusX).toBe(icon.radiusY)
   })
 
-  it('scales the pool with the card that casts it', () => {
-    const icon = auraBlobRadius(80, 1, VIEWPORT, BUFFER, dark)
-    const card = auraBlobRadius(360, 1, VIEWPORT, BUFFER, dark)
-    expect(card).toBeGreaterThan(icon)
-    // A big card still cannot wash the board out.
-    expect(auraBlobRadius(4000, 1, VIEWPORT, BUFFER, dark)).toBe(BUFFER * dark.maxRadius)
+  it('follows a rectangular visible footprint without pretending it is square', () => {
+    const card = auraScreenPool(360, 120, 1, VIEWPORT_WIDTH, VIEWPORT_HEIGHT, dark)
+    expect(card.radiusX).toBeGreaterThan(card.radiusY)
+    expect(card.radiusX - card.radiusY).toBeCloseTo(120)
   })
 
-  it('lets two welded icons pool into one mass, without reaching a distant card', () => {
-    // Welded members sit a 0.3-cell (12px) gap apart, so their 80px pools
-    // overlap and read as one — that overlap is the join now.
-    const r = auraBlobRadius(80, 1, VIEWPORT, BUFFER, dark)
-    const bufferPerWorldPx = BUFFER / VIEWPORT
-    const weldedCentreGap = (80 + 12) * bufferPerWorldPx
-    expect(r * 2).toBeGreaterThan(weldedCentreGap)
-    // A card five cells away is NOT swallowed into that pool.
-    const distantCentreGap = (80 + 200) * bufferPerWorldPx
-    expect(r * 2).toBeLessThan(distantCentreGap)
+  it('changes halo depth mildly across zoom instead of scaling it linearly', () => {
+    const far = auraScreenPool(240, 160, 0.4, VIEWPORT_WIDTH, VIEWPORT_HEIGHT, dark)
+    const near = auraScreenPool(240, 160, 2, VIEWPORT_WIDTH, VIEWPORT_HEIGHT, dark)
+    expect(near.halo).toBeGreaterThan(far.halo)
+    expect(near.halo / far.halo).toBeLessThan(2)
   })
 
-  it('survives a degenerate viewport without producing NaN', () => {
-    // A non-finite radius throws out of createRadialGradient.
-    expect(auraBlobRadius(80, 1, 0, BUFFER, dark)).toBe(0)
-    expect(Number.isFinite(auraBlobRadius(80, 1, VIEWPORT, BUFFER, dark))).toBe(true)
+  it('uses an aspect-correct adaptive buffer instead of stretching a square', () => {
+    expect(auraBufferSize(1280, 720)).toEqual({ width: 560, height: 315 })
+    expect(auraBufferSize(390, 844)).toEqual({ width: 254, height: 549 })
+  })
+
+  it('survives degenerate geometry without non-finite canvas values', () => {
+    expect(auraScreenPool(80, 80, 1, 0, VIEWPORT_HEIGHT, dark)).toEqual({
+      halo: 0,
+      radiusX: 0,
+      radiusY: 0,
+    })
+    const icon = auraScreenPool(80, 80, 1, VIEWPORT_WIDTH, VIEWPORT_HEIGHT, dark)
+    expect(Number.isFinite(icon.halo)).toBe(true)
+    expect(auraBufferSize(0, 0)).toEqual({ width: 0, height: 0 })
   })
 })

@@ -14,16 +14,12 @@ import {
 const NUMERIC_LABELS: Record<string, string> = {
   alpha: 'Overall intensity',
   coreAlpha: 'Centre intensity',
-  midStop: 'Bright ring position',
-  midAlpha: 'Bright ring intensity',
-  reach: 'Reach (× widget size)',
-  scatter: 'Scatter radius',
+  reach: 'Footprint influence',
+  scatter: 'Soft spread',
   blur: 'Blur',
-  minRadius: 'Min radius (× screen)',
-  maxRadius: 'Max radius (× screen)',
+  minRadius: 'Min halo (× viewport)',
+  maxRadius: 'Max halo (× viewport)',
   maxEmitters: 'Max emitters',
-  settleMs: 'Settle delay (ms)',
-  glide: 'Glide speed',
 }
 
 const CANVAS_LABELS: Record<keyof CanvasColorTuning, string> = {
@@ -31,7 +27,7 @@ const CANVAS_LABELS: Record<keyof CanvasColorTuning, string> = {
   gridFine: 'Grid (fine)',
 }
 
-const STEPS: Record<string, number> = { maxEmitters: 1, settleMs: 10, blur: 0.5 }
+const STEPS: Record<string, number> = { maxEmitters: 1, blur: 0.5 }
 
 type Tab = 'aura' | 'canvas' | 'accents' | 'export'
 

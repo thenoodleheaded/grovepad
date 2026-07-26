@@ -57,19 +57,21 @@ describe('widgets light the board locally instead', () => {
     expect(aura).toContain('(Number(b.glued) - Number(a.glued)) ||')
   })
 
-  it('emits a strong, tight pool with only a little spread', () => {
+  it('emits a soft, screen-stable pool from the visible widget footprint', () => {
     const dark = auraTuning.slice(auraTuning.indexOf('dark: {'), auraTuning.indexOf('light: {'))
     const value = (key: string) => Number(dark.match(new RegExp(`${key}: ([\\d.]+)`))![1])
-    // Strong at the source...
+    // Present at the source without recreating the old opaque bright ring.
     expect(value('alpha')).toBeGreaterThan(0.25)
-    // ...held close to the widget that casts it...
     expect(value('reach')).toBeLessThanOrEqual(1)
-    // ...with only a little spread past that, and a floor low enough that a
-    // small icon stays a small pool instead of being inflated to a wash.
-    expect(value('scatter')).toBeLessThanOrEqual(0.2)
-    expect(value('minRadius')).toBeLessThanOrEqual(0.03)
+    expect(value('scatter')).toBeLessThanOrEqual(0.25)
+    // A screen-space floor keeps tiny welded icons softly legible at far zoom,
+    // while the ceiling prevents any one card from washing the board.
+    expect(value('minRadius')).toBeGreaterThanOrEqual(0.04)
+    expect(value('maxRadius')).toBeLessThanOrEqual(0.2)
     // Enough emitters that a whole cluster of icons can glow at once.
     expect(value('maxEmitters')).toBeGreaterThanOrEqual(16)
+    expect(aura).toContain('widgetWithEffectiveSize(stored, restContext)')
+    expect(aura).toContain('const buffer = auraBufferSize(')
   })
 })
 

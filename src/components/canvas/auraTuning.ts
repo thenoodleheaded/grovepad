@@ -9,35 +9,21 @@ import type { Theme } from '../../store/useThemeStore'
 export interface AuraThemeTuning {
   /** Overall opacity multiplier for every blob. */
   alpha: number
-  /**
-   * Opacity at the exact centre of a blob. Kept below `midAlpha` so the light
-   * reads as a soft pool rather than a hotspot directly on top of the widget.
-   */
+  /** Opacity at the exact centre of a blob. */
   coreAlpha: number
-  /** Where the brightest ring sits, as a fraction of the blob radius. */
-  midStop: number
-  /** Opacity at `midStop` — the peak of the falloff. */
-  midAlpha: number
-  /** Blob radius as a multiple of the widget's largest edge. */
+  /** How strongly the visible widget footprint contributes to halo depth. */
   reach: number
-  /**
-   * Extra radius past `reach`, as a fraction of it, over which the light thins
-   * out to nothing. Higher values scatter the glow further from its widget.
-   */
+  /** Extra soft spread beyond the size-derived halo. */
   scatter: number
-  /** Gaussian blur applied to the low-resolution buffer, in buffer pixels. */
+  /** Gaussian blur applied to the aspect-correct buffer, in buffer pixels. */
   blur: number
-  /** Radius floor/ceiling as a fraction of the buffer, so one widget cannot wash out the board. */
+  /** Halo floor/ceiling as a fraction of the viewport's shorter edge. */
   minRadius: number
   maxRadius: number
   /** How many on-screen widgets may emit at once. */
   maxEmitters: number
   /** `lighter` adds overlapping accents like real light; `source-over` overpaints. */
   blend: 'lighter' | 'source-over'
-  /** How long a widget must hold still before its glow re-anchors, in ms. */
-  settleMs: number
-  /** Per-frame easing applied once settled — lower glides more slowly. */
-  glide: number
 }
 
 export interface AuraTuning {
@@ -60,36 +46,26 @@ export interface AuraTuningDocument {
 
 export const DEFAULT_AURA_TUNING: AuraTuning = {
   dark: {
-    alpha: 0.34,
-    coreAlpha: 0.5,
-    midStop: 0.36,
-    midAlpha: 0.95,
-    reach: 0.9,
-    scatter: 0.15,
-    blur: 5,
-    minRadius: 0.025,
-    maxRadius: 0.3,
-    maxEmitters: 20,
+    alpha: 0.3,
+    coreAlpha: 0.78,
+    reach: 0.82,
+    scatter: 0.22,
+    blur: 6,
+    minRadius: 0.05,
+    maxRadius: 0.18,
+    maxEmitters: 16,
     blend: 'lighter',
-    settleMs: 220,
-    glide: 0.06,
   },
   light: {
-    // Light mode overpaints through `multiply` rather than adding, so it needs a
-    // higher alpha than dark to land at a comparable strength.
-    alpha: 0.62,
-    coreAlpha: 0.5,
-    midStop: 0.36,
-    midAlpha: 0.95,
-    reach: 0.9,
-    scatter: 0.15,
-    blur: 5,
-    minRadius: 0.025,
-    maxRadius: 0.3,
-    maxEmitters: 20,
+    alpha: 0.34,
+    coreAlpha: 0.62,
+    reach: 0.78,
+    scatter: 0.2,
+    blur: 6,
+    minRadius: 0.045,
+    maxRadius: 0.16,
+    maxEmitters: 16,
     blend: 'source-over',
-    settleMs: 220,
-    glide: 0.06,
   },
 }
 
@@ -119,16 +95,12 @@ type AuraNumericKey = {
 const NUMERIC_BOUNDS: Record<AuraNumericKey, [number, number]> = {
   alpha: [0, 1],
   coreAlpha: [0, 1],
-  midStop: [0.01, 0.99],
-  midAlpha: [0, 1],
-  reach: [0.1, 8],
-  scatter: [0, 4],
-  blur: [0, 40],
-  minRadius: [0.01, 1],
-  maxRadius: [0.02, 2],
+  reach: [0, 3],
+  scatter: [0, 1.5],
+  blur: [0, 24],
+  minRadius: [0.01, 0.3],
+  maxRadius: [0.02, 0.5],
   maxEmitters: [1, 40],
-  settleMs: [0, 5000],
-  glide: [0.005, 1],
 }
 
 export const AURA_NUMERIC_KEYS = Object.keys(NUMERIC_BOUNDS) as AuraNumericKey[]
@@ -196,52 +168,6 @@ export function sanitizeAuraDocument(raw: unknown): AuraTuningDocument {
   }
 }
 
-/** The subset of a light source the anchor step reads and writes. */
-export interface AnchorState {
-  anchorX: number
-  anchorY: number
-  targetX: number
-  targetY: number
-  targetChangedAt: number
-}
-
-/**
- * Moves a light's anchor one frame toward the widget it belongs to.
- *
- * The anchor deliberately lags: while a widget is being dragged its target keeps
- * changing, so `targetChangedAt` keeps resetting and the settle window never
- * elapses — the light stays put instead of smearing across the board. Once the
- * widget rests for `settleMs` the anchor glides over. Returns true when it moved,
- * so the caller knows another frame is needed.
- */
-export function advanceAnchor(
-  blob: AnchorState,
-  now: number,
-  settleMs: number,
-  glide: number,
-  reducedMotion: boolean,
-): boolean {
-  const dx = blob.targetX - blob.anchorX
-  const dy = blob.targetY - blob.anchorY
-  if (dx === 0 && dy === 0) return false
-  if (reducedMotion) {
-    blob.anchorX = blob.targetX
-    blob.anchorY = blob.targetY
-    return true
-  }
-  if (settleMs > 0 && now - blob.targetChangedAt < settleMs) return false
-  // Snap the last sub-pixel rather than easing forever on a value that can never
-  // reach zero by repeated multiplication.
-  if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5) {
-    blob.anchorX = blob.targetX
-    blob.anchorY = blob.targetY
-  } else {
-    blob.anchorX += dx * glide
-    blob.anchorY += dy * glide
-  }
-  return true
-}
-
 /** CSS custom property each canvas colour drives. */
 const CANVAS_COLOR_VARS: Record<keyof CanvasColorTuning, string> = {
   canvasTintBase: '--gp-canvas-tint-base',
@@ -282,29 +208,66 @@ export function resolveAccent(
   return doc.accents[type]?.[theme] ?? registryAccent
 }
 
+export interface AuraScreenPool {
+  /** Soft extension beyond every side of the visible widget, in CSS pixels. */
+  halo: number
+  /** Full elliptical pool radii, including half the widget footprint. */
+  radiusX: number
+  radiusY: number
+}
+
 /**
- * The radius of the pool one widget casts, in buffer pixels.
+ * Screen-space pool geometry for one visible widget.
  *
- * This is the whole "strong but LOCAL" contract in one place: the pool is sized
- * from the widget's own longest edge (`reach`), spreads only a little past that
- * (`scatter`), and is then clamped. The floor matters most — set too high, a
- * 1×1 icon is inflated into a board-wide wash instead of the tight bright pool
- * that now carries a glue cluster's join.
- *
- * Extracted from the layer so the falloff can be reasoned about without a
- * canvas: the drawing code must not be the only definition of the geometry.
+ * The halo has a viewport-relative floor, then grows only mildly with the
+ * widget's apparent area. Zooming therefore changes the card footprint without
+ * turning its light into either a hard speck or a board-wide wash.
  */
-export function auraBlobRadius(
-  longestEdge: number,
+export function auraScreenPool(
+  width: number,
+  height: number,
   zoom: number,
   viewportWidth: number,
-  bufferResolution: number,
+  viewportHeight: number,
   tuning: Pick<AuraThemeTuning, 'reach' | 'scatter' | 'minRadius' | 'maxRadius'>,
-): number {
-  if (!(viewportWidth > 0) || !(bufferResolution > 0)) return 0
-  const screenRadius = longestEdge * zoom * tuning.reach * (1 + tuning.scatter)
-  const normRadius = (screenRadius / viewportWidth) * bufferResolution
-  const min = bufferResolution * tuning.minRadius
-  const max = bufferResolution * tuning.maxRadius
-  return Math.min(Math.max(normRadius, min), max)
+): AuraScreenPool {
+  if (
+    !(width >= 0) ||
+    !(height >= 0) ||
+    !(zoom > 0) ||
+    !(viewportWidth > 0) ||
+    !(viewportHeight > 0)
+  ) {
+    return { halo: 0, radiusX: 0, radiusY: 0 }
+  }
+  const screenWidth = width * zoom
+  const screenHeight = height * zoom
+  const viewportEdge = Math.min(viewportWidth, viewportHeight)
+  const minHalo = viewportEdge * tuning.minRadius
+  const maxHalo = viewportEdge * tuning.maxRadius
+  const apparentEdge = Math.sqrt(screenWidth * screenHeight)
+  // A fourth-root area response keeps zoom influence gentle: the visible card
+  // can grow substantially while the soft light around it changes only mildly.
+  const sizeContribution = Math.sqrt(apparentEdge) * 4 * tuning.reach
+  const candidate = (minHalo + sizeContribution) * (1 + tuning.scatter)
+  const halo = Math.min(Math.max(candidate, minHalo), maxHalo)
+  return {
+    halo,
+    radiusX: screenWidth / 2 + halo,
+    radiusY: screenHeight / 2 + halo,
+  }
+}
+
+/** Aspect-correct low-resolution buffer: enough pixels for a smooth gradient
+ * without painting a full viewport-sized canvas on every camera frame. */
+export function auraBufferSize(
+  viewportWidth: number,
+  viewportHeight: number,
+): { width: number; height: number } {
+  if (!(viewportWidth > 0) || !(viewportHeight > 0)) return { width: 0, height: 0 }
+  const scale = Math.min(0.65, 560 / Math.max(viewportWidth, viewportHeight))
+  return {
+    width: Math.max(1, Math.round(viewportWidth * scale)),
+    height: Math.max(1, Math.round(viewportHeight * scale)),
+  }
 }
