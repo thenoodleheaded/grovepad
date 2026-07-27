@@ -12,7 +12,6 @@ import {
   Maximize2,
   Minimize2,
   Pencil,
-  Plus,
   RotateCcw,
   Save,
   Scale,
@@ -25,6 +24,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type KeyboardEventHandler,
   type ReactNode,
   type RefObject,
 } from 'react'
@@ -38,6 +38,8 @@ import {
   type WidgetSkinState,
 } from '../../../utils/widgetSkins'
 import {
+  addDailyLogTimestamp,
+  autoTimestampFirstDailyLogEntry,
   noteCalloutTone,
   noteVersionSnapshots,
   noteWordDiff,
@@ -180,15 +182,17 @@ function NoteTextarea({
   className = '',
   onFocus,
   onBlur,
+  onKeyDown,
 }: {
   textareaRef: RefObject<HTMLTextAreaElement | null>
   value: string
-  onChange: (value: string) => void
+  onChange: (value: string, selectionStart: number) => void
   label: string
   placeholder: string
   className?: string
   onFocus?: () => void
   onBlur?: () => void
+  onKeyDown?: KeyboardEventHandler<HTMLTextAreaElement>
 }) {
   useAutoGrow(textareaRef, value)
   return (
@@ -198,7 +202,8 @@ function NoteTextarea({
       rows={3}
       aria-label={label}
       placeholder={placeholder}
-      onChange={(event) => onChange(event.target.value)}
+      onChange={(event) => onChange(event.target.value, event.target.selectionStart)}
+      onKeyDown={onKeyDown}
       onFocus={onFocus}
       onBlur={onBlur}
       className={`gp-note-editor ${className}`}
@@ -214,6 +219,10 @@ function formatLogDate(date: string): string {
     month: 'long',
     day: 'numeric',
   }).format(parsed)
+}
+
+function dailyLogTime(): string {
+  return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 }
 
 function versionLabel(date: Date): string {
@@ -264,21 +273,28 @@ export function NotesWidget({
   if (skin === 'daily_log') {
     const state = skinStateFor(data, skin)
     const date = typeof state.date === 'string' ? state.date : localDayKey()
-    const insertTimestamp = () => {
-      const editor = textareaRef.current
-      const cursor = editor && document.activeElement === editor
-        ? editor.selectionStart
-        : text.length
-      const now = new Date()
-      const time = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      const separator = cursor > 0 && text[cursor - 1] !== '\n' ? '\n' : ''
-      const insertion = `${separator}${time}  `
-      const nextText = `${text.slice(0, cursor)}${insertion}${text.slice(cursor)}`
-      setText(nextText)
+    const focusAt = (cursor: number) => {
       requestAnimationFrame(() => {
         textareaRef.current?.focus()
-        textareaRef.current?.setSelectionRange(cursor + insertion.length, cursor + insertion.length)
+        textareaRef.current?.setSelectionRange(cursor, cursor)
       })
+    }
+    const updateDailyText = (nextText: string, cursor: number) => {
+      const next = autoTimestampFirstDailyLogEntry(text, nextText, dailyLogTime())
+      setText(next.text)
+      if (next.cursorOffset > 0) focusAt(cursor + next.cursorOffset)
+    }
+    const startNextEntry: KeyboardEventHandler<HTMLTextAreaElement> = (event) => {
+      if (event.key !== 'Enter' || event.shiftKey || event.nativeEvent.isComposing) return
+      event.preventDefault()
+      const next = addDailyLogTimestamp(
+        text,
+        event.currentTarget.selectionStart,
+        event.currentTarget.selectionEnd,
+        dailyLogTime(),
+      )
+      setText(next.text)
+      focusAt(next.cursor)
     }
     return (
       <div ref={rootRef} className="gp-note-skin gp-note-daily" data-note-skin={skin}>
@@ -296,21 +312,17 @@ export function NotesWidget({
               onChange={(event) => updateSkinState(skin, { ...state, date: event.target.value })}
             />
           </span>
-          <span>
-            <button type="button" onClick={insertTimestamp}>
-              <Plus size={11} aria-hidden />
-              Time
-            </button>
-          </span>
+          <span className="gp-note-daily-hint">Enter adds time</span>
         </header>
         <div className="gp-note-daily-body gp-bare-field">
           <span aria-hidden className="gp-note-daily-rail" />
           <NoteTextarea
             textareaRef={textareaRef}
             value={text}
-            onChange={setText}
+            onChange={updateDailyText}
+            onKeyDown={startNextEntry}
             label="Daily log"
-            placeholder="What happened today?"
+            placeholder="What happened today? Shift+Enter for a plain line break."
             onFocus={() => setEditing(true)}
             onBlur={() => setEditing(false)}
           />
@@ -574,11 +586,15 @@ function VersionedNote({
               <button
                 key={snapshot.id}
                 type="button"
+                className="gp-note-history-row"
                 aria-pressed={snapshot.id === selected?.id}
                 onClick={() => setSelectedId(snapshot.id)}
               >
                 <FileClock size={10} aria-hidden />
-                {snapshot.label}
+                <span className="gp-note-history-label">{snapshot.label}</span>
+                <span className="gp-note-history-preview">
+                  {snapshot.text.trim() || 'Empty snapshot'}
+                </span>
               </button>
             ))}
           </div>

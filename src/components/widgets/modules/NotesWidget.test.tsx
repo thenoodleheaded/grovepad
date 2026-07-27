@@ -95,4 +95,52 @@ describe('purpose-built Note skins', () => {
     expect(quote).toContain('gp-note-quote')
     expect(quote).toContain('aria-label="Attribution"')
   })
+
+  it('makes Daily Log timestamps automatic instead of exposing a Time button', () => {
+    const markup = renderToStaticMarkup(
+      <NotesWidget
+        data={{ ...base, mode: 'daily_log' }}
+        skin="daily_log"
+        onChange={() => undefined}
+      />,
+    )
+
+    expect(markup).toContain('Enter adds time')
+    expect(markup).not.toContain('>Time</button>')
+  })
+
+  it('renders saved versions as full list rows with useful previews', () => {
+    const markup = renderToStaticMarkup(
+      <NotesWidget
+        data={{
+          ...base,
+          mode: 'versioned_note',
+          skinStates: {
+            versioned_note: {
+              snapshots: [
+                {
+                  id: 'latest',
+                  label: 'Jul 26, 6:22 PM',
+                  text: 'The newest saved draft',
+                  createdAt: '2026-07-26T13:22:00.000Z',
+                },
+                {
+                  id: 'earlier',
+                  label: 'Jul 26, 5:10 PM',
+                  text: 'An earlier idea',
+                  createdAt: '2026-07-26T12:10:00.000Z',
+                },
+              ],
+            },
+          },
+        }}
+        skin="versioned_note"
+        onChange={() => undefined}
+      />,
+    )
+
+    expect(markup.match(/gp-note-history-row/g)).toHaveLength(2)
+    expect(markup).toContain('The newest saved draft')
+    expect(markup).toContain('An earlier idea')
+  })
 })

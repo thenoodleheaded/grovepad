@@ -147,13 +147,30 @@ body {
     height var(--gp-motion-layout) var(--gp-ease-layout);
 }
 
+/* An expand or a collapse is the one moment this card's box changes size for
+   hundreds of milliseconds at a stretch, and `width`/`height` are properties
+   the compositor cannot animate on its own — every frame is a real layout and
+   repaint. Lifting the card onto its own layer for exactly that window keeps
+   the cost to the card itself: the canvas grid, the aura layer and every
+   neighbouring widget underneath it stop being repainted along with it.
+   WidgetCard sets `data-rest-motion` for the length of the glide (measured
+   from the live transition, not a constant) and drops it the moment the card
+   settles, so no card carries a promotion it isn't using. */
+.gp-widget-layout-motion[data-rest-motion] {
+  will-change: transform, width, height;
+}
+
 /*
  * Expand/collapse cross-fade for the resting-face system. The card's box
  * glides between tile and full size on .gp-widget-layout-motion above; these
  * two rules carry what's *inside* it across the same window, so nothing pops.
- * Both run for exactly --gp-motion-layout, matching REST_TRANSITION_MS in
- * widgetRest.ts, which is how long WidgetCard keeps the outgoing content
- * subtree mounted on collapse.
+ * Both run for exactly --gp-motion-layout. WidgetCard keeps the outgoing
+ * content subtree, the halo and the stacking lift alive for the same window,
+ * and it gets that number by reading this transition back off the element
+ * (`restGlideMs` in widgetRest.ts) rather than repeating it as a constant —
+ * --gp-motion-layout is live-tunable from the Fine-tune menu, so any second
+ * copy of it is a copy that goes stale the first time someone moves the
+ * slider.
  */
 .gp-rest-face {
   transition: opacity var(--gp-motion-layout) var(--gp-ease-layout);
@@ -181,8 +198,19 @@ body {
   position: absolute;
   /* Reach past every edge — three grid cells by default. All four knobs below
      are live-overridable from the Fine-tune menu (G); the fallbacks here are the
-     stock look and MUST match the defaults in uiTuning.ts. */
-  inset: calc(var(--gp-tune-halo-spread, 120px) * -1);
+     stock look and MUST match the defaults in uiTuning.ts.
+
+     Sized from the card's own expanded box (--gp-halo-w/h, set by WidgetCard)
+     and centred, rather than inset off a wrapper that is mid-glide. The two
+     agree exactly once the card is open; the difference is everything in
+     between, because this box then holds perfectly still through both the
+     expand and the collapse instead of resizing 60 times a second under a
+     backdrop filter. */
+  left: 50%;
+  top: 50%;
+  width: calc(var(--gp-halo-w, 0px) + var(--gp-tune-halo-spread, 120px) * 2);
+  height: calc(var(--gp-halo-h, 0px) + var(--gp-tune-halo-spread, 120px) * 2);
+  translate: -50% -50%;
   pointer-events: none;
   background: rgb(5 9 18 / var(--gp-tune-halo-dim, 0.3));
   backdrop-filter: blur(var(--gp-tune-halo-blur, 13px));
@@ -193,6 +221,10 @@ body {
   -webkit-mask-image: radial-gradient(closest-side, #000 var(--gp-tune-halo-softness, 55%), transparent 100%);
   transition: opacity var(--gp-motion-layout) var(--gp-ease-layout);
   animation: gp-rest-halo-in var(--gp-motion-layout) var(--gp-ease-layout) both;
+  /* Opacity is the only thing that ever changes here, and it is the one
+     property a compositor can animate without re-running the blur. Saying so
+     keeps the whole fade off the main thread. */
+  will-change: opacity;
 }
 
 @keyframes gp-rest-halo-in {
@@ -1170,6 +1202,13 @@ body[data-circuit-mode] .gp-widget-card {
 /* Login controls use fill and elevation without a focus-time halo. */
 .gp-login .gp-field-island {
   outline-color: transparent;
+}
+
+.gp-login .gp-login-input {
+  display: block;
+  height: 2.5rem;
+  min-height: 2.5rem;
+  line-height: 1.25rem;
 }
 
 .gp-login :where(.gp-login-provider, .gp-login-action) {

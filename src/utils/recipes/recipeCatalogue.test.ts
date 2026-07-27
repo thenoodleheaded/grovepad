@@ -19,9 +19,13 @@ function auditRecipes(check: (recipe: (typeof RECIPES)[number]) => string[]): st
 }
 
 describe('recipe catalogue', () => {
-  it('carries the whole document', () => {
-    expect(RECIPES).toHaveLength(460)
-    expect(RECIPE_SHELVES).toHaveLength(20)
+  it('carries the whole document minus its single-card templates', () => {
+    expect(RECIPES).toHaveLength(284)
+    expect(RECIPE_SHELVES).toHaveLength(19)
+  })
+
+  it('builds a board rather than a lone card', () => {
+    expect(auditRecipes((r) => (r.slots.length >= 2 ? [] : ['single-card template']))).toEqual([])
   })
 
   it('has unique ids and unique slot letters', () => {
@@ -35,10 +39,6 @@ describe('recipe catalogue', () => {
   it('files every recipe under a declared shelf', () => {
     const shelves = new Set(RECIPE_SHELVES.map((s) => s.id))
     expect(auditRecipes((r) => (shelves.has(r.shelf) ? [] : [`unknown shelf ${r.shelf}`]))).toEqual([])
-  })
-
-  it('places at least one card per recipe', () => {
-    expect(auditRecipes((r) => (r.slots.length > 0 ? [] : ['no slots']))).toEqual([])
   })
 
   it('only places widget types the app still offers', () => {

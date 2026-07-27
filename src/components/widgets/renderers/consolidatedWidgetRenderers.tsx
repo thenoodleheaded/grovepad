@@ -13,7 +13,6 @@ import type { ModuleData } from '../../../types/spatial'
 import type { WidgetRendererFamily } from './contracts'
 import {
   BarChartWidget,
-  CountdownWidget,
   DecisionWidget,
   DrawingWidget,
   FlashcardsWidget,
@@ -25,13 +24,12 @@ import {
   TasksWidget,
 } from './lazyCoreWidgets'
 import {
-  GpaWidget,
   GradeCalcWidget,
   QuizWidget,
   StudyGoalWidget,
   VocabWidget,
 } from './lazyEducationWidgets'
-import { DatePickerWidget } from './lazyWorkflowWidgets'
+import { DateWidget } from './lazyWorkflowWidgets'
 import { ExpansionWidget } from './lazyCatalogWidgets'
 
 
@@ -81,19 +79,20 @@ export const consolidatedWidgetRendererFamily: WidgetRendererFamily = {
 
     grade_calc: ({ widget, onUpdate }) => {
       const data = widget.data as GradeCalcData
-      if ((data.mode ?? 'weighted') === 'gpa') {
-        const gpa = data.gpa ?? { courses: [{ id: uid(), name: '', credits: 3, points: 4 }] }
-        return <GpaWidget data={gpa} onChange={(next) => onUpdate({ ...data, gpa: next } as ModuleData)} />
-      }
-      return <GradeCalcWidget data={data} onChange={(next) => onUpdate({ ...data, components: next.components } as ModuleData)} />
+      return (
+        <GradeCalcWidget
+          data={data}
+          onChange={(next) => onUpdate(next as ModuleData)}
+        />
+      )
     },
 
+    /** One canonical day, seven skins. `DateWidget` resolves the worn skin —
+     *  including the retired `countdown` mode, which is what the Deadline skin
+     *  now is — so this seam only has to hand over the data. */
     date_picker: ({ widget, onUpdate }) => {
       const data = widget.data as DatePickerData
-      if ((data.mode ?? 'date_time') === 'countdown') {
-        return <CountdownWidget data={{ label: data.label, targetDate: data.date }} onChange={(next) => onUpdate({ ...data, label: next.label, date: next.targetDate } as ModuleData)} />
-      }
-      return <DatePickerWidget data={data} onChange={(next) => onUpdate({ ...data, ...next, mode: data.mode ?? 'date_time' } as ModuleData)} />
+      return <DateWidget data={data} onChange={(next) => onUpdate(next as ModuleData)} />
     },
 
     sketchpad: ({ widget, onUpdate }) => {

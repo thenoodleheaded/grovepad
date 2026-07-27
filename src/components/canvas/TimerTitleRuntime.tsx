@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { useWidgetStore } from '../../store/useWidgetStore'
 import type { PomodoroData, TimekeeperData, TimerData } from '../../types/spatial'
+import { grovepadPageTitle } from '../../utils/pageTitle'
 
 function activeDeadline(): number | null {
   let soonest: number | null = null
@@ -33,20 +34,19 @@ export function TimerTitleRuntime() {
   )
 
   useEffect(() => {
-    const original = document.title
     const isOrigin = canvasName.toLowerCase() === 'origin'
     const displayTitle = isOrigin ? workspaceName : canvasName
-    const baseTitle = `grovepad | ${displayTitle}`
     const update = () => {
       const deadline = activeDeadline()
-      if (!deadline) { document.title = baseTitle; return }
+      if (!deadline) { document.title = grovepadPageTitle(displayTitle); return }
       const seconds = Math.max(0, Math.ceil((deadline - Date.now()) / 1000))
       const minutes = Math.floor(seconds / 60)
-      document.title = `(${minutes}:${String(seconds % 60).padStart(2, '0')}) ${baseTitle}`
+      const countdown = `${minutes}:${String(seconds % 60).padStart(2, '0')}`
+      document.title = grovepadPageTitle(displayTitle, countdown)
     }
     update()
     const timer = window.setInterval(update, 1000)
-    return () => { window.clearInterval(timer); document.title = original }
+    return () => { window.clearInterval(timer) }
   }, [canvasName, workspaceName])
   return null
 }

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { Widget } from '../types/spatial'
 import { GRID_SIZE, ICON_MIN_EDGE } from '../types/spatial'
 import { useWidgetRestStore } from '../store/useWidgetRestStore'
@@ -10,7 +10,9 @@ import {
   isWidgetRestExpanded,
   isWidgetResting,
   restExpansionOffset,
+  restGlideMs,
   restingTileSize,
+  REST_TRANSITION_MS,
   widgetWithEffectiveSize,
 } from './widgetRest'
 
@@ -218,5 +220,45 @@ describe('folding an open card back onto its original spot', () => {
     useWidgetRestStore.getState().collapseWidget()
     useWidgetRestStore.getState().nudgeExpandedOffset({ x: 50, y: 50 })
     expect(useWidgetRestStore.getState().expandedOffset).toEqual({ x: 0, y: 0 })
+  })
+})
+
+describe('the glide window the holds are measured against', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  function withTransitionDuration(duration: string) {
+    vi.stubGlobal('window', {
+      getComputedStyle: () => ({ transitionDuration: duration }),
+    })
+    return {} as Element
+  }
+
+  it('reads the card box glide back off the element', () => {
+    // The stock setting, expressed the way a browser reports it.
+    expect(restGlideMs(withTransitionDuration('0.3s, 0.3s, 0.3s'))).toBe(300)
+  })
+
+  it('follows the Fine-tune slider rather than the stock constant', () => {
+    // The whole point: Motion → Layout movement moves this between 80ms and
+    // 800ms, and the holds have to move with it.
+    expect(restGlideMs(withTransitionDuration('0.52s, 0.52s, 0.52s'))).toBe(520)
+    expect(restGlideMs(withTransitionDuration('0.08s'))).toBe(80)
+    expect(restGlideMs(withTransitionDuration('800ms'))).toBe(800)
+  })
+
+  it('collapses to nothing when reduced motion removes the transition', () => {
+    // `transition: none` computes to a zero duration, so the outgoing content
+    // and the halo leave immediately instead of lingering over an instant
+    // change.
+    expect(restGlideMs(withTransitionDuration('0s'))).toBe(0)
+  })
+
+  it('falls back to the stock window when there is nothing to measure', () => {
+    expect(restGlideMs(null)).toBe(REST_TRANSITION_MS)
+    expect(restGlideMs(undefined)).toBe(REST_TRANSITION_MS)
+    expect(restGlideMs(withTransitionDuration(''))).toBe(REST_TRANSITION_MS)
+    expect(restGlideMs(withTransitionDuration('auto'))).toBe(REST_TRANSITION_MS)
   })
 })

@@ -1,0 +1,1427 @@
+/*
+ * Purpose-built Logbook skins.
+ *
+ * The timestamped entry is canonical. Specialist fields stay with their skin,
+ * while rows paint as one continuous record on the card's single backplate —
+ * divider-separated regions of one surface, never a stack of glass cards
+ * (Article XIX, "a table is one island").
+ *
+ * Typography follows Article XVII: one label voice (9.5px / 650 / .085em /
+ * uppercase), one body voice (13px), and meta/sequence numerals in a mono face
+ * at 9.5–10.5px. Nothing here invents a fourth size.
+ *
+ * Every control wrapper carries `.gp-bare-field` so the auto field-island
+ * detector in 06-field-islands.css leaves the backplate alone; the composer is
+ * the one deliberate field island and paints its own single outline.
+ */
+
+.gp-widget-ui[data-widget-type='logbook'][data-skin-presentation] {
+  background-image: none;
+  padding-inline-start: 0;
+}
+
+.gp-widget-ui[data-widget-type='logbook'][data-skin-presentation]::before {
+  content: none;
+}
+
+.gp-logbook {
+  --gp-log-ink: var(--gp-widget-ink, #f5f5f5);
+  --gp-log-body: color-mix(in oklab, var(--gp-log-ink), transparent 8%);
+  --gp-log-meta: color-mix(in oklab, var(--gp-log-ink), transparent 44%);
+  --gp-log-label: color-mix(in oklab, var(--gp-log-ink), transparent 54%);
+  --gp-log-line: color-mix(in oklab, var(--gp-log-ink), transparent 90%);
+  --gp-log-line-soft: color-mix(in oklab, var(--gp-log-ink), transparent 95%);
+  --gp-log-wash: color-mix(in oklab, var(--gp-log-ink), transparent 96%);
+  --gp-log-accent-ink: color-mix(in oklab, var(--gp-widget-accent), white 16%);
+  --gp-log-accent-soft: color-mix(in oklab, var(--gp-widget-accent), transparent 87%);
+  --gp-log-accent-line: color-mix(in oklab, var(--gp-widget-accent), transparent 72%);
+  /* Scrim and plate stand in for the card's own local background: sticky bands
+     need something opaque to hide scrolling text behind, and timeline dots need
+     a ring their rail appears to pass behind. Widget glass stays dark in both
+     themes, so these are deliberately dark, with a light-theme lift below. */
+  --gp-log-scrim: oklch(17.5% 0.006 250 / 0.94);
+  --gp-log-plate: oklch(19% 0.006 250);
+  --gp-log-warn: #fbbf24;
+  --gp-log-typeface: var(--font-sans);
+  /* Reserved lane for the hover-revealed remove button, so entry text never
+     runs under it and the button never shares a corner with anything. */
+  --gp-log-gutter: 26px;
+  display: grid;
+  height: 100%;
+  min-height: 0;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 8px;
+  color: var(--gp-log-body);
+  container-type: inline-size;
+}
+
+/* Widget glass stays dark on a light canvas, so these only lift enough to match
+   the card's own lighter overlay — a sticky band should read as the card
+   holding still, never as a grey bar laid over it. */
+[data-theme='light'] .gp-logbook {
+  --gp-log-scrim: oklch(21% 0.006 250 / 0.95);
+  --gp-log-plate: oklch(22% 0.006 250);
+}
+
+/* Controls borrow the card's typeface and nothing else. A `font: inherit`
+   shorthand here would carry font-size at (0,1,1) and silently outrank every
+   single-class size rule below — which is exactly how a whole skin ends up
+   rendering at the inherited 16px. */
+.gp-logbook :is(button, input, textarea, kbd) {
+  font-family: inherit;
+}
+
+/* The catalogue's control reset (06-field-islands.css) gives every text
+   control a 30px floor and a 12px inline inset for generic field islands.
+   These controls are lines of a record, so they reclaim their own box. */
+.gp-logbook :is(input, textarea) {
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  color: inherit;
+  background: transparent;
+  caret-color: var(--gp-widget-accent);
+}
+
+.gp-logbook textarea {
+  display: block;
+  width: 100%;
+  max-height: 132px;
+  overflow-y: auto;
+  resize: none;
+  /* A record is prose: the box grows with what was written rather than hiding
+     the tail of a sentence behind a one-line scroller. */
+  field-sizing: content;
+  scrollbar-width: none;
+}
+
+.gp-logbook :is(input, textarea)::placeholder {
+  color: color-mix(in oklab, var(--gp-log-ink), transparent 74%);
+}
+
+.gp-logbook :is(input, textarea)::selection {
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 66%);
+}
+
+/* The catalogue's ghost-button rule (Article XIX, 06-field-islands.css) strips
+   every button's fill and radius and forces a 28px square floor, all with
+   `!important`. The chips below are status paint sized to their own text — not
+   actions — so each one wins back exactly those properties and no others. */
+.gp-logbook :is(
+  .gp-logbook-level,
+  .gp-logbook-status,
+  .gp-logbook-kind,
+  .gp-logbook-order,
+  .gp-logbook-remove,
+  .gp-logbook-add
+) {
+  /* Each chip declares its fill as `--gp-log-chip`, so state variants stay
+     ordinary declarations and only this one line carries the weight. */
+  border-radius: 999px !important;
+  background-color: var(--gp-log-chip, transparent) !important;
+  background-image: none !important;
+}
+
+.gp-logbook :is(.gp-logbook-level, .gp-logbook-remove) {
+  border-radius: 50% !important;
+}
+
+.gp-logbook .gp-logbook-add {
+  border-radius: var(--gp-r2) !important;
+}
+
+.gp-logbook button {
+  cursor: pointer;
+  transition:
+    color var(--gp-duration-snap) var(--gp-ease-snap),
+    background-color var(--gp-duration-snap) var(--gp-ease-snap),
+    opacity var(--gp-duration-snap) var(--gp-ease-snap);
+}
+
+.gp-logbook button:disabled {
+  cursor: default;
+}
+
+/* Glyphs never absorb the shrink: an icon beside a label that is being clipped
+   away on a narrow card would otherwise be squeezed to zero width, leaving an
+   empty chip where the icon-only control should be. */
+.gp-logbook svg {
+  flex: 0 0 auto;
+}
+
+.gp-logbook :is(button, input, textarea):focus-visible {
+  outline: 1px solid color-mix(in oklab, var(--gp-widget-accent), transparent 24%);
+  outline-offset: 2px;
+}
+
+/* Header ----------------------------------------------------------------- */
+
+.gp-logbook-header {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+  padding: 0 2px 8px;
+  border-bottom: 1px solid var(--gp-log-line);
+}
+
+.gp-logbook-eyebrow {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 5px;
+  overflow: hidden;
+  color: var(--gp-log-accent-ink);
+  font-size: 9.5px;
+  font-weight: 650;
+  letter-spacing: 0.085em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.gp-logbook-summary {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: baseline;
+  gap: 5px;
+  padding-left: 9px;
+  border-left: 1px solid var(--gp-log-line);
+}
+
+.gp-logbook-summary > strong {
+  color: var(--gp-log-ink);
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+.gp-logbook-summary > span {
+  color: var(--gp-log-label);
+  font-size: 9.5px;
+  font-weight: 650;
+  letter-spacing: 0.085em;
+  text-transform: uppercase;
+}
+
+/* The one flagged-entry pill: amber is meaning here, not decoration. */
+.gp-logbook-summary > em {
+  display: inline-flex;
+  align-self: center;
+  align-items: center;
+  gap: 3px;
+  border-radius: 999px;
+  padding: 2px 6px 2px 5px;
+  color: var(--gp-log-warn);
+  background: color-mix(in oklab, var(--gp-log-warn), transparent 86%);
+  font-size: 9.5px;
+  font-style: normal;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.gp-logbook-latest {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: auto;
+  color: var(--gp-log-meta);
+  font-family: var(--gp-log-typeface);
+  font-size: 9.5px;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.gp-logbook-latest::before {
+  width: 4px;
+  height: 4px;
+  border-radius: 999px;
+  content: '';
+  background: var(--gp-widget-accent);
+  box-shadow: 0 0 6px var(--gp-widget-accent);
+}
+
+/* Text chips sit at the catalogue's 28px control floor — one pointer-target
+   height for everything clickable in the card. */
+.gp-logbook-order {
+  display: inline-flex;
+  height: 28px;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 5px;
+  border: 0;
+  padding: 0 10px;
+  color: var(--gp-log-meta);
+  --gp-log-chip: var(--gp-log-wash);
+  font-size: 9.5px;
+  font-weight: 650;
+  letter-spacing: 0.03em;
+}
+
+.gp-logbook-order:hover {
+  color: var(--gp-log-accent-ink);
+  --gp-log-chip: var(--gp-log-accent-soft);
+}
+
+/* List and shared row anatomy -------------------------------------------- */
+
+.gp-logbook-list {
+  min-height: 0;
+  margin-inline: -2px;
+  padding-inline: 2px;
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-color: color-mix(in oklab, var(--gp-log-ink), transparent 84%) transparent;
+  scrollbar-width: thin;
+}
+
+.gp-logbook-list::-webkit-scrollbar {
+  width: 7px;
+}
+
+.gp-logbook-list::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background-clip: content-box;
+  background-color: color-mix(in oklab, var(--gp-log-ink), transparent 84%);
+}
+
+/* Rows are regions of the card's own surface: no glass, no radius, one
+   hairline between neighbours. The island recipe paints its gradient, catch-
+   light, and 32px floor with `!important`, so a flattened row has to say so at
+   the same weight. */
+.gp-logbook-row.gp-island {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  border: 0 !important;
+  border-bottom: 1px solid var(--gp-log-line-soft) !important;
+  border-radius: 0 !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+.gp-logbook-row.gp-island:last-child {
+  border-bottom: 0;
+}
+
+/* The exit animation owns `transition` on `.gp-subpanel-exit`, and this file
+   loads later — so the hover wash is scoped away from a row on its way out,
+   whose opacity transition is what finalizes the removal. */
+.gp-logbook-row.gp-island:not(.gp-subpanel-exit) {
+  transition: background-color var(--gp-duration-snap) var(--gp-ease-snap);
+}
+
+.gp-logbook-row.gp-island:hover {
+  background: var(--gp-log-wash);
+}
+
+.gp-logbook-row.gp-island:focus-within {
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 95%);
+}
+
+.gp-logbook-row .gp-subpanel-grip {
+  display: none;
+}
+
+.gp-logbook-entry-text {
+  color: var(--gp-log-body);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.45;
+}
+
+/* Level dot — the entry's one status glyph, and in the daily skin also the node
+   the timeline rail steps around. The catalogue floors every button at 28px so
+   nothing is a 5px pointer target; the disc keeps its 18px look by painting
+   only the content box, the same way the sticky-note swatches do. */
+.gp-logbook-level {
+  display: inline-flex;
+  width: 28px;
+  height: 28px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  padding: 5px;
+  border: 0;
+  color: #cbd5e1;
+  background-clip: content-box !important;
+  --gp-log-chip: color-mix(in oklab, #94a3b8, transparent 84%);
+}
+
+.gp-logbook-level > span {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.gp-logbook-level:hover:not(:disabled) {
+  --gp-log-chip: color-mix(in oklab, #94a3b8, transparent 70%);
+}
+
+.gp-logbook-level[data-level='info'] {
+  color: #7dd3fc;
+  --gp-log-chip: color-mix(in oklab, #38bdf8, transparent 84%);
+}
+
+.gp-logbook-level[data-level='info']:hover:not(:disabled) {
+  --gp-log-chip: color-mix(in oklab, #38bdf8, transparent 72%);
+}
+
+.gp-logbook-level[data-level='warning'] {
+  color: var(--gp-log-warn);
+  --gp-log-chip: color-mix(in oklab, #f59e0b, transparent 82%);
+}
+
+.gp-logbook-level[data-level='warning']:hover:not(:disabled) {
+  --gp-log-chip: color-mix(in oklab, #f59e0b, transparent 70%);
+}
+
+.gp-logbook-level:disabled {
+  opacity: 0.8;
+}
+
+/* Hover-revealed chrome is invisible AND inert at rest (Article XIX) —
+   otherwise the OS cursor flickers as the pointer crosses its hit-box. */
+.gp-logbook-remove {
+  position: absolute;
+  top: 2px;
+  right: 0;
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  padding: 4px;
+  border: 0;
+  color: color-mix(in oklab, #fb7185, var(--gp-log-ink) 18%);
+  background-clip: content-box !important;
+  --gp-log-chip: transparent;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.gp-logbook-row:hover > .gp-logbook-remove,
+.gp-logbook-row:focus-within > .gp-logbook-remove {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.gp-logbook-remove:hover {
+  --gp-log-chip: color-mix(in oklab, #fb7185, transparent 84%);
+}
+
+/* Specialist field — label above its control, hairline under it, accent only
+   while it is being written in. */
+.gp-logbook-detail {
+  display: grid;
+  min-width: 0;
+  align-content: start;
+  gap: 3px;
+}
+
+.gp-logbook-detail > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--gp-log-label);
+  font-size: 9.5px;
+  font-weight: 650;
+  letter-spacing: 0.085em;
+  text-transform: uppercase;
+}
+
+.gp-logbook-detail > span > svg {
+  color: color-mix(in oklab, var(--gp-widget-accent), transparent 25%);
+}
+
+.gp-logbook-detail :is(input, textarea) {
+  width: 100%;
+  padding-bottom: 3px;
+  border-bottom: 1px solid transparent;
+  font-size: 12px;
+  line-height: 1.45;
+  transition: border-color var(--gp-duration-snap) var(--gp-ease-snap);
+}
+
+.gp-logbook-detail:hover :is(input, textarea) {
+  border-bottom-color: var(--gp-log-line);
+}
+
+.gp-logbook-detail :is(input, textarea):focus {
+  border-bottom-color: var(--gp-log-accent-line);
+}
+
+.gp-logbook-detail input[type='date'] {
+  font-family: var(--gp-log-typeface);
+  font-size: 11px;
+}
+
+.gp-logbook-detail input[type='date']::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  filter: invert(1) opacity(0.4);
+}
+
+.gp-logbook-detail input[type='date']:hover::-webkit-calendar-picker-indicator {
+  filter: invert(1) opacity(0.75);
+}
+
+/* Shared timestamp voice: date on the line, clock beneath it when both are
+   shown, always mono so stacked entries line up. */
+.gp-logbook-stamp,
+.gp-logbook-audit-row time {
+  color: var(--gp-log-meta);
+  font-family: var(--gp-log-typeface);
+  font-size: 9.5px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.gp-logbook-stamp > i,
+.gp-logbook-audit-row time > i {
+  display: block;
+  color: color-mix(in oklab, var(--gp-log-ink), transparent 62%);
+  font-style: normal;
+}
+
+/* Composer --------------------------------------------------------------- */
+
+.gp-logbook-composer {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 8px;
+  border-radius: var(--gp-r2);
+  padding: 6px 6px 6px 7px;
+  outline: 1px solid color-mix(in oklab, var(--gp-log-ink), transparent 90%);
+  transition: outline-color var(--gp-duration-snap) var(--gp-ease-snap);
+}
+
+.gp-logbook-composer:focus-within {
+  outline-color: color-mix(in oklab, var(--gp-widget-accent), transparent 45%);
+}
+
+.gp-logbook-composer-field {
+  min-width: 0;
+}
+
+.gp-logbook-composer textarea {
+  max-height: 66px;
+  overflow-y: auto;
+  font-size: 13px;
+  line-height: 1.45;
+  scrollbar-width: none;
+}
+
+.gp-logbook-hint {
+  display: grid;
+  width: 18px;
+  height: 18px;
+  place-items: center;
+  border-radius: 5px;
+  color: var(--gp-log-meta);
+  background: var(--gp-log-wash);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--gp-log-ink), transparent 92%);
+  opacity: 0;
+  transition: opacity var(--gp-duration-snap) var(--gp-ease-snap);
+}
+
+.gp-logbook-composer:focus-within .gp-logbook-hint {
+  opacity: 1;
+}
+
+.gp-logbook-add {
+  display: inline-flex;
+  height: 28px;
+  align-items: center;
+  gap: 5px;
+  border: 0;
+  padding: 0 11px 0 9px;
+  color: var(--gp-log-accent-ink);
+  --gp-log-chip: var(--gp-log-accent-soft);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.gp-logbook-add:hover:not(:disabled) {
+  --gp-log-chip: color-mix(in oklab, var(--gp-widget-accent), transparent 76%);
+}
+
+.gp-logbook-add:disabled {
+  color: var(--gp-log-meta);
+  --gp-log-chip: var(--gp-log-wash);
+}
+
+/* Empty state ------------------------------------------------------------ */
+
+.gp-logbook-empty {
+  display: flex;
+  min-height: 88px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 16px 12px;
+  text-align: center;
+}
+
+.gp-logbook-empty > span[aria-hidden] {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  margin-bottom: 2px;
+  place-items: center;
+  border-radius: var(--gp-r2);
+  color: var(--gp-log-accent-ink);
+  background: var(--gp-log-accent-soft);
+  box-shadow: inset 0 1px 0 color-mix(in oklab, white, transparent 92%);
+}
+
+.gp-logbook-empty strong {
+  color: color-mix(in oklab, var(--gp-log-ink), transparent 14%);
+  font-size: 12.5px;
+  font-weight: 650;
+}
+
+.gp-logbook-empty > span:not([aria-hidden]) {
+  max-width: 15rem;
+  color: var(--gp-log-meta);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.gp-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
+/* Daily Log -------------------------------------------------------------- */
+
+.gp-logbook-day:not(:first-child) > header {
+  margin-top: 4px;
+}
+
+.gp-logbook-day > header {
+  position: sticky;
+  z-index: 2;
+  top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 7px 6px 7px 4px;
+  background: var(--gp-log-scrim);
+  backdrop-filter: blur(12px) saturate(1.3);
+  box-shadow: 0 6px 12px -10px rgb(0 0 0 / 0.65);
+}
+
+.gp-logbook-day > header strong {
+  color: var(--gp-log-accent-ink);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.075em;
+  text-transform: uppercase;
+}
+
+.gp-logbook-day > header span {
+  display: grid;
+  min-width: 16px;
+  height: 16px;
+  place-items: center;
+  border-radius: 999px;
+  padding-inline: 4px;
+  color: var(--gp-log-accent-ink);
+  background: var(--gp-log-accent-soft);
+  font-size: 9.5px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+/* The rail runs through the level-dot column: 4px row inset + 40px time
+   column + 10px gap + 9px half-dot = 63px. */
+.gp-logbook-day-track {
+  position: relative;
+}
+
+.gp-logbook-daily-row {
+  display: grid;
+  min-height: 36px;
+  grid-template-columns: 40px 28px minmax(0, 1fr);
+  align-items: start;
+  gap: 10px;
+  padding: 9px var(--gp-log-gutter) 9px 4px;
+}
+
+.gp-logbook-daily-row > time {
+  padding-top: 3px;
+  color: var(--gp-log-meta);
+  font-family: var(--gp-log-typeface);
+  font-size: 9.5px;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+/* The rail is drawn per row and steps around its own dot, so neighbouring rows
+   join into one continuous line with a clean gap at every node instead of a
+   line running under a translucent disc. Geometry: 4px row inset + 40px time
+   column + 10px gap + 14px half-control = 68px, dot centre 23px from the row
+   top (9px padding + 14px half-control), cleared by 6px either side. */
+.gp-logbook-daily-row::before {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: var(--gp-log-rail-x, 68px);
+  width: 1px;
+  content: '';
+  background: var(--gp-log-accent-line);
+}
+
+/* The line is a span between nodes, so it begins and ends at one — never as a
+   stub hanging off the first or last entry of a day. */
+.gp-logbook-day-track > .gp-logbook-row:first-child::before {
+  top: 23px;
+}
+
+.gp-logbook-day-track > .gp-logbook-row:last-child::before {
+  bottom: calc(100% - 23px);
+}
+
+/* The node's own plate, so the rail reads as passing behind the dot. */
+.gp-logbook-daily-row::after {
+  position: absolute;
+  z-index: 0;
+  top: 10px;
+  left: calc(var(--gp-log-rail-x, 68px) - 12px);
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  content: '';
+  background: var(--gp-log-plate);
+}
+
+.gp-logbook-daily-row > .gp-logbook-level {
+  position: relative;
+  z-index: 1;
+}
+
+/* Incident Log ----------------------------------------------------------- */
+
+.gp-logbook-incidents {
+  --gp-log-rail: #fb7185;
+}
+
+.gp-logbook-incident-row {
+  display: block;
+  padding: 11px var(--gp-log-gutter) 12px 13px;
+}
+
+.gp-logbook-incident-row::before {
+  position: absolute;
+  top: 11px;
+  bottom: 12px;
+  left: 2px;
+  width: 2.5px;
+  border-radius: 999px;
+  content: '';
+  background: var(--gp-log-rail);
+  opacity: 0.85;
+}
+
+.gp-logbook-status-monitoring { --gp-log-rail: #f59e0b; }
+.gp-logbook-status-resolved { --gp-log-rail: #22c55e; }
+
+.gp-logbook-incident-head {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.gp-logbook-incident-head .gp-logbook-entry-text {
+  font-weight: 600;
+}
+
+.gp-logbook-status {
+  display: inline-flex;
+  height: 28px;
+  align-items: center;
+  gap: 6px;
+  border: 0;
+  padding: 0 10px;
+  color: #fda4af;
+  --gp-log-chip: color-mix(in oklab, #fb7185, transparent 85%);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.045em;
+  text-transform: capitalize;
+}
+
+.gp-logbook-status > span {
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+.gp-logbook-status:hover {
+  --gp-log-chip: color-mix(in oklab, #fb7185, transparent 74%);
+}
+
+.gp-logbook-status[data-status='monitoring'] {
+  color: #fcd34d;
+  --gp-log-chip: color-mix(in oklab, #f59e0b, transparent 85%);
+}
+
+.gp-logbook-status[data-status='monitoring']:hover {
+  --gp-log-chip: color-mix(in oklab, #f59e0b, transparent 74%);
+}
+
+.gp-logbook-status[data-status='resolved'] {
+  color: #86efac;
+  --gp-log-chip: color-mix(in oklab, #22c55e, transparent 85%);
+}
+
+.gp-logbook-status[data-status='resolved']:hover {
+  --gp-log-chip: color-mix(in oklab, #22c55e, transparent 74%);
+}
+
+/* A closed incident stays legible but stops competing with the open ones. */
+.gp-logbook-status-resolved .gp-logbook-incident-head .gp-logbook-entry-text {
+  color: color-mix(in oklab, var(--gp-log-ink), transparent 32%);
+}
+
+.gp-logbook-incident-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin: 10px 0 0 26px;
+  padding-top: 10px;
+  border-top: 1px solid var(--gp-log-line-soft);
+}
+
+/* Lab Notebook ----------------------------------------------------------- */
+
+/* Notebook paper is carried by the margin rule alone. A horizontal ruling was
+   tried and cut: entries differ in height, so the ruling drifted off the text
+   it was meant to sit on, and a rule that does not meet its line is noise. */
+.gp-logbook-lab {
+  background-attachment: local;
+  background-image: linear-gradient(
+    90deg,
+    transparent 29px,
+    color-mix(in oklab, #fb7185, transparent 78%) 29px 30px,
+    transparent 30px
+  );
+}
+
+.gp-logbook-lab-row {
+  display: block;
+  padding: 11px var(--gp-log-gutter) 13px 38px;
+}
+
+.gp-logbook-lab-head {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.gp-logbook-lab-head > span {
+  color: var(--gp-log-accent-ink);
+  font-family: var(--gp-log-typeface);
+  font-size: 9.5px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.gp-logbook-lab-head .gp-logbook-entry-text {
+  font-weight: 600;
+  line-height: 22px;
+}
+
+.gp-logbook-lab-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 18px;
+  margin-top: 10px;
+}
+
+.gp-logbook-lab-grid .gp-logbook-detail {
+  min-height: 40px;
+  border-left: 1px solid var(--gp-log-accent-line);
+  padding-left: 10px;
+}
+
+.gp-logbook-lab-grid .gp-logbook-detail textarea {
+  line-height: 1.5;
+}
+
+/* Change Log ------------------------------------------------------------- */
+
+.gp-logbook-change-labels,
+.gp-logbook-change-grid {
+  display: grid;
+  grid-template-columns: 52px 78px minmax(6rem, 1fr) 84px 42px 28px;
+  align-items: center;
+  gap: 10px;
+}
+
+.gp-logbook-change-labels {
+  position: sticky;
+  z-index: 2;
+  top: 0;
+  padding: 7px var(--gp-log-gutter) 7px 4px;
+  color: var(--gp-log-label);
+  background: var(--gp-log-scrim);
+  backdrop-filter: blur(12px) saturate(1.3);
+  box-shadow: 0 6px 12px -10px rgb(0 0 0 / 0.65);
+  font-size: 9.5px;
+  font-weight: 650;
+  letter-spacing: 0.085em;
+  text-transform: uppercase;
+}
+
+.gp-logbook-change-row {
+  display: block;
+  padding: 8px var(--gp-log-gutter) 8px 4px;
+}
+
+.gp-logbook-version input {
+  width: 100%;
+  color: var(--gp-log-accent-ink);
+  font-family: var(--gp-log-typeface);
+  font-size: 10.5px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 650;
+}
+
+/* Kind is a cycling chip, not a native select — a dropdown inside glass is a
+   second material, and four kinds read faster as one colour-coded pill. */
+.gp-logbook-kind {
+  display: inline-flex;
+  width: 100%;
+  height: 28px;
+  align-items: center;
+  gap: 6px;
+  border: 0;
+  padding: 0 10px;
+  color: #86efac;
+  --gp-log-chip: color-mix(in oklab, #22c55e, transparent 86%);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: capitalize;
+}
+
+.gp-logbook-kind > span {
+  width: 5px;
+  height: 5px;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+.gp-logbook-kind:hover {
+  --gp-log-chip: color-mix(in oklab, #22c55e, transparent 74%);
+}
+
+.gp-logbook-kind[data-kind='changed'] {
+  color: #7dd3fc;
+  --gp-log-chip: color-mix(in oklab, #38bdf8, transparent 86%);
+}
+
+.gp-logbook-kind[data-kind='changed']:hover {
+  --gp-log-chip: color-mix(in oklab, #38bdf8, transparent 74%);
+}
+
+.gp-logbook-kind[data-kind='fixed'] {
+  color: #fcd34d;
+  --gp-log-chip: color-mix(in oklab, #f59e0b, transparent 86%);
+}
+
+.gp-logbook-kind[data-kind='fixed']:hover {
+  --gp-log-chip: color-mix(in oklab, #f59e0b, transparent 74%);
+}
+
+.gp-logbook-kind[data-kind='removed'] {
+  color: #fda4af;
+  --gp-log-chip: color-mix(in oklab, #fb7185, transparent 86%);
+}
+
+.gp-logbook-kind[data-kind='removed']:hover {
+  --gp-log-chip: color-mix(in oklab, #fb7185, transparent 74%);
+}
+
+.gp-logbook-change-copy .gp-logbook-entry-text {
+  font-size: 12.5px;
+}
+
+.gp-logbook-author {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 6px;
+}
+
+/* A monogram anchors the author column, so short names do not float loose in
+   the middle of the row. */
+.gp-logbook-author > i {
+  display: grid;
+  width: 17px;
+  height: 17px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 999px;
+  color: var(--gp-log-accent-ink);
+  background: var(--gp-log-accent-soft);
+  font-size: 9px;
+  font-style: normal;
+  font-weight: 700;
+}
+
+.gp-logbook-author input {
+  overflow: hidden;
+  font-size: 11.5px;
+  text-overflow: ellipsis;
+}
+
+/* Maintenance Log -------------------------------------------------------- */
+
+.gp-logbook-maintenance-row {
+  display: block;
+  padding: 11px var(--gp-log-gutter) 12px 4px;
+}
+
+.gp-logbook-maintenance-head {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto auto;
+  align-items: center;
+  gap: 9px;
+}
+
+.gp-logbook-tool {
+  display: grid;
+  width: 22px;
+  height: 22px;
+  place-items: center;
+  border-radius: 7px;
+  color: var(--gp-log-accent-ink);
+  background: var(--gp-log-accent-soft);
+  box-shadow: inset 0 1px 0 color-mix(in oklab, white, transparent 92%);
+}
+
+/* Asset and place are headlines, not labelled fields: a visible label would
+   only repeat what the value already says. The control keeps its aria-label. */
+.gp-logbook-asset > span,
+.gp-logbook-place > span {
+  display: none;
+}
+
+.gp-logbook-asset input {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.gp-logbook-place input {
+  color: var(--gp-log-accent-ink);
+  font-size: 13.5px;
+  font-weight: 650;
+}
+
+/* Derived from the next-service date — this skin's one live readout. */
+.gp-logbook-due {
+  display: inline-flex;
+  height: 18px;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0 7px;
+  color: #fcd34d;
+  background: color-mix(in oklab, #f59e0b, transparent 86%);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.gp-logbook-due[data-tone='today'],
+.gp-logbook-due[data-tone='overdue'] {
+  color: #fda4af;
+  background: color-mix(in oklab, #fb7185, transparent 84%);
+}
+
+.gp-logbook-maintenance-work {
+  margin: 9px 0 0 31px;
+  padding-top: 9px;
+  border-top: 1px solid var(--gp-log-line-soft);
+}
+
+.gp-logbook-maintenance-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 104px;
+  gap: 16px;
+  margin: 10px 0 0 31px;
+}
+
+/* Audit Trail ------------------------------------------------------------ */
+
+.gp-logbook-audit-banner {
+  position: sticky;
+  z-index: 2;
+  top: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 8px;
+  color: var(--gp-log-accent-ink);
+  background: var(--gp-log-scrim);
+  backdrop-filter: blur(12px) saturate(1.3);
+  box-shadow: 0 6px 12px -10px rgb(0 0 0 / 0.65);
+  font-size: 9.5px;
+  font-weight: 650;
+  letter-spacing: 0.055em;
+  text-transform: uppercase;
+}
+
+.gp-logbook-audit-row {
+  display: grid;
+  min-height: 38px;
+  grid-template-columns: 34px 28px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 8px 8px 6px;
+}
+
+/* Ledger zebra: the banner is a <header>, so only entry rows are counted. */
+.gp-logbook-audit-row:nth-of-type(even) {
+  background: color-mix(in oklab, var(--gp-log-ink), transparent 97.5%);
+}
+
+.gp-logbook-audit-seq {
+  color: color-mix(in oklab, var(--gp-widget-accent), transparent 22%);
+  font-family: var(--gp-log-typeface);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+
+.gp-logbook-audit-seq::before {
+  content: '#';
+  opacity: 0.45;
+}
+
+.gp-logbook-audit-event {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.gp-logbook-audit-event strong {
+  overflow: hidden;
+  color: var(--gp-log-body);
+  font-size: 12.5px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gp-logbook-audit-event span {
+  overflow: hidden;
+  color: var(--gp-log-meta);
+  font-family: var(--gp-log-typeface);
+  font-size: 9.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gp-logbook-audit-event b {
+  color: color-mix(in oklab, var(--gp-widget-accent), white 10%);
+  font-weight: 650;
+}
+
+.gp-logbook-audit-event i {
+  margin: 0 5px;
+  font-style: normal;
+  opacity: 0.6;
+}
+
+/* Travel Log ------------------------------------------------------------- */
+
+.gp-logbook-travel {
+  position: relative;
+}
+
+/* The route line runs through the waypoint column: 5px row inset + 10px
+   half-marker = 15px. */
+.gp-logbook-travel::before {
+  position: absolute;
+  top: 14px;
+  bottom: 14px;
+  left: 15px;
+  width: 1px;
+  content: '';
+  background: linear-gradient(
+    transparent,
+    var(--gp-log-accent-line) 6%,
+    var(--gp-log-accent-line) 94%,
+    transparent
+  );
+}
+
+.gp-logbook-travel-row {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr);
+  align-items: start;
+  gap: 12px;
+  padding: 12px var(--gp-log-gutter) 13px 5px;
+}
+
+.gp-logbook-waypoint {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  width: 20px;
+  height: 20px;
+  margin-top: 1px;
+  place-items: center;
+  border: 1px solid var(--gp-log-accent-line);
+  border-radius: 50%;
+  color: var(--gp-log-accent-ink);
+  background: var(--gp-log-plate);
+  font-family: var(--gp-log-typeface);
+  font-size: 9.5px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.gp-logbook-travel-card {
+  display: grid;
+  min-width: 0;
+  gap: 8px;
+}
+
+.gp-logbook-travel-card > header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 9px;
+}
+
+.gp-logbook-travel-copy {
+  padding-top: 8px;
+  border-top: 1px solid var(--gp-log-line-soft);
+}
+
+.gp-logbook-travel-details {
+  display: grid;
+  grid-template-columns: minmax(74px, 0.55fr) minmax(0, 1fr);
+  gap: 16px;
+}
+
+.gp-logbook-travel-details .gp-logbook-detail:first-child input {
+  font-family: var(--gp-log-typeface);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Narrow cards ----------------------------------------------------------- */
+
+/* Specialist grids collapse before their text has to truncate. */
+/* A record's own headline never competes with its chips for horizontal room:
+   below this width every header becomes two lines instead of squeezing the one
+   sentence that says what happened into a 50px column. */
+@container (max-width: 380px) {
+  .gp-logbook-incident-head {
+    grid-template-columns: 28px minmax(0, 1fr) auto;
+    grid-template-areas:
+      'level title title'
+      'status status date';
+    row-gap: 7px;
+  }
+
+  .gp-logbook-incident-head > .gp-logbook-level { grid-area: level; }
+  .gp-logbook-incident-head > .gp-bare-field { grid-area: title; }
+  .gp-logbook-incident-head > .gp-logbook-status { grid-area: status; justify-self: start; }
+  .gp-logbook-incident-head > .gp-logbook-stamp { grid-area: date; }
+
+  .gp-logbook-incident-grid {
+    margin-left: 0;
+  }
+
+  .gp-logbook-lab-head {
+    grid-template-columns: auto minmax(0, 1fr) 28px;
+    grid-template-areas:
+      'exp date level'
+      'title title title';
+    row-gap: 5px;
+  }
+
+  .gp-logbook-lab-head > span:first-child { grid-area: exp; }
+  .gp-logbook-lab-head > .gp-bare-field { grid-area: title; }
+  .gp-logbook-lab-head > .gp-logbook-stamp { grid-area: date; }
+  .gp-logbook-lab-head > .gp-logbook-level { grid-area: level; }
+
+  .gp-logbook-maintenance-head {
+    grid-template-columns: 22px minmax(0, 1fr) auto 28px;
+    grid-template-areas:
+      'tool asset asset level'
+      'due due date date';
+    row-gap: 7px;
+  }
+
+  .gp-logbook-maintenance-head > .gp-logbook-tool { grid-area: tool; }
+  .gp-logbook-maintenance-head > .gp-logbook-asset { grid-area: asset; }
+  .gp-logbook-maintenance-head > .gp-logbook-due { grid-area: due; justify-self: start; }
+  .gp-logbook-maintenance-head > .gp-logbook-stamp { grid-area: date; }
+  .gp-logbook-maintenance-head > .gp-logbook-level { grid-area: level; }
+}
+
+@container (max-width: 560px) {
+  .gp-logbook-incident-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px 16px;
+  }
+}
+
+/* Below the width where five columns can hold real sentences, a release
+   becomes two lines — its identity on top, the change itself underneath — so
+   the description never shrinks into a three-word column. */
+@container (max-width: 520px) {
+  .gp-logbook-change-labels {
+    display: none;
+  }
+
+  .gp-logbook-change-grid {
+    /* Fixed tracks, not `auto`: an input's intrinsic width is its 20-character
+       default, which would eat the row and collapse its neighbours. */
+    grid-template-columns: 52px 78px minmax(0, 1fr) auto 28px;
+    grid-template-areas:
+      'version kind author date level'
+      'copy copy copy copy copy';
+    gap: 6px 8px;
+    align-items: center;
+  }
+
+  .gp-logbook-version { grid-area: version; }
+  .gp-logbook-kind { grid-area: kind; }
+  .gp-logbook-change-copy { grid-area: copy; }
+  .gp-logbook-author { grid-area: author; }
+  .gp-logbook-change-grid > .gp-logbook-stamp { grid-area: date; }
+  .gp-logbook-change-grid > .gp-logbook-level { grid-area: level; }
+
+  .gp-logbook-author > i {
+    display: none;
+  }
+}
+
+@container (max-width: 340px) {
+  .gp-logbook-latest {
+    display: none;
+  }
+
+  /* Icon-only, and a circle rather than a squashed pill: the label is dropped,
+     so the target keeps the same 28px square every other control has. */
+  .gp-logbook .gp-logbook-order {
+    width: 28px;
+    justify-content: center;
+    overflow: hidden;
+    margin-left: auto;
+    padding: 0;
+    color: transparent;
+  }
+
+  .gp-logbook-order svg {
+    color: var(--gp-log-meta);
+  }
+
+  .gp-logbook-incident-grid,
+  .gp-logbook-lab-grid,
+  .gp-logbook-maintenance-grid,
+  .gp-logbook-travel-details {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .gp-logbook-change-grid {
+    grid-template-areas:
+      'version kind date level'
+      'copy copy copy copy';
+    grid-template-columns: 50px 76px minmax(0, 1fr) 28px;
+  }
+
+  .gp-logbook-change-grid > .gp-logbook-author {
+    display: none;
+  }
+
+  .gp-logbook-audit-row {
+    grid-template-columns: 30px 28px minmax(0, 1fr);
+  }
+
+  .gp-logbook-audit-row > time {
+    display: none;
+  }
+
+  .gp-logbook-lab-row {
+    padding-left: 34px;
+  }
+
+  .gp-logbook-maintenance-work,
+  .gp-logbook-maintenance-grid {
+    margin-left: 0;
+  }
+
+  /* Specificity, not chance: `.gp-logbook-add:disabled` also sets a colour, so
+     the icon-only collapse states its own at the same weight. */
+  .gp-logbook .gp-logbook-add {
+    width: 28px;
+    justify-content: center;
+    overflow: hidden;
+    padding: 0;
+    color: transparent;
+  }
+
+  .gp-logbook-add svg {
+    color: var(--gp-log-accent-ink);
+  }
+
+  .gp-logbook-add:disabled svg {
+    color: var(--gp-log-meta);
+  }
+
+  .gp-logbook-hint {
+    display: none;
+  }
+}
+
+@container (max-width: 260px) {
+  .gp-logbook-summary > span {
+    display: none;
+  }
+
+  .gp-logbook-daily-row {
+    grid-template-columns: 34px 28px minmax(0, 1fr);
+    --gp-log-rail-x: 62px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gp-logbook *,
+  .gp-logbook *::before,
+  .gp-logbook *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}

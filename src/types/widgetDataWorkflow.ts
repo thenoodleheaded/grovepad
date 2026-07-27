@@ -69,25 +69,53 @@ export interface StatusData {
   value: WorkflowStatus
 }
 
+export type DateSkinMode =
+  | 'date_time'
+  | 'deadline'
+  | 'relative_date'
+  | 'anniversary'
+  | 'range'
+  | 'recurring_date'
+  | 'milestone'
+
 export interface DatePickerData {
   label: string
-  /** ISO date (yyyy-mm-dd). */
+  /** ISO date (yyyy-mm-dd). The one canonical day every skin reads and writes. */
   date: string
   /** Local 24-hour time (HH:mm), or empty when unused. */
   time: string
   includeTime: boolean
-  mode?: 'date_time' | 'countdown'
+  /**
+   * Which way of holding that day this card wears. Persisted as `mode` because
+   * old boards already store it there; `'countdown'` is the retired value and
+   * reads back as `'deadline'`.
+   */
+  mode?: DateSkinMode | 'countdown'
+  /** Optional specialist state is isolated by skin so switching never loses it. */
+  skinStates?: Record<string, Record<string, unknown>>
 }
 
-interface OutlineItem {
+export interface OutlineItem {
   id: string
   text: string
   depth: number
   collapsed: boolean
 }
 
+export type OutlineSkinMode =
+  | 'tree'
+  | 'roman'
+  | 'scenes'
+  | 'sitemap'
+  | 'course'
+  | 'work_breakdown'
+  | 'collapsible_brief'
+
 export interface OutlineData {
   items: OutlineItem[]
+  skin?: OutlineSkinMode
+  /** Optional specialist fields are isolated by skin and stable item id. */
+  skinStates?: Record<string, Record<string, unknown>>
 }
 
 export type FormFieldType = 'text' | 'number' | 'checkbox'
@@ -100,9 +128,21 @@ export interface FormField {
   required: boolean
 }
 
+export type FormSkinMode =
+  | 'intake'
+  | 'survey'
+  | 'feedback'
+  | 'rsvp'
+  | 'inspection'
+  | 'application'
+  | 'conditional_form'
+
 export interface FormWidgetData {
   title: string
   fields: FormField[]
+  skin?: FormSkinMode
+  /** Optional specialist fields are isolated by skin and field id. */
+  skinStates?: Record<string, Record<string, unknown>>
 }
 
 interface AgendaItem {
@@ -196,17 +236,29 @@ export interface InventoryData {
   items: InventoryItem[]
 }
 
-type LogLevel = 'note' | 'info' | 'warning'
+export type LogLevel = 'note' | 'info' | 'warning'
 
-interface LogEntry {
+export interface LogEntry {
   id: string
   timestamp: string
   text: string
   level: LogLevel
 }
 
+export type LogbookSkinMode =
+  | 'daily_log'
+  | 'incident_log'
+  | 'lab_notebook'
+  | 'change_log'
+  | 'maintenance_log'
+  | 'audit_trail'
+  | 'travel_log'
+
 export interface LogbookData {
   entries: LogEntry[]
+  skin?: LogbookSkinMode
+  /** Optional specialist fields are isolated by skin and entry id. */
+  skinStates?: Record<string, Record<string, unknown>>
 }
 
 interface LineChartPoint {

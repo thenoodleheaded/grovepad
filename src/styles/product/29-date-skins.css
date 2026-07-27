@@ -1,0 +1,1124 @@
+/*
+ * Purpose-built Date skins.
+ *
+ * One day, seven questions. The card's hero is always the *answer* — how far
+ * away the day is — and the controls that set it sit below as sunken regions of
+ * the card's single backplate, never as separate panes of glass (Articles VIII
+ * and XVI). Every wrapper that directly holds a control carries
+ * `gp-bare-field`, so the auto field-island detector in 06-field-islands.css
+ * cannot manufacture a second island inside a well this sheet already painted.
+ *
+ * The colour rule: a Date card spends its own accent on the day it is pointing
+ * at, and one borrowed hue only when the day itself has a temperature — late,
+ * due, shipped. Nothing else is tinted.
+ */
+
+/* The generated presentation families paint grid, timeline and dashboard
+   furniture over a card whose whole job is one date. */
+.gp-widget-ui[data-widget-type='date_picker'][data-skin-presentation] {
+  background-image: none;
+  padding-inline-start: 0;
+}
+
+.gp-widget-ui[data-widget-type='date_picker'][data-skin-presentation]::before {
+  content: none;
+}
+
+.gp-widget-ui[data-widget-type='date_picker'][data-skin-presentation] :where(strong, output, b, em) {
+  color: inherit;
+}
+
+.gp-date {
+  --gp-date-ink: var(--gp-widget-ink, #f5f5f5);
+  --gp-date-quiet: color-mix(in oklab, var(--gp-date-ink), transparent 52%);
+  --gp-date-faint: color-mix(in oklab, var(--gp-date-ink), transparent 74%);
+  --gp-date-rule: color-mix(in oklab, var(--gp-date-ink), transparent 90%);
+  --gp-date-sunken: rgb(0 0 0 / 0.24);
+  --gp-date-deep: rgb(0 0 0 / 0.3);
+  --gp-date-live: color-mix(in oklab, var(--gp-widget-accent), white 12%);
+  --gp-date-late: #fb7185;
+  --gp-date-due: #fbbf24;
+  --gp-date-done: #34d399;
+  /* The one hue the reading leans on. Each state re-points it, so a hero, a
+     ring and a marker never disagree about how urgent the same day is. */
+  --gp-date-tone: var(--gp-date-live);
+  container-type: inline-size;
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+  gap: 0.5rem;
+  color: var(--gp-date-ink);
+}
+
+.gp-date[data-state='overdue'] {
+  --gp-date-tone: var(--gp-date-late);
+}
+
+.gp-date[data-state='today'] {
+  --gp-date-tone: var(--gp-date-due);
+}
+
+.gp-date[data-state='unset'] {
+  --gp-date-tone: var(--gp-date-faint);
+}
+
+/* `font-family`, never the `font` shorthand: the shorthand's specificity beats
+   every single-class rule below it and would reset each chip's own size back to
+   the inherited 16px. */
+.gp-date button,
+.gp-date input {
+  font-family: inherit;
+}
+
+/*
+ * The catalogue's ghost-button rule (Article XIX, 06-field-islands.css) strips
+ * every button's fill and radius and floors it at 28px square, all with
+ * `!important`. The 28px floor is kept — a date chip should be as easy to hit
+ * as anything else — but each control here IS its own surface, so this one rule
+ * wins back exactly radius and fill, and nothing else. Each control declares
+ * its fill as `--gp-date-chip`, so state variants stay ordinary declarations.
+ */
+.gp-date :is(
+  .gp-date-time-toggle,
+  .gp-date-quick,
+  .gp-date-clear,
+  .gp-date-segment,
+  .gp-date-rail-step,
+  .gp-date-stepper button
+) {
+  border-radius: var(--gp-date-radius, 999px) !important;
+  background-color: var(--gp-date-chip, transparent) !important;
+  background-image: none !important;
+  /* The floor is a hit area, not a width: four segments abreast must be able to
+     share one track without forcing the card wider than its content. */
+  min-width: 0;
+}
+
+.gp-date :is(.gp-date-segment, .gp-date-rail-step, .gp-date-stepper button) {
+  --gp-date-radius: 6px;
+}
+
+.gp-date button {
+  cursor: pointer;
+}
+
+.gp-date input {
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  color: inherit;
+  background: transparent;
+}
+
+.gp-date input::placeholder {
+  color: var(--gp-date-faint);
+  font-weight: 470;
+}
+
+.gp-date button:focus-visible,
+.gp-date input:focus-visible {
+  outline: 1px solid color-mix(in oklab, var(--gp-widget-accent), white 14%);
+  outline-offset: 2px;
+}
+
+/* ------------------------------------------------------------------- head */
+
+.gp-date-head {
+  display: flex;
+  min-width: 0;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.gp-date-glyph {
+  display: inline-flex;
+  width: 22px;
+  height: 22px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border-radius: 7px;
+  color: var(--gp-date-live);
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 86%);
+  box-shadow: inset 0 1px 0 color-mix(in oklab, white, transparent 88%);
+}
+
+.gp-date-name {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.gp-date-name input {
+  width: 100%;
+  min-height: 22px;
+  padding-inline: 0;
+  color: color-mix(in oklab, var(--gp-date-ink), transparent 14%);
+  font-size: 12.5px;
+  font-weight: 550;
+  letter-spacing: -0.01em;
+}
+
+.gp-date-name:focus-within {
+  box-shadow: inset 0 -1px 0 color-mix(in oklab, var(--gp-widget-accent), transparent 52%);
+}
+
+/* The pill reads slimmer than its 28px pointer target by painting only its
+   content box, the same way the logbook's level disc does. */
+.gp-date-time-toggle {
+  flex: 0 0 auto;
+  min-height: 28px;
+  border: 0;
+  padding: 4px 0.5rem;
+  color: var(--gp-date-quiet);
+  background-clip: content-box !important;
+  --gp-date-chip: color-mix(in oklab, var(--gp-date-ink), transparent 93%);
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  transition: color 140ms ease, background-color 140ms ease;
+}
+
+.gp-date-time-toggle:hover {
+  color: var(--gp-date-ink);
+}
+
+.gp-date-time-toggle[aria-pressed='true'] {
+  color: var(--gp-date-live);
+  --gp-date-chip: color-mix(in oklab, var(--gp-widget-accent), transparent 82%);
+}
+
+/* ------------------------------------------------------- wells and fields */
+
+/* The frame is painted here rather than on the label that holds the control,
+   because a wrapper with a control as its direct child is turned into a field
+   island by 06-field-islands.css and would draw a second surface inside this
+   one. */
+.gp-date-well {
+  display: grid;
+  min-width: 0;
+  gap: 1px;
+  border-radius: var(--gp-r2);
+  padding: 5px 9px 6px;
+  background: var(--gp-date-sunken);
+  box-shadow:
+    inset 0 1.5px 3px rgb(0 0 0 / 0.32),
+    0 1px 0 color-mix(in oklab, white, transparent 95%);
+  transition: box-shadow 140ms ease;
+}
+
+.gp-date-well:focus-within {
+  box-shadow:
+    inset 0 1.5px 3px rgb(0 0 0 / 0.32),
+    inset 0 0 0 1px color-mix(in oklab, var(--gp-widget-accent), transparent 62%);
+}
+
+.gp-date-well[data-tone='quiet'] {
+  background: color-mix(in oklab, var(--gp-date-ink), transparent 95%);
+  box-shadow: none;
+}
+
+.gp-date-well-label {
+  color: var(--gp-date-faint);
+  font-size: 8.5px;
+  font-weight: 650;
+  letter-spacing: 0.085em;
+  text-transform: uppercase;
+}
+
+.gp-date-well-field {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+}
+
+.gp-date-well-field input {
+  width: 100%;
+  min-height: 20px;
+  padding-inline: 0;
+  color: var(--gp-date-ink);
+  font-size: 12.5px;
+  font-weight: 550;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+/* The native day and clock pickers take their glyph and popup colours from
+   `color-scheme`, and it is the WELL they sit in that they have to be legible
+   against — not the page. A widget's interior is dark in both themes (nothing
+   in the app ever sets `--gp-widget-ink` away from its light default), so this
+   deliberately does NOT flip with `[data-theme='light']`: doing that turned the
+   calendar glyph dark on a still-dark well and all but erased it. */
+.gp-date-well-field input[type='date'],
+.gp-date-well-field input[type='time'] {
+  color-scheme: dark;
+}
+
+.gp-date-well-field input::-webkit-calendar-picker-indicator {
+  padding: 0;
+  cursor: pointer;
+  opacity: 0.42;
+  transition: opacity 140ms ease;
+}
+
+.gp-date-well:hover .gp-date-well-field input::-webkit-calendar-picker-indicator,
+.gp-date-well-field input:focus-visible::-webkit-calendar-picker-indicator {
+  opacity: 0.85;
+}
+
+.gp-date-fields {
+  display: grid;
+  min-width: 0;
+  flex: 0 0 auto;
+  gap: 0.4rem;
+}
+
+.gp-date-fields[data-columns='two'] {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+
+/* ---------------------------------------------------------------- actions */
+
+/* Quick-set chips always wrap. A row of them clipped at the card's edge would
+   hide the one action the reader was reaching for. */
+.gp-date-actions {
+  display: flex;
+  min-width: 0;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.28rem;
+}
+
+.gp-date-quick,
+.gp-date-clear {
+  min-height: 26px;
+  flex: 0 1 auto;
+  border: 0;
+  padding: 3px 0.55rem;
+  color: var(--gp-date-quiet);
+  background-clip: content-box !important;
+  --gp-date-chip: color-mix(in oklab, var(--gp-date-ink), transparent 90%);
+  font-size: 10px;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: color 140ms ease, background-color 140ms ease;
+}
+
+.gp-date-quick:hover:not(:disabled) {
+  color: var(--gp-date-ink);
+  --gp-date-chip: color-mix(in oklab, var(--gp-date-ink), transparent 80%);
+}
+
+.gp-date-quick[aria-pressed='true'] {
+  color: var(--gp-date-live);
+  --gp-date-chip: color-mix(in oklab, var(--gp-widget-accent), transparent 82%);
+}
+
+.gp-date-clear {
+  margin-inline-start: auto;
+  color: var(--gp-date-faint);
+  --gp-date-chip: transparent;
+}
+
+.gp-date-clear:hover:not(:disabled) {
+  color: color-mix(in oklab, var(--gp-date-late), var(--gp-date-ink) 14%);
+  --gp-date-chip: color-mix(in oklab, var(--gp-date-late), transparent 88%);
+}
+
+.gp-date :where(button):disabled {
+  opacity: 0.4;
+}
+
+/* --------------------------------------------------------- shared readings */
+
+/* Each skin's headline block: the answer large, its supporting line quiet,
+   an optional third line quieter still. */
+.gp-date-relative,
+.gp-date-anniversary,
+.gp-date-range,
+.gp-date-recurring,
+.gp-date-milestone {
+  display: grid;
+  min-width: 0;
+  flex: 0 0 auto;
+  gap: 1px;
+}
+
+.gp-date-relative strong,
+.gp-date-anniversary strong,
+.gp-date-range strong,
+.gp-date-recurring strong,
+.gp-date-milestone strong {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--gp-date-tone);
+  font-size: 25px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+  line-height: 1.12;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gp-date-relative span,
+.gp-date-anniversary span,
+.gp-date-range span,
+.gp-date-recurring span,
+.gp-date-milestone span {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--gp-date-quiet);
+  font-size: 10.5px;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gp-date-anniversary em {
+  color: var(--gp-date-faint);
+  font-size: 9.5px;
+  font-style: normal;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+/* -------------------------------------------------------- 1 · date & time */
+
+/* The calendar face: a torn-off page, so the day being held is legible before
+   any label is read. */
+.gp-date-plate {
+  display: flex;
+  min-width: 0;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.75rem;
+  border-radius: var(--gp-r1);
+  padding: 8px 11px 9px;
+  background:
+    radial-gradient(120% 140% at 0% 0%, color-mix(in oklab, var(--gp-widget-accent), transparent 88%), transparent 62%),
+    var(--gp-date-deep);
+  box-shadow:
+    inset 0 1.5px 3px rgb(0 0 0 / 0.4),
+    inset 0 -1px 0 color-mix(in oklab, white, transparent 94%);
+}
+
+.gp-date-plate-face {
+  display: grid;
+  min-width: 0;
+  flex: 1 1 auto;
+  grid-template-areas:
+    'weekday month'
+    'day     month';
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  column-gap: 0.6rem;
+}
+
+.gp-date-plate-weekday {
+  grid-area: weekday;
+  color: var(--gp-date-live);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.gp-date-plate-day {
+  grid-area: day;
+  color: var(--gp-date-ink);
+  font-size: 30px;
+  font-weight: 630;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.045em;
+  line-height: 1;
+}
+
+.gp-date-plate-month {
+  grid-area: month;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--gp-date-quiet);
+  font-size: 11.5px;
+  font-weight: 550;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* With no day there is no numeral and no weekday, so the message takes the
+   whole face rather than sitting beside an empty column. */
+.gp-date-plate[data-empty] .gp-date-plate-month {
+  grid-area: weekday / weekday / month / month;
+  align-self: center;
+  color: var(--gp-date-faint);
+}
+
+/* The time is a companion reading, separated by a hairline rather than by
+   another box. */
+.gp-date-plate-clock {
+  display: grid;
+  flex: 0 0 auto;
+  gap: 1px;
+  padding-inline-start: 0.75rem;
+  border-inline-start: 1px solid var(--gp-date-rule);
+  text-align: end;
+}
+
+.gp-date-plate-clock strong {
+  color: var(--gp-date-ink);
+  font-size: 15px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+/* ------------------------------------------------------------ 2 · deadline */
+
+.gp-date-deadline {
+  display: flex;
+  min-width: 0;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.gp-date-deadline[data-urgency='overdue'] {
+  --gp-date-tone: var(--gp-date-late);
+}
+
+.gp-date-deadline[data-urgency='due'],
+.gp-date-deadline[data-urgency='urgent'] {
+  --gp-date-tone: var(--gp-date-due);
+}
+
+/* The runway spent, drawn as an arc so the proportion is read rather than
+   computed. It starts at twelve o'clock and fills clockwise. */
+.gp-date-ring {
+  width: 46px;
+  height: 46px;
+  flex: 0 0 auto;
+  transform: rotate(-90deg);
+}
+
+.gp-date-ring circle {
+  fill: none;
+  stroke-width: 3.5;
+  stroke-linecap: round;
+}
+
+.gp-date-ring-track {
+  stroke: color-mix(in oklab, var(--gp-date-ink), transparent 88%);
+}
+
+.gp-date-ring-spent {
+  stroke: var(--gp-date-tone);
+  transition: stroke-dashoffset 320ms var(--gp-ease-snap, cubic-bezier(0.32, 0.72, 0, 1));
+}
+
+.gp-date-deadline-read {
+  display: grid;
+  min-width: 0;
+  flex: 1 1 auto;
+  gap: 0;
+}
+
+.gp-date-deadline-read strong {
+  color: var(--gp-date-tone);
+  font-size: 27px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.035em;
+  line-height: 1.05;
+}
+
+.gp-date-deadline-read span {
+  color: var(--gp-date-quiet);
+  font-size: 10.5px;
+  font-weight: 550;
+}
+
+.gp-date-deadline-read em {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--gp-date-faint);
+  font-size: 9.5px;
+  font-style: normal;
+  font-weight: 550;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gp-date-leads {
+  display: flex;
+  min-width: 0;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.gp-date-leads .gp-date-well-label {
+  flex: 0 0 auto;
+}
+
+/* ------------------------------------------------------ segmented choosers */
+
+.gp-date-segments {
+  display: grid;
+  min-width: 0;
+  flex: 1 1 auto;
+  grid-auto-columns: 1fr;
+  grid-auto-flow: column;
+  gap: 2px;
+  border-radius: var(--gp-r2);
+  padding: 2px;
+  background: rgb(0 0 0 / 0.22);
+  box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.3);
+}
+
+.gp-date-segment {
+  min-height: 26px;
+  border: 0;
+  padding: 0 4px;
+  color: var(--gp-date-quiet);
+  font-size: 10.5px;
+  font-weight: 620;
+  transition: background-color 140ms ease, color 140ms ease;
+}
+
+.gp-date-segment:hover {
+  color: var(--gp-date-ink);
+  --gp-date-chip: color-mix(in oklab, var(--gp-date-ink), transparent 92%);
+}
+
+.gp-date-segment[aria-pressed='true'] {
+  color: var(--gp-date-live);
+  --gp-date-chip: color-mix(in oklab, var(--gp-widget-accent), transparent 82%);
+}
+
+/* ------------------------------------------------------- 3 · relative date */
+
+.gp-date-relative strong {
+  font-size: 28px;
+}
+
+/* A fixed window either side of today, so the marker's travel means the same
+   thing on every card. */
+.gp-date-axis {
+  position: relative;
+  min-width: 0;
+  height: 30px;
+  flex: 0 0 auto;
+}
+
+.gp-date-axis-line {
+  position: absolute;
+  top: 9px;
+  right: 2px;
+  left: 2px;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(
+    90deg,
+    color-mix(in oklab, var(--gp-date-ink), transparent 94%),
+    color-mix(in oklab, var(--gp-date-ink), transparent 84%),
+    color-mix(in oklab, var(--gp-date-ink), transparent 94%)
+  );
+}
+
+.gp-date-axis-now {
+  position: absolute;
+  top: 4px;
+  left: 50%;
+  width: 1px;
+  height: 12px;
+  transform: translateX(-50%);
+  background: color-mix(in oklab, var(--gp-date-ink), transparent 62%);
+}
+
+.gp-date-axis-mark {
+  position: absolute;
+  top: 4px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  transform: translateX(-50%);
+  background: var(--gp-date-tone);
+  box-shadow:
+    0 0 0 3px color-mix(in oklab, var(--gp-date-tone), transparent 84%),
+    0 1px 3px rgb(0 0 0 / 0.4);
+  transition: left 320ms var(--gp-ease-snap, cubic-bezier(0.32, 0.72, 0, 1));
+}
+
+.gp-date-axis-caption {
+  position: absolute;
+  bottom: 0;
+  color: var(--gp-date-faint);
+  font-size: 8.5px;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.gp-date-axis-caption[data-side='start'] {
+  left: 0;
+}
+
+.gp-date-axis-caption[data-side='now'] {
+  left: 50%;
+  color: var(--gp-date-quiet);
+  transform: translateX(-50%);
+}
+
+.gp-date-axis-caption[data-side='end'] {
+  right: 0;
+}
+
+/* --------------------------------------------------------- 4 · anniversary */
+
+.gp-date-anniversary strong {
+  color: var(--gp-date-ink);
+}
+
+.gp-date-anniversary span[data-state='today'] {
+  color: var(--gp-date-due);
+}
+
+/* Twelve months as one band: the occasion's month is lit, this month carries a
+   pip, so "how far round the year" is answered without a second reading. */
+.gp-date-band {
+  display: grid;
+  min-width: 0;
+  flex: 0 0 auto;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 2px;
+  border-radius: var(--gp-r2);
+  padding: 2px;
+  background: rgb(0 0 0 / 0.22);
+  box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.3);
+}
+
+.gp-date-band-month {
+  position: relative;
+  display: grid;
+  min-width: 0;
+  height: 22px;
+  place-items: center;
+  border-radius: 5px;
+  color: var(--gp-date-faint);
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.gp-date-band-month[data-occasion] {
+  color: var(--gp-date-live);
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 78%);
+  box-shadow: inset 0 1px 0 color-mix(in oklab, white, transparent 86%);
+}
+
+.gp-date-band-month[data-now]::after {
+  position: absolute;
+  bottom: 2px;
+  left: 50%;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  content: '';
+  transform: translateX(-50%);
+  background: color-mix(in oklab, var(--gp-date-ink), transparent 40%);
+}
+
+/* --------------------------------------------------------------- 5 · range */
+
+.gp-date-range strong {
+  color: var(--gp-date-ink);
+}
+
+.gp-date-range[data-state='during'] strong {
+  color: var(--gp-date-live);
+}
+
+.gp-date-span {
+  display: grid;
+  min-width: 0;
+  flex: 0 0 auto;
+  gap: 0.3rem;
+}
+
+/* The track has to read as the whole span, not as empty card: a hairline gives
+   the un-elapsed part an edge, so "day 3 of 12" is visible as a proportion. */
+.gp-date-span-track {
+  position: relative;
+  display: block;
+  height: 6px;
+  border-radius: 999px;
+  background: rgb(0 0 0 / 0.28);
+  box-shadow:
+    inset 0 1px 2px rgb(0 0 0 / 0.34),
+    inset 0 0 0 1px color-mix(in oklab, var(--gp-date-ink), transparent 90%);
+}
+
+.gp-date-span-fill {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  display: block;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    color-mix(in oklab, var(--gp-widget-accent), transparent 46%),
+    var(--gp-date-live)
+  );
+  transition: inline-size 320ms var(--gp-ease-snap, cubic-bezier(0.32, 0.72, 0, 1));
+}
+
+.gp-date-span[data-state='after'] .gp-date-span-fill {
+  background: linear-gradient(
+    90deg,
+    color-mix(in oklab, var(--gp-date-done), transparent 62%),
+    var(--gp-date-done)
+  );
+}
+
+.gp-date-span-now {
+  position: absolute;
+  top: 50%;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--gp-date-ink);
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.5);
+  transition: left 320ms var(--gp-ease-snap, cubic-bezier(0.32, 0.72, 0, 1));
+}
+
+.gp-date-span-captions {
+  display: flex;
+  min-width: 0;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.4rem;
+}
+
+.gp-date-span-captions em {
+  flex: 0 0 auto;
+  color: var(--gp-date-faint);
+  font-size: 9px;
+  font-style: normal;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.gp-date-span-captions b {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--gp-date-quiet);
+  font-size: 9.5px;
+  font-weight: 620;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ----------------------------------------------------- 6 · recurring date */
+
+.gp-date-recurring strong {
+  color: var(--gp-date-ink);
+  font-size: 21px;
+}
+
+.gp-date-rule {
+  display: grid;
+  min-width: 0;
+  flex: 0 0 auto;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.gp-date-stepper {
+  display: grid;
+  flex: 0 0 auto;
+  grid-template-columns: auto minmax(0, 2.2rem) auto;
+  align-items: center;
+  border-radius: var(--gp-r2);
+  padding: 2px;
+  background: rgb(0 0 0 / 0.22);
+  box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.3);
+}
+
+.gp-date-stepper button {
+  display: grid;
+  width: 28px;
+  height: 26px;
+  place-items: center;
+  border: 0;
+  color: var(--gp-date-quiet);
+  transition: color 140ms ease, background-color 140ms ease;
+}
+
+.gp-date-stepper button:hover:not(:disabled) {
+  color: var(--gp-date-ink);
+  --gp-date-chip: color-mix(in oklab, var(--gp-date-ink), transparent 90%);
+}
+
+.gp-date-stepper-value {
+  display: flex;
+  min-width: 0;
+  justify-content: center;
+}
+
+.gp-date-stepper-value input {
+  width: 100%;
+  min-height: 20px;
+  padding-inline: 0;
+  color: var(--gp-date-ink);
+  font-size: 12px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+.gp-date-stepper-value input::-webkit-outer-spin-button,
+.gp-date-stepper-value input::-webkit-inner-spin-button {
+  margin: 0;
+  appearance: none;
+}
+
+/* The next few occurrences, so a repeat rule can be checked at a glance
+   instead of being trusted. */
+.gp-date-upcoming {
+  display: grid;
+  min-width: 0;
+  flex: 0 0 auto;
+  grid-auto-columns: 1fr;
+  grid-auto-flow: column;
+  gap: 0.3rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.gp-date-upcoming li {
+  display: grid;
+  min-width: 0;
+  gap: 0;
+  border-radius: var(--gp-r2);
+  padding: 4px 6px 5px;
+  background: color-mix(in oklab, var(--gp-date-ink), transparent 95%);
+  text-align: center;
+}
+
+.gp-date-upcoming li[data-next] {
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 84%);
+  box-shadow: inset 0 1px 0 color-mix(in oklab, white, transparent 88%);
+}
+
+.gp-date-upcoming em {
+  color: var(--gp-date-faint);
+  font-size: 8.5px;
+  font-style: normal;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.gp-date-upcoming li[data-next] em {
+  color: color-mix(in oklab, var(--gp-widget-accent), transparent 26%);
+}
+
+.gp-date-upcoming b {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--gp-date-quiet);
+  font-size: 10.5px;
+  font-weight: 620;
+  font-variant-numeric: tabular-nums;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gp-date-upcoming li[data-next] b {
+  color: var(--gp-date-live);
+}
+
+/* ----------------------------------------------------------- 7 · milestone */
+
+.gp-date-milestone b {
+  justify-self: start;
+  margin-top: 0.15rem;
+  border-radius: 999px;
+  padding: 0.1rem 0.5rem;
+  color: var(--gp-date-quiet);
+  background: color-mix(in oklab, var(--gp-date-ink), transparent 92%);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.gp-date-milestone[data-status='active'] b {
+  color: var(--gp-date-live);
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 82%);
+}
+
+.gp-date-milestone[data-status='at_risk'] b {
+  color: var(--gp-date-late);
+  background: color-mix(in oklab, var(--gp-date-late), transparent 84%);
+}
+
+.gp-date-milestone[data-status='shipped'] b {
+  color: var(--gp-date-done);
+  background: color-mix(in oklab, var(--gp-date-done), transparent 84%);
+}
+
+.gp-date-milestone[data-status='shipped'] strong {
+  color: var(--gp-date-done);
+}
+
+/* The four states as a rail, because a milestone moves along them in order.
+   Each step keeps its own dot so the sequence is readable while pressed. */
+.gp-date-rail {
+  display: grid;
+  min-width: 0;
+  flex: 0 0 auto;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 2px;
+  border-radius: var(--gp-r2);
+  padding: 2px;
+  background: rgb(0 0 0 / 0.22);
+  box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.3);
+}
+
+.gp-date-rail-step {
+  display: grid;
+  min-width: 0;
+  min-height: 32px;
+  justify-items: center;
+  gap: 2px;
+  border: 0;
+  padding: 4px 2px;
+  overflow: hidden;
+  color: var(--gp-date-faint);
+  font-size: 8.5px;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: color 140ms ease, background-color 140ms ease;
+}
+
+.gp-date-rail-step > span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: color-mix(in oklab, var(--gp-date-ink), transparent 80%);
+  transition: background-color 140ms ease;
+}
+
+.gp-date-rail-step:hover {
+  color: var(--gp-date-quiet);
+  --gp-date-chip: color-mix(in oklab, var(--gp-date-ink), transparent 92%);
+}
+
+.gp-date-rail-step[aria-pressed='true'] {
+  color: var(--gp-date-ink);
+  --gp-date-chip: color-mix(in oklab, var(--gp-date-ink), transparent 88%);
+}
+
+.gp-date-rail-step[aria-pressed='true'][data-status='planned'] > span {
+  background: color-mix(in oklab, var(--gp-date-ink), transparent 48%);
+}
+
+.gp-date-rail-step[aria-pressed='true'][data-status='active'] > span {
+  background: var(--gp-date-live);
+}
+
+.gp-date-rail-step[aria-pressed='true'][data-status='at_risk'] > span {
+  background: var(--gp-date-late);
+}
+
+.gp-date-rail-step[aria-pressed='true'][data-status='shipped'] > span {
+  background: var(--gp-date-done);
+}
+
+/* -------------------------------------------------------- narrow and quiet */
+
+@container (max-width: 250px) {
+  /* Paired fields stack rather than crush a day into three glyphs. */
+  .gp-date-fields[data-columns='two'] {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .gp-date-relative strong,
+  .gp-date-anniversary strong,
+  .gp-date-range strong,
+  .gp-date-milestone strong {
+    font-size: 21px;
+  }
+
+  .gp-date-deadline-read strong {
+    font-size: 23px;
+  }
+
+  .gp-date-plate-day {
+    font-size: 25px;
+  }
+
+  .gp-date-ring {
+    width: 38px;
+    height: 38px;
+  }
+
+  /* The rule and its interval need the full width each. */
+  .gp-date-rule {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .gp-date-stepper {
+    justify-self: start;
+  }
+
+  /* Four occurrences abreast become unreadable long before the card is this
+     narrow; two rows of two keep the dates intact. */
+  .gp-date-upcoming {
+    grid-auto-flow: row;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* The rail keeps its dots and drops its words rather than truncating all
+     four to one letter each. The pointer target stays at the 28px floor. */
+  .gp-date-rail-step {
+    min-height: 28px;
+    font-size: 0;
+    letter-spacing: 0;
+  }
+
+  .gp-date-band-month {
+    font-size: 8px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gp-date-ring-spent,
+  .gp-date-axis-mark,
+  .gp-date-span-fill,
+  .gp-date-span-now,
+  .gp-date-well,
+  :where(
+    .gp-date-segment,
+    .gp-date-quick,
+    .gp-date-clear,
+    .gp-date-time-toggle,
+    .gp-date-rail-step,
+    .gp-date-rail-step > span,
+    .gp-date-stepper button
+  ),
+  .gp-date-well-field input::-webkit-calendar-picker-indicator {
+    transition: none;
+  }
+}

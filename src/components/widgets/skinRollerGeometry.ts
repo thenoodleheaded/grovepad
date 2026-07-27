@@ -11,8 +11,18 @@
 /** Height of one skin row, and therefore the travel between two detents. */
 export const ROW_HEIGHT = 52
 
-/** Degrees of barrel rotation between neighbouring rows. */
-export const ANGLE_STEP = 20
+/**
+ * Degrees of barrel rotation between neighbouring rows.
+ *
+ * This is the drum's legibility budget, not merely its shape. A row rotated by
+ * `a` keeps only `cos(a)` of its height once projected, so a steep step crushes
+ * every row that is not in the lane — and while the drum is rolling fast, EVERY
+ * row is mid-rotation, the lane included. At 20° per row the third choice out
+ * kept barely a third of its height, which is why rolling quickly left the whole
+ * list an unreadable smear; at 12° it keeps four fifths, so the sharp zone below
+ * is a promise the projection can actually honour.
+ */
+export const ANGLE_STEP = 12
 
 /**
  * Barrel radius that makes ANGLE_STEP of rotation advance the surface by
@@ -20,8 +30,30 @@ export const ANGLE_STEP = 20
  */
 export const DRUM_RADIUS = ROW_HEIGHT / (2 * Math.tan((ANGLE_STEP * Math.PI) / 360))
 
+/**
+ * How much the projection magnifies the drum: rows ride DRUM_RADIUS closer to
+ * the eye than the drum's own plane, so they land this much larger than their
+ * CSS size. The drum's on-screen scale was tuned at this magnification, so
+ * DRUM_PERSPECTIVE is derived from it rather than set by hand — flattening
+ * ANGLE_STEP pushes the barrel's surface further out, and a hand-set
+ * perspective would have magnified (and re-softened) every row to compensate.
+ */
+export const PROJECTION_SCALE = 1.312
+
+/** The `perspective` that projects this barrel at exactly PROJECTION_SCALE. */
+export const DRUM_PERSPECTIVE = Math.round(DRUM_RADIUS / (1 - 1 / PROJECTION_SCALE))
+
 /** Rows further than this from the lane have rotated past the horizon. */
 const HORIZON = 90 / ANGLE_STEP
+
+/**
+ * How far from the lane the drum dissolves. Rows fade to nothing by here and
+ * are not painted past it — which must stay inside HORIZON, since a row rotated
+ * past 90° faces away from the eye. Held well under the horizon so the flatter
+ * barrel keeps roughly the height it had at the steeper step instead of running
+ * off both ends of the screen.
+ */
+const FADE_ROWS = Math.min(6, HORIZON)
 
 /** Resistance constant for the stretch past either end. Lower drags harder. */
 const RUBBER = 0.55
@@ -79,7 +111,7 @@ export interface RowPlacement {
   blur: number
   /** Rows nearer the lane paint over rows behind them. */
   zIndex: number
-  /** Rotated past the horizon — skip it entirely rather than paint a sliver. */
+  /** Rolled past the drum's edge — skip it rather than paint an invisible row. */
   hidden: boolean
 }
 
@@ -91,15 +123,15 @@ export function placeRow(index: number, offset: number, rowHeight = ROW_HEIGHT):
     // `|| 0` only normalises the -0 the lane row would otherwise produce.
     rotateX: -distance * ANGLE_STEP || 0,
     translateY: distance * rowHeight,
-    // Fades to nothing by the time a row reaches the horizon, so rows leave
-    // the drum rather than blinking out.
-    opacity: away >= HORIZON ? 0 : Math.max(0, 1 - (away / HORIZON) ** 1.4),
+    // Fades to nothing by the time a row reaches the drum's edge, so rows
+    // leave it rather than blinking out.
+    opacity: away >= FADE_ROWS ? 0 : Math.max(0, 1 - (away / FADE_ROWS) ** 1.4),
     // The lane and three choices each way are sharp; just past the third the
     // blur ramps up over one row and then holds flat, so everything further
     // out is plainly out of focus rather than merely hinted at.
     blur: Math.min(EDGE_BLUR, Math.max(0, (away - SHARP_ROWS) / BLUR_RAMP_ROWS) * EDGE_BLUR),
     zIndex: Math.max(0, 100 - Math.round(away * 10)),
-    hidden: away >= HORIZON,
+    hidden: away >= FADE_ROWS,
   }
 }
 

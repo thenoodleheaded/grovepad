@@ -1,0 +1,876 @@
+/*
+ * Purpose-built Meeting Notes skins.
+ *
+ * Every shape reads the same four facts — date, attendees, notes, actions —
+ * so the material is shared and only the arrangement changes. Rows sit on the
+ * card's single backplate: an agenda topic is a timeline stop, a resolution is
+ * a ledger line, a decision is a card with a review clock. Text controls are
+ * bare (Article VII) — the surfaces here are authored, never manufactured.
+ */
+
+.gp-widget-ui[data-widget-type='meeting_notes'][data-skin-presentation] {
+  background-image: none;
+  padding-inline-start: 0;
+}
+
+.gp-widget-ui[data-widget-type='meeting_notes'][data-skin-presentation]::before {
+  content: none;
+}
+
+.gp-meeting {
+  --gp-meet-line: color-mix(in oklab, var(--gp-widget-ink, #f5f5f5), transparent 88%);
+  --gp-meet-muted: color-mix(in oklab, var(--gp-widget-ink, #f5f5f5), transparent 56%);
+  --gp-meet-faint: color-mix(in oklab, var(--gp-widget-ink, #f5f5f5), transparent 74%);
+  --gp-meet-sink: color-mix(in oklab, var(--gp-widget-ink, #f5f5f5), transparent 94%);
+  display: flex;
+  /* Height follows content and is reported back through `onHeightChange`, so
+     the card grows to fit. A hard `height: 100%` let a too-short card compress
+     its own rows until a decision's owner chip printed over its text. */
+  min-height: 100%;
+  flex-direction: column;
+  gap: 0.5rem;
+  color: var(--gp-widget-ink, #f5f5f5);
+  container-type: inline-size;
+}
+
+/* No region of a meeting gives up its own height to fit a short card. The card
+   grows instead; overlap is never the answer. */
+.gp-meeting > * {
+  flex-shrink: 0;
+}
+
+/*
+ * Control resets are wrapped in `:where()` so they add no specificity: every
+ * per-part rule below is a single class and must be able to set its own size,
+ * padding, and surface without an `!important` arms race.
+ */
+.gp-meeting :where(button, input, textarea) {
+  font: inherit;
+}
+
+.gp-meeting :where(input, textarea) {
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  color: inherit;
+  background: transparent;
+}
+
+.gp-meeting :where(textarea) {
+  display: block;
+  width: 100%;
+  resize: none;
+  line-height: 1.5;
+}
+
+.gp-meeting :where(input, textarea)::placeholder {
+  color: color-mix(in oklab, var(--gp-widget-ink, #f5f5f5), transparent 76%);
+}
+
+.gp-meeting :is(button, input, textarea):focus-visible {
+  outline: 1px solid color-mix(in oklab, var(--gp-widget-accent), white 14%);
+  outline-offset: 2px;
+  border-radius: var(--gp-r2);
+}
+
+/* Native date pickers inherit the card's dark ink instead of the OS default. */
+.gp-meeting :where(input[type='date']) {
+  color-scheme: dark;
+}
+
+/* ------------------------------------------------------------------ head */
+
+.gp-meeting-head {
+  display: flex;
+  min-width: 0;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 0.5rem;
+  padding-bottom: 0.42rem;
+  border-bottom: 1px solid var(--gp-meet-line);
+}
+
+.gp-meeting-eyebrow {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 0.34rem;
+  color: var(--gp-widget-accent);
+  font-size: 0.56rem;
+  font-weight: 700;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.gp-meeting-summary {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.4rem;
+  color: var(--gp-meet-muted);
+  font-size: 0.56rem;
+}
+
+.gp-meeting-summary strong {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.22rem;
+  color: var(--gp-widget-ink, #f5f5f5);
+  font-size: 0.66rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.gp-meeting-summary em {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  color: #fbbf24;
+  font-style: normal;
+}
+
+.gp-meeting-summary small {
+  overflow: hidden;
+  font-variant-numeric: tabular-nums;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The Minutes masthead is a document header, not a widget header: a hairline
+   double rule and a wordmark set the formal register the skin promises. */
+.gp-meeting-masthead {
+  display: grid;
+  flex-shrink: 0;
+  align-items: baseline;
+  gap: 0 0.5rem;
+  grid-template-columns: auto 1fr auto;
+  padding-bottom: 0.4rem;
+  border-bottom: 3px double var(--gp-meet-line);
+}
+
+.gp-meeting-wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.32rem;
+  color: var(--gp-widget-accent);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.gp-meeting-masthead strong {
+  overflow: hidden;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gp-meeting-masthead small {
+  color: var(--gp-meet-muted);
+  font-size: 0.53rem;
+  white-space: nowrap;
+}
+
+/* ------------------------------------------------------------------ meta */
+
+.gp-meeting-meta {
+  display: flex;
+  min-width: 0;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.gp-meeting-date,
+.gp-meeting-attendees {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.32rem;
+  color: var(--gp-meet-muted);
+}
+
+.gp-meeting-attendees {
+  flex: 1;
+}
+
+.gp-meeting-date input,
+.gp-meeting-attendees input {
+  min-height: 1.25rem;
+  color: var(--gp-meet-muted);
+  font-size: 0.6rem;
+}
+
+.gp-meeting-attendees input {
+  width: 100%;
+}
+
+/* Attendees typed as one line, read back as people. */
+.gp-meeting-chips {
+  display: flex;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  gap: 0.28rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.gp-meeting-chips li {
+  display: inline-flex;
+  max-width: 100%;
+  align-items: center;
+  gap: 0.28rem;
+  border-radius: 999px;
+  padding: 0.13rem 0.44rem 0.13rem 0.13rem;
+  color: var(--gp-meet-muted);
+  background: var(--gp-meet-sink);
+  font-size: 0.55rem;
+  white-space: nowrap;
+}
+
+.gp-meeting-chips li span {
+  display: inline-flex;
+  width: 1.05rem;
+  height: 1.05rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  color: color-mix(in oklab, var(--gp-widget-accent), white 30%);
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 82%);
+  font-size: 0.46rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+/* --------------------------------------------------------------- writing */
+
+.gp-meeting-notes {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+  gap: 0.22rem;
+}
+
+.gp-meeting-notes > span,
+.gp-meeting-legend,
+.gp-meeting-field > span {
+  color: var(--gp-meet-faint);
+  font-size: 0.5rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.gp-meeting-legend {
+  margin: 0;
+}
+
+.gp-meeting-notes textarea {
+  min-height: 3.1rem;
+  flex: 1;
+  border-radius: var(--gp-r2);
+  padding: 0.4rem 0.5rem;
+  background: var(--gp-meet-sink);
+  font-size: 0.68rem;
+}
+
+.gp-meeting-notes--brief textarea {
+  min-height: 2.2rem;
+}
+
+/* Ruled paper for the formal record — the lines are the material, so the
+   fill is transparent and only the rules carry the surface. */
+.gp-meeting-notes--ruled textarea {
+  min-height: 4rem;
+  border-left: 2px solid color-mix(in oklab, var(--gp-widget-accent), transparent 62%);
+  border-radius: 0;
+  padding-left: 0.6rem;
+  background:
+    repeating-linear-gradient(
+      to bottom,
+      transparent 0,
+      transparent calc(1.5em - 1px),
+      var(--gp-meet-line) calc(1.5em - 1px),
+      var(--gp-meet-line) 1.5em
+    );
+  line-height: 1.5;
+}
+
+/* ---------------------------------------------------------------- fields */
+
+.gp-meeting-field {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.14rem;
+}
+
+.gp-meeting-field :is(input, textarea) {
+  min-height: 1.15rem;
+  border-radius: var(--gp-r2);
+  padding: 0.16rem 0.34rem;
+  background: var(--gp-meet-sink);
+  font-size: 0.63rem;
+}
+
+.gp-meeting-field textarea {
+  min-height: 1.9rem;
+}
+
+/* ------------------------------------------------------------------ rows */
+
+.gp-meeting-row.gp-island.gp-subpanel {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.3rem;
+  border-radius: var(--gp-r1) !important;
+  padding: 0.4rem 0.46rem;
+}
+
+/* The no-shrink rule belongs to the LIST, not the row. A row is also a
+   horizontal flex item wherever a marker sits beside it (the agenda rail, the
+   minutes ordinal, the handoff step), and pinning the row itself stopped it
+   filling the line — clipping the timebox chip off the card's edge. Held here,
+   each entry keeps its full height while the row still spans its line. */
+.gp-meeting-section > :is(ol, ul) > *,
+.gp-meeting-experiments > * {
+  flex-shrink: 0;
+}
+
+/* Where the list puts a marker beside the row — the agenda rail, the minutes
+   ordinal, the handoff step — the row is a horizontal flex item and must take
+   the rest of the line. Only its cross-axis height is fixed by the rule above. */
+.gp-meeting-rail > li > .gp-meeting-row,
+.gp-meeting-ledger > li > .gp-meeting-row,
+.gp-meeting-next > li > .gp-meeting-row {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.gp-meeting-row .gp-meeting-item-text {
+  min-width: 0;
+  flex: 1;
+}
+
+.gp-meeting-row .gp-meeting-item-text input {
+  width: 100%;
+  min-height: 1.25rem;
+  font-size: 0.7rem;
+  font-weight: 500;
+}
+
+/* A completed item stays legible — struck, not erased. */
+.gp-meeting-row:has(.gp-meeting-check[aria-checked='true']) .gp-meeting-item-text input {
+  color: var(--gp-meet-faint);
+  text-decoration: line-through;
+  text-decoration-color: color-mix(in oklab, var(--gp-widget-ink, #f5f5f5), transparent 70%);
+}
+
+.gp-meeting-check {
+  display: inline-flex;
+  width: 0.85rem;
+  height: 0.85rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid color-mix(in oklab, var(--gp-widget-ink, #f5f5f5), transparent 66%);
+  border-radius: 0.28rem !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  color: #052e16;
+  background: transparent !important;
+  transition:
+    background-color var(--gp-duration-snap, 120ms) var(--gp-ease-snap, ease),
+    border-color var(--gp-duration-snap, 120ms) var(--gp-ease-snap, ease);
+}
+
+.gp-meeting-check:hover {
+  border-color: color-mix(in oklab, var(--gp-widget-accent), white 20%);
+}
+
+.gp-meeting-check[aria-checked='true'] {
+  border-color: #34d399;
+  background: #34d399 !important;
+}
+
+.gp-meeting-remove {
+  position: absolute;
+  top: 0.24rem;
+  right: 0.24rem;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  padding: 0.14rem;
+  color: var(--gp-meet-faint);
+  opacity: 0;
+  transition: opacity var(--gp-duration-snap, 120ms) var(--gp-ease-snap, ease);
+  pointer-events: none;
+}
+
+.gp-meeting-row {
+  position: relative;
+}
+
+.gp-meeting-row:hover .gp-meeting-remove,
+.gp-meeting-remove:focus-visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.gp-meeting-remove:hover {
+  color: #f87171;
+}
+
+.gp-meeting-section {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.gp-meeting-section > :is(ol, ul) {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.gp-meeting-add {
+  display: inline-flex;
+  align-self: flex-start;
+  align-items: center;
+  gap: 0.26rem;
+  min-height: 1.5rem !important;
+  padding: 0 0.42rem;
+  border-radius: var(--gp-r2) !important;
+  color: var(--gp-meet-muted);
+  font-size: 0.56rem;
+  font-weight: 600;
+  transition: color var(--gp-duration-snap, 120ms) var(--gp-ease-snap, ease);
+}
+
+.gp-meeting-add:hover {
+  color: color-mix(in oklab, var(--gp-widget-accent), white 24%);
+}
+
+.gp-meeting-empty {
+  margin: 0;
+  padding: 0.3rem 0.1rem;
+  color: var(--gp-meet-faint);
+  font-size: 0.58rem;
+}
+
+/* ----------------------------------------------------------------- chips */
+
+.gp-meeting-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.gp-meeting-owner,
+.gp-meeting-due,
+.gp-meeting-review,
+.gp-meeting-timebox {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.24rem;
+  border-radius: 999px;
+  padding: 0.1rem 0.42rem;
+  color: var(--gp-meet-muted);
+  background: var(--gp-meet-sink);
+  font-size: 0.55rem;
+}
+
+.gp-meeting-owner input {
+  width: 5.2rem;
+  font-size: 0.55rem;
+}
+
+.gp-meeting-due input,
+.gp-meeting-review input {
+  font-size: 0.55rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.gp-meeting-due[data-overdue='true'],
+.gp-meeting-review[data-due='true'] {
+  color: #fbbf24;
+  background: color-mix(in oklab, #fbbf24, transparent 88%);
+}
+
+/* --------------------------------------------------------------- agenda */
+
+.gp-meeting-rail {
+  position: relative;
+}
+
+/* The rail is one continuous line behind the stops, drawn from the first dot
+   to the last so a single topic never trails a dangling thread. */
+.gp-meeting-rail::before {
+  content: '';
+  position: absolute;
+  top: 0.9rem;
+  bottom: 0.9rem;
+  left: 0.63rem;
+  width: 1px;
+  background: var(--gp-meet-line);
+}
+
+.gp-meeting-rail > li {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.gp-meeting-rail-dot {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  width: 1.3rem;
+  height: 1.3rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  margin-top: 0.28rem;
+  border: 1px solid color-mix(in oklab, var(--gp-widget-accent), transparent 60%);
+  border-radius: 999px;
+  color: color-mix(in oklab, var(--gp-widget-accent), white 26%);
+  background: var(--gp-widget-bg, #16181a);
+  font-size: 0.55rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.gp-meeting-rail-dot[data-done='true'] {
+  border-color: #34d399;
+  color: #052e16;
+  background: #34d399;
+}
+
+.gp-meeting-topic-head {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.gp-meeting-timebox input {
+  width: 1.9rem;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+/* The stepper arrows would collide with the "min" suffix in a 2rem chip. */
+.gp-meeting-timebox input[type='number'] {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.gp-meeting-timebox input::-webkit-outer-spin-button,
+.gp-meeting-timebox input::-webkit-inner-spin-button {
+  margin: 0;
+  appearance: none;
+}
+
+/* -------------------------------------------------------------- minutes */
+
+.gp-meeting-ledger > li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.44rem;
+}
+
+.gp-meeting-ordinal {
+  flex-shrink: 0;
+  margin-top: 0.55rem;
+  color: var(--gp-meet-faint);
+  font-size: 0.55rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.06em;
+}
+
+.gp-meeting-resolution-head,
+.gp-meeting-decision-head {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+/* ------------------------------------------------------------- stand-up */
+
+.gp-meeting-lanes {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+  gap: 0.34rem;
+}
+
+.gp-meeting-lane textarea {
+  min-height: 2.1rem;
+  border-left: 2px solid var(--gp-lane-hue, var(--gp-meet-line));
+  border-radius: 0 var(--gp-r2) var(--gp-r2) 0;
+  background: linear-gradient(
+    90deg,
+    color-mix(in oklab, var(--gp-lane-hue, transparent), transparent 90%),
+    var(--gp-meet-sink) 42%
+  );
+}
+
+.gp-meeting-lane--past {
+  --gp-lane-hue: #94a3b8;
+}
+
+.gp-meeting-lane--today {
+  --gp-lane-hue: var(--gp-widget-accent);
+}
+
+.gp-meeting-lane--blocked {
+  --gp-lane-hue: #fb7185;
+}
+
+.gp-meeting-lane--today > span {
+  color: color-mix(in oklab, var(--gp-widget-accent), white 22%);
+}
+
+.gp-meeting-lane--blocked > span {
+  color: #fda4af;
+}
+
+.gp-meeting-ask.gp-island.gp-subpanel,
+.gp-meeting-experiment.gp-island.gp-subpanel,
+.gp-meeting-next-row.gp-island.gp-subpanel,
+.gp-meeting-commitment.gp-island.gp-subpanel {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.26rem 0.42rem;
+}
+
+.gp-meeting-commitment.gp-island.gp-subpanel {
+  flex-wrap: wrap;
+}
+
+/* -------------------------------------------------------- retrospective */
+
+.gp-meeting-quadrants {
+  display: grid;
+  min-height: 0;
+  gap: 0.4rem;
+  grid-template-columns: 1fr;
+}
+
+@container (min-width: 22rem) {
+  .gp-meeting-quadrants {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.gp-meeting-quadrant {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  flex-direction: column;
+  gap: 0.26rem;
+  border-top: 2px solid var(--gp-quad-hue, var(--gp-meet-line));
+  border-radius: 0 0 var(--gp-r2) var(--gp-r2);
+  padding: 0.34rem 0.4rem 0.4rem;
+  background: linear-gradient(
+    180deg,
+    color-mix(in oklab, var(--gp-quad-hue, transparent), transparent 88%),
+    var(--gp-meet-sink) 60%
+  );
+}
+
+.gp-meeting-quadrant > p {
+  display: flex;
+  align-items: center;
+  gap: 0.26rem;
+  margin: 0;
+  color: var(--gp-quad-hue, var(--gp-meet-muted));
+  font-size: 0.52rem;
+  font-weight: 700;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+/* The quadrant tile already carries the surface; its writing area sits on it
+   flat so the retro does not read as four boxes inside four boxes. */
+.gp-meeting-notes--quadrant > span {
+  display: none;
+}
+
+.gp-meeting-notes--quadrant textarea {
+  min-height: 2.4rem;
+  padding: 0;
+  background: transparent;
+  font-size: 0.66rem;
+}
+
+.gp-meeting-quadrant--kept {
+  --gp-quad-hue: #34d399;
+}
+
+.gp-meeting-quadrant--dropped {
+  --gp-quad-hue: #fb7185;
+}
+
+.gp-meeting-quadrant--learned {
+  --gp-quad-hue: #60a5fa;
+}
+
+.gp-meeting-quadrant--next {
+  --gp-quad-hue: var(--gp-widget-accent);
+}
+
+.gp-meeting-quadrant--next .gp-meeting-experiments {
+  display: flex;
+  flex-direction: column;
+  gap: 0.26rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* ---------------------------------------------------------- one-to-one */
+
+.gp-meeting-columns {
+  display: grid;
+  min-height: 0;
+  gap: 0.4rem;
+  grid-template-columns: 1fr;
+}
+
+@container (min-width: 24rem) {
+  .gp-meeting-columns {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.gp-meeting-followup {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: flex-end;
+  padding-top: 0.38rem;
+  border-top: 1px solid var(--gp-meet-line);
+}
+
+.gp-meeting-followup .gp-meeting-field {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+/* ----------------------------------------------------- decision review */
+
+.gp-meeting-decision.gp-island.gp-subpanel {
+  border-left: 2px solid color-mix(in oklab, var(--gp-widget-accent), transparent 66%) !important;
+}
+
+/* ------------------------------------------------------------- handoff */
+
+.gp-meeting-notes--risks textarea {
+  min-height: 2.2rem;
+  border-left: 2px solid color-mix(in oklab, #fbbf24, transparent 55%);
+  border-radius: 0 var(--gp-r2) var(--gp-r2) 0;
+  background: linear-gradient(
+    90deg,
+    color-mix(in oklab, #fbbf24, transparent 92%),
+    var(--gp-meet-sink) 40%
+  );
+}
+
+.gp-meeting-notes--risks > span {
+  color: #fcd34d;
+}
+
+.gp-meeting-next > li {
+  display: flex;
+  align-items: center;
+  gap: 0.44rem;
+}
+
+.gp-meeting-step {
+  display: inline-flex;
+  width: 1.05rem;
+  height: 1.05rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  color: var(--gp-meet-muted);
+  background: var(--gp-meet-sink);
+  font-size: 0.5rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.gp-meeting-signoff {
+  display: flex;
+  flex-shrink: 0;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding-top: 0.4rem;
+  border-top: 1px dashed var(--gp-meet-line);
+}
+
+.gp-meeting-signoff .gp-meeting-field {
+  min-width: 0;
+  flex: 1;
+}
+
+.gp-meeting-stamp {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 0.3rem;
+  min-height: 1.55rem !important;
+  padding: 0 0.55rem;
+  border: 1px dashed color-mix(in oklab, var(--gp-widget-ink, #f5f5f5), transparent 62%);
+  border-radius: var(--gp-r2) !important;
+  color: var(--gp-meet-muted);
+  font-size: 0.55rem;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  transition:
+    color var(--gp-duration-snap, 120ms) var(--gp-ease-snap, ease),
+    border-color var(--gp-duration-snap, 120ms) var(--gp-ease-snap, ease);
+}
+
+.gp-meeting-stamp[aria-checked='true'] {
+  border-style: solid;
+  border-color: #34d399;
+  color: #6ee7b7;
+  background: color-mix(in oklab, #34d399, transparent 88%) !important;
+}
+
+/* An accepted handoff reads as settled: the sign-off rule goes solid and the
+   whole footer stops looking like an outstanding request. */
+.gp-meeting-signoff[data-acknowledged='true'] {
+  border-top-style: solid;
+  border-top-color: color-mix(in oklab, #34d399, transparent 70%);
+}
+
+/* -------------------------------------------------------- reduced motion */
+
+@media (prefers-reduced-motion: reduce) {
+  .gp-meeting :is(.gp-meeting-check, .gp-meeting-remove, .gp-meeting-add, .gp-meeting-stamp) {
+    transition: none;
+  }
+}

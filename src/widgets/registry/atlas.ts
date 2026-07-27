@@ -1,6 +1,7 @@
 import type { WidgetDefinition } from '../contracts/registry'
 import type { AtlasType } from '../atlasCatalog'
 import { ATLAS_CATALOG, ATLAS_TYPES, defaultAtlasData } from '../atlasCatalog'
+import { atlasSkinsFor } from '../atlasSkins'
 import { GRID_SIZE } from '../../types/spatial'
 
 export const ATLAS_WIDGET_DEFINITIONS = Object.fromEntries(
@@ -11,6 +12,10 @@ export const ATLAS_WIDGET_DEFINITIONS = Object.fromEntries(
       type,label:spec.label,description:spec.description,icon:spec.icon,category:spec.category,
       accent:spec.accent,defaultSize:{width:taller?400:360,height:GRID_SIZE*(taller?7:6)},
       defaultData:()=>defaultAtlasData(type),...(spec.pack?{pack:spec.pack}:{}),
+      // `mode` already carries domain meaning on some Atlas types (a Fasting
+      // window is 'ramadan'), so the roller writes `skin` instead — changing
+      // appearance can never change what the card computes.
+      skins:atlasSkinsFor(type),skinField:'skin',
     }
     return [type,definition]
   }),

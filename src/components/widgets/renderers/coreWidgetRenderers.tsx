@@ -71,11 +71,23 @@ export const coreWidgetRendererFamily: WidgetRendererFamily = {
     excalidraw: ({ widget, onUpdate }) => (
       <ExcalidrawWidget data={widget.data as ExcalidrawData} widgetId={widget.id} title={widget.title} onChange={onUpdate} />
     ),
-    budget: ({ widget, onUpdate }) => <BudgetWidget data={widget.data as BudgetData} onChange={onUpdate} />,
+    budget: ({ widget, onUpdate }) => (
+      <BudgetWidget
+        data={widget.data as BudgetData}
+        skin={(widget.data as BudgetData).skin}
+        onChange={onUpdate}
+      />
+    ),
     progress: ({ widget, onUpdate }) => <ProgressWidget data={widget.data as ProgressData} onChange={onUpdate} />,
     ai_generator: ({ widget, onUpdate }) => <AiGeneratorWidget data={widget.data as AiGeneratorData} widgetId={widget.id} onChange={onUpdate} />,
     timeline: ({ widget }) => <TimelineWidget data={widget.data as TimelineData} />,
-    dialog: ({ widget, onUpdate }) => <DialogWidget data={widget.data as DialogData} onChange={onUpdate} />,
+    dialog: ({ widget, onUpdate }) => (
+      <DialogWidget
+        data={widget.data as DialogData}
+        skin={(widget.data as DialogData).skin}
+        onChange={onUpdate}
+      />
+    ),
     game_tuner: ({ widget, onUpdate }) => <GameTunerWidget data={widget.data as GameTunerData} onChange={onUpdate} />,
     audio_player: ({ widget, onUpdate }) => <AudioPlayerWidget data={widget.data as AudioPlayerData} onChange={onUpdate} />,
     canvas_node: ({ widget, onUpdate, onHeightChange }) => (
@@ -88,7 +100,13 @@ export const coreWidgetRendererFamily: WidgetRendererFamily = {
     ),
     kanban: ({ widget, onUpdate }) => <KanbanWidget data={widget.data as KanbanData} onChange={onUpdate} />,
     countdown: ({ widget, onUpdate }) => <CountdownWidget data={widget.data as CountdownData} onChange={onUpdate} />,
-    habit: ({ widget, onUpdate }) => <HabitWidget data={widget.data as HabitData} onChange={onUpdate} />,
+    habit: ({ widget, onUpdate }) => (
+      <HabitWidget
+        data={widget.data as HabitData}
+        skin={(widget.data as HabitData).skin}
+        onChange={onUpdate}
+      />
+    ),
     linked_list: ({ widget, onUpdate }) => (
       <LinkedListWidget
         data={widget.data as LinkedListData}
@@ -99,7 +117,13 @@ export const coreWidgetRendererFamily: WidgetRendererFamily = {
     links: ({ widget, onUpdate }) => <LinksWidget data={widget.data as LinksData} onChange={onUpdate} />,
     code: ({ widget, onUpdate }) => <CodeWidget data={widget.data as CodeData} onChange={onUpdate} />,
     quote: ({ widget, onUpdate }) => <QuoteWidget data={widget.data as QuoteData} onChange={onUpdate} />,
-    poll: ({ widget, onUpdate }) => <PollWidget data={widget.data as PollData} onChange={onUpdate} />,
+    poll: ({ widget, onUpdate, onHeightChange }) => (
+      <PollWidget
+        data={widget.data as PollData}
+        onChange={onUpdate}
+        onHeightChange={onHeightChange}
+      />
+    ),
     contact: ({ widget, onUpdate }) => <ContactWidget data={widget.data as ContactData} onChange={onUpdate} />,
     media: ({ widget, onUpdate }) => (
       <MediaWidget
@@ -125,7 +149,13 @@ export const coreWidgetRendererFamily: WidgetRendererFamily = {
     ),
     timer: ({ widget, onUpdate }) => <TimerWidget data={widget.data as TimerData} onChange={onUpdate} />,
     timekeeper: ({ widget, onUpdate }) => <TimekeeperWidget data={widget.data as import('../../../types/widgetDataExpansion').TimekeeperData} onChange={onUpdate} />,
-    rating: ({ widget, onUpdate }) => <RatingWidget data={widget.data as RatingData} onChange={onUpdate} />,
+    rating: ({ widget, onUpdate }) => (
+      <RatingWidget
+        data={widget.data as RatingData}
+        skin={(widget.data as RatingData).skin}
+        onChange={onUpdate}
+      />
+    ),
     color_palette: ({ widget, onUpdate }) => <ColorPaletteWidget data={widget.data as ColorPaletteData} onChange={onUpdate} />,
     mood_tracker: ({ widget, onUpdate }) => <MoodTrackerWidget data={widget.data as MoodTrackerData} onChange={onUpdate} />,
     calculator: ({ widget, onUpdate }) => (
@@ -140,7 +170,13 @@ export const coreWidgetRendererFamily: WidgetRendererFamily = {
     weekly_planner: ({ widget, onUpdate }) => <WeeklyPlannerWidget data={widget.data as WeeklyPlannerData} onChange={onUpdate} />,
     stopwatch: ({ widget, onUpdate }) => <StopwatchWidget data={widget.data as StopwatchData} onChange={onUpdate} />,
     reading_list: ({ widget, onUpdate }) => <ReadingListWidget data={widget.data as ReadingListData} onChange={onUpdate} />,
-    meeting_notes: ({ widget, onUpdate }) => <MeetingNotesWidget data={widget.data as MeetingNotesData} onChange={onUpdate} />,
+    meeting_notes: ({ widget, onUpdate, onHeightChange }) => (
+      <MeetingNotesWidget
+        data={widget.data as MeetingNotesData}
+        onChange={onUpdate}
+        onHeightChange={onHeightChange}
+      />
+    ),
     priority_matrix: ({ widget, onUpdate }) => <PriorityMatrixWidget data={widget.data as PriorityMatrixData} onChange={onUpdate} />,
     world_clock: ({ widget, onUpdate }) => <WorldClockWidget data={widget.data as WorldClockData} onChange={onUpdate} />,
   },

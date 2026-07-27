@@ -17,6 +17,11 @@ import type { ModuleType,
 } from '../../types/spatial'
 import type { FieldDescriptor } from '../contracts/fields'
 import { num, text, bool, primaryZoneTime, formFieldFilled, decisionWinner, convertedUnit } from './valueHelpers'
+import {
+  appendLogbookEntry,
+  latestLogbookEntry,
+  logbookWarningCount,
+} from '../../components/widgets/modules/logbookSkinModel'
 
 /** Professional and ops widget fields (outline … world_clock). Extracted verbatim from fields.ts; field order IS port-slot order — never reorder within an entry. */
 export const PROFESSIONAL_FIELDS = {
@@ -234,7 +239,29 @@ export const PROFESSIONAL_FIELDS = {
       key: 'latest',
       label: 'Latest entry',
       valueType: 'text',
-      get: (d) => [...(d as LogbookData).entries].sort((a, b) => b.timestamp.localeCompare(a.timestamp))[0]?.text ?? '',
+      get: (d) => latestLogbookEntry((d as LogbookData).entries)?.text ?? '',
+    },
+    {
+      key: 'warning_count',
+      label: 'Warnings',
+      valueType: 'number',
+      get: (d) => logbookWarningCount((d as LogbookData).entries),
+    },
+    {
+      key: 'latest_level',
+      label: 'Latest level',
+      valueType: 'text',
+      get: (d) => latestLogbookEntry((d as LogbookData).entries)?.level ?? '',
+    },
+    {
+      key: 'append',
+      label: 'Append entry',
+      valueType: 'text',
+      get: () => '',
+      set: (d, v) => {
+        const value = text(v).trim()
+        return value ? appendLogbookEntry(d as LogbookData, value) : d
+      },
     },
   ],
   line_chart: [

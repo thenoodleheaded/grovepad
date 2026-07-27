@@ -429,6 +429,20 @@ export class LocalAiService {
         finishModelTrace({status:'ok',response:result.text,summary:options.skeleton&&plan?'Deep plan changed or detached the fixed skeleton; rejected':planSummary(null)})
         return deterministic
       }
+      // The validator refuses model-supplied widget data (untrusted) and
+      // hydrates every node with registry defaults — correct for the model's
+      // OWN nodes, but the skeleton's data is the TRUSTED deterministic parse
+      // of what the user typed (list rows, deadlines, amounts). Restore it,
+      // keeping the model's title and confidence; extras stay on defaults.
+      if(options.skeleton){
+        const bySkeletonId=new Map(options.skeleton.nodes.map(node=>[node.temporaryId,node]))
+        plan.nodes=plan.nodes.map(node=>{
+          const skeletonNode=bySkeletonId.get(node.temporaryId)
+          return skeletonNode
+            ? {...node,data:skeletonNode.data,sourceText:skeletonNode.sourceText,metadata:{...skeletonNode.metadata,interpretationConfidence:node.confidence}}
+            : node
+        })
+      }
       const nodeBonus=plan.nodes.length>=10 ? .12 : plan.nodes.length>=3 ? .07 : 0
       const confidence=Math.min(.96,Math.max(plan.confidence,.79)+nodeBonus)
       plan.confidence=confidence;plan.nodes.forEach(node=>{node.confidence=Math.max(node.confidence,confidence-.06)})

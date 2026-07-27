@@ -1,18 +1,14 @@
-import { ArrowLeftRight, Check, Copy, Minus, Plus, X } from 'lucide-react'
+import { Minus, Plus, X } from 'lucide-react'
 import type {
   InventoryData,
   LineChartData,
-  LogbookData,
   PieChartData,
   TimesheetData,
-  UnitConverterCategory,
-  UnitConverterData,
 } from '../../../../types/spatial'
-import { useTransientValue } from '../../../../hooks/useTransientValue'
 import { SmallAction, AddButton, Stat } from './shared'
-import { inputClass, numericClass, panelClass, finite, clamp, todayISO } from './sharedPrimitives'
+import { inputClass, numericClass, finite, todayISO } from './sharedPrimitives'
 
-/** Ops and chart widgets: Timesheet, Inventory, Logbook, LineChart, PieChart, UnitConverter. Extracted verbatim from EssentialWidgets.tsx. */
+/** Ops and chart widgets: Timesheet, Inventory, LineChart, PieChart. Extracted verbatim from EssentialWidgets.tsx. */
 export function TimesheetWidget({
   data,
   onChange,
@@ -92,42 +88,6 @@ export function InventoryWidget({
         })}
       </div>
       <AddButton label="Add inventory item" onClick={add} />
-    </div>
-  )
-}
-
-const LOG_LEVELS = ['note', 'info', 'warning'] as const
-const LOG_COLORS = { note: '#94a3b8', info: '#38bdf8', warning: '#f59e0b' } as const
-
-export function LogbookWidget({
-  data,
-  onChange,
-}: {
-  data: LogbookData
-  onChange: (data: LogbookData) => void
-}) {
-  const latest = [...data.entries].sort((a, b) => b.timestamp.localeCompare(a.timestamp))[0]
-  const setEntry = (id: string, patch: Partial<LogbookData['entries'][number]>) =>
-    onChange({ entries: data.entries.map((entry) => (entry.id === id ? { ...entry, ...patch } : entry)) })
-  const add = () => onChange({ entries: [...data.entries, { id: crypto.randomUUID(), timestamp: new Date().toISOString(), text: '', level: 'note' }] })
-
-  return (
-    <div className="flex h-full flex-col gap-2">
-      <div data-island="summary" className="grid grid-cols-[90px_1fr] gap-2"><Stat label="Entries" value={data.entries.length} /><Stat label="Latest" value={latest?.text || '—'} accent="text-slate-300" /></div>
-      <div className="min-h-0 flex-1 space-y-1 overflow-y-auto">
-        {[...data.entries].sort((a, b) => b.timestamp.localeCompare(a.timestamp)).map((entry) => {
-          const levelIndex = LOG_LEVELS.indexOf(entry.level)
-          const color = LOG_COLORS[entry.level]
-          return (
-            <div key={entry.id} data-island={entry.id} className={`${panelClass} group/log flex items-start gap-2 px-2.5 py-2`}>
-              <button type="button" title="Change level" onClick={() => setEntry(entry.id, { level: LOG_LEVELS[(levelIndex + 1) % LOG_LEVELS.length]! })} className="mt-1 h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: color, boxShadow: `0 0 8px ${color}55` }} />
-              <div className="min-w-0 flex-1"><textarea value={entry.text} placeholder="Log what happened…" rows={1} onChange={(event) => setEntry(entry.id, { text: event.target.value })} className={`${inputClass} resize-none leading-relaxed`} /><p className="mt-0.5  text-[8px] text-neutral-700">{new Date(entry.timestamp).toLocaleString()} · {entry.level}</p></div>
-              <SmallAction label="Remove entry" danger onClick={() => onChange({ entries: data.entries.filter((item) => item.id !== entry.id) })}><X size={9} /></SmallAction>
-            </div>
-          )
-        })}
-      </div>
-      <AddButton label="Append entry" onClick={add} />
     </div>
   )
 }
@@ -219,75 +179,6 @@ export function PieChartWidget({
       </div>
       <div data-island="summary" className="gp-pie-summary grid grid-cols-3 gap-2"><Stat label="Total" value={Math.round(total * 100) / 100} /><Stat label="Largest share" value={`${Math.round(largestShare * 10) / 10}%`} accent="text-pink-300" /><Stat label="Largest" value={largest?.label || '—'} accent="text-pink-300" /></div>
       <AddButton label="Add segment" onClick={add} />
-    </div>
-  )
-}
-
-const LINEAR_UNITS: Record<Exclude<UnitConverterCategory, 'temperature'>, Record<string, number>> = {
-  length: { mm: 0.001, cm: 0.01, m: 1, km: 1000, in: 0.0254, ft: 0.3048, yd: 0.9144, mi: 1609.344 },
-  mass: { mg: 0.000001, g: 0.001, kg: 1, oz: 0.0283495, lb: 0.453592, t: 1000 },
-  time: { ms: 0.001, s: 1, min: 60, h: 3600, day: 86400, week: 604800 },
-}
-const TEMP_UNITS = ['C', 'F', 'K'] as const
-const DEFAULT_UNITS: Record<UnitConverterCategory, [string, string]> = {
-  length: ['m', 'ft'], mass: ['kg', 'lb'], temperature: ['C', 'F'], time: ['min', 'h'],
-}
-
-function unitsFor(category: UnitConverterCategory): string[] {
-  return category === 'temperature' ? [...TEMP_UNITS] : Object.keys(LINEAR_UNITS[category])
-}
-
-function convertUnit(data: UnitConverterData): number {
-  const value = finite(data.value)
-  if (data.category !== 'temperature') {
-    const units = LINEAR_UNITS[data.category]
-    const from = units[data.from] ?? 1
-    const to = units[data.to] ?? 1
-    return (value * from) / to
-  }
-  let celsius = value
-  if (data.from === 'F') celsius = (value - 32) * (5 / 9)
-  else if (data.from === 'K') celsius = value - 273.15
-  if (data.to === 'F') return celsius * (9 / 5) + 32
-  if (data.to === 'K') return celsius + 273.15
-  return celsius
-}
-
-export function UnitConverterWidget({
-  data,
-  onChange,
-}: {
-  data: UnitConverterData
-  onChange: (data: UnitConverterData) => void
-}) {
-  const [copied, showCopied] = useTransientValue(false)
-  const output = convertUnit(data)
-  const precision = clamp(Math.round(data.precision), 0, 8)
-  const formatted = Number.isFinite(output) ? Number(output.toFixed(precision)).toString() : '0'
-  const units = unitsFor(data.category)
-  const setCategory = (category: UnitConverterCategory) => {
-    const [from, to] = DEFAULT_UNITS[category]
-    onChange({ ...data, category, from, to })
-  }
-  const copy = () => {
-    void navigator.clipboard?.writeText(formatted)
-    showCopied(true, 900)
-  }
-
-  return (
-    <div className="flex h-full flex-col gap-3">
-      <select aria-label="Unit category" value={data.category} onChange={(event) => setCategory(event.target.value as UnitConverterCategory)} className="mx-auto rounded-full border gp-hairline bg-neutral-900 px-3 py-1  text-[9px] uppercase tracking-wider text-emerald-300 outline-none">
-        <option value="length">Length</option><option value="mass">Mass</option><option value="temperature">Temperature</option><option value="time">Time</option>
-      </select>
-      <div data-island="conversion" className="gp-unit-conversion grid grid-cols-[1fr_34px_1fr] items-stretch gap-2">
-        <div className={`${panelClass} px-3 py-2`}><span className=" text-[8px] uppercase text-neutral-700">Input</span><input aria-label="Value to convert" type="number" value={data.value} onChange={(event) => onChange({ ...data, value: Number(event.target.value) })} className={`${numericClass} mt-1 w-full text-xl font-bold`} /><select aria-label="Source unit" value={data.from} onChange={(event) => onChange({ ...data, from: event.target.value })} className="mt-1 w-full bg-transparent  text-[9px] text-neutral-500 outline-none">{units.map((unit) => <option key={unit}>{unit}</option>)}</select></div>
-        <button type="button" aria-label="Swap units" onClick={() => onChange({ ...data, from: data.to, to: data.from })} className="flex items-center justify-center text-neutral-600 transition-transform hover:rotate-180 hover:text-emerald-300"><ArrowLeftRight size={14} /></button>
-        <div className="rounded-xl border border-emerald-400/20 bg-emerald-400/[0.055] px-3 py-2"><span className=" text-[8px] uppercase text-emerald-500/50">Output</span><div className="mt-1 flex items-center"><strong className="min-w-0 flex-1 truncate  text-xl text-emerald-200">{formatted}</strong><button type="button" aria-label="Copy output" onClick={copy} className="text-emerald-500/50 hover:text-emerald-300">{copied ? <Check size={11} /> : <Copy size={11} />}</button></div><select aria-label="Target unit" value={data.to} onChange={(event) => onChange({ ...data, to: event.target.value })} className="mt-1 w-full bg-transparent  text-[9px] text-emerald-500/60 outline-none">{units.map((unit) => <option key={unit}>{unit}</option>)}</select></div>
-      </div>
-      <div data-island="precision" className="gp-unit-precision mt-auto flex items-center justify-between gap-2 border-t gp-hairline pt-2">
-        <span className=" text-[9px] text-neutral-700">1 {data.from} = {Number(convertUnit({ ...data, value: 1 }).toFixed(6))} {data.to}</span>
-        <label className=" text-[8px] uppercase text-neutral-700">Precision <input type="number" min={0} max={8} value={data.precision} onChange={(event) => onChange({ ...data, precision: clamp(Number(event.target.value), 0, 8) })} className={`${numericClass} w-7 text-right text-[9px] text-neutral-500`} /></label>
-      </div>
     </div>
   )
 }

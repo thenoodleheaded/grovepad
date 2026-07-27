@@ -1,0 +1,960 @@
+/*
+ * Purpose-built Habit Tracker skins.
+ *
+ * All seven experiences edit the same seven booleans. Paint stays on the
+ * card's one backplate: readouts are wells, editable labels opt out of the
+ * automatic field island, and day controls spend accent only when complete.
+ */
+
+.gp-habit {
+  --gp-habit-ink: var(--gp-widget-ink, #f5f5f5);
+  --gp-habit-quiet: color-mix(in oklab, var(--gp-habit-ink), transparent 56%);
+  --gp-habit-faint: color-mix(in oklab, var(--gp-habit-ink), transparent 74%);
+  --gp-habit-rule: color-mix(in oklab, var(--gp-habit-ink), transparent 90%);
+  --gp-habit-soft: color-mix(in oklab, var(--gp-habit-ink), transparent 94%);
+  container-type: inline-size;
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.62rem;
+  color: var(--gp-habit-ink);
+}
+
+/* The generated catalogue backgrounds would compete with these complete
+   purpose-built compositions. */
+.gp-widget-ui[data-widget-type='habit'][data-skin-presentation] {
+  background-image: none;
+  padding-inline-start: 0;
+}
+
+.gp-widget-ui[data-widget-type='habit'][data-skin-presentation]::before {
+  content: none;
+}
+
+.gp-widget-ui[data-widget-type='habit'][data-skin-presentation] :where(strong, output, em) {
+  color: inherit;
+}
+
+/* Grovepad keeps cards charcoal on the light canvas. Lift the secondary ink
+   slightly so the softer card surface never washes out labels. */
+[data-theme='light'] .gp-habit {
+  --gp-habit-quiet: color-mix(in oklab, var(--gp-habit-ink), transparent 38%);
+  --gp-habit-faint: color-mix(in oklab, var(--gp-habit-ink), transparent 52%);
+  --gp-habit-rule: color-mix(in oklab, var(--gp-habit-ink), transparent 79%);
+  --gp-habit-soft: color-mix(in oklab, var(--gp-habit-ink), transparent 88%);
+}
+
+/* ------------------------------------------------------------------- head */
+
+.gp-habit-head {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.gp-habit-glyph {
+  display: grid;
+  width: 24px;
+  height: 24px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: var(--gp-r2);
+  color: color-mix(in oklab, var(--gp-widget-accent), white 12%);
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 87%);
+  box-shadow: inset 0 1px 0 color-mix(in oklab, white, transparent 88%);
+}
+
+.gp-habit-name {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.gp-habit-name input {
+  width: 100%;
+  min-width: 0;
+  min-height: 24px;
+  border: 0;
+  padding: 0;
+  color: color-mix(in oklab, var(--gp-habit-ink), transparent 12%);
+  background: transparent;
+  font-size: 13px;
+  font-weight: 590;
+  letter-spacing: -0.012em;
+  outline: 0;
+}
+
+.gp-habit-name input::placeholder {
+  color: var(--gp-habit-faint);
+  font-weight: 480;
+}
+
+.gp-habit-name:focus-within {
+  box-shadow: inset 0 -1px 0 color-mix(in oklab, var(--gp-widget-accent), transparent 50%);
+}
+
+.gp-habit-detail {
+  flex: 0 0 auto;
+  color: var(--gp-habit-faint);
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.gp-habit-caption {
+  display: flex;
+  min-height: 14px;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  margin: 0;
+  color: var(--gp-habit-quiet);
+  font-size: 9.5px;
+  font-weight: 560;
+  letter-spacing: 0.012em;
+  text-align: center;
+  text-wrap: balance;
+}
+
+/* -------------------------------------------------------------- day atoms */
+
+.gp-widget-ui button.gp-habit-day {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  min-height: 36px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  border: 0;
+  padding: 0;
+  color: var(--gp-habit-faint);
+  background: transparent;
+  box-shadow: none;
+  transition:
+    color var(--gp-duration-snap) var(--gp-ease-snap),
+    transform 180ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.gp-widget-ui button.gp-habit-day:hover {
+  color: var(--gp-habit-quiet);
+  transform: translateY(-1px);
+}
+
+.gp-widget-ui button.gp-habit-day:active {
+  transform: translateY(0) scale(0.94);
+}
+
+.gp-widget-ui button.gp-habit-day:focus-visible {
+  outline: 1px solid color-mix(in oklab, var(--gp-widget-accent), transparent 28%);
+  outline-offset: 2px;
+}
+
+.gp-habit-day-mark {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--gp-habit-ink), transparent 93%);
+  box-shadow:
+    inset 0 1.5px 3px rgb(0 0 0 / 0.28),
+    0 1px 0 color-mix(in oklab, white, transparent 95%);
+  transition:
+    background var(--gp-duration-snap) var(--gp-ease-snap),
+    box-shadow var(--gp-duration-snap) var(--gp-ease-snap),
+    transform 220ms cubic-bezier(0.34, 1.45, 0.5, 1);
+}
+
+.gp-habit-day[data-done] {
+  color: color-mix(in oklab, var(--gp-widget-accent), white 12%);
+}
+
+.gp-habit-day[data-done] .gp-habit-day-mark {
+  color: color-mix(in oklab, var(--gp-widget-accent), black 42%);
+  background: var(--gp-widget-accent);
+  box-shadow:
+    inset 0 1px 0 color-mix(in oklab, white, transparent 72%),
+    0 0 14px color-mix(in oklab, var(--gp-widget-accent), transparent 58%);
+  transform: scale(1.04);
+}
+
+.gp-habit-day-label {
+  font-size: 8.5px;
+  font-weight: 680;
+  letter-spacing: 0.04em;
+}
+
+/* --------------------------------------------------------------- week grid */
+
+.gp-habit-week-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  align-items: end;
+  gap: 0.25rem;
+}
+
+.gp-habit-progress-line {
+  position: relative;
+  height: 3px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--gp-habit-soft);
+  box-shadow: inset 0 1px 1px rgb(0 0 0 / 0.22);
+}
+
+.gp-habit-progress-line > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg,
+    color-mix(in oklab, var(--gp-widget-accent), transparent 24%),
+    var(--gp-widget-accent));
+  box-shadow: 0 0 9px color-mix(in oklab, var(--gp-widget-accent), transparent 52%);
+  transition: width 320ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ------------------------------------------------------------ month heatmap */
+
+.gp-habit--month {
+  gap: 0.5rem;
+}
+
+.gp-habit-heatmap {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: 20px 1fr;
+  gap: 0.4rem;
+  border-radius: var(--gp-r1);
+  padding: 0.55rem 0.65rem;
+  background: color-mix(in oklab, var(--gp-habit-ink), transparent 95%);
+  box-shadow:
+    inset 0 1px 0 color-mix(in oklab, white, transparent 94%),
+    0 7px 18px rgb(0 0 0 / 0.1);
+}
+
+.gp-habit-heat-labels {
+  display: grid;
+  grid-template-rows: repeat(7, 1fr);
+  align-items: center;
+  color: var(--gp-habit-faint);
+  font-size: 7.5px;
+  font-weight: 700;
+}
+
+.gp-habit-heat-cells {
+  display: grid;
+  grid-auto-flow: column;
+  grid-template-columns: repeat(4, minmax(12px, 18px));
+  grid-template-rows: repeat(7, 16px);
+  justify-content: space-between;
+  gap: 4px;
+}
+
+.gp-habit-heat-cell {
+  width: 100%;
+  height: 100%;
+  min-width: 12px;
+  border: 0;
+  border-radius: 4px !important;
+  padding: 0;
+  background: color-mix(in oklab, var(--gp-habit-ink), transparent 94%);
+  box-shadow: inset 0 1px 1px rgb(0 0 0 / 0.18);
+}
+
+.gp-habit-heat-cell[data-past] {
+  opacity: 0.44;
+}
+
+.gp-widget-ui button.gp-habit-heat-cell[data-current] {
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 89%);
+  transition:
+    transform 170ms cubic-bezier(0.16, 1, 0.3, 1),
+    background var(--gp-duration-snap) var(--gp-ease-snap);
+}
+
+.gp-widget-ui button.gp-habit-heat-cell[data-current]:hover {
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 72%);
+  transform: scale(1.08);
+}
+
+.gp-widget-ui button.gp-habit-heat-cell[data-done] {
+  background: var(--gp-widget-accent);
+  box-shadow:
+    inset 0 1px 0 color-mix(in oklab, white, transparent 78%),
+    0 0 8px color-mix(in oklab, var(--gp-widget-accent), transparent 62%);
+}
+
+.gp-widget-ui button.gp-habit-heat-cell:focus-visible {
+  outline: 1px solid var(--gp-widget-accent);
+  outline-offset: 2px;
+}
+
+.gp-habit-month-foot {
+  display: flex;
+  min-height: 22px;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--gp-habit-faint);
+  font-size: 8px;
+  font-weight: 600;
+}
+
+.gp-habit-month-foot > span {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.gp-habit-month-foot i {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 2px;
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 90%);
+}
+
+.gp-habit-month-foot i[data-level='soft'] { background: color-mix(in oklab, var(--gp-widget-accent), transparent 68%); }
+.gp-habit-month-foot i[data-level='bright'] { margin-inline-end: 2px; background: var(--gp-widget-accent); }
+
+.gp-habit-month-foot strong {
+  color: color-mix(in oklab, var(--gp-widget-accent), white 8%);
+  font-size: 17px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.04em;
+}
+
+.gp-habit-month-foot small {
+  color: var(--gp-habit-faint);
+  font-size: 9px;
+}
+
+/* ------------------------------------------------------------------ chain */
+
+.gp-habit-chain {
+  position: relative;
+  display: grid;
+  margin: 0;
+  padding: 0;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  list-style: none;
+}
+
+.gp-habit-chain::before {
+  position: absolute;
+  inset-inline: 6%;
+  top: 17px;
+  height: 2px;
+  content: '';
+  background: color-mix(in oklab, var(--gp-habit-ink), transparent 88%);
+  box-shadow: inset 0 1px 1px rgb(0 0 0 / 0.22);
+}
+
+.gp-habit-chain li {
+  position: relative;
+  min-width: 0;
+}
+
+.gp-habit-chain li[data-done]::after {
+  position: absolute;
+  top: 16px;
+  left: calc(50% + 14px);
+  width: calc(100% - 28px);
+  height: 2px;
+  content: '';
+  background: var(--gp-widget-accent);
+  box-shadow: 0 0 8px color-mix(in oklab, var(--gp-widget-accent), transparent 55%);
+}
+
+.gp-habit-chain li:last-child::after {
+  content: none;
+}
+
+.gp-habit-day[data-shape='link'] .gp-habit-day-mark {
+  width: 31px;
+  height: 31px;
+  border: 2px solid color-mix(in oklab, var(--gp-habit-ink), transparent 84%);
+  background: color-mix(in oklab, var(--gp-surface-panel, #111), transparent 6%);
+}
+
+.gp-habit-day[data-shape='link'][data-done] .gp-habit-day-mark {
+  border-color: color-mix(in oklab, var(--gp-widget-accent), white 8%);
+  background: color-mix(in oklab, var(--gp-widget-accent), black 12%);
+}
+
+.gp-habit-chain-message {
+  display: flex;
+  min-height: 25px;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  margin: 0;
+  border-radius: var(--gp-r2);
+  color: var(--gp-habit-quiet);
+  background: var(--gp-habit-soft);
+  font-size: 9.5px;
+  font-weight: 600;
+}
+
+.gp-habit-chain-message[data-live] {
+  color: color-mix(in oklab, var(--gp-widget-accent), white 10%);
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 91%);
+}
+
+/* --------------------------------------------------------------- scorecard */
+
+.gp-habit--score {
+  gap: 0.5rem;
+}
+
+.gp-habit-score-main {
+  display: grid;
+  grid-template-columns: minmax(86px, 0.8fr) minmax(120px, 1.2fr);
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.gp-habit-score-ring {
+  position: relative;
+  display: grid;
+  width: 86px;
+  height: 86px;
+  place-self: center;
+  place-items: center;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle, rgb(10 12 11 / 0.96) 55%, transparent 57%),
+    conic-gradient(var(--gp-widget-accent) var(--gp-habit-score), var(--gp-habit-rule) 0);
+  box-shadow:
+    inset 0 0 18px rgb(0 0 0 / 0.16),
+    0 0 18px color-mix(in oklab, var(--gp-widget-accent), transparent 88%);
+}
+
+.gp-habit-score-ring strong {
+  align-self: end;
+  color: color-mix(in oklab, var(--gp-widget-accent), white 10%);
+  font-size: 25px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.055em;
+  line-height: 1;
+}
+
+.gp-habit-score-ring strong small {
+  font-size: 11px;
+  letter-spacing: 0;
+}
+
+.gp-habit-score-ring > span {
+  align-self: start;
+  color: var(--gp-habit-faint);
+  font-size: 7px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.gp-habit-stats {
+  display: flex;
+  margin: 0;
+  flex-direction: column;
+}
+
+.gp-habit-stats > div {
+  display: flex;
+  min-height: 28px;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--gp-habit-rule);
+}
+
+.gp-habit-stats > div:last-child {
+  border-bottom: 0;
+}
+
+.gp-habit-stats dt {
+  color: var(--gp-habit-faint);
+  font-size: 8px;
+  font-weight: 680;
+  letter-spacing: 0.075em;
+  text-transform: uppercase;
+}
+
+.gp-habit-stats dd {
+  margin: 0;
+  color: color-mix(in oklab, var(--gp-habit-ink), transparent 14%);
+  font-size: 15px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+
+.gp-habit-stats small {
+  color: var(--gp-habit-faint);
+  font-size: 8px;
+  font-weight: 550;
+}
+
+.gp-habit-micro-days {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 3px;
+}
+
+.gp-widget-ui button.gp-habit-day[data-shape='micro'] {
+  min-height: 25px;
+  flex-direction: row;
+  gap: 3px;
+  border-radius: 6px;
+  background: var(--gp-habit-soft);
+}
+
+.gp-habit-day[data-shape='micro'] .gp-habit-day-mark {
+  width: 13px;
+  height: 13px;
+  box-shadow: none;
+}
+
+.gp-habit-day[data-shape='micro'] .gp-habit-day-label {
+  font-size: 7.5px;
+}
+
+/* ----------------------------------------------------------- shared picker */
+
+.gp-habit-day-picker {
+  display: grid;
+  min-height: 27px;
+  padding: 2px;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  border-radius: var(--gp-r2);
+  background: color-mix(in oklab, var(--gp-habit-ink), transparent 94%);
+  box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.2);
+}
+
+.gp-widget-ui .gp-habit-day-picker button {
+  position: relative;
+  border: 0;
+  border-radius: 6px !important;
+  padding: 0;
+  color: var(--gp-habit-faint);
+  background: transparent;
+  font-size: 8px;
+  font-weight: 700;
+  box-shadow: none;
+}
+
+.gp-widget-ui .gp-habit-day-picker button[aria-selected='true'] {
+  color: color-mix(in oklab, var(--gp-widget-accent), white 12%);
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 85%);
+  box-shadow: inset 0 1px 0 color-mix(in oklab, white, transparent 90%);
+}
+
+.gp-habit-day-picker button > span {
+  position: absolute;
+  right: 4px;
+  bottom: 3px;
+  width: 3px;
+  height: 3px;
+  border-radius: 999px;
+  background: var(--gp-widget-accent);
+}
+
+.gp-habit-day-picker button:focus-visible {
+  outline: 1px solid var(--gp-widget-accent);
+  outline-offset: -1px;
+}
+
+/* ----------------------------------------------------------- routine stack */
+
+.gp-habit--routine {
+  gap: 0.43rem;
+}
+
+.gp-habit-routine-list {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.gp-habit-routine-row {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  min-height: 32px;
+  align-items: center;
+  gap: 0.48rem;
+  border-bottom: 1px solid var(--gp-habit-rule);
+}
+
+.gp-habit-routine-row:last-child {
+  border-bottom: 0;
+}
+
+.gp-widget-ui button.gp-habit-routine-check {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  width: 21px;
+  height: 21px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 0;
+  border-radius: 7px !important;
+  color: var(--gp-habit-faint);
+  background: color-mix(in oklab, var(--gp-habit-ink), transparent 92%);
+  box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.25);
+}
+
+.gp-habit-routine-check > span {
+  font-size: 8px;
+  font-weight: 700;
+}
+
+.gp-habit-routine-row[data-done] .gp-habit-routine-check {
+  color: color-mix(in oklab, var(--gp-widget-accent), black 38%);
+  background: var(--gp-widget-accent);
+  box-shadow: 0 0 10px color-mix(in oklab, var(--gp-widget-accent), transparent 64%);
+}
+
+.gp-habit-routine-name {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.gp-habit-routine-name input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  padding: 0;
+  color: color-mix(in oklab, var(--gp-habit-ink), transparent 18%);
+  background: transparent;
+  font-size: 11px;
+  font-weight: 540;
+  outline: 0;
+}
+
+.gp-habit-routine-row[data-done] .gp-habit-routine-name input {
+  color: var(--gp-habit-quiet);
+  text-decoration: line-through;
+  text-decoration-color: color-mix(in oklab, var(--gp-widget-accent), transparent 40%);
+}
+
+.gp-habit-routine-thread {
+  position: absolute;
+  bottom: -7px;
+  left: 10px;
+  z-index: 0;
+  width: 1px;
+  height: 13px;
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 70%);
+}
+
+/* ---------------------------------------------------------- minimum target */
+
+.gp-habit--target {
+  gap: 0.43rem;
+}
+
+.gp-habit-target-main {
+  display: grid;
+  grid-template-columns: 34px 1fr 34px;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.gp-widget-ui .gp-habit-target-main > button {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border: 0;
+  border-radius: 999px !important;
+  color: var(--gp-habit-quiet);
+  background: var(--gp-habit-soft);
+  box-shadow: inset 0 1px 0 color-mix(in oklab, white, transparent 94%);
+  transition:
+    color var(--gp-duration-snap) var(--gp-ease-snap),
+    transform 160ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.gp-widget-ui .gp-habit-target-main > button:hover {
+  color: var(--gp-widget-accent);
+  transform: scale(1.06);
+}
+
+.gp-habit-target-readout {
+  display: grid;
+  min-height: 57px;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: 1fr 1fr;
+  align-items: center;
+  padding: 0.4rem 0.65rem;
+}
+
+.gp-habit-target-readout > span {
+  color: var(--gp-habit-faint);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.gp-habit-target-readout > strong {
+  grid-row: 1 / 3;
+  grid-column: 2;
+  color: color-mix(in oklab, var(--gp-widget-accent), white 10%);
+  font-size: 28px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.05em;
+}
+
+.gp-habit-target-readout > em {
+  color: var(--gp-habit-quiet);
+  font-size: 9px;
+  font-style: normal;
+  font-weight: 550;
+}
+
+.gp-habit-target-track {
+  position: relative;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--gp-habit-soft);
+  box-shadow: inset 0 1px 1px rgb(0 0 0 / 0.25);
+}
+
+.gp-habit-target-track > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg,
+    color-mix(in oklab, var(--gp-widget-accent), transparent 35%),
+    var(--gp-widget-accent));
+  transition: width 260ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.gp-habit-target-track > i {
+  position: absolute;
+  top: -2px;
+  width: 1px;
+  height: 9px;
+  background: color-mix(in oklab, var(--gp-habit-ink), transparent 36%);
+}
+
+.gp-habit-target-settings {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.7rem;
+}
+
+.gp-habit-target-settings label {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: 1fr 48px;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.gp-habit-target-settings label > span {
+  color: var(--gp-habit-faint);
+  font-size: 8px;
+  font-weight: 680;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.gp-habit-target-settings input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  border-radius: 6px;
+  padding: 3px 5px;
+  color: color-mix(in oklab, var(--gp-habit-ink), transparent 14%);
+  background: var(--gp-habit-soft);
+  font-size: 10px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  outline: 0;
+}
+
+/* -------------------------------------------------------- flexible frequency */
+
+.gp-habit-frequency-hero {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.65rem 0.75rem;
+}
+
+.gp-habit-frequency-hero > div:first-child {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: baseline;
+  gap: 1px 0.4rem;
+}
+
+.gp-habit-frequency-hero > div:first-child > span {
+  grid-column: 1;
+  color: var(--gp-habit-faint);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.gp-habit-frequency-hero strong {
+  grid-row: 1 / 3;
+  grid-column: 2;
+  color: color-mix(in oklab, var(--gp-widget-accent), white 10%);
+  font-size: 28px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.05em;
+}
+
+.gp-habit-frequency-hero strong small {
+  color: var(--gp-habit-faint);
+  font-size: 12px;
+}
+
+.gp-habit-frequency-hero em {
+  color: var(--gp-habit-quiet);
+  font-size: 9px;
+  font-style: normal;
+  font-weight: 550;
+}
+
+.gp-habit-frequency-target {
+  display: grid;
+  grid-template-columns: 24px auto 24px;
+  align-items: center;
+  border-radius: var(--gp-r2);
+  padding: 2px;
+  background: color-mix(in oklab, var(--gp-habit-ink), transparent 92%);
+}
+
+.gp-widget-ui .gp-habit-frequency-target button {
+  display: grid;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  border: 0;
+  border-radius: 6px !important;
+  padding: 0;
+  color: var(--gp-habit-quiet);
+  background: transparent;
+  box-shadow: none;
+}
+
+.gp-widget-ui .gp-habit-frequency-target button:hover:not(:disabled) {
+  color: var(--gp-widget-accent);
+  background: color-mix(in oklab, var(--gp-habit-ink), transparent 92%);
+}
+
+.gp-habit-frequency-target button:disabled {
+  opacity: 0.3;
+}
+
+.gp-habit-frequency-target > span {
+  padding-inline: 0.25rem;
+  color: var(--gp-habit-quiet);
+  font-size: 8px;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.gp-habit-frequency-target b {
+  color: var(--gp-habit-ink);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.gp-habit-frequency-days {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.gp-widget-ui button.gp-habit-day[data-shape='tile'] {
+  min-height: 38px;
+  border-radius: var(--gp-r2);
+  background: var(--gp-habit-soft);
+}
+
+.gp-habit-day[data-shape='tile'] .gp-habit-day-mark {
+  width: 19px;
+  height: 19px;
+  box-shadow: none;
+}
+
+.gp-habit-day[data-shape='tile'][data-done] {
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 90%);
+}
+
+.gp-habit--frequency[data-reached] .gp-habit-frequency-hero {
+  box-shadow:
+    inset 0 1.5px 3px rgb(0 0 0 / 0.42),
+    inset 0 -1px 0 color-mix(in oklab, var(--gp-widget-accent), transparent 82%),
+    0 0 16px color-mix(in oklab, var(--gp-widget-accent), transparent 91%);
+}
+
+/* --------------------------------------------------------------- responsive */
+
+@container (max-width: 310px) {
+  .gp-habit-detail {
+    max-width: 64px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .gp-habit-score-main {
+    grid-template-columns: 74px 1fr;
+    gap: 0.5rem;
+  }
+
+  .gp-habit-score-ring {
+    width: 72px;
+    height: 72px;
+  }
+
+  .gp-habit-score-ring strong {
+    font-size: 21px;
+  }
+
+  .gp-habit-stats > div {
+    min-height: 23px;
+  }
+
+  .gp-habit-frequency-hero {
+    grid-template-columns: 1fr;
+    gap: 0.4rem;
+  }
+
+  .gp-habit-frequency-target {
+    justify-self: stretch;
+    grid-template-columns: 24px 1fr 24px;
+  }
+
+  .gp-habit-frequency-target > span {
+    text-align: center;
+  }
+
+  .gp-habit-target-settings {
+    grid-template-columns: 1fr;
+    gap: 0.25rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gp-habit *,
+  .gp-habit *::before,
+  .gp-habit *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}

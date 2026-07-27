@@ -1,0 +1,1063 @@
+/*
+ * Purpose-built World Clock skins.
+ *
+ * Six arrangements read one stored list of time zones. Nothing here persists:
+ * every reading is derived at paint time, so a skin can restate the same
+ * cities as tiles, dials, bands, a planner, a travel pairing, or a daylight
+ * chart without touching the saved data.
+ */
+
+.gp-widget-ui[data-widget-type='world_clock'] {
+  container-type: inline-size;
+}
+
+/* The generic presentation shell paints a grid wash and a compact type scale
+   that fight these purpose-built layouts. Skins below own their surface. */
+.gp-widget-ui[data-widget-type='world_clock'][data-skin-presentation] {
+  background-image: none;
+  font-size: inherit;
+}
+
+.gp-wclock {
+  --gp-wclock-ink: var(--gp-widget-ink, #f8fafc);
+  --gp-wclock-soft: color-mix(in oklab, var(--gp-wclock-ink), transparent 58%);
+  --gp-wclock-faint: color-mix(in oklab, var(--gp-wclock-ink), transparent 76%);
+  --gp-wclock-rule: color-mix(in oklab, var(--gp-wclock-ink), transparent 88%);
+  --gp-wclock-wash: color-mix(in oklab, var(--gp-wclock-ink), transparent 95%);
+  --gp-wclock-glow: color-mix(in oklab, var(--gp-widget-accent), transparent 78%);
+  position: relative;
+  display: flex;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  flex-direction: column;
+  gap: 0.5rem;
+  color: var(--gp-wclock-ink);
+}
+
+.gp-wclock button,
+.gp-wclock input,
+.gp-wclock select {
+  font: inherit;
+  color: inherit;
+}
+
+.gp-wclock button:focus-visible,
+.gp-wclock input:focus-visible,
+.gp-wclock select:focus-visible {
+  outline: 1px solid color-mix(in oklab, var(--gp-widget-accent), transparent 20%);
+  outline-offset: 2px;
+}
+
+.gp-wclock-tabular {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+/* ── Shared chrome ───────────────────────────────────────────────────────── */
+
+.gp-wclock-header {
+  display: grid;
+  flex: 0 0 auto;
+  grid-template-columns: 26px minmax(0, 1fr) 24px;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.gp-wclock-badge {
+  display: grid;
+  width: 26px;
+  height: 26px;
+  place-items: center;
+  border-radius: 0.6rem;
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 84%);
+  color: color-mix(in oklab, var(--gp-widget-accent), var(--gp-wclock-ink) 22%);
+}
+
+.gp-wclock-header > div {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.06rem;
+}
+
+.gp-wclock-header strong {
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+}
+
+.gp-wclock-header small {
+  overflow: hidden;
+  color: var(--gp-wclock-soft);
+  font-size: 0.62rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gp-wclock-header > button {
+  display: grid;
+  width: 24px;
+  height: 24px;
+  border: 1px solid var(--gp-wclock-rule);
+  border-radius: 0.55rem;
+  background: transparent;
+  cursor: pointer;
+  place-items: center;
+  transition: background 140ms ease, border-color 140ms ease;
+}
+
+.gp-wclock-header > button:hover {
+  border-color: color-mix(in oklab, var(--gp-widget-accent), transparent 45%);
+  background: var(--gp-wclock-glow);
+}
+
+.gp-wclock-body {
+  display: flex;
+  min-height: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+}
+
+.gp-wclock-body > * {
+  min-height: 0;
+  flex: 1 1 auto;
+}
+
+.gp-wclock-note {
+  flex: 0 0 auto;
+  margin: 0.1rem 0 0;
+  color: var(--gp-wclock-faint);
+  font-size: 0.6rem;
+  line-height: 1.35;
+  text-wrap: pretty;
+}
+
+.gp-wclock-note strong {
+  color: var(--gp-wclock-soft);
+  font-weight: 600;
+}
+
+/* A remove control only appears once the row it belongs to is engaged, so a
+   wall of cities stays calm until the pointer or keyboard arrives. */
+.gp-wclock-remove {
+  position: absolute;
+  z-index: 2;
+  top: 0.24rem;
+  right: 0.24rem;
+  display: grid;
+  width: 17px;
+  height: 17px;
+  border: 0;
+  border-radius: 0.4rem;
+  background: color-mix(in oklab, var(--gp-wclock-ink), transparent 90%);
+  color: var(--gp-wclock-soft);
+  cursor: pointer;
+  opacity: 0;
+  place-items: center;
+  transition: opacity 130ms ease, background 130ms ease, color 130ms ease;
+}
+
+.gp-wclock :is(article, .gp-wclock-band-row):hover .gp-wclock-remove,
+.gp-wclock :is(article, .gp-wclock-band-row):focus-within .gp-wclock-remove,
+.gp-wclock-remove:focus-visible {
+  opacity: 1;
+}
+
+.gp-wclock-remove:hover,
+.gp-wclock-remove:focus-visible {
+  background: color-mix(in oklab, #f87171, transparent 78%);
+  color: color-mix(in oklab, #f87171, var(--gp-wclock-ink) 30%);
+}
+
+.gp-wclock-empty {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  min-height: 120px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  border: 1px dashed var(--gp-wclock-rule);
+  border-radius: 0.85rem;
+  background: transparent;
+  color: var(--gp-wclock-soft);
+  cursor: pointer;
+  gap: 0.28rem;
+  text-align: center;
+  transition: border-color 140ms ease, background 140ms ease;
+}
+
+.gp-wclock-empty:hover {
+  border-color: color-mix(in oklab, var(--gp-widget-accent), transparent 50%);
+  background: var(--gp-wclock-glow);
+}
+
+.gp-wclock-empty strong {
+  color: var(--gp-wclock-ink);
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.gp-wclock-empty span {
+  font-size: 0.62rem;
+}
+
+/* ── Analog face, shared by Analog Wall and Travel Clock ─────────────────── */
+
+.gp-wclock-face {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+}
+
+.gp-wclock-face[data-size='md'] {
+  --gp-wclock-size: 46px;
+}
+
+.gp-wclock-face[data-size='lg'] {
+  --gp-wclock-size: 62px;
+}
+
+.gp-wclock-dial {
+  position: relative;
+  display: block;
+  width: var(--gp-wclock-size);
+  height: var(--gp-wclock-size);
+  border: 1px solid color-mix(in oklab, var(--gp-widget-accent), transparent 62%);
+  border-radius: 50%;
+  background:
+    radial-gradient(
+      circle at 50% 34%,
+      color-mix(in oklab, var(--gp-widget-accent), transparent 88%),
+      transparent 68%
+    ),
+    color-mix(in oklab, var(--gp-wclock-ink), transparent 94%);
+  box-shadow: inset 0 0 0 3px color-mix(in oklab, var(--gp-wclock-ink), transparent 96%);
+}
+
+.gp-wclock-face[data-night] .gp-wclock-dial {
+  border-color: color-mix(in oklab, var(--gp-wclock-ink), transparent 82%);
+  background:
+    radial-gradient(
+      circle at 50% 34%,
+      color-mix(in oklab, #6366f1, transparent 86%),
+      transparent 70%
+    ),
+    color-mix(in oklab, var(--gp-wclock-ink), transparent 97%);
+}
+
+/* Ticks and hands are one rotated bar each, anchored at the dial centre. The
+   transform origin sits at the bottom of the element so a rotation about the
+   centre needs no compensating translate. */
+.gp-wclock-tick,
+.gp-wclock-hand {
+  position: absolute;
+  bottom: 50%;
+  left: 50%;
+  transform-origin: 50% 100%;
+  transform: translateX(-50%) rotate(var(--gp-wclock-angle, 0deg));
+  border-radius: 999px;
+}
+
+.gp-wclock-tick {
+  width: 1px;
+  height: calc(var(--gp-wclock-size) / 2 - 2px);
+  background: linear-gradient(
+    to top,
+    transparent calc(100% - 4px),
+    color-mix(in oklab, var(--gp-wclock-ink), transparent 72%) calc(100% - 4px)
+  );
+}
+
+.gp-wclock-hand-hour {
+  width: 2.5px;
+  height: calc(var(--gp-wclock-size) * 0.27);
+  background: var(--gp-wclock-ink);
+  transition: transform 420ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.gp-wclock-hand-minute {
+  width: 1.5px;
+  height: calc(var(--gp-wclock-size) * 0.39);
+  background: color-mix(in oklab, var(--gp-widget-accent), var(--gp-wclock-ink) 25%);
+  transition: transform 420ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.gp-wclock-cap {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--gp-wclock-ink);
+  transform: translate(-50%, -50%);
+}
+
+/* ── City Grid ───────────────────────────────────────────────────────────── */
+
+.gp-wclock-grid {
+  display: grid;
+  align-content: start;
+  gap: 0.4rem;
+  grid-template-columns: repeat(auto-fill, minmax(118px, 1fr));
+  overflow-y: auto;
+}
+
+.gp-wclock-tile {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  padding: 0.5rem 0.55rem;
+  border: 1px solid var(--gp-wclock-rule);
+  border-radius: 0.72rem;
+  background:
+    linear-gradient(
+      160deg,
+      color-mix(in oklab, var(--gp-widget-accent), transparent 93%),
+      transparent 62%
+    ),
+    var(--gp-wclock-wash);
+  gap: 0.12rem;
+  transition: border-color 150ms ease, transform 150ms ease;
+}
+
+.gp-wclock-tile:hover {
+  border-color: color-mix(in oklab, var(--gp-widget-accent), transparent 55%);
+  transform: translateY(-1px);
+}
+
+.gp-wclock-tile[data-primary] {
+  border-color: color-mix(in oklab, var(--gp-widget-accent), transparent 55%);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--gp-widget-accent), transparent 82%);
+}
+
+/* Night tiles cool down rather than darken, so the card keeps one light. */
+.gp-wclock-tile[data-night] {
+  background:
+    linear-gradient(160deg, color-mix(in oklab, #6366f1, transparent 92%), transparent 60%),
+    var(--gp-wclock-wash);
+}
+
+.gp-wclock-tile > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-right: 0.9rem;
+  gap: 0.3rem;
+}
+
+.gp-wclock-tile > header strong {
+  overflow: hidden;
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gp-wclock-tile > header svg {
+  flex: 0 0 auto;
+  color: var(--gp-wclock-faint);
+}
+
+.gp-wclock-tile[data-night] > header svg {
+  color: color-mix(in oklab, #a5b4fc, transparent 30%);
+}
+
+.gp-wclock-tile-time {
+  font-size: 1.32rem;
+  font-weight: 600;
+  line-height: 1.12;
+}
+
+.gp-wclock-tile > footer {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.3rem;
+}
+
+.gp-wclock-tile > footer span {
+  overflow: hidden;
+  color: var(--gp-wclock-soft);
+  font-size: 0.575rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gp-wclock-tile > footer em {
+  flex: 0 0 auto;
+  color: var(--gp-wclock-faint);
+  font-size: 0.555rem;
+  font-style: normal;
+  font-variant-numeric: tabular-nums;
+}
+
+.gp-wclock-daybadge {
+  align-self: flex-start;
+  margin-top: 0.24rem;
+  padding: 0.06rem 0.32rem;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 86%);
+  color: color-mix(in oklab, var(--gp-widget-accent), var(--gp-wclock-ink) 30%);
+  font-size: 0.52rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+/* ── Analog Wall ─────────────────────────────────────────────────────────── */
+
+.gp-wclock-wall {
+  display: grid;
+  align-content: start;
+  gap: 0.45rem;
+  grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+  overflow-y: auto;
+}
+
+.gp-wclock-wall-item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.55rem 0.35rem 0.45rem;
+  border: 1px solid var(--gp-wclock-rule);
+  border-radius: 0.8rem;
+  background: var(--gp-wclock-wash);
+  gap: 0.3rem;
+  text-align: center;
+  transition: border-color 150ms ease;
+}
+
+.gp-wclock-wall-item:hover {
+  border-color: color-mix(in oklab, var(--gp-widget-accent), transparent 55%);
+}
+
+.gp-wclock-wall-item strong {
+  overflow: hidden;
+  max-width: 100%;
+  font-size: 0.62rem;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gp-wclock-wall-item small {
+  display: flex;
+  align-items: baseline;
+  gap: 0.25rem;
+  color: var(--gp-wclock-soft);
+  font-size: 0.575rem;
+}
+
+.gp-wclock-wall-item small em {
+  color: var(--gp-wclock-faint);
+  font-size: 0.53rem;
+  font-style: normal;
+}
+
+/* ── Overlap Band ────────────────────────────────────────────────────────── */
+
+.gp-wclock-overlap {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.gp-wclock-window {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.gp-wclock-window label {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: var(--gp-wclock-soft);
+  font-size: 0.58rem;
+}
+
+.gp-wclock-window select {
+  padding: 0.14rem 0.3rem;
+  border: 1px solid var(--gp-wclock-rule);
+  border-radius: 0.45rem;
+  background: var(--gp-wclock-wash);
+  font-size: 0.58rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.gp-wclock-band-scroll {
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow: auto;
+}
+
+.gp-wclock-band-grid {
+  display: flex;
+  min-width: 232px;
+  flex-direction: column;
+  gap: 0.22rem;
+}
+
+/* The ruler shares the row grid so its labels line up with the columns. */
+.gp-wclock-band-ruler,
+.gp-wclock-band-row {
+  display: grid;
+  align-items: center;
+  gap: 0.4rem;
+  grid-template-columns: 74px minmax(0, 1fr) 18px;
+}
+
+.gp-wclock-band-ruler {
+  display: grid;
+  padding-left: calc(74px + 0.4rem);
+  grid-template-columns: repeat(24, 1fr);
+  gap: 1px;
+}
+
+.gp-wclock-band-ruler span {
+  color: var(--gp-wclock-faint);
+  font-size: 0.48rem;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.gp-wclock-band-ruler span[data-now] {
+  color: color-mix(in oklab, var(--gp-widget-accent), var(--gp-wclock-ink) 20%);
+  font-weight: 600;
+}
+
+.gp-wclock-band-row {
+  position: relative;
+}
+
+.gp-wclock-band-label {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.02rem;
+}
+
+.gp-wclock-band-label strong {
+  overflow: hidden;
+  font-size: 0.6rem;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gp-wclock-band-label small {
+  color: var(--gp-wclock-faint);
+  font-size: 0.5rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.gp-wclock-band-track {
+  display: grid;
+  height: 20px;
+  border-radius: 0.4rem;
+  background: color-mix(in oklab, var(--gp-wclock-ink), transparent 96%);
+  gap: 1px;
+  grid-template-columns: repeat(24, 1fr);
+  overflow: hidden;
+}
+
+.gp-wclock-band-track i {
+  background: transparent;
+  transition: background 140ms ease;
+}
+
+.gp-wclock-band-track i[data-working] {
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 68%);
+}
+
+/* A shared hour is the answer the skin exists to give, so it reads brightest. */
+.gp-wclock-band-track i[data-shared][data-working] {
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 24%);
+}
+
+.gp-wclock-band-track i[data-now] {
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--gp-wclock-ink), transparent 55%);
+}
+
+/* ── Meeting Planner ─────────────────────────────────────────────────────── */
+
+.gp-wclock-planner {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+  gap: 0.42rem;
+}
+
+.gp-wclock-scrub {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  padding: 0.45rem 0.55rem;
+  border: 1px solid var(--gp-wclock-rule);
+  border-radius: 0.7rem;
+  background: var(--gp-wclock-wash);
+  gap: 0.32rem;
+}
+
+.gp-wclock-scrub label {
+  display: flex;
+  align-items: baseline;
+  gap: 0.32rem;
+  color: var(--gp-wclock-soft);
+  font-size: 0.58rem;
+}
+
+.gp-wclock-scrub label svg {
+  align-self: center;
+  color: var(--gp-wclock-faint);
+}
+
+.gp-wclock-scrub label strong {
+  color: var(--gp-wclock-ink);
+  font-size: 0.86rem;
+  font-weight: 600;
+}
+
+.gp-wclock-scrub label em {
+  color: var(--gp-wclock-faint);
+  font-size: 0.55rem;
+  font-style: normal;
+}
+
+.gp-wclock-scrub input[type='range'] {
+  width: 100%;
+  height: 14px;
+  margin: 0;
+  accent-color: var(--gp-widget-accent);
+  background: transparent;
+  cursor: pointer;
+}
+
+.gp-wclock-planner-rows {
+  display: flex;
+  min-height: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 0.22rem;
+  overflow-y: auto;
+}
+
+.gp-wclock-planner-row {
+  position: relative;
+  display: grid;
+  align-items: center;
+  padding: 0.34rem 1.05rem 0.34rem 0.5rem;
+  border: 1px solid transparent;
+  border-radius: 0.6rem;
+  background: var(--gp-wclock-wash);
+  gap: 0.4rem;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+}
+
+/* The verdict is carried by a left edge and the pill, never by colour alone —
+   the pill always spells the state out. */
+.gp-wclock-planner-row::before {
+  position: absolute;
+  top: 0.34rem;
+  bottom: 0.34rem;
+  left: 0;
+  width: 2px;
+  border-radius: 999px;
+  background: var(--gp-wclock-verdict-hue, transparent);
+  content: '';
+}
+
+.gp-wclock-planner-row[data-verdict='good'] {
+  --gp-wclock-verdict-hue: #4ade80;
+}
+
+.gp-wclock-planner-row[data-verdict='edge'] {
+  --gp-wclock-verdict-hue: #fbbf24;
+}
+
+.gp-wclock-planner-row[data-verdict='asleep'] {
+  --gp-wclock-verdict-hue: #f87171;
+}
+
+.gp-wclock-planner-place {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.02rem;
+}
+
+.gp-wclock-planner-place strong {
+  overflow: hidden;
+  font-size: 0.63rem;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gp-wclock-planner-place small {
+  color: var(--gp-wclock-faint);
+  font-size: 0.51rem;
+}
+
+.gp-wclock-planner-time {
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.gp-wclock-verdict {
+  padding: 0.1rem 0.36rem;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--gp-wclock-verdict-hue, var(--gp-wclock-ink)), transparent 84%);
+  color: color-mix(in oklab, var(--gp-wclock-verdict-hue, var(--gp-wclock-ink)), var(--gp-wclock-ink) 34%);
+  font-size: 0.51rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+/* ── Travel Clock ────────────────────────────────────────────────────────── */
+
+.gp-wclock-travel {
+  display: grid;
+  align-items: stretch;
+  gap: 0.4rem;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+}
+
+.gp-wclock-travel-side {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: center;
+  /* The pairing is the whole point of this skin, so both dials sit optically
+     centred in their panel however tall the card is dragged. */
+  justify-content: center;
+  padding: 0.5rem 0.4rem;
+  border: 1px solid var(--gp-wclock-rule);
+  border-radius: 0.8rem;
+  background: var(--gp-wclock-wash);
+  gap: 0.3rem;
+  text-align: center;
+}
+
+.gp-wclock-travel-side[data-role='away'] {
+  border-color: color-mix(in oklab, var(--gp-widget-accent), transparent 62%);
+  background:
+    linear-gradient(170deg, color-mix(in oklab, var(--gp-widget-accent), transparent 92%), transparent 58%),
+    var(--gp-wclock-wash);
+}
+
+.gp-wclock-travel-side > header {
+  position: absolute;
+  top: 0.5rem;
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.14rem;
+}
+
+.gp-wclock-travel-side {
+  position: relative;
+  padding-top: 2.1rem;
+}
+
+.gp-wclock-travel-side > header span {
+  color: var(--gp-wclock-faint);
+  font-size: 0.5rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.gp-wclock-travel-side select {
+  max-width: 100%;
+  padding: 0.1rem 0.24rem;
+  border: 1px solid transparent;
+  border-radius: 0.4rem;
+  background: transparent;
+  font-size: 0.63rem;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+}
+
+.gp-wclock-travel-side select:hover {
+  border-color: var(--gp-wclock-rule);
+}
+
+.gp-wclock-travel-side > strong {
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.gp-wclock-travel-side > small {
+  color: var(--gp-wclock-soft);
+  font-size: 0.545rem;
+}
+
+.gp-wclock-travel-shift {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.16rem;
+  color: var(--gp-wclock-soft);
+}
+
+.gp-wclock-travel-shift strong {
+  color: color-mix(in oklab, var(--gp-widget-accent), var(--gp-wclock-ink) 26%);
+  font-size: 0.68rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Sunlight ────────────────────────────────────────────────────────────── */
+
+.gp-wclock-sun {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+  gap: 0.28rem;
+  overflow-y: auto;
+}
+
+.gp-wclock-sun-row {
+  position: relative;
+  display: grid;
+  align-items: center;
+  padding: 0.34rem 1.05rem 0.34rem 0.5rem;
+  border: 1px solid var(--gp-wclock-rule);
+  border-radius: 0.62rem;
+  background: var(--gp-wclock-wash);
+  gap: 0.45rem;
+  grid-template-columns: 78px minmax(0, 1fr) auto;
+}
+
+.gp-wclock-sun-place {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.02rem;
+}
+
+.gp-wclock-sun-place strong {
+  overflow: hidden;
+  font-size: 0.61rem;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gp-wclock-sun-place small {
+  color: var(--gp-wclock-soft);
+  font-size: 0.55rem;
+}
+
+/* The track is a full day; the lit band is positioned inside it from the
+   sunrise/sunset the model derived, and the marker rides the current hour. */
+.gp-wclock-sun-track {
+  position: relative;
+  height: 15px;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    color-mix(in oklab, #6366f1, transparent 88%),
+    color-mix(in oklab, #6366f1, transparent 94%)
+  );
+}
+
+.gp-wclock-sun-day {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: var(--gp-wclock-day-start, 25%);
+  width: var(--gp-wclock-day-width, 50%);
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    color-mix(in oklab, #fbbf24, transparent 74%),
+    color-mix(in oklab, #fdba74, transparent 52%),
+    color-mix(in oklab, #fbbf24, transparent 74%)
+  );
+}
+
+.gp-wclock-sun-marker {
+  position: absolute;
+  top: 50%;
+  left: var(--gp-wclock-sun-at, 50%);
+  display: grid;
+  width: 17px;
+  height: 17px;
+  border: 1px solid color-mix(in oklab, var(--gp-wclock-ink), transparent 78%);
+  border-radius: 50%;
+  background: var(--gp-widget-surface, #0f172a);
+  color: var(--gp-wclock-soft);
+  place-items: center;
+  transform: translate(-50%, -50%);
+  transition: left 420ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.gp-wclock-sun-row[data-daylight] .gp-wclock-sun-marker {
+  border-color: color-mix(in oklab, #fbbf24, transparent 50%);
+  color: color-mix(in oklab, #fbbf24, var(--gp-wclock-ink) 20%);
+}
+
+.gp-wclock-sun-edges {
+  display: flex;
+  flex-direction: column;
+  gap: 0.08rem;
+}
+
+.gp-wclock-sun-edges em {
+  display: flex;
+  align-items: center;
+  gap: 0.18rem;
+  color: var(--gp-wclock-faint);
+  font-size: 0.5rem;
+  font-style: normal;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── City picker ─────────────────────────────────────────────────────────── */
+
+.gp-wclock-picker {
+  position: absolute;
+  z-index: 6;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  border-radius: 0.7rem;
+  background: color-mix(in oklab, var(--gp-widget-surface, #0f172a), transparent 4%);
+  gap: 0.3rem;
+}
+
+.gp-wclock-picker > header {
+  display: grid;
+  flex: 0 0 auto;
+  align-items: center;
+  padding-bottom: 0.28rem;
+  border-bottom: 1px solid var(--gp-wclock-rule);
+  gap: 0.35rem;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+}
+
+.gp-wclock-picker > header svg {
+  color: var(--gp-wclock-faint);
+}
+
+.gp-wclock-picker input {
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  font-size: 0.66rem;
+  outline: none;
+}
+
+.gp-wclock-picker > header button {
+  display: grid;
+  width: 20px;
+  height: 20px;
+  border: 0;
+  border-radius: 0.4rem;
+  background: transparent;
+  color: var(--gp-wclock-soft);
+  cursor: pointer;
+  place-items: center;
+}
+
+.gp-wclock-picker > div {
+  display: flex;
+  min-height: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 0.1rem;
+  overflow-y: auto;
+}
+
+.gp-wclock-picker > div button {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 0.3rem 0.4rem;
+  border: 0;
+  border-radius: 0.5rem;
+  background: transparent;
+  cursor: pointer;
+  gap: 0.4rem;
+  text-align: left;
+  transition: background 120ms ease;
+}
+
+.gp-wclock-picker > div button:hover {
+  background: var(--gp-wclock-glow);
+}
+
+.gp-wclock-picker > div button span {
+  font-size: 0.65rem;
+  font-weight: 500;
+}
+
+.gp-wclock-picker > div button small {
+  color: var(--gp-wclock-faint);
+  font-size: 0.53rem;
+}
+
+.gp-wclock-picker-empty {
+  padding: 0.6rem 0.4rem;
+  color: var(--gp-wclock-faint);
+  font-size: 0.6rem;
+  text-align: center;
+}
+
+/* ── Narrow cards ────────────────────────────────────────────────────────── */
+
+@container (max-width: 300px) {
+  .gp-wclock-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .gp-wclock-wall {
+    grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+  }
+
+  /* Stacking keeps both dials legible instead of shrinking them to coins. */
+  .gp-wclock-travel {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .gp-wclock-travel-shift {
+    flex-direction: row;
+    gap: 0.3rem;
+  }
+
+  .gp-wclock-sun-row {
+    grid-template-columns: 66px minmax(0, 1fr);
+  }
+
+  .gp-wclock-sun-edges {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gp-wclock-hand-hour,
+  .gp-wclock-hand-minute,
+  .gp-wclock-sun-marker,
+  .gp-wclock-tile {
+    transition: none;
+  }
+
+  .gp-wclock-tile:hover {
+    transform: none;
+  }
+}

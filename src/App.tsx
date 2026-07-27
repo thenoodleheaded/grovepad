@@ -3,6 +3,7 @@ import { useAuthStore } from './store/useAuthStore'
 import { usePersistenceStatusStore } from './store/usePersistenceStatusStore'
 import { PersistenceCompatibilityBlock } from './components/ui/PersistenceCompatibilityBlock'
 import { initAdaptiveInputRuntime } from './runtime/adaptiveInputRuntime'
+import { grovepadPageTitle } from './utils/pageTitle'
 
 const LoginPage = lazy(() =>
   import('./components/auth/LoginPage').then((module) => ({ default: module.LoginPage })),
@@ -35,6 +36,17 @@ export default function App() {
   const isGuest = useAuthStore((state) => state.isGuest)
   const loading = useAuthStore((state) => state.loading)
   const compatibilityBlock = usePersistenceStatusStore((state) => state.compatibilityBlock)
+  const pageName = compatibilityBlock
+    ? 'update required'
+    : loading && !isGuest
+      ? 'loading'
+      : !session && !isGuest
+        ? 'login'
+        : null
+
+  useEffect(() => {
+    if (pageName) document.title = grovepadPageTitle(pageName)
+  }, [pageName])
 
   if (compatibilityBlock) {
     return <PersistenceCompatibilityBlock block={compatibilityBlock} />

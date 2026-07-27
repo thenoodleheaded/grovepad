@@ -21,6 +21,8 @@ function modelSummary(model: RestingFaceModel): string {
       return `${model.label} ${model.active ? 'on' : 'off'}`
     case 'text':
       return model.text
+    case 'note':
+      return model.lines.slice(0, 2).map((line) => line.text).filter(Boolean).join(' · ')
     case 'rows':
       return model.rows.slice(0, 2).map((row) => row.label).join(' · ')
     case 'stars':
@@ -35,6 +37,37 @@ function modelSummary(model: RestingFaceModel): string {
       return 'Timer'
     case 'image':
       return 'Image'
+    // Skin grammars: far zoom cannot draw a board or a month, so each one
+    // states the same reading in words instead of dropping to a bare glyph.
+    case 'columns':
+      return model.columns
+        .slice(0, 3)
+        .map((column) => `${column.label} ${column.note ?? column.items.length}`)
+        .join(' · ')
+    case 'grid':
+      return model.cells
+        .filter((cell) => cell.current)
+        .slice(0, 1)
+        .map((cell) => cell.text)
+        .join('') || model.eyebrow?.label || 'Grid'
+    case 'bars':
+      return model.bars.slice(0, 2).map((bar) => `${bar.label} ${bar.value}`).join(' · ')
+    case 'gauge':
+      return `${model.primary} ${model.secondary}`
+    case 'chips':
+      return model.chips.slice(0, 3).map((chip) => chip.text).join(' · ')
+    case 'lines':
+      return (model.total ?? model.lines.at(-1))
+        ? `${(model.total ?? model.lines.at(-1))!.left} ${(model.total ?? model.lines.at(-1))!.right ?? ''}`.trim()
+        : ''
+    case 'chain':
+      return model.nodes.slice(0, 3).map((node) => node.label).join(' → ')
+    case 'timeline':
+      return model.lanes.slice(0, 2).map((lane) => lane.label).join(' · ')
+    case 'split':
+      return `${model.left.primary} ${model.divider ?? '·'} ${model.right.primary}`
+    case 'paper':
+      return model.eyebrow?.label ?? 'Drawing'
     case 'icon':
       return ''
   }

@@ -134,3 +134,156 @@ describe('untangleCanvas', () => {
     expect('arrangeWidgets' in useWidgetStore.getState()).toBe(false)
   })
 })
+
+/**
+ * The Untangle button's other half. Separation alone can only ever push things
+ * apart, so a tree that had drifted into a sprawl stayed sprawled; compaction
+ * pulls a selected parent-linked family back into an exact 2-cell lattice.
+ */
+describe('untangleWidgets compacts selected trees', () => {
+  const GAP = GRID_SIZE * 2
+
+  /** A parent → child tree of plain notes, all placed far from real content. */
+  function tree(origin: number, shape: readonly { x: number; y: number }[]) {
+    const store = useWidgetStore.getState()
+    const ids = shape.map((_, index) =>
+      store.createWidget(`T${origin}-${index}`, { x: origin, y: origin }, 'notes'),
+    )
+    ids.forEach((id, index) => {
+      place(id, origin + shape[index]!.x, origin + shape[index]!.y, 160, 120)
+    })
+    return ids
+  }
+
+  function link(parentId: string, childId: string) {
+    useWidgetStore.getState().addRelation(parentId, childId, 'parent')
+  }
+
+  it('leaves exactly 2 cells between siblings and between generations', () => {
+    const O = 300_000
+    // A root with two children, all three scattered: the children are far below
+    // the root and far apart from each other, which is what untangle alone
+    // could never fix.
+    const [root, left, right] = tree(O, [
+      { x: 0, y: 0 },
+      { x: -1200, y: 900 },
+      { x: 1600, y: 1300 },
+    ]) as [string, string, string]
+    link(root, left)
+    link(root, right)
+
+    useWidgetStore.getState().untangleWidgets([root, left, right])
+
+    const r = widgetAt(root)
+    const l = widgetAt(left)
+    const g = widgetAt(right)
+    // Siblings: exactly 2 cells apart, sharing one baseline.
+    expect(xGap(l, g)).toBe(GAP)
+    expect(l.position.y).toBe(g.position.y)
+    // Generations: exactly 2 cells under the parent's bottom edge.
+    expect(l.position.y - (r.position.y + r.size.height)).toBe(GAP)
+    // The root held its place and the branches came to it.
+    expect(r.position).toEqual({ x: O, y: O })
+    // The parent sits centred over the span its children occupy.
+    const childSpan = (l.position.x + g.position.x + g.size.width) / 2
+    expect(r.position.x + r.size.width / 2).toBe(childSpan)
+    // Everything lands back on the grid.
+    for (const w of [r, l, g]) {
+      expect(Math.abs(w.position.x % GRID_SIZE)).toBe(0)
+      expect(Math.abs(w.position.y % GRID_SIZE)).toBe(0)
+    }
+
+    useWidgetStore.getState().deleteWidgets([root, left, right])
+  })
+
+  it('keeps whole branches clear of each other rather than interleaving them', () => {
+    const O = 400_000
+    const [root, a, b, aChild] = tree(O, [
+      { x: 0, y: 0 },
+      { x: 0, y: 2000 },
+      { x: 800, y: 2000 },
+      { x: -2000, y: 4000 },
+    ]) as [string, string, string, string]
+    link(root, a)
+    link(root, b)
+    link(a, aChild)
+
+    useWidgetStore.getState().untangleWidgets([root, a, b, aChild])
+
+    const branchA = widgetAt(a)
+    const branchB = widgetAt(b)
+    const child = widgetAt(aChild)
+    // A's subtree reserves its own width, so B never lands over A's child.
+    expect(xGap(branchA, branchB)).toBeGreaterThanOrEqual(GAP)
+    expect(child.position.x + child.size.width).toBeLessThanOrEqual(branchB.position.x - GAP)
+    // Three generations, each exactly 2 cells under the one above.
+    expect(branchA.position.y - (widgetAt(root).position.y + 120)).toBe(GAP)
+    expect(child.position.y - (branchA.position.y + 120)).toBe(GAP)
+
+    useWidgetStore.getState().deleteWidgets([root, a, b, aChild])
+  })
+
+  it('compacts a tree without pulling in an unrelated selected widget', () => {
+    const O = 500_000
+    const [root, child, loner] = tree(O, [
+      { x: 0, y: 0 },
+      { x: 900, y: 700 },
+      { x: 3000, y: 0 },
+    ]) as [string, string, string]
+    link(root, child)
+    const lonerBefore = widgetAt(loner).position
+
+    useWidgetStore.getState().untangleWidgets([root, child, loner])
+
+    expect(widgetAt(child).position.y - (widgetAt(root).position.y + 120)).toBe(GAP)
+    // Nothing overlapped it, so the widget that is not part of the tree stayed
+    // exactly where it was.
+    expect(widgetAt(loner).position).toEqual(lonerBefore)
+
+    useWidgetStore.getState().deleteWidgets([root, child, loner])
+  })
+
+  it('treats a glue cluster as one node and keeps its weld intact', () => {
+    const O = 600_000
+    const [root, memberA, memberB] = tree(O, [
+      { x: 0, y: 0 },
+      { x: 1200, y: 1500 },
+      { x: 1360, y: 1500 },
+    ]) as [string, string, string]
+    useWidgetStore.getState().glueWidgets(memberB, memberA)
+    link(root, memberA)
+    const seamBefore = widgetAt(memberB).position.x - widgetAt(memberA).position.x
+
+    useWidgetStore.getState().untangleWidgets([root, memberA, memberB])
+
+    const a = widgetAt(memberA)
+    const b = widgetAt(memberB)
+    // The cluster translated as one rigid node: same seam, same baseline.
+    expect(b.position.x - a.position.x).toBe(seamBefore)
+    expect(b.position.y).toBe(a.position.y)
+    // And it sits exactly 2 cells under its parent.
+    expect(a.position.y - (widgetAt(root).position.y + 120)).toBe(GAP)
+
+    useWidgetStore.getState().deleteWidgets([root, memberA, memberB])
+  })
+
+  it('falls back to plain separation when the selection holds no tree', () => {
+    const O = 700_000
+    const [a, b] = tree(O, [
+      { x: 0, y: 0 },
+      { x: 40, y: 40 },
+    ]) as [string, string]
+
+    useWidgetStore.getState().untangleWidgets([a, b])
+
+    // No parent relation anywhere, so this is the old behaviour exactly: pushed
+    // apart to the same 2-cell clearance, nothing else rearranged.
+    const gapNow = Math.max(
+      xGap(widgetAt(a), widgetAt(b)),
+      Math.abs(widgetAt(a).position.y - widgetAt(b).position.y) - 120,
+    )
+    expect(gapNow).toBe(GAP)
+
+    useWidgetStore.getState().deleteWidgets([a, b])
+  })
+})

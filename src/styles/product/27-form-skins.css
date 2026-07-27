@@ -1,0 +1,904 @@
+/*
+ * Purpose-built Form skins.
+ *
+ * A field is always the same four things — a label, an answer type, the
+ * answer, and whether it is required. Each skin restages that quartet: a
+ * survey numbers it, an inspection gives it a verdict, a branching form gives
+ * it a gate. The title, completion rail, and status chip never move.
+ */
+
+.gp-widget-ui[data-widget-type='form'][data-skin-presentation] {
+  background-image: none;
+  padding-inline-start: 0;
+}
+
+.gp-widget-ui[data-widget-type='form'][data-skin-presentation]::before {
+  content: none;
+}
+
+.gp-form {
+  --gp-form-ink: var(--gp-widget-ink, #f5f5f5);
+  --gp-form-line: color-mix(in oklab, var(--gp-form-ink), transparent 89%);
+  --gp-form-muted: color-mix(in oklab, var(--gp-form-ink), transparent 56%);
+  --gp-form-pass: #34d399;
+  --gp-form-fail: #fb7185;
+  --gp-form-gap: 0.4rem;
+  display: flex;
+  min-height: 0;
+  height: 100%;
+  flex-direction: column;
+  gap: var(--gp-form-gap);
+  color: var(--gp-form-ink);
+  container-type: inline-size;
+}
+
+/* `:where` keeps these resets at zero specificity, so a skin's own rule below
+   (a smaller verdict pill, an uppercase type chip) wins on its own merits. */
+.gp-form :where(button, input, select) {
+  font: inherit;
+}
+
+.gp-form input,
+.gp-form select {
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  color: inherit;
+  background: transparent;
+}
+
+.gp-form input::placeholder {
+  color: color-mix(in oklab, var(--gp-form-ink), transparent 76%);
+}
+
+.gp-form input[type='number'] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+.gp-form input[type='number']::-webkit-outer-spin-button,
+.gp-form input[type='number']::-webkit-inner-spin-button {
+  margin: 0;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.gp-form button:focus-visible,
+.gp-form input:focus-visible,
+.gp-form select:focus-visible {
+  outline: 1px solid color-mix(in oklab, var(--gp-widget-accent), white 14%);
+  outline-offset: 2px;
+}
+
+.gp-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
+/* Shell ------------------------------------------------------------------ */
+
+.gp-form-header {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.4rem;
+  padding-inline: 0.15rem;
+}
+
+.gp-form-eyebrow {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--gp-widget-accent);
+  font-size: 0.56rem;
+  font-weight: 700;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.gp-form-status {
+  margin-left: auto;
+  border-radius: 999px;
+  padding: 0.1rem 0.42rem;
+  color: var(--gp-form-muted);
+  background: color-mix(in oklab, var(--gp-form-ink), transparent 93%);
+  font-size: 0.5rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.gp-form-status[data-complete] {
+  color: var(--gp-form-pass);
+  background: color-mix(in oklab, var(--gp-form-pass), transparent 86%);
+}
+
+.gp-form-title.gp-island {
+  display: grid;
+  flex: 0 0 auto;
+  gap: 0.4rem;
+  padding: 0.5rem 0.7rem 0.55rem;
+}
+
+.gp-form-title input {
+  width: 100%;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+}
+
+.gp-form-rail {
+  height: 0.2rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--gp-form-ink), transparent 92%);
+}
+
+.gp-form-rail > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(
+    90deg,
+    color-mix(in oklab, var(--gp-widget-accent), transparent 45%),
+    var(--gp-widget-accent)
+  );
+  transition: inline-size 240ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.gp-form-list {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--gp-form-gap);
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+/* Shared field parts ----------------------------------------------------- */
+
+.gp-form-row.gp-island,
+.gp-form-question.gp-island,
+.gp-form-prompt.gp-island,
+.gp-form-check-row.gp-island {
+  display: grid;
+  min-width: 0;
+  flex: 0 0 auto;
+  gap: 0.3rem;
+  padding: 0.45rem 0.55rem 0.5rem;
+}
+
+.gp-form-row > header,
+.gp-form-question > header,
+.gp-form-prompt > header,
+.gp-form-check-row > header {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.gp-form-label-field {
+  min-width: 0;
+  flex: 1;
+}
+
+.gp-form-label-field input {
+  width: 100%;
+  color: var(--gp-form-muted);
+  font-size: 0.58rem;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+}
+
+.gp-form-required {
+  display: grid;
+  width: 1rem;
+  height: 1rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  color: color-mix(in oklab, var(--gp-form-ink), transparent 72%);
+  background: transparent;
+  transition: color 140ms ease, background-color 140ms ease;
+}
+
+.gp-form-required[aria-pressed='true'] {
+  color: var(--gp-form-fail);
+  background: color-mix(in oklab, var(--gp-form-fail), transparent 88%);
+}
+
+.gp-form-type {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.16rem;
+  border-radius: 0.4rem;
+  padding: 0.1rem 0.24rem;
+  color: var(--gp-form-muted);
+  background: color-mix(in oklab, var(--gp-form-ink), transparent 94%);
+}
+
+.gp-form-type select {
+  color: inherit;
+  font-size: 0.48rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.gp-form-remove {
+  display: grid;
+  width: 1.1rem;
+  height: 1.1rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  color: transparent;
+  background: transparent;
+  transition: color 140ms ease, background-color 140ms ease;
+}
+
+.gp-island:hover > header > .gp-form-remove,
+.gp-form-remove:focus-visible {
+  color: color-mix(in oklab, var(--gp-form-fail), var(--gp-form-ink) 14%);
+  background: color-mix(in oklab, var(--gp-form-fail), transparent 88%);
+}
+
+.gp-form-answer input {
+  width: 100%;
+  min-height: 1.5rem;
+  border-radius: 0.45rem;
+  padding: 0.22rem 0.45rem;
+  background: color-mix(in oklab, var(--gp-form-ink), transparent 95%);
+  font-size: 0.68rem;
+}
+
+.gp-form-answer input:focus {
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 92%);
+}
+
+.gp-form-check {
+  display: flex;
+  min-height: 1.6rem;
+  align-items: center;
+  gap: 0.4rem;
+  border: 1px solid var(--gp-form-line);
+  border-radius: 0.45rem;
+  padding-inline: 0.45rem;
+  color: var(--gp-form-muted);
+  background: transparent;
+  font-size: 0.64rem;
+  transition: color 140ms ease, border-color 140ms ease, background-color 140ms ease;
+}
+
+.gp-form-check > span {
+  display: grid;
+  width: 0.85rem;
+  height: 0.85rem;
+  place-items: center;
+  border: 1px solid currentColor;
+  border-radius: 0.25rem;
+}
+
+.gp-form-check[aria-checked='true'] {
+  border-color: color-mix(in oklab, var(--gp-form-pass), transparent 55%);
+  color: var(--gp-form-pass);
+  background: color-mix(in oklab, var(--gp-form-pass), transparent 90%);
+}
+
+.gp-form-add {
+  display: inline-flex;
+  min-height: 1.55rem;
+  align-self: flex-start;
+  align-items: center;
+  gap: 0.28rem;
+  flex: 0 0 auto;
+  border: 0;
+  border-radius: 0.5rem;
+  padding: 0 0.55rem;
+  color: color-mix(in oklab, var(--gp-widget-accent), white 20%);
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 88%);
+  font-size: 0.54rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  transition: background-color 140ms ease;
+}
+
+.gp-form-add:hover {
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 78%);
+}
+
+/* Survey ----------------------------------------------------------------- */
+
+.gp-form-question.gp-island {
+  border-left: 2px solid color-mix(in oklab, var(--gp-widget-accent), transparent 78%);
+  transition: border-color 180ms ease;
+}
+
+.gp-form-question-done.gp-island {
+  border-left-color: color-mix(in oklab, var(--gp-form-pass), transparent 40%);
+}
+
+.gp-form-step {
+  display: grid;
+  width: 1rem;
+  height: 1rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--gp-widget-accent);
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 86%);
+  font-size: 0.46rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.gp-form-question-done .gp-form-step {
+  color: var(--gp-form-pass);
+  background: color-mix(in oklab, var(--gp-form-pass), transparent 86%);
+}
+
+/* Feedback --------------------------------------------------------------- */
+
+.gp-form-score {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: baseline;
+  gap: 0.35rem;
+  padding: 0 0.2rem 0.3rem;
+  border-bottom: 1px solid var(--gp-form-line);
+  color: var(--gp-form-muted);
+  font-size: 0.5rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.gp-form-score > svg {
+  align-self: center;
+  color: var(--gp-widget-accent);
+}
+
+.gp-form-score b {
+  color: var(--gp-form-ink);
+  font-size: 0.95rem;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+.gp-form-rating {
+  display: flex;
+  align-items: center;
+  gap: 0.12rem;
+}
+
+.gp-form-rating button {
+  display: grid;
+  width: 1.25rem;
+  height: 1.25rem;
+  place-items: center;
+  border: 0;
+  border-radius: 0.35rem;
+  color: color-mix(in oklab, var(--gp-form-ink), transparent 76%);
+  background: transparent;
+  transition: color 140ms ease, transform 140ms ease;
+}
+
+.gp-form-rating button[aria-pressed='true'] {
+  color: #fbbf24;
+}
+
+.gp-form-rating button:hover {
+  transform: translateY(-1px);
+}
+
+.gp-form-rating b {
+  margin-left: 0.3rem;
+  color: var(--gp-form-muted);
+  font-size: 0.52rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* RSVP ------------------------------------------------------------------- */
+
+.gp-form-rsvp {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--gp-form-gap);
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.gp-form-attendance.gp-island,
+.gp-form-guests.gp-island {
+  display: grid;
+  flex: 0 0 auto;
+  gap: 0.35rem;
+  padding: 0.5rem 0.6rem 0.55rem;
+}
+
+.gp-form-reply {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.35rem;
+}
+
+.gp-form-reply button {
+  display: inline-flex;
+  min-height: 1.9rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  border: 1px solid var(--gp-form-line);
+  border-radius: 0.55rem;
+  color: var(--gp-form-muted);
+  background: transparent;
+  font-size: 0.62rem;
+  font-weight: 650;
+  transition: color 160ms ease, border-color 160ms ease, background-color 160ms ease;
+}
+
+.gp-form-reply-yes[aria-pressed='true'] {
+  border-color: color-mix(in oklab, var(--gp-form-pass), transparent 55%);
+  color: var(--gp-form-pass);
+  background: color-mix(in oklab, var(--gp-form-pass), transparent 88%);
+}
+
+.gp-form-reply-no[aria-pressed='true'] {
+  border-color: color-mix(in oklab, var(--gp-form-fail), transparent 55%);
+  color: var(--gp-form-fail);
+  background: color-mix(in oklab, var(--gp-form-fail), transparent 88%);
+}
+
+.gp-form-stepper {
+  display: inline-flex;
+  align-self: flex-start;
+  align-items: center;
+  gap: 0.35rem;
+  border-radius: 999px;
+  padding: 0.15rem;
+  background: color-mix(in oklab, var(--gp-form-ink), transparent 94%);
+}
+
+.gp-form-stepper button {
+  display: grid;
+  width: 1.25rem;
+  height: 1.25rem;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  color: var(--gp-form-muted);
+  background: transparent;
+  transition: color 140ms ease, background-color 140ms ease;
+}
+
+.gp-form-stepper button:hover:not(:disabled) {
+  color: var(--gp-form-ink);
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 80%);
+}
+
+.gp-form-stepper button:disabled {
+  opacity: 0.3;
+}
+
+.gp-form-stepper output {
+  min-width: 1.1rem;
+  color: var(--gp-form-ink);
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 650;
+  text-align: center;
+}
+
+/* Inspection ------------------------------------------------------------- */
+
+.gp-form-tally {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 0.45rem;
+  padding: 0 0.2rem 0.3rem;
+  border-bottom: 1px solid var(--gp-form-line);
+  font-size: 0.48rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.gp-form-tally span {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.22rem;
+  color: var(--gp-form-muted);
+}
+
+.gp-form-tally b {
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.gp-form-tally [data-result='pass'] b {
+  color: var(--gp-form-pass);
+}
+
+.gp-form-tally [data-result='fail'] b {
+  color: var(--gp-form-fail);
+}
+
+.gp-form-tally [data-result='na'] b {
+  color: var(--gp-form-muted);
+}
+
+.gp-form-check-row.gp-island {
+  border-left: 2px solid var(--gp-form-verdict, var(--gp-form-line));
+}
+
+.gp-form-check-pass {
+  --gp-form-verdict: color-mix(in oklab, var(--gp-form-pass), transparent 40%);
+}
+
+.gp-form-check-fail {
+  --gp-form-verdict: color-mix(in oklab, var(--gp-form-fail), transparent 40%);
+}
+
+.gp-form-check-na {
+  --gp-form-verdict: color-mix(in oklab, var(--gp-form-ink), transparent 78%);
+}
+
+.gp-form-verdict {
+  display: grid;
+  width: 1.15rem;
+  height: 1.15rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--gp-form-muted);
+  background: color-mix(in oklab, var(--gp-form-ink), transparent 93%);
+}
+
+.gp-form-check-pass .gp-form-verdict {
+  color: var(--gp-form-pass);
+  background: color-mix(in oklab, var(--gp-form-pass), transparent 86%);
+}
+
+.gp-form-check-fail .gp-form-verdict {
+  color: var(--gp-form-fail);
+  background: color-mix(in oklab, var(--gp-form-fail), transparent 86%);
+}
+
+.gp-form-verdicts {
+  display: inline-flex;
+  flex: 0 0 auto;
+  gap: 0.12rem;
+  border-radius: 0.4rem;
+  padding: 0.1rem;
+  background: color-mix(in oklab, var(--gp-form-ink), transparent 94%);
+}
+
+.gp-form-verdicts button {
+  border: 0;
+  border-radius: 0.3rem;
+  padding: 0.1rem 0.32rem;
+  color: var(--gp-form-muted);
+  background: transparent;
+  font-size: 0.45rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  transition: color 140ms ease, background-color 140ms ease;
+}
+
+.gp-form-verdict-pass[aria-pressed='true'] {
+  color: #052e21;
+  background: var(--gp-form-pass);
+}
+
+.gp-form-verdict-fail[aria-pressed='true'] {
+  color: #40101c;
+  background: var(--gp-form-fail);
+}
+
+.gp-form-verdict-na[aria-pressed='true'] {
+  color: var(--gp-form-ink);
+  background: color-mix(in oklab, var(--gp-form-ink), transparent 78%);
+}
+
+.gp-form-note {
+  display: block;
+  padding-left: 1.45rem;
+}
+
+.gp-form-note input {
+  width: 100%;
+  font-size: 0.6rem;
+  font-style: italic;
+}
+
+/* Application ------------------------------------------------------------ */
+
+.gp-form-review {
+  display: inline-flex;
+  align-self: flex-start;
+  flex: 0 0 auto;
+  gap: 0.12rem;
+  border-radius: 0.45rem;
+  padding: 0.12rem;
+  background: color-mix(in oklab, var(--gp-form-ink), transparent 94%);
+}
+
+.gp-form-review button {
+  border: 0;
+  border-radius: 0.35rem;
+  padding: 0.14rem 0.42rem;
+  color: var(--gp-form-muted);
+  background: transparent;
+  font-size: 0.46rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition: color 140ms ease, background-color 140ms ease;
+}
+
+.gp-form-review button[aria-pressed='true'] {
+  color: var(--gp-form-ink);
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 72%);
+}
+
+.gp-form-review button[data-state='accepted'][aria-pressed='true'] {
+  color: #052e21;
+  background: var(--gp-form-pass);
+}
+
+.gp-form-review button[data-state='rejected'][aria-pressed='true'] {
+  color: #40101c;
+  background: var(--gp-form-fail);
+}
+
+.gp-form-section {
+  display: grid;
+  flex: 0 0 auto;
+  gap: 0.3rem;
+}
+
+.gp-form-section h4 {
+  margin: 0.2rem 0 0;
+  padding-bottom: 0.25rem;
+  border-bottom: 1px solid var(--gp-form-line);
+  color: var(--gp-widget-accent);
+  font-size: 0.48rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.gp-form-meta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.35rem;
+  padding-top: 0.22rem;
+  border-top: 1px dashed var(--gp-form-line);
+}
+
+.gp-form-meta label {
+  display: grid;
+  min-width: 0;
+  gap: 0.1rem;
+}
+
+.gp-form-meta span {
+  color: var(--gp-form-muted);
+  font-size: 0.44rem;
+  font-weight: 700;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.gp-form-meta input {
+  width: 100%;
+  font-size: 0.58rem;
+}
+
+/* Conditional ------------------------------------------------------------ */
+
+.gp-form-gated.gp-island {
+  border-left: 2px solid color-mix(in oklab, var(--gp-widget-accent), transparent 78%);
+}
+
+.gp-form-gated-hidden.gp-island {
+  border-left-style: dashed;
+  border-left-color: color-mix(in oklab, var(--gp-form-ink), transparent 82%);
+  opacity: 0.62;
+}
+
+.gp-form-gated-note {
+  margin: 0;
+  color: var(--gp-form-muted);
+  font-size: 0.55rem;
+  font-style: italic;
+}
+
+.gp-form-rule {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem;
+  padding-top: 0.25rem;
+  border-top: 1px dashed var(--gp-form-line);
+  color: var(--gp-form-muted);
+  font-size: 0.5rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.gp-form-rule > svg {
+  flex: 0 0 auto;
+  color: var(--gp-widget-accent);
+}
+
+.gp-form-rule select {
+  border-radius: 0.32rem;
+  padding: 0.08rem 0.2rem;
+  color: var(--gp-form-ink);
+  background: color-mix(in oklab, var(--gp-form-ink), transparent 94%);
+  font-size: 0.5rem;
+  text-transform: none;
+}
+
+/* Narrow cards ----------------------------------------------------------- */
+
+@container (max-width: 330px) {
+  .gp-form-meta,
+  .gp-form-reply {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .gp-form-verdicts {
+    order: 1;
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .gp-form-row > header,
+  .gp-form-question > header,
+  .gp-form-prompt > header,
+  .gp-form-check-row > header {
+    flex-wrap: wrap;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gp-form-rail > span,
+  .gp-form-rating button {
+    transition: none;
+  }
+
+  .gp-form-rating button:hover {
+    transform: none;
+  }
+}
+
+/* Status paint, not ghost actions -----------------------------------------
+ *
+ * `06-field-islands.css` flattens every non-empty button inside widget content
+ * to a ghost control with `!important` and floors it at 28px. That is right for
+ * a text action, but the controls below are not actions — they are the answer
+ * itself: a verdict, a review state, an attendance reply. If they cannot hold a
+ * fill, the form stops showing what it was told. Re-asserting here is the same
+ * escape the Logbook skins take.
+ */
+
+.gp-form-required,
+.gp-form-remove,
+.gp-form-stepper button,
+.gp-form-rating button,
+.gp-form-verdicts button,
+.gp-form-review button {
+  min-width: 0;
+  min-height: 0;
+}
+
+.gp-form-required,
+.gp-form-remove,
+.gp-form-stepper button {
+  border-radius: 50% !important;
+}
+
+.gp-form-required[aria-pressed='true'] {
+  background-color: color-mix(in oklab, var(--gp-form-fail), transparent 88%) !important;
+}
+
+.gp-island:hover > header > .gp-form-remove,
+.gp-form-remove:focus-visible {
+  background-color: color-mix(in oklab, var(--gp-form-fail), transparent 88%) !important;
+}
+
+.gp-form-stepper button:hover:not(:disabled) {
+  background-color: color-mix(in oklab, var(--gp-widget-accent), transparent 80%) !important;
+}
+
+.gp-form-add {
+  background-color: color-mix(in oklab, var(--gp-widget-accent), transparent 88%) !important;
+}
+
+.gp-form-add:hover {
+  background-color: color-mix(in oklab, var(--gp-widget-accent), transparent 78%) !important;
+}
+
+/* Attendance is a two-way segmented reply: the unchosen side must still read as
+   a choice, so it keeps its hairline rather than going fully ghost. */
+.gp-form-reply button {
+  min-height: 1.9rem;
+  border-radius: 0.55rem !important;
+  border-color: var(--gp-form-line) !important;
+}
+
+.gp-form-reply-yes[aria-pressed='true'] {
+  border-color: color-mix(in oklab, var(--gp-form-pass), transparent 45%) !important;
+  background-color: color-mix(in oklab, var(--gp-form-pass), transparent 84%) !important;
+}
+
+.gp-form-reply-no[aria-pressed='true'] {
+  border-color: color-mix(in oklab, var(--gp-form-fail), transparent 45%) !important;
+  background-color: color-mix(in oklab, var(--gp-form-fail), transparent 84%) !important;
+}
+
+/* Verdict and review pills carry the state, so the selected one is solid. */
+.gp-form-verdicts button,
+.gp-form-review button {
+  border-radius: 0.32rem !important;
+}
+
+.gp-form-verdict-pass[aria-pressed='true'] {
+  background-color: var(--gp-form-pass) !important;
+}
+
+.gp-form-verdict-fail[aria-pressed='true'] {
+  background-color: var(--gp-form-fail) !important;
+}
+
+.gp-form-verdict-na[aria-pressed='true'] {
+  background-color: color-mix(in oklab, var(--gp-form-ink), transparent 74%) !important;
+}
+
+.gp-form-review button[aria-pressed='true'] {
+  background-color: color-mix(in oklab, var(--gp-widget-accent), transparent 70%) !important;
+}
+
+.gp-form-review button[data-state='accepted'][aria-pressed='true'] {
+  background-color: var(--gp-form-pass) !important;
+}
+
+.gp-form-review button[data-state='rejected'][aria-pressed='true'] {
+  background-color: var(--gp-form-fail) !important;
+}
+
+/* A select carries a 30px user-agent height that would swell the type chip and
+   the branching rule well past the line they label. */
+.gp-form-type select,
+.gp-form-rule select {
+  height: auto;
+  min-height: 0;
+  line-height: 1.2;
+}
+
+.gp-form-type {
+  min-height: 1.15rem;
+}
+
+/* `align-self` does nothing to a grid item — the stepper stretched the full
+   card width until it was told to size to its own content. */
+.gp-form-stepper {
+  justify-self: start;
+}

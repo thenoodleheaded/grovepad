@@ -25,6 +25,13 @@ import {
   selectedLinkedNodeId,
   writeCurrentLinkedValue,
 } from '../../components/widgets/modules/linkedListSkinModel'
+import {
+  leadingPollOption,
+  pollIsTied,
+  pollOptions,
+  pollShare,
+  totalPollVotes,
+} from '../../components/widgets/modules/pollSkinModel'
 
 /** Everyday widget fields (notes … tracker). Extracted verbatim from fields.ts; field order IS port-slot order — never reorder within an entry. */
 export const CORE_WIDGET_FIELDS = {
@@ -119,7 +126,7 @@ export const CORE_WIDGET_FIELDS = {
   rating: [
     {
       key: 'value',
-      label: 'Stars',
+      label: 'Rating',
       valueType: 'number',
       get: (d) => (d as RatingData).value,
       set: (d, v) => ({ ...(d as RatingData), value: Math.min(5, Math.max(0, Math.round(num(v)))) }),
@@ -202,7 +209,27 @@ export const CORE_WIDGET_FIELDS = {
       label: 'Total votes',
       valueType: 'number',
       unit: 'count',
-      get: (d) => (d as PollData).options.reduce((s, o) => s + o.votes, 0),
+      get: (d) => totalPollVotes(pollOptions((d as PollData).options)),
+    },
+    {
+      key: 'leader',
+      label: 'Leading option',
+      valueType: 'text',
+      get: (d) => {
+        const options = pollOptions((d as PollData).options)
+        if (pollIsTied(options)) return 'Tied'
+        return leadingPollOption(options)?.label ?? ''
+      },
+    },
+    {
+      key: 'leader_share',
+      label: 'Leading share',
+      valueType: 'number',
+      unit: 'percent',
+      get: (d) => {
+        const options = pollOptions((d as PollData).options)
+        return pollShare(leadingPollOption(options)?.votes ?? 0, totalPollVotes(options))
+      },
     },
   ],
   habit: [

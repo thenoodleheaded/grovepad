@@ -29,7 +29,7 @@ import { createGlueSlice } from './slices/glueSlice'
 import { createSelectionSlice } from './slices/selectionSlice'
 import { createUiLinkingSlice } from './slices/uiLinkingSlice'
 
-export { untangleCanvasLayout } from './widgetUntangle'
+export { compactSelectedTrees, untangleCanvasLayout } from './widgetUntangle'
 export { getCriticalPath, strictCarrierIds, strictHolderOf } from './widgetGraph'
 
 

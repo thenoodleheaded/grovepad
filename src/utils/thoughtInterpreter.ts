@@ -436,7 +436,7 @@ function dataFor(type: ModuleType, source: string, lines: ParsedLine[]): ModuleD
     case 'notes': return { ...defaultRecord, text: source, mode: /sticky/i.test(source) ? 'sticky' : /quote/i.test(source) ? 'quote' : 'plain' } as ModuleData
     case 'bar_chart': return { ...defaultRecord, mode: /line|trend/i.test(source) ? 'line' : /donut/i.test(source) ? 'donut' : /pie/i.test(source) ? 'pie' : 'bar', bars: lines.slice(1).map((line, index) => ({ id: uid(), label: line.text.replace(/[:=]\s*-?\d+(?:\.\d+)?\s*$/, ''), value: numbers[index] ?? 0, color: ['#38bdf8', '#a3e635', '#f472b6', '#fbbf24'][index % 4]! })) } as ModuleData
     case 'grade_calc': return { ...defaultRecord, mode: /gpa/i.test(source) ? 'gpa' : 'weighted' } as ModuleData
-    case 'date_picker': return { ...defaultRecord, label: cleanTitle(lines[0]?.text ?? 'Target date'), date: detectDate(source) ?? defaultRecord.date, mode: /countdown|days until/i.test(source) ? 'countdown' : 'date_time' } as ModuleData
+    case 'date_picker': return { ...defaultRecord, label: cleanTitle(lines[0]?.text ?? 'Target date'), date: detectDate(source) ?? defaultRecord.date, mode: /countdown|days until|deadline|due by/i.test(source) ? 'deadline' : 'date_time' } as ModuleData
     case 'sketchpad': {
       const mode = /excalidraw|flowchart|diagram/i.test(source) ? 'diagram'
         : /storyboard|shot list/i.test(source) ? 'storyboard'

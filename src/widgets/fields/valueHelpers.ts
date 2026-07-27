@@ -1,8 +1,8 @@
 import type {
   DecisionMatrixData,
   FormField,
-  UnitConverterData,
 } from '../../types/spatial'
+export { convertedUnit } from '../../components/widgets/modules/unitConverterSkinModel'
 import type { FieldValue } from '../contracts/fields'
 
 export function num(v: FieldValue): number {
@@ -71,24 +71,4 @@ export function decisionWinner(data: DecisionMatrixData): { label: string; score
     if (!winner.label || score > winner.score) winner = { label: option.label, score }
   })
   return winner
-}
-
-const CONVERSION_FACTORS = {
-  length: { mm: 0.001, cm: 0.01, m: 1, km: 1000, in: 0.0254, ft: 0.3048, yd: 0.9144, mi: 1609.344 },
-  mass: { mg: 0.000001, g: 0.001, kg: 1, oz: 0.0283495, lb: 0.453592, t: 1000 },
-  time: { ms: 0.001, s: 1, min: 60, h: 3600, day: 86400, week: 604800 },
-} as const
-
-export function convertedUnit(data: UnitConverterData): number {
-  const value = Number.isFinite(data.value) ? data.value : 0
-  if (data.category !== 'temperature') {
-    const factors = CONVERSION_FACTORS[data.category] as Record<string, number>
-    return (value * (factors[data.from] ?? 1)) / (factors[data.to] ?? 1)
-  }
-  let celsius = value
-  if (data.from === 'F') celsius = (value - 32) * (5 / 9)
-  else if (data.from === 'K') celsius = value - 273.15
-  if (data.to === 'F') return celsius * (9 / 5) + 32
-  if (data.to === 'K') return celsius + 273.15
-  return celsius
 }

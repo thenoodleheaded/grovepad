@@ -69,7 +69,13 @@ export const workflowWidgetRendererFamily: WidgetRendererFamily = {
     swot: ({ widget, onUpdate }) => <SwotWidget data={widget.data as SwotData} onChange={onUpdate} />,
     timesheet: ({ widget, onUpdate }) => <TimesheetWidget data={widget.data as TimesheetData} onChange={onUpdate} />,
     inventory: ({ widget, onUpdate }) => <InventoryWidget data={widget.data as InventoryData} onChange={onUpdate} />,
-    logbook: ({ widget, onUpdate }) => <LogbookWidget data={widget.data as LogbookData} onChange={onUpdate} />,
+    logbook: ({ widget, onUpdate, onHeightChange }) => (
+      <LogbookWidget
+        data={widget.data as LogbookData}
+        onChange={onUpdate}
+        onHeightChange={onHeightChange}
+      />
+    ),
     line_chart: ({ widget, onUpdate }) => <LineChartWidget data={widget.data as LineChartData} onChange={onUpdate} />,
     pie_chart: ({ widget, onUpdate }) => <PieChartWidget data={widget.data as PieChartData} onChange={onUpdate} />,
     unit_converter: ({ widget, onUpdate }) => <UnitConverterWidget data={widget.data as UnitConverterData} onChange={onUpdate} />,

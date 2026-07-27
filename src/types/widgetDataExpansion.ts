@@ -1,4 +1,27 @@
-export type UnitConverterCategory = 'length' | 'mass' | 'temperature' | 'time'
+export type UnitConverterSkin =
+  | 'general'
+  | 'cooking'
+  | 'engineering'
+  | 'data'
+  | 'temperature'
+  | 'currency'
+  | 'custom_formula'
+
+export type UnitConverterCategory =
+  | 'length'
+  | 'mass'
+  | 'temperature'
+  | 'time'
+  | 'cooking_volume'
+  | 'area'
+  | 'volume'
+  | 'pressure'
+  | 'energy'
+  | 'power'
+  | 'data_storage'
+  | 'data_rate'
+  | 'currency'
+  | 'custom'
 
 export interface UnitConverterData {
   category: UnitConverterCategory
@@ -6,6 +29,10 @@ export interface UnitConverterData {
   from: string
   to: string
   precision: number
+  /** Absent on older boards and intentionally resolves to General. */
+  skin?: UnitConverterSkin
+  /** Currency rates and custom formulas stay isolated from ordinary units. */
+  skinStates?: Record<string, Record<string, unknown>>
 }
 
 export interface SeriesPoint { t: number; v: number }
@@ -83,6 +110,9 @@ export interface AtlasWidgetData {
   /** The preset rendered by the consolidated Tracker widget. */
   trackerMode: string
   mode: string
+  /** Which shape the card wears — see `atlasSkins`. Absent means the object
+   *  hero, so boards saved before Atlas skins existed open unchanged. */
+  skin?: string
   primary: number
   secondary: number
   target: number

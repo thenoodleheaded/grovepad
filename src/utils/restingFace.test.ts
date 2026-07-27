@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import type { Widget } from '../types/spatial'
 import { GRID_SIZE, ICON_MIN_EDGE } from '../types/spatial'
-import { REST_ROW_LIMIT, restingFace } from './restingFace'
+import {
+  NOTE_REST_LINE_LIMIT,
+  NOTE_REST_VERSION_LIMIT,
+  REST_ROW_LIMIT,
+  restingFace,
+} from './restingFace'
 
 function widget(type: string, data: unknown, overrides: Partial<Widget> = {}): Widget {
   return {
@@ -41,12 +46,15 @@ describe('the resting-face law: content decides the face and the tile', () => {
     if (face.model.kind !== 'rows') throw new Error('expected rows')
     expect(face.model.rows[0]).toMatchObject({ label: 'Done thing', done: true })
 
+    // A poll's point is relative standing, so its trailing value is the share
+    // rather than the raw count, and the leading option leads the rows.
     const poll = restingFace(widget('poll', {
       question: 'Lunch?',
-      options: [{ id: 'a', text: 'Pizza', votes: 4 }, { id: 'b', text: 'Sushi', votes: 2 }],
+      options: [{ id: 'a', label: 'Pizza', votes: 4 }, { id: 'b', label: 'Sushi', votes: 2 }],
     }))
     if (poll.model.kind !== 'rows') throw new Error('expected rows')
-    expect(poll.model.rows[0]).toMatchObject({ label: 'Pizza', value: '4' })
+    expect(poll.model.rows[0]).toMatchObject({ label: 'Pizza', value: '66.7%' })
+    expect(poll.model.rows[1]).toMatchObject({ label: 'Sushi', value: '33.3%' })
   })
 
   it('bounds rows and reports honest overflow', () => {
@@ -82,8 +90,88 @@ describe('the resting-face law: content decides the face and the tile', () => {
 
   it('shows the widget\'s own words for text widgets', () => {
     const face = restingFace(widget('notes', { text: 'Remember the milk' }))
-    expect(face.model).toMatchObject({ kind: 'text', text: 'Remember the milk' })
+    expect(face.model).toMatchObject({
+      kind: 'note',
+      skin: 'plain',
+      lines: [{ kind: 'text', text: 'Remember the milk' }],
+    })
     expect(face.size.height).toBe(GRID_SIZE)
+  })
+
+  it.each([
+    'plain',
+    'sticky',
+    'quote',
+    'daily_log',
+    'markdown_page',
+    'typewriter',
+    'callout',
+    'versioned_note',
+  ] as const)('gives the %s Note skin its own resting model', (mode) => {
+    const face = restingFace(widget('notes', {
+      text: '# Heading\n- First point\nA useful sentence',
+      mode,
+      color: 'pink',
+      attribution: 'Ada',
+      skinStates: {
+        daily_log: { date: '2026-07-26' },
+        callout: { tone: 'warning' },
+        versioned_note: {
+          snapshots: [
+            { id: 'v1', label: 'Today, 10:00', text: 'Earlier', createdAt: '2026-07-26T10:00:00Z' },
+          ],
+        },
+      },
+    }))
+    expect(face.model).toMatchObject({ kind: 'note', skin: mode })
+  })
+
+  it('preserves Markdown structure and skin-specific Note details', () => {
+    const markdown = restingFace(widget('notes', {
+      mode: 'markdown_page',
+      text: '# Heading\n- First point\n> Quoted point\n```\nconst ready = true\n```',
+    }))
+    if (markdown.model.kind !== 'note') throw new Error('expected Note face')
+    expect(markdown.model.lines.map((line) => line.kind)).toEqual([
+      'heading',
+      'bullet',
+      'quote',
+      'code',
+    ])
+
+    const sticky = restingFace(widget('notes', {
+      mode: 'sticky',
+      text: 'Pin this thought',
+      color: 'purple',
+    }))
+    expect(sticky.model).toMatchObject({ kind: 'note', skin: 'sticky', color: 'purple' })
+
+    const callout = restingFace(widget('notes', {
+      mode: 'callout',
+      text: 'Do not miss this',
+      skinStates: { callout: { tone: 'important' } },
+    }))
+    expect(callout.model).toMatchObject({ kind: 'note', skin: 'callout', tone: 'important' })
+  })
+
+  it('keeps Note previews bounded regardless of document and history size', () => {
+    const face = restingFace(widget('notes', {
+      mode: 'versioned_note',
+      text: Array.from({ length: 100 }, (_, index) => `Line ${index} with enough text to wrap across the preview`).join('\n'),
+      skinStates: {
+        versioned_note: {
+          snapshots: Array.from({ length: 20 }, (_, index) => ({
+            id: `v${index}`,
+            label: `Version ${index}`,
+            text: `Snapshot ${index}`,
+            createdAt: '2026-07-26T10:00:00Z',
+          })),
+        },
+      },
+    }))
+    if (face.model.kind !== 'note') throw new Error('expected Note face')
+    expect(face.model.lines).toHaveLength(NOTE_REST_LINE_LIMIT)
+    expect(face.model.versions).toHaveLength(NOTE_REST_VERSION_LIMIT)
   })
 
   it('keeps one-line faces one cell tall', () => {

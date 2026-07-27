@@ -1,0 +1,997 @@
+/*
+ * Purpose-built Unit Converter skins.
+ *
+ * The input and output are the stable landmarks in every skin. Supporting
+ * anatomy changes with the job, but the result remains the card's one hero.
+ * Editable controls paint as parts of the card's one backplate; the computed
+ * output alone gets a genuine sunken well.
+ */
+
+.gp-widget-ui[data-widget-type='unit_converter'] {
+  container-type: inline-size;
+}
+
+.gp-widget-ui[data-widget-type='unit_converter'][data-skin-presentation] {
+  padding-inline-start: 0;
+  background-image: none;
+}
+
+.gp-widget-ui[data-widget-type='unit_converter'][data-skin-presentation]::before {
+  content: none;
+}
+
+.gp-widget-ui[data-widget-type='unit_converter'][data-skin-presentation] :where(strong, output, em) {
+  color: inherit;
+}
+
+.gp-uc {
+  --gp-uc-ink: var(--gp-widget-ink, #f5f5f5);
+  --gp-uc-quiet: color-mix(in oklab, var(--gp-uc-ink), transparent 56%);
+  --gp-uc-faint: color-mix(in oklab, var(--gp-uc-ink), transparent 73%);
+  --gp-uc-rule: color-mix(in oklab, var(--gp-uc-ink), transparent 89%);
+  --gp-uc-surface: color-mix(in oklab, var(--gp-uc-ink), transparent 95%);
+  --gp-uc-surface-hover: color-mix(in oklab, var(--gp-uc-ink), transparent 91%);
+  --gp-uc-well: rgb(0 0 0 / 0.25);
+  container-type: inline-size;
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  flex-direction: column;
+  gap: 0.58rem;
+  color: var(--gp-uc-ink);
+}
+
+.gp-uc ::selection {
+  color: #08100f;
+  background: color-mix(in oklab, var(--gp-widget-accent), white 18%);
+}
+
+.gp-uc button,
+.gp-uc input,
+.gp-uc select {
+  font: inherit;
+}
+
+.gp-uc button:focus-visible,
+.gp-uc input:focus-visible,
+.gp-uc select:focus-visible {
+  outline: 1px solid color-mix(in oklab, var(--gp-widget-accent), white 8%);
+  outline-offset: 2px;
+}
+
+/* ------------------------------------------------------------------- head */
+
+.gp-uc-head {
+  display: flex;
+  min-width: 0;
+  min-height: 29px;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 1px 1px 0;
+}
+
+.gp-uc-glyph {
+  display: inline-flex;
+  width: 27px;
+  height: 27px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--gp-r2);
+  color: color-mix(in oklab, var(--gp-widget-accent), white 16%);
+  background:
+    linear-gradient(145deg,
+      color-mix(in oklab, var(--gp-widget-accent), transparent 78%),
+      color-mix(in oklab, var(--gp-widget-accent), transparent 93%));
+  box-shadow:
+    inset 0 1px 0 color-mix(in oklab, white, transparent 84%),
+    0 5px 14px color-mix(in oklab, var(--gp-widget-accent), transparent 91%);
+}
+
+.gp-uc-heading {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.gp-uc-heading > span {
+  color: var(--gp-uc-faint);
+  font-size: 7.5px;
+  font-weight: 680;
+  letter-spacing: 0.105em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.gp-uc-heading strong {
+  overflow: hidden;
+  color: color-mix(in oklab, var(--gp-uc-ink), transparent 12%);
+  font-size: 13px;
+  font-weight: 610;
+  letter-spacing: -0.012em;
+  line-height: 1.15;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gp-uc-category-badge {
+  display: inline-flex;
+  min-height: 20px;
+  flex: 0 0 auto;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0 8px;
+  color: color-mix(in oklab, var(--gp-widget-accent), white 14%);
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 90%);
+  font-size: 7.5px;
+  font-weight: 720;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* ------------------------------------------------------------ categories */
+
+.gp-uc-categories {
+  display: flex;
+  min-width: 0;
+  gap: 3px;
+  overflow-x: auto;
+  padding: 1px;
+  scrollbar-width: none;
+}
+
+.gp-uc-categories::-webkit-scrollbar {
+  display: none;
+}
+
+.gp-uc-categories button {
+  min-width: max-content;
+  min-height: 28px;
+  flex: 1 0 auto;
+  border: 0;
+  border-radius: 999px;
+  padding: 0 9px;
+  color: var(--gp-uc-faint);
+  background: transparent;
+  font-size: 8px;
+  font-weight: 650;
+  letter-spacing: 0.045em;
+  cursor: pointer;
+  transition:
+    color var(--gp-duration-snap) var(--gp-ease-snap),
+    background-color var(--gp-duration-snap) var(--gp-ease-snap),
+    transform var(--gp-duration-snap) var(--gp-ease-snap);
+}
+
+.gp-uc-categories button:hover {
+  color: var(--gp-uc-quiet);
+  background: var(--gp-uc-surface);
+}
+
+.gp-uc-categories button:active {
+  transform: scale(0.97);
+}
+
+.gp-uc-categories button[aria-pressed='true'] {
+  color: color-mix(in oklab, var(--gp-widget-accent), white 13%);
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 87%);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--gp-widget-accent), transparent 76%);
+}
+
+/* ------------------------------------------------------- conversion stage */
+
+.gp-uc-stage {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr) 32px minmax(0, 1fr);
+  align-items: stretch;
+  gap: 0.4rem;
+}
+
+.gp-uc-side {
+  display: flex;
+  min-width: 0;
+  min-height: 88px;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3px;
+  border-radius: var(--gp-r3);
+  padding: 9px 10px;
+}
+
+.gp-uc-side--input {
+  background:
+    linear-gradient(150deg, var(--gp-uc-surface), transparent 78%);
+  box-shadow:
+    inset 0 0 0 1px var(--gp-uc-rule),
+    inset 0 1px 0 color-mix(in oklab, white, transparent 96%);
+  transition:
+    background-color var(--gp-duration-snap) var(--gp-ease-snap),
+    box-shadow var(--gp-duration-snap) var(--gp-ease-snap);
+}
+
+.gp-uc-side--input:focus-within {
+  background:
+    linear-gradient(150deg,
+      color-mix(in oklab, var(--gp-widget-accent), transparent 92%),
+      transparent 82%);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in oklab, var(--gp-widget-accent), transparent 60%),
+    inset 0 1px 0 color-mix(in oklab, white, transparent 94%);
+}
+
+.gp-uc-side--output {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 78% 18%,
+      color-mix(in oklab, var(--gp-widget-accent), transparent 89%),
+      transparent 48%),
+    var(--gp-uc-well);
+  box-shadow:
+    inset 0 2px 5px rgb(0 0 0 / 0.36),
+    inset 0 -1px 0 color-mix(in oklab, white, transparent 95%);
+}
+
+.gp-uc-side--output::after {
+  position: absolute;
+  right: -15px;
+  bottom: -21px;
+  width: 58px;
+  height: 58px;
+  border: 1px solid color-mix(in oklab, var(--gp-widget-accent), transparent 88%);
+  border-radius: 50%;
+  content: '';
+  pointer-events: none;
+}
+
+.gp-uc-side-label {
+  color: var(--gp-uc-faint);
+  font-size: 8px;
+  font-weight: 680;
+  letter-spacing: 0.105em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.gp-uc-side--output .gp-uc-side-label {
+  color: color-mix(in oklab, var(--gp-widget-accent), transparent 38%);
+}
+
+.gp-uc-value-row {
+  display: flex;
+  min-width: 0;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.gp-uc-value-row input,
+.gp-uc-value-row output {
+  width: 100%;
+  min-width: 0;
+  min-height: 29px;
+  overflow: hidden;
+  border: 0;
+  color: var(--gp-uc-ink);
+  background: transparent;
+  font-size: clamp(18px, 8cqi, 25px);
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.045em;
+  line-height: 1.12;
+  outline: 0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gp-uc-value-row output {
+  color: color-mix(in oklab, var(--gp-widget-accent), white 19%);
+  text-shadow: 0 0 20px color-mix(in oklab, var(--gp-widget-accent), transparent 81%);
+}
+
+.gp-uc-value-row em {
+  flex: 0 0 auto;
+  color: var(--gp-uc-quiet);
+  font-size: 9px;
+  font-style: normal;
+  font-weight: 640;
+  letter-spacing: -0.01em;
+}
+
+.gp-uc-value-row input::-webkit-outer-spin-button,
+.gp-uc-value-row input::-webkit-inner-spin-button,
+.gp-uc-detail input::-webkit-outer-spin-button,
+.gp-uc-detail input::-webkit-inner-spin-button {
+  margin: 0;
+  appearance: none;
+}
+
+.gp-uc-value-row input[type='number'],
+.gp-uc-detail input[type='number'] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+.gp-uc-side select {
+  width: 100%;
+  min-width: 0;
+  min-height: 24px;
+  border: 0;
+  padding: 0 15px 0 0;
+  overflow: hidden;
+  color: var(--gp-uc-quiet);
+  background: transparent;
+  font-size: 8.5px;
+  font-weight: 570;
+  outline: 0;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+.gp-uc-output-foot {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 4px;
+}
+
+.gp-uc-output-foot select,
+.gp-uc-output-foot .gp-uc-unit-name {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.gp-uc-unit-name {
+  overflow: hidden;
+  color: var(--gp-uc-quiet);
+  font-size: 8.5px;
+  font-weight: 620;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gp-uc-swap {
+  align-self: center;
+  display: inline-flex;
+  width: 32px;
+  height: 32px;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 50%;
+  color: color-mix(in oklab, var(--gp-widget-accent), transparent 23%);
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 90%);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in oklab, var(--gp-widget-accent), transparent 78%),
+    0 4px 12px rgb(0 0 0 / 0.13);
+  cursor: pointer;
+  transition:
+    color var(--gp-duration-snap) var(--gp-ease-snap),
+    background-color var(--gp-duration-snap) var(--gp-ease-snap),
+    transform var(--gp-duration-snap) var(--gp-ease-spring);
+}
+
+.gp-uc-swap:hover {
+  color: color-mix(in oklab, var(--gp-widget-accent), white 24%);
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 83%);
+  transform: rotate(180deg) scale(1.05);
+}
+
+.gp-uc-swap:active {
+  transform: rotate(180deg) scale(0.92);
+}
+
+.gp-uc-swap:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.gp-uc-copy {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  width: 27px;
+  height: 27px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 50%;
+  color: color-mix(in oklab, var(--gp-widget-accent), transparent 38%);
+  background: transparent;
+  cursor: pointer;
+  transition:
+    color var(--gp-duration-snap) var(--gp-ease-snap),
+    background-color var(--gp-duration-snap) var(--gp-ease-snap),
+    transform var(--gp-duration-snap) var(--gp-ease-snap);
+}
+
+.gp-uc-copy:hover,
+.gp-uc-copy[data-copied] {
+  color: color-mix(in oklab, var(--gp-widget-accent), white 20%);
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 86%);
+}
+
+.gp-uc-copy:active {
+  transform: scale(0.9);
+}
+
+/* ------------------------------------------------------------- details */
+
+.gp-uc-detail {
+  min-width: 0;
+  border-block: 1px solid var(--gp-uc-rule);
+}
+
+.gp-uc-detail--general {
+  display: grid;
+  min-height: 28px;
+  grid-template-columns: auto 1fr auto 1fr auto;
+  align-items: center;
+  gap: 8px;
+  padding-inline: 8px;
+  color: var(--gp-uc-faint);
+  font-size: 8px;
+  font-weight: 690;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.gp-uc-detail--general i {
+  height: 1px;
+  background:
+    repeating-linear-gradient(90deg,
+      color-mix(in oklab, var(--gp-widget-accent), transparent 73%) 0 2px,
+      transparent 2px 5px);
+}
+
+.gp-uc-detail--general span:first-child,
+.gp-uc-detail--general span:last-child {
+  color: color-mix(in oklab, var(--gp-widget-accent), transparent 22%);
+}
+
+.gp-uc-detail--cooking {
+  display: grid;
+  min-height: 36px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: center;
+}
+
+.gp-uc-detail--cooking > span {
+  display: flex;
+  min-width: 0;
+  align-items: baseline;
+  justify-content: center;
+  gap: 4px;
+  border-right: 1px solid var(--gp-uc-rule);
+  color: var(--gp-uc-quiet);
+  font-size: 8px;
+  font-weight: 620;
+}
+
+.gp-uc-detail--cooking > span:last-child {
+  border-right: 0;
+}
+
+.gp-uc-detail--cooking i {
+  color: color-mix(in oklab, var(--gp-widget-accent), white 14%);
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 590;
+}
+
+.gp-uc-detail--engineering {
+  display: grid;
+  min-height: 36px;
+  grid-template-columns: auto auto auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 7px;
+  padding: 0 9px;
+  background:
+    linear-gradient(90deg, transparent 49.5%, var(--gp-uc-rule) 50%, transparent 50.5%),
+    linear-gradient(0deg, transparent 49.5%, var(--gp-uc-rule) 50%, transparent 50.5%);
+  background-size: 12px 12px;
+}
+
+.gp-uc-detail--engineering span {
+  color: var(--gp-uc-faint);
+  font-size: 7px;
+  font-weight: 750;
+  letter-spacing: 0.12em;
+}
+
+.gp-uc-detail--engineering code {
+  overflow: hidden;
+  color: color-mix(in oklab, var(--gp-widget-accent), white 10%);
+  font-size: 9px;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gp-uc-detail--engineering i {
+  color: var(--gp-uc-faint);
+  font-size: 9px;
+  font-style: normal;
+}
+
+.gp-uc-detail--data {
+  display: grid;
+  min-height: 44px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: stretch;
+}
+
+.gp-uc-detail--data > span {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: 1fr 1fr;
+  align-items: center;
+  column-gap: 6px;
+  padding: 6px 7px;
+  border-right: 1px solid var(--gp-uc-rule);
+}
+
+.gp-uc-detail--data > span:last-child {
+  border-right: 0;
+}
+
+.gp-uc-detail--data i {
+  display: inline-flex;
+  width: 23px;
+  height: 23px;
+  grid-row: 1 / -1;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  color: color-mix(in oklab, var(--gp-widget-accent), white 13%);
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 90%);
+  font-size: 8px;
+  font-style: normal;
+  font-weight: 760;
+}
+
+.gp-uc-detail--data strong {
+  align-self: end;
+  overflow: hidden;
+  color: var(--gp-uc-quiet);
+  font-size: 8px;
+  font-weight: 680;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gp-uc-detail--data em {
+  align-self: start;
+  overflow: hidden;
+  color: var(--gp-uc-faint);
+  font-size: 6.5px;
+  font-style: normal;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gp-uc-detail--temperature {
+  display: grid;
+  min-height: 38px;
+  grid-template-columns: auto minmax(60px, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  padding-inline: 9px;
+  color: var(--gp-uc-faint);
+  font-size: 7px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.gp-uc-detail--temperature i {
+  position: relative;
+  height: 5px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #60a5fa, #a78bfa 47%, #fb7185);
+  box-shadow: 0 0 13px color-mix(in oklab, var(--gp-widget-accent), transparent 78%);
+}
+
+.gp-uc-detail--temperature i::before,
+.gp-uc-detail--temperature i::after {
+  position: absolute;
+  top: 8px;
+  width: 1px;
+  height: 3px;
+  background: var(--gp-uc-rule);
+  content: '';
+}
+
+.gp-uc-detail--temperature i::before {
+  left: 25%;
+}
+
+.gp-uc-detail--temperature i::after {
+  right: 25%;
+}
+
+.gp-uc-detail--temperature b {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 11px;
+  height: 11px;
+  border: 2px solid color-mix(in oklab, var(--gp-widget-accent), white 34%);
+  border-radius: 50%;
+  background: color-mix(in oklab, var(--gp-widget-accent), #111 76%);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--gp-widget-accent), transparent 82%);
+  transform: translate(-50%, -50%);
+}
+
+/* ------------------------------------------------ currency and formula */
+
+.gp-uc-detail--currency {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr) minmax(0, 0.8fr);
+  gap: 0;
+  background: transparent;
+}
+
+.gp-uc-detail--currency label,
+.gp-uc-formula-fields label {
+  display: flex;
+  min-width: 0;
+  min-height: 46px;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3px;
+  padding: 6px 8px;
+  border-right: 1px solid var(--gp-uc-rule);
+  background: color-mix(in oklab, var(--gp-widget-bg, #121212), black 3%);
+}
+
+.gp-uc-detail--currency label:nth-child(3) {
+  border-right: 0;
+}
+
+.gp-uc-detail--currency label > span,
+.gp-uc-formula-fields label > span {
+  color: var(--gp-uc-faint);
+  font-size: 7px;
+  font-weight: 690;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.gp-uc-detail--currency input,
+.gp-uc-formula-fields input {
+  width: 100%;
+  min-width: 0;
+  min-height: 24px;
+  border: 0;
+  padding: 0;
+  color: var(--gp-uc-ink);
+  background: transparent;
+  font-size: 11px;
+  font-weight: 620;
+  font-variant-numeric: tabular-nums;
+  outline: 0;
+}
+
+.gp-uc-detail--currency label:focus-within,
+.gp-uc-formula-fields label:focus-within {
+  background: color-mix(in oklab, var(--gp-widget-accent), var(--gp-widget-bg, #121212) 92%);
+}
+
+.gp-uc-detail--currency .gp-uc-rate-field input {
+  color: color-mix(in oklab, var(--gp-widget-accent), white 18%);
+  font-size: 14px;
+}
+
+.gp-uc-detail--currency .gp-uc-date-field {
+  min-height: 38px;
+  grid-column: 1 / -1;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid var(--gp-uc-rule);
+  border-right: 0;
+}
+
+.gp-uc-date-field input {
+  width: auto;
+  max-width: 130px;
+  color: var(--gp-uc-quiet);
+  color-scheme: dark;
+  font-size: 9px;
+  text-align: right;
+}
+
+.gp-uc-detail--formula {
+  display: flex;
+  flex-direction: column;
+}
+
+.gp-uc-formula-preview {
+  display: flex;
+  min-width: 0;
+  min-height: 34px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  overflow: hidden;
+  color: var(--gp-uc-faint);
+  font-size: 9px;
+  white-space: nowrap;
+}
+
+.gp-uc-formula-preview span,
+.gp-uc-formula-preview strong {
+  color: var(--gp-uc-quiet);
+  font-size: 8px;
+  font-weight: 670;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.gp-uc-formula-preview i {
+  font-style: normal;
+}
+
+.gp-uc-formula-preview b {
+  max-width: 74px;
+  overflow: hidden;
+  color: color-mix(in oklab, var(--gp-widget-accent), white 14%);
+  font-size: 11px;
+  font-weight: 650;
+  text-overflow: ellipsis;
+}
+
+.gp-uc-formula-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0;
+  border-top: 1px solid var(--gp-uc-rule);
+  background: transparent;
+}
+
+.gp-uc-formula-fields label {
+  border-right: 1px solid var(--gp-uc-rule);
+  border-bottom: 1px solid var(--gp-uc-rule);
+}
+
+.gp-uc-formula-fields label:nth-child(even) {
+  border-right: 0;
+}
+
+.gp-uc-formula-fields label:nth-last-child(-n + 2) {
+  border-bottom: 0;
+}
+
+/* ---------------------------------------------------------------- footer */
+
+.gp-uc-footer {
+  display: flex;
+  min-width: 0;
+  min-height: 29px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 1px 1px 0;
+}
+
+.gp-uc-rate {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--gp-uc-faint);
+  font-size: 7.5px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 570;
+  letter-spacing: 0.015em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gp-uc-precision {
+  display: inline-flex;
+  min-height: 28px;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 2px;
+  border-radius: 999px;
+  padding: 2px;
+  color: var(--gp-uc-faint);
+  background: var(--gp-uc-surface);
+  box-shadow: inset 0 0 0 1px var(--gp-uc-rule);
+}
+
+.gp-uc-precision > span {
+  padding-inline: 6px 3px;
+  font-size: 7px;
+  font-weight: 680;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.gp-uc-precision button {
+  display: inline-flex;
+  width: 24px;
+  height: 24px;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 50%;
+  color: var(--gp-uc-quiet);
+  background: transparent;
+  cursor: pointer;
+}
+
+.gp-uc-precision button:hover {
+  color: color-mix(in oklab, var(--gp-widget-accent), white 14%);
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 88%);
+}
+
+.gp-uc-precision button:disabled {
+  opacity: 0.25;
+  cursor: default;
+}
+
+.gp-uc-precision output {
+  min-width: 13px;
+  color: color-mix(in oklab, var(--gp-widget-accent), white 13%);
+  font-size: 9px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  text-align: center;
+}
+
+/* ----------------------------------------------------------- skin texture */
+
+.gp-uc[data-uc-skin='cooking'] .gp-uc-side--input {
+  background:
+    radial-gradient(circle at 84% 18%, color-mix(in oklab, var(--gp-widget-accent), transparent 83%) 0 2px, transparent 3px),
+    linear-gradient(150deg, var(--gp-uc-surface), transparent 78%);
+}
+
+.gp-uc[data-uc-skin='engineering'] .gp-uc-side {
+  border-radius: 7px;
+}
+
+.gp-uc[data-uc-skin='engineering'] .gp-uc-side--input {
+  background:
+    linear-gradient(90deg, transparent 49.5%, var(--gp-uc-rule) 50%, transparent 50.5%),
+    linear-gradient(0deg, transparent 49.5%, var(--gp-uc-rule) 50%, transparent 50.5%),
+    var(--gp-uc-surface);
+  background-size: 10px 10px;
+}
+
+.gp-uc[data-uc-skin='data'] .gp-uc-side {
+  border-radius: 8px;
+}
+
+.gp-uc[data-uc-skin='temperature'] .gp-uc-side--output {
+  background:
+    radial-gradient(circle at 80% 18%, rgb(251 113 133 / 0.1), transparent 42%),
+    radial-gradient(circle at 18% 84%, rgb(96 165 250 / 0.1), transparent 44%),
+    var(--gp-uc-well);
+}
+
+.gp-uc[data-uc-skin='currency'] .gp-uc-side--output {
+  background:
+    repeating-linear-gradient(135deg, transparent 0 8px, color-mix(in oklab, var(--gp-widget-accent), transparent 96%) 8px 9px),
+    var(--gp-uc-well);
+}
+
+.gp-uc[data-uc-skin='custom_formula'] .gp-uc-side--output {
+  background:
+    radial-gradient(circle at 50% 100%, color-mix(in oklab, var(--gp-widget-accent), transparent 87%), transparent 55%),
+    var(--gp-uc-well);
+}
+
+/* -------------------------------------------------------------- responsive */
+
+@container (max-width: 285px) {
+  .gp-uc {
+    gap: 0.48rem;
+  }
+
+  .gp-uc-category-badge {
+    display: none;
+  }
+
+  .gp-uc-stage {
+    grid-template-columns: minmax(0, 1fr) 28px minmax(0, 1fr);
+    gap: 0.25rem;
+  }
+
+  .gp-uc-side {
+    min-height: 82px;
+    padding-inline: 8px;
+  }
+
+  .gp-uc-swap {
+    width: 28px;
+    height: 28px;
+  }
+
+  .gp-uc-detail--data i {
+    display: none;
+  }
+
+  .gp-uc-detail--data > span {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .gp-uc-detail--engineering {
+    gap: 4px;
+    padding-inline: 5px;
+  }
+
+  .gp-uc-precision > span {
+    display: none;
+  }
+}
+
+@container (max-width: 235px) {
+  .gp-uc-stage {
+    grid-template:
+      'input swap' auto
+      'output output' auto
+      / minmax(0, 1fr) 32px;
+  }
+
+  .gp-uc-side--input {
+    grid-area: input;
+  }
+
+  .gp-uc-swap {
+    grid-area: swap;
+  }
+
+  .gp-uc-side--output {
+    grid-area: output;
+  }
+
+  .gp-uc-footer {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+/* ----------------------------------------------------------------- themes */
+
+[data-theme='light'] .gp-uc {
+  /* The canvas turns light; widget glass intentionally remains smoked. */
+  --gp-uc-ink: var(--gp-widget-ink, #f5f7fb);
+  --gp-uc-well: rgb(0 0 0 / 0.22);
+}
+
+[data-theme='light'] .gp-uc-side--input {
+  background:
+    linear-gradient(150deg, rgb(255 255 255 / 0.06), transparent 78%);
+}
+
+[data-theme='light'] .gp-uc-side--output {
+  box-shadow:
+    inset 0 2px 4px rgb(0 0 0 / 0.34),
+    inset 0 -1px 0 rgb(255 255 255 / 0.05);
+}
+
+[data-theme='light'] .gp-uc-detail--currency label,
+[data-theme='light'] .gp-uc-formula-fields label {
+  background: color-mix(in oklab, var(--gp-widget-bg, #15181d), black 3%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gp-uc *,
+  .gp-uc *::before,
+  .gp-uc *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.001ms !important;
+  }
+
+  .gp-uc-swap:hover {
+    transform: none;
+  }
+}

@@ -34,9 +34,11 @@ interface GradeComponent {
 
 export interface GradeCalcData {
   components: GradeComponent[]
-  mode?: 'weighted' | 'gpa'
+  mode?: 'weighted' | 'gpa' | 'pass_fail' | 'what_if' | 'rubric' | 'dropped_scores' | 'curve_simulator'
   /** GPA state is retained while the weighted-grade view is active. */
   gpa?: GpaData
+  /** Optional specialist settings stay isolated by skin. */
+  skinStates?: Record<string, Record<string, unknown>>
 }
 
 interface GpaCourse {

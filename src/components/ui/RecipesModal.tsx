@@ -13,14 +13,19 @@ import { RECIPE_LEVEL_LABELS, type RecipeDefinition } from '../../utils/recipes/
 // ---------------------------------------------------------------------------
 // Recipes — the template catalogue, browsable one shelf at a time.
 //
-// 460 recipes is far more than one grid should hold, so a shelf owns the view
+// 284 recipes is far more than one grid should hold, so a shelf owns the view
 // and search cuts across every shelf at once. Each tile builds its whole board
-// — cards, skins, relations, and wires — in a single undo step.
+// — cards, skins, relations, and wires — in a single undo step. Every recipe
+// places two cards or more; a lone card is what the widget library is for.
 // ---------------------------------------------------------------------------
 
 const LEVEL_ACCENTS: Record<number, string> = {
   1: '#4ade80', 2: '#38bdf8', 3: '#a78bfa', 4: '#fbbf24', 5: '#fb7185',
 }
+
+/** Only the levels the catalogue actually carries — like the shelf list, this
+ *  follows the data, so a filter that could only return nothing never shows. */
+const LEVELS = ([1, 2, 3, 4, 5] as const).filter((value) => RECIPES.some((r) => r.level === value))
 
 function viewCenterWorld() {
   const canvas = useCanvasStore.getState()
@@ -150,7 +155,7 @@ export function RecipesModal({ onClose }: { onClose: () => void }) {
           >
             Any level
           </button>
-          {([1, 2, 3, 4, 5] as const).map((value) => (
+          {LEVELS.map((value) => (
             <button
               key={value}
               type="button"

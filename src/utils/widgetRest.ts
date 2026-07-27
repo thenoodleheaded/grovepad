@@ -40,11 +40,39 @@ export function widgetShowsTitleRow(widget: Widget, options: { glued?: boolean }
 // `effectiveWidgetSize` so visuals and geometry can never disagree.
 // ---------------------------------------------------------------------------
 
-/** How long an expand or collapse takes. Must stay in step with
- * `--gp-motion-layout` in index.css, which drives the card box's own
- * size/position glide: the outgoing content has to outlive that glide or it
- * pops out from under the incoming face. */
+/** The stock expand/collapse window, and the fallback wherever the live
+ * duration cannot be read (tests, SSR, a detached node). Kept in step with the
+ * `--gp-motion-layout` default in index.css. */
 export const REST_TRANSITION_MS = 300
+
+/**
+ * How long THIS card's expand or collapse glide will actually take.
+ *
+ * `--gp-motion-layout` is not a constant: the Fine-tune menu (Motion → Layout
+ * movement) moves it anywhere between 80ms and 800ms, and
+ * `prefers-reduced-motion` flattens it to nothing. So every hold that has to
+ * outlive the glide — the outgoing content subtree, the blur halo, the
+ * stacking lift that keeps a collapsing card above its neighbours — must read
+ * the duration off the element that is actually transitioning, never off the
+ * constant above. When the two clocks drift apart the seam is visible: a hold
+ * SHORTER than the glide unmounts the content mid-flight, blinks the halo out
+ * while it is still at full strength, and drops a half-collapsed card behind
+ * the widgets it is still covering; a hold LONGER than the glide leaves
+ * full-size content sitting inside a tile that has already finished closing.
+ */
+export function restGlideMs(element: Element | null | undefined): number {
+  if (!element || typeof window === 'undefined' || !window.getComputedStyle) {
+    return REST_TRANSITION_MS
+  }
+  // The card box glides on one shorthand, so every listed property shares a
+  // duration; the first entry is the whole story.
+  const [first] = window.getComputedStyle(element).transitionDuration.split(',')
+  const raw = first?.trim()
+  if (!raw) return REST_TRANSITION_MS
+  const value = Number.parseFloat(raw)
+  if (!Number.isFinite(value) || value < 0) return REST_TRANSITION_MS
+  return raw.endsWith('ms') ? value : value * 1000
+}
 
 export interface WidgetRestContext {
   expandedWidgetId: string | null

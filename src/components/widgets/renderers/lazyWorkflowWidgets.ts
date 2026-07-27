@@ -4,7 +4,7 @@ const loadEssentialWidgets = () => import('../modules/EssentialWidgets')
 
 export const BranchGateWidget = lazy(async () => ({ default: (await loadEssentialWidgets()).BranchGateWidget }))
 export const DailyAgendaWidget = lazy(async () => ({ default: (await loadEssentialWidgets()).DailyAgendaWidget }))
-export const DatePickerWidget = lazy(async () => ({ default: (await loadEssentialWidgets()).DatePickerWidget }))
+export const DateWidget = lazy(async () => ({ default: (await loadEssentialWidgets()).DateWidget }))
 export const DecisionMatrixWidget = lazy(async () => ({ default: (await loadEssentialWidgets()).DecisionMatrixWidget }))
 export const FormWidget = lazy(async () => ({ default: (await loadEssentialWidgets()).FormWidget }))
 export const FormulaWidget = lazy(async () => ({ default: (await loadEssentialWidgets()).FormulaWidget }))

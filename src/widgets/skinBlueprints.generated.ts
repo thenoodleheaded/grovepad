@@ -1167,7 +1167,7 @@ export const WIDGET_SKIN_BLUEPRINTS = {
     {
       "value": "dropped_scores",
       "label": "Dropped Scores",
-      "description": "Applies drop-lowest and replacement policies.",
+      "description": "Previews a result after excluding the lowest scores.",
       "implementation": "schema-extension",
       "presentation": "dashboard",
       "accent": "#e4cd72"
@@ -1757,7 +1757,7 @@ export const WIDGET_SKIN_BLUEPRINTS = {
     {
       "value": "stars",
       "label": "Stars",
-      "description": "The current familiar five-star control.",
+      "description": "The familiar five-star control.",
       "implementation": "renderer-ready",
       "presentation": "standard",
       "accent": "#e4cd72"
@@ -1765,7 +1765,7 @@ export const WIDGET_SKIN_BLUEPRINTS = {
     {
       "value": "slider",
       "label": "Slider",
-      "description": "A continuous horizontal scale with a precise numeric reading.",
+      "description": "A continuous scale with a precise reading.",
       "implementation": "renderer-ready",
       "presentation": "standard",
       "accent": "#729ce4"
@@ -1773,7 +1773,7 @@ export const WIDGET_SKIN_BLUEPRINTS = {
     {
       "value": "emoji",
       "label": "Emoji",
-      "description": "A low-friction emotional or satisfaction scale.",
+      "description": "A quick emotional or satisfaction scale.",
       "implementation": "renderer-ready",
       "presentation": "standard",
       "accent": "#e472a5"
@@ -1781,7 +1781,7 @@ export const WIDGET_SKIN_BLUEPRINTS = {
     {
       "value": "traffic_light",
       "label": "Traffic Light",
-      "description": "Three-state red, amber, and green assessment.",
+      "description": "A clear red, amber, or green assessment.",
       "implementation": "renderer-ready",
       "presentation": "standard",
       "accent": "#e4c072"
@@ -1789,7 +1789,7 @@ export const WIDGET_SKIN_BLUEPRINTS = {
     {
       "value": "nps",
       "label": "NPS",
-      "description": "A zero-to-ten recommendation scale with detractor group labels.",
+      "description": "A zero-to-ten recommendation scale.",
       "implementation": "renderer-ready",
       "presentation": "standard",
       "accent": "#729de4"
@@ -1797,7 +1797,7 @@ export const WIDGET_SKIN_BLUEPRINTS = {
     {
       "value": "rubric",
       "label": "Rubric",
-      "description": "Combines several rated criteria into one score.",
+      "description": "Combine several named criteria into one published rating.",
       "implementation": "schema-extension",
       "presentation": "matrix",
       "accent": "#e4cd72"
@@ -1805,7 +1805,7 @@ export const WIDGET_SKIN_BLUEPRINTS = {
     {
       "value": "confidence",
       "label": "Confidence",
-      "description": "Pairs the rating with a certainty or evidence-strength reading.",
+      "description": "Pair the rating with certainty and a short evidence note.",
       "implementation": "schema-extension",
       "presentation": "standard",
       "accent": "#e4cd72"
@@ -2147,7 +2147,7 @@ export const WIDGET_SKIN_BLUEPRINTS = {
     {
       "value": "general",
       "label": "General",
-      "description": "The current input/output conversion.",
+      "description": "Everyday length, weight, temperature, and duration conversions.",
       "implementation": "renderer-ready",
       "presentation": "standard",
       "accent": "#a7e472"
@@ -2155,7 +2155,7 @@ export const WIDGET_SKIN_BLUEPRINTS = {
     {
       "value": "cooking",
       "label": "Cooking",
-      "description": "Cups, spoons, weight, temperature, and serving-friendly units.",
+      "description": "Cups, spoons, weight, temperature, and kitchen-friendly units.",
       "implementation": "renderer-ready",
       "presentation": "standard",
       "accent": "#e472e2"
@@ -2171,7 +2171,7 @@ export const WIDGET_SKIN_BLUEPRINTS = {
     {
       "value": "data",
       "label": "Data",
-      "description": "Bits, bytes, transfer sizes, and decimal/binary prefixes.",
+      "description": "Bits, bytes, transfer sizes, and decimal or binary prefixes.",
       "implementation": "renderer-ready",
       "presentation": "standard",
       "accent": "#72d1e4"
@@ -2187,7 +2187,7 @@ export const WIDGET_SKIN_BLUEPRINTS = {
     {
       "value": "currency",
       "label": "Currency",
-      "description": "Adds dated exchange-rate sources and freshness.",
+      "description": "A clearly dated manual exchange rate without a network dependency.",
       "implementation": "schema-extension",
       "presentation": "standard",
       "accent": "#72c6e4"
@@ -2195,7 +2195,7 @@ export const WIDGET_SKIN_BLUEPRINTS = {
     {
       "value": "custom_formula",
       "label": "Custom Formula",
-      "description": "Lets a user define safe factor and offset conversions.",
+      "description": "A bounded factor and offset conversion with your own unit names.",
       "implementation": "schema-extension",
       "presentation": "form",
       "accent": "#72e4e0"
@@ -2396,7 +2396,7 @@ export const WIDGET_SKIN_BLUEPRINTS = {
       "value": "roleplay",
       "label": "Roleplay",
       "description": "Speaker goals, hidden notes, and performance prompts.",
-      "implementation": "renderer-ready",
+      "implementation": "schema-extension",
       "presentation": "form",
       "accent": "#e4cd72"
     },

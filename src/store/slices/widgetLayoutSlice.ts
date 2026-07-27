@@ -19,7 +19,7 @@ import { buildGlueIndex, expandMovedWidgetIds } from '../widgetGraph'
 import { MIN_WIDGET_HEIGHT, MIN_WIDGET_WIDTH } from '../widgetLayoutConstants'
 import { fitWidgetSize, computeDataHeight, computeDataWidth } from '../widgetSizing'
 import { settleWidgetLayout } from '../widgetSettling'
-import { untangleCanvasLayout } from '../widgetUntangle'
+import { compactSelectedTrees, untangleCanvasLayout } from '../widgetUntangle'
 import type { WidgetStoreSlice, WidgetStoreSliceContext } from '../widgetStoreSliceContext'
 
 function fullSizing(widget: Widget) {
@@ -159,7 +159,17 @@ export function createWidgetLayoutSlice({ set, get, pushHistory }: WidgetStoreSl
     const selectedWidgets = Object.fromEntries(
       selectedIds.map((id) => [id, state.widgets[id]!]),
     )
-    const untangled = untangleCanvasLayout(selectedWidgets, state.glues, canvasId)
+    // Trees first: any parent-linked family inside the selection is pulled in to
+    // an exact 2-cell lattice. Then the separation pass clears whatever is still
+    // overlapping — holding each compacted tree rigid, so the pass that only
+    // ever pushes cannot undo the compaction it was handed.
+    const compacted = compactSelectedTrees(selectedWidgets, state.glues, state.relations, canvasId)
+    const untangled = untangleCanvasLayout(
+      compacted.widgets,
+      state.glues,
+      canvasId,
+      compacted.trees,
+    )
     if (untangled === selectedWidgets) {
       useToastStore.getState().addToast('Selection already untangled')
       return
@@ -170,7 +180,11 @@ export function createWidgetLayoutSlice({ set, get, pushHistory }: WidgetStoreSl
     )
     pushHistory()
     set({ widgets: applyWidgetPositions(state.widgets, positions) })
-    useToastStore.getState().addToast('Untangled selection')
+    useToastStore.getState().addToast(
+      compacted.trees.length > 0
+        ? `Compacted ${compacted.trees.length === 1 ? 'tree' : `${compacted.trees.length} trees`}`
+        : 'Untangled selection',
+    )
   },
 
   autoScaleCanvas: () => {

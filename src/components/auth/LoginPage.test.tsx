@@ -8,6 +8,7 @@ describe('LoginPage field surfaces', () => {
 
     expect(markup.match(/gp-field-island/g)).toHaveLength(2)
     expect(markup.match(/gp-input/g)).toHaveLength(2)
+    expect(markup.match(/gp-login-input/g)).toHaveLength(2)
     expect(markup.match(/gp-login-action /g)).toHaveLength(2)
     expect(markup.match(/gp-login-provider/g)).toHaveLength(4)
     expect(markup).not.toContain('gp-hairline')

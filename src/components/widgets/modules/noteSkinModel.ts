@@ -34,6 +34,49 @@ const CALLOUT_TONES = new Set<NoteCalloutTone>([
   'important',
 ])
 
+export interface DailyLogEdit {
+  text: string
+  cursor: number
+}
+
+export function autoTimestampFirstDailyLogEntry(
+  previousText: string,
+  nextText: string,
+  timeLabel: string,
+): { text: string; cursorOffset: number } {
+  if (
+    previousText.trim() ||
+    !nextText.trim() ||
+    nextText.trimStart().startsWith(timeLabel)
+  ) {
+    return { text: nextText, cursorOffset: 0 }
+  }
+
+  const prefix = `${timeLabel}  `
+  return {
+    text: `${prefix}${nextText}`,
+    cursorOffset: prefix.length,
+  }
+}
+
+export function addDailyLogTimestamp(
+  text: string,
+  selectionStart: number,
+  selectionEnd: number,
+  timeLabel: string,
+): DailyLogEdit {
+  const start = Math.max(0, Math.min(selectionStart, text.length))
+  const end = Math.max(start, Math.min(selectionEnd, text.length))
+  const before = text.slice(0, start)
+  const separator = before.length > 0 && !before.endsWith('\n') ? '\n' : ''
+  const insertion = `${separator}${timeLabel}  `
+
+  return {
+    text: `${before}${insertion}${text.slice(end)}`,
+    cursor: before.length + insertion.length,
+  }
+}
+
 export function noteCalloutTone(raw: unknown): NoteCalloutTone {
   return typeof raw === 'string' && CALLOUT_TONES.has(raw as NoteCalloutTone)
     ? raw as NoteCalloutTone

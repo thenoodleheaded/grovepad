@@ -12,9 +12,24 @@ import {
 import { useWidgetClock } from '../../hooks/useWidgetClock'
 import {
   restingFace,
+  type RestEyebrow,
+  type RestNoteModel,
   type RestingFaceModel,
   type RestRow,
 } from '../../utils/restingFace'
+import {
+  BarsFace,
+  ChainFace,
+  ChipsFace,
+  ColumnsFace,
+  EyebrowLine,
+  GaugeFace,
+  GridFace,
+  LinesFace,
+  PaperFace,
+  SplitFace,
+  TimelineFace,
+} from './RestingFaceGrammars'
 
 // ---------------------------------------------------------------------------
 // Resting faces: the widget's information drawn as itself, inside the exact
@@ -29,6 +44,16 @@ import {
 
 const SPARK_WIDTH = 100
 const SPARK_HEIGHT = 40
+
+/**
+ * Two-dimensional grammars fill their tile rather than sitting centred in it:
+ * a board's columns, a month's weeks, and a timeline's scale all mean "the
+ * whole box", and their measured heights in restingFace.ts already include the
+ * 12/10 padding applied here.
+ */
+const STRETCH_FACES = new Set<RestingFaceModel['kind']>([
+  'columns', 'grid', 'bars', 'chips', 'lines', 'chain', 'timeline', 'split',
+])
 
 function chartSeries(data: unknown): SeriesPoint[] {
   const rec = data as {
@@ -230,18 +255,36 @@ function CalendarWeekFace({ data, accent }: { data: CalendarData; accent: string
   )
 }
 
+const ROW_TONE_INK: Record<string, string> = {
+  muted: 'rgb(115 115 115)',
+  good: 'oklch(78% 0.15 162)',
+  warn: 'oklch(80% 0.15 78)',
+  bad: 'oklch(70% 0.19 22)',
+}
+
 /** Real item rows: completion glyph when the item has one, trailing value
  * when the item carries a number. "N items" never appears — the items do. */
-function RowsFace({ rows, overflow, accent }: {
+function RowsFace({ rows, overflow, accent, eyebrow, meter }: {
   rows: readonly RestRow[]
   overflow: number
   accent: string
+  eyebrow?: RestEyebrow
+  meter?: number
 }) {
   const completable = rows.filter((row) => row.done !== undefined)
   const done = completable.filter((row) => row.done).length
 
   return (
     <div className="flex w-full min-w-0 flex-col" aria-hidden>
+      {eyebrow && <EyebrowLine eyebrow={eyebrow} accent={accent} />}
+      {meter !== undefined && (
+        <span className="mb-[3px] flex h-[3px] w-full overflow-hidden rounded-full bg-white/[0.06]">
+          <span
+            className="h-full rounded-full"
+            style={{ width: `${Math.round(meter * 100)}%`, background: accent, opacity: 0.85 }}
+          />
+        </span>
+      )}
       {rows.map((row) => (
         <span key={row.key} className="group/rest-row flex h-4 min-w-0 items-center gap-1.5">
           {row.done !== undefined && (
@@ -267,7 +310,12 @@ function RowsFace({ rows, overflow, accent }: {
             {row.label}
           </span>
           {row.value !== undefined && (
-            <span className="shrink-0 text-[10px] font-semibold leading-4 tabular-nums text-neutral-300">
+            <span
+              className="shrink-0 text-[10px] font-semibold leading-4 tabular-nums text-neutral-300"
+              style={row.tone && row.tone !== 'neutral'
+                ? { color: row.tone === 'accent' ? accent : ROW_TONE_INK[row.tone] }
+                : undefined}
+            >
               {row.value}
             </span>
           )}
@@ -289,6 +337,272 @@ function RowsFace({ rows, overflow, accent }: {
           />
         </span>
       )}
+    </div>
+  )
+}
+
+const STICKY_REST_COLORS = {
+  yellow: '#fcd34d',
+  pink: '#f472b6',
+  blue: '#38bdf8',
+  green: '#34d399',
+  purple: '#a78bfa',
+} as const
+
+const CALLOUT_REST_TREATMENTS = {
+  info: { label: 'Info', color: '#60a5fa' },
+  tip: { label: 'Tip', color: '#34d399' },
+  warning: { label: 'Warning', color: '#f59e0b' },
+  decision: { label: 'Decision', color: '#a78bfa' },
+  important: { label: 'Important', color: '#f472b6' },
+} as const
+
+const REST_LOG_DATE_FORMATTER = new Intl.DateTimeFormat(undefined, {
+  weekday: 'short',
+  month: 'short',
+  day: 'numeric',
+})
+
+function restLogDate(raw?: string): string {
+  if (!raw) return 'Daily log'
+  const parsed = new Date(`${raw}T12:00:00`)
+  return Number.isNaN(parsed.getTime()) ? 'Daily log' : REST_LOG_DATE_FORMATTER.format(parsed)
+}
+
+/**
+ * A fixed-ceiling reading of the Note body. The model has already reduced
+ * arbitrary writing to five lines, so every branch below has the same small,
+ * predictable DOM cost.
+ */
+function NotePreviewLines({
+  model,
+  className = '',
+}: {
+  model: RestNoteModel
+  className?: string
+}) {
+  return (
+    <div className={`flex min-h-0 min-w-0 flex-1 flex-col justify-center gap-[2px] ${className}`}>
+      {model.lines.map((line, index) => {
+        if (line.kind === 'rule') {
+          return <span key={index} className="my-[3px] h-px w-full bg-current opacity-15" />
+        }
+        if (line.kind === 'bullet') {
+          return (
+            <span key={index} className="flex min-w-0 items-center gap-1.5 text-[9.5px] leading-[12px] text-neutral-300">
+              <span aria-hidden className="h-[3px] w-[3px] shrink-0 rounded-full bg-current opacity-65" />
+              <span className="truncate">{line.text}</span>
+            </span>
+          )
+        }
+        if (line.kind === 'heading') {
+          return (
+            <strong key={index} className="truncate text-[11.5px] font-semibold leading-[14px] text-neutral-100">
+              {line.text}
+            </strong>
+          )
+        }
+        if (line.kind === 'quote') {
+          return (
+            <span key={index} className="truncate border-l border-current pl-1.5 text-[9.5px] italic leading-[13px] text-neutral-400">
+              {line.text}
+            </span>
+          )
+        }
+        if (line.kind === 'code') {
+          return (
+            <code key={index} className="truncate rounded-[3px] bg-black/25 px-1 py-px text-[8px] leading-[11px] text-neutral-300">
+              {line.text}
+            </code>
+          )
+        }
+        return (
+          <span key={index} className="truncate text-[10px] leading-[14px] text-neutral-300">
+            {line.text}
+          </span>
+        )
+      })}
+    </div>
+  )
+}
+
+/**
+ * Eight compact editorial arrangements, each borrowing the same visual
+ * grammar as its expanded Note skin. These are intentionally plain DOM and
+ * gradients: no textarea, Markdown renderer, layout measurement, animation,
+ * or effect is mounted while a card rests.
+ */
+function NoteFace({ model, accent }: { model: RestNoteModel; accent: string }) {
+  if (model.skin === 'sticky') {
+    const color = STICKY_REST_COLORS[model.color ?? 'yellow']
+    return (
+      <div
+        data-rest-note-skin="sticky"
+        className="relative flex h-full w-full overflow-hidden rounded-[10px] px-3 pb-2 pt-3"
+        style={{
+          color,
+          background: `linear-gradient(145deg, ${color}22, ${color}0a 68%, transparent)`,
+          boxShadow: `inset 0 0 0 1px ${color}20`,
+        }}
+      >
+        <span
+          aria-hidden
+          className="absolute left-1/2 top-[3px] h-[4px] w-9 -translate-x-1/2 rounded-full"
+          style={{ background: `${color}55` }}
+        />
+        <span
+          aria-hidden
+          className="pointer-events-none absolute inset-x-3 bottom-2 top-4 opacity-25"
+          style={{
+            backgroundImage: `repeating-linear-gradient(180deg, transparent 0 13px, ${color} 13px 14px)`,
+          }}
+        />
+        <NotePreviewLines model={model} className="relative" />
+      </div>
+    )
+  }
+
+  if (model.skin === 'quote') {
+    return (
+      <div
+        data-rest-note-skin="quote"
+        className="relative flex h-full w-full flex-col overflow-hidden px-4 py-2.5 pl-7"
+      >
+        <span
+          aria-hidden
+          className="absolute bottom-2.5 left-3 top-6 w-[2px] rounded-full"
+          style={{ background: `linear-gradient(${accent}aa, transparent)` }}
+        />
+        <span
+          aria-hidden
+          className="absolute left-2 top-0 text-[31px] leading-none opacity-45"
+          style={{ color: accent }}
+        >
+          “
+        </span>
+        <NotePreviewLines model={model} className="italic" />
+        {model.attribution && (
+          <span className="mt-1 flex min-w-0 items-center gap-1.5 text-[8px] font-semibold uppercase tracking-[0.09em] text-neutral-500">
+            <span aria-hidden className="h-px w-3 shrink-0" style={{ background: `${accent}88` }} />
+            <span className="truncate">{model.attribution}</span>
+          </span>
+        )}
+      </div>
+    )
+  }
+
+  if (model.skin === 'daily_log') {
+    return (
+      <div data-rest-note-skin="daily_log" className="flex h-full w-full flex-col px-3 py-2.5">
+        <div className="flex h-5 items-center gap-1.5 border-b border-white/[0.07] pb-1 text-[8px] font-semibold uppercase tracking-[0.08em]">
+          <span aria-hidden className="h-[5px] w-[5px] rounded-full" style={{ background: accent, boxShadow: `0 0 6px ${accent}` }} />
+          <span className="truncate" style={{ color: accent }}>{restLogDate(model.date)}</span>
+        </div>
+        <div className="flex min-h-0 flex-1 gap-2 pt-1.5">
+          <span
+            aria-hidden
+            className="w-px shrink-0 rounded-full"
+            style={{ background: `linear-gradient(${accent}99, transparent)` }}
+          />
+          <NotePreviewLines model={model} />
+        </div>
+      </div>
+    )
+  }
+
+  if (model.skin === 'markdown_page') {
+    return (
+      <div data-rest-note-skin="markdown_page" className="flex h-full w-full flex-col px-3 py-2.5">
+        <div className="mb-1.5 flex h-4 items-center justify-between border-b border-white/[0.07] pb-1">
+          <span className="text-[8px] font-semibold uppercase tracking-[0.1em]" style={{ color: accent }}>
+            Markdown
+          </span>
+          <span className="rounded-[4px] bg-white/[0.05] px-1.5 py-px text-[7px] text-neutral-500">Read</span>
+        </div>
+        <NotePreviewLines model={model} />
+      </div>
+    )
+  }
+
+  if (model.skin === 'typewriter') {
+    return (
+      <div data-rest-note-skin="typewriter" className="flex h-full w-full flex-col px-3 py-2">
+        <div className="flex h-4 items-center border-b border-white/[0.07] text-[7.5px] font-medium uppercase tracking-[0.14em] text-neutral-500">
+          Draft
+        </div>
+        <div className="relative mx-auto flex min-h-0 w-[88%] flex-1 py-1.5">
+          <NotePreviewLines model={model} />
+          <span
+            aria-hidden
+            className="absolute inset-x-0 bottom-0 h-px"
+            style={{ background: `linear-gradient(90deg, transparent, ${accent}88, transparent)` }}
+          />
+        </div>
+      </div>
+    )
+  }
+
+  if (model.skin === 'callout') {
+    const treatment = CALLOUT_REST_TREATMENTS[model.tone ?? 'info']
+    return (
+      <div
+        data-rest-note-skin="callout"
+        data-rest-callout-tone={model.tone ?? 'info'}
+        className="relative flex h-full w-full flex-col overflow-hidden px-3 py-2.5 pl-4"
+        style={{ background: `radial-gradient(85% 90% at 0% 0%, ${treatment.color}18, transparent 72%)` }}
+      >
+        <span
+          aria-hidden
+          className="absolute bottom-2 left-2 top-2 w-[2px] rounded-full"
+          style={{ background: `linear-gradient(${treatment.color}, ${treatment.color}33)`, boxShadow: `0 0 8px ${treatment.color}66` }}
+        />
+        <span className="mb-1 text-[8px] font-bold uppercase tracking-[0.1em]" style={{ color: treatment.color }}>
+          {treatment.label}
+        </span>
+        <NotePreviewLines model={model} />
+      </div>
+    )
+  }
+
+  if (model.skin === 'versioned_note') {
+    return (
+      <div data-rest-note-skin="versioned_note" className="flex h-full w-full flex-col px-3 py-2.5">
+        <div className="mb-1 flex h-4 items-center justify-between border-b border-white/[0.07] pb-1">
+          <span className="text-[8px] font-semibold uppercase tracking-[0.1em]" style={{ color: accent }}>
+            Versions
+          </span>
+          <span aria-hidden className="flex gap-[2px]">
+            {[0, 1, 2].map((index) => (
+              <span key={index} className="h-[3px] w-[3px] rounded-full" style={{ background: index === 0 ? accent : 'rgb(255 255 255 / 0.12)' }} />
+            ))}
+          </span>
+        </div>
+        <NotePreviewLines model={model} />
+        {model.versions && model.versions.length > 0 && (
+          <div className="mt-1 flex flex-col gap-[2px] border-t border-white/[0.06] pt-1">
+            {model.versions.map((version, index) => (
+              <span key={`${version}-${index}`} className="flex min-w-0 items-center gap-1.5 text-[7.5px] leading-[11px] text-neutral-500">
+                <span aria-hidden className="h-[3px] w-[3px] shrink-0 rounded-full" style={{ background: index === 0 ? accent : 'rgb(255 255 255 / 0.16)' }} />
+                <span className="truncate">{version}</span>
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  return (
+    <div
+      data-rest-note-skin="plain"
+      className="relative flex h-full w-full overflow-hidden px-3 py-2.5"
+    >
+      <span
+        aria-hidden
+        className="pointer-events-none absolute inset-x-3 bottom-2 top-2 opacity-[0.07]"
+        style={{ backgroundImage: 'repeating-linear-gradient(180deg, transparent 0 13px, currentColor 13px 14px)' }}
+      />
+      <NotePreviewLines model={model} className="relative" />
     </div>
   )
 }
@@ -501,17 +815,112 @@ export const WidgetRestingFace = memo(function WidgetRestingFace({ widget }: { w
     case 'clock': face = <ClockFace widget={widget} />; break
     case 'stars': face = <StarsFace value={model.value} accent={accent} />; break
     case 'palette': face = <PaletteFace colors={model.colors} />; break
-    case 'rows': face = <RowsFace rows={model.rows} overflow={model.overflow} accent={accent} />; break
+    case 'rows':
+      face = (
+        <RowsFace
+          rows={model.rows}
+          overflow={model.overflow}
+          accent={accent}
+          eyebrow={model.eyebrow}
+          meter={model.meter}
+        />
+      )
+      break
+    case 'note': face = <NoteFace model={model} accent={accent} />; break
     case 'text': face = <TextFace model={model} accent={accent} />; break
     case 'boolean': face = <BooleanFace model={model} accent={accent} />; break
     case 'metric': face = <MetricFace model={model} accent={accent} />; break
+    case 'columns':
+      face = <ColumnsFace columns={model.columns} eyebrow={model.eyebrow} accent={accent} />
+      break
+    case 'grid':
+      face = (
+        <GridFace
+          cols={model.cols}
+          header={model.header}
+          cells={model.cells}
+          eyebrow={model.eyebrow}
+          dense={model.dense}
+          accent={accent}
+        />
+      )
+      break
+    case 'bars': face = <BarsFace bars={model.bars} eyebrow={model.eyebrow} accent={accent} />; break
+    case 'gauge':
+      face = (
+        <GaugeFace
+          progress={model.progress}
+          primary={model.primary}
+          secondary={model.secondary}
+          caption={model.caption}
+          tone={model.tone}
+          accent={accent}
+        />
+      )
+      break
+    case 'chips':
+      face = <ChipsFace chips={model.chips} overflow={model.overflow} eyebrow={model.eyebrow} accent={accent} />
+      break
+    case 'lines':
+      face = (
+        <LinesFace
+          lines={model.lines}
+          eyebrow={model.eyebrow}
+          mono={model.mono}
+          total={model.total}
+          accent={accent}
+        />
+      )
+      break
+    case 'chain':
+      face = (
+        <ChainFace
+          nodes={model.nodes}
+          shape={model.shape}
+          overflow={model.overflow}
+          eyebrow={model.eyebrow}
+          accent={accent}
+        />
+      )
+      break
+    case 'timeline':
+      face = <TimelineFace units={model.units} lanes={model.lanes} eyebrow={model.eyebrow} accent={accent} />
+      break
+    case 'split':
+      face = (
+        <SplitFace
+          left={model.left}
+          right={model.right}
+          divider={model.divider}
+          eyebrow={model.eyebrow}
+          accent={accent}
+        />
+      )
+      break
+    case 'paper':
+      face = (
+        <PaperFace
+          pattern={model.pattern}
+          strokes={model.strokes}
+          frames={model.frames}
+          eyebrow={model.eyebrow}
+          accent={accent}
+        />
+      )
+      break
   }
 
   return (
     <div
       aria-hidden
       data-rest-summary={model.kind}
-      className="pointer-events-none absolute inset-0 flex items-center px-3"
+      className={`pointer-events-none absolute inset-0 flex ${
+        model.kind === 'note' || model.kind === 'paper'
+          ? 'items-stretch overflow-hidden'
+          : STRETCH_FACES.has(model.kind)
+            ? 'items-stretch overflow-hidden px-3 py-[10px]'
+            : 'items-center px-3'
+      }`}
     >
       {face}
     </div>

@@ -349,8 +349,17 @@ def main() -> None:
         sys.exit(f'missing source document: {DOCX}')
     inventory, templates = parse(document_lines())
     recipes = resolve(inventory, templates, atlas_labels())
+
+    # Single-card templates are dropped: placing one widget is what the widget
+    # library already does, so they add a browsing step without adding a board.
+    # A shelf left with nothing disappears with them, since emit() derives the
+    # shelf list from the recipes that survive.
+    dropped = [r for r in recipes if len(r['slots']) < 2]
+    recipes = [r for r in recipes if len(r['slots']) >= 2]
+
     OUT.write_text(emit(recipes), encoding='utf-8')
-    print(f'{OUT.relative_to(ROOT)}: {len(recipes)} recipes, '
+    print(f'{OUT.relative_to(ROOT)}: {len(recipes)} recipes '
+          f'({len(dropped)} single-card templates dropped), '
           f'{sum(len(r["slots"]) for r in recipes)} cards, '
           f'{sum(len(r["relations"]) for r in recipes)} relations, '
           f'{sum(len(r["wires"]) for r in recipes)} wires')

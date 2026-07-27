@@ -478,19 +478,13 @@
   opacity: 0;
 }
 
-.gp-note-daily-header button {
-  display: inline-flex;
-  height: 26px;
-  align-items: center;
-  gap: 0.28rem;
-  border-radius: var(--gp-r2);
-  padding: 0 0.4rem;
-  font-size: 9.5px;
-  letter-spacing: 0.06em;
-}
-
-.gp-note-daily-header button:hover {
-  background: color-mix(in oklab, var(--gp-widget-accent), transparent 90%) !important;
+.gp-note-daily-hint {
+  flex: 0 0 auto;
+  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 58%);
+  font-size: 9px;
+  font-weight: 550;
+  letter-spacing: 0.035em;
+  white-space: nowrap;
 }
 
 .gp-note-daily-body {
@@ -865,27 +859,47 @@
 
 .gp-note-history-rail {
   display: flex;
+  max-height: 168px;
+  flex-direction: column;
   gap: 0.25rem;
-  overflow-x: auto;
-  padding: 0.1rem 0 0.25rem;
-  overscroll-behavior-inline: contain;
+  overflow-y: auto;
+  padding: 0.1rem 0.2rem 0.25rem 0;
+  overscroll-behavior-block: contain;
   scrollbar-width: thin;
 }
 
 .gp-note-history-rail button {
-  display: inline-flex;
-  height: 24px;
-  flex: 0 0 auto;
+  display: grid;
+  width: 100%;
+  min-height: 30px;
+  grid-template-columns: 12px minmax(92px, 0.36fr) minmax(0, 1fr);
   align-items: center;
   gap: 0.3rem;
-  padding: 0 0.5rem;
+  border-bottom: 1px solid color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 92%);
+  border-radius: var(--gp-r2);
+  padding: 0.25rem 0.5rem;
   font-size: 9.5px;
   font-variant-numeric: tabular-nums;
-  white-space: nowrap;
+  text-align: left;
 }
 
 .gp-note-history-rail button[aria-pressed='true'] {
   color: var(--gp-note-eyebrow-ink);
+}
+
+.gp-note-history-label,
+.gp-note-history-preview {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gp-note-history-label {
+  font-weight: 650;
+}
+
+.gp-note-history-preview {
+  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 55%);
 }
 
 .gp-note-history-detail {
@@ -990,6 +1004,14 @@
     align-items: flex-start;
     flex-direction: column;
     gap: 0.2rem;
+  }
+
+  .gp-note-history-rail button {
+    grid-template-columns: 12px minmax(0, 1fr);
+  }
+
+  .gp-note-history-preview {
+    grid-column: 2;
   }
 
   .gp-note-sticky-footer {

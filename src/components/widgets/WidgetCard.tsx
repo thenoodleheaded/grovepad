@@ -25,8 +25,8 @@ import {
   expansionOffsetFor,
   isWidgetRestExpanded,
   isWidgetResting,
-  REST_TRANSITION_MS,
   restExpansionOffset,
+  restGlideMs,
   restingTileSize,
 } from '../../utils/widgetRest'
 import { restingFace } from '../../utils/restingFace'
@@ -183,10 +183,14 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
   // Resting swaps a mounted content subtree for the resting face. Holding the
   // outgoing content for one layout beat lets the two cross-fade instead of
   // the content vanishing the instant the box starts shrinking.
+  // Every hold below is measured from the card's OWN live transition, never
+  // from a constant: `--gp-motion-layout` is user-tunable (80–800ms) and
+  // reduced motion flattens it, so a hard-coded window drifts out of step with
+  // the glide it is supposed to cover. See `restGlideMs`.
   const [contentLingering, holdContent] = useTransientValue(false)
   const wasRestingRef = useRef(resting)
   useEffect(() => {
-    if (resting && !wasRestingRef.current) holdContent(true, REST_TRANSITION_MS)
+    if (resting && !wasRestingRef.current) holdContent(true, restGlideMs(layoutRef.current))
     wasRestingRef.current = resting
   }, [resting, holdContent])
   // The expanded card's blur halo outlives the expansion by one layout beat so
@@ -194,11 +198,20 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
   // the frame the slot clears. The stacking lift is held for the same beat, or
   // the fading halo would drop beneath the neighbours it is still covering.
   const [haloLingering, holdHalo] = useTransientValue(false)
+  // True for the whole of an expand or a collapse, in both directions. The
+  // only thing it drives is compositor promotion: the card's box is animating,
+  // so it earns its own layer for exactly as long as that lasts and gives it
+  // straight back — a permanent `will-change` on every card on the board costs
+  // memory for movement that isn't happening.
+  const [restGliding, holdGlide] = useTransientValue(false)
   const wasRestExpandedRef = useRef(restExpanded)
   useEffect(() => {
-    if (!restExpanded && wasRestExpandedRef.current) holdHalo(true, REST_TRANSITION_MS)
+    if (restExpanded === wasRestExpandedRef.current) return
+    const glide = restGlideMs(layoutRef.current)
+    if (!restExpanded) holdHalo(true, glide)
+    holdGlide(true, glide)
     wasRestExpandedRef.current = restExpanded
-  }, [restExpanded, holdHalo])
+  }, [restExpanded, holdHalo, holdGlide])
   // No content mounts while resting, so the content-floor pass must not run
   // (it would read an absent element and try to shrink the dormant full size).
   const shouldFitContent = Boolean(widget && !widget.iconified && !resting)
@@ -908,6 +921,7 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
       data-unglue-intent={hasUnglueIntent || undefined}
       data-glue-target={isGlueTarget || undefined}
       data-settle-pending={settlePending || undefined}
+      data-rest-motion={restGliding || undefined}
       className="gp-widget-layout-motion group/widget-shell absolute left-0 top-0"
       style={{
         // The ghost offset rides on the same positioning transform: displaced
@@ -931,11 +945,26 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
         /* The floor shadow under the expanded card: a ring of backdrop blur
            reaching three grid cells past every edge, riding this lifted
            wrapper so it sits ON TOP of every neighbouring widget. Painted
-           before the article in DOM order, so the card itself stays crisp. */
+           before the article in DOM order, so the card itself stays crisp.
+
+           Its box is pinned to the card's EXPANDED size and centred, so it
+           holds absolutely still for the whole gesture while the card glides
+           in or out of it. That is a correctness point as much as a speed one:
+           expansion is centre-anchored (see `expansionOffsetFor`), so this
+           wrapper's centre is the same screen point whether the card is a tile
+           or fully open — a fixed box hung off it never moves a pixel. A
+           backdrop filter that neither moves nor resizes is sampled once and
+           reused; letting it ride the growing box instead made the browser
+           re-snapshot and re-blur a 600×480 region on every single frame of
+           the glide, which is what dragged the animation off 60fps. */
         <div
           aria-hidden
           className="gp-rest-halo"
           data-halo-out={!restExpanded || undefined}
+          style={{
+            '--gp-halo-w': `${widget.size.width}px`,
+            '--gp-halo-h': `${widget.size.height}px`,
+          } as CSSProperties}
         />
       )}
       <article

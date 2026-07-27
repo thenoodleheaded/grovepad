@@ -141,7 +141,7 @@ export interface ExcalidrawData {
   updatedAt: string
 }
 
-interface BudgetItem {
+export interface BudgetItem {
   id: string
   label: string
   amount: number
@@ -150,6 +150,18 @@ interface BudgetItem {
 export interface BudgetData {
   currency: string
   items: BudgetItem[]
+  /** The financial lens worn by this one shared set of line items. */
+  skin?:
+    | 'category_plan'
+    | 'envelope'
+    | 'zero_based'
+    | '50_30_20'
+    | 'cashflow'
+    | 'sinking_funds'
+    | 'shared_budget'
+    | 'project_budget'
+  /** Dates, ownership, goals, and other specialist details stay isolated by skin. */
+  skinStates?: Record<string, Record<string, unknown>>
 }
 
 export interface ProgressData {
@@ -182,6 +194,15 @@ export interface DialogLine {
 
 export interface DialogData {
   lines: DialogLine[]
+  skin?:
+    | 'screenplay'
+    | 'chat'
+    | 'interview'
+    | 'roleplay'
+    | 'comic'
+    | 'localization'
+    | 'audio_transcript'
+  skinStates?: Record<string, Record<string, unknown>>
 }
 
 export interface GameTunerData {
@@ -228,11 +249,24 @@ export interface CountdownData {
   targetDate: string
 }
 
+export type HabitSkinMode =
+  | 'week_grid'
+  | 'month_heatmap'
+  | 'chain'
+  | 'scorecard'
+  | 'routine_stack'
+  | 'minimum_target'
+  | 'flexible_frequency'
+
 export interface HabitData {
   label: string
   /** Mon..Sun completion for the current week. */
   days: boolean[]
   streak: number
+  /** Alternate presentation over the same canonical seven completions. */
+  skin?: HabitSkinMode
+  /** Specialist settings stay isolated from the shared week. */
+  skinStates?: Record<string, Record<string, unknown>>
 }
 
 interface LinkItem {
@@ -278,15 +312,28 @@ export interface QuoteData {
   attribution: string
 }
 
-interface PollOption {
+export interface PollOption {
   id: string
   label: string
   votes: number
 }
 
+export type PollSkinMode =
+  | 'bars'
+  | 'donut'
+  | 'approval'
+  | 'ranked_choice'
+  | 'pairwise'
+  | 'live_room'
+  | 'anonymous'
+
 export interface PollData {
   question: string
+  /** Canonical tally. Every skin reads and writes these same counts. */
   options: PollOption[]
+  skin?: PollSkinMode
+  /** Ballots, duels, and room state stay with the skin that collects them. */
+  skinStates?: Record<string, Record<string, unknown>>
 }
 
 export interface ContactData {
@@ -382,6 +429,17 @@ export interface RatingData {
   label: string
   /** 0-5. */
   value: number
+  /** The presentation worn by this one shared rating. */
+  skin?:
+    | 'stars'
+    | 'slider'
+    | 'emoji'
+    | 'traffic_light'
+    | 'nps'
+    | 'rubric'
+    | 'confidence'
+  /** Rubric criteria and confidence evidence stay isolated by skin. */
+  skinStates?: Record<string, Record<string, unknown>>
 }
 
 export interface ColorPaletteData {
@@ -444,6 +502,17 @@ export interface CounterData {
   label: string
   count: number
   step: number
+  /** The presentation worn by this one stored number. */
+  skin?:
+    | 'tally'
+    | 'clicker'
+    | 'goal_counter'
+    | 'up_down'
+    | 'multi_counter'
+    | 'timed_rate'
+    | 'resetting_period'
+  /** Optional specialist state is isolated by skin so switching never loses it. */
+  skinStates?: Record<string, Record<string, unknown>>
 }
 
 export interface ProsConsItem {
@@ -451,10 +520,20 @@ export interface ProsConsItem {
   text: string
 }
 
+export type ProsConsSkinMode =
+  | 'balance'
+  | 'debate'
+  | 'red_team'
+  | 'weighted_trade_off'
+  | 'reversible_irreversible'
+
 export interface ProsConsData {
   topic: string
   pros: ProsConsItem[]
   cons: ProsConsItem[]
+  skin?: ProsConsSkinMode
+  /** Optional specialist fields are isolated by skin and item id. */
+  skinStates?: Record<string, Record<string, unknown>>
 }
 
 export interface PlannerTask {
@@ -525,12 +604,28 @@ interface MeetingActionItem {
   done: boolean
 }
 
+export type MeetingNotesSkinMode =
+  | 'agenda'
+  | 'minutes'
+  | 'stand_up'
+  | 'retrospective'
+  | 'one_to_one'
+  | 'decision_review'
+  | 'handoff'
+
 export interface MeetingNotesData {
   /** ISO date (yyyy-mm-dd). */
   date: string
   attendees: string
   notes: string
   actions: MeetingActionItem[]
+  skin?: MeetingNotesSkinMode
+  /**
+   * Optional specialist fields are isolated per skin: the panel prose a shape
+   * asks for (a stand-up's blockers, a handoff's risks) and a per-item map
+   * keyed by action id (a topic's timebox, a decision's review date).
+   */
+  skinStates?: Record<string, Record<string, unknown>>
 }
 
 /** Quadrants: 0 = urgent+important, 1 = important, 2 = urgent, 3 = neither. */
@@ -559,6 +654,16 @@ export interface DecisionData {
 export interface WorldClockData {
   /** IANA timezone names, e.g. "America/New_York". */
   zones: string[]
+  /** The presentation worn by this one shared list of cities. */
+  skin?:
+    | 'city_grid'
+    | 'analog_wall'
+    | 'overlap_band'
+    | 'meeting_planner'
+    | 'travel_clock'
+    | 'sunlight'
+  /** Optional specialist state is isolated by skin so switching never loses it. */
+  skinStates?: Record<string, Record<string, unknown>>
 }
 
 // ── Study & learning module schemas ────────────────────────────────────────

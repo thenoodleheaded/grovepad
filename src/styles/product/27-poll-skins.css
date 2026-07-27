@@ -1,0 +1,1253 @@
+/*
+ * Purpose-built Poll skins.
+ *
+ * The tally is canonical, so every skin paints the same numbers a different
+ * way: a ranked bar, a share dial, an approval ballot, a runoff, a duel, a
+ * hosted room, a sealed ballot. Rows sit directly on the card's backplate —
+ * no nested glass — and each option keeps one stable colour across all seven.
+ */
+
+.gp-widget-ui[data-widget-type='poll'][data-skin-presentation] {
+  background-image: none;
+}
+
+.gp-widget-ui[data-widget-type='poll'][data-skin-presentation]::before {
+  content: none;
+}
+
+.gp-poll {
+  --gp-poll-line: color-mix(in oklab, var(--gp-widget-ink, #f5f5f5), transparent 89%);
+  --gp-poll-muted: color-mix(in oklab, var(--gp-widget-ink, #f5f5f5), transparent 55%);
+  --gp-poll-faint: color-mix(in oklab, var(--gp-widget-ink, #f5f5f5), transparent 94%);
+  --gp-poll-seg: var(--gp-widget-accent);
+  display: grid;
+  height: 100%;
+  min-height: 0;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  gap: 0.42rem;
+  color: var(--gp-widget-ink, #f5f5f5);
+  container-type: inline-size;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Wrapped in :where() so this reset carries no specificity — every size and
+   colour set on a control class further down wins without an !important. */
+.gp-poll :where(button, input) {
+  font-family: inherit;
+  font-size: 0.6rem;
+  font-weight: inherit;
+}
+
+/* The shared field sheet gives every widget input a 28px floor and 12px of
+   inline padding so it reads as a well. A poll option is a line of text on the
+   card, aligned to the bar underneath it, so the well geometry is undone here
+   and `gp-bare-field` on the wrapper keeps a second glass pane from appearing. */
+.gp-poll :where(input) {
+  min-width: 0;
+  min-height: 0;
+  height: auto;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  color: inherit;
+  background: transparent;
+}
+
+.gp-poll :where(input)::placeholder {
+  color: color-mix(in oklab, var(--gp-widget-ink, #f5f5f5), transparent 76%);
+}
+
+.gp-poll :where(button) {
+  border: 0;
+  background: transparent;
+  transition: color 140ms ease, background-color 140ms ease, transform 140ms ease;
+}
+
+.gp-poll button:disabled {
+  cursor: default;
+  opacity: 0.34;
+}
+
+.gp-poll button:focus-visible,
+.gp-poll input:focus-visible {
+  outline: 1px solid color-mix(in oklab, var(--gp-widget-accent), white 14%);
+  outline-offset: 2px;
+}
+
+/* Header, question, footer ------------------------------------------------ */
+
+.gp-poll-header {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.gp-poll-eyebrow {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.32rem;
+  color: var(--gp-widget-accent);
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.gp-poll-summary {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  align-items: baseline;
+  gap: 0.24rem;
+  color: var(--gp-poll-muted);
+  font-size: 0.55rem;
+}
+
+.gp-poll-summary strong {
+  color: var(--gp-widget-ink, #f5f5f5);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.gp-poll-summary small {
+  overflow: hidden;
+  margin-left: auto;
+  padding-left: 0.3rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gp-poll-order {
+  display: inline-flex;
+  min-height: 28px;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0 0.1rem;
+  color: var(--gp-poll-muted);
+  font-size: 0.5rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.gp-poll-order:hover {
+  color: color-mix(in oklab, var(--gp-widget-accent), white 30%);
+}
+
+.gp-poll-question input {
+  width: 100%;
+  padding-bottom: 0.32rem;
+  border-bottom: 1px solid var(--gp-poll-line);
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  line-height: 1.3;
+}
+
+.gp-poll-footer {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding-top: 0.4rem;
+  border-top: 1px solid var(--gp-poll-line);
+}
+
+.gp-poll-add {
+  display: inline-flex;
+  min-height: 28px;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0 0.1rem;
+  color: color-mix(in oklab, var(--gp-widget-accent), white 22%);
+  font-size: 0.58rem;
+  font-weight: 700;
+}
+
+.gp-poll-add:hover {
+  color: color-mix(in oklab, var(--gp-widget-accent), white 45%);
+}
+
+.gp-poll-meta {
+  overflow: hidden;
+  color: var(--gp-poll-muted);
+  font-size: 0.5rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gp-poll-note {
+  padding: 0.5rem 0.1rem;
+  color: var(--gp-poll-muted);
+  font-size: 0.55rem;
+}
+
+.gp-poll-empty {
+  display: flex;
+  min-height: 5.5rem;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  color: var(--gp-poll-muted);
+  text-align: center;
+}
+
+.gp-poll-empty > svg {
+  color: var(--gp-widget-accent);
+}
+
+.gp-poll-empty strong {
+  color: var(--gp-widget-ink, #f5f5f5);
+  font-size: 0.7rem;
+}
+
+.gp-poll-empty span {
+  max-width: 13rem;
+  font-size: 0.55rem;
+}
+
+/* Shared row parts -------------------------------------------------------- */
+
+.gp-poll-label input {
+  width: 100%;
+  font-size: 0.66rem;
+  line-height: 1.3;
+}
+
+.gp-poll-count {
+  flex: 0 0 auto;
+  color: var(--gp-poll-muted);
+  font-size: 0.55rem;
+  text-align: right;
+}
+
+/* Share over count: the headline number reads at a glance, the raw tally
+   stays underneath it so nothing about the poll is hidden behind a percent. */
+.gp-poll-stat {
+  display: grid;
+  justify-items: end;
+  gap: 0.05rem;
+  line-height: 1.1;
+  text-align: right;
+}
+
+.gp-poll-stat > b {
+  color: var(--gp-widget-ink, #f5f5f5);
+  font-size: 0.64rem;
+  font-weight: 700;
+}
+
+.gp-poll-stat > small {
+  color: var(--gp-poll-muted);
+  font-size: 0.46rem;
+  white-space: nowrap;
+}
+
+.gp-poll-bar-row[data-leading] .gp-poll-stat > b {
+  color: color-mix(in oklab, var(--gp-widget-accent), white 24%);
+}
+
+.gp-poll-track {
+  position: relative;
+  overflow: hidden;
+  height: 0.42rem;
+  border-radius: 999px;
+  background: var(--gp-poll-faint);
+}
+
+.gp-poll-track-slim {
+  height: 0.25rem;
+}
+
+.gp-poll-track > span {
+  display: block;
+  height: 100%;
+  min-width: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    90deg,
+    color-mix(in oklab, var(--gp-poll-seg), transparent 45%),
+    var(--gp-poll-seg)
+  );
+  transition: width 420ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.gp-poll-track[data-masked] > span {
+  filter: blur(3px);
+  opacity: 0.45;
+}
+
+.gp-poll-count[data-masked] {
+  letter-spacing: 0.08em;
+}
+
+/* Text and icon actions are ghost controls by house rule (06-field-islands):
+   any non-empty button inside a widget has its fill and shadow stripped and a
+   28px hit floor imposed. These are styled in colour and weight, and rows
+   reserve 28px lanes so nothing is nudged by a control that is wider than the
+   glyph it draws. Only controls whose fill IS the meaning — a colour swatch, a
+   ballot mark, a duel card — opt out with `gp-check-free`. */
+.gp-poll-vote {
+  display: inline-flex;
+  width: 28px;
+  height: 28px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  color: color-mix(in oklab, var(--gp-widget-accent), white 24%);
+  font-size: 0.58rem;
+  font-weight: 700;
+}
+
+.gp-poll-vote:hover {
+  color: color-mix(in oklab, var(--gp-widget-accent), white 45%);
+  transform: translateY(-1px);
+}
+
+.gp-poll-vote:active {
+  transform: translateY(0) scale(0.92);
+}
+
+/* Removal is a hover-revealed overlay, so it never reserves a lane in the
+   row grid and never nudges the numbers as options come and go. */
+.gp-poll-remove {
+  position: absolute;
+  top: 50%;
+  right: -2px;
+  display: grid;
+  width: 28px;
+  height: 28px;
+  translate: 0 -50%;
+  place-items: center;
+  color: transparent;
+  pointer-events: none;
+}
+
+.gp-poll-bar-row:hover > .gp-poll-remove,
+.gp-poll-legend-row:hover > .gp-poll-remove,
+.gp-poll-approval-row:hover > .gp-poll-remove,
+.gp-poll-rank-row:hover > .gp-poll-remove,
+.gp-poll-room-row:hover > .gp-poll-remove,
+.gp-poll-anon-row:hover > .gp-poll-remove,
+.gp-poll-matrix th:hover .gp-poll-remove,
+.gp-poll-remove:focus-visible {
+  color: color-mix(in oklab, #fb7185, var(--gp-widget-ink, #f5f5f5) 12%);
+  pointer-events: auto;
+}
+
+.gp-poll-primary,
+.gp-poll-ghost {
+  display: inline-flex;
+  min-height: 28px;
+  align-items: center;
+  gap: 0.32rem;
+  padding: 0 0.2rem;
+  font-size: 0.58rem;
+  font-weight: 700;
+}
+
+.gp-poll-primary {
+  color: color-mix(in oklab, var(--gp-widget-accent), white 26%);
+}
+
+.gp-poll-primary:hover:not(:disabled) {
+  color: color-mix(in oklab, var(--gp-widget-accent), white 48%);
+}
+
+.gp-poll-primary em {
+  display: grid;
+  min-width: 1.1rem;
+  height: 1.1rem;
+  place-items: center;
+  border-radius: 999px;
+  color: #0b0b0d;
+  background: color-mix(in oklab, var(--gp-widget-accent), white 10%);
+  font-size: 0.5rem;
+  font-style: normal;
+  font-weight: 800;
+}
+
+.gp-poll-ghost {
+  color: var(--gp-poll-muted);
+}
+
+.gp-poll-ghost:hover:not(:disabled) {
+  color: var(--gp-widget-ink, #f5f5f5);
+}
+
+.gp-poll-action-bar {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.45rem;
+  padding-top: 0.45rem;
+}
+
+.gp-poll-action-bar .gp-poll-meta {
+  margin-left: auto;
+  text-align: right;
+}
+
+/* Bars -------------------------------------------------------------------- */
+
+.gp-poll-bars {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+  overflow: auto;
+  overscroll-behavior: contain;
+  gap: 0.12rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.gp-poll-bar-row {
+  position: relative;
+  display: grid;
+  min-width: 0;
+  grid-template-columns: 1.35rem minmax(0, 1fr) auto 28px;
+  align-items: center;
+  gap: 0.45rem;
+  border-radius: 0.55rem;
+  padding: 0.36rem 1.5rem 0.36rem 0.28rem;
+  transition: background-color 160ms ease;
+}
+
+.gp-poll-bar-row:hover {
+  background: color-mix(in oklab, var(--gp-widget-ink, #f5f5f5), transparent 96%);
+}
+
+.gp-poll-rank {
+  display: grid;
+  width: 1.35rem;
+  height: 1.35rem;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--gp-poll-muted);
+  background: var(--gp-poll-faint);
+  font-size: 0.53rem;
+  font-weight: 700;
+}
+
+.gp-poll-bar-row[data-leading] .gp-poll-rank {
+  color: #fde68a;
+  background: color-mix(in oklab, #f59e0b, transparent 82%);
+}
+
+.gp-poll-bar-body {
+  display: grid;
+  min-width: 0;
+  gap: 0.26rem;
+}
+
+/* Donut ------------------------------------------------------------------- */
+
+.gp-poll-donut {
+  display: grid;
+  min-height: 0;
+  grid-template-columns: 6.2rem minmax(0, 1fr);
+  align-items: center;
+  gap: 0.55rem;
+}
+
+@container (max-width: 270px) {
+  .gp-poll-donut {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+  }
+}
+
+.gp-poll-dial {
+  position: relative;
+  display: grid;
+  width: 100%;
+  max-width: 6.2rem;
+  margin: 0;
+  place-items: center;
+}
+
+.gp-poll-dial svg {
+  width: 100%;
+  height: auto;
+  transform: rotate(-90deg);
+}
+
+.gp-poll-dial-track {
+  fill: none;
+  stroke: var(--gp-poll-faint);
+  stroke-width: 9;
+}
+
+.gp-poll-dial-arc {
+  fill: none;
+  stroke-linecap: butt;
+  stroke-width: 9;
+  transition: stroke-dasharray 420ms cubic-bezier(0.22, 1, 0.36, 1),
+    stroke-dashoffset 420ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.gp-poll-dial[data-empty] .gp-poll-dial-arc {
+  opacity: 0.24;
+}
+
+/* The reading is inscribed in the ring's inner hole (r 40 − stroke 9/2 ≈ 35.5
+   of a 100 viewBox), so its corners must clear that radius — hence the tight
+   max-width and line-heights rather than the type's natural leading. */
+.gp-poll-dial figcaption {
+  position: absolute;
+  display: grid;
+  max-width: 3rem;
+  justify-items: center;
+  line-height: 1.05;
+  text-align: center;
+}
+
+.gp-poll-dial figcaption strong {
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.gp-poll-dial figcaption span {
+  color: var(--gp-poll-muted);
+  font-size: 0.44rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.gp-poll-dial figcaption em {
+  overflow: hidden;
+  max-width: 100%;
+  margin-top: 0.12rem;
+  color: color-mix(in oklab, var(--gp-widget-accent), white 18%);
+  font-size: 0.47rem;
+  font-style: normal;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gp-poll-legend {
+  display: flex;
+  min-height: 0;
+  width: 100%;
+  flex-direction: column;
+  overflow: auto;
+  overscroll-behavior: contain;
+  gap: 0.06rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.gp-poll-legend-row {
+  position: relative;
+  display: grid;
+  min-width: 0;
+  grid-template-columns: 1.35rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.42rem;
+  border-radius: 0.45rem;
+  padding: 0.24rem 1.5rem 0.24rem 0.22rem;
+}
+
+.gp-poll-legend-row:hover {
+  background: color-mix(in oklab, var(--gp-widget-ink, #f5f5f5), transparent 96%);
+}
+
+.gp-poll-swatch {
+  display: grid;
+  width: 1.35rem;
+  height: 1.35rem;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  place-items: center;
+  border-radius: 0.42rem;
+  color: transparent;
+  background: var(--gp-poll-seg);
+}
+
+.gp-poll-swatch:hover {
+  color: #0b0b0d;
+  transform: scale(1.1);
+}
+
+/* Approval ---------------------------------------------------------------- */
+
+.gp-poll-approval {
+  display: grid;
+  min-height: 0;
+  grid-template-rows: minmax(0, 1fr) auto;
+}
+
+.gp-poll-approval-list {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+  overflow: auto;
+  overscroll-behavior: contain;
+  gap: 0.14rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.gp-poll-approval-row {
+  position: relative;
+  display: grid;
+  min-width: 0;
+  grid-template-columns: 28px minmax(0, 1fr) 3.2rem 2.2rem;
+  align-items: center;
+  gap: 0.4rem;
+  border: 1px solid transparent;
+  border-radius: 0.6rem;
+  padding: 0.3rem 1.5rem 0.3rem 0.3rem;
+  transition: background-color 160ms ease, border-color 160ms ease;
+}
+
+.gp-poll-approval-row[data-approved] {
+  border-color: color-mix(in oklab, var(--gp-widget-accent), transparent 68%);
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 93%);
+}
+
+/* role="checkbox" keeps this out of the ghost-button rule, and the shared
+   control sheet already paints the checked state in the card's own hue. */
+.gp-poll-approve {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  place-items: center;
+  border: 1px solid var(--gp-poll-line);
+  border-radius: 0.55rem;
+  color: transparent;
+  background: transparent;
+}
+
+.gp-poll-approve[aria-checked='true'] {
+  color: color-mix(in oklab, var(--gp-widget-accent), white 30%);
+}
+
+/* Ranked choice ----------------------------------------------------------- */
+
+/* Alone among the skins, Ranked Choice shows two lists at once — the ballot
+   and the runoff it produces — and neither scrolls. A flex column states the
+   rule that grid track sizing only implies: the body may grow, never shrink,
+   so the card's height reporter sees the whole runoff and grows the card to
+   fit it. (This cannot live in the container query below — `.gp-poll` declares
+   the container, and an element is never its own query container.) */
+.gp-poll[data-poll-skin='ranked_choice'] {
+  display: flex;
+  flex-direction: column;
+}
+
+.gp-poll[data-poll-skin='ranked_choice'] > * {
+  flex: none;
+}
+
+.gp-poll[data-poll-skin='ranked_choice'] > .gp-poll-ranked {
+  flex: 1 0 auto;
+}
+
+.gp-poll-ranked {
+  display: grid;
+  min-height: 0;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 0.7rem;
+}
+
+.gp-poll-ranking,
+.gp-poll-rounds {
+  display: grid;
+  align-content: start;
+  grid-template-rows: auto auto auto;
+}
+
+.gp-poll-ranked h4 {
+  margin: 0 0 0.3rem;
+  color: var(--gp-poll-muted);
+  font-size: 0.47rem;
+  font-weight: 700;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.gp-poll-ranking ol {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.gp-poll-rank-row {
+  position: relative;
+  display: grid;
+  min-width: 0;
+  grid-template-columns: 1.35rem minmax(0, 1fr) 1.35rem;
+  align-items: center;
+  gap: 0.35rem;
+  border-radius: 0.5rem;
+  padding: 0.2rem 1.5rem 0.2rem 0.2rem;
+}
+
+.gp-poll-rank-row:hover {
+  background: color-mix(in oklab, var(--gp-widget-ink, #f5f5f5), transparent 96%);
+}
+
+.gp-poll-medal {
+  display: grid;
+  width: 1.35rem;
+  height: 1.35rem;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--gp-poll-muted);
+  background: var(--gp-poll-faint);
+  font-size: 0.53rem;
+  font-weight: 700;
+}
+
+.gp-poll-medal[data-place='1'] {
+  color: #fde68a;
+  background: color-mix(in oklab, #f59e0b, transparent 80%);
+}
+
+.gp-poll-medal[data-place='2'] {
+  color: #e2e8f0;
+  background: color-mix(in oklab, #cbd5e1, transparent 84%);
+}
+
+.gp-poll-medal[data-place='3'] {
+  color: #fdba74;
+  background: color-mix(in oklab, #c2410c, transparent 78%);
+}
+
+/* Two 14px halves make one 28px reorder target without either arrow claiming
+   a lane of its own; the fill is stripped by the ghost-button rule, so the
+   affordance has to come from colour. */
+.gp-poll-move {
+  display: inline-grid;
+  width: 1.35rem;
+  height: 28px;
+  align-content: center;
+}
+
+.gp-poll-move button {
+  display: grid;
+  width: 1.35rem;
+  height: 14px;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  place-items: center;
+  color: color-mix(in oklab, var(--gp-widget-ink, #f5f5f5), transparent 62%);
+}
+
+.gp-poll-move button:hover:not(:disabled) {
+  color: color-mix(in oklab, var(--gp-widget-accent), white 30%);
+}
+
+.gp-poll-round {
+  padding: 0.4rem 0 0.45rem;
+  border-top: 1px solid var(--gp-poll-line);
+}
+
+.gp-poll-round:first-of-type {
+  border-top: 0;
+}
+
+.gp-poll-round > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+  margin-bottom: 0.3rem;
+  color: var(--gp-poll-muted);
+  font-size: 0.5rem;
+  font-weight: 700;
+}
+
+.gp-poll-round > header em {
+  overflow: hidden;
+  font-size: 0.47rem;
+  font-style: normal;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gp-poll-round > header em[data-outcome='win'] {
+  color: #86efac;
+}
+
+.gp-poll-round > header em[data-outcome='cut'] {
+  color: #fda4af;
+}
+
+.gp-poll-round ul {
+  display: grid;
+  gap: 0.22rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.gp-poll-round li {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr) 3.2rem 1.2rem;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.55rem;
+}
+
+.gp-poll-round li > span {
+  overflow: hidden;
+  color: color-mix(in oklab, var(--gp-widget-ink, #f5f5f5), transparent 20%);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gp-poll-round li > b {
+  font-size: 0.55rem;
+  text-align: right;
+}
+
+.gp-poll-round li[data-state='cut'] > span {
+  color: var(--gp-poll-muted);
+  text-decoration: line-through;
+}
+
+.gp-poll-round li[data-state='win'] > span,
+.gp-poll-round li[data-state='win'] > b {
+  color: #86efac;
+  font-weight: 700;
+}
+
+/* Stacked, the ballot sits above the runoff it produces, separated by a rule
+   rather than by a column gap. */
+@container (max-width: 380px) {
+  .gp-poll-ranked {
+    display: block;
+  }
+
+  .gp-poll-rounds {
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--gp-poll-line);
+  }
+}
+
+
+/* Pairwise ---------------------------------------------------------------- */
+
+.gp-poll-pairwise {
+  display: grid;
+  min-height: 0;
+  grid-template-rows: auto auto minmax(0, 1fr);
+}
+
+.gp-poll-duel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: stretch;
+  gap: 0.45rem;
+}
+
+.gp-poll-duel-card {
+  display: grid;
+  min-width: 0;
+  align-content: center;
+  justify-items: start;
+  gap: 0.16rem;
+  border: 1px solid color-mix(in oklab, var(--gp-poll-seg), transparent 72%);
+  border-radius: 0.75rem;
+  padding: 0.6rem 0.65rem;
+  text-align: left;
+  background: linear-gradient(
+    150deg,
+    color-mix(in oklab, var(--gp-poll-seg), transparent 88%),
+    transparent 70%
+  );
+}
+
+.gp-poll-duel-card:hover {
+  border-color: color-mix(in oklab, var(--gp-poll-seg), transparent 40%);
+  background: linear-gradient(
+    150deg,
+    color-mix(in oklab, var(--gp-poll-seg), transparent 76%),
+    transparent 70%
+  );
+  transform: translateY(-1px);
+}
+
+.gp-poll-duel-card:active {
+  transform: translateY(0) scale(0.99);
+}
+
+.gp-poll-duel-card strong {
+  overflow: hidden;
+  max-width: 100%;
+  color: var(--gp-widget-ink, #f5f5f5);
+  font-size: 0.72rem;
+  font-weight: 650;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gp-poll-duel-card em {
+  color: color-mix(in oklab, var(--gp-poll-seg), white 12%);
+  font-size: 0.5rem;
+  font-style: normal;
+  font-weight: 700;
+}
+
+.gp-poll-duel-card span {
+  color: var(--gp-poll-muted);
+  font-size: 0.47rem;
+}
+
+.gp-poll-vs {
+  align-self: center;
+  color: var(--gp-poll-muted);
+  font-size: 0.5rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.gp-poll-matrix-scroll {
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  margin-top: 0.15rem;
+  padding-top: 0.4rem;
+  border-top: 1px solid var(--gp-poll-line);
+}
+
+.gp-poll-matrix {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.53rem;
+}
+
+.gp-poll-matrix th,
+.gp-poll-matrix td {
+  padding: 0.18rem 0.22rem;
+  font-weight: 400;
+}
+
+.gp-poll-matrix thead th {
+  color: var(--gp-poll-muted);
+  font-size: 0.46rem;
+  text-align: center;
+}
+
+.gp-poll-matrix thead th > span {
+  display: inline-grid;
+  min-width: 1.25rem;
+  height: 1.05rem;
+  place-items: center;
+  border-radius: 0.3rem;
+  color: color-mix(in oklab, var(--gp-poll-seg), white 20%);
+  background: color-mix(in oklab, var(--gp-poll-seg), transparent 84%);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+/* Positioned so the hover-revealed removal overlay anchors to the row's own
+   name cell rather than escaping to the card. */
+.gp-poll-matrix tbody th {
+  position: relative;
+  display: grid;
+  min-width: 0;
+  grid-template-columns: 0.3rem minmax(0, 1fr);
+  align-items: center;
+  gap: 0.32rem;
+  padding-right: 1.5rem;
+  text-align: left;
+}
+
+.gp-poll-matrix tbody th > i {
+  width: 0.3rem;
+  height: 1.05rem;
+  border-radius: 999px;
+  background: var(--gp-poll-seg);
+}
+
+.gp-poll-matrix tbody th .gp-poll-label input {
+  font-size: 0.55rem;
+}
+
+.gp-poll-matrix td {
+  color: var(--gp-poll-muted);
+  text-align: center;
+}
+
+.gp-poll-matrix td[data-strong] {
+  color: var(--gp-widget-ink, #f5f5f5);
+  font-weight: 700;
+}
+
+.gp-poll-matrix td[data-self] {
+  color: color-mix(in oklab, var(--gp-widget-ink, #f5f5f5), transparent 84%);
+}
+
+.gp-poll-matrix td[data-total] {
+  color: color-mix(in oklab, var(--gp-widget-accent), white 18%);
+  font-weight: 700;
+}
+
+.gp-poll-matrix tbody tr + tr th,
+.gp-poll-matrix tbody tr + tr td {
+  border-top: 1px solid var(--gp-poll-line);
+}
+
+/* Live room --------------------------------------------------------------- */
+
+.gp-poll-room {
+  display: grid;
+  min-height: 0;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 0.3rem;
+}
+
+.gp-poll-room-bar {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 0.6rem;
+  padding: 0.35rem 0.45rem;
+  background: var(--gp-poll-faint);
+}
+
+.gp-poll-phase {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.24rem;
+  border-radius: 999px;
+  padding: 0.14rem 0.42rem;
+  color: var(--gp-poll-muted);
+  background: color-mix(in oklab, var(--gp-widget-ink, #f5f5f5), transparent 92%);
+  font-size: 0.48rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.gp-poll-phase[data-phase='open'] {
+  color: #86efac;
+  background: color-mix(in oklab, #22c55e, transparent 82%);
+}
+
+.gp-poll-phase[data-phase='closed'] {
+  color: #fda4af;
+  background: color-mix(in oklab, #fb7185, transparent 84%);
+}
+
+.gp-poll-room[data-phase='open'] .gp-poll-phase svg {
+  animation: gp-poll-pulse 2.2s ease-in-out infinite;
+}
+
+@keyframes gp-poll-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.28; }
+}
+
+.gp-poll-stepper {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.22rem;
+  color: var(--gp-poll-muted);
+  font-size: 0.5rem;
+}
+
+.gp-poll-stepper button {
+  display: grid;
+  width: 1.05rem;
+  height: 1.05rem;
+  place-items: center;
+  border-radius: 0.3rem;
+  color: var(--gp-poll-muted);
+  background: color-mix(in oklab, var(--gp-widget-ink, #f5f5f5), transparent 92%);
+}
+
+.gp-poll-stepper button:hover:not(:disabled) {
+  color: var(--gp-widget-ink, #f5f5f5);
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 76%);
+}
+
+.gp-poll-stepper b {
+  min-width: 1.1rem;
+  color: var(--gp-widget-ink, #f5f5f5);
+  font-size: 0.62rem;
+  text-align: center;
+}
+
+.gp-poll-stepper i {
+  font-style: normal;
+}
+
+.gp-poll-turnout {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.gp-poll-turnout .gp-poll-track {
+  flex: 1;
+}
+
+.gp-poll-turnout .gp-poll-track > span {
+  --gp-poll-seg: var(--gp-widget-accent);
+}
+
+.gp-poll-turnout small {
+  flex: 0 0 auto;
+  color: var(--gp-poll-muted);
+  font-size: 0.47rem;
+}
+
+.gp-poll-room-list,
+.gp-poll-anon-list {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+  overflow: auto;
+  overscroll-behavior: contain;
+  gap: 0.14rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.gp-poll-room-row,
+.gp-poll-anon-row {
+  position: relative;
+  display: grid;
+  min-width: 0;
+  grid-template-columns: 1.55rem minmax(0, 1fr) 3.2rem 2.2rem;
+  align-items: center;
+  gap: 0.42rem;
+  border-radius: 0.5rem;
+  padding: 0.26rem 1.5rem 0.26rem 0.24rem;
+}
+
+.gp-poll-room-row:hover,
+.gp-poll-anon-row:hover {
+  background: color-mix(in oklab, var(--gp-widget-ink, #f5f5f5), transparent 96%);
+}
+
+.gp-poll-radio,
+.gp-poll-anon-mark {
+  display: grid;
+  width: 1.55rem;
+  height: 1.55rem;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--gp-poll-muted);
+  background: var(--gp-poll-faint);
+}
+
+.gp-poll-radio:hover:not(:disabled),
+.gp-poll-anon-mark:hover:not(:disabled) {
+  color: color-mix(in oklab, var(--gp-widget-accent), white 20%);
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 74%);
+  transform: scale(1.08);
+}
+
+.gp-poll-room-row b,
+.gp-poll-anon-row b {
+  color: var(--gp-widget-ink, #f5f5f5);
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-align: right;
+}
+
+/* Anonymous --------------------------------------------------------------- */
+
+.gp-poll-anon {
+  display: grid;
+  min-height: 0;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 0.3rem;
+}
+
+.gp-poll-shield {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0;
+  border: 1px solid color-mix(in oklab, var(--gp-widget-accent), transparent 78%);
+  border-radius: 0.55rem;
+  padding: 0.34rem 0.45rem;
+  color: color-mix(in oklab, var(--gp-widget-ink, #f5f5f5), transparent 28%);
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 93%);
+  font-size: 0.5rem;
+}
+
+.gp-poll-shield > svg {
+  flex: 0 0 auto;
+  color: var(--gp-widget-accent);
+}
+
+.gp-poll-shield button {
+  margin-left: auto;
+  border-radius: 0.4rem;
+  padding: 0.12rem 0.4rem;
+  color: color-mix(in oklab, var(--gp-widget-accent), white 24%);
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 82%);
+  font-size: 0.47rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.gp-poll-anon[data-cast] .gp-poll-anon-mark {
+  color: color-mix(in oklab, #86efac, transparent 30%);
+}
+
+.gp-poll-anon-foot {
+  padding-top: 0.35rem;
+  border-top: 1px solid var(--gp-poll-line);
+}
+
+/* Motion ------------------------------------------------------------------ */
+
+@media (prefers-reduced-motion: reduce) {
+  .gp-poll button,
+  .gp-poll-track > span,
+  .gp-poll-dial-arc {
+    transition: none;
+  }
+
+  .gp-poll button:hover,
+  .gp-poll-swatch:hover,
+  .gp-poll-radio:hover:not(:disabled),
+  .gp-poll-anon-mark:hover:not(:disabled),
+  .gp-poll-duel-card:hover {
+    transform: none;
+  }
+
+  .gp-poll-room[data-phase='open'] .gp-poll-phase svg {
+    animation: none;
+  }
+}

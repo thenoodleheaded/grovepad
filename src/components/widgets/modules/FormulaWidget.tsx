@@ -1,5 +1,5 @@
 import {
-  ArrowDownRight, ArrowUpRight, Copy, GitBranch, Minus, Percent, Plus,
+  ArrowDownRight, ArrowUpRight, Check, Copy, GitBranch, Minus, Percent, Plus,
   Scale, Sigma, TrendingUp, Variable,
 } from 'lucide-react'
 import type { ModuleData } from '../../../types/spatial'
@@ -58,6 +58,16 @@ const SKIN_GLYPH: Record<FormulaSkinMode, typeof Sigma> = {
   conditional: GitBranch,
 }
 
+const SKIN_NAME: Record<FormulaSkinMode, string> = {
+  two_input: 'Two input',
+  percent_change: 'Change',
+  ratio: 'Ratio',
+  growth: 'Projection',
+  expression: 'Expression',
+  weighted_score: 'Weighted',
+  conditional: 'Conditional',
+}
+
 /* ------------------------------------------------------------------ shared */
 
 /** The card's own name. Every skin carries it in the same place. */
@@ -83,6 +93,7 @@ function FormulaLabel({
           onChange={(event) => onChange(event.target.value)}
         />
       </div>
+      <span className="gp-fx-kind" aria-hidden>{SKIN_NAME[skin]}</span>
     </header>
   )
 }
@@ -116,6 +127,7 @@ function Operand({
           aria-label={label}
           value={Number.isFinite(value) ? value : 0}
           onChange={(event) => onChange(Number(event.target.value) || 0)}
+          onFocus={(event) => event.currentTarget.select()}
         />
         {suffix && <em aria-hidden>{suffix}</em>}
       </span>
@@ -154,14 +166,18 @@ function Result({
         <button
           type="button"
           className="gp-fx-copy"
+          data-copied={copied || undefined}
           aria-label="Copy result"
-          title="Copy result"
+          title={copied ? 'Result copied' : 'Copy result'}
           onClick={() => {
             void navigator.clipboard?.writeText(formatFormulaNumber(reading.value))
             showCopied(true, 1400)
           }}
         >
-          {copied ? <span className="gp-fx-copied">Copied</span> : <Copy size={11} aria-hidden />}
+          {copied ? <Check size={12} aria-hidden /> : <Copy size={11} aria-hidden />}
+          <span className="sr-only" role="status" aria-live="polite">
+            {copied ? 'Result copied' : ''}
+          </span>
         </button>
       </div>
       {children}
@@ -254,6 +270,10 @@ function RatioSkin({ data, patch }: SkinProps) {
         <span className="gp-fx-split-a" style={{ flexGrow: Math.max(0.001, shareA) }} />
         <span className="gp-fx-split-b" style={{ flexGrow: Math.max(0.001, 1 - shareA) }} />
       </div>
+      <div className="gp-fx-split-legend" aria-hidden>
+        <span><i data-part="a" />A · {Math.round(shareA * 100)}%</span>
+        <span><i data-part="b" />B · {Math.round((1 - shareA) * 100)}%</span>
+      </div>
 
       <Result data={data} skin="ratio">
         <p className="gp-fx-caption">
@@ -326,6 +346,7 @@ function ExpressionSkin({ data, patch, state, setState }: SkinProps) {
       <FormulaLabel skin="expression" value={data.label} onChange={(label) => patch({ label })} />
 
       <div className="gp-fx-expression gp-bare-field" data-invalid={reading.note ? true : undefined}>
+        <span className="gp-fx-expression-prefix" aria-hidden>ƒ(a,b)</span>
         <input
           value={source}
           aria-label="Expression over A and B"
@@ -362,6 +383,7 @@ function ExpressionSkin({ data, patch, state, setState }: SkinProps) {
 function WeightedScoreSkin({ data, patch, state, setState }: SkinProps) {
   const rows = weightedRows(state, data.a, data.b)
   const shares = weightShares(rows)
+  const totalWeight = rows.reduce((total, row) => total + row.weight, 0)
   const extra = Array.isArray(state.rows) ? state.rows as Record<string, unknown>[] : []
 
   const writeExtra = (next: Record<string, unknown>[]) => setState({ ...state, rows: next })
@@ -407,6 +429,7 @@ function WeightedScoreSkin({ data, patch, state, setState }: SkinProps) {
                   step="any"
                   aria-label={`Row ${index + 1} value`}
                   value={row.value}
+                  onFocus={(event) => event.currentTarget.select()}
                   onChange={(event) => {
                     const value = Number(event.target.value) || 0
                     if (canonical) return patch(row.id === 'a' ? { a: value } : { b: value })
@@ -421,6 +444,7 @@ function WeightedScoreSkin({ data, patch, state, setState }: SkinProps) {
                   step="any"
                   aria-label={`Row ${index + 1} weight`}
                   value={row.weight}
+                  onFocus={(event) => event.currentTarget.select()}
                   onChange={(event) => {
                     const weight = Math.max(0, Number(event.target.value) || 0)
                     if (canonical) {
@@ -447,15 +471,20 @@ function WeightedScoreSkin({ data, patch, state, setState }: SkinProps) {
         })}
       </ul>
 
-      <button
-        type="button"
-        className="gp-fx-add"
-        disabled={extra.length >= WEIGHTED_EXTRA_LIMIT}
-        onClick={() => writeExtra([...extra, { id: crypto.randomUUID(), label: '', value: 0, weight: 1 }])}
-      >
-        <Plus size={12} aria-hidden />
-        Add a row
-      </button>
+      <div className="gp-fx-row-footer">
+        <button
+          type="button"
+          className="gp-fx-add"
+          disabled={extra.length >= WEIGHTED_EXTRA_LIMIT}
+          onClick={() => writeExtra([...extra, { id: crypto.randomUUID(), label: '', value: 0, weight: 1 }])}
+        >
+          <Plus size={12} aria-hidden />
+          Add a row
+        </button>
+        <span className="gp-fx-weight-total">
+          Total weight <strong>{formatFormulaNumber(totalWeight)}</strong>
+        </span>
+      </div>
 
       <Result data={data} skin="weighted_score" />
     </div>
@@ -502,7 +531,9 @@ function ConditionalSkin({ data, patch, state, setState }: SkinProps) {
             aria-label="Value when the comparison holds"
             value={branches.whenTrue}
             onChange={(event) => setState({ ...state, whenTrue: Number(event.target.value) || 0 })}
+            onFocus={(event) => event.currentTarget.select()}
           />
+          <span className="gp-fx-branch-state" aria-hidden>{holds ? 'Selected' : 'Standby'}</span>
         </label>
         <label className="gp-fx-branch gp-bare-field" data-live={!holds || undefined}>
           <span className="gp-fx-label">Else</span>
@@ -512,7 +543,9 @@ function ConditionalSkin({ data, patch, state, setState }: SkinProps) {
             aria-label="Value when the comparison does not hold"
             value={branches.whenFalse}
             onChange={(event) => setState({ ...state, whenFalse: Number(event.target.value) || 0 })}
+            onFocus={(event) => event.currentTarget.select()}
           />
+          <span className="gp-fx-branch-state" aria-hidden>{!holds ? 'Selected' : 'Standby'}</span>
         </label>
       </div>
 

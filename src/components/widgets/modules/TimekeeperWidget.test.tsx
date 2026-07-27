@@ -18,7 +18,7 @@ describe('unified Time widget', () => {
     ['pomodoro', 'gp-clock-body'],
     ['stopwatch', 'gp-clock-body'],
     ['deadline', 'gp-time-deadline'],
-    ['world_clock', 'gp-time-world'],
+    ['world_clock', 'gp-wclock'],
     ['hourglass', 'gp-time-hourglass'],
     ['intervals', 'gp-time-interval'],
     ['tabata', 'data-preset="tabata"'],

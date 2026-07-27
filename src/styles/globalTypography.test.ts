@@ -39,6 +39,7 @@ describe('global typography contract', () => {
       ['font', 'mono'].join('-'),
       ['font', 'serif'].join('-'),
       ['ui', 'monospace'].join('-'),
+      ['ui', 'serif'].join('-'),
       ['ui', 'sans-serif'].join('-'),
       ['system', 'ui'].join('-'),
     ]

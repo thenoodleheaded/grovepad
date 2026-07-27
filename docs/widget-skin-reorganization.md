@@ -702,6 +702,7 @@ Every proposal appears once below. The descriptions remain in the [opportunity c
 - Kanban, Assignments, Daily Agenda, Week Planner, Timeline, Priority Matrix, Vocabulary, Quiz, Study Goal, OKRs, GPA Tracker, Excalidraw, Random Picker, Timer, Pomodoro, Stopwatch, and Countdown are searchable widgets again.
 - The 50 former Tracker skins are searchable widgets again. The combined Tracker remains only for old boards and recipes, so no saved data is discarded.
 - The combined Timer remains only for old boards. Countdown, Pomodoro, and Stopwatch now have separate lifecycle-safe homes.
+- The 50 searchable Atlas widgets — the former Tracker presets, plus the tracking, study, and specialist cards built on the same envelope — were the last public widgets with no skins of their own. They now wear Object, Dial, Ledger, Trend, Schedule, and Compact: six ways of seeing one stored record. Each type is offered only the shapes its declared spec can fill, so a card never presents an empty chart as a choice, and every type keeps at least Object and Compact. See the Atlas skins route in the [codebase map](codebase-map.md).
 
 ## Follow-through rule
 

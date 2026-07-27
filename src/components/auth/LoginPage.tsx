@@ -207,7 +207,7 @@ export function LoginPage() {
                 aria-label="Email"
                 disabled={!supabaseConfigured}
                 onChange={(e) => setEmail(e.target.value)}
-                className="gp-input h-10 w-full text-sm text-neutral-100 placeholder:text-neutral-600 disabled:opacity-50"
+                className="gp-input gp-login-input h-10 w-full text-sm text-neutral-100 placeholder:text-neutral-600 disabled:opacity-50"
               />
             </div>
             <div className="gp-field-island">
@@ -220,7 +220,7 @@ export function LoginPage() {
                 aria-label="Password"
                 disabled={!supabaseConfigured}
                 onChange={(e) => setPassword(e.target.value)}
-                className="gp-input h-10 w-full text-sm text-neutral-100 placeholder:text-neutral-600 disabled:opacity-50"
+                className="gp-input gp-login-input h-10 w-full text-sm text-neutral-100 placeholder:text-neutral-600 disabled:opacity-50"
               />
             </div>
             <button

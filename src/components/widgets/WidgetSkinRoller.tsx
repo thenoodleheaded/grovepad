@@ -5,6 +5,7 @@ import { useAdaptiveInputStore } from '../../store/useAdaptiveInputStore'
 import { haptic } from '../../utils/haptics'
 import type { WidgetSkinOption } from '../../widgets/contracts/registry'
 import {
+  DRUM_PERSPECTIVE,
   DRUM_RADIUS,
   ROW_HEIGHT,
   indexForOffset,
@@ -450,7 +451,14 @@ export function WidgetSkinRoller({
             : `transform ${OPEN_MS}ms cubic-bezier(0.22, 1, 0.36, 1)`,
           ...(reducedMotion
             ? null
-            : { perspective: 620, perspectiveOrigin: '50% 50%', transformStyle: 'preserve-3d' as const }),
+            : {
+                // Paired with DRUM_RADIUS by the geometry module: the two
+                // together are what set how much the barrel is magnified, so
+                // neither may be tuned here on its own.
+                perspective: DRUM_PERSPECTIVE,
+                perspectiveOrigin: '50% 50%',
+                transformStyle: 'preserve-3d' as const,
+              }),
         }}
       >
         {skins.map((skin, index) => {

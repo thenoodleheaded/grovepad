@@ -1,0 +1,900 @@
+/*
+ * Purpose-built Pros & Cons skins.
+ *
+ * The topic and the two argument lists are canonical; each skin re-stages
+ * them. A pro is always the accent-warm green side and a con the rose side,
+ * so the same point keeps its meaning as the card rolls between skins.
+ */
+
+.gp-widget-ui[data-widget-type='pros_cons'][data-skin-presentation] {
+  background-image: none;
+  padding-inline-start: 0;
+}
+
+.gp-widget-ui[data-widget-type='pros_cons'][data-skin-presentation]::before {
+  content: none;
+}
+
+.gp-pros-cons {
+  --gp-pc-ink: var(--gp-widget-ink, #f5f5f5);
+  --gp-pc-line: color-mix(in oklab, var(--gp-pc-ink), transparent 89%);
+  --gp-pc-muted: color-mix(in oklab, var(--gp-pc-ink), transparent 56%);
+  --gp-pc-pro: #34d399;
+  --gp-pc-con: #fb7185;
+  --gp-pc-gap: 0.4rem;
+  display: flex;
+  min-height: 0;
+  height: 100%;
+  flex-direction: column;
+  gap: var(--gp-pc-gap);
+  color: var(--gp-pc-ink);
+  container-type: inline-size;
+}
+
+/* `:where` keeps these resets at zero specificity, so a skin's own rule below
+   (a smaller Add chip, a monospace stamp) wins without needing !important. */
+.gp-pros-cons :where(button, input) {
+  font: inherit;
+}
+
+.gp-pros-cons input,
+.gp-pros-cons textarea {
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  color: inherit;
+  background: transparent;
+}
+
+.gp-pros-cons textarea {
+  display: block;
+  width: 100%;
+  overflow: hidden;
+  resize: none;
+}
+
+.gp-pros-cons input::placeholder,
+.gp-pros-cons textarea::placeholder {
+  color: color-mix(in oklab, var(--gp-pc-ink), transparent 76%);
+}
+
+.gp-pros-cons button:focus-visible,
+.gp-pros-cons input:focus-visible,
+.gp-pros-cons textarea:focus-visible {
+  outline: 1px solid color-mix(in oklab, var(--gp-widget-accent), white 14%);
+  outline-offset: 2px;
+}
+
+/* Header and topic ------------------------------------------------------- */
+
+.gp-pc-header {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.4rem;
+  padding-inline: 0.15rem;
+}
+
+.gp-pc-eyebrow {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--gp-widget-accent);
+  font-size: 0.56rem;
+  font-weight: 700;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.gp-pc-flag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.22rem;
+  margin-left: auto;
+  border-radius: 999px;
+  padding: 0.1rem 0.4rem;
+  color: #fda4af;
+  background: color-mix(in oklab, var(--gp-pc-con), transparent 86%);
+  font-size: 0.5rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.gp-pc-topic.gp-island {
+  flex: 0 0 auto;
+  padding: 0.5rem 0.7rem;
+}
+
+.gp-pc-topic input {
+  width: 100%;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+}
+
+/* Balance meter ---------------------------------------------------------- */
+
+.gp-pc-meter {
+  display: grid;
+  flex: 0 0 auto;
+  gap: 0.28rem;
+  padding-inline: 0.15rem;
+}
+
+.gp-pc-meter-track {
+  display: flex;
+  position: relative;
+  height: 0.42rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--gp-pc-ink), transparent 92%);
+}
+
+.gp-pc-meter-pro,
+.gp-pc-meter-con {
+  transition: inline-size 240ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.gp-pc-meter-pro {
+  background: linear-gradient(
+    90deg,
+    color-mix(in oklab, var(--gp-pc-pro), transparent 45%),
+    var(--gp-pc-pro)
+  );
+}
+
+.gp-pc-meter-con {
+  background: linear-gradient(
+    90deg,
+    var(--gp-pc-con),
+    color-mix(in oklab, var(--gp-pc-con), transparent 45%)
+  );
+}
+
+.gp-pc-meter:not([data-stated]) .gp-pc-meter-pro,
+.gp-pc-meter:not([data-stated]) .gp-pc-meter-con {
+  opacity: 0.22;
+}
+
+.gp-pc-meter-pivot {
+  position: absolute;
+  top: -0.12rem;
+  bottom: -0.12rem;
+  left: 50%;
+  width: 1px;
+  background: color-mix(in oklab, var(--gp-pc-ink), transparent 55%);
+  transform: translateX(-0.5px);
+}
+
+.gp-pc-meter-legend {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--gp-pc-muted);
+  font-size: 0.5rem;
+  font-weight: 650;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.gp-pc-meter-legend span {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.25rem;
+}
+
+.gp-pc-meter-legend b {
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.gp-pc-meter-legend [data-side='pro'] b {
+  color: var(--gp-pc-pro);
+}
+
+.gp-pc-meter-legend [data-side='con'] b {
+  color: var(--gp-pc-con);
+}
+
+/* Shared point rows ------------------------------------------------------ */
+
+/* Auto-growing field: the ::after mirror holds the same text at the same
+   metrics, so the grid cell is exactly as tall as the wrapped value and the
+   textarea stretches to fill it. Nothing measures, nothing reflows twice. */
+.gp-pc-point-field {
+  display: grid;
+  min-width: 0;
+  flex: 1;
+}
+
+.gp-pc-point-field > textarea,
+.gp-pc-point-field::after {
+  grid-area: 1 / 1;
+  padding: 0;
+  font-size: 0.68rem;
+  line-height: 1.35;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.gp-pc-point-field::after {
+  visibility: hidden;
+  content: attr(data-value) ' ';
+}
+
+.gp-pc-dot {
+  width: 0.3rem;
+  height: 0.3rem;
+  flex: 0 0 auto;
+  margin-top: 0.33rem;
+  border-radius: 50%;
+}
+
+[data-side='pro'] > .gp-pc-dot {
+  background: var(--gp-pc-pro);
+}
+
+[data-side='con'] > .gp-pc-dot {
+  background: var(--gp-pc-con);
+}
+
+.gp-pc-remove {
+  display: grid;
+  width: 1.1rem;
+  height: 1.1rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  color: transparent;
+  background: transparent;
+  transition: color 140ms ease, background-color 140ms ease;
+}
+
+.gp-pc-row:hover .gp-pc-remove,
+.gp-pc-weighted:hover .gp-pc-remove,
+.gp-pc-claim:hover .gp-pc-remove,
+.gp-pc-consequence:hover .gp-pc-remove,
+.gp-pc-exchange:hover > .gp-pc-remove,
+.gp-pc-attack:hover .gp-pc-remove,
+.gp-pc-remove:focus-visible {
+  color: color-mix(in oklab, var(--gp-pc-con), var(--gp-pc-ink) 14%);
+  background: color-mix(in oklab, var(--gp-pc-con), transparent 88%);
+}
+
+.gp-pc-add {
+  display: inline-flex;
+  min-height: 1.4rem;
+  align-items: center;
+  gap: 0.24rem;
+  align-self: flex-start;
+  margin-top: 0.15rem;
+  border: 0;
+  border-radius: 0.45rem;
+  padding: 0 0.4rem;
+  color: var(--gp-pc-muted);
+  background: transparent;
+  font-size: 0.53rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  transition: color 140ms ease, background-color 140ms ease;
+}
+
+.gp-pc-add[data-side='pro']:hover {
+  color: var(--gp-pc-pro);
+  background: color-mix(in oklab, var(--gp-pc-pro), transparent 88%);
+}
+
+.gp-pc-add[data-side='con']:hover {
+  color: var(--gp-pc-con);
+  background: color-mix(in oklab, var(--gp-pc-con), transparent 88%);
+}
+
+/* Balance ---------------------------------------------------------------- */
+
+.gp-pc-columns {
+  display: grid;
+  min-height: 0;
+  flex: 1;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--gp-pc-gap);
+}
+
+.gp-pc-column.gp-island {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 0.5rem 0.55rem;
+}
+
+.gp-pc-column > header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.3rem;
+  padding-bottom: 0.32rem;
+  border-bottom: 1px solid var(--gp-pc-line);
+}
+
+.gp-pc-column > header span {
+  font-size: 0.52rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.gp-pc-column-pro > header span {
+  color: var(--gp-pc-pro);
+}
+
+.gp-pc-column-con > header span {
+  color: var(--gp-pc-con);
+}
+
+.gp-pc-column > header b {
+  color: var(--gp-pc-muted);
+  font-size: 0.6rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 650;
+}
+
+.gp-pc-column-body {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.gp-pc-row {
+  display: flex;
+  min-height: 1.6rem;
+  min-width: 0;
+  flex: 0 0 auto;
+  align-items: flex-start;
+  padding-block: 0.28rem;
+  gap: 0.4rem;
+  border-radius: 0.4rem;
+  padding-inline: 0.1rem;
+  transition: background-color 140ms ease;
+}
+
+.gp-pc-row:hover {
+  background: color-mix(in oklab, var(--gp-pc-ink), transparent 96%);
+}
+
+/* Debate ----------------------------------------------------------------- */
+
+.gp-pc-stage {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--gp-pc-gap);
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+/* Exchanges stack down a flex column: without an explicit basis they shrink
+   below their own content and the speeches overlap. */
+.gp-pc-exchange.gp-island {
+  display: grid;
+  position: relative;
+  min-width: 0;
+  flex: 0 0 auto;
+  gap: 0.32rem;
+  padding: 0.5rem 1.6rem 0.5rem 1.55rem;
+}
+
+.gp-pc-exchange-index {
+  position: absolute;
+  top: 0.5rem;
+  left: 0.5rem;
+  display: grid;
+  width: 0.95rem;
+  height: 0.95rem;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--gp-widget-accent);
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 86%);
+  font-size: 0.46rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.gp-pc-exchange > .gp-pc-remove {
+  position: absolute;
+  top: 0.42rem;
+  right: 0.34rem;
+}
+
+.gp-pc-speech {
+  display: grid;
+  min-width: 0;
+  gap: 0.1rem;
+  border-left: 2px solid;
+  padding-left: 0.48rem;
+}
+
+.gp-pc-speech[data-side='pro'] {
+  border-color: color-mix(in oklab, var(--gp-pc-pro), transparent 40%);
+}
+
+.gp-pc-speech[data-side='con'] {
+  border-color: color-mix(in oklab, var(--gp-pc-con), transparent 40%);
+}
+
+.gp-pc-speech-label {
+  font-size: 0.46rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.gp-pc-speech[data-side='pro'] .gp-pc-speech-label {
+  color: var(--gp-pc-pro);
+}
+
+.gp-pc-speech[data-side='con'] .gp-pc-speech-label {
+  color: var(--gp-pc-con);
+}
+
+.gp-pc-rebuttal {
+  display: flex;
+  min-width: 0;
+  align-items: flex-start;
+  gap: 0.35rem;
+  margin-left: 0.48rem;
+  border-radius: 0.45rem;
+  padding: 0.22rem 0.42rem;
+  color: var(--gp-pc-muted);
+  background: color-mix(in oklab, var(--gp-pc-ink), transparent 95%);
+}
+
+.gp-pc-rebuttal > svg {
+  flex: 0 0 auto;
+  margin-top: 0.15rem;
+  color: var(--gp-widget-accent);
+}
+
+.gp-pc-rebuttal .gp-pc-point-field > textarea,
+.gp-pc-rebuttal .gp-pc-point-field::after {
+  font-size: 0.62rem;
+  font-style: italic;
+}
+
+.gp-pc-exchange-unpaired .gp-pc-speech {
+  padding-left: 0.48rem;
+}
+
+.gp-pc-stage-actions {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 0.3rem;
+  padding-inline: 0.15rem;
+}
+
+/* Red team --------------------------------------------------------------- */
+
+.gp-pc-redteam {
+  display: grid;
+  min-height: 0;
+  flex: 1;
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+  gap: var(--gp-pc-gap);
+  overflow: hidden;
+}
+
+.gp-pc-claims,
+.gp-pc-attacks {
+  display: flex;
+  min-height: 0;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.25rem;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.gp-pc-claims > header,
+.gp-pc-attacks > header {
+  display: flex;
+  position: sticky;
+  z-index: 2;
+  top: 0;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.3rem;
+  padding: 0 0.15rem 0.28rem;
+  border-bottom: 1px solid var(--gp-pc-line);
+  background: color-mix(in oklab, var(--gp-widget-surface, #111), transparent 6%);
+  backdrop-filter: blur(10px);
+  font-size: 0.5rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.gp-pc-claims > header span {
+  color: var(--gp-pc-pro);
+}
+
+.gp-pc-attacks > header span {
+  color: var(--gp-pc-con);
+}
+
+.gp-pc-claims > header b,
+.gp-pc-attacks > header b {
+  color: var(--gp-pc-muted);
+  font-size: 0.48rem;
+  letter-spacing: 0.06em;
+}
+
+.gp-pc-attacks > header b[data-alert] {
+  color: #fbbf24;
+}
+
+.gp-pc-claim {
+  display: flex;
+  min-height: 1.65rem;
+  min-width: 0;
+  flex: 0 0 auto;
+  align-items: flex-start;
+  padding-block: 0.3rem;
+  gap: 0.35rem;
+  border-radius: 0.4rem;
+  padding-inline: 0.15rem;
+}
+
+.gp-pc-claim > svg {
+  flex: 0 0 auto;
+  color: color-mix(in oklab, var(--gp-pc-pro), transparent 25%);
+}
+
+.gp-pc-claim:hover {
+  background: color-mix(in oklab, var(--gp-pc-ink), transparent 96%);
+}
+
+.gp-pc-attack.gp-island {
+  display: grid;
+  min-width: 0;
+  flex: 0 0 auto;
+  gap: 0.28rem;
+  border-left: 2px solid var(--gp-pc-severity, var(--gp-pc-con));
+  padding: 0.42rem 0.5rem;
+}
+
+.gp-pc-attack-low {
+  --gp-pc-severity: #94a3b8;
+}
+
+.gp-pc-attack-medium {
+  --gp-pc-severity: #fbbf24;
+}
+
+.gp-pc-attack-high {
+  --gp-pc-severity: var(--gp-pc-con);
+}
+
+.gp-pc-attack-head {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.gp-pc-attack-head > svg {
+  flex: 0 0 auto;
+  color: var(--gp-pc-severity);
+}
+
+.gp-pc-severity {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.14rem;
+}
+
+.gp-pc-severity button {
+  width: 0.42rem;
+  height: 0.42rem;
+  border: 1px solid color-mix(in oklab, var(--gp-pc-ink), transparent 68%);
+  border-radius: 50%;
+  padding: 0;
+  background: transparent;
+  transition: background-color 140ms ease, border-color 140ms ease;
+}
+
+.gp-pc-severity button[data-severity='low'][aria-pressed='true'] {
+  border-color: #94a3b8;
+  background: #94a3b8;
+}
+
+.gp-pc-severity button[data-severity='medium'][aria-pressed='true'] {
+  border-color: #fbbf24;
+  background: #fbbf24;
+}
+
+.gp-pc-severity button[data-severity='high'][aria-pressed='true'] {
+  border-color: var(--gp-pc-con);
+  background: var(--gp-pc-con);
+}
+
+.gp-pc-evidence {
+  display: grid;
+  min-width: 0;
+  gap: 0.1rem;
+  padding-left: 1.05rem;
+}
+
+.gp-pc-evidence > span {
+  color: var(--gp-pc-muted);
+  font-size: 0.44rem;
+  font-weight: 700;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.gp-pc-evidence input {
+  width: 100%;
+  font-size: 0.6rem;
+}
+
+/* Weighted trade-off ----------------------------------------------------- */
+
+.gp-pc-weighted {
+  display: flex;
+  min-height: 1.8rem;
+  min-width: 0;
+  flex: 0 0 auto;
+  align-items: flex-start;
+  padding-block: 0.3rem;
+  gap: 0.35rem;
+  border-radius: 0.4rem;
+  padding-inline: 0.1rem;
+}
+
+.gp-pc-weighted:hover {
+  background: color-mix(in oklab, var(--gp-pc-ink), transparent 96%);
+}
+
+.gp-pc-dial {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.16rem;
+}
+
+.gp-pc-dial button {
+  display: grid;
+  width: 0.95rem;
+  height: 0.95rem;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  color: var(--gp-pc-muted);
+  background: color-mix(in oklab, var(--gp-pc-ink), transparent 94%);
+  transition: color 140ms ease, background-color 140ms ease;
+}
+
+.gp-pc-dial button:hover:not(:disabled) {
+  color: var(--gp-pc-ink);
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 82%);
+}
+
+.gp-pc-dial button:disabled {
+  opacity: 0.3;
+}
+
+.gp-pc-pips {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.1rem;
+}
+
+.gp-pc-pips i {
+  width: 0.18rem;
+  height: 0.5rem;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--gp-pc-ink), transparent 86%);
+  transition: background-color 160ms ease;
+}
+
+.gp-pc-weighted[data-side='pro'] .gp-pc-pips i[data-on] {
+  background: var(--gp-pc-pro);
+}
+
+.gp-pc-weighted[data-side='con'] .gp-pc-pips i[data-on] {
+  background: var(--gp-pc-con);
+}
+
+/* Reversible / irreversible ---------------------------------------------- */
+
+.gp-pc-lanes {
+  display: grid;
+  min-height: 0;
+  flex: 1;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--gp-pc-gap);
+}
+
+.gp-pc-lane.gp-island {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.5rem 0.55rem;
+}
+
+.gp-pc-lane > header {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.52rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.gp-pc-lane > header b {
+  margin-left: auto;
+  color: var(--gp-pc-muted);
+  font-size: 0.6rem;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+}
+
+.gp-pc-lane-reversible > header {
+  color: #7dd3fc;
+}
+
+.gp-pc-lane-irreversible > header {
+  color: #fda4af;
+}
+
+.gp-pc-lane-note {
+  margin: 0 0 0.2rem;
+  padding-bottom: 0.3rem;
+  border-bottom: 1px solid var(--gp-pc-line);
+  color: var(--gp-pc-muted);
+  font-size: 0.5rem;
+  line-height: 1.35;
+}
+
+.gp-pc-lane-body {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.gp-pc-consequence {
+  display: flex;
+  min-height: 1.7rem;
+  min-width: 0;
+  flex: 0 0 auto;
+  align-items: flex-start;
+  padding-block: 0.3rem;
+  gap: 0.35rem;
+  border-radius: 0.4rem;
+  padding-inline: 0.1rem;
+}
+
+.gp-pc-consequence:hover {
+  background: color-mix(in oklab, var(--gp-pc-ink), transparent 96%);
+}
+
+.gp-pc-flip {
+  display: grid;
+  width: 1.1rem;
+  height: 1.1rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  color: transparent;
+  background: transparent;
+  transition: color 140ms ease, background-color 140ms ease;
+}
+
+.gp-pc-consequence:hover .gp-pc-flip,
+.gp-pc-flip:focus-visible {
+  color: var(--gp-widget-accent);
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 86%);
+}
+
+.gp-pc-lane-irreversible .gp-pc-flip {
+  transform: scaleX(-1);
+}
+
+.gp-pc-lane-empty {
+  margin: 0;
+  padding: 0.7rem 0.15rem;
+  color: color-mix(in oklab, var(--gp-pc-ink), transparent 72%);
+  font-size: 0.53rem;
+  line-height: 1.4;
+}
+
+/* Narrow cards ----------------------------------------------------------- */
+
+@container (max-width: 380px) {
+  .gp-pc-columns,
+  .gp-pc-lanes,
+  .gp-pc-redteam {
+    grid-template-columns: minmax(0, 1fr);
+    overflow: auto;
+  }
+
+  .gp-pc-redteam {
+    grid-auto-rows: min-content;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gp-pc-meter-pro,
+  .gp-pc-meter-con,
+  .gp-pc-pips i {
+    transition: none;
+  }
+}
+
+/* Status paint, not ghost actions -----------------------------------------
+ *
+ * `06-field-islands.css` flattens every non-empty button inside widget content
+ * to a ghost control with `!important` — no fill, no border, no shadow — and
+ * floors it at 28px so stray buttons cannot manufacture a second island. That
+ * is right for the Add chips, which are text actions. It is wrong for the
+ * controls below: the weight dial and the two hover circles are paint sized to
+ * their own glyph, and a 28px floor would break the row rhythm they sit in.
+ * Re-asserting here is the same escape the Logbook skins take.
+ */
+
+.gp-pc-dial button,
+.gp-pc-remove,
+.gp-pc-flip {
+  min-width: 0;
+  min-height: 0;
+}
+
+.gp-pc-dial button {
+  border-radius: 50% !important;
+  background-color: color-mix(in oklab, var(--gp-pc-ink), transparent 94%) !important;
+}
+
+.gp-pc-dial button:hover:not(:disabled) {
+  background-color: color-mix(in oklab, var(--gp-widget-accent), transparent 82%) !important;
+}
+
+.gp-pc-remove,
+.gp-pc-flip {
+  border-radius: 50% !important;
+}
+
+.gp-pc-row:hover .gp-pc-remove,
+.gp-pc-weighted:hover .gp-pc-remove,
+.gp-pc-claim:hover .gp-pc-remove,
+.gp-pc-consequence:hover .gp-pc-remove,
+.gp-pc-exchange:hover > .gp-pc-remove,
+.gp-pc-attack:hover .gp-pc-remove,
+.gp-pc-remove:focus-visible {
+  background-color: color-mix(in oklab, var(--gp-pc-con), transparent 88%) !important;
+}
+
+.gp-pc-consequence:hover .gp-pc-flip,
+.gp-pc-flip:focus-visible {
+  background-color: color-mix(in oklab, var(--gp-widget-accent), transparent 86%) !important;
+}
+
+/* The severity dots are empty buttons, so the ghost rule already exempts them;
+   they only need their floor back to stay dot-sized. */
+.gp-pc-severity button {
+  min-width: 0;
+  min-height: 0;
+}

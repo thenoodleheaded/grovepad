@@ -8,7 +8,9 @@ import { ATLAS_TYPES } from '../../widgets/atlasCatalog'
 import type { WidgetSkinOption } from '../../widgets/contracts/registry'
 import {
   ANGLE_STEP,
+  DRUM_PERSPECTIVE,
   DRUM_RADIUS,
+  PROJECTION_SCALE,
   ROW_HEIGHT,
   WHEEL_NOTCH,
   indexForOffset,
@@ -183,13 +185,37 @@ describe('skin roller barrel placement', () => {
     expect(face).toBeCloseTo(ROW_HEIGHT, 6)
   })
 
-  it('fades rows out and drops them at the horizon', () => {
+  it('fades rows out and drops them at the drum’s edge', () => {
     const near = placeRow(2, 0)
-    const far = placeRow(5, 0)
+    const far = placeRow(6, 0)
     expect(near.opacity).toBeGreaterThan(0)
     expect(near.opacity).toBeLessThan(1)
     expect(far.hidden).toBe(true)
     expect(far.opacity).toBe(0)
+  })
+
+  /**
+   * The whole point of the barrel's step: a rotated row is projected to
+   * `cos(angle)` of its height, so the step decides how much of a row survives
+   * being one, two, or three choices out. At 20° per row the third choice kept
+   * 34% of its height — a smear, not a choice — and rolling fast put every row,
+   * the lane included, in that state. This is the promise the sharp zone below
+   * makes, expressed in the only terms that matter: readable height.
+   */
+  it('keeps the third choice each way readable, not crushed into a sliver', () => {
+    const heightAt = (rowsOut: number) => Math.cos((rowsOut * ANGLE_STEP * Math.PI) / 180)
+    expect(heightAt(1)).toBeGreaterThan(0.95)
+    expect(heightAt(3)).toBeGreaterThan(0.8)
+    // And the drum still reads as a curved barrel rather than a flat list: the
+    // furthest row it paints is plainly foreshortened.
+    let furthest = 0
+    while (!placeRow(furthest + 1, 0).hidden) furthest += 1
+    expect(heightAt(furthest)).toBeLessThan(0.6)
+  })
+
+  it('derives the perspective that keeps the drum at its tuned magnification', () => {
+    const projected = DRUM_PERSPECTIVE / (DRUM_PERSPECTIVE - DRUM_RADIUS)
+    expect(projected).toBeCloseTo(PROJECTION_SCALE, 3)
   })
 
   it('draws only a handful of rows even for the Tracker’s long list', () => {

@@ -8,8 +8,12 @@ import type { ModuleType,
   ToggleData,
 } from '../../types/spatial'
 import type { FieldDescriptor } from '../contracts/fields'
-import { num, text, bool, daysUntil } from './valueHelpers'
+import { num, text, bool } from './valueHelpers'
 import { formulaValue } from '../../components/widgets/modules/formulaSkinModel'
+import {
+  dateDurationDays,
+  dateReading,
+} from '../../components/widgets/modules/dateSkinModel'
 
 /** Input and logic widget fields (text_input … date_picker). Extracted verbatim from fields.ts; field order IS port-slot order — never reorder within an entry. */
 export const INPUT_LOGIC_FIELDS = {
@@ -132,19 +136,45 @@ export const INPUT_LOGIC_FIELDS = {
       get: (d) => (d as DatePickerData).date,
       set: (d, v) => ({ ...(d as DatePickerData), date: text(v) }),
     },
+    /**
+     * Distance is measured to the day the worn skin actually points at, so an
+     * Anniversary or a Recurring Date reports its NEXT occurrence rather than
+     * a first occasion in the past. The open card, the folded face and this
+     * wire all read the same `dateReading`, so they can never disagree.
+     */
     {
       key: 'days_until',
       label: 'Days until',
       valueType: 'number',
       unit: 'count',
-      get: (d) => daysUntil((d as DatePickerData).date),
+      get: (d) => dateReading(d as DatePickerData).days ?? 0,
       timeSensitive: true,
     },
     {
       key: 'is_due',
       label: 'Is due',
       valueType: 'boolean',
-      get: (d) => Boolean((d as DatePickerData).date) && daysUntil((d as DatePickerData).date) <= 0,
+      get: (d) => {
+        const reading = dateReading(d as DatePickerData)
+        return reading.days !== null && reading.days <= 0
+      },
+      timeSensitive: true,
+    },
+    {
+      key: 'next_occurrence',
+      label: 'Next occurrence',
+      valueType: 'text',
+      unit: 'date_iso',
+      get: (d) => dateReading(d as DatePickerData).day,
+      timeSensitive: true,
+    },
+    /** Only a Range has a length; every other skin marks a point in time. */
+    {
+      key: 'duration_days',
+      label: 'Duration (days)',
+      valueType: 'number',
+      unit: 'count',
+      get: (d) => dateDurationDays(d as DatePickerData) ?? 0,
       timeSensitive: true,
     },
   ],

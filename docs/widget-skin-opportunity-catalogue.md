@@ -350,7 +350,7 @@ Current automation surface: Grade % (number), Passing (boolean), GPA (number); n
 - **Renderer-ready · Pass / Fail** — Focuses on the margin above or below a required grade.
 - **Renderer-ready · What-if** — Makes one hypothetical score prominent while preserving current marks.
 - **Schema-extension · Rubric** — Scores criteria separately and computes a weighted result.
-- **Schema-extension · Dropped Scores** — Applies drop-lowest and replacement policies.
+- **Schema-extension · Dropped Scores** — Previews a result after excluding the lowest scores.
 - **Schema-extension · Curve Simulator** — Compares raw and curved grade scenarios.
 
 ## Data & Views
@@ -500,13 +500,13 @@ Current purpose: A labeled 5-star rating. Current skins: **none**.
 
 Current automation surface: Stars (number, writable); Clear rating.
 
-- **Renderer-ready · Stars** — The current familiar five-star control.
-- **Renderer-ready · Slider** — A continuous horizontal scale with a precise numeric reading.
-- **Renderer-ready · Emoji** — A low-friction emotional or satisfaction scale.
-- **Renderer-ready · Traffic Light** — Three-state red, amber, and green assessment.
-- **Renderer-ready · NPS** — A zero-to-ten recommendation scale with detractor group labels.
-- **Schema-extension · Rubric** — Combines several rated criteria into one score.
-- **Schema-extension · Confidence** — Pairs the rating with a certainty or evidence-strength reading.
+- **Renderer-ready · Stars** — The familiar five-star control.
+- **Renderer-ready · Slider** — A continuous scale with a precise reading.
+- **Renderer-ready · Emoji** — A quick emotional or satisfaction scale.
+- **Renderer-ready · Traffic Light** — A clear red, amber, or green assessment.
+- **Renderer-ready · NPS** — A zero-to-ten recommendation scale.
+- **Schema-extension · Rubric** — Combine several named criteria into one published rating.
+- **Schema-extension · Confidence** — Pair the rating with certainty and a short evidence note.
 
 ### Set Store (`set_store`)
 
@@ -596,13 +596,13 @@ Current purpose: Fast local conversions for length, mass, temperature, and time.
 
 Current automation surface: Input (number, writable), Converted output (number); no trigger commands.
 
-- **Renderer-ready · General** — The current input/output conversion.
-- **Renderer-ready · Cooking** — Cups, spoons, weight, temperature, and serving-friendly units.
+- **Renderer-ready · General** — Everyday length, weight, temperature, and duration conversions.
+- **Renderer-ready · Cooking** — Cups, spoons, weight, temperature, and kitchen-friendly units.
 - **Renderer-ready · Engineering** — Length, area, volume, pressure, energy, and power.
-- **Renderer-ready · Data** — Bits, bytes, transfer sizes, and decimal/binary prefixes.
+- **Renderer-ready · Data** — Bits, bytes, transfer sizes, and decimal or binary prefixes.
 - **Renderer-ready · Temperature** — A focused Celsius, Fahrenheit, and Kelvin surface.
-- **Schema-extension · Currency** — Adds dated exchange-rate sources and freshness.
-- **Schema-extension · Custom Formula** — Lets a user define safe factor and offset conversions.
+- **Schema-extension · Currency** — A clearly dated manual exchange rate without a network dependency.
+- **Schema-extension · Custom Formula** — A bounded factor and offset conversion with your own unit names.
 
 ### World Clock (`world_clock`)
 
@@ -656,7 +656,7 @@ Current automation surface: Lines (number); no trigger commands.
 - **Renderer-ready · Screenplay** — Character headings, parentheticals, dialogue, and scene rhythm.
 - **Renderer-ready · Chat** — Message bubbles with alternating speakers.
 - **Renderer-ready · Interview** — Question-and-answer transcript styling.
-- **Renderer-ready · Roleplay** — Speaker goals, hidden notes, and performance prompts.
+- **Schema-extension · Roleplay** — Speaker goals, hidden notes, and performance prompts.
 - **Schema-extension · Comic** — Groups lines into panels and speech balloons.
 - **Schema-extension · Localization** — Shows source and translated lines side by side.
 - **Schema-extension · Audio Transcript** — Adds timestamps and speaker identification.

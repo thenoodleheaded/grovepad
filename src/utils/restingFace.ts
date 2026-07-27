@@ -1,18 +1,105 @@
-import type { FormulaData, ModuleType, Size, Widget } from '../types/spatial'
+import type { DatePickerData, FormField, FormulaData, FormWidgetData, LogbookData, MeetingNotesData, ModuleType, PollData, ProsConsData, ProsConsItem, Size, Widget } from '../types/spatial'
 import { GRID_SIZE, ICON_MIN_EDGE } from '../types/spatial'
 import {
   formulaReading,
   formulaResultWord,
   formulaSkinMode,
 } from '../components/widgets/modules/formulaSkinModel'
+import {
+  noteCalloutTone,
+  noteVersionSnapshots,
+  type NoteSkinMode,
+} from '../components/widgets/modules/noteSkinModel'
 import { locationPoint, placeName } from '../components/widgets/modules/locationSkinModel'
+import {
+  dateDay,
+  dateReading,
+  deadlineLeadDays,
+  deadlineProgress,
+  mediumDayText,
+  MILESTONE_STATUS_LABELS,
+  milestoneDetail,
+  rangeEndDay,
+  rangeSpan,
+  shortDayText,
+} from '../components/widgets/modules/dateSkinModel'
 import { linkedListNodes } from '../components/widgets/modules/linkedListSkinModel'
+import {
+  logbookEntries,
+  logbookEntryDetails,
+  logbookSkinMode,
+  orderedLogbookEntries,
+} from '../components/widgets/modules/logbookSkinModel'
+import {
+  EMOJI_CHOICES,
+  formatRating,
+  npsBand,
+  npsScore,
+  ratingConfidence,
+  ratingSkinMode,
+  trafficChoice,
+} from '../components/widgets/modules/ratingSkinModel'
+import {
+  meetingItemDetails,
+  meetingNotesSkinMode,
+} from '../components/widgets/modules/meetingNotesSkinModel'
+import {
+  habitBestRun,
+  habitDoneCount,
+  habitSkinMode,
+} from '../components/widgets/modules/habitSkinModel'
+import {
+  formFields,
+  formSkinMode,
+  inspectionCheck,
+  inspectionChecks,
+  inspectionResult,
+  ratingValue,
+  RATING_MAX,
+} from '../components/widgets/modules/formSkinModel'
+import {
+  prosConsItems,
+  prosConsSkinMode,
+  prosConsWeights,
+  redTeamDetail,
+  redTeamDetails,
+  reversibilityFor,
+  reversibilityMap,
+  statedItems,
+  weightFor,
+} from '../components/widgets/modules/prosConsSkinModel'
+import {
+  liveRoomState,
+  pollBallotCount,
+  pollOptions,
+  pollSkinMode,
+  pollTallies,
+  totalPollVotes,
+} from '../components/widgets/modules/pollSkinModel'
 import {
   toggleSkinMode,
   toggleStateLabel,
 } from '../components/widgets/modules/toggleSkinModel'
 import { titleCapsuleWidth } from './titleCapsuleWidth'
 import { clamp01 } from './math'
+import {
+  compact,
+  finite,
+  formatRestDuration,
+  formatRestNumber,
+  record,
+  NOTE_REST_LINE_LIMIT,
+  NOTE_REST_VERSION_LIMIT,
+  REST_ROW_LIMIT,
+  type RestEyebrow,
+  type RestingFace,
+  type RestingFaceModel,
+  type RestLine,
+  type RestNoteLine,
+  type RestNoteLineKind,
+  type RestReadout,
+  type RestRow,
+} from './restingFaceModel'
 
 // ---------------------------------------------------------------------------
 // Resting face model — the single source for WHAT a resting widget shows and
@@ -32,41 +119,35 @@ import { clamp01 } from './math'
 // this model, so visuals and anchors can never disagree.
 // ---------------------------------------------------------------------------
 
-export interface RestRow {
-  key: string
-  label: string
-  /** Tri-state: undefined = the item has no completion concept. */
-  done?: boolean
-  /** Right-aligned trailing value (poll votes, budget amounts, metric tiles). */
-  value?: string
-}
+export type {
+  RestBar,
+  RestCell,
+  RestChip,
+  RestColumn,
+  RestEyebrow,
+  RestLane,
+  RestLine,
+  RestNode,
+  RestNoteLine,
+  RestNoteLineKind,
+  RestNoteModel,
+  RestReadout,
+  RestRow,
+  RestTone,
+  RestingFace,
+  RestingFaceModel,
+} from './restingFaceModel'
+export {
+  NOTE_REST_LINE_LIMIT,
+  NOTE_REST_VERSION_LIMIT,
+  REST_ROW_LIMIT,
+} from './restingFaceModel'
 
-export type RestingFaceModel =
-  | { kind: 'icon' }
-  | { kind: 'image' }
-  | { kind: 'metric'; primary: string; secondary: string; progress?: number }
-  | { kind: 'boolean'; label: string; active: boolean }
-  | { kind: 'text'; text: string; tint?: string }
-  | { kind: 'rows'; rows: readonly RestRow[]; overflow: number }
-  | { kind: 'clock' }
-  | {
-      kind: 'chart'
-      /** Readouts stacked down the right of the plot, most important first. */
-      stats: readonly { label: string; value: string }[]
-    }
-  | { kind: 'stars'; value: number }
-  | { kind: 'week' }
-  | { kind: 'palette'; colors: readonly string[] }
-
-export interface RestingFace {
-  model: RestingFaceModel
-  size: Size
-}
-
-export const REST_ROW_LIMIT = 6
 const MARK_SAMPLE_LIMIT = 24
 const TEXT_CLAMP = 220
 const TEXT_LINE_LIMIT = 6
+const NOTE_REST_TEXT_LIMIT = 420
+const NOTE_REST_LINE_CHARS = 58
 
 // Layout constants shared with WidgetRestingFace.tsx — change together.
 const REST_PAD_X = 12
@@ -85,6 +166,39 @@ const WEEK_HEIGHT = 60
 const STARS_WIDTH = 5 * 16 + 4 * 4 + REST_PAD_X * 2
 /** Keep in step with BooleanFace's track in WidgetRestingFace.tsx. */
 const BOOLEAN_SWITCH_WIDTH = 26
+
+// Skin grammars. A board, a month, or a timeline is a two-dimensional shape:
+// squeezing it into the six-cell text ceiling would turn it back into a list,
+// which is exactly what folding it must NOT do. They get their own ceiling.
+const MAX_WIDE_TILE = 320
+const EYEBROW_HEIGHT = 14
+const COLUMN_HEADER = 13
+const COLUMN_ITEM = 13
+const COLUMN_GAP = 6
+const COLUMN_MIN_WIDTH = 52
+const COLUMN_MAX_WIDTH = 96
+const DENSE_CELL = 15
+const DENSE_GAP = 2
+const GRID_ROW_HEIGHT = 14
+const GRID_COL_GAP = 8
+const BAR_ROW_HEIGHT = 16
+const BAR_TRACK_WIDTH = 54
+const GAUGE_DIAMETER = 46
+const CHIP_HEIGHT = 17
+const CHIP_GAP = 4
+const CHIP_PAD = 12
+const LINE_HEIGHT = 13
+const LINE_GAP = 12
+const NODE_WIDTH = 46
+const NODE_CONNECTOR = 12
+const NODE_HEIGHT = 30
+const TIMELINE_LABEL = 62
+const TIMELINE_TRACK = 118
+const TIMELINE_ROW = 15
+const TIMELINE_SCALE = 10
+const SPLIT_DIVIDER = 22
+const PAPER_WIDTH = GRID_SIZE * 4
+const PAPER_HEIGHT = GRID_SIZE * 3
 
 const ARRAY_KEYS = [
   'items', 'rows', 'entries', 'steps', 'tasks', 'cards', 'options', 'tiles',
@@ -137,37 +251,135 @@ function measureFaceText(text: string): number {
   return text.length * 5.6
 }
 
-function record(value: unknown): Record<string, unknown> | null {
-  return value !== null && typeof value === 'object' && !Array.isArray(value)
-    ? value as Record<string, unknown>
-    : null
+const NOTE_SKINS = new Set<NoteSkinMode>([
+  'plain',
+  'sticky',
+  'quote',
+  'daily_log',
+  'markdown_page',
+  'typewriter',
+  'callout',
+  'versioned_note',
+])
+
+function noteSkin(type: ModuleType, raw: unknown): NoteSkinMode {
+  if (type === 'sticky_note') return 'sticky'
+  if (type === 'quote') return 'quote'
+  return typeof raw === 'string' && NOTE_SKINS.has(raw as NoteSkinMode)
+    ? raw as NoteSkinMode
+    : 'plain'
 }
 
-function finite(value: unknown): number | null {
-  return typeof value === 'number' && Number.isFinite(value) ? value : null
+/**
+ * A Note preview is deliberately a tiny tokenizer rather than a mounted
+ * editor or the full Markdown renderer. It reads a bounded prefix, emits at
+ * most five short lines, and preserves just enough syntax to keep Markdown
+ * visibly Markdown-shaped.
+ */
+function notePreviewLines(raw: string, skin: NoteSkinMode): RestNoteLine[] {
+  const source = raw.slice(0, NOTE_REST_TEXT_LIMIT).replace(/\r\n?/g, '\n')
+  const result: RestNoteLine[] = []
+  let inCode = false
+
+  const push = (kind: RestNoteLineKind, value: string) => {
+    let remaining = value.replace(/\s+/g, ' ').trim()
+    if (kind === 'rule') {
+      result.push({ kind, text: '' })
+      return
+    }
+    while (remaining && result.length < NOTE_REST_LINE_LIMIT) {
+      if (remaining.length <= NOTE_REST_LINE_CHARS) {
+        result.push({ kind, text: remaining })
+        break
+      }
+      const breakAt = Math.max(
+        1,
+        remaining.lastIndexOf(' ', NOTE_REST_LINE_CHARS),
+      )
+      result.push({ kind, text: remaining.slice(0, breakAt).trimEnd() })
+      remaining = remaining.slice(breakAt).trimStart()
+    }
+  }
+
+  for (const rawLine of source.split('\n')) {
+    if (result.length >= NOTE_REST_LINE_LIMIT) break
+    const line = rawLine.trim()
+    if (!line) continue
+
+    if (skin === 'markdown_page') {
+      if (/^```/.test(line)) {
+        inCode = !inCode
+        continue
+      }
+      if (inCode) {
+        push('code', line)
+        continue
+      }
+      const heading = line.match(/^#{1,3}\s+(.+)$/)
+      if (heading) {
+        push('heading', heading[1] ?? '')
+        continue
+      }
+      const bullet = line.match(/^(?:[-*+]|\d+[.)])\s+(.+)$/)
+      if (bullet) {
+        push('bullet', bullet[1] ?? '')
+        continue
+      }
+      const quote = line.match(/^>\s?(.+)$/)
+      if (quote) {
+        push('quote', quote[1] ?? '')
+        continue
+      }
+      if (/^(?:---+|___+|\*\*\*+)$/.test(line)) {
+        push('rule', '')
+        continue
+      }
+    }
+
+    push('text', line)
+  }
+
+  return result
 }
 
-function compact(value: string, limit: number): string {
-  const clean = value.replace(/\s+/g, ' ').trim()
-  return clean.length > limit ? `${clean.slice(0, limit - 1).trimEnd()}…` : clean
-}
+function noteRestModel(type: ModuleType, data: Record<string, unknown>): RestingFaceModel {
+  const skin = noteSkin(type, data.mode)
+  const text = typeof data.text === 'string' ? data.text : ''
+  const states = record(data.skinStates) ?? {}
+  const state = record(states[skin]) ?? {}
+  const lines = notePreviewLines(text, skin)
+  const attribution = skin === 'quote' && typeof data.attribution === 'string'
+    ? compact(data.attribution.slice(0, 100), 48)
+    : ''
+  const versions = skin === 'versioned_note'
+    ? noteVersionSnapshots(state.snapshots)
+      .slice(0, NOTE_REST_VERSION_LIMIT)
+      .map((snapshot) => compact(snapshot.label, 34))
+    : []
 
-function formatRestNumber(value: number): string {
-  const magnitude = Math.abs(value)
-  if (magnitude >= 1_000_000) return `${Math.round(value / 100_000) / 10}M`
-  if (magnitude >= 1_000) return `${Math.round(value / 100) / 10}k`
-  if (Number.isInteger(value)) return String(value)
-  return String(Math.round(value * 10) / 10)
-}
+  if (lines.length === 0 && !attribution && versions.length === 0) return { kind: 'icon' }
 
-function formatRestDuration(seconds: number): string {
-  const safe = Math.max(0, Math.round(seconds))
-  const hours = Math.floor(safe / 3600)
-  const minutes = Math.floor((safe % 3600) / 60)
-  const remainder = safe % 60
-  return hours > 0
-    ? `${hours}:${String(minutes).padStart(2, '0')}:${String(remainder).padStart(2, '0')}`
-    : `${minutes}:${String(remainder).padStart(2, '0')}`
+  const color = skin === 'sticky' && (
+    data.color === 'yellow' ||
+    data.color === 'pink' ||
+    data.color === 'blue' ||
+    data.color === 'green' ||
+    data.color === 'purple'
+  ) ? data.color : undefined
+  const date = skin === 'daily_log' && typeof state.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(state.date)
+    ? state.date
+    : undefined
+
+  return {
+    kind: 'note',
+    skin,
+    lines,
+    ...(color ? { color } : {}),
+    ...(attribution ? { attribution } : {}),
+    ...(date ? { date } : {}),
+    ...(skin === 'callout' ? { tone: noteCalloutTone(state.tone) } : {}),
+    ...(versions.length > 0 ? { versions } : {}),
+  }
 }
 
 function humanize(key: string): string {
@@ -178,6 +390,14 @@ function humanize(key: string): string {
  * every other widget box, so tiles, icons, and cards always line up. */
 function snap(value: number): number {
   return Math.max(MIN_TILE, Math.ceil(value / GRID_SIZE) * GRID_SIZE)
+}
+
+/** The eyebrow renders a size down and in caps, like the expanded heading. */
+function eyebrowWidth(eyebrow: RestEyebrow): number {
+  return (
+    measureFaceText(eyebrow.label.toUpperCase()) * 0.85 +
+    (eyebrow.note ? measureFaceText(eyebrow.note) * 0.9 + 10 : 0)
+  )
 }
 
 // ---------------------------------------------------------------------------
@@ -316,6 +536,56 @@ function specialModel(type: ModuleType, data: Record<string, unknown>): RestingF
       overflow: 0,
     }
   }
+  /**
+   * A folded Date card shows the answer its skin is for, not the field it
+   * stores: a Deadline rests as the days left, a Range as its two ends, a
+   * Milestone as its status. All of it comes from the one shared reading, so a
+   * resting tile can never contradict the open card or a `days_until` wire.
+   */
+  if (type === 'date_picker') {
+    const dateData = data as unknown as DatePickerData
+    const reading = dateReading(dateData)
+    if (!reading.day) return { kind: 'icon' }
+    if (reading.skin === 'range') {
+      const span = rangeSpan(dateDay(dateData.date), rangeEndDay(dateData))
+      if (!span) return { kind: 'icon' }
+      return {
+        kind: 'rows',
+        rows: [
+          { key: 'span', label: `${span.nights} ${span.nights === 1 ? 'night' : 'nights'}`, value: shortDayText(span.start) },
+          { key: 'end', label: 'Ends', value: shortDayText(span.end) },
+        ],
+        overflow: 0,
+      }
+    }
+    if (reading.skin === 'milestone') {
+      const detail = milestoneDetail(dateData)
+      return {
+        kind: 'rows',
+        rows: [
+          { key: 'status', label: MILESTONE_STATUS_LABELS[detail.status], value: mediumDayText(reading.day) },
+          ...(detail.owner ? [{ key: 'owner', label: compact(detail.owner, 24), value: reading.phrase }] : []),
+        ],
+        overflow: 0,
+      }
+    }
+    if (reading.skin === 'deadline') {
+      const days = reading.days ?? 0
+      return {
+        kind: 'metric',
+        primary: days === 0 ? 'Today' : String(Math.abs(days)),
+        secondary: days === 0 ? 'Due' : days < 0 ? 'Days overdue' : 'Days left',
+        progress: deadlineProgress(days, deadlineLeadDays(dateData)),
+      }
+    }
+    // Anniversary, Recurring Date and Date & Time all rest as the phrase the
+    // card leads with, over the day it resolves to.
+    return {
+      kind: 'metric',
+      primary: reading.phrase,
+      secondary: mediumDayText(reading.day),
+    }
+  }
   if (type === 'linked_list') {
     const nodes = linkedListNodes(data.nodes)
     if (nodes.length === 0) return { kind: 'icon' }
@@ -334,7 +604,179 @@ function specialModel(type: ModuleType, data: Record<string, unknown>): RestingF
       overflow: Math.max(0, nodes.length - visible.length),
     }
   }
-  if (type === 'rating') return { kind: 'stars', value: finite(data.value) ?? 0 }
+  if (type === 'logbook') {
+    const logData = data as unknown as LogbookData
+    const entries = logbookEntries(data.entries)
+    if (entries.length === 0) return { kind: 'icon' }
+    const skin = logbookSkinMode(data.skin)
+    const details = logbookEntryDetails(logData, skin)
+    const visible = orderedLogbookEntries(entries, 'newest').slice(0, 4)
+    const valueFor = (entry: (typeof visible)[number]): string => {
+      const detail = details[entry.id] ?? {}
+      if (skin === 'incident_log') return detail.status ?? entry.level
+      if (skin === 'lab_notebook') return detail.conclusion ? 'Conclusion' : detail.hypothesis ? 'Hypothesis' : 'Experiment'
+      if (skin === 'change_log') return detail.version || detail.changeKind || 'Change'
+      if (skin === 'maintenance_log') return detail.nextService || detail.asset || 'Service'
+      if (skin === 'audit_trail') return detail.actor || detail.source || 'Event'
+      if (skin === 'travel_log') return detail.place || detail.distance || 'Waypoint'
+      return new Intl.DateTimeFormat('en', {
+        hour: '2-digit',
+        minute: '2-digit',
+      }).format(new Date(entry.timestamp))
+    }
+    return {
+      kind: 'rows',
+      rows: visible.map((entry) => ({
+        key: entry.id,
+        label: compact(entry.text || 'Empty entry', 28),
+        value: compact(valueFor(entry), 16),
+      })),
+      overflow: Math.max(0, entries.length - visible.length),
+    }
+  }
+  if (type === 'pros_cons') {
+    const sheet = data as unknown as ProsConsData
+    const skin = prosConsSkinMode(sheet.skin)
+    const pros = statedItems(prosConsItems(sheet.pros))
+    const cons = statedItems(prosConsItems(sheet.cons))
+    if (pros.length === 0 && cons.length === 0) return { kind: 'icon' }
+    const weights = prosConsWeights(sheet)
+    const reversibility = reversibilityMap(sheet)
+    const attacks = redTeamDetails(sheet)
+    // Each skin folds to the number it is actually about: the weighted call
+    // shows weights, the one-way check shows what cannot be undone.
+    const valueFor = (item: ProsConsItem, side: 'pro' | 'con'): string => {
+      if (skin === 'weighted_trade_off') return `×${weightFor(weights, item.id)}`
+      if (skin === 'reversible_irreversible') {
+        return reversibilityFor(reversibility, item.id) === 'irreversible' ? 'one-way' : 'undoable'
+      }
+      if (skin === 'red_team' && side === 'con') return redTeamDetail(attacks, item.id).severity
+      return side === 'pro' ? 'pro' : 'con'
+    }
+    const visible = [
+      ...pros.map((item) => ({ item, side: 'pro' as const })),
+      ...cons.map((item) => ({ item, side: 'con' as const })),
+    ].slice(0, 4)
+    return {
+      kind: 'rows',
+      rows: visible.map(({ item, side }) => ({
+        key: item.id,
+        label: compact(item.text, 28),
+        value: compact(valueFor(item, side), 16),
+      })),
+      overflow: Math.max(0, pros.length + cons.length - visible.length),
+    }
+  }
+  if (type === 'form') {
+    const form = data as unknown as FormWidgetData
+    const fields = formFields(form.fields)
+    if (fields.length === 0) return { kind: 'icon' }
+    const skin = formSkinMode(form.skin)
+    const checks = inspectionChecks(form)
+    const valueFor = (field: FormField): string => {
+      if (skin === 'inspection') return inspectionResult(field, inspectionCheck(checks, field.id))
+      if (skin === 'feedback' && field.type === 'number') {
+        const score = ratingValue(field)
+        return score > 0 ? `${score}/${RATING_MAX}` : '—'
+      }
+      if (field.type === 'checkbox') return field.value === true ? 'yes' : 'no'
+      const answer = String(field.value ?? '').trim()
+      return answer || (field.required ? 'required' : '—')
+    }
+    const visible = fields.slice(0, 4)
+    return {
+      kind: 'rows',
+      rows: visible.map((field) => ({
+        key: field.id,
+        label: compact(field.label || 'Untitled question', 28),
+        value: compact(valueFor(field), 16),
+      })),
+      overflow: Math.max(0, fields.length - visible.length),
+    }
+  }
+  if (type === 'poll') {
+    const pollData = data as unknown as PollData
+    const options = pollOptions(pollData.options)
+    const total = totalPollVotes(options)
+    // Nothing named and nothing cast is nothing to show.
+    if (options.length === 0 || (total === 0 && options.every((option) => !option.label.trim()))) {
+      return { kind: 'icon' }
+    }
+    const skin = pollSkinMode(pollData.skin)
+    // A room that has not revealed its result must not leak it while folded.
+    const masked = skin === 'live_room' && !liveRoomState(pollData).revealed
+    const ballots = pollBallotCount(pollData, 'approval')
+    const visible = pollTallies(options, 'leading').slice(0, 4)
+    const valueFor = (tally: (typeof visible)[number]): string => {
+      if (masked) return '•••'
+      if (total === 0) return '—'
+      if (skin === 'pairwise') return `${tally.votes}W`
+      if (skin === 'approval' && ballots > 0) return `${tally.votes}/${ballots}`
+      return `${tally.share}%`
+    }
+    return {
+      kind: 'rows',
+      rows: visible.map((tally) => ({
+        key: tally.option.id,
+        label: compact(tally.option.label || 'Untitled option', 28),
+        value: valueFor(tally),
+      })),
+      overflow: Math.max(0, options.length - visible.length),
+    }
+  }
+  if (type === 'rating') {
+    const value = finite(data.value) ?? 0
+    const skin = ratingSkinMode(data.skin)
+    if (skin === 'emoji') {
+      return {
+        kind: 'text',
+        text: EMOJI_CHOICES.find((choice) => choice.value === Math.round(value))?.emoji ?? '—',
+      }
+    }
+    if (skin === 'traffic_light') {
+      const signal = trafficChoice(value)
+      const emoji = signal?.tone === 'green' ? '🟢' : signal?.tone === 'amber' ? '🟡' : signal ? '🔴' : '⚪'
+      return { kind: 'text', text: `${emoji} ${signal?.label ?? 'No status'}` }
+    }
+    if (skin === 'nps') {
+      const score = npsScore(value)
+      return { kind: 'metric', primary: `${score}/10`, secondary: npsBand(score) }
+    }
+    if (skin === 'rubric') {
+      return { kind: 'metric', primary: `${formatRating(value)}/5`, secondary: 'Rubric' }
+    }
+    if (skin === 'confidence') {
+      const states = record(data.skinStates)
+      const confidence = ratingConfidence(record(states?.confidence) ?? {})
+      return {
+        kind: 'metric',
+        primary: `${formatRating(value)}/5`,
+        secondary: `${confidence.percent}% confident`,
+      }
+    }
+    if (skin === 'slider') {
+      return { kind: 'metric', primary: `${formatRating(value)}/5`, secondary: 'Rating' }
+    }
+    return { kind: 'stars', value }
+  }
+  if (type === 'habit') {
+    const done = habitDoneCount(data.days)
+    const skin = habitSkinMode(data.skin)
+    const secondary = skin === 'chain'
+      ? `${habitBestRun(data.days)} day chain`
+      : skin === 'scorecard'
+        ? 'Weekly score'
+        : skin === 'routine_stack'
+          ? 'Routine stack'
+          : skin === 'minimum_target'
+            ? 'Minimum / target'
+            : skin === 'flexible_frequency'
+              ? 'Flexible week'
+              : skin === 'month_heatmap'
+                ? 'This month'
+                : 'This week'
+    return { kind: 'metric', primary: `${done}/7`, secondary, progress: done / 7 }
+  }
   if (type === 'color_palette') {
     const colors = Array.isArray(data.colors) ? paletteColors(data.colors) : null
     return colors ? { kind: 'palette', colors } : { kind: 'icon' }
@@ -404,7 +846,44 @@ function specialModel(type: ModuleType, data: Record<string, unknown>): RestingF
       secondary: formulaResultWord(skin),
     }
   }
-  if (type === 'notes' || type === 'sticky_note' || type === 'quote' || type === 'code' || type === 'meeting_notes') {
+  if (type === 'notes' || type === 'sticky_note' || type === 'quote') {
+    return noteRestModel(type, data)
+  }
+  /**
+   * A meeting rests as the work it left behind. It was previously grouped with
+   * Code and read `text`/`content`/`body` — none of which a meeting has — so
+   * every card rested as a bare icon no matter how full it was. The trailing
+   * value is whatever the worn skin made that item mean.
+   */
+  if (type === 'meeting_notes') {
+    const meeting = data as unknown as MeetingNotesData
+    const actions = Array.isArray(meeting.actions) ? meeting.actions : []
+    const skin = meetingNotesSkinMode(meeting.skin)
+    if (actions.length > 0) {
+      const details = meetingItemDetails(meeting, skin)
+      const visible = actions.slice(0, 4)
+      const valueFor = (id: string): string => {
+        const detail = details[id] ?? {}
+        if (skin === 'agenda') return detail.minutes ? `${detail.minutes} min` : ''
+        if (skin === 'decision_review') return detail.review || detail.owner || ''
+        return detail.owner || detail.due || ''
+      }
+      return {
+        kind: 'rows',
+        rows: visible.map((action) => ({
+          key: action.id,
+          label: compact(action.text || 'Untitled item', 28),
+          done: action.done,
+          value: compact(valueFor(action.id), 16) || undefined,
+        })),
+        overflow: Math.max(0, actions.length - visible.length),
+      }
+    }
+    const notes = typeof meeting.notes === 'string' ? meeting.notes : ''
+    if (!notes.trim()) return { kind: 'icon' }
+    return { kind: 'text', text: compact(notes, TEXT_CLAMP) }
+  }
+  if (type === 'code') {
     const text = typeof data.text === 'string' ? data.text
       : typeof data.content === 'string' ? data.content
         : typeof data.body === 'string' ? data.body
@@ -413,7 +892,6 @@ function specialModel(type: ModuleType, data: Record<string, unknown>): RestingF
     return {
       kind: 'text',
       text: compact(text, TEXT_CLAMP),
-      ...(type === 'sticky_note' && typeof data.color === 'string' ? { tint: data.color } : {}),
     }
   }
   /**
@@ -552,19 +1030,257 @@ function modelSize(model: RestingFaceModel, widget: Pick<Widget, 'size' | 'title
         height: snap(PAD_Y * 2 + lines * REST_TEXT_LINE_HEIGHT),
       }
     }
+    case 'note': {
+      const skinFloor = {
+        plain: 140,
+        sticky: 160,
+        quote: 180,
+        daily_log: 200,
+        markdown_page: 200,
+        typewriter: 200,
+        callout: 180,
+        versioned_note: 220,
+      }[model.skin]
+      let widest = 0
+      for (const line of model.lines) {
+        const scale = line.kind === 'heading' ? 1.18 : line.kind === 'code' ? 0.9 : 1
+        widest = Math.max(widest, measureFaceText(line.text) * scale)
+      }
+      if (model.attribution) widest = Math.max(widest, measureFaceText(model.attribution) + 24)
+      for (const version of model.versions ?? []) {
+        widest = Math.max(widest, measureFaceText(version) + 42)
+      }
+
+      const header = model.skin === 'plain' || model.skin === 'sticky' || model.skin === 'quote' ? 0 : 20
+      const footer = model.skin === 'quote' && model.attribution ? 16
+        : model.skin === 'versioned_note' && model.versions?.length
+          ? 8 + model.versions.length * 13
+          : 0
+      return {
+        width: Math.min(MAX_TILE_WIDTH, snap(Math.max(skinFloor, REST_PAD_X * 2 + widest))),
+        height: snap(
+          PAD_Y * 2 +
+          header +
+          Math.max(1, model.lines.length) * REST_TEXT_LINE_HEIGHT +
+          footer,
+        ),
+      }
+    }
     case 'rows': {
       let widest = 0
       for (const row of model.rows) {
         const valueWidth = row.value === undefined ? 0 : ROW_VALUE_GAP + measureFaceText(row.value)
         widest = Math.max(widest, ROW_GLYPH + measureFaceText(row.label) + valueWidth)
       }
+      if (model.eyebrow) widest = Math.max(widest, eyebrowWidth(model.eyebrow))
       return {
         width: Math.min(MAX_TILE_WIDTH, snap(REST_PAD_X * 2 + widest)),
         height: snap(
-          PAD_Y * 2 + model.rows.length * REST_ROW_HEIGHT + (model.overflow > 0 ? OVERFLOW_LINE : 0),
+          PAD_Y * 2 +
+          (model.eyebrow ? EYEBROW_HEIGHT : 0) +
+          model.rows.length * REST_ROW_HEIGHT +
+          (model.overflow > 0 ? OVERFLOW_LINE : 0) +
+          (model.meter === undefined ? 0 : 6),
         ),
       }
     }
+    case 'columns': {
+      let tallest = 0
+      let total = 0
+      for (const column of model.columns) {
+        let widest = measureFaceText(column.label) + (column.note ? measureFaceText(column.note) + 8 : 0)
+        for (const item of column.items) {
+          widest = Math.max(widest, 10 + measureFaceText(item.label) + (item.value ? measureFaceText(item.value) + 6 : 0))
+        }
+        total += Math.min(COLUMN_MAX_WIDTH, Math.max(COLUMN_MIN_WIDTH, widest + 12))
+        tallest = Math.max(
+          tallest,
+          column.items.length * COLUMN_ITEM + (column.overflow > 0 ? 10 : 0),
+        )
+      }
+      total += COLUMN_GAP * Math.max(0, model.columns.length - 1)
+      return {
+        width: Math.min(MAX_WIDE_TILE, snap(REST_PAD_X * 2 + total)),
+        height: snap(
+          PAD_Y * 2 +
+          (model.eyebrow ? EYEBROW_HEIGHT : 0) +
+          COLUMN_HEADER +
+          Math.max(COLUMN_ITEM, tallest),
+        ),
+      }
+    }
+    case 'grid': {
+      const rows = Math.max(1, Math.ceil(model.cells.length / Math.max(1, model.cols)))
+      if (model.dense) {
+        return {
+          width: Math.min(
+            MAX_WIDE_TILE,
+            snap(Math.max(
+              REST_PAD_X * 2 + model.cols * DENSE_CELL + (model.cols - 1) * DENSE_GAP,
+              model.eyebrow ? REST_PAD_X * 2 + eyebrowWidth(model.eyebrow) : 0,
+            )),
+          ),
+          height: snap(
+            PAD_Y * 2 +
+            (model.eyebrow ? EYEBROW_HEIGHT : 0) +
+            (model.header ? DENSE_CELL : 0) +
+            rows * DENSE_CELL + (rows - 1) * DENSE_GAP,
+          ),
+        }
+      }
+      // A text grid takes its column widths from its own widest cell, so a
+      // folded table lines its columns up the way the open one does.
+      const columnWidths = new Array<number>(model.cols).fill(0)
+      model.header?.forEach((text, index) => {
+        if (index < model.cols) columnWidths[index] = measureFaceText(text)
+      })
+      model.cells.forEach((cell, index) => {
+        const column = index % model.cols
+        columnWidths[column] = Math.max(columnWidths[column]!, measureFaceText(cell.text))
+      })
+      const width = columnWidths.reduce((sum, value) => sum + value, 0) +
+        GRID_COL_GAP * Math.max(0, model.cols - 1)
+      return {
+        width: Math.min(MAX_WIDE_TILE, snap(REST_PAD_X * 2 + Math.max(width, model.eyebrow ? eyebrowWidth(model.eyebrow) : 0))),
+        height: snap(
+          PAD_Y * 2 +
+          (model.eyebrow ? EYEBROW_HEIGHT : 0) +
+          (model.header ? GRID_ROW_HEIGHT : 0) +
+          rows * GRID_ROW_HEIGHT,
+        ),
+      }
+    }
+    case 'bars': {
+      let widest = 0
+      for (const bar of model.bars) {
+        widest = Math.max(widest, measureFaceText(bar.label) + 8 + measureFaceText(bar.value))
+      }
+      widest = Math.max(widest, BAR_TRACK_WIDTH)
+      if (model.eyebrow) widest = Math.max(widest, eyebrowWidth(model.eyebrow))
+      return {
+        width: Math.min(MAX_TILE_WIDTH, snap(REST_PAD_X * 2 + Math.max(BAR_TRACK_WIDTH + 24, widest))),
+        height: snap(
+          PAD_Y * 2 + (model.eyebrow ? EYEBROW_HEIGHT : 0) + model.bars.length * BAR_ROW_HEIGHT,
+        ),
+      }
+    }
+    case 'gauge': {
+      const textWidth = Math.max(
+        measureFaceText(model.primary) * 1.4,
+        measureFaceText(model.secondary.toUpperCase()) * 0.85,
+        model.caption ? measureFaceText(model.caption) * 0.85 : 0,
+      )
+      return {
+        width: Math.min(MAX_TILE_WIDTH, snap(REST_PAD_X * 2 + GAUGE_DIAMETER + 10 + textWidth)),
+        height: snap(PAD_Y * 2 + GAUGE_DIAMETER),
+      }
+    }
+    case 'chips': {
+      const inner = MAX_TILE_WIDTH - REST_PAD_X * 2
+      let line = 0
+      let lines = 1
+      for (const chip of model.chips) {
+        const width = measureFaceText(chip.text) * 1.05 + CHIP_PAD
+        if (line > 0 && line + width > inner) { lines += 1; line = 0 }
+        line += width + CHIP_GAP
+      }
+      const widest = model.chips.reduce(
+        (max, chip) => Math.max(max, measureFaceText(chip.text) * 1.05 + CHIP_PAD),
+        model.eyebrow ? eyebrowWidth(model.eyebrow) : 0,
+      )
+      const packed = model.chips.reduce(
+        (sum, chip) => sum + measureFaceText(chip.text) * 1.05 + CHIP_PAD + CHIP_GAP,
+        0,
+      )
+      return {
+        width: Math.min(MAX_TILE_WIDTH, snap(REST_PAD_X * 2 + Math.max(widest, Math.min(inner, packed)))),
+        height: snap(
+          PAD_Y * 2 +
+          (model.eyebrow ? EYEBROW_HEIGHT : 0) +
+          lines * CHIP_HEIGHT + (lines - 1) * CHIP_GAP +
+          (model.overflow > 0 ? 10 : 0),
+        ),
+      }
+    }
+    case 'lines': {
+      const scale = model.mono ? 1.02 : 1
+      let widest = model.eyebrow ? eyebrowWidth(model.eyebrow) : 0
+      const measure = (line: RestLine) =>
+        (measureFaceText(line.left) + (line.right ? measureFaceText(line.right) + LINE_GAP : 0)) * scale
+      for (const line of model.lines) widest = Math.max(widest, measure(line))
+      if (model.total) widest = Math.max(widest, measure(model.total) * 1.15)
+      return {
+        width: Math.min(MAX_TILE_WIDTH, snap(REST_PAD_X * 2 + widest)),
+        height: snap(
+          PAD_Y * 2 +
+          (model.eyebrow ? EYEBROW_HEIGHT : 0) +
+          Math.max(1, model.lines.length) * LINE_HEIGHT +
+          (model.total ? LINE_HEIGHT + 5 : 0),
+        ),
+      }
+    }
+    case 'chain': {
+      if (model.shape === 'stack') {
+        let widest = model.eyebrow ? eyebrowWidth(model.eyebrow) : 0
+        for (const node of model.nodes) {
+          widest = Math.max(widest, 14 + measureFaceText(node.label) + (node.caption ? measureFaceText(node.caption) + 8 : 0))
+        }
+        return {
+          width: Math.min(MAX_TILE_WIDTH, snap(REST_PAD_X * 2 + widest)),
+          height: snap(
+            PAD_Y * 2 +
+            (model.eyebrow ? EYEBROW_HEIGHT : 0) +
+            model.nodes.length * REST_ROW_HEIGHT +
+            (model.overflow > 0 ? OVERFLOW_LINE : 0),
+          ),
+        }
+      }
+      const span = model.nodes.length * NODE_WIDTH +
+        Math.max(0, model.nodes.length - 1) * NODE_CONNECTOR +
+        (model.overflow > 0 ? NODE_CONNECTOR + 18 : 0)
+      return {
+        width: Math.min(MAX_WIDE_TILE, snap(REST_PAD_X * 2 + span)),
+        height: snap(
+          PAD_Y * 2 +
+          (model.eyebrow ? EYEBROW_HEIGHT : 0) +
+          NODE_HEIGHT +
+          (model.shape === 'circular' ? 10 : 0),
+        ),
+      }
+    }
+    case 'timeline': {
+      let labelWidth = 0
+      for (const lane of model.lanes) labelWidth = Math.max(labelWidth, measureFaceText(lane.label))
+      const label = Math.min(TIMELINE_LABEL, Math.max(34, labelWidth))
+      return {
+        width: Math.min(MAX_WIDE_TILE, snap(REST_PAD_X * 2 + label + 8 + TIMELINE_TRACK)),
+        height: snap(
+          PAD_Y * 2 +
+          (model.eyebrow ? EYEBROW_HEIGHT : 0) +
+          TIMELINE_SCALE +
+          model.lanes.length * TIMELINE_ROW,
+        ),
+      }
+    }
+    case 'split': {
+      const side = (readout: RestReadout) => Math.max(
+        measureFaceText(readout.primary) * 1.4,
+        measureFaceText(readout.secondary.toUpperCase()) * 0.85,
+      )
+      const divider = model.divider ? measureFaceText(model.divider) * 1.2 + 12 : SPLIT_DIVIDER
+      return {
+        width: Math.min(
+          MAX_TILE_WIDTH,
+          snap(REST_PAD_X * 2 + side(model.left) + divider + side(model.right)),
+        ),
+        height: snap(PAD_Y * 2 + (model.eyebrow ? EYEBROW_HEIGHT : 0) + 30),
+      }
+    }
+    case 'paper':
+      return {
+        width: PAPER_WIDTH,
+        height: snap(PAPER_HEIGHT + (model.eyebrow ? EYEBROW_HEIGHT : 0)),
+      }
   }
 }
 

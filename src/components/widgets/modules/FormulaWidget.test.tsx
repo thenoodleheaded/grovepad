@@ -49,7 +49,10 @@ describe('purpose-built Formula skins', () => {
   })
 
   it.each(SKINS)('shows the published answer in the %s skin', (skin) => {
-    expect(render(skin)).toContain('gp-fx-hero')
+    const markup = render(skin)
+    expect(markup).toContain('gp-fx-hero')
+    expect(markup).toContain('aria-label="Copy result"')
+    expect(markup).toContain('role="status"')
   })
 
   it('names the movement and its direction on the percent card', () => {
@@ -65,6 +68,8 @@ describe('purpose-built Formula skins', () => {
     const markup = render('ratio', { a: 3, b: 1 })
     expect(markup).toContain('Simplifies to 3 : 1')
     expect(markup).toContain('75 percent of the total')
+    expect(markup).toContain('A · 75%')
+    expect(markup).toContain('B · 25%')
   })
 
   it('projects six periods of growth without publishing more than one', () => {
@@ -76,6 +81,7 @@ describe('purpose-built Formula skins', () => {
 
   it('carries the written expression and reports one that cannot be read', () => {
     const good = render('expression', { skinStates: { expression: { expression: 'a * b' } } })
+    expect(good).toContain('ƒ(a,b)')
     expect(good).toContain('value="a * b"')
     expect(good).toContain('50000')
 
@@ -96,6 +102,7 @@ describe('purpose-built Formula skins', () => {
     expect(markup).toContain('value="Cost"')
     expect(markup).toContain('value="Support"')
     expect(markup).toContain('Add a row')
+    expect(markup).toContain('Total weight')
     expect((markup.match(/gp-fx-row-remove/g) ?? []).length).toBe(1)
   })
 
@@ -107,6 +114,8 @@ describe('purpose-built Formula skins', () => {
     })
     expect(markup).toContain('10 &gt; 4 is true')
     expect((markup.match(/data-live="true"/g) ?? []).length).toBe(1)
+    expect((markup.match(/Selected/g) ?? []).length).toBe(1)
+    expect((markup.match(/Standby/g) ?? []).length).toBe(1)
     expect(markup).toContain('100')
   })
 

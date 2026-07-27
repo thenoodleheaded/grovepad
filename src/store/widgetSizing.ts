@@ -13,6 +13,35 @@ import { CONSOLIDATED_WIDGET_MODES, publicWidgetTypeFor, widgetDefinition } from
 import { clamp } from '../utils/math'
 import { MIN_WIDGET_HEIGHT, MIN_WIDGET_WIDTH } from './widgetLayoutConstants'
 
+/**
+ * Meeting Notes skins, as [per-action height, fixed chrome] in CSS pixels.
+ * Chrome is each skin's measured empty height plus the card's content inset —
+ * a stand-up carries three lanes and a retro four quadrants before a single
+ * action exists, so one shared constant put both into a scroller on creation.
+ */
+const MEETING_SKIN_METRICS: Record<string, readonly [number, number]> = {
+  agenda: [64, 282],
+  minutes: [62, 296],
+  stand_up: [30, 354],
+  retrospective: [30, 396],
+  one_to_one: [32, 334],
+  decision_review: [92, 282],
+  handoff: [30, 344],
+}
+
+/** Poll skins, as [per-option height, fixed chrome] in CSS pixels. */
+const POLL_SKIN_METRICS: Record<string, readonly [number, number]> = {
+  bars: [46, 120],
+  donut: [26, 190],
+  approval: [38, 158],
+  // Below 380px the ballot and its runoff stack, so each option costs a
+  // ranking row and a runoff line in every round it survives.
+  ranked_choice: [46, 260],
+  pairwise: [24, 250],
+  live_room: [34, 190],
+  anonymous: [34, 176],
+}
+
 export function computeDataHeight(type: ModuleType, data: ModuleData): number {
   const C = GRID_SIZE
   switch (type) {
@@ -32,7 +61,10 @@ export function computeDataHeight(type: ModuleType, data: ModuleData): number {
     }
     case 'poll': {
       const d = data as PollData
-      return Math.max(C * 4, Math.ceil((d.options.length * 36 + 96) / C) * C)
+      // Each skin stacks a different amount of fixed chrome above the options:
+      // a dial and legend, a cast bar, a runoff column, a duel plus its matrix.
+      const [perOption, chrome] = POLL_SKIN_METRICS[d.skin ?? 'bars'] ?? POLL_SKIN_METRICS.bars!
+      return Math.max(C * 4, Math.ceil((d.options.length * perOption + chrome) / C) * C)
     }
     case 'metrics': {
       const d = data as MetricsData
@@ -45,8 +77,25 @@ export function computeDataHeight(type: ModuleType, data: ModuleData): number {
     }
     case 'pros_cons': {
       const d = data as ProsConsData
+      // Balance and the weighted dial stack two columns side by side, so only
+      // the taller column sets the height. Debate stacks every exchange, and
+      // Red Team gives each failure mode an evidence line of its own.
+      const skin = d.skin ?? 'balance'
+      if (skin === 'debate') {
+        const exchanges = d.pros.length + Math.max(0, d.cons.length - d.pros.length)
+        return Math.max(C * 5, Math.ceil((exchanges * 96 + 132) / C) * C)
+      }
+      if (skin === 'red_team') {
+        return Math.max(C * 5, Math.ceil((d.cons.length * 62 + d.pros.length * 8 + 132) / C) * C)
+      }
+      if (skin === 'reversible_irreversible') {
+        // Either lane can hold every point, so the taller case is all of them.
+        const points = d.pros.length + d.cons.length
+        return Math.max(C * 5, Math.ceil((points * 30 + 168) / C) * C)
+      }
       const rows = Math.max(d.pros.length, d.cons.length)
-      return Math.max(C * 4, Math.ceil((rows * 28 + 120) / C) * C)
+      const rowHeight = skin === 'weighted_trade_off' ? 32 : 28
+      return Math.max(C * 4, Math.ceil((rows * rowHeight + 148) / C) * C)
     }
     case 'weekly_planner': {
       const d = data as WeeklyPlannerData
@@ -63,7 +112,13 @@ export function computeDataHeight(type: ModuleType, data: ModuleData): number {
     }
     case 'meeting_notes': {
       const d = data as MeetingNotesData
-      return Math.max(C * 6, Math.ceil((d.actions.length * 24 + 296) / C) * C)
+      // Each skin spends its height differently: a decision carries a rationale
+      // and two chips, a stand-up ask is a single line under three lanes. This
+      // is the creation-time estimate only — the renderer reports its real
+      // height once mounted.
+      const [rowHeight, chrome] = MEETING_SKIN_METRICS[d.skin ?? 'agenda']
+        ?? MEETING_SKIN_METRICS.agenda!
+      return Math.max(C * 6, Math.ceil((d.actions.length * rowHeight + chrome) / C) * C)
     }
     case 'decision': {
       const d = data as DecisionData
@@ -89,7 +144,10 @@ export function computeDataHeight(type: ModuleType, data: ModuleData): number {
     }
     case 'grade_calc': {
       const d = data as GradeCalcData
-      return Math.max(C * 4, Math.ceil((d.components.length * 32 + 128) / C) * C)
+      const rowCount = d.mode === 'gpa'
+        ? (d.gpa?.courses.length ?? 1)
+        : d.components.length
+      return Math.max(C * 4, Math.ceil((rowCount * 36 + 154) / C) * C)
     }
     case 'gpa': {
       const d = data as GpaData
@@ -117,7 +175,18 @@ export function computeDataHeight(type: ModuleType, data: ModuleData): number {
     }
     case 'form': {
       const d = data as FormWidgetData
-      return Math.max(C * 5, Math.ceil((d.fields.length * 42 + 120) / C) * C)
+      // Every skin stacks the same fields; they differ in how much each field
+      // carries. Application adds a section and an evidence line, Inspection a
+      // note, Conditional a rule row.
+      const perField = d.skin === 'application'
+        ? 92
+        : d.skin === 'conditional_form'
+          ? 76
+          : d.skin === 'inspection'
+            ? 68
+            : 54
+      const chrome = d.skin === 'rsvp' ? 236 : d.skin === 'feedback' ? 176 : 150
+      return Math.max(C * 5, Math.ceil((d.fields.length * perField + chrome) / C) * C)
     }
     case 'daily_agenda': {
       const d = data as DailyAgendaData

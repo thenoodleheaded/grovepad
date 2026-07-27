@@ -252,122 +252,6 @@
 .gp-time-deadline > footer span i { width: 4px; height: 4px; border-radius: 50%; background: var(--gp-widget-accent); }
 .gp-time-deadline > footer small { margin-left: auto; }
 
-/* World clock */
-
-.gp-time-world {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  border: 1px solid var(--gp-time-rule);
-  border-radius: var(--gp-r1, 10px);
-  background:
-    linear-gradient(145deg, color-mix(in oklab, var(--gp-widget-accent), transparent 96%), transparent 46%),
-    color-mix(in oklab, #071019, transparent 14%);
-}
-
-.gp-time-world > header {
-  display: grid;
-  min-height: 43px;
-  grid-template-columns: 27px minmax(0, 1fr) 25px;
-  align-items: center;
-  gap: 0.42rem;
-  padding: 0 0.48rem;
-  border-bottom: 1px solid var(--gp-time-rule);
-}
-
-.gp-time-world > header > span {
-  display: grid;
-  width: 26px;
-  height: 26px;
-  place-items: center;
-  border-radius: 50%;
-  color: color-mix(in oklab, var(--gp-widget-accent), white 10%);
-  background: color-mix(in oklab, var(--gp-widget-accent), transparent 87%);
-  box-shadow: 0 0 18px color-mix(in oklab, var(--gp-widget-accent), transparent 86%);
-}
-
-.gp-time-world > header > div { display: flex; min-width: 0; flex-direction: column; }
-.gp-time-world > header strong { font-size: 8px; }
-.gp-time-world > header small { color: var(--gp-time-faint); font-size: 5.7px; }
-
-.gp-time-world > header > button,
-.gp-time-zone-picker header button {
-  display: grid;
-  width: 24px;
-  height: 24px;
-  place-items: center;
-  border: 0;
-  border-radius: 7px;
-  color: var(--gp-time-soft);
-  background: var(--gp-time-wash);
-}
-
-.gp-time-world-list {
-  min-height: 0;
-  flex: 1 1 auto;
-  overflow: auto;
-  scrollbar-width: thin;
-}
-
-.gp-time-world-list article {
-  display: grid;
-  min-height: 48px;
-  grid-template-columns: 22px minmax(0, 1fr) auto 19px;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 0 0.42rem;
-  border-bottom: 1px solid var(--gp-time-rule);
-}
-
-.gp-time-world-list article[data-primary] {
-  background: linear-gradient(90deg, color-mix(in oklab, var(--gp-widget-accent), transparent 93%), transparent);
-}
-
-.gp-time-world-index { color: color-mix(in oklab, var(--gp-widget-accent), white 8%); font-size: 5.5px; }
-.gp-time-world-place,
-.gp-time-world-reading { display: flex; min-width: 0; flex-direction: column; }
-.gp-time-world-place strong { overflow: hidden; font-size: 7.5px; text-overflow: ellipsis; white-space: nowrap; }
-.gp-time-world-place small,
-.gp-time-world-reading small { margin-top: 0.1rem; color: var(--gp-time-faint); font-size: 5.4px; }
-.gp-time-world-reading { align-items: flex-end; }
-.gp-time-world-reading strong { font-size: 15px; font-weight: 700; letter-spacing: -0.04em; }
-.gp-time-world-list article > button { display: grid; width: 18px; height: 18px; place-items: center; border: 0; border-radius: 5px; color: var(--gp-time-faint); background: transparent; opacity: 0; }
-.gp-time-world-list article:hover > button,
-.gp-time-world-list article > button:focus-visible { opacity: 1; }
-.gp-time-world-empty { display: flex; width: 100%; height: 100%; align-items: center; justify-content: center; flex-direction: column; gap: 0.2rem; border: 0; color: var(--gp-time-faint); background: transparent; }
-.gp-time-world-empty strong { margin-top: 0.15rem; color: var(--gp-time-soft); font-size: 8px; }
-.gp-time-world-empty span { font-size: 5.8px; }
-
-.gp-time-zone-picker {
-  position: absolute;
-  z-index: 4;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  padding: 0.45rem;
-  background: color-mix(in oklab, #071019, transparent 2%);
-  animation: gp-time-pop 140ms var(--gp-ease-snap) both;
-}
-
-@keyframes gp-time-pop { from { opacity: 0; transform: scale(0.985); } }
-
-.gp-time-zone-picker > header {
-  display: grid;
-  grid-template-columns: 17px minmax(0, 1fr) 24px;
-  align-items: center;
-  gap: 0.3rem;
-  padding-bottom: 0.35rem;
-  border-bottom: 1px solid var(--gp-time-rule);
-  color: var(--gp-time-faint);
-}
-
-.gp-time-zone-picker header input { min-width: 0; border: 0; outline: 0; color: var(--gp-time-ink); background: transparent; font-size: 7px; }
-.gp-time-zone-picker > div { display: grid; min-height: 0; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.3rem; padding-top: 0.35rem; overflow: auto; }
-.gp-time-zone-picker > div button { display: flex; min-height: 34px; align-items: flex-start; justify-content: center; flex-direction: column; padding: 0 0.42rem; border: 1px solid var(--gp-time-rule); border-radius: 7px; color: var(--gp-time-soft); background: var(--gp-time-wash); text-align: left; }
-.gp-time-zone-picker > div button span { font-size: 6.8px; font-weight: 650; }
-.gp-time-zone-picker > div button small { margin-top: 0.1rem; overflow: hidden; color: var(--gp-time-faint); font-size: 5px; text-overflow: ellipsis; white-space: nowrap; }
-
 /* Hourglass */
 
 .gp-time-hourglass,
@@ -539,15 +423,11 @@
 @container (max-width: 220px) {
   .gp-time-date-control { display: none !important; }
   .gp-time-deadline > header { grid-template-columns: 27px minmax(0, 1fr); }
-  .gp-time-world-place small,
-  .gp-time-world-index { display: none; }
-  .gp-time-world-list article { grid-template-columns: minmax(0, 1fr) auto 19px; }
   .gp-time-stages > main { grid-template-columns: 1fr; }
   .gp-time-stages > main > section { display: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .gp-time-zone-picker,
   .gp-time-key,
   .gp-time-hourglass-art > i {
     animation: none;

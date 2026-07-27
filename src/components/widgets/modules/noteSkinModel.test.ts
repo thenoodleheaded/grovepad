@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
+  addDailyLogTimestamp,
+  autoTimestampFirstDailyLogEntry,
   noteCalloutTone,
   noteVersionSnapshots,
   noteWordDiff,
@@ -48,6 +50,32 @@ describe('Note skin model', () => {
       added: 2,
       removed: 1,
       unchanged: 2,
+    })
+  })
+
+  it('starts a Daily Log with an automatic timestamp without changing blank drafts', () => {
+    expect(autoTimestampFirstDailyLogEntry('', 'Morning walk', '09:14 AM')).toEqual({
+      text: '09:14 AM  Morning walk',
+      cursorOffset: 10,
+    })
+    expect(autoTimestampFirstDailyLogEntry('', '   ', '09:14 AM')).toEqual({
+      text: '   ',
+      cursorOffset: 0,
+    })
+    expect(autoTimestampFirstDailyLogEntry('', '09:14 AM  Already timed', '09:14 AM')).toEqual({
+      text: '09:14 AM  Already timed',
+      cursorOffset: 0,
+    })
+  })
+
+  it('creates the next Daily Log timeline entry at the caret', () => {
+    expect(addDailyLogTimestamp('09:14 AM  Morning walk', 22, 22, '10:05 AM')).toEqual({
+      text: '09:14 AM  Morning walk\n10:05 AM  ',
+      cursor: 33,
+    })
+    expect(addDailyLogTimestamp('', 0, 0, '10:05 AM')).toEqual({
+      text: '10:05 AM  ',
+      cursor: 10,
     })
   })
 })

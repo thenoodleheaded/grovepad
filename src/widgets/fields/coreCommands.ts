@@ -43,6 +43,7 @@ import {
   reverseLinkedNodes,
   selectedLinkedNodeId,
 } from '../../components/widgets/modules/linkedListSkinModel'
+import { resetPollVotes } from '../../components/widgets/modules/pollSkinModel'
 
 /** Inline widget commands, extracted verbatim from fields.ts; key order preserved. */
 export const CORE_WIDGET_COMMANDS = {
@@ -373,11 +374,11 @@ export const CORE_WIDGET_COMMANDS = {
   poll: [
     {
       key: 'reset',
+      // Ballots, duel records, and room phase are the same result told another
+      // way, so clearing votes has to clear them too or the runoff would keep
+      // reporting a winner the tally no longer knows about.
       label: 'Clear votes',
-      run: (d) => ({
-        ...(d as PollData),
-        options: (d as PollData).options.map((o) => ({ ...o, votes: 0 })),
-      }),
+      run: (d) => resetPollVotes(d as PollData),
     },
   ],
   mood_tracker: [
