@@ -1184,11 +1184,7 @@ export function buildLaunchShowcase(): DemoBoard {
       key: 'renewals',
       type: 'renewals_vault',
       title: 'Renewals',
-      skin: 'timeline',
-      // The timeline skin's own height reporter grows this card well past what
-      // `computeDataHeight` predicts. Storing the height it settles at keeps
-      // the card from resizing (and shoving its neighbours) on first render.
-      size: { width: 360, height: 920 },
+      skin: 'wallet',
       data: {
         rows: [
           { id: rid('r'), item: 'Passport', expires: inDays(180), noteRef: '', renewLeadDays: 90 },
