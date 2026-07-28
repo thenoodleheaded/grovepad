@@ -4,15 +4,14 @@ import { parsePersistedBoard } from '../utils/persistedBoardSchema'
 import { useWidgetStore } from './useWidgetStore'
 import { useWidgetRestStore } from './useWidgetRestStore'
 import { ICON_MAX_EDGE, ICONIFIED_SIZE, WIDGET_MAX_EDGE } from '../types/spatial'
-import { expansionOffsetFor, restingTileSize } from '../utils/widgetRest'
+import { GLUE_GAP } from '../utils/glueGeometry'
+import { expandedIconSize, expansionOffsetFor, restingTileSize } from '../utils/widgetRest'
 import { clearLiveWidgetSizing, setLiveWidgetSizing } from './liveWidgetSizing'
 
 const baseline = parsePersistedBoard(buildBoardSnapshot(useWidgetStore.getState()))!
 
 afterEach(() => {
-  // Release the expansion slot without the origin fold-back: the board is
-  // about to be replaced wholesale, so there is nothing left to restore into.
-  useWidgetRestStore.getState().collapseWidget({ restoreOrigin: false })
+  useWidgetRestStore.getState().collapseWidget()
   for (const id of Object.keys(useWidgetStore.getState().widgets)) clearLiveWidgetSizing(id)
   useWidgetStore.getState().loadBoard(baseline)
 })
@@ -284,39 +283,88 @@ describe('re-centred scale states', () => {
   })
 })
 
-describe('an expansion folds back onto the state it opened from', () => {
-  /** Open a card the way WidgetCard.expandFromIcon does: capture the icon as
-   * the origin, go full history-neutrally, take the expansion slot. */
-  function openFromIcon(id: string) {
+/**
+ * An icon welded to the left edge of a neighbour, far from the seed board. The
+ * card the icon opens into is several times the width of its square, so
+ * anything that commits the swap shoves the neighbour visibly aside.
+ */
+function gluedIconPair(): [string, string] {
+  const store = useWidgetStore.getState()
+  const icon = store.createWidget('Peek', { x: 60_000, y: 60_000 }, 'notes')
+  const mate = store.createWidget('Mate', { x: 62_000, y: 60_000 }, 'notes')
+  useWidgetStore.getState().setWidgetScaleState(icon, 'icon')
+  const square = useWidgetStore.getState().widgets[icon]!
+  const widgets = useWidgetStore.getState().widgets
+  useWidgetStore.setState({
+    widgets: {
+      ...widgets,
+      [mate]: {
+        ...widgets[mate]!,
+        position: { x: square.position.x + square.size.width + GLUE_GAP, y: square.position.y },
+      },
+    },
+  })
+  useWidgetStore.getState().glueWidgets(mate, icon)
+  return [icon, mate]
+}
+
+describe('an expansion returns to the state it opened from', () => {
+  /** Open an icon the way WidgetCard.expandFromIcon does: take the expansion
+   * slot, centred on the icon square, and touch the board not at all. */
+  function peekIconOpen(id: string) {
     const icon = useWidgetStore.getState().widgets[id]!
-    const origin = { kind: 'icon', size: icon.size } as const
-    useWidgetStore.getState().setWidgetScaleState(id, 'full', { skipHistory: true })
-    const open = useWidgetStore.getState().widgets[id]!
     useWidgetRestStore.getState().expandWidget(
       id,
-      expansionOffsetFor(restingTileSize(open), open.size),
-      origin,
+      expansionOffsetFor(icon.size, expandedIconSize(icon)),
+      { kind: 'icon', size: icon.size },
     )
     return icon
   }
 
-  it('folds a card opened from an icon back into the same icon, same spot', () => {
+  it('writes nothing to the board when an icon is peeked open and closed', () => {
     const id = useWidgetStore.getState().createWidget('Notes', { x: 400, y: 400 }, 'notes')
     useWidgetStore.getState().setWidgetScaleState(id, 'icon')
-    // Grow the icon to an in-between size — the remembered square must come
-    // back exactly, not be rounded to either 2×2 or 3×3.
+    // Grow the icon to an in-between size — nothing about the peek may round
+    // it to 2×2 or 3×3, because nothing about the peek touches it at all.
     useWidgetStore.getState().resizeWidget(id, { width: 97.5, height: 97.5 }, false)
-    const icon = openFromIcon(id)
+    const icon = peekIconOpen(id)
     expect(icon.size).toEqual({ width: 97.5, height: 97.5 })
-    expect(useWidgetStore.getState().widgets[id]!.iconified).toBe(false)
+
+    // Open: still an icon in the record, same square, same spot — while the
+    // card the user sees comes from the box the icon remembers.
+    const open = useWidgetStore.getState().widgets[id]!
+    expect(open).toEqual(icon)
+    expect(expandedIconSize(open)).toEqual(icon.expandedSize)
 
     useWidgetRestStore.getState().collapseWidget()
 
-    const closed = useWidgetStore.getState().widgets[id]!
-    expect(closed.iconified).toBe(true)
-    expect(closed.size).toEqual(icon.size)
-    expect(closed.position).toEqual(icon.position)
+    expect(useWidgetStore.getState().widgets[id]!).toEqual(icon)
     expect(useWidgetRestStore.getState().expandedWidgetId).toBe(null)
+  })
+
+  it('costs no undo step, so undo still reverses the click before it', () => {
+    const id = useWidgetStore.getState().createWidget('Notes', { x: 400, y: 400 }, 'notes')
+    useWidgetStore.getState().setWidgetScaleState(id, 'icon')
+    peekIconOpen(id)
+    useWidgetRestStore.getState().collapseWidget()
+
+    // One undo puts the widget back to the full card it was before it was
+    // iconified. Opening it used to be an edit of its own sitting in between.
+    useWidgetStore.getState().undo()
+    expect(useWidgetStore.getState().widgets[id]!.iconified).toBeFalsy()
+  })
+
+  it('leaves a peeked icon’s clustermates exactly where they stand', () => {
+    // Making space for a card that is only being glanced at is a real board
+    // change: undoable, persisted, and on a shared canvas it would shove
+    // everyone else's view of the group about as well.
+    const [icon, mate] = gluedIconPair()
+    const before = useWidgetStore.getState().widgets[mate]!
+
+    peekIconOpen(icon)
+
+    expect(useWidgetStore.getState().widgets[mate]!.position).toEqual(before.position)
+    expect(useWidgetStore.getState().widgets[mate]!.size).toEqual(before.size)
   })
 
   it('leaves a card opened from rest to the resting system on collapse', () => {
@@ -338,31 +386,4 @@ describe('an expansion folds back onto the state it opened from', () => {
     expect(closed.size).toEqual(before.size)
   })
 
-  it('does not fold back when the collapse is a pin hold', () => {
-    const id = useWidgetStore.getState().createWidget('Notes', { x: 400, y: 400 }, 'notes')
-    useWidgetStore.getState().setWidgetScaleState(id, 'icon')
-    openFromIcon(id)
-
-    // Pinning keeps the card open: release the slot without restoring.
-    useWidgetRestStore.getState().collapseWidget({ restoreOrigin: false })
-
-    expect(useWidgetStore.getState().widgets[id]!.iconified).toBe(false)
-    expect(useWidgetRestStore.getState().expandedWidgetId).toBe(null)
-  })
-
-  it('no-ops the fold-back when the card was already returned to an icon', () => {
-    const id = useWidgetStore.getState().createWidget('Notes', { x: 400, y: 400 }, 'notes')
-    useWidgetStore.getState().setWidgetScaleState(id, 'icon')
-    openFromIcon(id)
-    // Something else (undo, a gesture) already iconified the card while the
-    // stale slot survived; collapse must not disturb it.
-    useWidgetStore.getState().setWidgetScaleState(id, 'icon', { skipHistory: true })
-    const parked = useWidgetStore.getState().widgets[id]!
-
-    useWidgetRestStore.getState().collapseWidget()
-
-    const after = useWidgetStore.getState().widgets[id]!
-    expect(after.size).toEqual(parked.size)
-    expect(after.position).toEqual(parked.position)
-  })
 })

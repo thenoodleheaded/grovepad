@@ -1,16 +1,10 @@
-import type { DatePickerData, FormField, FormulaData, FormWidgetData, LogbookData, MeetingNotesData, ModuleType, PollData, ProsConsData, ProsConsItem, Size, Widget } from '../types/spatial'
+import type { DatePickerData, FormField, FormWidgetData, LogbookData, MeetingNotesData, ModuleType, PollData, ProsConsData, ProsConsItem, Size, Widget } from '../types/spatial'
 import { GRID_SIZE, ICON_MIN_EDGE } from '../types/spatial'
-import {
-  formulaReading,
-  formulaResultWord,
-  formulaSkinMode,
-} from '../components/widgets/modules/formulaSkinModel'
 import {
   noteCalloutTone,
   noteVersionSnapshots,
   type NoteSkinMode,
 } from '../components/widgets/modules/noteSkinModel'
-import { locationPoint, placeName } from '../components/widgets/modules/locationSkinModel'
 import {
   dateDay,
   dateReading,
@@ -23,7 +17,6 @@ import {
   rangeSpan,
   shortDayText,
 } from '../components/widgets/modules/dateSkinModel'
-import { linkedListNodes } from '../components/widgets/modules/linkedListSkinModel'
 import {
   logbookEntries,
   logbookEntryDetails,
@@ -77,9 +70,38 @@ import {
   totalPollVotes,
 } from '../components/widgets/modules/pollSkinModel'
 import {
-  toggleSkinMode,
-  toggleStateLabel,
-} from '../components/widgets/modules/toggleSkinModel'
+  cataloguedSkin,
+  dressWithCatalogueSkin,
+  skinDetails,
+} from './restingFaces/catalogue'
+import { calendarRestingFace } from './restingFaces/calendar'
+import { canvasLmsRestingFace } from './restingFaces/canvasLms'
+import { trackerRestingFace } from './restingFaces/atlas'
+import { goalRestingFace, progressRestingFace } from './restingFaces/goal'
+import {
+  locationRestingFace,
+  toggleRestingFace,
+} from './restingFaces/structure'
+import {
+  canvasNodeRestingFace,
+  mediaRestingFace,
+  sketchpadRestingFace,
+} from './restingFaces/visual'
+import {
+  bulletsRestingFace,
+  codeRestingFace,
+  linksRestingFace,
+  textInputRestingFace,
+} from './restingFaces/text'
+import {
+  calculatorRestingFace,
+  counterRestingFace,
+  formulaRestingFace,
+  numberInputRestingFace,
+} from './restingFaces/numeric'
+import { tableRestingFace } from './restingFaces/table'
+import { tasksRestingFace } from './restingFaces/tasks'
+import { timekeeperRestingFace } from './restingFaces/time'
 import { titleCapsuleWidth } from './titleCapsuleWidth'
 import { clamp01 } from './math'
 import {
@@ -157,12 +179,12 @@ const PAD_Y = 10
 const OVERFLOW_LINE = 14
 const ROW_GLYPH = 16
 const ROW_VALUE_GAP = 10
+/** One outline step, matching RowsFace's indent in WidgetRestingFace.tsx. */
+const ROW_INDENT = 9
 const MIN_TILE = GRID_SIZE
 const MAX_TILE_WIDTH = 240
 const CHART_WIDTH = 140
 const CHART_STATS_WIDTH = 64
-const WEEK_WIDTH = 164
-const WEEK_HEIGHT = 60
 const STARS_WIDTH = 5 * 16 + 4 * 4 + REST_PAD_X * 2
 /** Keep in step with BooleanFace's track in WidgetRestingFace.tsx. */
 const BOOLEAN_SWITCH_WIDTH = 26
@@ -170,12 +192,12 @@ const BOOLEAN_SWITCH_WIDTH = 26
 // Skin grammars. A board, a month, or a timeline is a two-dimensional shape:
 // squeezing it into the six-cell text ceiling would turn it back into a list,
 // which is exactly what folding it must NOT do. They get their own ceiling.
-const MAX_WIDE_TILE = 320
+const MAX_WIDE_TILE = 360
 const EYEBROW_HEIGHT = 14
 const COLUMN_HEADER = 13
 const COLUMN_ITEM = 13
 const COLUMN_GAP = 6
-const COLUMN_MIN_WIDTH = 52
+const COLUMN_MIN_WIDTH = 42
 const COLUMN_MAX_WIDTH = 96
 const DENSE_CELL = 15
 const DENSE_GAP = 2
@@ -197,6 +219,8 @@ const TIMELINE_TRACK = 118
 const TIMELINE_ROW = 15
 const TIMELINE_SCALE = 10
 const SPLIT_DIVIDER = 22
+const CLOCK_READOUT_WIDTH = 92
+const CLOCK_READOUT_HEIGHT = 28
 const PAPER_WIDTH = GRID_SIZE * 4
 const PAPER_HEIGHT = GRID_SIZE * 3
 
@@ -392,10 +416,16 @@ function snap(value: number): number {
   return Math.max(MIN_TILE, Math.ceil(value / GRID_SIZE) * GRID_SIZE)
 }
 
-/** The eyebrow renders a size down and in caps, like the expanded heading. */
+/**
+ * The eyebrow renders a size down, in caps, and letter-spaced. The tracking is
+ * a real 0.11em per character and has to be measured, or a long skin name
+ * ("Programmer", "Birthday & Anniversary") is sized to fit and then truncates
+ * anyway.
+ */
 function eyebrowWidth(eyebrow: RestEyebrow): number {
+  const label = eyebrow.label.toUpperCase()
   return (
-    measureFaceText(eyebrow.label.toUpperCase()) * 0.85 +
+    measureFaceText(label) * 0.85 + label.length * 0.9 +
     (eyebrow.note ? measureFaceText(eyebrow.note) * 0.9 + 10 : 0)
   )
 }
@@ -505,37 +535,29 @@ function chartStats(series: readonly unknown[], unit: string): { label: string; 
 }
 
 function specialModel(type: ModuleType, data: Record<string, unknown>): RestingFaceModel | null {
-  if (type === 'media') {
-    return data.url || data.localBlobKey ? { kind: 'image' } : { kind: 'icon' }
-  }
+  // Skinned families answer for themselves: each module below reads the same
+  // skin model the open card reads, so the folded tile wears the same shape.
+  if (type === 'tracker') return trackerRestingFace(data)
+  if (type === 'checklist') return tasksRestingFace(data)
+  if (type === 'table') return tableRestingFace(data)
+  if (type === 'goal_tracker') return goalRestingFace(data)
+  if (type === 'progress') return progressRestingFace(data)
+  if (type === 'counter') return counterRestingFace(data)
+  if (type === 'calculator') return calculatorRestingFace(data)
+  if (type === 'formula') return formulaRestingFace(data)
+  if (type === 'number_input') return numberInputRestingFace(data)
+  if (type === 'bullets') return bulletsRestingFace(data)
+  if (type === 'links') return linksRestingFace(data)
+  if (type === 'media') return mediaRestingFace(data)
+  if (type === 'sketchpad') return sketchpadRestingFace(data)
   if (type === 'bar_chart' || type === 'line_chart' || type === 'pie_chart') {
     const series = CHART_ARRAY_KEYS.map((key) => data[key]).find(Array.isArray)
     if (!Array.isArray(series) || series.length === 0) return { kind: 'icon' }
     return { kind: 'chart', stats: chartStats(series, typeof data.unit === 'string' ? data.unit : '') }
   }
-  if (type === 'calendar') return { kind: 'week' }
-  // A folded place says where it is. Without coordinates there is nothing to
-  // report yet, so it rests as its icon rather than as an empty row.
-  if (type === 'location') {
-    const point = locationPoint({
-      latitude: finite(data.latitude),
-      longitude: finite(data.longitude),
-    })
-    if (!point) return { kind: 'icon' }
-    const name = placeName(
-      typeof data.label === 'string' ? data.label : '',
-      typeof data.address === 'string' ? data.address : '',
-    )
-    return {
-      kind: 'rows',
-      rows: [{
-        key: 'place',
-        label: compact(name, 24),
-        value: `${point.latitude.toFixed(3)}, ${point.longitude.toFixed(3)}`,
-      }],
-      overflow: 0,
-    }
-  }
+  if (type === 'calendar') return calendarRestingFace(data)
+  if (type === 'canvas_lms') return canvasLmsRestingFace(data)
+  if (type === 'location') return locationRestingFace(data)
   /**
    * A folded Date card shows the answer its skin is for, not the field it
    * stores: a Deadline rests as the days left, a Range as its two ends, a
@@ -584,24 +606,6 @@ function specialModel(type: ModuleType, data: Record<string, unknown>): RestingF
       kind: 'metric',
       primary: reading.phrase,
       secondary: mediumDayText(reading.day),
-    }
-  }
-  if (type === 'linked_list') {
-    const nodes = linkedListNodes(data.nodes)
-    if (nodes.length === 0) return { kind: 'icon' }
-    const visible = nodes.length <= 3
-      ? nodes
-      : [nodes[0]!, nodes[1]!, nodes.at(-1)!]
-    return {
-      kind: 'rows',
-      rows: visible.map((node, index) => ({
-        key: node.id,
-        label: index === 0
-          ? 'Head'
-          : index === visible.length - 1 ? 'Tail' : `#${index + 1}`,
-        value: compact(node.value || 'Empty node', 24),
-      })),
-      overflow: Math.max(0, nodes.length - visible.length),
     }
   }
   if (type === 'logbook') {
@@ -781,70 +785,19 @@ function specialModel(type: ModuleType, data: Record<string, unknown>): RestingF
     const colors = Array.isArray(data.colors) ? paletteColors(data.colors) : null
     return colors ? { kind: 'palette', colors } : { kind: 'icon' }
   }
-  if (type === 'toggle' || type === 'branch_gate') {
+  if (type === 'toggle') return toggleRestingFace(data)
+  if (type === 'branch_gate') {
     const enabled = data.value === true
     const activeLabel = enabled ? data.trueLabel : data.falseLabel
-    if (typeof activeLabel === 'string' && activeLabel.trim()) {
-      return { kind: 'boolean', label: compact(activeLabel, 24), active: enabled }
-    }
-    // A Toggle's skin owns the language for its own state, so a folded
-    // Availability card rests as "Busy" rather than the generic "Off".
-    if (type === 'toggle') {
-      const skin = toggleSkinMode(data.skin)
-      const states = data.skinStates as Record<string, Record<string, unknown>> | undefined
-      return {
-        kind: 'boolean',
-        label: compact(toggleStateLabel(skin, enabled, states?.[skin] ?? {}), 24),
-        active: enabled,
-      }
-    }
-    return { kind: 'boolean', label: enabled ? 'On' : 'Off', active: enabled }
+    return typeof activeLabel === 'string' && activeLabel.trim()
+      ? { kind: 'boolean', label: compact(activeLabel, 24), active: enabled }
+      : { kind: 'boolean', label: enabled ? 'On' : 'Off', active: enabled }
   }
-  if (type === 'timekeeper' && data.mode === 'deadline') {
-    const deadline = data.deadline as Record<string, unknown> | undefined
-    const targetDate = typeof deadline?.targetDate === 'string' ? deadline.targetDate : ''
-    const target = new Date(`${targetDate}T00:00:00`)
-    const days = Number.isNaN(target.getTime())
-      ? '—'
-      : String(Math.ceil((target.getTime() - Date.now()) / 86_400_000))
-    return { kind: 'metric', primary: days, secondary: 'Days left' }
-  }
-  if (type === 'timekeeper' && data.mode === 'world_clock') {
-    const worldClock = data.worldClock as Record<string, unknown> | undefined
-    const zones = Array.isArray(worldClock?.zones) ? worldClock.zones : []
-    const zone = typeof zones[0] === 'string' ? zones[0] : 'UTC'
-    try {
-      const time = new Intl.DateTimeFormat('en-GB', {
-        hour: '2-digit',
-        minute: '2-digit',
-        timeZone: zone,
-      }).format(new Date())
-      return { kind: 'metric', primary: time, secondary: zone.split('/').at(-1)?.replaceAll('_', ' ') ?? zone }
-    } catch {
-      return { kind: 'metric', primary: '--:--', secondary: 'World clock' }
-    }
-  }
-  if (type === 'timekeeper' && data.mode === 'chess_clock') {
-    return { kind: 'metric', primary: 'Chess', secondary: 'Clock' }
-  }
-  if (type === 'timer' || type === 'stopwatch' || type === 'pomodoro' || type === 'timekeeper') {
-    // The dial is the face: the card's own outline carries the marks, so the
-    // tile only needs room for the readout inside them.
-    return { kind: 'clock' }
-  }
-  if (type === 'formula') {
-    const a = finite(data.a)
-    const b = finite(data.b)
-    if (a === null || b === null) return null
-    // The same calculation the card and the wire use, so a folded Percent
-    // Change tile shows the percent rather than a sum nobody asked for.
-    const skin = formulaSkinMode(data.skin)
-    const reading = formulaReading(data as unknown as FormulaData)
-    return {
-      kind: 'metric',
-      primary: `${formatRestNumber(reading.value)}${reading.suffix}`,
-      secondary: formulaResultWord(skin),
-    }
+  if (type === 'timekeeper') return timekeeperRestingFace(data)
+  if (type === 'timer' || type === 'stopwatch' || type === 'pomodoro') {
+    // Retired standalone types kept for old-board hydration: the dial is the
+    // face, and the card's own outline carries the marks.
+    return { kind: 'clock', shape: 'dial' }
   }
   if (type === 'notes' || type === 'sticky_note' || type === 'quote') {
     return noteRestModel(type, data)
@@ -883,48 +836,14 @@ function specialModel(type: ModuleType, data: Record<string, unknown>): RestingF
     if (!notes.trim()) return { kind: 'icon' }
     return { kind: 'text', text: compact(notes, TEXT_CLAMP) }
   }
-  if (type === 'code') {
-    const text = typeof data.text === 'string' ? data.text
-      : typeof data.content === 'string' ? data.content
-        : typeof data.body === 'string' ? data.body
-          : ''
-    if (!text.trim()) return { kind: 'icon' }
-    return {
-      kind: 'text',
-      text: compact(text, TEXT_CLAMP),
-    }
-  }
+  if (type === 'code') return codeRestingFace(data)
   /**
    * A Text Input's content is the string it emits, and `value` is not one of
    * the generic content keys — so a card holding a real address, query, or
    * command rested as a blank icon and hid the only thing it had to say.
    */
-  if (type === 'text_input') {
-    const value = typeof data.value === 'string' ? data.value.trim() : ''
-    if (!value) return { kind: 'icon' }
-    return { kind: 'text', text: compact(value, TEXT_CLAMP) }
-  }
-  if (type === 'table') {
-    const rows = Array.isArray(data.rows) ? data.rows : []
-    // Row 0 is the header: printing it as a record would state a column name
-    // where the reader expects a value.
-    const body = rows.slice(1).filter((row): row is unknown[] => Array.isArray(row))
-    if (body.length === 0) return { kind: 'icon' }
-    const shown = body.slice(0, REST_ROW_LIMIT)
-    return {
-      kind: 'rows',
-      rows: shown.map((row, index) => {
-        const cells = row.filter((cell): cell is string => typeof cell === 'string' && cell.trim() !== '')
-        return {
-          key: `row-${index}`,
-          label: compact(cells[0] ?? '', 40),
-          ...(cells.length > 1 ? { value: compact(cells[cells.length - 1]!, 10) } : {}),
-        }
-      }).filter((row) => row.label !== ''),
-      overflow: Math.max(0, body.length - shown.length),
-    }
-  }
-  if (type === 'canvas_node') return { kind: 'text', text: 'Open canvas' }
+  if (type === 'text_input') return textInputRestingFace(data)
+  if (type === 'canvas_node') return canvasNodeRestingFace(data)
   return null
 }
 
@@ -986,29 +905,60 @@ function modelSize(model: RestingFaceModel, widget: Pick<Widget, 'size' | 'title
       // The image rests at its own stored footprint; the resting resize
       // handle (ratio-locked) is what changes it.
       return widget.size
-    case 'boolean':
+    case 'boolean': {
       // Switch track (26) + its gap (10) + the label, which renders a size up
-      // from the measuring font and so needs the 1.15 correction.
+      // from the measuring font and so needs the 1.15 correction. A checkbox
+      // or power button is square and narrower than the track.
+      const control = model.shape === 'checkbox' || model.shape === 'power' ? 16 : BOOLEAN_SWITCH_WIDTH
       return {
-        width: snap(REST_PAD_X * 2 + BOOLEAN_SWITCH_WIDTH + 10 + measureFaceText(model.label) * 1.15),
+        width: snap(REST_PAD_X * 2 + control + 10 + measureFaceText(model.label) * 1.15),
         height: GRID_SIZE,
       }
+    }
     case 'metric': {
       const textWidth = Math.max(
         measureFaceText(model.primary) * 1.5, // primary renders at 15px, measured at 10px
         measureFaceText(model.secondary.toUpperCase()) * 0.85,
+        model.eyebrow ? eyebrowWidth(model.eyebrow) : 0,
       )
       const progressWidth = model.progress === undefined ? 0 : 54 + 8
       return {
         width: Math.min(MAX_TILE_WIDTH, snap(REST_PAD_X * 2 + textWidth + progressWidth)),
-        height: GRID_SIZE,
+        height: model.eyebrow ? snap(GRID_SIZE + EYEBROW_HEIGHT) : GRID_SIZE,
       }
     }
-    case 'clock':
+    case 'clock': {
       // Square, because a dial is: the marks sit at equal clock angles, so a
       // wide tile would crowd them at twelve and six and fling them apart at
       // the sides. Three cells leaves room for the readout inside the bezel.
-      return { width: GRID_SIZE * 3, height: GRID_SIZE * 3 }
+      if (!model.shape || model.shape === 'dial') {
+        return { width: GRID_SIZE * 3, height: GRID_SIZE * 3 }
+      }
+      // The other shapes hang their context off the readout instead of ringing
+      // it, so they measure like any other stacked face.
+      let widest = model.eyebrow ? eyebrowWidth(model.eyebrow) : 0
+      for (const row of model.rows ?? []) {
+        widest = Math.max(
+          widest,
+          measureFaceText(row.label) + (row.value ? measureFaceText(row.value) + ROW_VALUE_GAP : 0),
+        )
+      }
+      const chipRun = (model.chips ?? []).reduce(
+        (sum, chip) => sum + measureFaceText(chip.text) * 1.05 + CHIP_PAD + CHIP_GAP,
+        0,
+      )
+      widest = Math.max(widest, Math.min(MAX_TILE_WIDTH - REST_PAD_X * 2, chipRun), CLOCK_READOUT_WIDTH)
+      return {
+        width: Math.min(MAX_TILE_WIDTH, snap(REST_PAD_X * 2 + widest)),
+        height: snap(
+          PAD_Y * 2 +
+          (model.eyebrow ? EYEBROW_HEIGHT : 0) +
+          CLOCK_READOUT_HEIGHT +
+          (model.chips && model.chips.length > 0 ? CHIP_HEIGHT + CHIP_GAP : 0) +
+          (model.rows?.length ?? 0) * REST_ROW_HEIGHT,
+        ),
+      }
+    }
     case 'stars':
       return { width: snap(STARS_WIDTH), height: GRID_SIZE }
     case 'palette':
@@ -1017,8 +967,6 @@ function modelSize(model: RestingFaceModel, widget: Pick<Widget, 'size' | 'title
       // The plot needs real width to be a chart rather than a decoration, and
       // the readout column claims a fixed strip down its right edge.
       return { width: snap(CHART_WIDTH + CHART_STATS_WIDTH), height: GRID_SIZE * 2 }
-    case 'week':
-      return { width: snap(WEEK_WIDTH), height: snap(WEEK_HEIGHT) }
     case 'text': {
       const total = measureFaceText(model.text)
       const inner = Math.min(MAX_TILE_WIDTH - REST_PAD_X * 2, Math.max(88, total))
@@ -1070,7 +1018,9 @@ function modelSize(model: RestingFaceModel, widget: Pick<Widget, 'size' | 'title
       let widest = 0
       for (const row of model.rows) {
         const valueWidth = row.value === undefined ? 0 : ROW_VALUE_GAP + measureFaceText(row.value)
-        widest = Math.max(widest, ROW_GLYPH + measureFaceText(row.label) + valueWidth)
+        const leadWidth = row.lead === undefined ? 0 : measureFaceText(row.lead) + 6
+        const indentWidth = (row.indent ?? 0) * ROW_INDENT
+        widest = Math.max(widest, indentWidth + leadWidth + ROW_GLYPH + measureFaceText(row.label) + valueWidth)
       }
       if (model.eyebrow) widest = Math.max(widest, eyebrowWidth(model.eyebrow))
       return {
@@ -1085,27 +1035,41 @@ function modelSize(model: RestingFaceModel, widget: Pick<Widget, 'size' | 'title
       }
     }
     case 'columns': {
-      let tallest = 0
-      let total = 0
+      const perRow = Math.max(1, Math.min(model.wrap ?? model.columns.length, model.columns.length))
+      const bandCount = Math.ceil(model.columns.length / perRow)
+      const widths: number[] = []
+      const heights: number[] = []
       for (const column of model.columns) {
-        let widest = measureFaceText(column.label) + (column.note ? measureFaceText(column.note) + 8 : 0)
+        let widest = measureFaceText(column.label) * 0.8 +
+          (column.note ? measureFaceText(column.note) * 0.8 + 8 : 0)
         for (const item of column.items) {
-          widest = Math.max(widest, 10 + measureFaceText(item.label) + (item.value ? measureFaceText(item.value) + 6 : 0))
+          widest = Math.max(
+            widest,
+            (measureFaceText(item.label) + (item.value ? measureFaceText(item.value) + 6 : 0)) * 0.88,
+          )
         }
-        total += Math.min(COLUMN_MAX_WIDTH, Math.max(COLUMN_MIN_WIDTH, widest + 12))
-        tallest = Math.max(
-          tallest,
-          column.items.length * COLUMN_ITEM + (column.overflow > 0 ? 10 : 0),
+        widths.push(Math.min(COLUMN_MAX_WIDTH, Math.max(COLUMN_MIN_WIDTH, widest + 10)))
+        heights.push(column.items.length * COLUMN_ITEM + (column.overflow > 0 ? 10 : 0))
+      }
+      // Each band is as wide as its widest members and as tall as its fullest
+      // column, so a matrix's short quadrant never squashes the busy one.
+      let widest = 0
+      let stacked = 0
+      for (let band = 0; band < bandCount; band++) {
+        const slice = widths.slice(band * perRow, band * perRow + perRow)
+        widest = Math.max(widest, slice.reduce((sum, value) => sum + value, 0) + COLUMN_GAP * (slice.length - 1))
+        stacked += COLUMN_HEADER + Math.max(
+          COLUMN_ITEM,
+          ...heights.slice(band * perRow, band * perRow + perRow),
         )
       }
-      total += COLUMN_GAP * Math.max(0, model.columns.length - 1)
       return {
-        width: Math.min(MAX_WIDE_TILE, snap(REST_PAD_X * 2 + total)),
+        width: Math.min(MAX_WIDE_TILE, snap(REST_PAD_X * 2 + widest)),
         height: snap(
           PAD_Y * 2 +
           (model.eyebrow ? EYEBROW_HEIGHT : 0) +
-          COLUMN_HEADER +
-          Math.max(COLUMN_ITEM, tallest),
+          stacked +
+          COLUMN_GAP * (bandCount - 1),
         ),
       }
     }
@@ -1171,8 +1135,8 @@ function modelSize(model: RestingFaceModel, widget: Pick<Widget, 'size' | 'title
         model.caption ? measureFaceText(model.caption) * 0.85 : 0,
       )
       return {
-        width: Math.min(MAX_TILE_WIDTH, snap(REST_PAD_X * 2 + GAUGE_DIAMETER + 10 + textWidth)),
-        height: snap(PAD_Y * 2 + GAUGE_DIAMETER),
+        width: Math.min(MAX_TILE_WIDTH, snap(REST_PAD_X * 2 + Math.max(GAUGE_DIAMETER + 10 + textWidth, model.eyebrow ? eyebrowWidth(model.eyebrow) : 0))),
+        height: snap(PAD_Y * 2 + GAUGE_DIAMETER + (model.eyebrow ? EYEBROW_HEIGHT : 0)),
       }
     }
     case 'chips': {
@@ -1296,7 +1260,13 @@ export function restingFace(widget: Pick<Widget, 'type' | 'data' | 'size' | 'tit
   if (cached) return cached
 
   const data = record(widget.data) ?? {}
-  const model = specialModel(widget.type, data) ?? genericModel(data)
+  const base = specialModel(widget.type, data) ?? genericModel(data)
+  // A catalogued skin dresses the open card rather than replacing its body, so
+  // the tile takes the same dress and whatever the base face left blank.
+  const blueprint = cataloguedSkin(widget.type, data)
+  const model = blueprint
+    ? dressWithCatalogueSkin(base, blueprint, skinDetails(data, blueprint.value))
+    : base
   const size = modelSize(model, widget)
   // Every face except the bare icon and the bare image stays wide enough for
   // its floating title capsule; content can exceed that, never undercut it.
@@ -1306,7 +1276,11 @@ export function restingFace(widget: Pick<Widget, 'type' | 'data' | 'size' | 'tit
     size.width = snap(Math.max(size.width, titleCapsuleWidth(widget.title)))
   }
 
-  const face: RestingFace = { model, size }
+  const face: RestingFace = {
+    model,
+    size,
+    ...(blueprint ? { presentation: blueprint.presentation } : {}),
+  }
   faceCache.set(widget, face)
   return face
 }

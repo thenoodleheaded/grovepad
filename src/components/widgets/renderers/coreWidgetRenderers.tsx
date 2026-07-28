@@ -16,7 +16,6 @@ import type {
   GameTunerData,
   HabitData,
   KanbanData,
-  LinkedListData,
   LinksData,
   MediaData,
   MeetingNotesData,
@@ -43,7 +42,7 @@ import {
   CalculatorWidget, CalendarWidget, CanvasNodeWidget, CodeWidget,
   ColorPaletteWidget, ContactWidget, CounterWidget, CountdownWidget,
   DialogWidget, ExcalidrawWidget, GameTunerWidget,
-  HabitWidget, KanbanWidget, LinkedListWidget, LinksWidget, MediaWidget, MeetingNotesWidget, MetricsWidget,
+  HabitWidget, KanbanWidget, LinksWidget, MediaWidget, MeetingNotesWidget, MetricsWidget,
   MoodTrackerWidget, PollWidget, PriorityMatrixWidget, ProgressWidget,
   ProsConsWidget, QuoteWidget, RatingWidget, ReadingListWidget,
   StickyNoteWidget, StopwatchWidget, TableWidget, TimekeeperWidget, TimelineWidget, TimerWidget,
@@ -104,13 +103,6 @@ export const coreWidgetRendererFamily: WidgetRendererFamily = {
       <HabitWidget
         data={widget.data as HabitData}
         skin={(widget.data as HabitData).skin}
-        onChange={onUpdate}
-      />
-    ),
-    linked_list: ({ widget, onUpdate }) => (
-      <LinkedListWidget
-        data={widget.data as LinkedListData}
-        skin={(widget.data as LinkedListData).skin}
         onChange={onUpdate}
       />
     ),

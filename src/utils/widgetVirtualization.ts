@@ -1,9 +1,9 @@
 import type { Size, Vector2D, Widget } from '../types/spatial'
 import {
+  effectiveWidgetSize,
   isWidgetRestExpanded,
   isWidgetResting,
   restExpansionOffset,
-  restingTileSize,
   type WidgetRestContext,
 } from './widgetRest'
 
@@ -71,8 +71,9 @@ export function displayedWidgetRect(
   widget: Widget,
   restContext: WidgetRestContext,
 ): WorldRect {
-  const resting = isWidgetResting(widget, restContext)
-  const size = resting ? restingTileSize(widget) : widget.size
+  // Not `widget.size`: a peeked-open icon is stored at its little square and
+  // drawn as the whole card, so the window would cull it a card early.
+  const size = effectiveWidgetSize(widget, restContext)
   const offset = isWidgetRestExpanded(widget, restContext)
     ? restExpansionOffset(widget, restContext)
     : { x: 0, y: 0 }

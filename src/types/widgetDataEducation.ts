@@ -23,6 +23,21 @@ export interface VocabData {
   terms: VocabTerm[]
 }
 
+export type CanvasLmsSkin =
+  | 'overview'
+  | 'courses'
+  | 'assignments'
+  | 'grades'
+  | 'announcements'
+
+/**
+ * Only presentation belongs to the shared board. Canvas credentials and
+ * downloaded student records are deliberately kept in device-local storage.
+ */
+export interface CanvasLmsData {
+  skin?: CanvasLmsSkin
+}
+
 interface GradeComponent {
   id: string
   name: string

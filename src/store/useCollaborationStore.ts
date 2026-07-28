@@ -14,6 +14,7 @@ export interface CollaborationState {
   status: CollaborationStatus
   canvasId: string | null
   role: CollaborationRole | null
+  publicAccess: boolean
   localClientId: number | null
   participants: CollaborationPresence[]
   followingClientId: number | null
@@ -26,6 +27,7 @@ export const INITIAL_COLLABORATION_STATE: CollaborationState = {
   status: 'disabled',
   canvasId: null,
   role: null,
+  publicAccess: false,
   localClientId: null,
   participants: [],
   followingClientId: null,

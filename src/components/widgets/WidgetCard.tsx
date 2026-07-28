@@ -12,17 +12,20 @@ import { findGlueSnap, foldedMemberInsets, glueMemberInsets } from '../../utils/
 import { resolveLinkTargetAt } from '../../utils/linkTarget'
 import { PointerDragSession } from '../../utils/pointerDrag'
 import {
-  beginDragDisplacement,
-  cancelDragDisplacement,
-  endDragDisplacement,
-  updateDragDisplacement,
-  useDragDisplacementStore,
-} from '../../store/dragDisplacement'
+  beginDragReflow,
+  cancelDragReflow,
+  endDragReflow,
+  updateDragReflow,
+  useDragReflowStore,
+} from '../../store/dragReflow'
 import { movedIdsForWidget } from '../../store/widgetCollection'
 import { expandMovedWidgetIds } from '../../store/widgetGraph'
 import { contentFitHeight } from '../../utils/widgetContentFloor'
 import {
+  effectiveWidgetSize,
+  expandedIconSize,
   expansionOffsetFor,
+  iconPeeksOpen,
   isWidgetRestExpanded,
   isWidgetResting,
   restExpansionOffset,
@@ -34,6 +37,8 @@ import { useTransientValue } from '../../hooks/useTransientValue'
 import { useWidgetClock } from '../../hooks/useWidgetClock'
 import { WidgetClockRing } from './WidgetClockRing'
 import { useWidgetRestStore } from '../../store/useWidgetRestStore'
+import { useWidgetSheetStore } from '../../store/useWidgetSheetStore'
+import { widgetOpensAsSheet, widgetSheetOrigin } from '../../utils/widgetSheet'
 import { isWidgetSizingGestureActive } from '../../store/widgetSizingGesture'
 import { widgetHasButtonOverflow } from '../../utils/widgetButtonLayout'
 import { DEFAULT_SIZING, widgetDefinition } from '../../widgets/registry'
@@ -131,8 +136,8 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
     }),
   )
 
-  const ghostOffset = useDragDisplacementStore((state) => state.offsets[widgetId])
-  const settlePending = useDragDisplacementStore((state) => state.pendingSettleIds.has(widgetId))
+  const ghostOffset = useDragReflowStore((state) => state.offsets[widgetId])
+  const settlePending = useDragReflowStore((state) => state.pendingSettleIds.has(widgetId))
   const isRenaming = useWidgetStore((state) => state.renamingWidgetId === widgetId)
   const [titleEditing, setTitleEditing] = useState(false)
   const lastTitleClickRef = useRef(0)
@@ -153,6 +158,12 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
   const restCtx = { expandedWidgetId, expandedOffset }
   const resting = Boolean(widget && isWidgetResting(widget, restCtx))
   const restExpanded = Boolean(widget && isWidgetRestExpanded(widget, restCtx))
+  // Drawn as an icon. The RECORD can still say `iconified` while this is false:
+  // a peeked-open icon keeps its stored square for the whole peek (that is what
+  // keeps the click off the board), and what the user is looking at meanwhile
+  // is an ordinary full card. Every render decision reads this; the few places
+  // that genuinely mean the stored state read `widget.iconified` directly.
+  const iconified = Boolean(widget?.iconified) && !restExpanded
   // While one card is held open, every other card is BACKGROUND. The open card
   // is the thing being worked in — a neighbour underneath it lighting up, and
   // leaning toward the cursor, as the pointer crosses on its way to the open
@@ -175,11 +186,18 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
   )
   // The tile this card rests as. Also the box the face keeps while fading, so
   // an expanding card doesn't stretch its own outgoing face on the way out.
-  const restTile = widget && (resting || restExpanded) ? restingTileSize(widget) : null
-  // The box actually on screen: the resting tile when one shows, otherwise the
-  // stored card. The outline gesture measures itself against what the user can
-  // see, never against a dormant size hiding behind a tile.
-  const onScreenSize = (resting && restTile ? restTile : widget?.size) ?? { width: 0, height: 0 }
+  // Only a card that actually rests has one: an icon opens straight out of its
+  // own square, and its outgoing face is the identity glyph below, not a tile.
+  const restTile = widget && !widget.iconified && (resting || restExpanded)
+    ? restingTileSize(widget)
+    : null
+  // The box actually on screen: the resting tile when one shows, the card a
+  // peeked icon opens into, otherwise the stored card. The outline gesture
+  // measures itself against what the user can see, never against a dormant
+  // size hiding behind a tile.
+  const onScreenSize = widget
+    ? effectiveWidgetSize(widget, restCtx)
+    : { width: 0, height: 0 }
   // Resting swaps a mounted content subtree for the resting face. Holding the
   // outgoing content for one layout beat lets the two cross-fade instead of
   // the content vanishing the instant the box starts shrinking.
@@ -214,6 +232,9 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
   }, [restExpanded, holdHalo, holdGlide])
   // No content mounts while resting, so the content-floor pass must not run
   // (it would read an absent element and try to shrink the dormant full size).
+  // (And not while an icon is peeked open either — the record still says icon,
+  // so a content-fit pass would write its measurement onto the icon's square.
+  // A peek changes nothing on the board, this pass included.)
   const shouldFitContent = Boolean(widget && !widget.iconified && !resting)
   const fitContentType = widget?.type
 
@@ -228,12 +249,27 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
   // card becomes the dial, at every scale state including the resting tile.
   const clock = useWidgetClock(widget)
 
+  // On a phone there is no room to grow a full card in place — it is wider
+  // than the screen — so an opened widget takes over the screen instead
+  // (WidgetFullscreenSheet), growing out of the exact rectangle the tile
+  // occupies and folding back onto it. The board underneath is untouched: this
+  // card keeps resting at its stored position, so no canvas geometry, weld
+  // seam, or edge routing has a phone-specific case to answer for. Returns
+  // whether it took the open, so each caller can fall through to the in-place
+  // expansion on every other screen size.
+  const openAsSheet = (): boolean => {
+    if (!widgetOpensAsSheet(useAdaptiveInputStore.getState().capabilities.viewportClass)) return false
+    useWidgetSheetStore.getState().openWidgetSheet(widgetId, widgetSheetOrigin(widgetId))
+    return true
+  }
+
   // Opening a card centres it on the tile it replaces. The offset is captured
   // here, once, and then held for the life of the expansion — see the note on
   // `expandedOffset` in useWidgetRestStore for why it must not be re-derived.
   const expandFromRest = () => {
     const live = useWidgetStore.getState().widgets[widgetId]
     if (!live) return
+    if (openAsSheet()) return
     useWidgetRestStore.getState().expandWidget(
       widgetId,
       expansionOffsetFor(restingTileSize(live), live.size),
@@ -254,35 +290,36 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
   }
 
   // A plain click on an icon opens the widget, exactly like a click on a
-  // resting tile. The scale-state change lands the resting tile centred where
-  // the icon sat, and the ephemeral expansion then opens the card out of that
-  // tile, so the thing you pressed stays under the pointer throughout. The
-  // icon being left — exact square included — is captured as the expansion's
-  // origin: closing the card folds it back into that very icon, so for a card
-  // that takes the expansion slot the scale change skips history (the
-  // open-and-close pair nets to no edit at all).
+  // resting tile — and just as ephemerally. The board record is NOT touched:
+  // the widget stays an icon, in its own square, and the open card is simply
+  // drawn over it, centred on the square so the thing you pressed stays under
+  // the pointer. That is what keeps a peek out of undo, out of the neighbours'
+  // way (nothing shuffles aside to make room for a card that is only being
+  // glanced at), and off a shared canvas, where the swap used to sync and
+  // jostle everyone else's view of the group. The swap commits later, if ever:
+  // pinning is the one moment the card really becomes a card.
   const expandFromIcon = () => {
     const store = useWidgetStore.getState()
     const live = store.widgets[widgetId]
     if (!live?.iconified) return
-    const origin = { kind: 'icon', size: live.size } as const
-    const willRest =
-      widgetDefinition(live.type).restingFace !== false &&
-      live.metadata.pinned !== true
-    // A card the resting system doesn't govern never collapses back, so its
-    // opening stays a durable, undoable scale change like before.
-    store.setWidgetScaleState(widgetId, 'full', { skipHistory: willRest })
-    const restored = useWidgetStore.getState().widgets[widgetId]
-    if (!restored || restored.iconified) return
-    // A widget that doesn't rest is already fully open at its stored box; the
-    // expansion slot is only for cards that would otherwise sit as a tile.
-    if (willRest) {
-      useWidgetRestStore.getState().expandWidget(
-        widgetId,
-        expansionOffsetFor(restingTileSize(restored), restored.size),
-        origin,
-      )
+    // Already peeked open — a second click on the open card is not a new open.
+    if (useWidgetRestStore.getState().expandedWidgetId === widgetId) return
+    // On a phone there is no room to grow the card in place, so it opens as a
+    // sheet out of the icon square instead. Same deal: no edit, no undo step,
+    // and the icon is still an icon when the sheet closes.
+    if (openAsSheet()) return
+    // A widget that never rests has no overlay to open into, so clicking its
+    // icon genuinely reopens it: that stays a durable, undoable scale change,
+    // and its neighbours making space is the right answer there.
+    if (!iconPeeksOpen(live)) {
+      store.setWidgetScaleState(widgetId, 'full')
+      return
     }
+    useWidgetRestStore.getState().expandWidget(
+      widgetId,
+      expansionOffsetFor(live.size, expandedIconSize(live)),
+      { kind: 'icon', size: live.size },
+    )
   }
 
   const edgeResize = useWidgetResize(widgetId, widget, {
@@ -301,7 +338,7 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
       useWidgetStore.getState().selectWidget(widgetId, false)
       if (unfoldCollapsedCluster()) return
       if (resting) expandFromRest()
-      else if (widget?.iconified) expandFromIcon()
+      else if (iconified) expandFromIcon()
     },
   })
   useContentFloor(widgetId, contentRef, fitContentType, shouldFitContent)
@@ -335,7 +372,7 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
     }
   }, [isRenaming])
 
-  const skinSwitch = useWidgetSkinSwitch(widget ? widget.iconified === true : false)
+  const skinSwitch = useWidgetSkinSwitch(iconified)
 
   if (!widget) return null
 
@@ -376,8 +413,8 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
     glueDragRef.current = e.altKey && !inFoldedCluster
     // An option-drag is a precision welding gesture: neighbors must hold
     // perfectly still while a seam is being aimed, so it never arms the
-    // displacement system at all.
-    if (!glueDragRef.current) beginDragDisplacement()
+    // reflow at all.
+    if (!glueDragRef.current) beginDragReflow()
     activeDragWidgetId.current = dragWidgetId
     dragRef.current = new PointerDragSession(e, {
       onFirstMove: () => {
@@ -401,7 +438,7 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
           fresh,
         ).filter((id) => !fresh.widgets[id]?.metadata.locked)
         const safeZoom = zoom > 0 ? zoom : 1
-        updateDragDisplacement(movingIds, { x: dx / safeZoom, y: dy / safeZoom })
+        updateDragReflow(movingIds, { x: dx / safeZoom, y: dy / safeZoom })
       },
     })
   }
@@ -562,27 +599,28 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
     const draggedId = activeDragWidgetId.current
 
     if (!session.end()) {
-      cancelDragDisplacement()
+      cancelDragReflow()
       useWidgetStore.getState().selectWidget(draggedId, activeSelectionAdditive.current)
       // A stationary click on a resting face summons the full card. Ephemeral
-      // view state only — accordion, no history, nothing persisted. A click
-      // on an icon opens the widget the same way (that one is a real state
-      // change, so it carries its own undo step).
+      // view state only — accordion, no history, nothing persisted. A click on
+      // an icon opens the widget exactly as ephemerally: the record stays an
+      // icon until (and unless) the card is pinned.
       if (draggedId === widgetId && unfoldCollapsedCluster()) {
         // The whole collection opened; no per-widget expansion on top of it.
       } else if (resting && draggedId === widgetId) {
         expandFromRest()
-      } else if (widget.iconified && draggedId === widgetId) {
+      } else if (iconified && draggedId === widgetId) {
         expandFromIcon()
       }
     } else {
       const state = useWidgetStore.getState()
       const liveWidget = state.widgets[draggedId]
-      // The preview becomes real exactly at drop: displaced neighbors take
-      // their ghost positions inside the same history step the first-move
-      // snapshot opened, then the settle pass resolves whatever the
-      // budget left overlapped.
-      const ghostOffsets = endDragDisplacement()
+      // The preview becomes real exactly at drop: reflowed neighbors take
+      // the ghost positions they have been showing all along, inside the same
+      // history step the first-move snapshot opened. The settle pass then
+      // resolves the cards outside the lane, which the reflow never speaks
+      // for — the ones the preview has been dimming as pending.
+      const ghostOffsets = endDragReflow()
       if (Object.keys(ghostOffsets).length > 0) state.applyGhostDisplacement(ghostOffsets)
       // Option-drag resolution: the weld the preview promised, or — for a
       // member released ANYWHERE off a seam — the pull-off. A release between
@@ -628,7 +666,7 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
     const session = dragRef.current
     if (!session || session.pointerId !== e.pointerId) return
     dragRef.current = null
-    cancelDragDisplacement()
+    cancelDragReflow()
     const draggedId = activeDragWidgetId.current
     const state = useWidgetStore.getState()
     const wasGlueDrag = glueDragRef.current
@@ -667,7 +705,30 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
     e.preventDefault()
     e.stopPropagation()
     const state = useWidgetStore.getState()
-    if (!state.selectedIds.has(widgetId)) state.selectWidget(widgetId, false)
+    // A right-click aims at ONE card, and the menu acts on the selection.
+    // `selectWidget` deliberately expands a glued member to its whole cluster
+    // (select and drag agree on what a group is) — but through this path that
+    // turned every command into a group command, so a member inside a group
+    // could not be duplicated or deleted on its own. The menu narrows to the
+    // pressed card instead. Group-wide commands are not lost: they are the
+    // group frame's own static buttons (complete-all, favourite-all,
+    // delete-group), which is where they belong.
+    const glueId = state.widgetGlueIndex[widgetId]
+    const clusterIds = glueId ? state.glues[glueId]?.widgetIds ?? [] : []
+    const selectionIsWholeCluster =
+      clusterIds.length > 1 &&
+      state.selectedIds.size === clusterIds.length &&
+      clusterIds.every((id) => state.selectedIds.has(id))
+    if (inFoldedCluster) {
+      // A collapsed cluster is one object and one pointer target, so its menu
+      // stays the collection's — there is no individual card to aim at.
+      if (!state.selectedIds.has(widgetId)) state.selectWidget(widgetId, false)
+    } else if (!state.selectedIds.has(widgetId) || selectionIsWholeCluster) {
+      state.selectWidgets([widgetId])
+    }
+    // A press that lands inside a multi-widget selection the user built
+    // themselves (marquee, shift-click) keeps it: acting on all of them is
+    // the whole point of having made it.
     state.openContextMenu(widgetId, e.clientX, e.clientY)
   }
 
@@ -777,22 +838,23 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
   // (Position locking is a separate thing, in the right-click menu.)
   const togglePin = () => {
     if (!widget.metadata.pinned && expandedWidgetId === widgetId) {
-      // What the pin is interrupting, captured before the slot is released:
-      // a card opened out of an icon must come back to that exact icon when it
-      // is unpinned, not drop onto a resting tile it never showed. Only the
-      // expansion still knows — by now the card itself is an ordinary full card.
+      // What the pin is interrupting: a card opened out of an icon must come
+      // back to that exact icon when it is unpinned, not drop onto a resting
+      // tile it never showed. (For an icon the store can also see this in the
+      // record — the peek left it iconified — but a card opened from rest has
+      // only the expansion to say so, so both paths report it the same way.)
       const origin = useWidgetRestStore.getState().expandedFrom
       const from = origin?.kind === 'icon'
         ? { kind: 'icon' as const, width: origin.size.width, height: origin.size.height }
         : { kind: 'rest' as const }
-      // Pin means "hold this card open", so the slot is released WITHOUT the
-      // fold-back to the expansion's origin — restoring it would iconify the
-      // very card being pinned. The view offset the expansion was drawn at is
-      // handed to the pin action instead: pinned cards draw at their stored
-      // position, so absorbing the offset there keeps the card exactly where
+      // Pin means "hold this card open", and it is the moment a peek becomes a
+      // real board change: the store commits the icon → card swap and lets the
+      // neighbours make space, in the pin's own history step. The view offset
+      // the expansion was drawn at goes with it — pinned cards draw at their
+      // stored position, so absorbing the offset keeps the card exactly where
       // the user sees it rather than jumping diagonally back to the anchor.
       const absorbOffset = useWidgetRestStore.getState().expandedOffset
-      useWidgetRestStore.getState().collapseWidget({ restoreOrigin: false })
+      useWidgetRestStore.getState().collapseWidget()
       useWidgetStore.getState().toggleWidgetPinned(widgetId, { absorbOffset, from })
       return
     }
@@ -831,7 +893,6 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
     return base
   }
 
-  const iconified = widget.iconified === true
   // The resting tile is its own identity — the floating capsule would repeat it.
   // The capsule stays visible while resting: it IS the tile's identity (icon
   // + name), so the face below spends every pixel on data instead.
@@ -883,7 +944,7 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
         : iconLike
           ? Math.round(iconEdge * 0.26)
           : 22
-  const baseSize = resting && restTile ? restTile : widget.size
+  const baseSize = onScreenSize
   // A glued member shrinks by its welded-edge insets and shifts by the leading
   // (left/top) insets, so the gap comes out of both cards equally and the
   // cluster's outer corners hold the grid. An expanded card floats free of the
@@ -924,9 +985,9 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
       data-rest-motion={restGliding || undefined}
       className="gp-widget-layout-motion group/widget-shell absolute left-0 top-0"
       style={{
-        // The ghost offset rides on the same positioning transform: displaced
-        // cards preview their post-drop spot without their stored position
-        // (or anything downstream of it) changing until commit.
+        // The ghost offset rides on the same positioning transform: a card
+        // the reflow re-slotted previews its post-drop spot without its stored
+        // position (or anything downstream of it) changing until commit.
         transform: `translate3d(${
           widget.position.x + (ghostOffset?.x ?? 0) + restOffset.x + glueOffset.x
         }px, ${
@@ -962,8 +1023,14 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
           className="gp-rest-halo"
           data-halo-out={!restExpanded || undefined}
           style={{
-            '--gp-halo-w': `${widget.size.width}px`,
-            '--gp-halo-h': `${widget.size.height}px`,
+            // The card this widget opens INTO, read without reference to the
+            // expansion so it is the same number before, during and after the
+            // glide. For a peeked icon that is the box it remembers, never its
+            // little stored square — which is also why this cannot be
+            // `onScreenSize`: that one folds back the instant the slot drops,
+            // and the halo would shrink out from under its own fade.
+            '--gp-halo-w': `${expandedIconSize(widget).width}px`,
+            '--gp-halo-h': `${expandedIconSize(widget).height}px`,
           } as CSSProperties}
         />
       )}

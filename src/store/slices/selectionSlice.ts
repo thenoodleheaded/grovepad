@@ -14,7 +14,7 @@ import { buildGlueIndex, computeBlockedWidgetIds } from '../widgetGraph'
 import { settleWidgetsByCanvas } from '../widgetSettling'
 import { uniqueExistingIds, withWidget } from '../widgetCollection'
 import { analyzeWidgetDeletion } from '../widgetDeletion'
-import { restingTileSize } from '../../utils/widgetRest'
+import { expandedIconSize, restingTileSize } from '../../utils/widgetRest'
 import { widgetDefinition } from '../../widgets/registry'
 import type { WidgetStoreSlice, WidgetStoreSliceContext } from '../widgetStoreSliceContext'
 export function createSelectionSlice({ set, get, pushHistory, markSpawned }: WidgetStoreSliceContext): WidgetStoreSlice {
@@ -381,12 +381,13 @@ export function createSelectionSlice({ set, get, pushHistory, markSpawned }: Wid
         // slide it off its own weld and off the grid the group sits on.
         const welded = Boolean(glueId)
         if (nextPinned) {
-          // Remember what the pin interrupted. The caller knows more than the
-          // store can: a card opened out of an icon is, at this instant, an
-          // ordinary full card, and only the expansion still remembers the
-          // exact icon square it came from.
-          const from = options?.from ?? { kind: 'rest' as const }
-          metadata.pinnedFrom = from
+          // Remember what the pin interrupted. A card being peeked open out of
+          // an icon is still STORED as that icon, so the record is its own best
+          // witness and outranks whatever the caller passed; only a card that
+          // is genuinely full needs the caller to say where it came from.
+          metadata.pinnedFrom = widget.iconified === true
+            ? { kind: 'icon' as const, width: widget.size.width, height: widget.size.height }
+            : options?.from ?? { kind: 'rest' as const }
         } else {
           delete metadata.pinnedFrom
         }
@@ -447,6 +448,24 @@ export function createSelectionSlice({ set, get, pushHistory, markSpawned }: Wid
             }
           }
         }
+        // Peeking at an icon leaves the board record alone — it is still an
+        // icon, sitting in its own little square, while the open card is drawn
+        // over the top of it. Pinning is the moment that peek becomes real, so
+        // this is where the icon → card swap finally commits, and the settle
+        // pass below is where the neighbours give way to it. Both halves land
+        // inside the single history step the pin already opened, and the box
+        // comes from the same `expandedIconSize` the peek was drawn at, so
+        // nothing resizes under the user at the instant they pin.
+        if (nextPinned && widget.iconified === true) {
+          return {
+            ...widget,
+            iconified: false,
+            size: expandedIconSize(widget),
+            expandedSize: undefined,
+            position,
+            metadata,
+          }
+        }
         return { ...widget, position, metadata }
       }),
     }))
@@ -463,7 +482,7 @@ export function createSelectionSlice({ set, get, pushHistory, markSpawned }: Wid
         anchorIds: [widgetId],
       })
       const cluster = glueId ? state.glues[glueId] : undefined
-      if (cluster) widgets = closeClusterGaps(widgets, cluster.widgetIds)
+      if (cluster) widgets = closeClusterGaps(widgets, cluster.widgetIds, [widgetId])
       return { widgets }
     })
   },

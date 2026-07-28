@@ -46,32 +46,32 @@ export interface AuraTuningDocument {
 
 export const DEFAULT_AURA_TUNING: AuraTuning = {
   dark: {
-    alpha: 0.3,
-    coreAlpha: 0.78,
-    reach: 0.82,
-    scatter: 0.22,
-    blur: 6,
-    minRadius: 0.05,
-    maxRadius: 0.18,
-    maxEmitters: 16,
-    blend: 'lighter',
+    alpha: 0.855,
+    coreAlpha: 0.22,
+    reach: 1.86,
+    scatter: 1.5,
+    blur: 10,
+    minRadius: 0.1189,
+    maxRadius: 0.5,
+    maxEmitters: 13,
+    blend: 'source-over',
   },
   light: {
-    alpha: 0.34,
-    coreAlpha: 0.62,
-    reach: 0.78,
-    scatter: 0.2,
+    alpha: 0.52,
+    coreAlpha: 0.35,
+    reach: 1.15,
+    scatter: 0.35,
     blur: 6,
-    minRadius: 0.045,
-    maxRadius: 0.16,
-    maxEmitters: 16,
-    blend: 'source-over',
+    minRadius: 0.1,
+    maxRadius: 0.5,
+    maxEmitters: 8,
+    blend: 'lighter',
   },
 }
 
 const DEFAULT_CANVAS_COLORS: { dark: CanvasColorTuning; light: CanvasColorTuning } = {
   dark: {
-    canvasTintBase: '#141815',
+    canvasTintBase: '#0a0a0a',
     gridFine: 'rgb(163 230 53 / 0.13)',
   },
   light: {
@@ -219,9 +219,9 @@ export interface AuraScreenPool {
 /**
  * Screen-space pool geometry for one visible widget.
  *
- * The halo has a viewport-relative floor, then grows only mildly with the
- * widget's apparent area. Zooming therefore changes the card footprint without
- * turning its light into either a hard speck or a board-wide wash.
+ * Sized proportionally with camera zoom so aura glows scale cleanly when zooming
+ * out rather than maintaining a large screen-fixed floor that causes adjacent
+ * colors to clump together.
  */
 export function auraScreenPool(
   width: number,
@@ -243,14 +243,18 @@ export function auraScreenPool(
   const screenWidth = width * zoom
   const screenHeight = height * zoom
   const viewportEdge = Math.min(viewportWidth, viewportHeight)
-  const minHalo = viewportEdge * tuning.minRadius
-  const maxHalo = viewportEdge * tuning.maxRadius
-  const apparentEdge = Math.sqrt(screenWidth * screenHeight)
-  // A fourth-root area response keeps zoom influence gentle: the visible card
-  // can grow substantially while the soft light around it changes only mildly.
-  const sizeContribution = Math.sqrt(apparentEdge) * 4 * tuning.reach
-  const candidate = (minHalo + sizeContribution) * (1 + tuning.scatter)
-  const halo = Math.min(Math.max(candidate, minHalo), maxHalo)
+
+  // Scaling halo with zoom ensures colors zoom out proportionally with cards
+  // instead of remaining fixed-size on screen and getting closer together.
+  const worldHalo = Math.max(
+    viewportEdge * tuning.minRadius,
+    Math.sqrt(width * height) * 0.45 * tuning.reach,
+  )
+  const halo = Math.min(
+    worldHalo * zoom * (1 + tuning.scatter),
+    viewportEdge * tuning.maxRadius * zoom,
+  )
+
   return {
     halo,
     radiusX: screenWidth / 2 + halo,

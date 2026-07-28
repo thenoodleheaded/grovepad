@@ -1,0 +1,250 @@
+/* ---------------------------------------------------------------------------
+ * Phone fullscreen widget sheet
+ *
+ * On a phone an opened widget becomes its own screen instead of expanding in
+ * place on the board (see src/utils/widgetSheet.ts and
+ * WidgetFullscreenSheet.tsx). The whole thing is modelled on how a phone home
+ * screen opens an app, because that is the gesture every user already has in
+ * their hands, and it is built from four movements that run together:
+ *
+ *   1. A `clip-path` inset grows from the tile's exact rectangle (and its exact
+ *      corner radius) to the whole layer. The sheet is laid out at full size
+ *      from the first frame and the *window onto it* is what moves, so text and
+ *      controls are never scaled, squashed, or re-flowed mid-flight.
+ *   2. The content inside scales up from `--gp-sheet-content-rest`, anchored on
+ *      the tapped tile's own centre — the widget comes toward you out of its
+ *      icon rather than swelling from the middle of the screen.
+ *   3. The board behind recedes and dims. Without this the sheet reads as a
+ *      panel covering the board; with it, it reads as going *into* the widget.
+ *   4. The content cross-fades: in slightly behind the mask, out well ahead of
+ *      it, so closing reads as a rectangle collapsing onto its icon rather than
+ *      a screenful of text shrinking.
+ *
+ * The panel deliberately also carries `.gp-widget-card.gp-glass.gp-backplate`
+ * so it wears the widget's own material and accent — the card grows into the
+ * screen rather than handing off to a different-looking object.
+ * ------------------------------------------------------------------------- */
+
+:root {
+  /* Longer than an ordinary layout move: an app-open is the one transition a
+     phone lets you watch. Derived from --gp-motion-layout rather than fixed, so
+     the Fine-tune menu's Motion setting still governs it (450ms at stock, and
+     flattened entirely under reduced motion). */
+  --gp-sheet-motion: calc(var(--gp-motion-layout) * 1.5);
+  /* Leaves immediately, arrives slowly, never overshoots. An overshoot would be
+     invisible while opening (the mask is clipped to its own box anyway) but on
+     closing it would show the sheet undershooting past its tile and coming
+     back, which is exactly the wobble this curve exists to avoid. */
+  --gp-ease-sheet: cubic-bezier(0.32, 0.72, 0, 1);
+  --gp-sheet-content-rest: 0.88;
+}
+
+.gp-widget-sheet-layer {
+  position: fixed;
+  z-index: 200;
+  inset: 0;
+}
+
+.gp-widget-sheet-scrim {
+  position: absolute;
+  inset: 0;
+  /* Deep, but not opaque: the board has to stay legible behind the growing
+     mask for its recede to be visible at all. The panel's own material is
+     ~98% opaque, so nothing ghosts through the sheet itself. */
+  background: rgb(3 6 12 / 0.62);
+  opacity: 0;
+  /* Opacity only — the one property a compositor animates without repainting. */
+  transition: opacity var(--gp-sheet-motion) var(--gp-ease-sheet);
+  will-change: opacity;
+}
+
+.gp-widget-sheet-scrim[data-open] {
+  /* Thins out as the sheet is pulled down, so the board reappearing behind it
+     is what the gesture reads as. */
+  opacity: var(--gp-sheet-scrim, 1);
+}
+
+.gp-widget-sheet {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  inset: 0;
+  /* The corners belong to the clip, not to the box: the flight rounds them to
+     the tile's own radius and squares them off as it fills the screen. A
+     border-radius inherited from the card material would sit *inside* that and
+     leave four notches of bare page at the corners of an open sheet. */
+  border-radius: 0;
+  /* The panel takes initial focus so the trap has somewhere neutral to land;
+     it is a container, not a control, so it shows no focus ring. */
+  outline: none;
+  transition:
+    clip-path var(--gp-sheet-motion) var(--gp-ease-sheet),
+    transform var(--gp-sheet-motion) var(--gp-ease-sheet);
+  will-change: clip-path;
+}
+
+/* Safe-area and keyboard insets live on the content, never on the panel: the
+   content stage scales around a point given in viewport coordinates, so its box
+   has to BE the viewport. Padding here would offset that origin by however tall
+   the notch is, and the sheet would open from beside its icon. */
+.gp-widget-sheet-stage {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  opacity: 0;
+  scale: var(--gp-sheet-content-rest);
+  transition:
+    /* Closing: the content clears out in the first third, so what you actually
+       watch on the way back is the rectangle collapsing onto its tile. */
+    opacity calc(var(--gp-sheet-motion) * 0.3) var(--gp-ease-sheet),
+    scale var(--gp-sheet-motion) var(--gp-ease-sheet);
+}
+
+.gp-widget-sheet-stage[data-open] {
+  opacity: 1;
+  scale: 1;
+  transition:
+    /* Opening: a beat behind the mask, then quick — the widget is legible well
+       before the flight finishes, which is what makes it feel fast. */
+    opacity calc(var(--gp-sheet-motion) * 0.42) var(--gp-ease-sheet)
+      calc(var(--gp-sheet-motion) * 0.08),
+    scale var(--gp-sheet-motion) var(--gp-ease-sheet);
+}
+
+/* While a finger owns the sheet it must track that finger exactly; a
+   transition here would make the pull feel like it lags behind the hand. */
+.gp-widget-sheet[data-dragging] {
+  transition: none;
+}
+
+.gp-widget-sheet-head {
+  position: relative;
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 8px;
+  padding: calc(14px + var(--gp-safe-top)) calc(8px + var(--gp-safe-right)) 10px
+    calc(14px + var(--gp-safe-left));
+  touch-action: none;
+}
+
+/* The pull-down affordance: a phone says "this sheet can be let go" with a
+   grabber, not with a hint. Centred over the whole row, not in flow. */
+.gp-widget-sheet-grip {
+  position: absolute;
+  top: calc(6px + var(--gp-safe-top));
+  left: 50%;
+  width: 36px;
+  height: 4px;
+  translate: -50% 0;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.22);
+}
+
+[data-theme='light'] .gp-widget-sheet-grip {
+  background: rgb(255 255 255 / 0.3);
+}
+
+.gp-widget-sheet-identity {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  align-items: center;
+  gap: 8px;
+}
+
+.gp-widget-sheet-title {
+  overflow: hidden;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.2;
+  /* A card keeps light-on-dark internals in both themes, so the sheet's own
+     chrome does too rather than following the page's text colour. */
+  color: #e5e5e5;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gp-widget-sheet-close {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: transparent;
+  color: #a3a3a3;
+}
+
+.gp-widget-sheet-close:active {
+  color: #e5e5e5;
+}
+
+.gp-widget-sheet-body {
+  min-height: 0;
+  flex: 1;
+  overflow: hidden;
+  padding: 0 calc(14px + var(--gp-safe-right))
+    max(calc(14px + var(--gp-safe-bottom)), var(--gp-keyboard-inset, 0px))
+    calc(14px + var(--gp-safe-left));
+}
+
+/* The sheet is not part of the card's hover/selection language, so it drops the
+   accent hairline a card wears across its top edge. */
+.gp-widget-sheet::before {
+  content: none;
+}
+
+/* ---------------------------------------------------------------------------
+ * The board receding behind an open sheet.
+ *
+ * `data-widget-sheet` is written to the document root by WidgetFullscreenSheet
+ * for exactly as long as a sheet is on screen: 'open' while it holds the
+ * screen, 'flight' while it is closing. Pointer events are withdrawn for the
+ * whole of that, including the closing glide — the board is mid-animation and
+ * offset from where it hit-tests, and a tap landing on the wrong widget as a
+ * sheet folds away is worse than a tap that does nothing.
+ * ------------------------------------------------------------------------- */
+
+html[data-widget-sheet] .gp-canvas-shell {
+  pointer-events: none;
+  /* Slightly above centre: a phone's content sits high, and pushing away from
+     the upper third reads as depth rather than as a zoom. */
+  transform-origin: 50% 42%;
+  transition:
+    transform var(--gp-sheet-motion) var(--gp-ease-sheet),
+    opacity var(--gp-sheet-motion) var(--gp-ease-sheet);
+  /* Deliberately no `will-change` here. The browser promotes this for the
+     duration of the transition and hands the memory straight back; declaring it
+     would pin a full-screen texture of the entire board — every card, edge and
+     aura — for as long as the widget stays open, which on a phone is the one
+     place that cost actually hurts. Any promotion hitch is hidden behind a
+     sheet that is still the size of an icon on the frame it happens. */
+}
+
+html[data-widget-sheet='open'] .gp-canvas-shell {
+  transform: scale(1.08);
+  opacity: 0.3;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gp-widget-sheet,
+  .gp-widget-sheet-scrim,
+  .gp-widget-sheet-stage,
+  .gp-widget-sheet-stage[data-open] {
+    transition: none;
+  }
+
+  /* No flight at all, so no scale to flatten — and a board that jumped 8%
+     bigger and back with nothing in between would be worse than none. */
+  .gp-widget-sheet-stage {
+    scale: 1;
+  }
+
+  html[data-widget-sheet] .gp-canvas-shell,
+  html[data-widget-sheet='open'] .gp-canvas-shell {
+    transform: none;
+    opacity: 1;
+    transition: none;
+  }
+}

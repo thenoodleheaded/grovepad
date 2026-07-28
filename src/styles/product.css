@@ -23,7 +23,6 @@
 @import './product/21-task-skins.css';
 @import './product/22-text-input-skins.css';
 @import './product/23-location-skins.css';
-@import './product/24-linked-list-skins.css';
 @import './product/25-formula-skins.css';
 @import './product/26-logbook-skins.css';
 @import './product/27-poll-skins.css';
@@ -40,3 +39,6 @@
 @import './product/29-date-skins.css';
 @import './product/30-world-clock-skins.css';
 @import './product/31-counter-skins.css';
+@import './product/32-contact-skins.css';
+@import './product/33-widget-sheet.css';
+@import './product/34-canvas-lms-skins.css';

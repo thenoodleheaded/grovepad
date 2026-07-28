@@ -112,10 +112,27 @@ describe('Toggle skin registry contract', () => {
     expect(face({ skin: 'power' })).toMatchObject({ label: 'Disarmed' })
     expect(face({ skin: 'checkbox', value: true })).toMatchObject({ label: 'Done' })
     expect(face({})).toMatchObject({ label: 'Off' })
+    // A segmented control that folded to its winner alone would read as a
+    // label, so both choices stay on screen with the taken one filled.
     expect(face({
       skin: 'segment',
       value: true,
       skinStates: { segment: { onLabel: 'Production' } },
-    })).toMatchObject({ label: 'Production' })
+    })).toMatchObject({
+      kind: 'chips',
+      chips: [
+        { text: 'Off', filled: false },
+        { text: 'Production', filled: true },
+      ],
+    })
+    expect(face({ skin: 'tri_state', skinStates: { tri_state: { state: 'unset' } } }))
+      .toMatchObject({
+        kind: 'chips',
+        chips: [
+          { text: 'Off', filled: false },
+          { text: 'Unset', filled: true },
+          { text: 'On', filled: false },
+        ],
+      })
   })
 })

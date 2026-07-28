@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs'
 import { afterEach, describe, expect, it } from 'vitest'
 import { makeRelation, makeWidget } from '../test/factories'
 import { buildBoardSnapshot } from '../utils/persistence'
@@ -241,5 +242,44 @@ describe('strict hold in the store', () => {
     useWidgetStore.getState().updateWidgetsMetadata([parentId], { strictHold: true })
     const parsed = parsePersistedBoard(buildBoardSnapshot(useWidgetStore.getState()))
     expect(parsed?.widgets[parentId]?.metadata.strictHold).toBe(true)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// The switch a person actually reaches for. There is no DOM test environment
+// here, so the menu's ownership rules are guarded at the source.
+// ---------------------------------------------------------------------------
+
+describe("the widget menu's soft/hard switch", () => {
+  const menu = readFileSync(
+    new URL('../components/ui/WidgetContextMenu.tsx', import.meta.url),
+    'utf8',
+  )
+
+  it('asks the one owner whether the decision is already owned above', () => {
+    expect(menu).toContain('strictHolderOf(contextMenu.widgetId, state.widgets, state.relations)')
+  })
+
+  it('offers no switch inside a held tree — it names the holder, disabled', () => {
+    // The law: strictness is inherited downward and owned at the top, so a node
+    // already held cannot be softened here. The row must be inert, or the menu
+    // would promise a change the rules discard.
+    expect(menu).toContain('heldByTitle !== null ? (')
+    const heldRow = menu.slice(menu.indexOf('heldByTitle !== null ? ('), menu.indexOf(') : hasFamily ? ('))
+    expect(heldRow).toContain('Held strictly by ')
+    expect(heldRow).toContain('disabled')
+    expect(heldRow).not.toContain('updateWidgetsMetadata')
+  })
+
+  it('toggles both ways for a free parent, through the metadata owner', () => {
+    // Nothing about a hold is a one-way door: a holder that owns its own
+    // decision can always release it.
+    expect(menu).toContain("strictHold ? 'Release strict hold' : 'Hold family strictly'")
+    expect(menu).toContain('updateWidgetsMetadata([widget.id], { strictHold: !strictHold })')
+  })
+
+  it('stays hidden for a widget with no family to hold', () => {
+    expect(menu).toContain("relation.type === 'parent' && relation.fromId === contextMenu.widgetId")
+    expect(menu).toContain(') : hasFamily ? (')
   })
 })

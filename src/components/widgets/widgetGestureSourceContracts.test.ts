@@ -44,16 +44,14 @@ describe('an open card folds back onto the spot it opened from', () => {
     expect(restStore).toContain("set({ expandedWidgetId: null, expandedOffset: NO_OFFSET, expandedFrom: null })")
   })
 
-  it('folds a card opened from an icon back into that exact icon square', () => {
-    // The origin — kind AND size — is captured at expansion; collapse hands it
-    // to the scale-state action history-neutrally, so open-and-close nets to
-    // no edit and a continuously sized icon never comes back as the 2×2 floor.
-    expect(restStore).toContain("expandedFrom?.kind === 'icon'")
-    expect(restStore).toContain("setWidgetScaleState(expandedWidgetId, 'icon', {")
-    expect(restStore).toContain('toSize: expandedFrom.size')
-    // Pinning keeps the card open: it must release the slot without the
-    // fold-back, or it would iconify the very card being pinned.
-    expect(card).toContain('collapseWidget({ restoreOrigin: false })')
+  it('opens an icon without touching the board, so closing it has nothing to undo', () => {
+    // The peek is a view. If this store ever reached into the board again, a
+    // glance at an icon would be a real edit once more: an undo step, a shove
+    // to every clustermate, and a sync to everyone else on the canvas.
+    expect(restStore).not.toContain('useWidgetStore')
+    // The card the peek is drawn at comes from what the icon remembers — its
+    // stored `size` is the little square for the whole of the expansion.
+    expect(card).toContain('expansionOffsetFor(live.size, expandedIconSize(live))')
   })
 })
 
@@ -184,7 +182,7 @@ describe('option-drag owns gluing', () => {
     expect(moveBranch).toContain('glueDragRef.current = e.altKey && !inFoldedCluster')
     expect(linkBranch).not.toContain('glueDragRef.current =')
     expect(moveBranch.indexOf('glueDragRef.current = e.altKey'))
-      .toBeLessThan(moveBranch.indexOf('if (!glueDragRef.current) beginDragDisplacement()'))
+      .toBeLessThan(moveBranch.indexOf('if (!glueDragRef.current) beginDragReflow()'))
 
     // Exactly one place may arm the gesture, and exactly one place may open a
     // drag session — together those make a fourth press path inherit the
@@ -209,9 +207,9 @@ describe('option-drag owns gluing', () => {
     expect(card).toContain(
       'state.setUnglueIntentWidgetId(!snap && members.length > 0 ? dragged.id : null)',
     )
-    // A welding gesture never arms displacement: every other card holds
+    // A welding gesture never arms the reflow: every other card holds
     // perfectly still while a seam is being aimed.
-    expect(card).toContain('if (!glueDragRef.current) beginDragDisplacement()')
+    expect(card).toContain('if (!glueDragRef.current) beginDragReflow()')
     expect(card).toContain('if (glueDragRef.current) return')
   })
 
@@ -233,11 +231,44 @@ describe('option-drag owns gluing', () => {
   })
 
   it('drags whole glue clusters and strict families on a plain drag, matching the store move', () => {
-    // The displacement scene must mirror exactly what moveWidget moved: the
+    // The reflow baseline must mirror exactly what moveWidget moved: the
     // selection expanded through every touched cluster and strict family, via
     // the one shared closure the store itself uses.
     expect(card).toContain('expandMovedWidgetIds(')
     expect(card).toContain('movedIdsForWidget(dragWidgetId, fresh.selectedIds, fresh.widgets)')
+  })
+})
+
+describe('a right-click aims at one card, even inside a group', () => {
+  const menu = card.slice(card.indexOf('const onContextMenu'), card.indexOf('const onCardKeyDown'))
+
+  it('narrows a glued member to itself instead of selecting its whole cluster', () => {
+    expect(menu, 'the context-menu handler moved; this contract needs rewriting').not.toBe('')
+    // The menu acts on the SELECTION (WidgetContextMenu's `actionIds`), so
+    // routing this press through `selectWidget` — which expands a glued member
+    // to its cluster — made Duplicate and Delete group-wide with no way to
+    // reach one member. `selectWidgets` is the non-expanding setter.
+    expect(menu).toContain('state.selectWidgets([widgetId])')
+    // The cluster-expanding select survives on exactly one branch: a folded
+    // collection, which is one object with no individual card to aim at.
+    expect(menu.match(/selectWidget\(widgetId, false\)/g) ?? []).toHaveLength(1)
+    expect(menu.indexOf('selectWidget(widgetId, false)'))
+      .toBeGreaterThan(menu.indexOf('if (inFoldedCluster)'))
+  })
+
+  it('re-aims even when the cluster is already the selection', () => {
+    // Selecting a member selects the cluster, so by the time you right-click
+    // one, the group is usually already selected. Guarding only on "is this
+    // widget selected" would leave the group command in place — the exact bug.
+    expect(menu).toContain('selectionIsWholeCluster')
+    expect(menu).toContain('!state.selectedIds.has(widgetId) || selectionIsWholeCluster')
+  })
+
+  it('leaves a multi-widget selection the user built alone', () => {
+    // A marquee or shift-click selection is a deliberate "act on all of
+    // these"; a press inside it must not collapse to one card.
+    expect(menu).toContain('clusterIds.length > 1')
+    expect(menu).toContain('state.selectedIds.size === clusterIds.length')
   })
 })
 

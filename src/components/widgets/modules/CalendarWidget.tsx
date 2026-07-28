@@ -1,21 +1,36 @@
 import {
   CakeSlice,
   CalendarDays,
+  CalendarSync,
   ChevronLeft,
   ChevronRight,
+  ExternalLink,
   Heart,
   ListChecks,
+  LoaderCircle,
   Moon,
   Plus,
+  RefreshCw,
   Sun,
   Sunset,
   Trash2,
+  Unplug,
   Users,
 } from 'lucide-react'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { CalendarData, ModuleData } from '../../../types/spatial'
 import { localDayKey } from '../../../utils/localDate'
 import { dataWithSkinState, skinStateFor, type WidgetSkinState } from '../../../utils/widgetSkins'
+import { supabaseConfigured } from '../../../lib/supabase'
+import {
+  connectExternalCalendar,
+  connectedExternalCalendarProviders,
+  disconnectExternalCalendar,
+  loadExternalCalendarMonth,
+  type ExternalCalendarFeed,
+  type ExternalCalendarProvider,
+} from '../../../services/externalCalendarService'
+import { useAuthStore } from '../../../store/useAuthStore'
 import {
   addCalendarDays,
   anchorForMonth,
@@ -72,7 +87,7 @@ function occasionDateLabel(date: string): string {
   return dateLabel(`2000-${date}`, { month: 'short', day: 'numeric' })
 }
 
-/** Seven purposeful calendar tools sharing one marked-date core. */
+/** Eight purposeful calendar tools sharing one marked-date core. */
 export function CalendarWidget({
   data,
   onChange,
@@ -84,9 +99,55 @@ export function CalendarWidget({
   const [occasionName, setOccasionName] = useState('')
   const [occasionDate, setOccasionDate] = useState(todayIso)
   const [occasionKind, setOccasionKind] = useState<OccasionKind>('birthday')
+  const [externalFeeds, setExternalFeeds] = useState<
+    Partial<Record<ExternalCalendarProvider, ExternalCalendarFeed>>
+  >({})
+  const [externalLoading, setExternalLoading] = useState(false)
+  const [externalError, setExternalError] = useState('')
+  const [externalBusy, setExternalBusy] = useState<ExternalCalendarProvider | null>(null)
+  const [externalRevision, setExternalRevision] = useState(0)
+  const session = useAuthStore((state) => state.session)
+  const isGuest = useAuthStore((state) => state.isGuest)
+  const exitGuest = useAuthStore((state) => state.exitGuest)
   const skin = requestedSkin ?? calendarSkin(data.skin)
   const marked = new Set(data.markedDates.filter((iso) => dateFromDayKey(iso)))
   const fallbackAnchor = anchorForMonth(data.year, data.month, todayIso)
+
+  useEffect(() => {
+    if (skin !== 'connected_calendars') return
+    const providers = connectedExternalCalendarProviders()
+    if (providers.length === 0) {
+      setExternalFeeds({})
+      setExternalLoading(false)
+      return
+    }
+    const controller = new AbortController()
+    setExternalLoading(true)
+    setExternalError('')
+    void Promise.allSettled(
+      providers.map(async (provider) => ({
+        provider,
+        feed: await loadExternalCalendarMonth(
+          provider,
+          data.year,
+          data.month,
+          controller.signal,
+        ),
+      })),
+    ).then((results) => {
+      if (controller.signal.aborted) return
+      const next: Partial<Record<ExternalCalendarProvider, ExternalCalendarFeed>> = {}
+      const failures: string[] = []
+      for (const result of results) {
+        if (result.status === 'fulfilled') next[result.value.provider] = result.value.feed
+        else failures.push(result.reason instanceof Error ? result.reason.message : 'Calendar sync failed.')
+      }
+      setExternalFeeds(next)
+      setExternalError(failures[0] ?? '')
+      setExternalLoading(false)
+    })
+    return () => controller.abort()
+  }, [data.month, data.year, externalRevision, skin])
 
   const baseData = (patch: Partial<CalendarData> = {}): CalendarData => ({
     ...data,
@@ -509,6 +570,142 @@ export function CalendarWidget({
               </button>
             </article>
           ))}
+        </div>
+      </div>
+    )
+  } else if (skin === 'connected_calendars') {
+    const connected = connectedExternalCalendarProviders()
+    const feeds = Object.values(externalFeeds).filter(
+      (feed): feed is ExternalCalendarFeed => Boolean(feed),
+    )
+    const calendars = feeds.flatMap((feed) => feed.calendars)
+    const events = feeds.flatMap((feed) => feed.events)
+      .toSorted((left, right) => left.start.localeCompare(right.start))
+    const connect = async (provider: ExternalCalendarProvider) => {
+      setExternalBusy(provider)
+      setExternalError('')
+      try {
+        await connectExternalCalendar(provider, session, isGuest ? exitGuest : undefined)
+      } catch (error) {
+        setExternalError(error instanceof Error ? error.message : 'Could not connect this calendar.')
+        setExternalBusy(null)
+      }
+    }
+    const disconnect = (provider: ExternalCalendarProvider) => {
+      disconnectExternalCalendar(provider)
+      setExternalFeeds((current) => {
+        const next = { ...current }
+        delete next[provider]
+        return next
+      })
+      setExternalRevision((value) => value + 1)
+    }
+    const providerControl = (
+      provider: ExternalCalendarProvider,
+      label: string,
+      mark: string,
+    ) => {
+      const isConnected = connected.includes(provider)
+      return (
+        <div className="gp-calendar-provider" data-provider={provider} data-connected={isConnected || undefined}>
+          <span aria-hidden>{mark}</span>
+          <span>
+            <strong>{label}</strong>
+            <small>{isConnected ? 'Read-only access' : 'Not connected'}</small>
+          </span>
+          {isConnected ? (
+            <button type="button" aria-label={`Disconnect ${label}`} onClick={() => disconnect(provider)}>
+              <Unplug size={11} aria-hidden />
+            </button>
+          ) : (
+            <button
+              type="button"
+              disabled={!supabaseConfigured || externalBusy !== null}
+              onClick={() => { void connect(provider) }}
+            >
+              {externalBusy === provider
+                ? <LoaderCircle size={11} aria-hidden className="gp-spin" />
+                : <CalendarSync size={11} aria-hidden />}
+              Connect
+            </button>
+          )}
+        </div>
+      )
+    }
+    content = (
+      <div className="gp-calendar-connected">
+        <header className="gp-calendar-section-heading">
+          <span><CalendarSync size={13} aria-hidden /> Connected calendars</span>
+          <button
+            type="button"
+            aria-label="Refresh connected calendars"
+            disabled={connected.length === 0 || externalLoading}
+            onClick={() => setExternalRevision((value) => value + 1)}
+          >
+            <RefreshCw size={11} aria-hidden className={externalLoading ? 'gp-spin' : undefined} />
+          </button>
+        </header>
+        <p className="gp-calendar-private-note">
+          Private to this device · events and access tokens are never saved on the board.
+        </p>
+        <div className="gp-calendar-provider-grid">
+          {providerControl('google', 'Google Calendar', 'G')}
+          {providerControl('microsoft', 'Outlook Calendar', 'M')}
+        </div>
+        {externalError && <p className="gp-calendar-connect-error" role="status">{externalError}</p>}
+        {!supabaseConfigured && (
+          <p className="gp-calendar-connect-error" role="status">
+            Cloud sign-in is not configured for this Grovepad installation.
+          </p>
+        )}
+        <div className="gp-calendar-external-list" data-floor-overflow="scroll">
+          {connected.length === 0 ? (
+            <div className="gp-calendar-empty">
+              <CalendarSync size={20} aria-hidden />
+              <strong>Bring your schedule together</strong>
+              <span>Connect Google or Outlook for a private, read-only agenda.</span>
+            </div>
+          ) : externalLoading && events.length === 0 ? (
+            <div className="gp-calendar-empty">
+              <LoaderCircle size={20} aria-hidden className="gp-spin" />
+              <strong>Reading your calendars</strong>
+              <span>Loading {MONTH_NAMES[data.month]} events.</span>
+            </div>
+          ) : events.length === 0 ? (
+            <div className="gp-calendar-empty">
+              <CalendarDays size={20} aria-hidden />
+              <strong>No events this month</strong>
+              <span>{calendars.length} {calendars.length === 1 ? 'calendar' : 'calendars'} connected.</span>
+            </div>
+          ) : events.map((event) => {
+            const date = new Date(event.start)
+            const day = Number.isNaN(date.getTime())
+              ? event.start.slice(5, 10)
+              : new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric' }).format(date)
+            const time = event.allDay
+              ? 'All day'
+              : Number.isNaN(date.getTime())
+                ? ''
+                : new Intl.DateTimeFormat(undefined, { hour: 'numeric', minute: '2-digit' }).format(date)
+            return (
+              <article key={`${event.provider}-${event.calendarId}-${event.id}`} className="gp-calendar-external-event">
+                <i style={{ '--gp-event-color': event.color } as React.CSSProperties} aria-hidden />
+                <time dateTime={event.start}>
+                  <strong>{day}</strong>
+                  <span>{time}</span>
+                </time>
+                <span>
+                  <strong>{event.title}</strong>
+                  <small>{event.calendarName}</small>
+                </span>
+                {event.url && (
+                  <a href={event.url} target="_blank" rel="noreferrer" aria-label={`Open ${event.title}`}>
+                    <ExternalLink size={11} aria-hidden />
+                  </a>
+                )}
+              </article>
+            )
+          })}
         </div>
       </div>
     )

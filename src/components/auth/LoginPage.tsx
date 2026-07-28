@@ -85,8 +85,13 @@ const OAUTH_PROVIDERS: Array<{
   { id: 'facebook', label: 'Facebook', Mark: FacebookMark, tint: 'bg-[#1877F2]/20 text-white', comingSoon: true },
 ]
 
+function authRedirectUrl(): string {
+  const url = new URL(window.location.href)
+  return url.searchParams.has('collaborate') ? url.toString() : url.origin
+}
+
 /** Full-screen login gate — Supabase auth with a local-first guest exit. */
-export function LoginPage() {
+export function LoginPage({ sharedCanvasLink = false }: { sharedCanvasLink?: boolean }) {
   const [mode, setMode] = useState<Mode>('signin')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -136,7 +141,7 @@ export function LoginPage() {
       if (!supabase) return
       const { error } = await supabase.auth.signInWithOtp({
         email,
-        options: { emailRedirectTo: window.location.origin },
+        options: { emailRedirectTo: authRedirectUrl() },
       })
       if (error) fail(error.message)
       else succeed('Magic link sent — check your inbox.')
@@ -160,7 +165,7 @@ export function LoginPage() {
       }
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
-        options: { redirectTo: window.location.origin },
+        options: { redirectTo: authRedirectUrl() },
       })
       if (error) {
         fail(error.message)
@@ -187,6 +192,12 @@ export function LoginPage() {
         </div>
 
         <div className="gp-login-form-panel gp-panel w-full rounded-3xl p-9 shadow-2xl">
+          {sharedCanvasLink && (
+            <div className="mb-4 rounded-xl border border-emerald-400/25 bg-emerald-400/[0.06] px-3 py-2.5 text-[11px] leading-relaxed text-emerald-100/90">
+              Sign in or create an account to view this shared canvas. Public links are
+              read-only unless the owner approves your email as an Editor.
+            </div>
+          )}
           {!supabaseConfigured && (
             <div className="mb-4 rounded-xl border border-amber-400/25 bg-amber-400/[0.06] px-3 py-2.5 text-[11px] leading-relaxed text-amber-200/90">
               Supabase isn't configured yet. Add <code className="">VITE_SUPABASE_URL</code>{' '}
@@ -245,7 +256,7 @@ export function LoginPage() {
 
           {/* Create account and guest are equally weighted, real buttons — guest
               is a first-class local-only path, not an afterthought link. */}
-          <div className="mt-2.5 grid grid-cols-2 gap-2">
+          <div className={`mt-2.5 grid gap-2 ${sharedCanvasLink ? 'grid-cols-1' : 'grid-cols-2'}`}>
             <button
               type="button"
               onClick={() => {
@@ -256,14 +267,16 @@ export function LoginPage() {
             >
               {mode === 'signin' ? 'Create account' : 'Sign in instead'}
             </button>
-            <button
-              type="button"
-              onClick={continueAsGuest}
-              className="gp-island gp-login-action gp-login-action--guest flex h-10 items-center justify-center gap-1.5 text-sm font-medium text-emerald-300 transition-all active:scale-[0.98]"
-            >
-              Continue as guest
-              <ArrowRight size={13} aria-hidden />
-            </button>
+            {!sharedCanvasLink && (
+              <button
+                type="button"
+                onClick={continueAsGuest}
+                className="gp-island gp-login-action gp-login-action--guest flex h-10 items-center justify-center gap-1.5 text-sm font-medium text-emerald-300 transition-all active:scale-[0.98]"
+              >
+                Continue as guest
+                <ArrowRight size={13} aria-hidden />
+              </button>
+            )}
           </div>
           <div className="mt-3 flex justify-center">
             <button

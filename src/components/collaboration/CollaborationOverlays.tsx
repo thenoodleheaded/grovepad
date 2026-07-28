@@ -3,6 +3,7 @@ import {
   Copy,
   Crosshair,
   Eye,
+  Globe2,
   Link2,
   MessageCircle,
   Pencil,
@@ -31,6 +32,7 @@ import {
   postCollaborationComment,
   refreshCollaborationComments,
   retryCollaboration,
+  setCollaborativeCanvasPublicAccess,
 } from '../../collaboration/collaborationController'
 import type { CollaborationPresence, CollaborationRole } from '../../collaboration/types'
 
@@ -267,6 +269,7 @@ function ShareTab({ run, message }: {
 }) {
   const canvasId = useCollaborationStore((state) => state.canvasId)
   const role = useCollaborationStore((state) => state.role)
+  const publicAccess = useCollaborationStore((state) => state.publicAccess)
   const activeCanvasId = useWidgetStore((state) => state.activeCanvasId)
   const canvasName = useWidgetStore((state) => state.canvases[state.activeCanvasId]?.name ?? 'Current canvas')
   const [email, setEmail] = useState('')
@@ -281,53 +284,92 @@ function ShareTab({ run, message }: {
     <div className="space-y-3">
       <section className="gp-collaboration-card rounded-xl p-3">
         <div className="flex items-start gap-2.5">
-          <Link2 size={14} className="mt-0.5 shrink-0 text-emerald-300" />
+          {publicAccess
+            ? <Globe2 size={14} className="mt-0.5 shrink-0 text-emerald-300" />
+            : <Link2 size={14} className="mt-0.5 shrink-0 text-sky-300" />}
           <div>
             <p className="text-xs font-semibold text-neutral-200">Only “{canvasName}” is shared</p>
-            <p className="mt-1 text-[10px] leading-4 text-neutral-500">Other canvases stay private. Files stored only on this device are not uploaded by multiplayer.</p>
+            <p className="mt-1 text-[10px] leading-4 text-neutral-500">
+              {publicAccess
+                ? 'Anyone signed in with this link can view. Only the owner and approved editor emails can change information.'
+                : 'Only invited accounts can enter. Other canvases stay private.'}
+            </p>
+            <p className="mt-1 text-[9px] leading-4 text-neutral-600">Files stored only on this device are not uploaded by multiplayer.</p>
           </div>
         </div>
       </section>
 
       <button type="button" onClick={() => void run(copyLink, 'Canvas link copied')} className="gp-collaboration-primary-action w-full">
-        <Copy size={13} />Copy canvas link
+        <Copy size={13} />Copy {publicAccess ? 'public canvas link' : 'canvas link'}
       </button>
 
       {role === 'owner' ? (
-        <form className="gp-collaboration-card space-y-3 rounded-xl p-3" onSubmit={(event) => {
-          event.preventDefault()
-          setBusy(true)
-          void run(() => inviteCollaborator(email, inviteRole), `Access granted to ${email}`)
-            .then((ok) => { if (ok) setEmail('') })
-            .finally(() => setBusy(false))
-        }}>
-          <div className="flex items-start gap-2.5">
-            <ShieldCheck size={14} className="mt-0.5 shrink-0 text-sky-300" />
-            <div>
-              <p className="text-xs font-semibold text-neutral-200">Grant or update access</p>
-              <p className="mt-1 text-[10px] leading-4 text-neutral-500">The person needs an existing Grovepad account. This does not send email—copy the link above and send it separately.</p>
+        <>
+          <section className="gp-collaboration-card rounded-xl p-3">
+            <button
+              type="button"
+              role="switch"
+              aria-checked={publicAccess}
+              disabled={busy}
+              onClick={() => {
+                setBusy(true)
+                void run(
+                  () => setCollaborativeCanvasPublicAccess(!publicAccess),
+                  publicAccess ? 'Public viewing turned off' : 'Public canvas link enabled',
+                ).finally(() => setBusy(false))
+              }}
+              className="flex w-full items-center justify-between gap-3 text-left disabled:opacity-45"
+            >
+              <span className="flex min-w-0 items-start gap-2.5">
+                <Globe2 size={14} className="mt-0.5 shrink-0 text-emerald-300" />
+                <span>
+                  <span className="block text-xs font-semibold text-neutral-200">Public link viewing</span>
+                  <span className="mt-1 block text-[10px] leading-4 text-neutral-500">
+                    Anyone signed in with the link can view, but cannot edit or comment.
+                  </span>
+                </span>
+              </span>
+              <span aria-hidden className={`relative h-5 w-9 shrink-0 rounded-full border transition-colors ${publicAccess ? 'border-emerald-300/40 bg-emerald-400/30' : 'border-white/10 bg-black/25'}`}>
+                <span className={`absolute top-0.5 h-3.5 w-3.5 rounded-full bg-white/90 transition-transform ${publicAccess ? 'translate-x-[17px]' : 'translate-x-0.5'}`} />
+              </span>
+            </button>
+          </section>
+
+          <form className="gp-collaboration-card space-y-3 rounded-xl p-3" onSubmit={(event) => {
+            event.preventDefault()
+            setBusy(true)
+            void run(() => inviteCollaborator(email, inviteRole), `Access granted to ${email}`)
+              .then((ok) => { if (ok) setEmail('') })
+              .finally(() => setBusy(false))
+          }}>
+            <div className="flex items-start gap-2.5">
+              <ShieldCheck size={14} className="mt-0.5 shrink-0 text-sky-300" />
+              <div>
+                <p className="text-xs font-semibold text-neutral-200">Approve people by email</p>
+                <p className="mt-1 text-[10px] leading-4 text-neutral-500">Only accounts you assign the Editor role can change canvas information. This does not send email—copy the link above and send it separately.</p>
+              </div>
             </div>
-          </div>
-          <label className="block">
-            <span className="mb-1.5 block text-[10px] font-medium text-neutral-500">Account email</span>
-            <input required type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="person@example.com" className="gp-collaboration-input" />
-          </label>
-          <div className="grid grid-cols-[1fr_auto] gap-2">
-            <label>
-              <span className="sr-only">Access role</span>
-              <select value={inviteRole} onChange={(event) => setInviteRole(event.target.value as Exclude<CollaborationRole, 'owner'>)} className="gp-collaboration-input">
-                <option value="editor">Editor · can edit</option>
-                <option value="commenter">Commenter · comments only</option>
-                <option value="viewer">Viewer · view only</option>
-              </select>
+            <label className="block">
+              <span className="mb-1.5 block text-[10px] font-medium text-neutral-500">Account email</span>
+              <input required type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="person@example.com" className="gp-collaboration-input" />
             </label>
-            <button disabled={busy} type="submit" className="gp-collaboration-primary-action">{busy ? 'Saving…' : 'Grant access'}</button>
-          </div>
-          <p className="text-[9px] leading-4 text-neutral-600">Entering the same email again changes that person’s role.</p>
-        </form>
+            <div className="grid grid-cols-[1fr_auto] gap-2">
+              <label>
+                <span className="sr-only">Access role</span>
+                <select value={inviteRole} onChange={(event) => setInviteRole(event.target.value as Exclude<CollaborationRole, 'owner'>)} className="gp-collaboration-input">
+                  <option value="editor">Editor · can edit</option>
+                  <option value="commenter">Commenter · comments only</option>
+                  <option value="viewer">Viewer · view only</option>
+                </select>
+              </label>
+              <button disabled={busy} type="submit" className="gp-collaboration-primary-action">{busy ? 'Saving…' : 'Grant access'}</button>
+            </div>
+            <p className="text-[9px] leading-4 text-neutral-600">Entering the same email again changes that person’s role.</p>
+          </form>
+        </>
       ) : (
         <section className="gp-collaboration-card rounded-xl p-3 text-[10px] leading-4 text-neutral-500">
-          Only the canvas owner can grant or change access. You can still copy and send the link to someone who already has access.
+          Only the canvas owner can grant editing access or change public viewing. You can still copy and send this link.
         </section>
       )}
 

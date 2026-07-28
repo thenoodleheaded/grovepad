@@ -177,9 +177,8 @@ describe('the resting-face law: content decides the face and the tile', () => {
   it('keeps one-line faces one cell tall', () => {
     for (const [type, data] of [
       ['toggle', { value: true }],
-      ['counter', { count: 12 }],
       ['rating', { value: 3 }],
-      ['formula', { a: 2, b: 3, operator: 'multiply' }],
+      ['number_input', { label: 'Volume', value: 7, min: 0, max: 10, step: 1 }],
     ] as const) {
       expect(restingFace(widget(type, data)).size.height, type).toBe(GRID_SIZE)
     }

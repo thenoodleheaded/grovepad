@@ -5,7 +5,6 @@ import type { ModuleType,
   CounterData,
   GoalTrackerData,
   HabitData,
-  LinkedListData,
   NotesData,
   PollData,
   ProgressData,
@@ -19,12 +18,6 @@ import type { ModuleType,
 } from '../../types/spatial'
 import type { FieldDescriptor } from '../contracts/fields'
 import { num, text, bool, primaryZoneTime } from './valueHelpers'
-import {
-  linkedListNodes,
-  linkedNodeIndex,
-  selectedLinkedNodeId,
-  writeCurrentLinkedValue,
-} from '../../components/widgets/modules/linkedListSkinModel'
 import {
   leadingPollOption,
   pollIsTied,
@@ -42,44 +35,6 @@ export const CORE_WIDGET_FIELDS = {
       valueType: 'text',
       get: (d) => (d as NotesData).text,
       set: (d, v) => ({ ...(d as NotesData), text: text(v) }),
-    },
-  ],
-  linked_list: [
-    {
-      key: 'head',
-      label: 'Head value',
-      valueType: 'text',
-      get: (d) => linkedListNodes((d as LinkedListData).nodes)[0]?.value ?? '',
-    },
-    {
-      key: 'tail',
-      label: 'Tail value',
-      valueType: 'text',
-      get: (d) => linkedListNodes((d as LinkedListData).nodes).at(-1)?.value ?? '',
-    },
-    {
-      key: 'current',
-      label: 'Current value',
-      valueType: 'text',
-      get: (d) => {
-        const data = d as LinkedListData
-        const nodes = linkedListNodes(data.nodes)
-        return nodes[linkedNodeIndex(nodes, selectedLinkedNodeId(nodes, data.selectedId))]?.value ?? ''
-      },
-      set: (d, value) => writeCurrentLinkedValue(d as LinkedListData, text(value)),
-    },
-    {
-      key: 'length',
-      label: 'Node count',
-      valueType: 'number',
-      unit: 'count',
-      get: (d) => linkedListNodes((d as LinkedListData).nodes).length,
-    },
-    {
-      key: 'empty',
-      label: 'Is empty',
-      valueType: 'boolean',
-      get: (d) => linkedListNodes((d as LinkedListData).nodes).length === 0,
     },
   ],
   sticky_note: [

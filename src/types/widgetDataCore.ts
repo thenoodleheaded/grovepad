@@ -279,29 +279,6 @@ export interface LinksData {
   items: LinkItem[]
 }
 
-export interface LinkedListNode {
-  /** Stable identity: pointers and selection never depend on the editable value. */
-  id: string
-  value: string
-}
-
-export interface LinkedListData {
-  /** Canonical head-to-tail order. Every skin derives its pointers from this. */
-  nodes: LinkedListNode[]
-  /** The node exposed as `current` to circuits and focus-oriented skins. */
-  selectedId?: string | null
-  skin?:
-    | 'chain'
-    | 'vertical'
-    | 'compact'
-    | 'focus'
-    | 'doubly_linked'
-    | 'circular'
-    | 'memory_map'
-  /** Reserved for future per-skin preferences without contaminating node data. */
-  skinStates?: Record<string, Record<string, unknown>>
-}
-
 export interface CodeData {
   language: string
   code: string
@@ -338,9 +315,35 @@ export interface PollData {
 
 export interface ContactData {
   name: string
+  /** Job title, relation, or service category, depending on the skin wearing it. */
   role: string
   email: string
   phone: string
+  /** Company, vendor, or care organization. */
+  organization?: string
+  /** Street or postal address. */
+  address?: string
+  /** A profile, storefront, or support page. */
+  website?: string
+  /** Freeform context: a personal note, delivery terms, a care instruction. */
+  note?: string
+  /** Birthday as yyyy-mm-dd. */
+  birthday?: string
+  /** Account, policy, or case number. */
+  reference?: string
+  /** Which route to try first. Every skin that lists routes marks this one. */
+  preferred?: 'phone' | 'text' | 'email'
+  /** The presentation worn by this one stored person. */
+  skin?:
+    | 'personal'
+    | 'business'
+    | 'emergency'
+    | 'vendor'
+    | 'relationship'
+    | 'household'
+    | 'care_contact'
+  /** Optional specialist state is isolated by skin so switching never loses it. */
+  skinStates?: Record<string, Record<string, unknown>>
 }
 
 export interface MediaData {
@@ -411,6 +414,7 @@ export interface CalendarData {
     | 'availability'
     | 'shift_rota'
     | 'birthday_and_anniversary'
+    | 'connected_calendars'
   /** Optional specialist state is isolated by skin so switching never loses it. */
   skinStates?: Record<string, Record<string, unknown>>
 }

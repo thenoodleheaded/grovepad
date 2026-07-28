@@ -309,6 +309,7 @@ async function startCanvasSession(
     if (navigator.onLine || !cachedDocument) throw error
     bootstrap = {
       role: cachedDocument.role,
+      publicAccess: false,
       snapshot: cachedDocument.snapshot,
       lastSequence: cachedDocument.lastSequence,
       updates: [],
@@ -354,7 +355,12 @@ async function startCanvasSession(
     dispose: () => {},
   }
   active = currentSession
-  useCollaborationStore.setState({ role: bootstrap.role, localClientId: awareness.clientID, error: null })
+  useCollaborationStore.setState({
+    role: bootstrap.role,
+    publicAccess: bootstrap.publicAccess,
+    localClientId: awareness.clientID,
+    error: null,
+  })
   void publishPendingUpdateCount(currentSession).catch(() => {})
 
   const localState: LocalPresenceState = {
@@ -698,6 +704,14 @@ async function inviteCollaborator(email: string, role: CollaborationRole): Promi
   await active.repository.setMemberRole(active.canvasId, email, role)
 }
 
+async function setCanvasPublicAccess(isPublic: boolean): Promise<void> {
+  if (!active || active.role !== 'owner') {
+    throw new Error('Only the canvas owner can change public access')
+  }
+  await active.repository.setPublicAccess(active.canvasId, isPublic)
+  useCollaborationStore.setState({ publicAccess: isPublic })
+}
+
 /**
  * Turning sharing off must revoke access, not just stop this client syncing,
  * so it verifies ownership and deletes the server collaboration before changing
@@ -766,6 +780,7 @@ export function initCollaborationRuntime(): () => void {
     setEditingWidget: setCollaborativeEditingWidget,
     follow: followCollaborator,
     invite: inviteCollaborator,
+    setPublicAccess: setCanvasPublicAccess,
     setShared: setCanvasShared,
     postComment: postCollaborationComment,
     refreshComments: refreshCollaborationComments,

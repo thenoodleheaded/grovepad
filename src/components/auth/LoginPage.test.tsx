@@ -21,6 +21,14 @@ describe('LoginPage field surfaces', () => {
     expect(markup).toContain('gp-island gp-login-action gp-login-action--guest')
   })
 
+  it('requires an account for a shared canvas link and explains editor approval', () => {
+    const markup = renderToStaticMarkup(<LoginPage sharedCanvasLink />)
+
+    expect(markup).toContain('Sign in or create an account to view this shared canvas.')
+    expect(markup).toContain('the owner approves your email as an Editor')
+    expect(markup).not.toContain('Continue as guest')
+  })
+
   it('keeps the login card roomy and removes non-actionable marketing copy', () => {
     const markup = renderToStaticMarkup(<LoginPage />)
 

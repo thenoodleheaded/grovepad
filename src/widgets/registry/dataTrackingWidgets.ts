@@ -49,6 +49,13 @@ import {
   ChevronsUpDown,
   ListPlus,
   CalendarSync,
+  UserRound,
+  Briefcase,
+  Siren,
+  Store,
+  HeartHandshake,
+  House,
+  Stethoscope,
 } from 'lucide-react'
 import type { WidgetDefinition } from '../contracts/registry'
 import { localDayKey } from '../../utils/localDate'
@@ -567,12 +574,28 @@ export const DATA_TRACKING_WIDGET_DEFINITIONS = {
   contact: {
     type: 'contact',
     label: 'Contact Card',
-    description: 'Name, role, and how to reach them',
+    description: 'One person, seven ways to hold onto them',
     icon: Contact,
     category: 'tracking',
     accent: '#d8b4fe',
-    defaultSize: { width: 300, height: C * 4 },
-    defaultData: () => ({ name: '', role: '', email: '', phone: '' }),
+    // The Personal form is four labelled rows under an identity block, and
+    // Household stacks a roster — the card starts tall enough for those
+    // rather than opening on a scrollbar.
+    defaultSize: { width: 320, height: C * 7 },
+    sizing: { minWidth: 220, minHeight: C * 4, maxWidth: 560 },
+    defaultData: () => ({ name: '', role: '', email: '', phone: '', skin: 'personal' }),
+    skinField: 'skin',
+    rendererOwnedSkinDetails: ['relationship', 'household', 'care_contact'],
+    // Metadata mirrors the generated catalogue exactly; only the icon is ours.
+    skins: [
+      { value: 'personal', label: 'Personal', description: 'Informal identity, birthday, notes, and preferred channels.', implementation: 'renderer-ready', presentation: 'form', icon: UserRound, accent: '#729ce4' },
+      { value: 'business', label: 'Business', description: 'Company, role, work details, and professional links.', implementation: 'renderer-ready', presentation: 'standard', icon: Briefcase, accent: '#9872e4' },
+      { value: 'emergency', label: 'Emergency', description: 'Critical details and one-tap call emphasis.', implementation: 'renderer-ready', presentation: 'standard', icon: Siren, accent: '#b172e4' },
+      { value: 'vendor', label: 'Vendor', description: 'Service category, terms, identifiers, and support routes.', implementation: 'renderer-ready', presentation: 'map', icon: Store, accent: '#9272e4' },
+      { value: 'relationship', label: 'Relationship', description: 'Adds last contact, desired cadence, and personal context.', implementation: 'schema-extension', presentation: 'standard', icon: HeartHandshake, accent: '#e472b2' },
+      { value: 'household', label: 'Household', description: 'Represents several related people under one address.', implementation: 'schema-extension', presentation: 'standard', icon: House, accent: '#e472c9' },
+      { value: 'care_contact', label: 'Care Contact', description: 'Adds role, availability, care notes, and escalation order.', implementation: 'schema-extension', presentation: 'standard', icon: Stethoscope, accent: '#729ce4' },
+    ],
   },
   color_palette: {
     type: 'color_palette',

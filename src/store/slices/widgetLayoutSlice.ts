@@ -310,7 +310,7 @@ export function createWidgetLayoutSlice({ set, get, pushHistory }: WidgetStoreSl
         let settled = settleWidgetLayout(state.widgets, [id], state.widgetGlueIndex, { anchorIds: [id] })
         const glueId = state.widgetGlueIndex[id]
         const cluster = glueId ? state.glues[glueId] : undefined
-        if (cluster) settled = closeClusterGaps(settled, cluster.widgetIds)
+        if (cluster) settled = closeClusterGaps(settled, cluster.widgetIds, [id])
         return { widgets: settled }
       })
     }
@@ -380,7 +380,7 @@ export function createWidgetLayoutSlice({ set, get, pushHistory }: WidgetStoreSl
         })
         const glueId = state.widgetGlueIndex[id]
         const cluster = glueId ? state.glues[glueId] : undefined
-        if (cluster) settled = closeClusterGaps(settled, cluster.widgetIds)
+        if (cluster) settled = closeClusterGaps(settled, cluster.widgetIds, [id])
         return { widgets: settled }
       })
     }
@@ -457,7 +457,7 @@ export function createWidgetLayoutSlice({ set, get, pushHistory }: WidgetStoreSl
       // SHRANK left a hole nothing closes on its own. Pull the cluster back
       // together so the changed card re-welds onto its nearest clustermate,
       // then drop whatever genuinely no longer touches from the record.
-      settled = closeClusterGaps(settled, cluster.widgetIds)
+      settled = closeClusterGaps(settled, cluster.widgetIds, [id])
       const glues = reconcileGlueClusters(settled, state.glues)
       if (glues === state.glues) return { widgets: settled }
       return {

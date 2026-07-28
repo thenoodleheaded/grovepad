@@ -12,6 +12,7 @@ import { useThemeStore } from '../../store/useThemeStore'
 import { applyCanvasColors } from './auraTuning'
 import { isOverlayOpen } from '../../store/useOverlayStore'
 import { useWidgetStore } from '../../store/useWidgetStore'
+import { useDragReflowStore } from '../../store/dragReflow'
 import { useWidgetRestStore } from '../../store/useWidgetRestStore'
 import { useToastStore } from '../../store/useToastStore'
 import { GRID_SIZE, screenToWorld } from '../../types/spatial'
@@ -40,6 +41,7 @@ import { WidgetLayer } from '../widgets/WidgetLayer'
 import { CanvasContextMenu } from '../ui/CanvasContextMenu'
 import { CanvasToolbar } from '../ui/CanvasToolbar'
 import { SelectionActionBar } from '../ui/SelectionActionBar'
+import { WidgetFullscreenSheet } from '../widgets/WidgetFullscreenSheet'
 import { ShaperHUD } from '../ui/ShaperHUD'
 import { TargetingBanner } from '../ui/TargetingBanner'
 import { WidgetContextMenu } from '../ui/WidgetContextMenu'
@@ -97,12 +99,6 @@ const ScaleDebugPanel = SCALE_DEBUG_ENABLED
       import('./ScaleDebugPanel').then((module) => ({ default: module.ScaleDebugPanel })),
     )
   : null
-const AURA_TUNING_ENABLED = import.meta.env.DEV
-const AuraTuningPanel = AURA_TUNING_ENABLED
-  ? lazy(() =>
-      import('./AuraTuningPanel').then((module) => ({ default: module.AuraTuningPanel })),
-    )
-  : null
 const PERF_DEBUG_ENABLED = import.meta.env.DEV
 const PerfDebugPanel = PERF_DEBUG_ENABLED
   ? lazy(() =>
@@ -116,7 +112,7 @@ const UiTuningPanel = lazy(() =>
 )
 
 if (import.meta.env.DEV) {
-  Object.assign(window, { __grovepad: { useWidgetStore, useCanvasStore, useAiDebugStore, useCircuitStore, useScaleDebugStore, usePerfDebugStore, useWidgetRestStore, useAuraTuningStore, useMcpConnectorStore } })
+  Object.assign(window, { __grovepad: { useWidgetStore, useCanvasStore, useAiDebugStore, useCircuitStore, useScaleDebugStore, usePerfDebugStore, useWidgetRestStore, useAuraTuningStore, useMcpConnectorStore, useDragReflowStore } })
 }
 
 /** In-memory clipboard — persists across interactions but not page reloads. */
@@ -193,14 +189,13 @@ export function CanvasViewport() {
   const aiDebugOpen = useAiDebugStore((state) => AI_DEBUG_ENABLED && state.isOpen)
   const scaleDebugOpen = useScaleDebugStore((state) => SCALE_DEBUG_ENABLED && state.isOpen)
   const perfDebugOpen = usePerfDebugStore((state) => PERF_DEBUG_ENABLED && state.isOpen)
-  const auraTuningOpen = useAuraTuningStore((state) => AURA_TUNING_ENABLED && state.isOpen)
   const uiTuningOpen = useUiTuningStore((state) => state.isOpen)
   const auraCanvasColors = useAuraTuningStore((state) => state.doc.canvas)
   const auraTuningTheme = useThemeStore((state) => state.theme)
   // Tuned canvas colours are pushed onto the document as inline custom properties
   // and lifted again on teardown, so the stylesheet stays the production source.
   useEffect(() => {
-    if (!AURA_TUNING_ENABLED) return
+    if (!import.meta.env.DEV) return
     return applyCanvasColors(auraTuningTheme, auraCanvasColors[auraTuningTheme])
   }, [auraTuningTheme, auraCanvasColors])
   useEffect(() => {
@@ -780,11 +775,6 @@ export function CanvasViewport() {
           <PerfDebugPanel />
         </Suspense>
       )}
-      {AuraTuningPanel && auraTuningOpen && (
-        <Suspense fallback={null}>
-          <AuraTuningPanel />
-        </Suspense>
-      )}
       {uiTuningOpen && (
         <Suspense fallback={null}>
           <UiTuningPanel />
@@ -794,6 +784,11 @@ export function CanvasViewport() {
       <CanvasNavigator />
       <CanvasTreeDrawer />
       <SelectionActionBar />
+      {/* Phones open a widget as its own screen instead of expanding it in
+          place. One instance for the whole app; it portals to document.body,
+          so it sits above every canvas layer and none of the viewport's
+          wheel/pointer listeners ever see its input. */}
+      <WidgetFullscreenSheet />
       <ToastContainer />
       <WidgetDeletionDialog />
       <CloudConflictDialog />

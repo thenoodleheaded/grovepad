@@ -4,6 +4,7 @@ import { byteaToBytes, bytesToBytea } from './binaryEncoding'
 
 export interface CollaborationBootstrap {
   role: CollaborationRole
+  publicAccess: boolean
   snapshot: Uint8Array | null
   lastSequence: number
   updates: Array<{ id: string; sequence: number; payload: Uint8Array }>
@@ -13,6 +14,7 @@ export interface CollaborationCanvasMetadata {
   canvasId: string
   name: string
   ownerId: string
+  publicAccess: boolean
 }
 
 export interface CollaborationComment {
@@ -28,6 +30,7 @@ export interface CollaborationComment {
 interface SnapshotRow { snapshot: string; last_seq: number }
 interface UpdateRow { update_id: string; seq: number; payload: string }
 interface MemberRow { role: CollaborationRole }
+interface AccessRow { is_public: boolean }
 
 function throwIfError(error: { message: string } | null): void {
   if (error) throw new Error(error.message)
@@ -61,6 +64,12 @@ export class SupabaseCollaborationRepository {
 
   async bootstrap(canvasId: string, name: string): Promise<CollaborationBootstrap> {
     const role = await this.ensureCanvas(canvasId, name)
+    const accessResult = await this.client
+      .from('canvas_collaborations')
+      .select('is_public')
+      .eq('canvas_id', canvasId)
+      .single<AccessRow>()
+    throwIfError(accessResult.error)
     const snapshotResult = await this.client
       .from('canvas_crdt_documents')
       .select('snapshot,last_seq')
@@ -72,21 +81,36 @@ export class SupabaseCollaborationRepository {
       : null
     const lastSequence = snapshotResult.data?.last_seq ?? 0
     const updates = await this.fetchUpdates(canvasId, lastSequence)
-    return { role, snapshot, lastSequence, updates }
+    return {
+      role,
+      publicAccess: accessResult.data!.is_public,
+      snapshot,
+      lastSequence,
+      updates,
+    }
   }
 
   async getCanvasMetadata(canvasId: string): Promise<CollaborationCanvasMetadata> {
     const result = await this.client
       .from('canvas_collaborations')
-      .select('canvas_id,name,owner_id')
+      .select('canvas_id,name,owner_id,is_public')
       .eq('canvas_id', canvasId)
-      .single<{ canvas_id: string; name: string; owner_id: string }>()
+      .single<{ canvas_id: string; name: string; owner_id: string; is_public: boolean }>()
     throwIfError(result.error)
     return {
       canvasId: result.data!.canvas_id,
       name: result.data!.name,
       ownerId: result.data!.owner_id,
+      publicAccess: result.data!.is_public,
     }
+  }
+
+  async setPublicAccess(canvasId: string, isPublic: boolean): Promise<void> {
+    const result = await this.client.rpc('set_canvas_public_access', {
+      p_canvas_id: canvasId,
+      p_is_public: isPublic,
+    })
+    throwIfError(result.error)
   }
 
   /**

@@ -8,6 +8,8 @@ Run this checklist after every implementation phase, against a production build 
 - [ ] Crush a resting tile diagonally into an icon, resize it continuously between 2×2 and 3×3 without live detents, and confirm release snaps to the nearer whole grid square. Then escape back by pulling past the ceiling. Nothing anywhere renders an icon smaller than 2×2.
 - [ ] While hovering a card so it leans toward the pointer, start a resize: the lean must stay exactly where it was, not snap back to centre.
 - [ ] Open a resting tile, drag one side of the open card far out, then close it: only that side moved, and the tile lands back on the exact spot it opened from.
+- [ ] Click an icon that sits inside a glued group: the card opens over its neighbours without moving any of them, Escape closes it back into the same icon at the same spot, and Undo afterwards reverses whatever you did BEFORE the click. Then open it again and press Pin: only now does the group make space, in one undo step, with the card staying exactly where it was drawn.
+- [ ] At phone width (under 640px), tap a resting tile: it grows out of that tile into a fullscreen sheet, edits save, and the chevron, Escape, or a pull-down on the header folds it back onto the same tile with the board untouched behind it. Tap an icon: it opens the same way and is still an icon afterwards.
 - [ ] Create a second widget and connect compatible output and input ports; confirm the value propagates.
 - [ ] Create a dependency and a relation; confirm their distinct line visuals, routing, selection, and deletion behavior.
 - [ ] Pan and zoom the canvas, including far-zoom proxy mode, and confirm widgets and lines remain aligned.
@@ -18,6 +20,7 @@ Run this checklist after every implementation phase, against a production build 
 - [ ] In two signed-in browser profiles, open the same invited canvas and confirm create/move/delete, note typing, cursors, selections, edit indicators, and participant departure appear on both sides.
 - [ ] Disconnect one editor, make changes on both sides, reconnect, and confirm both clients converge without duplicate widgets or lost note characters; reload both clients to prove cold-start durability.
 - [ ] Exercise Owner, Editor, Commenter, and Viewer accounts: only Owner manages access; Owner/Editor mutate; Commenter posts and replies only; Viewer remains read-only. Confirm prohibited direct API writes are rejected by RLS.
+- [ ] Enable Public link viewing, open the copied link from an uninvited signed-in account, and confirm the canvas loads as read-only. Assign that account Editor by email and reconnect to confirm editing works; disable Public link viewing and confirm a different uninvited account can no longer enter.
 - [ ] Follow a collaborator while they pan and zoom; confirm local camera controls lock until follow is stopped and reduced-motion mode does not add cursor animation.
 
 ## Canvas engine (docs/canvas-engine.md)

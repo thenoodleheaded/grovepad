@@ -71,16 +71,24 @@ export function EyebrowLine({ eyebrow, accent }: { eyebrow: RestEyebrow; accent:
  * one reading on the right, a tinted rule under both — is exactly what a
  * folded board keeps, because that header IS the board's information.
  */
-export function ColumnsFace({ columns, eyebrow, accent }: {
+export function ColumnsFace({ columns, wrap, eyebrow, accent }: {
   columns: readonly RestColumn[]
+  wrap?: number
   eyebrow?: RestEyebrow
   accent: string
 }) {
+  const perRow = Math.max(1, Math.min(wrap ?? columns.length, Math.max(1, columns.length)))
+  const bands: RestColumn[][] = []
+  for (let index = 0; index < columns.length; index += perRow) {
+    bands.push(columns.slice(index, index + perRow))
+  }
+
   return (
-    <div className="flex h-full w-full min-w-0 flex-col">
+    <div className="flex h-full w-full min-w-0 flex-col gap-[6px]">
       {eyebrow && <EyebrowLine eyebrow={eyebrow} accent={accent} />}
-      <div className="flex min-h-0 min-w-0 flex-1 gap-[6px]">
-        {columns.map((column) => {
+      {bands.map((band, bandIndex) => (
+      <div key={bandIndex} className="flex min-h-0 min-w-0 flex-1 gap-[6px]">
+        {band.map((column) => {
           const tint = ink(column.tone ?? 'accent', accent)
           return (
             <section key={column.key} className="flex min-w-0 flex-1 flex-col">
@@ -127,6 +135,7 @@ export function ColumnsFace({ columns, eyebrow, accent }: {
           )
         })}
       </div>
+      ))}
     </div>
   )
 }
@@ -256,17 +265,18 @@ export function BarsFace({ bars, eyebrow, accent }: {
 
 /** A dial. The ring states the proportion, the text states the exact reading —
  * the same division of labour the open card's hero uses. */
-export function GaugeFace({ progress, primary, secondary, caption, tone, accent }: {
+export function GaugeFace({ progress, primary, secondary, caption, tone, eyebrow, accent }: {
   progress: number
   primary: string
   secondary: string
   caption?: string
   tone?: RestTone
+  eyebrow?: RestEyebrow
   accent: string
 }) {
   const tint = ink(tone ?? 'accent', accent)
   const circumference = 2 * Math.PI * 19
-  return (
+  const dial = (
     <div className="flex w-full min-w-0 items-center gap-2.5">
       <svg width="46" height="46" viewBox="0 0 46 46" className="shrink-0 -rotate-90" aria-hidden>
         <circle cx="23" cy="23" r="19" fill="none" stroke="rgb(255 255 255 / 0.08)" strokeWidth="5" />
@@ -294,6 +304,14 @@ export function GaugeFace({ progress, primary, secondary, caption, tone, accent 
           </span>
         )}
       </div>
+    </div>
+  )
+
+  if (!eyebrow) return dial
+  return (
+    <div className="flex h-full w-full min-w-0 flex-col">
+      <EyebrowLine eyebrow={eyebrow} accent={accent} />
+      <div className="flex min-h-0 flex-1 items-center">{dial}</div>
     </div>
   )
 }

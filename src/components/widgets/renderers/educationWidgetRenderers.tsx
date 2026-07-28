@@ -1,5 +1,6 @@
 import type {
   AssignmentData,
+  CanvasLmsData,
   CitationData,
   CornellData,
   FormulaSheetData,
@@ -11,7 +12,7 @@ import type {
 } from '../../../types/widgetDataEducation'
 import type { WidgetRendererFamily } from './contracts'
 import {
-  AssignmentWidget, CitationWidget, CornellWidget, FormulaSheetWidget, GpaWidget,
+  AssignmentWidget, CanvasLmsWidget, CitationWidget, CornellWidget, FormulaSheetWidget, GpaWidget,
   PomodoroWidget, QuizWidget, StudyGoalWidget, VocabWidget,
 } from './lazyEducationWidgets'
 
@@ -19,6 +20,7 @@ export const educationWidgetRendererFamily: WidgetRendererFamily = {
   id: 'education',
   renderers: {
     pomodoro: ({ widget, onUpdate }) => <PomodoroWidget data={widget.data as PomodoroData} onChange={onUpdate} />,
+    canvas_lms: ({ widget }) => <CanvasLmsWidget data={widget.data as CanvasLmsData} />,
     vocab: ({ widget, onUpdate }) => <VocabWidget data={widget.data as VocabData} onChange={onUpdate} />,
     gpa: ({ widget, onUpdate }) => <GpaWidget data={widget.data as GpaData} onChange={onUpdate} />,
     assignment: ({ widget, onUpdate }) => <AssignmentWidget data={widget.data as AssignmentData} onChange={onUpdate} />,

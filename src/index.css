@@ -116,7 +116,9 @@ body {
 }
 
 [data-theme="light"] {
-  --gp-relation-outline: #64748b;
+  /* Green-gray instead of slate, so structural outlines sit in the same
+     family as the bright sage canvas they draw on. */
+  --gp-relation-outline: #5f6d63;
 }
 
 /* ---------------------------------------------------------------------------
@@ -252,19 +254,21 @@ body[data-widget-dragging] .gp-route-chip-motion {
 }
 
 /*
- * Displacement preview: cards and plates pushed aside by the drag's ghost
- * negotiation keep their layout glide even while the body-level drag flag
- * has collapsed everything else to zero. The dragged card itself never
- * carries data-ghost-displaced, so pointer tracking stays exact. Under
- * prefers-reduced-motion the global duration override still flattens this
- * to an instant move.
+ * Reflow preview: cards and plates the drag has re-slotted keep their layout
+ * glide even while the body-level drag flag has collapsed everything else to
+ * zero. This transition is what makes the reflow readable — a card retargeted
+ * mid-flight picks up from wherever it currently is instead of restarting, so
+ * the lane opens and closes around the hand rather than snapping between
+ * arrangements. The dragged card itself never carries data-ghost-displaced,
+ * so pointer tracking stays exact. Under prefers-reduced-motion the global
+ * duration override still flattens this to an instant move.
  */
 body[data-widget-dragging] .gp-widget-layout-motion[data-ghost-displaced] {
   transition: transform var(--gp-motion-layout) var(--gp-ease-layout);
 }
 
-/* Overlap the displacement budget declined to resolve: the covered card dims
- * as a "will settle on drop" hint instead of moving. */
+/* Overlap the lane cannot answer for — a locked card, or one standing outside
+ * the drag's band: it dims as a "will settle on drop" hint instead of moving. */
 body[data-widget-dragging] .gp-widget-layout-motion[data-settle-pending] > .gp-card-motion {
   opacity: 0.7;
   transition: opacity var(--gp-motion-fast) var(--gp-ease-standard);
@@ -504,28 +508,34 @@ body[data-widget-dragging] .gp-card-motion {
      neutral-950 (canvas bg, darkest) ↔ neutral-50 (near-white)
      neutral-900 (card bg)            ↔ neutral-100 (very light)
      neutral-800 (input bg)           ↔ neutral-200 (light)
-     …and so on. neutral-500 is the midpoint — stays the same. */
-  --color-neutral-100: oklch(20.5% 0 0);
-  --color-neutral-200: oklch(26.9% 0 0);
-  --color-neutral-300: oklch(37.1% 0 0);
-  --color-neutral-400: oklch(43.9% 0 0);
-  --color-neutral-600: oklch(70.8% 0 0);
-  --color-neutral-700: oklch(87% 0 0);
-  --color-neutral-800: oklch(92.2% 0 0);
-  --color-neutral-900: oklch(97% 0 0);
-  --color-neutral-950: oklch(98.8% 0 0);
+     …and so on. Every step carries a whisper of the brand green (hue 145) so
+     surfaces read as bright sage rather than clashing bare whites, and the
+     inverted "muted text" step (600) sits darker than a straight inversion
+     would put it, keeping secondary text legible on the bright chrome. */
+  --color-neutral-100: oklch(22% 0.01 145);
+  --color-neutral-200: oklch(28% 0.012 145);
+  --color-neutral-300: oklch(38% 0.012 145);
+  --color-neutral-400: oklch(45% 0.012 145);
+  --color-neutral-600: oklch(58% 0.012 145);
+  --color-neutral-700: oklch(86% 0.008 142);
+  --color-neutral-800: oklch(91.5% 0.008 142);
+  --color-neutral-900: oklch(96.5% 0.006 142);
+  --color-neutral-950: oklch(98% 0.005 142);
 
-  /* Grid lines — keep them light since canvas is dark-ish #2f3531 */
-  --gp-grid-fine: rgb(163 230 53 / calc(0.13 * var(--gp-tune-grid, 1)));
+  /* Grid lines — dark lime on the bright paper canvas. Matches
+     DEFAULT_CANVAS_COLORS.light.gridFine in auraTuning.ts. */
+  --gp-grid-fine: rgb(106 148 34 / calc(0.14 * var(--gp-tune-grid, 1)));
 
-  /* Hairlines invert: pure black at the same subtlety. */
-  --gp-hairline: rgba(0, 0, 0, 0.10);
-  --gp-hairline-strong: rgba(0, 0, 0, 0.18);
+  /* Hairlines invert: green-black instead of pure black, same subtlety. */
+  --gp-hairline: rgba(24, 38, 27, 0.12);
+  --gp-hairline-strong: rgba(24, 38, 27, 0.22);
 }
 
 /* In light mode the neon green (L=88%) is illegible against near-white panels.
    Swap to a deep vivid green that reads as the same brand hue but has contrast. */
 [data-theme="light"] {
+  --color-emerald-50: oklch(24% 0.08 140);
+  --color-emerald-100: oklch(29% 0.11 139);
   --color-emerald-200: oklch(32% 0.14 138);
   --color-emerald-300: oklch(40% 0.18 138);
   --color-emerald-400: oklch(48% 0.22 137);
@@ -534,25 +544,21 @@ body[data-widget-dragging] .gp-card-motion {
 }
 
 [data-theme="light"] body {
-  color: #1c1c1c;
+  color: #1b231d;
 }
 
 /* hover:text-white is invisible against a light background — remap it to
    near-black so every button label stays legible on hover. */
 [data-theme="light"] .hover\:text-white:hover {
-  color: oklch(14.5% 0 0);
-}
-
-[data-theme="light"] .gp-picker-icon {
-  filter: saturate(1.5) brightness(0.55);
+  color: oklch(16% 0.012 145);
 }
 
 [data-theme="light"] .gp-port {
-  background: #f8fafc;
+  background: #f4f7f3;
 }
 
 [data-theme="light"] .gp-port-label {
-  background: rgba(255, 255, 255, 0.94);
+  background: rgba(247, 250, 246, 0.95);
 }
 
 [data-theme="light"] .gp-bp-chip {

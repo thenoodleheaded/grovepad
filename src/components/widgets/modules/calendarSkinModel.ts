@@ -6,6 +6,7 @@ export type CalendarSkin =
   | 'availability'
   | 'shift_rota'
   | 'birthday_and_anniversary'
+  | 'connected_calendars'
 
 export type AvailabilitySlot = 'morning' | 'afternoon' | 'evening'
 export type ShiftKind = 'off' | 'morning' | 'evening' | 'night'
@@ -48,6 +49,7 @@ const CALENDAR_SKINS = new Set<CalendarSkin>([
   'availability',
   'shift_rota',
   'birthday_and_anniversary',
+  'connected_calendars',
 ])
 const AVAILABILITY_SLOTS = new Set<AvailabilitySlot>(['morning', 'afternoon', 'evening'])
 const SHIFT_KINDS = new Set<ShiftKind>(['off', 'morning', 'evening', 'night'])

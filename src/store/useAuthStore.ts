@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import type { Session } from '@supabase/supabase-js'
 import { getSupabaseClient, supabaseConfigured } from '../lib/supabase'
+import { rememberExternalCalendarToken } from '../services/externalCalendarService'
 
 // ---------------------------------------------------------------------------
 // Auth session state. The login page gates the app until either a Supabase
@@ -141,8 +142,10 @@ export function ensureAuthInitialized(): Promise<void> {
         return
       }
       const { data } = await supabase.auth.getSession()
+      rememberExternalCalendarToken(data.session)
       useAuthStore.setState({ session: data.session, loading: false })
       supabase.auth.onAuthStateChange((_event, session) => {
+        rememberExternalCalendarToken(session)
         useAuthStore.setState({ session, loading: false })
       })
       authInitialized = true

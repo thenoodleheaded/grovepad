@@ -122,7 +122,17 @@ describe('Text Input skin registry contract', () => {
       kind: 'text',
       text: 'grovepad.app/boards',
     })
-    expect(face('design, release, canvas', 'tags')).toMatchObject({ kind: 'text' })
+    // Tags are a reading of that same string, so they fold to the chips the
+    // open card draws rather than back to the raw comma-separated text.
+    expect(face('design, release, canvas', 'tags')).toMatchObject({
+      kind: 'chips',
+      chips: [{ text: 'design' }, { text: 'release' }, { text: 'canvas' }],
+    })
+    // A command card folds to its prompt, which is what it is for.
+    expect(face('npm run check', 'command')).toMatchObject({
+      kind: 'lines',
+      eyebrow: { label: 'Command' },
+    })
     expect(face('   ')).toEqual({ kind: 'icon' })
   })
 

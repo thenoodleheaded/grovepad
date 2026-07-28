@@ -6,7 +6,9 @@ import { makeWidget as makeBaseWidget } from '../test/factories'
 import { WIDGET_REGISTRY } from '../widgets/registry'
 import {
   effectiveWidgetSize,
+  expandedIconSize,
   expansionOffsetFor,
+  iconPeeksOpen,
   isWidgetRestExpanded,
   isWidgetResting,
   restExpansionOffset,
@@ -63,8 +65,9 @@ describe('effective size', () => {
     const widget = makeWidget()
     const tile = restingTileSize(widget)
     expect(tile).toEqual({ width: ICON_MIN_EDGE, height: ICON_MIN_EDGE })
-    expect(effectiveWidgetSize(widget, true)).toEqual(tile)
-    expect(effectiveWidgetSize(widget, false)).toEqual(widget.size)
+    expect(effectiveWidgetSize(widget, idleCtx)).toEqual(tile)
+    expect(effectiveWidgetSize(widget, { ...idleCtx, expandedWidgetId: widget.id }))
+      .toEqual(widget.size)
   })
 
   it('sizes to the half-cell lattice when there is content', () => {
@@ -87,9 +90,10 @@ describe('effective size', () => {
   })
 
   it('returns the stored record itself when nothing is substituted', () => {
-    // A widget the resting system does not govern costs no allocation.
-    const pinned = makeWidget({ iconified: true })
-    expect(widgetWithEffectiveSize(pinned, { ...idleCtx, expandedWidgetId: 'w1' })).toBe(pinned)
+    // A widget the resting system does not govern costs no allocation. (An
+    // icon that is not the one being peeked at is exactly such a widget.)
+    const icon = makeWidget({ iconified: true })
+    expect(widgetWithEffectiveSize(icon, { ...idleCtx, expandedWidgetId: 'other' })).toBe(icon)
   })
 })
 
@@ -151,25 +155,91 @@ describe('centre-anchored expansion', () => {
       .toEqual(widgetWithEffectiveSize(widget, ctx).position)
   })
 
-  it('does not offset resting, pinned, or icon widgets', () => {
+  it('does not offset resting, pinned, or idle icon widgets', () => {
     const widget = makeWidget()
     const offset = { x: -50, y: -50 }
     expect(restExpansionOffset(widget, idleCtx)).toEqual({ x: 0, y: 0 })
     expect(restExpansionOffset(widget, { ...idleCtx, expandedWidgetId: 'other', expandedOffset: offset })).toEqual({ x: 0, y: 0 })
     // A pinned card is held open at its stored box, never as the expanded slot.
     expect(restExpansionOffset(makeWidget({ metadata: { badges: [], pinned: true } }), { ...idleCtx, expandedWidgetId: 'w1', expandedOffset: offset })).toEqual({ x: 0, y: 0 })
+    // An icon somebody else's expansion left alone draws on its own square.
     expect(
-      restExpansionOffset(makeWidget({ iconified: true }), { ...idleCtx, expandedWidgetId: 'w1', expandedOffset: offset }),
+      restExpansionOffset(makeWidget({ iconified: true }), { ...idleCtx, expandedWidgetId: 'other', expandedOffset: offset }),
     ).toEqual({ x: 0, y: 0 })
   })
 
   it('reads a stale expanded id against the widget’s real state', () => {
-    // The id outlives a card that has since been iconified: it must stop
-    // counting as expanded, or it keeps the lifted stacking order.
+    // The id outlives a card that has since been pinned: it must stop counting
+    // as expanded, or it keeps the lifted stacking order.
     const ctx = { ...idleCtx, expandedWidgetId: 'w1' }
     expect(isWidgetRestExpanded(makeWidget(), ctx)).toBe(true)
-    expect(isWidgetRestExpanded(makeWidget({ iconified: true }), ctx)).toBe(false)
     expect(isWidgetRestExpanded(makeWidget({ metadata: { badges: [], pinned: true } }), ctx)).toBe(false)
+    expect(isWidgetRestExpanded(makeWidget({ iconified: true, metadata: { badges: [], pinned: true } }), ctx)).toBe(false)
+  })
+})
+
+describe('peeking an icon open', () => {
+  const ICON = { width: ICON_MIN_EDGE, height: ICON_MIN_EDGE }
+  const CARD = { width: 320, height: 200 }
+  const icon = (overrides: Partial<Widget> = {}) =>
+    makeWidget({ iconified: true, size: ICON, expandedSize: CARD, ...overrides })
+  const peeking = { expandedWidgetId: 'w1', expandedOffset: expansionOffsetFor(ICON, CARD) }
+
+  it('takes the expansion slot while the record stays an icon', () => {
+    // This is the whole point: a click that opens an icon writes nothing to
+    // the board, so it costs no undo step, moves no clustermate, and never
+    // reaches a collaborator. The peeked card lives entirely in view state.
+    const widget = icon()
+    expect(isWidgetRestExpanded(widget, peeking)).toBe(true)
+    expect(widget.iconified).toBe(true)
+    expect(widget.size).toEqual(ICON)
+  })
+
+  it('is still not a resting widget — peeked or idle', () => {
+    // An icon is nobody's resting tile; being peeked at does not make it one.
+    expect(isWidgetResting(icon(), peeking)).toBe(false)
+    expect(isWidgetResting(icon(), idleCtx)).toBe(false)
+  })
+
+  it('sizes the open card from the square the icon remembers', () => {
+    // The stored `size` is the icon itself for the whole peek, so the card has
+    // to come from `expandedSize` — the same box a pin would swap in, so the
+    // card does not resize under the user at the moment it commits.
+    expect(expandedIconSize(icon())).toEqual(CARD)
+    expect(effectiveWidgetSize(icon(), peeking)).toEqual(CARD)
+    // Nothing remembered (an icon created as one) falls back to the type's
+    // own default card rather than opening at the icon's little square.
+    const fresh = icon({ expandedSize: undefined })
+    expect(expandedIconSize(fresh)).toEqual(WIDGET_REGISTRY.line_chart.defaultSize)
+  })
+
+  it('hands geometry consumers a card, not an icon', () => {
+    // Lines, rails and overlays anchor to this record. Left flagged `iconified`
+    // at the icon's size, they all aimed at a little square sitting in the
+    // middle of the card the user is actually looking at.
+    const widget = icon()
+    const effective = widgetWithEffectiveSize(widget, peeking)
+    expect(effective.iconified).toBe(false)
+    expect(effective.size).toEqual(CARD)
+    // Centred on the icon it grew out of, so the thing you pressed stays put.
+    expect(effective.position.x + CARD.width / 2)
+      .toBe(widget.position.x + ICON.width / 2)
+    expect(effective.position.y + CARD.height / 2)
+      .toBe(widget.position.y + ICON.height / 2)
+    // And the stored record is untouched by the substitution.
+    expect(widget.iconified).toBe(true)
+    expect(widget.size).toEqual(ICON)
+  })
+
+  it('leaves a widget with nothing to open into to the durable swap', () => {
+    // No resting face means no overlay to peek into: clicking that icon really
+    // does reopen the widget, so it keeps committing the scale change (and its
+    // neighbours making space is correct there).
+    expect(iconPeeksOpen(icon())).toBe(true)
+    expect(iconPeeksOpen(icon({ type: 'not_a_registered_type' as Widget['type'] }))).toBe(false)
+    // Pinned is already held open, and a full card was never an icon.
+    expect(iconPeeksOpen(icon({ metadata: { badges: [], pinned: true } }))).toBe(false)
+    expect(iconPeeksOpen(makeWidget())).toBe(false)
   })
 })
 

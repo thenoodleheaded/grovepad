@@ -33,4 +33,22 @@ describe('SupabaseCollaborationRepository channels', () => {
       },
     ])
   })
+
+  it('changes public-link visibility through the owner-checked database function', async () => {
+    const calls: Array<{ name: string; args: unknown }> = []
+    const client = {
+      rpc: async (name: string, args: unknown) => {
+        calls.push({ name, args })
+        return { data: null, error: null }
+      },
+    } as unknown as SupabaseClient
+    const repository = new SupabaseCollaborationRepository(client)
+
+    await repository.setPublicAccess('canvas-1', true)
+
+    expect(calls).toEqual([{
+      name: 'set_canvas_public_access',
+      args: { p_canvas_id: 'canvas-1', p_is_public: true },
+    }])
+  })
 })

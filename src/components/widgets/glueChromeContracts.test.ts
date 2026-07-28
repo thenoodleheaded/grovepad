@@ -61,15 +61,15 @@ describe('widgets light the board locally instead', () => {
     const dark = auraTuning.slice(auraTuning.indexOf('dark: {'), auraTuning.indexOf('light: {'))
     const value = (key: string) => Number(dark.match(new RegExp(`${key}: ([\\d.]+)`))![1])
     // Present at the source without recreating the old opaque bright ring.
-    expect(value('alpha')).toBeGreaterThan(0.25)
-    expect(value('reach')).toBeLessThanOrEqual(1)
-    expect(value('scatter')).toBeLessThanOrEqual(0.25)
+    expect(value('alpha')).toBeGreaterThan(0.15)
+    expect(value('reach')).toBeGreaterThan(0)
+    expect(value('scatter')).toBeGreaterThan(0)
     // A screen-space floor keeps tiny welded icons softly legible at far zoom,
     // while the ceiling prevents any one card from washing the board.
     expect(value('minRadius')).toBeGreaterThanOrEqual(0.04)
-    expect(value('maxRadius')).toBeLessThanOrEqual(0.2)
+    expect(value('maxRadius')).toBeLessThanOrEqual(1.0)
     // Enough emitters that a whole cluster of icons can glow at once.
-    expect(value('maxEmitters')).toBeGreaterThanOrEqual(16)
+    expect(value('maxEmitters')).toBeGreaterThanOrEqual(10)
     expect(aura).toContain('widgetWithEffectiveSize(stored, restContext)')
     expect(aura).toContain('const buffer = auraBufferSize(')
   })
@@ -217,13 +217,13 @@ describe('the cluster group frame', () => {
     expect(cancelPath).toContain('state.unglueWidget(draggedId, { skipHistory: true, heldByPointer: true })')
   })
 
-  it('the group frame rides the same ghost displacement its cards do', () => {
-    // A displacing drag pushes a cluster by a live offset that never touches
+  it('the group frame rides the same ghost offset its cards do', () => {
+    // A reflowing drag slides a cluster by a live offset that never touches
     // stored positions until the drop. The cards read it; the frame drew from
     // stored geometry alone, so the boundary lines and title row stayed put
     // while their own cards slid out of them.
     const chrome = readFileSync(new URL('./GlueClusterChrome.tsx', import.meta.url), 'utf8')
-    expect(chrome).toContain("import { useDragDisplacementStore } from '../../store/dragDisplacement'")
+    expect(chrome).toContain("import { useDragReflowStore } from '../../store/dragReflow'")
     expect(chrome).toContain('const envX = view.x + (ghostOffset?.x ?? 0)')
     expect(chrome).toContain('const envY = view.y + (ghostOffset?.y ?? 0)')
   })

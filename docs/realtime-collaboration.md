@@ -4,7 +4,7 @@
 
 Signed-in users automatically connect the active canvas to a local-first Yjs document. Board edits remain immediate and usable when the network disappears. Supabase Realtime carries the low-latency hot path, while an append-only Postgres update log plus compact snapshots provides reliable cold starts and missed-message recovery.
 
-The collaboration button in the canvas's upper-right corner shows connection state and online people. Clicking another person's avatar follows their camera; clicking the follow banner stops. The panel copies an exact canvas link, lets an Owner grant access by an existing account email, and exposes comments/replies. Private canvases require an invited role. An Owner may instead make a canvas Public in Canvas settings; then any signed-in link visitor joins as a read-only Viewer, while edit and comment rights still require an explicit invitation.
+The collaboration button in the canvas's upper-right corner shows connection state and online people. Clicking another person's avatar follows their camera; clicking the follow banner stops. The panel copies an exact canvas link, lets an Owner grant access by an existing account email, and exposes comments/replies. Private canvases require an invited role. An Owner may instead enable Public link viewing in the Share panel; then any signed-in link visitor joins as a read-only Viewer, while edit and comment rights still require an explicit invitation.
 
 Roles are intentionally narrow:
 
@@ -36,15 +36,16 @@ Local board persistence continues independently. A Supabase outage can change th
 
 ## Database deployment
 
-Apply migrations in timestamp order, including `20260719050000_realtime_collaboration.sql` and `20260722093000_realtime_awareness_channel.sql`. The migrations create:
+Apply migrations in timestamp order, including `20260719050000_realtime_collaboration.sql`, `20260722093000_realtime_awareness_channel.sql`, and `20260728120000_public_canvas_links.sql`. The migrations create:
 
 - `canvas_collaborations` and `canvas_members`;
 - `canvas_crdt_documents` and `canvas_crdt_updates`;
 - `canvas_comments`;
 - owner-only invitation and editor-only compaction functions;
+- owner-only public-link visibility control with an effective Viewer role for signed-in visitors;
 - private-channel policies on `realtime.messages`.
 
-The document topic is `canvas:<canvas-id>` and the participant topic is `awareness:<canvas-id>`; both use private Realtime channels with database authorization. Only Owners and Editors may publish CRDT Broadcast updates on the document topic. Members may publish low-frequency Presence and ephemeral awareness Broadcasts on the participant topic. Keeping the topics separate prevents a Viewer from gaining permission to publish board updates merely so they can share a cursor. Table RLS prevents Commenters/Viewers from appending CRDT rows, limits every cold-start read to members, and limits comments to Owner/Editor/Commenter. There is no public or link-only access tier: a canvas is readable only by its owner and the people they invited.
+The document topic is `canvas:<canvas-id>` and the participant topic is `awareness:<canvas-id>`; both use private Realtime channels with database authorization. Only Owners and Editors may publish CRDT Broadcast updates on the document topic. Invited members and signed-in Viewers of a public link may publish low-frequency Presence and ephemeral awareness Broadcasts on the participant topic. Keeping the topics separate prevents a Viewer from gaining permission to publish board updates merely so they can share a cursor. Table RLS prevents Commenters/Viewers from appending CRDT rows, allows public-link cold starts only when `is_public` is enabled, and limits comments to Owner/Editor/Commenter. Anonymous access remains revoked.
 
 Run the SQL policy tests against a disposable Supabase database after applying migrations:
 

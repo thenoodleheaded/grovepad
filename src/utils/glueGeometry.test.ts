@@ -4,7 +4,9 @@ import { makeWidget } from '../test/factories'
 import { WIDGET_TITLE_ROW } from './widgetRest'
 import {
   COLLAPSED_MEMBER_SIZE,
+  closeClusterGaps,
   collapsedClusterLayout,
+  compactWeldedCluster,
   connectedGlueComponents,
   findGlueSnap,
   clusterFrameEnvelope,
@@ -221,6 +223,186 @@ describe('cluster reflow when a member changes footprint', () => {
     const moved = reflowWeldedCluster([box('a', 0, 0, 320, 160), box('b', 200, 0, 200, 160)], [])
     expect(moved.has('a')).toBe(false)
     expect(moved.get('b')).toEqual({ x: 320, y: 0 })
+  })
+
+  it('sends a SWALLOWED neighbour along the row, never up out of it', () => {
+    // A row of five icons; the middle is pinned open and now measures 240×200
+    // of chrome, which swallows the icon to its right whole. That icon's
+    // centre then sits almost exactly on the grown card's, so every centre
+    // comparison ties — and the cheapest escape used to lift it OUT of the
+    // row, where no amount of closing ranks could ever bring it back.
+    const moved = reflowWeldedCluster(
+      [
+        box('a', 0, 40, 80, 80), box('b', 80, 40, 80, 80),
+        box('c', 160, 0, 240, 200),
+        box('d', 240, 40, 80, 80), box('e', 320, 40, 80, 80),
+      ],
+      ['c'],
+    )
+    // Everyone stays on the row: only x changes, and the swallowed card comes
+    // out of the side it was welded on.
+    expect(moved.get('d')).toEqual({ x: 400, y: 40 })
+    expect(moved.get('e')).toEqual({ x: 480, y: 40 })
+    expect(moved.has('a')).toBe(false)
+    expect(moved.has('b')).toBe(false)
+  })
+})
+
+describe('cluster compaction when a member shrinks or leaves', () => {
+  const box = (id: string, x: number, y: number, width = 80, height = 80) =>
+    ({ id, rect: rect(x, y, width, height) })
+
+  it('closes the hole a shrunk member leaves in a row', () => {
+    // A row of four. The second was pinned open at 240 and has just been
+    // unpinned back to an 80 icon, holding its welded top-left corner. The
+    // rest of the row still stands where the open card used to end.
+    const moved = compactWeldedCluster(
+      [box('a', 0, 0), box('b', 80, 0), box('c', 400, 0), box('d', 480, 0)],
+      ['b'],
+    )
+    expect(moved.has('a')).toBe(false)
+    expect(moved.has('b')).toBe(false)
+    // Both close onto the shrunk card, and onto each other: no gaps left.
+    expect(moved.get('c')).toEqual({ x: 160, y: 0 })
+    expect(moved.get('d')).toEqual({ x: 240, y: 0 })
+  })
+
+  it('closes an interior hole even though the block never came apart', () => {
+    // Eight icons round a hole where the middle one was dragged out. Every
+    // survivor still touches its neighbours AROUND the gap, so connectivity
+    // sees one whole cluster — this is the case a component-level repair is
+    // blind to, and the one the bug report showed.
+    const moved = compactWeldedCluster(
+      [
+        box('a', 0, 0), box('b', 80, 0), box('c', 160, 0),
+        box('d', 0, 80), /* hole at 80,80 */ box('f', 160, 80),
+        box('g', 0, 160), box('h', 80, 160), box('i', 160, 160),
+      ],
+      ['a'],
+    )
+    // The block re-packs onto itself: eight cards cannot fill a 3×3, so the
+    // one missing square ends up at the OUTER edge, never in the middle.
+    expect(moved.get('f')).toEqual({ x: 80, y: 80 })
+    expect(moved.get('i')).toEqual({ x: 160, y: 80 })
+    expect(moved.has('a')).toBe(false)
+    expect(moved.has('c')).toBe(false)
+    expect(moved.has('h')).toBe(false)
+  })
+
+  it('travels along the axis a member is arranged on, keeping rows rows', () => {
+    // A column with a hole: the card below must come straight up, not sidle
+    // across into the anchor's own lane.
+    const column = compactWeldedCluster([box('a', 0, 0), box('b', 0, 240)], ['a'])
+    expect(column.get('b')).toEqual({ x: 0, y: 80 })
+
+    // Staircase: the two touch at a corner only and share no lane, so there is
+    // nothing to close onto and the arrangement survives untouched.
+    const stair = compactWeldedCluster([box('a', 0, 0), box('b', 80, 80)], ['a'])
+    expect(stair.size).toBe(0)
+  })
+
+  it('never moves an anchor, never overlaps, and settles in one pass', () => {
+    const boxes = [box('a', 0, 0), box('b', 80, 0), box('c', 400, 0), box('d', 480, 0)]
+    const once = compactWeldedCluster(boxes, ['b'])
+    // Nothing is pulled on top of anything: every pair still has clear air or
+    // an exact shared edge.
+    const settled = boxes.map((entry) => {
+      const corner = once.get(entry.id) ?? entry.rect
+      return rect(corner.x, corner.y, entry.rect.width, entry.rect.height)
+    })
+    for (let i = 0; i < settled.length; i += 1) {
+      for (let j = i + 1; j < settled.length; j += 1) {
+        expect(glueSeparation(settled[i]!, settled[j]!)).toBeGreaterThanOrEqual(0)
+        const overlapX =
+          Math.min(settled[i]!.x + settled[i]!.width, settled[j]!.x + settled[j]!.width) -
+          Math.max(settled[i]!.x, settled[j]!.x)
+        const overlapY =
+          Math.min(settled[i]!.y + settled[i]!.height, settled[j]!.y + settled[j]!.height) -
+          Math.max(settled[i]!.y, settled[j]!.y)
+        expect(overlapX > 0.5 && overlapY > 0.5).toBe(false)
+      }
+    }
+    // Idempotent: a compact cluster is already home, so a second run is a
+    // no-op — running the pass on every footprint change cannot drift a group.
+    expect(compactWeldedCluster(
+      settled.map((r, index) => ({ id: boxes[index]!.id, rect: r })),
+      ['b'],
+    ).size).toBe(0)
+  })
+
+  it('is the exact inverse of the push half: grow then shrink returns the layout', () => {
+    // The reversibility the group already promises for opening and closing a
+    // card: the two passes must undo each other, or every open/close walks the
+    // cluster a little further.
+    const start = [box('a', 0, 0, 200, 160), box('b', 200, 0, 200, 160), box('c', 400, 0, 200, 160)]
+    const grown = reflowWeldedCluster(
+      [box('a', 0, 0, 320, 160), box('b', 200, 0, 200, 160), box('c', 400, 0, 200, 160)],
+      ['a'],
+    )
+    expect(grown.get('b')).toEqual({ x: 320, y: 0 })
+    expect(grown.get('c')).toEqual({ x: 520, y: 0 })
+    // Now the card shrinks back to 200 and the row closes up again.
+    const shrunk = compactWeldedCluster(
+      [box('a', 0, 0, 200, 160), box('b', 320, 0, 200, 160), box('c', 520, 0, 200, 160)],
+      ['a'],
+    )
+    expect(shrunk.get('b')).toEqual({ x: start[1]!.rect.x, y: 0 })
+    expect(shrunk.get('c')).toEqual({ x: start[2]!.rect.x, y: 0 })
+  })
+
+  it('returns a row of icons exactly where it started after pin then unpin', () => {
+    // The whole promise, end to end, in the shape the bug was reported in: the
+    // middle icon of a welded row is pinned open (the push half makes room)
+    // and then unpinned (this half closes it back up). The row must come out
+    // identical to how it went in — anything else walks the group a little
+    // further on every open and close.
+    const start = [
+      box('a', 0, 40), box('b', 80, 40), box('c', 160, 40),
+      box('d', 240, 40), box('e', 320, 40),
+    ]
+    const opened = reflowWeldedCluster(
+      [
+        start[0]!, start[1]!,
+        box('c', 160, 0, 240, 200),
+        start[3]!, start[4]!,
+      ],
+      ['c'],
+    )
+    // Then the card is unpinned: back to an 80 icon, still welded at its own
+    // corner, with its neighbours parked where the growth left them.
+    const closed = compactWeldedCluster(
+      [
+        start[0]!, start[1]!, box('c', 160, 40),
+        box('d', opened.get('d')!.x, opened.get('d')!.y),
+        box('e', opened.get('e')!.x, opened.get('e')!.y),
+      ],
+      ['c'],
+    )
+    expect(closed.get('d')).toEqual({ x: start[3]!.rect.x, y: start[3]!.rect.y })
+    expect(closed.get('e')).toEqual({ x: start[4]!.rect.x, y: start[4]!.rect.y })
+  })
+
+  it('closes ranks through closeClusterGaps for a hole no split can reveal', () => {
+    // Same interior hole, this time through the store-facing entry point, so
+    // the wiring every call site uses is covered too. These members are pinned,
+    // so each also reserves its floating title row — which is why the second
+    // row is stored a row-height clear of the first (80 box + WIDGET_TITLE_ROW)
+    // rather than flush against it.
+    const row = 80 + WIDGET_TITLE_ROW
+    const members = {
+      a: widget('a', 0, 0, 80, 80),
+      b: widget('b', 80, 0, 80, 80),
+      c: widget('c', 160, 0, 80, 80),
+      d: widget('d', 0, row, 80, 80),
+      f: widget('f', 160, row, 80, 80),
+    }
+    const ids = ['a', 'b', 'c', 'd', 'f']
+    expect(connectedGlueComponents(ids, members).length).toBe(1)
+    const closed = closeClusterGaps(members, ids, ['a'])
+    // f slides into the hole beside d — and stops there, rather than riding up
+    // under the name row of the card above.
+    expect(closed.f!.position).toEqual({ x: 80, y: row })
+    expect(closed.a!.position).toEqual({ x: 0, y: 0 })
   })
 })
 

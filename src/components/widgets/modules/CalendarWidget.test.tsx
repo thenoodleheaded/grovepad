@@ -20,6 +20,7 @@ describe('purpose-built Calendar skins', () => {
     ['availability', 'gp-calendar-availability'],
     ['shift_rota', 'gp-calendar-rota'],
     ['birthday_and_anniversary', 'gp-calendar-occasions'],
+    ['connected_calendars', 'gp-calendar-connected'],
   ] as const)('renders the %s experience with its own anatomy', (skin, className) => {
     const markup = renderToStaticMarkup(
       <CalendarWidget
@@ -72,5 +73,18 @@ describe('purpose-built Calendar skins', () => {
     expect(rota).toContain('data-shift="morning"')
     expect(occasions).toContain('Ada')
     expect(occasions).toContain('Dec 10')
+  })
+
+  it('offers private read-only Google and Outlook connections', () => {
+    const markup = renderToStaticMarkup(
+      <CalendarWidget
+        data={{ ...base, skin: 'connected_calendars' }}
+        skin="connected_calendars"
+        onChange={() => undefined}
+      />,
+    )
+    expect(markup).toContain('Google Calendar')
+    expect(markup).toContain('Outlook Calendar')
+    expect(markup).toContain('events and access tokens are never saved on the board')
   })
 })

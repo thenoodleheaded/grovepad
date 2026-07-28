@@ -351,6 +351,19 @@ export function reflowWeldedCluster(
   const live = boxes.map((box) => ({ id: box.id, ...box.rect }))
   let dirty = false
 
+  // The axis the CLUSTER as a whole is laid out on, read once from where the
+  // members started. It is the last word on which way a pair opens when the
+  // pair itself no longer has an arrangement to read — see the swallowed case
+  // below.
+  let envMinX = Infinity, envMinY = Infinity, envMaxX = -Infinity, envMaxY = -Infinity
+  for (const rect of live) {
+    envMinX = Math.min(envMinX, rect.x)
+    envMinY = Math.min(envMinY, rect.y)
+    envMaxX = Math.max(envMaxX, rect.x + rect.width)
+    envMaxY = Math.max(envMaxY, rect.y + rect.height)
+  }
+  const clusterRunsX = envMaxX - envMinX >= envMaxY - envMinY
+
   for (let pass = 0; pass < REFLOW_PASSES; pass += 1) {
     let overlapped = false
     for (let i = 0; i < live.length; i += 1) {
@@ -382,15 +395,40 @@ export function reflowWeldedCluster(
         const spanY = (a.height + b.height) / 2
         const alongX = Math.abs(a.x + a.width / 2 - (b.x + b.width / 2)) / (spanX || 1)
         const alongY = Math.abs(a.y + a.height / 2 - (b.y + b.height / 2)) / (spanY || 1)
-        const pushX = alongX === alongY ? overlapX <= overlapY : alongX > alongY
+        // A card that has been SWALLOWED WHOLE — its box inside the other's on
+        // both axes — has no arrangement left to read: the centres very nearly
+        // coincide, so every comparison here is a coin flip and the cheapest
+        // escape is meaningless (there is no near edge to leave by). That is
+        // exactly what a card pinned open inside a row of icons does to its
+        // neighbour, and the coin flip lifted that neighbour OUT OF THE ROW,
+        // where nothing ever brought it back. The cluster's own axis decides
+        // instead, so a row stays a row.
+        const swallowed =
+          Math.min(overlapX, a.width, b.width) >= Math.min(a.width, b.width) - REFLOW_EPS &&
+          Math.min(overlapY, a.height, b.height) >= Math.min(a.height, b.height) - REFLOW_EPS
+        const pushX = swallowed
+          ? clusterRunsX
+          : alongX === alongY
+            ? overlapX <= overlapY
+            : alongX > alongY
+        // The pair keeps the order it already has — whoever is nearer the start
+        // of the axis stays there. Choosing by the shorter escape instead let a
+        // swallowed pair come out the other way round, so two cards visibly
+        // traded places on the row.
+        // Travel is then the true cost of separating in THAT direction, not the
+        // raw overlap: for boxes that merely graze the two are the same number,
+        // but a swallowed card's overlap is only its own width, and moving by
+        // that leaves it still inside.
         if (pushX) {
           const direction = a.x + a.width / 2 <= b.x + b.width / 2 ? -1 : 1
-          a.x += direction * overlapX * shareA
-          b.x -= direction * overlapX * shareB
+          const travel = direction < 0 ? a.x + a.width - b.x : b.x + b.width - a.x
+          a.x += direction * travel * shareA
+          b.x -= direction * travel * shareB
         } else {
           const direction = a.y + a.height / 2 <= b.y + b.height / 2 ? -1 : 1
-          a.y += direction * overlapY * shareA
-          b.y -= direction * overlapY * shareB
+          const travel = direction < 0 ? a.y + a.height - b.y : b.y + b.height - a.y
+          a.y += direction * travel * shareA
+          b.y -= direction * travel * shareB
         }
       }
     }
@@ -404,6 +442,148 @@ export function reflowWeldedCluster(
     // Whole pixels: stored member boxes are integral, and a half-pixel drift
     // would accumulate through repeated folds. A 1px rounding is well inside
     // the touch epsilon the seam insets use, so welds still read as welds.
+    const x = Math.round(end.x)
+    const y = Math.round(end.y)
+    if (x !== start.rect.x || y !== start.rect.y) moved.set(start.id, { x, y })
+  }
+  return moved
+}
+
+interface LiveRect {
+  id: string
+  x: number
+  y: number
+  width: number
+  height: number
+}
+
+/** The two axes, each named alongside its perpendicular, so the gravity pass
+ * below is written once and run twice rather than duplicated per axis. */
+const COMPACT_AXES = [
+  { pos: 'x', size: 'width', perpPos: 'y', perpSize: 'height' },
+  { pos: 'y', size: 'height', perpPos: 'x', perpSize: 'width' },
+] as const
+
+/**
+ * Pull a welded cluster's members back onto each other after one of them
+ * shrank or left — the exact mirror of `reflowWeldedCluster`.
+ *
+ * The push half already answers what a cluster does when a member GROWS. This
+ * is the same story in reverse, and it must be, or the two are not inverses
+ * and an open/close round trip inside a group does not return the layout it
+ * started from. So it keeps the same three laws: anchored members never move,
+ * a member travels along the axis it is arranged on (never diagonally, so rows
+ * stay rows), and it lands EXACTLY touching, which is what lets the seam
+ * re-carve itself from `glueMemberInsets` and the group keep reading as one
+ * object.
+ *
+ * Each free member slides toward the anchored block until it meets something —
+ * gravity, one axis at a time, nearest member first so a card only ever closes
+ * onto what has already arrived. Travel is capped by the nearest box sharing
+ * its lane, so compacting can never produce an overlap; a member with nothing
+ * ahead of it on an axis stays put rather than drifting into empty space.
+ *
+ * This is what closes an INTERIOR hole. Connectivity alone cannot see one: pull
+ * the middle card out of a block and every survivor still touches its
+ * neighbours around the gap, so the cluster never "falls apart" and a
+ * component-level repair concludes there is nothing to do.
+ *
+ * Pure: takes visible boxes, returns the members whose top-left moved.
+ */
+export function compactWeldedCluster(
+  boxes: readonly WeldedBox[],
+  anchorIds: readonly string[],
+): Map<string, Vector2D> {
+  const moved = new Map<string, Vector2D>()
+  if (boxes.length < 2) return moved
+
+  const ids = new Set(boxes.map((box) => box.id))
+  const anchored = new Set(anchorIds.filter((id) => ids.has(id)))
+  // Same still point the push half falls back on: with nothing anchored the
+  // cluster's leading card holds and everything gathers onto it.
+  if (anchored.size === 0) anchored.add(boxes[0]!.id)
+
+  const live: LiveRect[] = boxes.map((box) => ({ id: box.id, ...box.rect }))
+  // Anchored members never move, so the block they form is fixed for the whole
+  // pass and every direction below is read off it once.
+  let blockMinX = Infinity, blockMinY = Infinity, blockMaxX = -Infinity, blockMaxY = -Infinity
+  for (const rect of live) {
+    if (!anchored.has(rect.id)) continue
+    blockMinX = Math.min(blockMinX, rect.x)
+    blockMinY = Math.min(blockMinY, rect.y)
+    blockMaxX = Math.max(blockMaxX, rect.x + rect.width)
+    blockMaxY = Math.max(blockMaxY, rect.y + rect.height)
+  }
+  const block = {
+    x: { min: blockMinX, max: blockMaxX },
+    y: { min: blockMinY, max: blockMaxY },
+  }
+
+  const free = live.filter((rect) => !anchored.has(rect.id))
+  if (free.length === 0) return moved
+  let dirty = false
+
+  for (let pass = 0; pass < REFLOW_PASSES; pass += 1) {
+    let closed = false
+    for (const axis of COMPACT_AXES) {
+      const { min: blockMin, max: blockMax } = block[axis.pos]
+      const blockCentre = (blockMin + blockMax) / 2
+      // Nearest first. Out of order, a far card stops where a near one has not
+      // arrived yet; the passes would still converge, but this closes a row in
+      // one sweep and keeps the result independent of member order.
+      const ordered = [...free].sort(
+        (a, b) =>
+          Math.abs(a[axis.pos] + a[axis.size] / 2 - blockCentre) -
+          Math.abs(b[axis.pos] + b[axis.size] / 2 - blockCentre),
+      )
+      for (const rect of ordered) {
+        const start = rect[axis.pos]
+        const end = start + rect[axis.size]
+        // A member straddling the block's span on this axis is already in its
+        // column: it has no side to come from, and its travel is the other
+        // axis's business.
+        const direction = end <= blockMin + REFLOW_EPS ? 1 : start >= blockMax - REFLOW_EPS ? -1 : 0
+        if (direction === 0) continue
+        let travel = Infinity
+        for (const other of live) {
+          if (other === rect) continue
+          // Boxes that merely touch edge-on share no lane and slide past each
+          // other; only a real shared span can block.
+          const lane =
+            Math.min(rect[axis.perpPos] + rect[axis.perpSize], other[axis.perpPos] + other[axis.perpSize]) -
+            Math.max(rect[axis.perpPos], other[axis.perpPos])
+          if (lane <= REFLOW_EPS) continue
+          const gap =
+            direction < 0
+              ? start - (other[axis.pos] + other[axis.size])
+              : other[axis.pos] - end
+          // Negative means the other box is behind, or already met: not
+          // something this member can close onto.
+          if (gap < -REFLOW_EPS) continue
+          // A gap no wider than the seam IS the weld — a cluster welded by the
+          // option-drag gesture is stored exactly `GLUE_GAP` apart, and a
+          // cluster stored touching carves the same seam out of both cards, so
+          // the two read identically. Closing one would tighten a real weld and
+          // walk the whole group in by a seam on every footprint change. Such a
+          // neighbour stops this member dead instead.
+          travel = Math.min(travel, gap <= GLUE_GAP + REFLOW_EPS ? 0 : gap)
+        }
+        // Nothing ahead on this axis. A card with no one to weld against must
+        // hold its place rather than sail across the board toward the anchor.
+        if (travel === Infinity || travel <= REFLOW_EPS) continue
+        rect[axis.pos] += direction * travel
+        closed = true
+        dirty = true
+      }
+    }
+    if (!closed) break
+  }
+
+  if (!dirty) return moved
+  for (let i = 0; i < live.length; i += 1) {
+    const start = boxes[i]!
+    const end = live[i]!
+    // Whole pixels, exactly as the push half rounds — see the note there.
     const x = Math.round(end.x)
     const y = Math.round(end.y)
     if (x !== start.rect.x || y !== start.rect.y) moved.set(start.id, { x, y })
@@ -799,29 +979,50 @@ export function connectedGlueComponents(
 export function closeClusterGaps(
   widgets: Record<string, Widget>,
   memberIds: readonly string[],
+  anchorIds: readonly string[] = [],
 ): Record<string, Widget> {
   const present = memberIds.filter((id) => widgets[id])
   if (present.length < 2) return widgets
+  let next = widgets
   const components = connectedGlueComponents(present, widgets, GLUE_GAP)
-  if (components.length < 2) return widgets
-  const next = { ...widgets }
-  const merged: string[] = [...components[0]!]
-  for (const component of components.slice(1)) {
-    // Chrome boxes, so a group closing ranks stops where the arriving card's
-    // own title row begins rather than sliding it under the card above.
-    const block = chromeEnvelope(merged, next)!
-    const env = chromeEnvelope(component, next)!
-    const { gapX, gapY } = edgeGaps(block, env)
-    // Close whichever axes actually hold clear air, toward the block.
-    const dx = gapX > 0 ? (env.x + env.width / 2 >= block.x + block.width / 2 ? -gapX : gapX) : 0
-    const dy = gapY > 0 ? (env.y + env.height / 2 >= block.y + block.height / 2 ? -gapY : gapY) : 0
-    for (const id of component) {
-      const w = next[id]!
-      next[id] = { ...w, position: { x: w.position.x + dx, y: w.position.y + dy } }
+  if (components.length > 1) {
+    next = { ...widgets }
+    const merged: string[] = [...components[0]!]
+    for (const component of components.slice(1)) {
+      // Chrome boxes, so a group closing ranks stops where the arriving card's
+      // own title row begins rather than sliding it under the card above.
+      const block = chromeEnvelope(merged, next)!
+      const env = chromeEnvelope(component, next)!
+      const { gapX, gapY } = edgeGaps(block, env)
+      // Close whichever axes actually hold clear air, toward the block. This
+      // step exists for a piece that drifted DIAGONALLY clear of the rest,
+      // sharing no lane with it — gravity below has nothing to pull such a
+      // piece against, and only a whole-envelope move brings it back in reach.
+      const dx = gapX > 0 ? (env.x + env.width / 2 >= block.x + block.width / 2 ? -gapX : gapX) : 0
+      const dy = gapY > 0 ? (env.y + env.height / 2 >= block.y + block.height / 2 ? -gapY : gapY) : 0
+      for (const id of component) {
+        const w = next[id]!
+        next[id] = { ...w, position: { x: w.position.x + dx, y: w.position.y + dy } }
+      }
+      merged.push(...component)
     }
-    merged.push(...component)
   }
-  return next
+  // Then close the holes connectivity cannot see. A card taken out of the
+  // MIDDLE of a block leaves every survivor still touching its neighbours
+  // around the gap, so the step above sees one whole cluster and does nothing:
+  // the hole is only ever closed here.
+  const boxes: WeldedBox[] = present.map((id) => ({ id, rect: glueChromeRect(next[id]!) }))
+  const moved = compactWeldedCluster(boxes, anchorIds.filter((id) => next[id]))
+  if (moved.size === 0) return next
+  const compacted = { ...next }
+  for (const [id, corner] of moved) {
+    const w = compacted[id]!
+    // Compaction answers in chrome-box corners; hand each member back the
+    // headroom that was added so the stored position stays the card's own.
+    const head = widgetShowsTitleRow(w, { glued: true }) ? WIDGET_TITLE_ROW : 0
+    compacted[id] = { ...w, position: { x: corner.x, y: corner.y + head } }
+  }
+  return compacted
 }
 
 /**

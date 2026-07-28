@@ -462,13 +462,19 @@ describe('engine support', () => {
   })
 
   it('a collapsed rail resolves drops to the port it paints on top', () => {
-    // A used counter rests as a single 40px row, where portRailOffset has no
-    // room to separate its four inputs and every dot lands on one point. Drag
-    // now resolves that point the way the painted rail and tap-to-connect
+    // A Clicker counter rests as a single 40px row, where portRailOffset has
+    // no room to separate its four inputs and every dot lands on one point.
+    // Drag now resolves that point the way the painted rail and tap-to-connect
     // already do — the last port — instead of disagreeing with both. Which
     // port a stack of coincident dots should mean is a rail-layout question,
-    // not one this hit-test can answer.
-    const counter = widget('counter', { label: 'Reps', count: 3, step: 1 } as ModuleData, 2000, 2000)
+    // not one this hit-test can answer. (The Tally skin the card wears by
+    // default rests as its marks, which is two cells and leaves the rail room.)
+    const counter = widget(
+      'counter',
+      { label: 'Reps', count: 3, step: 1, skin: 'clicker' } as ModuleData,
+      2000,
+      2000,
+    )
     const rest = { expandedWidgetId: null }
     const effective = widgetWithEffectiveSize(counter, rest)
     expect(effective.size.height).toBe(40)

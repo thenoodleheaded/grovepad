@@ -59,8 +59,12 @@ describe('expand/collapse frame cost', () => {
     // Insetting off the wrapper is the defect: the wrapper is the thing being
     // animated, so the filtered region would resize on every frame.
     expect(halo).not.toContain('inset:')
-    expect(card).toContain("'--gp-halo-w': `${widget.size.width}px`")
-    expect(card).toContain("'--gp-halo-h': `${widget.size.height}px`")
+    // The box the card opens INTO, read without reference to the expansion —
+    // for a peeked icon the stored size is its little square, and the on-screen
+    // size folds back to it the instant the slot drops, either of which would
+    // resize the filtered region mid-fade.
+    expect(card).toContain("'--gp-halo-w': `${expandedIconSize(widget).width}px`")
+    expect(card).toContain("'--gp-halo-h': `${expandedIconSize(widget).height}px`")
   })
 
   it('promotes the gliding card for the length of the glide only', () => {

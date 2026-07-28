@@ -537,6 +537,14 @@ export const WIDGET_SKIN_BLUEPRINTS = {
       "implementation": "schema-extension",
       "presentation": "standard",
       "accent": "#72c9e4"
+    },
+    {
+      "value": "connected_calendars",
+      "label": "Connected Calendars",
+      "description": "Privately combines read-only Google and Outlook events without saving provider tokens or event details to the board.",
+      "implementation": "renderer-ready",
+      "presentation": "timeline",
+      "accent": "#72e4a1"
     }
   ],
   "date_picker": [

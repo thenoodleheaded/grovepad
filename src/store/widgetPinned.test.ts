@@ -1,8 +1,9 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { GRID_SIZE } from '../types/spatial'
+import { GLUE_GAP, glueBoxRect } from '../utils/glueGeometry'
 import { buildBoardSnapshot } from '../utils/persistence'
 import { parsePersistedBoard } from '../utils/persistedBoardSchema'
-import { isWidgetResting } from '../utils/widgetRest'
+import { expandedIconSize, isWidgetResting } from '../utils/widgetRest'
 import { useWidgetStore } from './useWidgetStore'
 
 const baseline = parsePersistedBoard(buildBoardSnapshot(useWidgetStore.getState()))!
@@ -12,6 +13,31 @@ afterEach(() => {
 })
 
 const firstId = () => Object.keys(useWidgetStore.getState().widgets)[0]!
+
+/**
+ * An icon welded to the left edge of a neighbour, far from the seed board. The
+ * card the icon opens into is several times the width of its square, so a
+ * commit has somewhere to push the neighbour to.
+ */
+function gluedIconPair(): [string, string] {
+  const store = useWidgetStore.getState()
+  const icon = store.createWidget('Peek', { x: 60_000, y: 60_000 }, 'notes')
+  const mate = store.createWidget('Mate', { x: 62_000, y: 60_000 }, 'notes')
+  useWidgetStore.getState().setWidgetScaleState(icon, 'icon')
+  const square = useWidgetStore.getState().widgets[icon]!
+  const widgets = useWidgetStore.getState().widgets
+  useWidgetStore.setState({
+    widgets: {
+      ...widgets,
+      [mate]: {
+        ...widgets[mate]!,
+        position: { x: square.position.x + square.size.width + GLUE_GAP, y: square.position.y },
+      },
+    },
+  })
+  useWidgetStore.getState().glueWidgets(mate, icon)
+  return [icon, mate]
+}
 
 describe('pinned widgets', () => {
   it('toggles, and holds the card out of rest while pinned', () => {
@@ -94,6 +120,64 @@ describe('pinned widgets', () => {
     expect(unpinned.position.y + unpinned.size.height / 2).toBeCloseTo(cardCentre.y, 0)
     // The memory is spent, not left lying around for the next pin.
     expect(unpinned.metadata.pinnedFrom).toBeUndefined()
+  })
+
+  it('commits the icon → card swap when a peeked icon is pinned', () => {
+    // Peeking is a view: the record is still an icon when the Pin button is
+    // pressed. Pinning is where that peek finally becomes a board change, so
+    // the swap happens HERE — at the box the peek was already drawn at, so
+    // nothing resizes under the user — and it costs one history step.
+    const id = firstId()
+    useWidgetStore.getState().setWidgetScaleState(id, 'icon')
+    const icon = useWidgetStore.getState().widgets[id]!
+    const card = expandedIconSize(icon)
+
+    useWidgetStore.getState().toggleWidgetPinned(id)
+
+    const pinned = useWidgetStore.getState().widgets[id]!
+    expect(pinned.metadata.pinned).toBe(true)
+    expect(pinned.iconified).toBe(false)
+    expect(pinned.size).toEqual(card)
+    // The record was its own witness — nobody had to tell it that the pin
+    // interrupted an icon — so unpinning still returns to that exact square.
+    expect(pinned.metadata.pinnedFrom).toEqual({
+      kind: 'icon',
+      width: icon.size.width,
+      height: icon.size.height,
+    })
+
+    useWidgetStore.getState().undo()
+    const undone = useWidgetStore.getState().widgets[id]!
+    expect(undone.metadata.pinned).toBeFalsy()
+    expect(undone.iconified).toBe(true)
+    expect(undone.size).toEqual(icon.size)
+  })
+
+  it('re-packs the cluster around an icon pinned open inside it', () => {
+    // The mirror of the peek, which leaves its clustermates untouched: pinning
+    // is the moment the card really grows, so it is the moment the clustermates
+    // give way — far enough to touch the new box, and no further.
+    const [icon, mate] = gluedIconPair()
+    const before = useWidgetStore.getState().widgets[mate]!.position
+
+    useWidgetStore.getState().toggleWidgetPinned(icon)
+
+    const opened = useWidgetStore.getState().widgets[icon]!
+    const pushed = useWidgetStore.getState().widgets[mate]!
+    expect(opened.iconified).toBe(false)
+    // The clustermate stood aside rather than being buried under the card.
+    expect(pushed.position).not.toEqual(before)
+    const card = glueBoxRect(opened)
+    const neighbour = glueBoxRect(pushed)
+    expect(
+      card.x < neighbour.x + neighbour.width &&
+      neighbour.x < card.x + card.width &&
+      card.y < neighbour.y + neighbour.height &&
+      neighbour.y < card.y + card.height,
+    ).toBe(false)
+    // And the weld survived: still one cluster, still the same two members.
+    const state = useWidgetStore.getState()
+    expect(state.widgetGlueIndex[mate]).toBe(state.widgetGlueIndex[icon])
   })
 
   it('still falls back to the resting face for a card pinned from rest', () => {

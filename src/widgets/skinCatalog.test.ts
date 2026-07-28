@@ -12,9 +12,9 @@ import { WIDGET_SKIN_OWNERSHIP } from './skinOwnership.generated'
 import { WIDGET_REGISTRY } from './registry'
 
 describe('complete widget skin catalogue', () => {
-  it('installs all 610 catalogue choices without letting planning labels hide them', () => {
-    expect(cataloguedOpportunityCount()).toBe(610)
-    expect(cataloguedSkinCount()).toBe(610)
+  it('installs all 611 catalogue choices without letting planning labels hide them', () => {
+    expect(cataloguedOpportunityCount()).toBe(611)
+    expect(cataloguedSkinCount()).toBe(611)
 
     for (const [untypedType, blueprints] of Object.entries(WIDGET_SKIN_BLUEPRINTS)) {
       const type = untypedType as ModuleType

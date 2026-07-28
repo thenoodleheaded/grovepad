@@ -11,7 +11,6 @@ import type { ModuleType,
   GoalTrackerData,
   HabitData,
   KanbanData,
-  LinkedListData,
   LinksData,
   MeetingNotesData,
   NumberInputData,
@@ -35,14 +34,6 @@ import type { ModuleType,
 } from '../../types/spatial'
 import type { CommandDescriptor } from '../contracts/fields'
 import { text, isValidTimeZone } from './valueHelpers'
-import {
-  appendLinkedNode,
-  linkedListNodes,
-  neighboringNodeId,
-  removeLinkedNode,
-  reverseLinkedNodes,
-  selectedLinkedNodeId,
-} from '../../components/widgets/modules/linkedListSkinModel'
 import { resetPollVotes } from '../../components/widgets/modules/pollSkinModel'
 
 /** Inline widget commands, extracted verbatim from fields.ts; key order preserved. */
@@ -219,76 +210,6 @@ export const CORE_WIDGET_COMMANDS = {
             },
           },
         }
-      },
-    },
-  ],
-  linked_list: [
-    {
-      key: 'add_node',
-      label: 'Append node from wire',
-      acceptsPayload: true,
-      run: (d, payload) => {
-        const data = d as LinkedListData
-        const nodes = linkedListNodes(data.nodes)
-        const next = appendLinkedNode(nodes, text(payload ?? '').trim())
-        return { ...data, nodes: next.nodes, selectedId: next.selectedId }
-      },
-    },
-    {
-      key: 'next',
-      label: 'Select next node',
-      run: (d) => {
-        const data = d as LinkedListData
-        const nodes = linkedListNodes(data.nodes)
-        const selectedId = selectedLinkedNodeId(nodes, data.selectedId)
-        return {
-          ...data,
-          nodes,
-          selectedId: neighboringNodeId(nodes, selectedId, 1, data.skin === 'circular'),
-        }
-      },
-    },
-    {
-      key: 'previous',
-      label: 'Select previous node',
-      run: (d) => {
-        const data = d as LinkedListData
-        const nodes = linkedListNodes(data.nodes)
-        const selectedId = selectedLinkedNodeId(nodes, data.selectedId)
-        return {
-          ...data,
-          nodes,
-          selectedId: neighboringNodeId(nodes, selectedId, -1, data.skin === 'circular'),
-        }
-      },
-    },
-    {
-      key: 'reverse',
-      label: 'Reverse the list',
-      run: (d) => {
-        const data = d as LinkedListData
-        return { ...data, nodes: reverseLinkedNodes(linkedListNodes(data.nodes)) }
-      },
-    },
-    {
-      key: 'remove_current',
-      label: 'Remove current node',
-      run: (d) => {
-        const data = d as LinkedListData
-        const nodes = linkedListNodes(data.nodes)
-        const selectedId = selectedLinkedNodeId(nodes, data.selectedId)
-        if (!selectedId) return { ...data, nodes, selectedId: null }
-        const next = removeLinkedNode(nodes, selectedId)
-        return { ...data, nodes: next.nodes, selectedId: next.selectedId }
-      },
-    },
-    {
-      key: 'head',
-      label: 'Select head',
-      run: (d) => {
-        const data = d as LinkedListData
-        const nodes = linkedListNodes(data.nodes)
-        return { ...data, nodes, selectedId: nodes[0]?.id ?? null }
       },
     },
   ],

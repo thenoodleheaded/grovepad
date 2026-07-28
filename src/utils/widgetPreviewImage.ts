@@ -29,8 +29,6 @@ function modelSummary(model: RestingFaceModel): string {
       return `${model.value}/5`
     case 'chart':
       return model.stats.slice(0, 2).map((stat) => `${stat.label} ${stat.value}`).join(' · ')
-    case 'week':
-      return 'Calendar'
     case 'palette':
       return 'Palette'
     case 'clock':

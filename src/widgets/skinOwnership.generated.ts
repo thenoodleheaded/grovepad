@@ -277,6 +277,10 @@ export const WIDGET_SKIN_OWNERSHIP = {
     "birthday_and_anniversary": {
       "kind": "move",
       "target": "Gifts & Occasions"
+    },
+    "connected_calendars": {
+      "kind": "skin",
+      "target": "Calendar"
     }
   },
   "date_picker": {

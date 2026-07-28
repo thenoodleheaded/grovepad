@@ -1,6 +1,6 @@
 import { memo, useEffect, useMemo, useState } from 'react'
 import { Check, Star } from 'lucide-react'
-import type { CalendarData, MediaData, Widget } from '../../types/spatial'
+import type { MediaData, Widget } from '../../types/spatial'
 import { widgetDefinition } from '../../widgets/registry'
 import { widgetAccent } from '../../utils/widgetSkins'
 import {
@@ -55,6 +55,14 @@ const STRETCH_FACES = new Set<RestingFaceModel['kind']>([
   'columns', 'grid', 'bars', 'chips', 'lines', 'chain', 'timeline', 'split',
 ])
 
+/** Faces that already carry a lattice, a scale, or a ruling of their own. */
+const SELF_RULED_FACES = new Set<RestingFaceModel['kind']>([
+  'grid', 'columns', 'timeline', 'paper', 'chart', 'bars',
+])
+
+/** The presentation dresses that paint a background rather than set type. */
+const PAINTED_DRESSES = new Set(['grid', 'matrix', 'map', 'timeline'])
+
 function chartSeries(data: unknown): SeriesPoint[] {
   const rec = data as {
     bars?: readonly { value?: unknown; color?: unknown }[]
@@ -76,16 +84,23 @@ function chartSeries(data: unknown): SeriesPoint[] {
  * and the latest column picked out; a line gets a gradient area beneath it —
  * a resting chart should look like a chart, not like a sparkline ornament.
  */
-function ChartFace({ widget, accent, stats }: {
+function ChartFace({ widget, accent, stats, plotted }: {
   widget: Widget
   accent: string
   stats: readonly { label: string; value: string }[]
+  /** Given when the model carries its own readings — a card that keeps a
+   * history rather than the Chart family's bars/points/segments. */
+  plotted?: readonly number[]
 }) {
-  const mode = (widget.data as { mode?: string })?.mode ?? 'bar'
+  // A supplied series is always a line: it is a history, and a history's shape
+  // over time is the whole reason to draw it.
+  const mode = plotted ? 'line' : (widget.data as { mode?: string })?.mode ?? 'bar'
   const gradientId = `gp-rest-chart-${widget.id}`
 
   const face = useMemo(() => {
-    const series = chartSeries(widget.data)
+    const series = plotted
+      ? plotted.map((value) => ({ value }))
+      : chartSeries(widget.data)
     const values = series.map((point) => point.value)
     if (mode === 'donut' || mode === 'pie') {
       return { kind: 'ring' as const, segments: donutSegments(series) }
@@ -95,7 +110,7 @@ function ChartFace({ widget, accent, stats }: {
     }
     const gap = series.length > 0 ? Math.max(2, (SPARK_WIDTH / series.length) * 0.34) : 2
     return { kind: 'bars' as const, bars: sparklineBars(series, SPARK_WIDTH, SPARK_HEIGHT, gap) }
-  }, [mode, widget.data])
+  }, [mode, plotted, widget.data])
 
   return (
     <div className="flex h-full w-full min-w-0 items-stretch gap-2.5">
@@ -205,56 +220,6 @@ function ChartFace({ widget, accent, stats }: {
   )
 }
 
-/** Local yyyy-mm-dd, matching how CalendarData stores marked dates. */
-function localIso(date: Date): string {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
-}
-
-/** This week and the next as a 7×2 strip — the calendar's honest resting
- * answer to "what's coming up". Today is the accent cell. */
-function CalendarWeekFace({ data, accent }: { data: CalendarData; accent: string }) {
-  const cells = useMemo(() => {
-    const today = new Date()
-    const todayKey = localIso(today)
-    const monday = new Date(today)
-    monday.setDate(today.getDate() - ((today.getDay() + 6) % 7))
-    const marked = new Set(
-      Array.isArray(data.markedDates) ? data.markedDates.slice(0, 200) : [],
-    )
-    return Array.from({ length: 14 }, (_, index) => {
-      const day = new Date(monday)
-      day.setDate(monday.getDate() + index)
-      const key = localIso(day)
-      return {
-        key,
-        label: day.getDate(),
-        isToday: key === todayKey,
-        isMarked: marked.has(key),
-      }
-    })
-  }, [data.markedDates])
-
-  return (
-    <div className="grid w-full grid-cols-7 gap-1" aria-hidden>
-      {cells.map((cell) => (
-        <span
-          key={cell.key}
-          className="flex h-5 min-w-0 items-center justify-center rounded-[5px] text-[9px] font-medium tabular-nums"
-          style={
-            cell.isToday
-              ? { background: accent, color: '#0a0a0a', fontWeight: 700 }
-              : cell.isMarked
-                ? { background: `${accent}26`, color: accent }
-                : { color: 'var(--color-neutral-600, #525252)' }
-          }
-        >
-          {cell.label}
-        </span>
-      ))}
-    </div>
-  )
-}
-
 const ROW_TONE_INK: Record<string, string> = {
   muted: 'rgb(115 115 115)',
   good: 'oklch(78% 0.15 162)',
@@ -286,7 +251,16 @@ function RowsFace({ rows, overflow, accent, eyebrow, meter }: {
         </span>
       )}
       {rows.map((row) => (
-        <span key={row.key} className="group/rest-row flex h-4 min-w-0 items-center gap-1.5">
+        <span
+          key={row.key}
+          className="group/rest-row flex h-4 min-w-0 items-center gap-1.5"
+          style={row.indent ? { paddingLeft: row.indent * 9 } : undefined}
+        >
+          {row.lead !== undefined && (
+            <span className="shrink-0 text-[8.5px] font-semibold leading-4 tabular-nums text-neutral-500">
+              {row.lead}
+            </span>
+          )}
           {row.done !== undefined && (
             row.done ? (
               <span
@@ -642,6 +616,23 @@ function MetricFace({ model, accent }: {
   model: Extract<RestingFaceModel, { kind: 'metric' }>
   accent: string
 }) {
+  if (model.eyebrow) {
+    return (
+      <div className="flex h-full w-full min-w-0 flex-col">
+        <EyebrowLine eyebrow={model.eyebrow} accent={accent} />
+        <div className="flex min-h-0 flex-1 items-center">
+          <MetricBody model={model} accent={accent} />
+        </div>
+      </div>
+    )
+  }
+  return <MetricBody model={model} accent={accent} />
+}
+
+function MetricBody({ model, accent }: {
+  model: Extract<RestingFaceModel, { kind: 'metric' }>
+  accent: string
+}) {
   return (
     <div className="relative flex w-full min-w-0 items-center">
       {model.progress !== undefined && (
@@ -667,12 +658,57 @@ function MetricFace({ model, accent }: {
   )
 }
 
-/** A switch reads as a switch: the track shows which side it is thrown to,
- * lit and glowing when on, dark and inset when off. */
-function BooleanFace({ model, accent }: {
+/**
+ * A boolean reads as the control it is worn as: a switch is thrown to one
+ * side, a checkbox is ticked or empty, a power button is lit or dark. The word
+ * beside it is the skin's own — "Busy", "To do", "Armed" — so a folded card
+ * says what the open one says.
+ */
+function BooleanFace({ model, accent: cardAccent }: {
   model: Extract<RestingFaceModel, { kind: 'boolean' }>
   accent: string
 }) {
+  const accent = model.tone && model.tone !== 'accent' && model.tone !== 'neutral'
+    ? ROW_TONE_INK[model.tone] ?? cardAccent
+    : cardAccent
+
+  if (model.shape === 'checkbox' || model.shape === 'power') {
+    const on = model.active
+    return (
+      <div className="flex w-full min-w-0 items-center gap-2.5">
+        <span
+          aria-hidden
+          className={`flex h-[16px] w-[16px] shrink-0 items-center justify-center ${
+            model.shape === 'checkbox' ? 'rounded-[4px]' : 'rounded-full'
+          }`}
+          style={on
+            ? {
+              background: `${accent}2e`,
+              boxShadow: `inset 0 0 0 1px ${accent}88${model.shape === 'power' ? `, 0 0 8px ${accent}66` : ''}`,
+              color: accent,
+            }
+            : {
+              background: 'rgb(255 255 255 / 0.04)',
+              boxShadow: 'inset 0 0 0 1px rgb(255 255 255 / 0.14)',
+              color: 'rgb(115 115 115)',
+            }}
+        >
+          {model.shape === 'checkbox'
+            ? on && <Check size={10} strokeWidth={3.5} />
+            : (
+              <span
+                className="h-[7px] w-[2px] rounded-full"
+                style={{ background: 'currentColor', marginTop: -1 }}
+              />
+            )}
+        </span>
+        <span className={`min-w-0 truncate text-[11px] font-semibold ${on ? 'text-neutral-50' : 'text-neutral-500'}`}>
+          {model.label}
+        </span>
+      </div>
+    )
+  }
+
   return (
     <div className="flex w-full min-w-0 items-center gap-2.5">
       <span
@@ -696,9 +732,17 @@ function BooleanFace({ model, accent }: {
   )
 }
 
-/** The dial's centre: the marks live on the card's own outline (WidgetCard
- * paints them), so the face is just the readout sitting inside them. */
-function ClockFace({ widget }: { widget: Widget }) {
+/**
+ * The dial's centre: the marks live on the card's own outline (WidgetCard
+ * paints them), so the face is just the readout sitting inside them. The
+ * non-dial modes keep the same single live readout and hang their own static
+ * context — rounds, splits, stages — around it.
+ */
+function ClockFace({ widget, model, accent }: {
+  widget: Widget
+  model: Extract<RestingFaceModel, { kind: 'clock' }>
+  accent: string
+}) {
   const clock = useWidgetClock(widget)
   if (!clock) return null
   // The number takes the phase colour only while the clock is actually
@@ -713,8 +757,8 @@ function ClockFace({ widget }: { widget: Widget }) {
         : clock.tone === 'break'
           ? 'oklch(80% 0.15 162)'
           : undefined
-  return (
-    <div className="flex w-full flex-col items-center justify-center">
+  const readout = (centred: boolean) => (
+    <div className={`flex w-full flex-col ${centred ? 'items-center justify-center' : 'items-start'}`}>
       <span
         className="text-[17px] font-semibold leading-none tabular-nums text-neutral-100"
         style={ink ? { color: ink } : undefined}
@@ -724,6 +768,64 @@ function ClockFace({ widget }: { widget: Widget }) {
       <span className="mt-[3px] text-[7.5px] font-medium uppercase tracking-[0.14em] text-neutral-500">
         {clock.caption}
       </span>
+    </div>
+  )
+
+  if (!model.shape || model.shape === 'dial') return readout(true)
+
+  return (
+    <div className="flex h-full w-full min-w-0 flex-col">
+      {model.eyebrow && <EyebrowLine eyebrow={model.eyebrow} accent={accent} />}
+      <div className="flex h-[28px] min-w-0 items-center gap-2">
+        {model.shape === 'hourglass' && (
+          // The falling-sand silhouette, drawn once rather than animated: at
+          // rest the shape is the identity, and the number is the reading.
+          <span
+            aria-hidden
+            className="h-[22px] w-[13px] shrink-0"
+            style={{
+              background: `linear-gradient(180deg, ${accent}66 0 ${Math.round(clock.fraction * 100)}%, transparent ${Math.round(clock.fraction * 100)}%)`,
+              clipPath: 'polygon(0 0, 100% 0, 55% 50%, 100% 100%, 0 100%, 45% 50%)',
+              boxShadow: `inset 0 0 0 1px ${accent}44`,
+            }}
+          />
+        )}
+        {readout(false)}
+      </div>
+      {model.chips && model.chips.length > 0 && (
+        <div className="mt-[4px] flex min-w-0 flex-wrap gap-[4px]">
+          {model.chips.map((chip) => (
+            <span
+              key={chip.key}
+              className="flex h-[17px] items-center truncate rounded-full px-[6px] text-[9px] font-medium leading-[17px]"
+              style={chip.filled
+                ? { background: `${accent}2e`, color: accent, boxShadow: `inset 0 0 0 1px ${accent}55` }
+                : { color: 'rgb(115 115 115)', boxShadow: 'inset 0 0 0 1px rgb(255 255 255 / 0.1)' }}
+            >
+              {chip.text}
+            </span>
+          ))}
+        </div>
+      )}
+      {model.rows && model.rows.length > 0 && (
+        <div className="flex min-w-0 flex-col">
+          {model.rows.map((row) => (
+            <span key={row.key} className="flex h-4 min-w-0 items-center gap-2">
+              <span className="min-w-0 flex-1 truncate text-[9.5px] leading-4 text-neutral-400">
+                {row.label}
+              </span>
+              {row.value !== undefined && (
+                <span
+                  className="shrink-0 text-[9.5px] font-semibold leading-4 tabular-nums text-neutral-300"
+                  style={row.tone === 'accent' ? { color: accent } : undefined}
+                >
+                  {row.value}
+                </span>
+              )}
+            </span>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
@@ -790,6 +892,62 @@ function ImageFace({ data, alt }: { data: MediaData; alt: string }) {
 }
 
 /**
+ * The same ruling the OPEN card wears for this skin, mirrored onto the tile.
+ * These are deliberate copies of `08-skin-presentations.css`: graph paper stays
+ * squared, a matrix keeps its crosshair, a map keeps its faint contour. Paint
+ * only — never layout, so the measured tile is unaffected.
+ */
+function presentationDress(
+  presentation: string | undefined,
+  accent: string,
+  kind: RestingFaceModel['kind'],
+): React.CSSProperties | undefined {
+  if (!presentation) return undefined
+  // A face that already draws its own lattice must not be ruled a second time:
+  // squared paper behind a month grid, or a contour behind a heat map, reads as
+  // interference rather than as the card's material.
+  if (SELF_RULED_FACES.has(kind) && PAINTED_DRESSES.has(presentation)) return undefined
+  const rule = `color-mix(in oklab, ${accent}, transparent 76%)`
+  if (presentation === 'grid') {
+    return {
+      backgroundImage: `linear-gradient(${rule} 1px, transparent 1px), linear-gradient(90deg, ${rule} 1px, transparent 1px)`,
+      backgroundSize: '14px 14px',
+      backgroundPosition: '-1px -1px',
+    }
+  }
+  if (presentation === 'matrix') {
+    return {
+      backgroundImage:
+        `linear-gradient(90deg, transparent calc(50% - 0.5px), ${rule} 50%, transparent calc(50% + 0.5px)),` +
+        `linear-gradient(transparent calc(50% - 0.5px), ${rule} 50%, transparent calc(50% + 0.5px))`,
+    }
+  }
+  if (presentation === 'map') {
+    return {
+      backgroundImage:
+        `radial-gradient(circle at 20% 35%, ${rule} 0 1.5px, transparent 2px),` +
+        `radial-gradient(circle at 72% 62%, ${rule} 0 1.5px, transparent 2px),` +
+        `linear-gradient(30deg, transparent 48%, ${rule} 49% 51%, transparent 52%)`,
+      backgroundSize: '100% 100%, 100% 100%, 24px 24px',
+    }
+  }
+  if (presentation === 'timeline') {
+    return {
+      backgroundImage: `linear-gradient(transparent, ${accent}, transparent)`,
+      backgroundSize: '1px calc(100% - 12px)',
+      backgroundPosition: '4px 6px',
+      backgroundRepeat: 'no-repeat',
+    }
+  }
+  if (presentation === 'terminal') return { letterSpacing: '-0.015em' }
+  if (presentation === 'compact') return { fontSize: '0.94em' }
+  if (presentation === 'ledger' || presentation === 'chart' || presentation === 'time') {
+    return { fontVariantNumeric: 'tabular-nums' }
+  }
+  return undefined
+}
+
+/**
  * The resting representation of one widget, rendered from the same model that
  * sized the tile. Icon faces render nothing here — the tile itself is the
  * icon (WidgetCard paints it, exactly like the iconified state).
@@ -797,7 +955,7 @@ function ImageFace({ data, alt }: { data: MediaData; alt: string }) {
 export const WidgetRestingFace = memo(function WidgetRestingFace({ widget }: { widget: Widget }) {
   const def = widgetDefinition(widget.type)
   const accent = widgetAccent(widget, def)
-  const { model } = restingFace(widget)
+  const { model, presentation } = restingFace(widget)
 
   if (model.kind === 'icon') return null
   if (model.kind === 'image') {
@@ -810,9 +968,10 @@ export const WidgetRestingFace = memo(function WidgetRestingFace({ widget }: { w
 
   let face: React.ReactNode
   switch (model.kind) {
-    case 'chart': face = <ChartFace widget={widget} accent={accent} stats={model.stats} />; break
-    case 'week': face = <CalendarWeekFace data={widget.data as CalendarData} accent={accent} />; break
-    case 'clock': face = <ClockFace widget={widget} />; break
+    case 'chart':
+      face = <ChartFace widget={widget} accent={accent} stats={model.stats} plotted={model.series} />
+      break
+    case 'clock': face = <ClockFace widget={widget} model={model} accent={accent} />; break
     case 'stars': face = <StarsFace value={model.value} accent={accent} />; break
     case 'palette': face = <PaletteFace colors={model.colors} />; break
     case 'rows':
@@ -831,7 +990,7 @@ export const WidgetRestingFace = memo(function WidgetRestingFace({ widget }: { w
     case 'boolean': face = <BooleanFace model={model} accent={accent} />; break
     case 'metric': face = <MetricFace model={model} accent={accent} />; break
     case 'columns':
-      face = <ColumnsFace columns={model.columns} eyebrow={model.eyebrow} accent={accent} />
+      face = <ColumnsFace columns={model.columns} wrap={model.wrap} eyebrow={model.eyebrow} accent={accent} />
       break
     case 'grid':
       face = (
@@ -854,6 +1013,7 @@ export const WidgetRestingFace = memo(function WidgetRestingFace({ widget }: { w
           secondary={model.secondary}
           caption={model.caption}
           tone={model.tone}
+          eyebrow={model.eyebrow}
           accent={accent}
         />
       )
@@ -914,10 +1074,13 @@ export const WidgetRestingFace = memo(function WidgetRestingFace({ widget }: { w
     <div
       aria-hidden
       data-rest-summary={model.kind}
+      data-rest-presentation={presentation}
+      style={presentationDress(presentation, accent, model.kind)}
       className={`pointer-events-none absolute inset-0 flex ${
         model.kind === 'note' || model.kind === 'paper'
           ? 'items-stretch overflow-hidden'
-          : STRETCH_FACES.has(model.kind)
+          : STRETCH_FACES.has(model.kind) ||
+            ('eyebrow' in model && model.eyebrow !== undefined)
             ? 'items-stretch overflow-hidden px-3 py-[10px]'
             : 'items-center px-3'
       }`}

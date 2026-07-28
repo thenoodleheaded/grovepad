@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect } from 'react'
-import { useAuthStore } from './store/useAuthStore'
+import { ensureAuthInitialized, useAuthStore } from './store/useAuthStore'
 import { usePersistenceStatusStore } from './store/usePersistenceStatusStore'
 import { PersistenceCompatibilityBlock } from './components/ui/PersistenceCompatibilityBlock'
 import { initAdaptiveInputRuntime } from './runtime/adaptiveInputRuntime'
@@ -36,17 +36,22 @@ export default function App() {
   const isGuest = useAuthStore((state) => state.isGuest)
   const loading = useAuthStore((state) => state.loading)
   const compatibilityBlock = usePersistenceStatusStore((state) => state.compatibilityBlock)
+  const joiningSharedCanvas = new URL(window.location.href).searchParams.has('collaborate')
   const pageName = compatibilityBlock
     ? 'update required'
     : loading && !isGuest
       ? 'loading'
-      : !session && !isGuest
+      : !session && (!isGuest || joiningSharedCanvas)
         ? 'login'
         : null
 
   useEffect(() => {
     if (pageName) document.title = grovepadPageTitle(pageName)
   }, [pageName])
+
+  useEffect(() => {
+    if (joiningSharedCanvas && !session) void ensureAuthInitialized()
+  }, [joiningSharedCanvas, session])
 
   if (compatibilityBlock) {
     return <PersistenceCompatibilityBlock block={compatibilityBlock} />
@@ -60,7 +65,9 @@ export default function App() {
 
   return (
     <Suspense fallback={<AppBootScreen />}>
-      {!session && !isGuest ? <LoginPage /> : <CanvasViewport />}
+      {!session && (!isGuest || joiningSharedCanvas)
+        ? <LoginPage sharedCanvasLink={joiningSharedCanvas} />
+        : <CanvasViewport />}
     </Suspense>
   )
 }

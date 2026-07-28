@@ -112,7 +112,6 @@ const INTENT_PATTERNS: Partial<Record<ModuleType, RegExp>> = {
   countdown: /\b(countdown|days? until)\b/i,
   habit: /\b(habit(?: tracker)?|streak|daily habit)\b/i,
   links: /\b(link list|bookmarks?|urls?)\b/i,
-  linked_list: /\b(linked list|node chain|pointer chain|doubly linked|circular list)\b/i,
   code: /\b(code snippet|source code|function|class)\b/i,
   quote: /\b(quote|quotation|said by)\b/i,
   poll: /\b(poll|vote|survey choice)\b/i,
@@ -229,7 +228,6 @@ const SEMANTIC_EXAMPLES: Partial<Record<ModuleType, string>> = {
   contact: 'person details how to reach them phone email company',
   logbook: 'record what happened chronological events incidents observations',
   form: 'collect answers details questions fields people fill out',
-  linked_list: 'ordered nodes head tail next previous pointers singly doubly circular traversal',
 }
 
 const WIDGET_LANGUAGE_VOCABULARY = buildVocabulary(

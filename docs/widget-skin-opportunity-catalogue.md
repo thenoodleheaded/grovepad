@@ -8,7 +8,7 @@
 
 - **94** currently spawnable widget types analyzed.
 - **11** currently have at least one selectable skin; **83** have none.
-- **610** implementable skin opportunities proposed: **368 renderer-ready** and **242 schema-extension**.
+- **611** implementable skin opportunities proposed: **369 renderer-ready** and **242 schema-extension**.
 - Every public widget is covered, including widgets that already have skins.
 - Existing-only legacy types are not proposed as independent targets; their useful forms already belong to canonical widgets such as Tasks, Goal, Timer, Chart, Study Deck, Date, Drawing, and Tracker.
 
@@ -182,6 +182,7 @@ Current automation surface: Marked days (number), Today (text); no trigger comma
 - **Renderer-ready · Availability** — Emphasizes free and busy intervals rather than event details.
 - **Schema-extension · Shift Rota** — Adds assignee, role, and repeating shift patterns.
 - **Schema-extension · Birthday & Anniversary** — Repeats people-linked annual occasions.
+- **Renderer-ready · Connected Calendars** — Privately combines read-only Google and Outlook events without saving provider tokens or event details to the board.
 
 ### Date (`date_picker`)
 

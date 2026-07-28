@@ -171,8 +171,8 @@ def main() -> None:
     count = sum(len(skins) for skins in catalogue.values())
     if len(catalogue) != 94:
         raise SystemExit(f"Expected 94 public widget sections, found {len(catalogue)}")
-    if count != 610:
-        raise SystemExit(f"Expected 610 implementable skins, found {count}")
+    if count != 611:
+        raise SystemExit(f"Expected 611 implementable skins, found {count}")
     TARGET.write_text(render(catalogue))
     print(f"Wrote {count} skins for {len(catalogue)} widgets to {TARGET}")
 

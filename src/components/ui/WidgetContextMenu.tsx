@@ -8,20 +8,23 @@ import {
   GitMerge,
   LockKeyhole,
   UnlockKeyhole,
+  Magnet,
   MonitorSmartphone,
   MousePointer2,
   Trash2,
+  Waypoints,
 } from 'lucide-react'
 import { useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { useShallow } from 'zustand/react/shallow'
 import { useOverlayLifecycle } from '../../store/useOverlayStore'
 import { useToastStore } from '../../store/useToastStore'
-import { useWidgetStore } from '../../store/useWidgetStore'
+import { strictHolderOf, useWidgetStore } from '../../store/useWidgetStore'
 import { useNativeWidgetStore } from '../../store/useNativeWidgetStore'
 import { requestWidgetDeletion } from '../../store/useWidgetDeletionDialogStore'
 import { clampPopover } from '../../utils/popoverPosition'
 import { menuNavigationIndex } from '../../utils/menuNavigation'
+import { truncate } from '../../utils/text'
 import { isNativeWidgetHost } from '../../runtime/nativeNoteWidgetSync'
 
 function MenuButton({
@@ -65,6 +68,24 @@ export function WidgetContextMenu() {
   const isGlued = useWidgetStore((state) =>
     contextMenu ? Boolean(state.widgetGlueIndex[contextMenu.widgetId]) : false,
   )
+  // Holding a family strictly only means something for a node that HAS a
+  // family: a leaf with no parent-linked children would offer a switch that
+  // changes nothing.
+  const hasFamily = useWidgetStore((state) =>
+    contextMenu
+      ? Object.values(state.relations).some(
+          (relation) => relation.type === 'parent' && relation.fromId === contextMenu.widgetId,
+        )
+      : false,
+  )
+  // Strictness is inherited downward and owned at the top: a node already held
+  // by an ancestor is hard whatever it says about itself, so it never offers
+  // its own switch — it names the holder, and the hold is released up there.
+  const heldByTitle = useWidgetStore((state) => {
+    if (!contextMenu) return null
+    const holderId = strictHolderOf(contextMenu.widgetId, state.widgets, state.relations)
+    return holderId ? state.widgets[holderId]?.title ?? null : null
+  })
   const { nativeWidgetId, nativeWidgetSyncStatus } = useNativeWidgetStore(useShallow((state) => ({
     nativeWidgetId: state.selectedWidgetId,
     nativeWidgetSyncStatus: state.syncStatus,
@@ -104,7 +125,11 @@ export function WidgetContextMenu() {
 
   const isSelected = selectedIds.includes(widget.id)
   const actionIds = isSelected ? selectedIds : [widget.id]
-  const { x: left, y: top } = clampPopover(contextMenu.x, contextMenu.y, 220, 350)
+  const strictHold = widget.metadata.strictHold === true
+  // Height is what keeps the menu on screen near the bottom edge, so the
+  // estimate counts the tallest the menu gets: every conditional row present,
+  // including the strict-hold switch.
+  const { x: left, y: top } = clampPopover(contextMenu.x, contextMenu.y, 220, 380)
 
   const close = () => useWidgetStore.getState().closeContextMenu()
   const run = (action: () => void) => {
@@ -210,6 +235,30 @@ export function WidgetContextMenu() {
         >
           <Cable size={13} aria-hidden />
         </MenuButton>
+        {heldByTitle !== null ? (
+          // Inside a held tree there are no soft pockets: this node cannot be
+          // softened here, so the row is a statement, not a switch.
+          <MenuButton
+            label={`Held strictly by ${truncate(heldByTitle, 14)}`}
+            disabled
+            onClick={() => {}}
+          >
+            <Magnet size={13} aria-hidden />
+          </MenuButton>
+        ) : hasFamily ? (
+          <MenuButton
+            label={strictHold ? 'Release strict hold' : 'Hold family strictly'}
+            onClick={() =>
+              run(() =>
+                useWidgetStore
+                  .getState()
+                  .updateWidgetsMetadata([widget.id], { strictHold: !strictHold }),
+              )
+            }
+          >
+            {strictHold ? <Waypoints size={13} aria-hidden /> : <Magnet size={13} aria-hidden />}
+          </MenuButton>
+        ) : null}
         <div className="my-1 border-t border-neutral-800" />
         <MenuButton
           label={actionIds.length > 1 ? `Delete ${actionIds.length}` : 'Delete'}

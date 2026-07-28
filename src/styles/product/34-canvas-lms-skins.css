@@ -1,0 +1,524 @@
+/* College Canvas — one private connection, five purpose-built readings. */
+
+.gp-canvas-lms {
+  --gp-canvas-tone: var(--gp-widget-accent, #e45b52);
+  --gp-canvas-ink: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 10%);
+  --gp-canvas-soft: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 48%);
+  --gp-canvas-faint: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 66%);
+
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  overflow: hidden;
+  color: var(--gp-canvas-ink);
+}
+
+.gp-canvas-lms button,
+.gp-canvas-lms a,
+.gp-canvas-lms input {
+  font: inherit;
+}
+
+.gp-canvas-lms-header {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.18rem 0 0.55rem;
+}
+
+.gp-canvas-lms-header > span,
+.gp-canvas-lms-header > span:first-child > span {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+}
+
+.gp-canvas-lms-header > span:first-child {
+  gap: 0.38rem;
+  color: color-mix(in oklab, var(--gp-canvas-tone), white 16%);
+}
+
+.gp-canvas-lms-header > span:first-child > span {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.gp-canvas-lms-header strong {
+  overflow: hidden;
+  max-width: 190px;
+  font-size: 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gp-canvas-lms-header small {
+  color: var(--gp-canvas-faint);
+  font-size: 7px;
+}
+
+.gp-canvas-lms-header > span:last-child {
+  gap: 0.18rem;
+}
+
+.gp-canvas-lms-header button {
+  display: grid;
+  width: 27px;
+  height: 27px;
+  place-items: center;
+  border: 0;
+  border-radius: 8px;
+  color: var(--gp-canvas-soft);
+  background: transparent;
+}
+
+.gp-canvas-lms-header button:hover:not(:disabled) {
+  color: var(--gp-canvas-ink);
+  background: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 94%);
+}
+
+.gp-canvas-lms-header button:disabled {
+  opacity: 0.38;
+}
+
+@keyframes gp-canvas-lms-spin {
+  to { transform: rotate(1turn); }
+}
+
+.gp-canvas-lms .gp-spin {
+  animation: gp-canvas-lms-spin 0.85s linear infinite;
+}
+
+.gp-canvas-lms-body {
+  min-width: 0;
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow: auto;
+  scrollbar-width: thin;
+}
+
+.gp-canvas-lms-connect {
+  display: grid;
+  width: min(100%, 330px);
+  margin: auto;
+  grid-template-columns: 38px minmax(0, 1fr);
+  gap: 0.55rem 0.65rem;
+  align-items: center;
+  padding: 0.8rem;
+  border: 1px solid color-mix(in oklab, var(--gp-canvas-tone), transparent 76%);
+  border-radius: var(--gp-r2, 16px);
+  background:
+    radial-gradient(circle at 12% 0%, color-mix(in oklab, var(--gp-canvas-tone), transparent 85%), transparent 42%),
+    color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 97%);
+}
+
+.gp-canvas-lms-mark {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border-radius: 12px;
+  color: color-mix(in oklab, var(--gp-canvas-tone), white 22%);
+  background: color-mix(in oklab, var(--gp-canvas-tone), transparent 84%);
+}
+
+.gp-canvas-lms-connect h3 {
+  margin: 0;
+  color: var(--gp-canvas-ink);
+  font-size: 11px;
+}
+
+.gp-canvas-lms-connect > div > p,
+.gp-canvas-lms-help,
+.gp-canvas-lms-private {
+  margin: 0.16rem 0 0;
+  color: var(--gp-canvas-faint);
+  font-size: 7.4px;
+  line-height: 1.4;
+}
+
+.gp-canvas-lms-field {
+  display: flex;
+  min-width: 0;
+  grid-column: 1 / -1;
+  flex-direction: column;
+  gap: 0.22rem;
+}
+
+.gp-canvas-lms-field > span {
+  color: var(--gp-canvas-soft);
+  font-size: 7px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.gp-canvas-lms-field > input {
+  width: 100%;
+  min-width: 0;
+  height: 30px;
+  box-sizing: border-box;
+  padding: 0 0.55rem;
+  border: 1px solid color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 88%);
+  border-radius: 9px;
+  outline: none;
+  color: var(--gp-canvas-ink);
+  background: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 96%);
+  font-size: 8.5px;
+}
+
+.gp-canvas-lms-field > input:focus-visible {
+  border-color: color-mix(in oklab, var(--gp-canvas-tone), transparent 28%);
+  box-shadow: 0 0 0 2px color-mix(in oklab, var(--gp-canvas-tone), transparent 83%);
+}
+
+.gp-canvas-lms-help,
+.gp-canvas-lms-private,
+.gp-canvas-lms-error,
+.gp-canvas-lms-connect-button {
+  grid-column: 1 / -1;
+}
+
+.gp-canvas-lms-connect-button {
+  display: flex;
+  min-height: 30px;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  border: 0;
+  border-radius: 9px;
+  color: #fff;
+  background: var(--gp-canvas-tone);
+  font-size: 8.5px;
+  font-weight: 750;
+}
+
+.gp-canvas-lms-connect-button:disabled {
+  opacity: 0.58;
+}
+
+.gp-canvas-lms-private {
+  padding-top: 0.42rem;
+  border-top: 1px solid color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 92%);
+}
+
+.gp-canvas-lms-error {
+  flex: 0 0 auto;
+  margin: 0 0 0.42rem;
+  padding: 0.38rem 0.48rem;
+  border-radius: 8px;
+  color: #fecaca;
+  background: color-mix(in oklab, #ef4444, transparent 87%);
+  font-size: 7.5px;
+  line-height: 1.35;
+}
+
+.gp-canvas-lms-loading,
+.gp-canvas-lms-empty {
+  display: flex;
+  min-height: 118px;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 0.28rem;
+  color: var(--gp-canvas-faint);
+  text-align: center;
+}
+
+.gp-canvas-lms-loading strong,
+.gp-canvas-lms-empty strong {
+  color: var(--gp-canvas-soft);
+  font-size: 8.5px;
+}
+
+.gp-canvas-lms-empty span {
+  max-width: 230px;
+  font-size: 7.2px;
+  line-height: 1.35;
+}
+
+.gp-canvas-lms-course-mark {
+  display: block;
+  width: 5px;
+  height: 28px;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: var(--gp-canvas-course);
+}
+
+.gp-canvas-lms-course-card {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: 5px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.48rem;
+  padding: 0.5rem 0.58rem;
+  border-bottom: 1px solid color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 93%);
+}
+
+.gp-canvas-lms-course-card > span,
+.gp-canvas-lms-assignment > span,
+.gp-canvas-lms-grade-row > span {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.gp-canvas-lms a {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.24rem;
+  color: inherit;
+  text-decoration: none;
+}
+
+.gp-canvas-lms a strong,
+.gp-canvas-lms-course-card > span > strong,
+.gp-canvas-lms-assignment strong,
+.gp-canvas-lms-grade-row strong {
+  overflow: hidden;
+  font-size: 8.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gp-canvas-lms-course-card small,
+.gp-canvas-lms-assignment small,
+.gp-canvas-lms-grade-row small {
+  overflow: hidden;
+  margin-top: 0.12rem;
+  color: var(--gp-canvas-faint);
+  font-size: 7px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gp-canvas-lms-course-card output {
+  color: color-mix(in oklab, var(--gp-canvas-tone), white 20%);
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.gp-canvas-lms-assignment {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: 4px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.48rem;
+  padding: 0.46rem 0.12rem;
+  border-bottom: 1px solid color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 93%);
+}
+
+.gp-canvas-lms-assignment > i {
+  width: 4px;
+  height: 24px;
+  border-radius: 999px;
+  background: var(--gp-canvas-course);
+}
+
+.gp-canvas-lms-assignment > span:last-child {
+  align-items: flex-end;
+  text-align: right;
+}
+
+.gp-canvas-lms-assignment time {
+  color: var(--gp-canvas-soft);
+  font-size: 7px;
+  white-space: nowrap;
+}
+
+.gp-canvas-lms-assignment[data-done] {
+  opacity: 0.58;
+}
+
+.gp-canvas-lms-grade-row {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: 5px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.52rem;
+  padding: 0.52rem 0.2rem;
+  border-bottom: 1px solid color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 93%);
+}
+
+.gp-canvas-lms-grade-row > span > i {
+  position: relative;
+  height: 3px;
+  margin-top: 0.35rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 92%);
+}
+
+.gp-canvas-lms-grade-row > span > i::after {
+  position: absolute;
+  inset: 0;
+  width: calc(var(--gp-canvas-score) * 1%);
+  border-radius: inherit;
+  background: var(--gp-canvas-course);
+  content: '';
+}
+
+.gp-canvas-lms-grade-row output {
+  display: flex;
+  align-items: flex-end;
+  flex-direction: column;
+}
+
+.gp-canvas-lms-grade-row output strong {
+  font-size: 10px;
+}
+
+.gp-canvas-lms-announcement {
+  padding: 0.55rem 0.15rem;
+  border-bottom: 1px solid color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 93%);
+}
+
+.gp-canvas-lms-announcement header {
+  display: flex;
+  align-items: center;
+  gap: 0.28rem;
+  margin-bottom: 0.24rem;
+  color: var(--gp-canvas-faint);
+  font-size: 6.8px;
+}
+
+.gp-canvas-lms-announcement header i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--gp-canvas-course);
+}
+
+.gp-canvas-lms-announcement header time {
+  margin-left: auto;
+}
+
+.gp-canvas-lms-announcement > a,
+.gp-canvas-lms-announcement > strong {
+  font-size: 8.8px;
+}
+
+.gp-canvas-lms-announcement p {
+  display: -webkit-box;
+  margin: 0.24rem 0 0;
+  overflow: hidden;
+  color: var(--gp-canvas-soft);
+  font-size: 7.4px;
+  line-height: 1.42;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.gp-canvas-lms-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.38rem;
+}
+
+.gp-canvas-lms-stats > span {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  flex-direction: column;
+  padding: 0.48rem 0.3rem;
+  border-radius: 10px;
+  background: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 96%);
+}
+
+.gp-canvas-lms-stats strong {
+  color: color-mix(in oklab, var(--gp-canvas-tone), white 20%);
+  font-size: 15px;
+  line-height: 1;
+}
+
+.gp-canvas-lms-stats small {
+  margin-top: 0.18rem;
+  color: var(--gp-canvas-faint);
+  font-size: 6.8px;
+  text-transform: uppercase;
+}
+
+.gp-canvas-lms-overview > section {
+  margin-top: 0.6rem;
+}
+
+.gp-canvas-lms-overview > section > header {
+  display: flex;
+  align-items: center;
+  gap: 0.28rem;
+  padding-bottom: 0.2rem;
+  color: var(--gp-canvas-soft);
+  font-size: 7.5px;
+  font-weight: 750;
+  text-transform: uppercase;
+}
+
+.gp-canvas-lms-overview .gp-canvas-lms-empty {
+  min-height: 90px;
+}
+
+.gp-canvas-lms-course-strip {
+  display: flex;
+  gap: 0.3rem;
+  margin-top: 0.5rem;
+  overflow-x: auto;
+}
+
+.gp-canvas-lms-course-strip > span {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.26rem 0.38rem;
+  border-radius: 999px;
+  color: var(--gp-canvas-soft);
+  background: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 96%);
+  font-size: 6.8px;
+}
+
+.gp-canvas-lms-course-strip .gp-canvas-lms-course-mark {
+  width: 5px;
+  height: 5px;
+}
+
+@container (max-width: 270px) {
+  .gp-canvas-lms-connect {
+    grid-template-columns: 1fr;
+  }
+
+  .gp-canvas-lms-mark {
+    display: none;
+  }
+
+  .gp-canvas-lms-course-card,
+  .gp-canvas-lms-grade-row {
+    grid-template-columns: 4px minmax(0, 1fr);
+  }
+
+  .gp-canvas-lms-course-card output,
+  .gp-canvas-lms-grade-row output {
+    grid-column: 2;
+    align-items: flex-start;
+  }
+
+  .gp-canvas-lms-assignment {
+    grid-template-columns: 4px minmax(0, 1fr);
+  }
+
+  .gp-canvas-lms-assignment > span:last-child {
+    grid-column: 2;
+    align-items: flex-start;
+    text-align: left;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gp-canvas-lms .gp-spin {
+    animation: none;
+  }
+}

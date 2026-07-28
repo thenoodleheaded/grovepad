@@ -25,9 +25,14 @@ describe('collaboration UI contracts', () => {
   it('states the real sharing and access boundaries', () => {
     expect(ui).toContain('Only “{canvasName}” is shared')
     expect(ui).toContain('Files stored only on this device are not uploaded by multiplayer.')
-    expect(ui).toContain('The person needs an existing Grovepad account.')
+    expect(ui).toContain('Anyone signed in with the link can view, but cannot edit or comment.')
+    expect(ui).toContain('Only accounts you assign the Editor role can change canvas information.')
     expect(ui).toContain('This does not send email')
     expect(ui).toContain('Entering the same email again changes that person’s role.')
+    expect(ui).toContain('setCollaborativeCanvasPublicAccess')
+    expect(store).toContain('publicAccess: boolean')
+    expect(controller).toContain('setPublicAccess: (isPublic: boolean) => Promise<void>')
+    expect(runtime).toContain('setPublicAccess: setCanvasPublicAccess')
   })
 
   it('makes every role and connection state understandable', () => {

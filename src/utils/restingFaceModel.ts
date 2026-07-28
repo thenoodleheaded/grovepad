@@ -1,4 +1,5 @@
 import type { NoteCalloutTone, NoteSkinMode } from '../components/widgets/modules/noteSkinModel'
+import type { SkinPresentation } from '../widgets/skinBlueprints.generated'
 
 // ---------------------------------------------------------------------------
 // The resting-face vocabulary.
@@ -39,6 +40,9 @@ export interface RestRow {
   /** A small leading label the open card puts before the row: a clock time, a
    * step number, a rank. Rendered ahead of the completion glyph. */
   lead?: string
+  /** Outline depth. Real indentation, not padded text: spaces inside a
+   * truncating label are collapsed and would flatten the tree. */
+  indent?: number
   tone?: RestTone
 }
 
@@ -131,19 +135,49 @@ export interface RestNoteModel {
 export type RestingFaceModel =
   | { kind: 'icon' }
   | { kind: 'image' }
-  | { kind: 'metric'; primary: string; secondary: string; progress?: number; tone?: RestTone }
-  | { kind: 'boolean'; label: string; active: boolean; shape?: 'switch' | 'checkbox' | 'power' }
+  | {
+      kind: 'metric'
+      primary: string
+      secondary: string
+      progress?: number
+      tone?: RestTone
+      eyebrow?: RestEyebrow
+    }
+  | {
+      kind: 'boolean'
+      label: string
+      active: boolean
+      shape?: 'switch' | 'checkbox' | 'power'
+      /** Availability speaks in status colour, not the card's accent. */
+      tone?: RestTone
+    }
   | { kind: 'text'; text: string; tint?: string }
   | RestNoteModel
   | { kind: 'rows'; rows: readonly RestRow[]; overflow: number; eyebrow?: RestEyebrow; meter?: number }
-  | { kind: 'clock' }
+  /**
+   * The one LIVE face: a ticking readout the renderer subscribes to. Everything
+   * around it is static context, so a folded interval trainer can show its
+   * rounds and a lap timer its splits without a second subscription.
+   */
+  | {
+      kind: 'clock'
+      /** `dial` keeps the card-outline bezel; the rest lay the readout out the
+       * way their own mode does. */
+      shape?: 'dial' | 'hourglass' | 'intervals' | 'laps' | 'stages'
+      eyebrow?: RestEyebrow
+      chips?: readonly RestChip[]
+      rows?: readonly RestRow[]
+    }
   | {
       kind: 'chart'
       /** Readouts stacked down the right of the plot, most important first. */
       stats: readonly { label: string; value: string }[]
+      /** Values to plot. Absent means the renderer reads the widget's own
+       * bars/points/segments — the Chart family's shape. Present is for a card
+       * that keeps a reading history in some other shape (an Atlas trend). */
+      series?: readonly number[]
     }
   | { kind: 'stars'; value: number }
-  | { kind: 'week' }
   | { kind: 'palette'; colors: readonly string[] }
   // --- skin grammars -------------------------------------------------------
   /** Side-by-side lanes of cards: boards, sprints, quadrants, week columns.
@@ -170,6 +204,7 @@ export type RestingFaceModel =
       secondary: string
       caption?: string
       tone?: RestTone
+      eyebrow?: RestEyebrow
     }
   /** A wrapped run of pills: tags, segments, chip lists, presets. */
   | { kind: 'chips'; chips: readonly RestChip[]; overflow: number; eyebrow?: RestEyebrow }
@@ -200,6 +235,13 @@ export type RestingFaceModel =
 export interface RestingFace {
   model: RestingFaceModel
   size: { width: number; height: number }
+  /**
+   * The catalogue presentation the worn skin dresses the OPEN card with
+   * (08-skin-presentations.css). The folded tile wears the same dress, so a
+   * card ruled like graph paper or crossed like a matrix still reads that way
+   * at rest. Purely paint: it never changes the tile's measurements.
+   */
+  presentation?: SkinPresentation
 }
 
 // ---------------------------------------------------------------------------
@@ -208,7 +250,7 @@ export interface RestingFace {
 // ---------------------------------------------------------------------------
 
 export const REST_ROW_LIMIT = 6
-export const REST_COLUMN_LIMIT = 4
+export const REST_COLUMN_LIMIT = 7
 export const REST_COLUMN_ITEM_LIMIT = 3
 export const REST_CELL_LIMIT = 42
 export const REST_BAR_LIMIT = 4

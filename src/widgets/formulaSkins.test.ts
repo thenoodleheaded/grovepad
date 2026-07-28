@@ -156,8 +156,21 @@ describe('Formula skin registry contract', () => {
       data: card(data),
     }).model
 
-    expect(face({})).toMatchObject({ kind: 'metric', primary: '450', secondary: 'Result' })
-    expect(face({ skin: 'percent_change' })).toMatchObject({ primary: '25%', secondary: 'Change' })
-    expect(face({ skin: 'growth', a: 1000, b: 10 })).toMatchObject({ secondary: 'Next period' })
+    // Two-input folds to the sum as it is written, over its answer.
+    expect(face({})).toMatchObject({
+      kind: 'lines',
+      eyebrow: { label: 'Result' },
+      total: { right: '450' },
+    })
+    // Percent change is a movement, so it folds to where it went from and to.
+    expect(face({ skin: 'percent_change' })).toMatchObject({
+      kind: 'split',
+      eyebrow: { label: 'Percent change', note: '+25%' },
+    })
+    // Growth is a projection: the folded card keeps the periods themselves.
+    const growth = face({ skin: 'growth', a: 1000, b: 10 })
+    expect(growth).toMatchObject({ kind: 'bars', eyebrow: { label: 'Growth', note: '10%' } })
+    if (growth.kind !== 'bars') throw new Error('expected a growth projection')
+    expect(growth.bars[0]).toMatchObject({ label: 'Period 1', value: '1.1k' })
   })
 })

@@ -1,0 +1,1293 @@
+/*
+ * Purpose-built Contact Card skins.
+ *
+ * Seven faces over one stored person. `name`, `role`, `email`, `phone` and the
+ * rest of the canonical fields stay shared, so the number typed on the
+ * Business card is the number the Emergency face dials — only the shape around
+ * it changes, and each shape is a different silhouette on the board: a form,
+ * a letterpress card, one enormous call target, a service plot, a cadence
+ * meter, a roster, an escalation slot.
+ *
+ * Every control wrapper carries `.gp-bare-field` so the auto field-island
+ * detector in 06-field-islands.css never manufactures a second pane of glass;
+ * the surfaces below are the ones this family deliberately paints.
+ */
+
+.gp-widget-ui[data-widget-type='contact'] {
+  container-type: inline-size;
+}
+
+.gp-widget-ui[data-widget-type='contact'][data-skin-presentation] {
+  background-image: none;
+  font-size: inherit;
+}
+
+.gp-contact-skin {
+  --gp-contact-ink: var(--gp-widget-ink, #f8fafc);
+  --gp-contact-soft: color-mix(in oklab, var(--gp-contact-ink), transparent 42%);
+  --gp-contact-faint: color-mix(in oklab, var(--gp-contact-ink), transparent 68%);
+  --gp-contact-ghost: color-mix(in oklab, var(--gp-contact-ink), transparent 82%);
+  --gp-contact-rule: color-mix(in oklab, var(--gp-contact-ink), transparent 89%);
+  --gp-contact-wash: color-mix(in oklab, var(--gp-contact-ink), transparent 95%);
+  --gp-contact-tint: color-mix(in oklab, var(--gp-widget-accent), transparent 88%);
+  --gp-contact-edge: color-mix(in oklab, var(--gp-widget-accent), transparent 62%);
+  --gp-contact-live: color-mix(in oklab, var(--gp-widget-accent), var(--gp-contact-ink) 20%);
+  /* The one hue that is not the skin's: an alarm has to read as an alarm. */
+  --gp-contact-alarm: #f87171;
+  display: flex;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  flex-direction: column;
+  color: var(--gp-contact-ink);
+}
+
+.gp-contact-skin > * {
+  display: flex;
+  min-height: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.gp-contact-skin button,
+.gp-contact-skin input,
+.gp-contact-skin textarea {
+  font: inherit;
+  color: inherit;
+}
+
+/*
+ * Buttons inside widget content are ghost controls: 06-field-islands.css
+ * strips their border, background, and shadow with `!important` so an action
+ * can never manufacture a second island. A control that genuinely needs a fill
+ * paints it on its own `::before` — the same escape the glass constitution
+ * uses for any tint a flattened element still needs — and edges are drawn with
+ * `outline`, which the flatten rule leaves alone. Every rule below is scoped
+ * one class deeper than `.gp-contact-skin button` so the `font: inherit`
+ * above cannot outrank a control's own type size.
+ */
+.gp-contact-skin .gp-contact-fill {
+  position: relative;
+  isolation: isolate;
+}
+
+.gp-contact-skin .gp-contact-fill::before {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--gp-contact-tint);
+  content: '';
+  pointer-events: none;
+  transition: background 130ms ease;
+}
+
+.gp-contact-skin textarea {
+  min-height: 0;
+  resize: none;
+}
+
+.gp-contact-skin a:focus-visible,
+.gp-contact-skin button:focus-visible,
+.gp-contact-skin input:focus-visible,
+.gp-contact-skin textarea:focus-visible {
+  outline: 1px solid color-mix(in oklab, var(--gp-widget-accent), transparent 20%);
+  outline-offset: 2px;
+}
+
+.gp-contact-tabular {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+}
+
+/* An account number reads as a code through spacing and figures, not through a
+   second typeface — the app is one family (see globalTypography.test.ts). */
+.gp-contact-ref {
+  font-size: 0.66rem !important;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.09em;
+}
+
+.gp-contact-empty {
+  margin: 0;
+  padding: 0.6rem 0.4rem;
+  color: var(--gp-contact-faint);
+  font-size: 0.6rem;
+  text-align: center;
+  text-wrap: pretty;
+}
+
+/* ── Shared identity ─────────────────────────────────────────────────────── */
+
+.gp-contact-skin header {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.gp-contact-identity {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  padding: 0 !important;
+}
+
+.gp-contact-name {
+  width: 100%;
+  min-height: 0 !important;
+  padding: 0 !important;
+  font-size: 0.92rem;
+  font-weight: 620;
+  letter-spacing: -0.012em;
+  line-height: 1.25;
+}
+
+.gp-contact-role,
+.gp-contact-org {
+  width: 100%;
+  min-height: 0 !important;
+  padding: 0 !important;
+  color: var(--gp-contact-faint);
+  font-size: 0.66rem !important;
+  line-height: 1.4;
+}
+
+.gp-contact-org {
+  font-size: 0.6rem !important;
+}
+
+.gp-contact-skin ::placeholder {
+  color: var(--gp-contact-ghost);
+}
+
+/* The avatar is one radial bloom of the skin's own accent under a hairline
+   ring — the only place a face shows its hue at full strength. */
+.gp-contact-avatar {
+  display: grid;
+  width: 46px;
+  height: 46px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 30%, color-mix(in oklab, var(--gp-widget-accent), transparent 58%), transparent 70%),
+    var(--gp-contact-tint);
+  box-shadow:
+    inset 0 0 0 1px var(--gp-contact-edge),
+    inset 0 1px 0 color-mix(in oklab, white, transparent 84%);
+  color: var(--gp-contact-live);
+  font-size: 0.82rem;
+  font-weight: 640;
+  letter-spacing: 0.01em;
+  place-items: center;
+}
+
+.gp-contact-avatar[data-size='small'] {
+  width: 32px;
+  height: 32px;
+  font-size: 0.66rem;
+}
+
+/* ── Shared labelled line ────────────────────────────────────────────────── */
+
+/* Scoped one level deeper than `[data-skin-presentation='form'] :where(label)`
+   in 08-skin-presentations.css, which would otherwise top-align every row. */
+.gp-contact-skin .gp-contact-line {
+  display: grid;
+  min-height: 28px;
+  align-items: center;
+  padding: 0 !important;
+  gap: 0.45rem;
+  grid-template-columns: 14px 4.3rem minmax(0, 1fr);
+}
+
+.gp-contact-line-icon {
+  display: grid;
+  color: var(--gp-contact-ghost);
+  place-items: center;
+}
+
+.gp-contact-line-label {
+  overflow: hidden;
+  color: var(--gp-contact-faint);
+  font-size: 0.58rem;
+  letter-spacing: 0.07em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.gp-contact-skin .gp-contact-line input {
+  min-height: 26px !important;
+  padding: 0 !important;
+  font-size: 0.7rem;
+}
+
+.gp-contact-line:focus-within .gp-contact-line-icon {
+  color: var(--gp-contact-live);
+}
+
+/* Date inputs paint their own picker glyph; keep it in the family's ink. */
+.gp-contact-skin input[type='date']::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  filter: invert(1);
+  opacity: 0.35;
+}
+
+.gp-contact-skin input[type='date']:hover::-webkit-calendar-picker-indicator {
+  opacity: 0.7;
+}
+
+/* ── Shared note ─────────────────────────────────────────────────────────── */
+
+.gp-contact-skin .gp-contact-note {
+  display: flex;
+  min-height: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: stretch;
+  padding: 0 !important;
+  gap: 0.14rem;
+}
+
+.gp-contact-note > span {
+  color: var(--gp-contact-faint);
+  font-size: 0.55rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.gp-contact-note textarea {
+  min-height: 2.1rem !important;
+  flex: 1 1 auto;
+  padding: 0 0 0 0.5rem !important;
+  border-left: 2px solid var(--gp-contact-edge) !important;
+  font-size: 0.66rem;
+  line-height: 1.45;
+}
+
+/* ── Shared route rail ───────────────────────────────────────────────────── */
+
+.gp-contact-routes {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 0.28rem;
+}
+
+.gp-contact-routes a {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 0;
+  align-items: center;
+  justify-content: center;
+  padding: 0.32rem 0.4rem;
+  border: 1px solid var(--gp-contact-rule);
+  border-radius: 0.5rem;
+  background: var(--gp-contact-wash);
+  color: var(--gp-contact-soft);
+  gap: 0.25rem;
+  font-size: 0.6rem;
+  text-decoration: none;
+  transition: border-color 130ms ease, background 130ms ease, color 130ms ease;
+}
+
+.gp-contact-routes a span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gp-contact-routes a:hover {
+  border-color: var(--gp-contact-edge);
+  background: var(--gp-contact-tint);
+  color: var(--gp-contact-live);
+}
+
+.gp-contact-routes a[data-preferred] {
+  border-color: var(--gp-contact-edge);
+  background: var(--gp-contact-tint);
+  color: var(--gp-contact-live);
+  font-weight: 600;
+}
+
+.gp-contact-link {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  align-self: flex-start;
+  color: var(--gp-contact-faint);
+  gap: 0.25rem;
+  font-size: 0.6rem;
+  text-decoration: none;
+  transition: color 130ms ease;
+}
+
+.gp-contact-link:hover {
+  color: var(--gp-contact-live);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* ══ Personal ════════════════════════════════════════════════════════════════
+   A form, as the catalogue promises: identity on top, labelled rows under it,
+   and the channel the person actually prefers as the closing statement. */
+
+.gp-contact-birthday {
+  display: flex;
+  flex: 0 0 auto;
+  align-self: flex-start;
+  max-width: 100%;
+  align-items: center;
+  margin: 0;
+  padding: 0.24rem 0.5rem;
+  border-radius: 999px;
+  background: var(--gp-contact-tint);
+  color: var(--gp-contact-live);
+  gap: 0.35rem;
+  font-size: 0.6rem;
+}
+
+.gp-contact-birthday small {
+  color: color-mix(in oklab, var(--gp-contact-live), transparent 32%);
+}
+
+.gp-contact-birthday[data-today] {
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 74%);
+  font-weight: 600;
+}
+
+/* The form is the card's one surface; the rows sit on it, hairline-separated,
+   rather than each becoming a slab of its own. */
+.gp-contact-form {
+  display: flex;
+  min-height: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  padding: 0.1rem 0.55rem;
+  border-radius: var(--gp-r1, 10px);
+  background: linear-gradient(
+    180deg,
+    color-mix(in oklab, var(--gp-contact-ink), transparent 95%),
+    color-mix(in oklab, var(--gp-contact-ink), transparent 97%)
+  );
+  box-shadow: inset 0 1px 0 color-mix(in oklab, white, transparent 93%);
+  overflow-y: auto;
+}
+
+.gp-contact-form > .gp-contact-line + .gp-contact-line {
+  border-top: 1px solid var(--gp-contact-rule);
+}
+
+.gp-contact-channels {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.24rem;
+}
+
+.gp-contact-channels > span {
+  margin-right: auto;
+  color: var(--gp-contact-faint);
+  font-size: 0.55rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.gp-contact-skin .gp-contact-channels button {
+  min-height: 0;
+  padding: 0.22rem 0.6rem;
+  outline: 1px solid var(--gp-contact-rule);
+  outline-offset: -1px;
+  color: var(--gp-contact-faint);
+  cursor: pointer;
+  font-size: 0.6rem;
+  transition: outline-color 130ms ease, color 130ms ease;
+}
+
+.gp-contact-skin .gp-contact-channels button::before {
+  background: transparent;
+}
+
+.gp-contact-skin .gp-contact-channels button:hover {
+  outline-color: var(--gp-contact-edge);
+  color: var(--gp-contact-soft);
+}
+
+.gp-contact-skin .gp-contact-channels button[data-active] {
+  outline-color: var(--gp-contact-edge);
+  color: var(--gp-contact-live);
+  font-weight: 600;
+}
+
+.gp-contact-skin .gp-contact-channels button[data-active]::before {
+  background: var(--gp-contact-tint);
+}
+
+/* ══ Business ════════════════════════════════════════════════════════════════
+   A letterpress card: square monogram, a rule with an inked leader, and work
+   details in two typeset columns. Nothing here is round. */
+
+.gp-contact-monogram {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  flex: 0 0 auto;
+  border-radius: 0.55rem;
+  background: linear-gradient(
+    160deg,
+    color-mix(in oklab, var(--gp-widget-accent), transparent 74%),
+    color-mix(in oklab, var(--gp-widget-accent), transparent 92%)
+  );
+  box-shadow: inset 0 0 0 1px var(--gp-contact-edge);
+  color: var(--gp-contact-live);
+  font-size: 0.78rem;
+  font-weight: 640;
+  letter-spacing: 0.06em;
+  place-items: center;
+}
+
+.gp-contact-business .gp-contact-role {
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  font-size: 0.58rem !important;
+}
+
+/* A hairline the full width of the card, inked for its first 26px. */
+.gp-contact-rule {
+  display: block;
+  height: 1px;
+  flex: 0 0 auto;
+  background: linear-gradient(
+    to right,
+    var(--gp-widget-accent) 0 26px,
+    var(--gp-contact-rule) 26px
+  );
+}
+
+.gp-contact-grid {
+  display: grid;
+  min-height: 0;
+  flex: 1 1 auto;
+  align-content: start;
+  margin: 0;
+  gap: 0.4rem 0.7rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.gp-contact-grid > div {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.04rem;
+}
+
+.gp-contact-grid dt {
+  display: flex;
+  align-items: center;
+  color: var(--gp-contact-faint);
+  gap: 0.25rem;
+  font-size: 0.53rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.gp-contact-grid dd {
+  margin: 0;
+  padding: 0 !important;
+}
+
+.gp-contact-grid dd input {
+  min-height: 20px !important;
+  padding: 0 !important;
+  font-size: 0.68rem;
+  font-weight: 550;
+}
+
+.gp-contact-dot {
+  display: block;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--gp-widget-accent);
+}
+
+/* ══ Emergency ═══════════════════════════════════════════════════════════════
+   One target, impossible to mistake. The caution bar and the dial button are
+   the only place in the family that leaves the skin's hue for an alarm red. */
+
+.gp-contact-emergency .gp-contact-alarm {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  padding: 0.22rem 0.5rem;
+  border-radius: 0.4rem;
+  background:
+    repeating-linear-gradient(
+      -45deg,
+      color-mix(in oklab, var(--gp-contact-alarm), transparent 92%) 0 6px,
+      transparent 6px 12px
+    ),
+    color-mix(in oklab, var(--gp-contact-alarm), transparent 94%);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--gp-contact-alarm), transparent 78%);
+  color: color-mix(in oklab, var(--gp-contact-alarm), var(--gp-contact-ink) 30%);
+  gap: 0.35rem;
+  font-size: 0.55rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.gp-contact-call {
+  display: grid;
+  min-height: 62px;
+  flex: 1 1 auto;
+  align-content: center;
+  justify-items: center;
+  margin: 0;
+  padding: 0.5rem;
+  border-radius: 0.85rem;
+  background:
+    radial-gradient(
+      circle at 50% 34%,
+      color-mix(in oklab, var(--gp-contact-alarm), transparent 78%),
+      transparent 66%
+    ),
+    color-mix(in oklab, var(--gp-contact-alarm), transparent 92%);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in oklab, var(--gp-contact-alarm), transparent 62%),
+    0 4px 14px color-mix(in oklab, var(--gp-contact-alarm), transparent 88%);
+  color: color-mix(in oklab, var(--gp-contact-alarm), var(--gp-contact-ink) 24%);
+  gap: 0.1rem;
+  text-decoration: none;
+  transition: transform 120ms ease, box-shadow 160ms ease, background 160ms ease;
+}
+
+a.gp-contact-call:hover {
+  background:
+    radial-gradient(
+      circle at 50% 34%,
+      color-mix(in oklab, var(--gp-contact-alarm), transparent 68%),
+      transparent 66%
+    ),
+    color-mix(in oklab, var(--gp-contact-alarm), transparent 88%);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in oklab, var(--gp-contact-alarm), transparent 46%),
+    0 6px 20px color-mix(in oklab, var(--gp-contact-alarm), transparent 82%);
+}
+
+a.gp-contact-call:active {
+  transform: scale(0.985);
+}
+
+.gp-contact-call strong {
+  font-size: clamp(1.05rem, 11cqi, 1.6rem);
+  font-variant-numeric: tabular-nums;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+}
+
+.gp-contact-call small {
+  color: color-mix(in oklab, var(--gp-contact-alarm), transparent 42%);
+  font-size: 0.55rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.gp-contact-call[data-empty] {
+  background: var(--gp-contact-wash);
+  box-shadow: inset 0 0 0 1px var(--gp-contact-rule);
+  color: var(--gp-contact-faint);
+}
+
+.gp-contact-call[data-empty] strong {
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.gp-contact-call[data-empty] small {
+  color: var(--gp-contact-ghost);
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+.gp-contact-emergency-rows {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  padding: 0 0.55rem;
+  border-radius: var(--gp-r1, 10px);
+  background: var(--gp-contact-wash);
+}
+
+.gp-contact-emergency-rows > .gp-contact-line + .gp-contact-line {
+  border-top: 1px solid var(--gp-contact-rule);
+}
+
+.gp-contact-skin .gp-contact-critical {
+  display: flex;
+  min-height: 0;
+  flex: 0 1 auto;
+  flex-direction: column;
+  align-items: stretch;
+  padding: 0 !important;
+  gap: 0.14rem;
+}
+
+.gp-contact-critical > span {
+  display: flex;
+  align-items: center;
+  color: color-mix(in oklab, var(--gp-contact-alarm), transparent 32%);
+  gap: 0.22rem;
+  font-size: 0.55rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.gp-contact-critical textarea {
+  min-height: 2rem !important;
+  padding: 0 0 0 0.5rem !important;
+  border-left: 2px solid color-mix(in oklab, var(--gp-contact-alarm), transparent 62%) !important;
+  font-size: 0.66rem;
+  line-height: 1.45;
+}
+
+/* ══ Vendor ══════════════════════════════════════════════════════════════════
+   A service record. The plot is not a map — it is a dot grid and a pin, which
+   says "this is where they are" without a tile the board would have to fetch. */
+
+.gp-contact-vendor > header {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.28rem;
+}
+
+.gp-contact-chip {
+  display: inline-flex;
+  align-self: flex-start;
+  max-width: 100%;
+  align-items: center;
+  padding: 0.14rem 0.5rem 0.14rem 0.42rem;
+  border: 1px solid var(--gp-contact-edge);
+  border-radius: 999px;
+  background: var(--gp-contact-tint);
+  color: var(--gp-contact-live);
+  gap: 0.28rem;
+}
+
+.gp-contact-chip input {
+  width: 8rem;
+  max-width: 100%;
+  min-height: 18px !important;
+  padding: 0 !important;
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.gp-contact-chip input::placeholder {
+  color: color-mix(in oklab, var(--gp-contact-live), transparent 55%);
+}
+
+.gp-contact-plot {
+  position: relative;
+  display: flex;
+  min-height: 70px;
+  flex: 1 1 auto;
+  align-items: stretch;
+  padding: 0.4rem 0.5rem 0.4rem 1.9rem;
+  border-radius: var(--gp-r1, 10px);
+  background-color: color-mix(in oklab, var(--gp-contact-ink), transparent 96%);
+  background-image: radial-gradient(
+    color-mix(in oklab, var(--gp-contact-ink), transparent 88%) 1px,
+    transparent 1px
+  );
+  background-size: 10px 10px;
+  box-shadow: inset 0 0 0 1px var(--gp-contact-rule);
+  overflow: hidden;
+}
+
+/* The pin sits over its own soft halo, the way a dropped marker does. */
+.gp-contact-pin {
+  position: absolute;
+  top: 0.3rem;
+  left: 0.42rem;
+  display: grid;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--gp-contact-tint), transparent 72%);
+  color: var(--gp-widget-accent);
+  place-items: center;
+}
+
+.gp-contact-skin .gp-contact-plot > label {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 auto;
+  padding: 0 !important;
+}
+
+.gp-contact-plot textarea {
+  min-height: 0 !important;
+  flex: 1 1 auto;
+  padding: 0 !important;
+  font-size: 0.66rem;
+  line-height: 1.4;
+}
+
+.gp-contact-meta {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  padding: 0 0.55rem;
+  border-radius: var(--gp-r1, 10px);
+  background: var(--gp-contact-wash);
+}
+
+.gp-contact-meta > .gp-contact-line + .gp-contact-line {
+  border-top: 1px solid var(--gp-contact-rule);
+}
+
+/* ══ Relationship ════════════════════════════════════════════════════════════
+   A cadence meter: how long since, how long left, and one button that answers
+   both. The track is the whole point, so it gets the card's middle. */
+
+.gp-contact-cadence {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  padding: 0.5rem 0.55rem;
+  border-radius: var(--gp-r1, 10px);
+  background: linear-gradient(
+    180deg,
+    color-mix(in oklab, var(--gp-contact-ink), transparent 95%),
+    color-mix(in oklab, var(--gp-contact-ink), transparent 97%)
+  );
+  box-shadow: inset 0 1px 0 color-mix(in oklab, white, transparent 93%);
+  gap: 0.4rem;
+}
+
+.gp-contact-cadence-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.gp-contact-cadence-head strong {
+  font-size: 0.95rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 620;
+  letter-spacing: -0.015em;
+}
+
+.gp-contact-cadence-head small {
+  flex: 0 0 auto;
+  color: var(--gp-contact-faint);
+  font-size: 0.58rem;
+}
+
+.gp-contact-track {
+  display: block;
+  height: 8px;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--gp-contact-ink), transparent 93%);
+  box-shadow: inset 0 1px 2px color-mix(in oklab, black, transparent 78%);
+  overflow: hidden;
+}
+
+.gp-contact-track i {
+  display: block;
+  width: calc(var(--gp-contact-progress, 0) * 100%);
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(
+    to right,
+    color-mix(in oklab, var(--gp-widget-accent), transparent 55%),
+    var(--gp-widget-accent)
+  );
+  transition: width 340ms cubic-bezier(0.22, 1, 0.36, 1), background 200ms ease;
+}
+
+.gp-contact-relationship[data-status='overdue'] .gp-contact-track i {
+  background: linear-gradient(
+    to right,
+    color-mix(in oklab, var(--gp-contact-alarm), transparent 55%),
+    var(--gp-contact-alarm)
+  );
+}
+
+.gp-contact-relationship[data-status='overdue'] .gp-contact-cadence-head small {
+  color: color-mix(in oklab, var(--gp-contact-alarm), var(--gp-contact-ink) 24%);
+  font-weight: 600;
+}
+
+.gp-contact-relationship[data-status='due'] .gp-contact-cadence-head small {
+  color: var(--gp-contact-live);
+  font-weight: 600;
+}
+
+.gp-contact-cadence-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+}
+
+.gp-contact-stepper {
+  display: flex;
+  align-items: center;
+  padding: 2px;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--gp-contact-ink), transparent 94%);
+  gap: 0.1rem;
+}
+
+.gp-contact-skin .gp-contact-stepper button {
+  display: grid;
+  width: 20px;
+  min-width: 0;
+  height: 20px;
+  min-height: 0;
+  color: var(--gp-contact-faint);
+  cursor: pointer;
+  place-items: center;
+  transition: color 120ms ease;
+}
+
+.gp-contact-skin .gp-contact-stepper button:hover {
+  color: var(--gp-contact-live);
+}
+
+.gp-contact-stepper b {
+  min-width: 4.4rem;
+  color: var(--gp-contact-soft);
+  font-size: 0.6rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 550;
+  text-align: center;
+}
+
+.gp-contact-skin .gp-contact-log {
+  display: flex;
+  min-height: 0;
+  align-items: center;
+  padding: 0.32rem 0.62rem;
+  outline: 1px solid var(--gp-contact-edge);
+  outline-offset: -1px;
+  color: var(--gp-contact-live);
+  cursor: pointer;
+  gap: 0.3rem;
+  font-size: 0.64rem;
+  font-weight: 600;
+  transition: outline-color 130ms ease, color 130ms ease, transform 120ms ease;
+}
+
+.gp-contact-skin .gp-contact-log:hover::before {
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 76%);
+}
+
+.gp-contact-skin .gp-contact-log:active {
+  transform: scale(0.97);
+}
+
+.gp-contact-skin .gp-contact-log[data-done] {
+  outline-color: var(--gp-contact-rule);
+  color: var(--gp-contact-faint);
+  font-weight: 500;
+}
+
+.gp-contact-skin .gp-contact-log[data-done]::before {
+  background: transparent;
+}
+
+/* ══ Household ═══════════════════════════════════════════════════════════════
+   A door plate over a roster. One address, several people, one shared line. */
+
+.gp-contact-plate {
+  align-items: center;
+  padding: 0.4rem 0.55rem;
+  border-radius: var(--gp-r1, 10px);
+  background: linear-gradient(
+    180deg,
+    var(--gp-contact-tint),
+    color-mix(in oklab, var(--gp-widget-accent), transparent 95%)
+  );
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--gp-widget-accent), transparent 80%);
+}
+
+.gp-contact-door {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 auto;
+  border-radius: 0.5rem;
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 76%);
+  color: var(--gp-contact-live);
+  place-items: center;
+}
+
+.gp-contact-plate .gp-contact-name {
+  font-size: 0.8rem;
+}
+
+/* The roster owns the one surface; rows sit on it. A row holds both fields and
+   a button, which 06-field-islands.css flattens with `!important` so a
+   composite can never become a second pane of glass — so the separation is a
+   hairline drawn on a pseudo-element, not a nested card. */
+.gp-contact-roster {
+  display: flex;
+  min-height: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  border-radius: var(--gp-r1, 10px);
+  background: linear-gradient(
+    180deg,
+    color-mix(in oklab, var(--gp-contact-ink), transparent 95%),
+    color-mix(in oklab, var(--gp-contact-ink), transparent 97%)
+  );
+  box-shadow: inset 0 1px 0 color-mix(in oklab, white, transparent 93%);
+  overflow-y: auto;
+}
+
+.gp-contact-skin .gp-contact-person.gp-subpanel {
+  position: relative;
+  display: grid;
+  width: 100%;
+  min-height: 32px;
+  align-items: center;
+  margin: 0;
+  padding: 0.22rem 1.1rem 0.22rem 0.42rem;
+  gap: 0.4rem;
+  grid-template-columns: 22px minmax(0, 1.3fr) minmax(0, 1fr);
+  border-radius: 0 !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+.gp-contact-roster > .gp-contact-person + .gp-contact-person::before {
+  position: absolute;
+  top: 0;
+  right: 0.5rem;
+  left: 0.5rem;
+  height: 1px;
+  background: var(--gp-contact-rule);
+  content: '';
+}
+
+.gp-contact-skin .gp-contact-person.gp-subpanel:focus-within {
+  background-color: color-mix(in oklab, var(--gp-widget-accent), transparent 93%) !important;
+}
+
+/* A row holding a text control also matches the auto field-island rule in
+   06-field-islands.css, whose `transition: outline-color …` REPLACES the exit
+   animation's own transition. Removal is finalized by the row's `transitionend`
+   for `opacity`, so without this the row would fade out and then live on in the
+   data forever. Restore the exit transition for the row on its way out. */
+.gp-contact-skin .gp-contact-person.gp-subpanel-exit {
+  transition:
+    opacity 130ms var(--gp-ease-snap),
+    scale 130ms var(--gp-ease-snap);
+}
+
+.gp-contact-pip {
+  display: grid;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--gp-contact-tint);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--gp-widget-accent), transparent 76%);
+  color: var(--gp-contact-live);
+  font-size: 0.52rem;
+  font-weight: 620;
+  place-items: center;
+}
+
+.gp-contact-person input {
+  min-width: 0;
+  min-height: 22px !important;
+  padding: 0 !important;
+  font-size: 0.68rem;
+}
+
+.gp-contact-relation {
+  color: var(--gp-contact-faint);
+  font-size: 0.62rem !important;
+  text-align: right;
+}
+
+.gp-contact-skin .gp-contact-remove {
+  position: absolute;
+  top: 50%;
+  right: 0.24rem;
+  display: grid;
+  width: 18px;
+  min-width: 0;
+  height: 18px;
+  min-height: 0;
+  color: var(--gp-contact-faint);
+  cursor: pointer;
+  opacity: 0;
+  place-items: center;
+  transform: translateY(-50%);
+  transition: opacity 120ms ease, color 120ms ease;
+}
+
+.gp-contact-person:hover .gp-contact-remove,
+.gp-contact-person:focus-within .gp-contact-remove,
+.gp-contact-remove:focus-visible {
+  opacity: 1;
+}
+
+.gp-contact-remove:hover {
+  color: color-mix(in oklab, var(--gp-contact-alarm), var(--gp-contact-ink) 30%);
+}
+
+.gp-contact-skin .gp-contact-add {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  padding: 0.32rem;
+  outline: 1px dashed var(--gp-contact-rule);
+  outline-offset: -1px;
+  color: var(--gp-contact-soft);
+  cursor: pointer;
+  gap: 0.3rem;
+  font-size: 0.62rem;
+  transition: outline-color 130ms ease, color 130ms ease;
+}
+
+.gp-contact-skin .gp-contact-add::before {
+  background: transparent;
+}
+
+.gp-contact-skin .gp-contact-add:hover {
+  outline-color: var(--gp-contact-edge);
+  color: var(--gp-contact-live);
+}
+
+.gp-contact-skin .gp-contact-add:hover::before {
+  background: var(--gp-contact-tint);
+}
+
+.gp-contact-shared {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 0.4rem;
+}
+
+.gp-contact-shared > label {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 0;
+  align-items: center;
+  padding: 0 !important;
+  gap: 0.3rem;
+  color: var(--gp-contact-ghost);
+}
+
+.gp-contact-shared input {
+  min-width: 0;
+  min-height: 22px !important;
+  padding: 0 !important;
+  color: var(--gp-contact-soft);
+  font-size: 0.63rem;
+}
+
+/* ══ Care Contact ════════════════════════════════════════════════════════════
+   An on-call slot. The numeral is the point of this face: at a glance you
+   know whether this is the person to ring first. */
+
+.gp-contact-care > header {
+  align-items: flex-start;
+}
+
+.gp-contact-escalation {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  padding: 0.28rem 0.3rem 0.28rem 0.5rem;
+  border-radius: 0.6rem;
+  background: color-mix(in oklab, var(--gp-contact-ink), transparent 95%);
+  box-shadow: inset 0 0 0 1px var(--gp-contact-rule);
+  gap: 0.2rem;
+}
+
+.gp-contact-escalation[data-first] {
+  background: var(--gp-contact-tint);
+  box-shadow: inset 0 0 0 1px var(--gp-contact-edge);
+}
+
+.gp-contact-escalation b {
+  color: var(--gp-contact-soft);
+  font-size: 1.35rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 660;
+  line-height: 1;
+}
+
+.gp-contact-escalation[data-first] b {
+  color: var(--gp-contact-live);
+}
+
+.gp-contact-order {
+  display: flex;
+  flex-direction: column;
+}
+
+.gp-contact-skin .gp-contact-order button {
+  display: grid;
+  width: 18px;
+  min-width: 0;
+  height: 15px;
+  min-height: 0;
+  color: var(--gp-contact-ghost);
+  cursor: pointer;
+  place-items: center;
+  transition: color 120ms ease;
+}
+
+.gp-contact-skin .gp-contact-order button:hover:not(:disabled) {
+  color: var(--gp-contact-live);
+}
+
+.gp-contact-skin .gp-contact-order button:disabled {
+  cursor: default;
+  opacity: 0.3;
+}
+
+.gp-contact-escalation-label {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  margin: 0;
+  color: var(--gp-contact-faint);
+  gap: 0.28rem;
+  font-size: 0.58rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.gp-contact-care > .gp-contact-line {
+  padding: 0 0.55rem !important;
+  border-radius: var(--gp-r1, 10px);
+  background: var(--gp-contact-wash);
+}
+
+.gp-contact-care-actions {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 0.35rem;
+}
+
+.gp-contact-care-actions a,
+.gp-contact-care-actions label {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 0;
+  align-items: center;
+  justify-content: center;
+  padding: 0.36rem !important;
+  border: 1px solid var(--gp-contact-rule);
+  border-radius: 0.55rem;
+  background: var(--gp-contact-wash);
+  color: var(--gp-contact-soft);
+  gap: 0.3rem;
+  font-size: 0.64rem;
+  text-decoration: none;
+  transition: border-color 130ms ease, background 130ms ease, color 130ms ease;
+}
+
+.gp-contact-care-actions label {
+  justify-content: flex-start;
+  color: var(--gp-contact-ghost);
+}
+
+.gp-contact-care-actions input {
+  min-width: 0;
+  min-height: 20px !important;
+  padding: 0 !important;
+  color: var(--gp-contact-soft);
+  font-size: 0.64rem;
+}
+
+.gp-contact-care-actions a[data-primary] {
+  border-color: var(--gp-contact-edge);
+  background: var(--gp-contact-tint);
+  color: var(--gp-contact-live);
+  font-weight: 600;
+}
+
+.gp-contact-care-actions a:hover {
+  border-color: var(--gp-contact-edge);
+  background: var(--gp-contact-tint);
+  color: var(--gp-contact-live);
+}
+
+/* ── Narrow cards ────────────────────────────────────────────────────────── */
+
+@container (max-width: 250px) {
+  /* Two typeset columns become one; a clipped email helps nobody. */
+  .gp-contact-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .gp-contact-line {
+    grid-template-columns: 14px minmax(0, 1fr);
+  }
+
+  .gp-contact-line-label {
+    display: none;
+  }
+
+  .gp-contact-avatar {
+    width: 38px;
+    height: 38px;
+    font-size: 0.72rem;
+  }
+
+  .gp-contact-channels > span {
+    display: none;
+  }
+
+  .gp-contact-cadence-foot {
+    flex-wrap: wrap;
+  }
+
+  .gp-contact-shared {
+    flex-direction: column;
+    gap: 0.1rem;
+  }
+
+  .gp-contact-skin .gp-contact-person.gp-subpanel {
+    grid-template-columns: 22px minmax(0, 1fr);
+  }
+
+  .gp-contact-relation {
+    grid-column: 2;
+    text-align: left;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gp-contact-routes a,
+  .gp-contact-channels button,
+  .gp-contact-call,
+  .gp-contact-track i,
+  .gp-contact-log,
+  .gp-contact-add,
+  .gp-contact-remove,
+  .gp-contact-stepper button {
+    transition: none;
+  }
+
+  a.gp-contact-call:active,
+  .gp-contact-log:active {
+    transform: none;
+  }
+}

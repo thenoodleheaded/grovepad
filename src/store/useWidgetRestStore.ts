@@ -1,15 +1,14 @@
 import { create } from 'zustand'
 import type { Size, Vector2D } from '../types/spatial'
-import { useWidgetStore } from './useWidgetStore'
 
 const NO_OFFSET: Vector2D = { x: 0, y: 0 }
 
 /**
  * The scale state a card was showing at the instant it expanded — the state it
- * must fold back onto when the expansion closes. A resting tile carries no
- * size: the tile re-derives from content on collapse. An icon keeps its exact
- * square, because an icon between 2×2 and 3×3 must come back at that precise
- * size, never at the 2×2 floor.
+ * returns to when the expansion closes, and the state a pin has to record as
+ * the thing it interrupted. A resting tile carries no size: the tile re-derives
+ * from content. An icon keeps its exact square, because an icon between 2×2 and
+ * 3×3 must come back at that precise size, never at the 2×2 floor.
  */
 export type ExpandOrigin = { kind: 'rest' } | { kind: 'icon'; size: Size }
 
@@ -40,13 +39,11 @@ interface WidgetRestState {
    */
   nudgeExpandedOffset: (delta: Vector2D) => void
   /**
-   * Close the expansion and return the card to the state it was opened from.
-   * A card opened out of an icon folds back into that exact icon square —
-   * history-neutral, re-centred by the store so the icon lands on the very
-   * spot it was opened from. `restoreOrigin: false` releases the slot without
-   * the fold-back, for callers that intend to keep the card open (pinning).
+   * Close the expansion. Nothing to put back: the board record was never
+   * changed to open the card, not even for an icon, so dropping the slot IS
+   * the collapse — the card simply draws as its tile or its icon again.
    */
-  collapseWidget: (options?: { restoreOrigin?: boolean }) => void
+  collapseWidget: () => void
 }
 
 /**
@@ -54,11 +51,16 @@ interface WidgetRestState {
  * a *view*, never an edit: nothing here persists, syncs to collaborators, or
  * creates undo history. The board's saved layout (position/size/iconified)
  * stays untouched — a reload simply returns every unpinned widget to rest.
- * (The one deliberate exception: opening a card *out of an icon* parks the
- * icon state for the life of the expansion; collapse puts it back, so the
- * open-and-close pair still nets to no edit.)
+ *
+ * That holds for icons too. Opening one used to swap it to a full card for the
+ * life of the peek, which made a click a real board edit: neighbours shuffled
+ * aside to make room, undo grew a step, and on a shared canvas everyone else's
+ * view of the group jostled because someone glanced at a card. The record now
+ * stays an icon throughout and the geometry layer sizes the open card from
+ * `expandedSize` (see `expandedIconSize`); the swap commits at exactly one
+ * moment — a pin — which is also the one moment making space is right.
  */
-export const useWidgetRestStore = create<WidgetRestState>((set, get) => ({
+export const useWidgetRestStore = create<WidgetRestState>((set) => ({
   expandedWidgetId: null,
   expandedOffset: NO_OFFSET,
   expandedFrom: null,
@@ -69,19 +71,7 @@ export const useWidgetRestStore = create<WidgetRestState>((set, get) => ({
       ? state
       : { expandedOffset: { x: state.expandedOffset.x + delta.x, y: state.expandedOffset.y + delta.y } }
   )),
-  collapseWidget: (options = {}) => {
-    const { expandedWidgetId, expandedFrom } = get()
-    if (options.restoreOrigin !== false && expandedWidgetId !== null && expandedFrom?.kind === 'icon') {
-      // Fold the card back into the icon it was opened from. skipHistory keeps
-      // the round trip out of undo — the matching scale change on open skipped
-      // it too, so the pair nets to nothing. The action re-centres the icon on
-      // the tile box at the stored anchor, which is the exact inverse of the
-      // re-centring the open performed: the icon lands where it started.
-      useWidgetStore.getState().setWidgetScaleState(expandedWidgetId, 'icon', {
-        skipHistory: true,
-        toSize: expandedFrom.size,
-      })
-    }
+  collapseWidget: () => {
     set({ expandedWidgetId: null, expandedOffset: NO_OFFSET, expandedFrom: null })
   },
 }))

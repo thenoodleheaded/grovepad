@@ -21,7 +21,6 @@ export type ModuleType =
   | 'countdown'
   | 'habit'
   | 'links'
-  | 'linked_list'
   | 'code'
   | 'quote'
   | 'poll'
@@ -45,6 +44,7 @@ export type ModuleType =
   | 'stopwatch'
   | 'reading_list'
   | 'flashcards'
+  | 'canvas_lms'
   | 'meeting_notes'
   | 'priority_matrix'
   | 'decision'
@@ -149,7 +149,6 @@ export const MODULE_TYPES: readonly ModuleType[] = [
   'countdown',
   'habit',
   'links',
-  'linked_list',
   'code',
   'quote',
   'poll',
@@ -173,6 +172,7 @@ export const MODULE_TYPES: readonly ModuleType[] = [
   'stopwatch',
   'reading_list',
   'flashcards',
+  'canvas_lms',
   'meeting_notes',
   'priority_matrix',
   'decision',

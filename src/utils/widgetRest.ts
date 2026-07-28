@@ -92,7 +92,10 @@ function restEligible(widget: Widget, _ctx: WidgetRestContext): boolean {
   // `undefined` — a crash here in the glue geometry took the whole canvas down.
   const definition = widgetDefinition(widget.type) as ReturnType<typeof widgetDefinition> | undefined
   if (!definition || definition.restingFace === false) return false
-  // A user-authored icon state outranks the resting system entirely.
+  // A user-authored icon state outranks the resting system entirely: an icon
+  // is never somebody's resting tile. Being peeked open is the one exception,
+  // and it is answered by `iconPeeksOpen` in `isWidgetRestExpanded` — never
+  // here, or an idle icon would start reading as a resting widget.
   if (widget.iconified === true) return false
   // Pinned means held open: the card leaves the accordion for good rather than
   // becoming its expanded member, so it keeps its stored footprint exactly —
@@ -102,17 +105,50 @@ function restEligible(widget: Widget, _ctx: WidgetRestContext): boolean {
   return true
 }
 
+/**
+ * Whether clicking this icon opens it as an ephemeral peek rather than as a
+ * durable scale change. An icon is stored as an icon for the whole peek — the
+ * board record is never touched — so the resting system has to govern it while
+ * it is the expanded slot even though `restEligible` (correctly) says an idle
+ * icon is nobody's resting tile.
+ *
+ * A type that never rests has no overlay to open into: clicking its icon
+ * genuinely reopens the widget, so that path keeps committing the swap.
+ */
+export function iconPeeksOpen(widget: Widget): boolean {
+  if (widget.iconified !== true) return false
+  const definition = widgetDefinition(widget.type) as ReturnType<typeof widgetDefinition> | undefined
+  if (!definition || definition.restingFace === false) return false
+  // Pinned means held open; nothing about it is ephemeral.
+  return widget.metadata.pinned !== true
+}
+
 /** Whether this widget currently shows its resting face. */
 export function isWidgetResting(widget: Widget, ctx: WidgetRestContext): boolean {
   return restEligible(widget, ctx) && ctx.expandedWidgetId !== widget.id
 }
 
-/** Whether this widget is the one currently expanded out of its resting face.
- * Not the same as a bare `expandedWidgetId` comparison: a stale id left over
- * from a card that has since been iconified
- * must not still read as expanded. */
+/** Whether this widget is the one currently expanded out of its resting face —
+ * or peeked open out of its icon, which is the same ephemeral slot. Not the
+ * same as a bare `expandedWidgetId` comparison: a stale id left over from a
+ * card that has since been pinned must not still read as expanded. */
 export function isWidgetRestExpanded(widget: Widget, ctx: WidgetRestContext): boolean {
-  return restEligible(widget, ctx) && ctx.expandedWidgetId === widget.id
+  if (ctx.expandedWidgetId !== widget.id) return false
+  return restEligible(widget, ctx) || iconPeeksOpen(widget)
+}
+
+/**
+ * The card an icon opens into. An icon's stored `size` IS its little square —
+ * the full-card box it remembers is parked in `expandedSize` — so every
+ * surface that draws a peeked-open icon has to take the box from here rather
+ * than from `size`, which for the whole life of the peek still says "icon".
+ * The same box `setWidgetScaleState` would swap in, so the card does not
+ * resize under the user at the one moment the swap really commits (a pin).
+ */
+export function expandedIconSize(widget: Widget): Size {
+  if (widget.iconified !== true) return widget.size
+  const definition = widgetDefinition(widget.type) as ReturnType<typeof widgetDefinition> | undefined
+  return widget.expandedSize ?? definition?.defaultSize ?? widget.size
 }
 
 /** Content-derived footprint of the resting tile — exactly the box the
@@ -121,9 +157,14 @@ export function restingTileSize(widget: Pick<Widget, 'type' | 'data' | 'size' | 
   return restingFace(widget).size
 }
 
-/** The size the widget actually occupies on screen right now. */
-export function effectiveWidgetSize(widget: Widget, resting: boolean): Size {
-  return resting ? restingTileSize(widget) : widget.size
+/** The size the widget actually occupies on screen right now: its resting
+ * tile while it rests, the card it opens into while it is the expanded slot
+ * (an icon's stored `size` is still the icon square throughout the peek), and
+ * otherwise its stored box. */
+export function effectiveWidgetSize(widget: Widget, ctx: WidgetRestContext): Size {
+  if (isWidgetResting(widget, ctx)) return restingTileSize(widget)
+  if (isWidgetRestExpanded(widget, ctx)) return expandedIconSize(widget)
+  return widget.size
 }
 
 /** The offset a card opens with, so it grows out of the middle of the tile it
@@ -169,6 +210,19 @@ export function restingFootprintWidget(widget: Widget): Widget {
 export function widgetWithEffectiveSize(widget: Widget, ctx: WidgetRestContext): Widget {
   if (isWidgetResting(widget, ctx)) return { ...widget, size: restingTileSize(widget) }
   const offset = restExpansionOffset(widget, ctx)
+  // A peeked icon is a full card on screen and an icon in the record. Consumers
+  // read this widget to draw and anchor, so it has to describe the card: an
+  // effective record still flagged `iconified` sent lines and rails to a little
+  // square in the middle of the card the user is actually looking at.
+  if (widget.iconified === true && isWidgetRestExpanded(widget, ctx)) {
+    return {
+      ...widget,
+      iconified: false,
+      size: expandedIconSize(widget),
+      expandedSize: undefined,
+      position: { x: widget.position.x + offset.x, y: widget.position.y + offset.y },
+    }
+  }
   if (offset.x === 0 && offset.y === 0) return widget
   return {
     ...widget,

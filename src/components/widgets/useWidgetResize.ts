@@ -193,6 +193,11 @@ export function useWidgetResize(
   const gestureAllowed = Boolean(
     widget &&
     !widget.metadata.locked &&
+    // A peeked-open icon is a full card on screen and an icon in the record,
+    // so this gesture has no honest box to work on: every path here writes to
+    // `size`, which for the length of the peek is the icon's own little
+    // square. Peeking is a view — pin the card first, then resize it.
+    !(restExpanded && widget.iconified === true) &&
     // A content-driven card has nothing to resize, but its OTHER scale states
     // still answer to the outline: the resting tile can be crushed into an
     // icon, and the icon scales continuously and escapes back out. Those are

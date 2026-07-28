@@ -130,11 +130,11 @@ describe('screen-space aura geometry', () => {
     expect(card.radiusX - card.radiusY).toBeCloseTo(120)
   })
 
-  it('changes halo depth mildly across zoom instead of scaling it linearly', () => {
+  it('scales halo depth proportionally across zoom so colors zoom with the board', () => {
     const far = auraScreenPool(240, 160, 0.4, VIEWPORT_WIDTH, VIEWPORT_HEIGHT, dark)
     const near = auraScreenPool(240, 160, 2, VIEWPORT_WIDTH, VIEWPORT_HEIGHT, dark)
     expect(near.halo).toBeGreaterThan(far.halo)
-    expect(near.halo / far.halo).toBeLessThan(2)
+    expect(near.halo / far.halo).toBeCloseTo(2 / 0.4)
   })
 
   it('uses an aspect-correct adaptive buffer instead of stretching a square', () => {

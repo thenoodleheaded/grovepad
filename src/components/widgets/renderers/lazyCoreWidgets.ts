@@ -22,7 +22,6 @@ export const GameTunerWidget = lazy(async () => ({ default: (await import('../mo
 export const GoalTrackerWidget = lazy(async () => ({ default: (await import('../modules/GoalTrackerWidget')).GoalTrackerWidget }))
 export const HabitWidget = lazy(async () => ({ default: (await import('../modules/HabitWidget')).HabitWidget }))
 export const KanbanWidget = lazy(async () => ({ default: (await import('../modules/KanbanWidget')).KanbanWidget }))
-export const LinkedListWidget = lazy(async () => ({ default: (await import('../modules/LinkedListWidget')).LinkedListWidget }))
 export const LinksWidget = lazy(async () => ({ default: (await import('../modules/LinksWidget')).LinksWidget }))
 export const MediaWidget = lazy(async () => ({ default: (await import('../modules/MediaWidget')).MediaWidget }))
 export const MeetingNotesWidget = lazy(async () => ({ default: (await import('../modules/MeetingNotesWidget')).MeetingNotesWidget }))
@@ -70,7 +69,6 @@ export const CORE_WIDGET_MODULE_LOADERS: ReadonlyArray<() => Promise<unknown>> =
   () => import('../modules/GoalTrackerWidget'),
   () => import('../modules/HabitWidget'),
   () => import('../modules/KanbanWidget'),
-  () => import('../modules/LinkedListWidget'),
   () => import('../modules/LinksWidget'),
   () => import('../modules/MediaWidget'),
   () => import('../modules/MeetingNotesWidget'),

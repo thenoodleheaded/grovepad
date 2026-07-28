@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { SlidersHorizontal, RotateCcw, X, Sparkles } from 'lucide-react'
+import { SlidersHorizontal, RotateCcw, X } from 'lucide-react'
 import { useUiTuningStore } from '../../store/useUiTuningStore'
 import { useOverlayLifecycle } from '../../store/useOverlayStore'
 import {
@@ -7,8 +7,6 @@ import {
   TUNE_CATEGORIES,
   type TuneField,
 } from './uiTuning'
-
-const ADVANCED_GLOW = import.meta.env.DEV
 
 const CHIP = 'rounded-full px-2.5 py-1 text-[11px] transition-colors'
 const NUM_INPUT =
@@ -51,12 +49,6 @@ export function UiTuningPanel() {
 
   const category = TUNE_CATEGORIES.find((c) => c.id === tab) ?? TUNE_CATEGORIES[0]
   const overrideCount = Object.keys(values).length
-
-  const openGlowTuner = () => {
-    // Lazily reach for the dev-only aura store without importing it at module
-    // scope, so the production bundle never pulls it in.
-    import('../../store/useAuraTuningStore').then((m) => m.useAuraTuningStore.getState().setOpen(true))
-  }
 
   return (
     <div
@@ -169,16 +161,6 @@ export function UiTuningPanel() {
             </div>
           )
         })}
-
-        {ADVANCED_GLOW && category?.id === TUNE_CATEGORIES[0]?.id && (
-          <button
-            type="button"
-            onClick={openGlowTuner}
-            className="mt-1 flex items-center justify-center gap-1.5 rounded-lg border gp-hairline py-1.5 text-[11px] text-neutral-400 transition-colors hover:bg-neutral-800 hover:text-neutral-200"
-          >
-            <Sparkles size={12} aria-hidden /> Advanced glow tuner
-          </button>
-        )}
       </div>
     </div>
   )

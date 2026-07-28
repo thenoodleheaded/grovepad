@@ -18,8 +18,8 @@ export function EmptyCanvasState() {
 
   if (!isEmpty || shaping) return null
 
-  // The canvas surface stays dark in both themes (--gp-surface-canvas), so the
-  // plate is painted once for a dark backdrop rather than branching on theme.
+  // The plate is authored for the dark backdrop; the light theme's bright
+  // canvas re-skins it in CSS ([data-theme='light'] .gp-empty-plate).
   return (
     <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center p-5">
       <section

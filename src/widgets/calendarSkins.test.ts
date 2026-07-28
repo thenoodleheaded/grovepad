@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { widgetDefinition } from './registry'
 
 describe('Calendar widget skins', () => {
-  it('offers all seven Calendar experiences through the skin field', () => {
+  it('offers all eight Calendar experiences through the skin field', () => {
     const definition = widgetDefinition('calendar')
     expect(definition.skinField).toBe('skin')
     expect(definition.skins?.map((skin) => skin.value)).toEqual([
@@ -13,6 +13,7 @@ describe('Calendar widget skins', () => {
       'availability',
       'shift_rota',
       'birthday_and_anniversary',
+      'connected_calendars',
     ])
   })
 
