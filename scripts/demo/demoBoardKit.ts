@@ -109,6 +109,14 @@ export interface TriggerSpec {
   edge?: 'rising' | 'falling' | 'change'
 }
 
+/** How a canvas arranges the groups handed to `column`. */
+export interface CanvasLayout {
+  /** Lanes to spread across. Defaults to four. */
+  lanes?: number
+  /** Give each group its own lane, in order, instead of balancing. */
+  strict?: boolean
+}
+
 export interface RelationSpec {
   from: string
   to: string
@@ -121,11 +129,19 @@ class DemoCanvas {
   readonly id: string
   private readonly board: DemoBoard
   private readonly slots = new Map<string, string>()
-  private cursorX = ORIGIN.x
+  /** Bottom edge reached so far in each lane. */
+  private readonly bottoms: number[]
+  /** Lane each placed widget landed in; x is resolved once the canvas is full. */
+  private readonly lane = new Map<string, number>()
+  private widest = 0
+  private readonly strict: boolean
+  private nextStrictLane = 0
 
-  constructor(board: DemoBoard, id: string) {
+  constructor(board: DemoBoard, id: string, options: CanvasLayout = {}) {
     this.board = board
     this.id = id
+    this.strict = options.strict === true
+    this.bottoms = new Array<number>(options.lanes ?? 4).fill(ORIGIN.y)
   }
 
   /** Resolve a slot name to the widget id it was placed under. */
@@ -136,43 +152,71 @@ class DemoCanvas {
   }
 
   /**
-   * Place one column of entries, top-aligned at `top`, starting at the current
-   * horizontal cursor. Each entry is either a card or a glue cluster; the
-   * column advances the cursor by its widest resting tile.
+   * Add one group of entries — cards and glue clusters — to the canvas.
+   *
+   * By default each group goes into whichever lane is currently shortest, so a
+   * canvas of wildly different tile heights still reads as one deliberate
+   * composition instead of a few tall cards beside a scatter of small ones. A
+   * `strict` canvas instead gives each group its own lane in order, which is
+   * what a circuit needs: inputs, then logic, then outputs, left to right.
    */
-  column(entries: ColumnEntry[], top = ORIGIN.y): this {
-    let y = top
-    let widest = 0
-    for (const entry of entries) {
-      if (isGlue(entry)) {
-        y += GLUE_TITLE_HEADROOM
+  column(entries: ColumnEntry[]): this {
+    const groups = this.strict ? [entries] : entries.map((entry) => [entry])
+    for (const group of groups) {
+      const lane = this.strict
+        ? Math.min(this.nextStrictLane++, this.bottoms.length - 1)
+        : this.shortestLane()
+      let y = this.bottoms[lane]!
+      for (const entry of group) {
+        const cards = isGlue(entry) ? entry.cards : [entry]
+        y += isGlue(entry) ? GLUE_TITLE_HEADROOM : WIDGET_TITLE_ROW
         const members: string[] = []
-        for (const [index, card] of entry.cards.entries()) {
-          const placed = this.placeCard(card, { x: this.cursorX, y })
-          // A welded member hands its name to the group frame and sits on a
-          // 0.3-cell seam. A pinned one takes its title strip back, which
-          // would prise the seam open — so only cards with a real resting
-          // tile may be glued.
-          if (placed.pinned) {
+        for (const [index, card] of cards.entries()) {
+          const widget = this.board.buildCard(card, this.id, { x: 0, y })
+          if (isGlue(entry) && widget.metadata.pinned === true) {
+            // A welded member hands its name to the group frame and sits on a
+            // 0.3-cell seam. A pinned one takes its title strip back, which
+            // would prise that seam open — so only cards with a real resting
+            // tile may be glued.
             throw new Error(
               `[${this.id}] "${card.title}" rests as a bare icon, so it cannot join the "${entry.glue}" cluster`,
             )
           }
-          members.push(placed.id)
-          widest = Math.max(widest, placed.tile.width)
-          y += placed.tile.height + (index === entry.cards.length - 1 ? 0 : GLUE_GAP)
+          this.place(card.key, widget, lane)
+          members.push(widget.id)
+          const box = this.board.footprint(widget)
+          this.widest = Math.max(this.widest, box.width)
+          y += box.height + (index === cards.length - 1 ? 0 : GLUE_GAP)
         }
-        this.board.addGlue(entry.glue, members)
-        y += STACK_GAP + WIDGET_TITLE_ROW
-        continue
+        if (isGlue(entry)) this.board.addGlue(entry.glue, members)
+        y += STACK_GAP
       }
-      y += WIDGET_TITLE_ROW
-      const placed = this.placeCard(entry, { x: this.cursorX, y })
-      widest = Math.max(widest, placed.tile.width)
-      y += placed.tile.height + STACK_GAP
+      this.bottoms[lane] = y
     }
-    this.cursorX += widest + COLUMN_GAP
     return this
+  }
+
+  /** Resolve every lane index into a world x, once the canvas is complete. */
+  settleLanes(): void {
+    const pitch = this.widest + COLUMN_GAP
+    for (const [id, lane] of this.lane) {
+      this.board.moveWidget(id, ORIGIN.x + lane * pitch)
+    }
+  }
+
+  private shortestLane(): number {
+    let lane = 0
+    for (let i = 1; i < this.bottoms.length; i++) {
+      if (this.bottoms[i]! < this.bottoms[lane]!) lane = i
+    }
+    return lane
+  }
+
+  private place(key: string, widget: Widget, lane: number): void {
+    if (this.slots.has(key)) throw new Error(`[${this.id}] duplicate card key "${key}"`)
+    this.slots.set(key, widget.id)
+    this.lane.set(widget.id, lane)
+    this.board.addWidget(widget)
   }
 
   rel(from: string, to: string, kind: RelationType = 'parent'): this {
@@ -196,17 +240,13 @@ class DemoCanvas {
     return this
   }
 
-  private placeCard(spec: CardSpec, position: { x: number; y: number }) {
-    if (this.slots.has(spec.key)) throw new Error(`[${this.id}] duplicate card key "${spec.key}"`)
-    const widget = this.board.buildCard(spec, this.id, position)
-    this.slots.set(spec.key, widget.id)
+  /** Record a built widget under its slot name and add it to the board. */
+  private register(key: string, widget: Widget): void {
+    if (this.slots.has(key)) throw new Error(`[${this.id}] duplicate card key "${key}"`)
+    this.slots.set(key, widget.id)
     this.board.addWidget(widget)
-    return {
-      id: widget.id,
-      tile: this.board.footprint(widget),
-      pinned: widget.metadata.pinned === true,
-    }
   }
+
 }
 
 // ---------------------------------------------------------------------------
@@ -220,6 +260,7 @@ export class DemoBoard {
   private readonly glues: Record<string, WidgetGlue> = {}
   private readonly workspaceName: string
   private readonly rootCanvasId: string
+  private readonly surfaces: DemoCanvas[] = []
   private counter = 0
 
   constructor(workspaceName: string, rootCanvasName: string) {
@@ -235,11 +276,13 @@ export class DemoBoard {
   }
 
   /** The workspace's root canvas, as a placeable surface. */
-  root(): DemoCanvas {
-    return new DemoCanvas(this, this.rootCanvasId)
+  root(layout: CanvasLayout = {}): DemoCanvas {
+    const canvas = new DemoCanvas(this, this.rootCanvasId, layout)
+    this.surfaces.push(canvas)
+    return canvas
   }
 
-  canvas(name: string, parent: DemoCanvas | null = null): DemoCanvas {
+  canvas(name: string, parent: DemoCanvas | null = null, layout: CanvasLayout = {}): DemoCanvas {
     const id = this.mintCanvasId(name)
     this.canvases[id] = {
       id,
@@ -247,7 +290,9 @@ export class DemoBoard {
       workspaceId: this.workspaceId,
       parentCanvasId: parent ? parent.id : this.rootCanvasId,
     }
-    return new DemoCanvas(this, id)
+    const canvas = new DemoCanvas(this, id, layout)
+    this.surfaces.push(canvas)
+    return canvas
   }
 
   /** Point a placed `canvas_node` card at the canvas it opens. */
@@ -324,6 +369,12 @@ export class DemoBoard {
 
   addWidget(widget: Widget): void {
     this.widgets[widget.id] = widget
+  }
+
+  /** Set a placed widget's final world x, once its canvas knows its pitch. */
+  moveWidget(id: string, x: number): void {
+    const widget = this.widgets[id]
+    if (widget) widget.position = { ...widget.position, x }
   }
 
   addGlue(name: string, widgetIds: string[]): void {
@@ -447,6 +498,7 @@ export class DemoBoard {
   }
 
   toState(): PersistedBoardState {
+    for (const surface of this.surfaces) surface.settleLanes()
     this.assertNoOverlap()
     const workspace: Workspace = {
       id: this.workspaceId,

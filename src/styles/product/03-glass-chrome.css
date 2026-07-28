@@ -602,8 +602,8 @@ html[data-motion='reduced'] *::after {
   background:
     radial-gradient(70% 65% at 50% 30%, rgb(40 72 50 / 0.18), transparent 72%),
     rgb(0 0 0 / 0.65);
-  backdrop-filter: blur(28px) saturate(0.75);
-  -webkit-backdrop-filter: blur(28px) saturate(0.75);
+  backdrop-filter: blur(24px) saturate(0.75);
+  -webkit-backdrop-filter: blur(24px) saturate(0.75);
 }
 
 .gp-settings-overlay[data-state='open'] {
@@ -642,27 +642,13 @@ html[data-motion='reduced'] *::after {
 }
 
 @keyframes gp-settings-backdrop-in {
-  from {
-    background-color: rgb(0 0 0 / 0);
-    backdrop-filter: blur(0) saturate(1);
-    -webkit-backdrop-filter: blur(0) saturate(1);
-  }
-  to {
-    backdrop-filter: blur(28px) saturate(0.75);
-    -webkit-backdrop-filter: blur(28px) saturate(0.75);
-  }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 @keyframes gp-settings-backdrop-out {
-  from {
-    backdrop-filter: blur(28px) saturate(0.75);
-    -webkit-backdrop-filter: blur(28px) saturate(0.75);
-  }
-  to {
-    background-color: rgb(0 0 0 / 0);
-    backdrop-filter: blur(0) saturate(1);
-    -webkit-backdrop-filter: blur(0) saturate(1);
-  }
+  from { opacity: 1; }
+  to { opacity: 0; }
 }
 
 @keyframes gp-settings-shell-in {

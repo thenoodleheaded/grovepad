@@ -124,15 +124,17 @@ const VIOLET = '#c084fc'
 export function buildLaunchShowcase(): DemoBoard {
   const board = new DemoBoard('Grovepad Showcase', 'Launch Board')
 
-  const hub = board.root()
-  const school = board.canvas('Semester HQ', hub)
-  const sprint = board.canvas('Exam Sprint', school)
-  const vault = board.canvas('Lecture Vault', school)
-  const money = board.canvas('Money Center', hub)
-  const freelance = board.canvas('Freelance Studio', money)
-  const life = board.canvas('Life Systems', hub)
-  const studio = board.canvas('Studio', hub)
-  const lab = board.canvas('Automation Lab', hub)
+  const hub = board.root({ lanes: 3 })
+  const school = board.canvas('Semester HQ', hub, { lanes: 4 })
+  // The two circuit canvases read left to right — inputs, logic, outputs — so
+  // their groups keep their own lanes rather than being balanced.
+  const sprint = board.canvas('Exam Sprint', school, { lanes: 4, strict: true })
+  const vault = board.canvas('Lecture Vault', school, { lanes: 3 })
+  const money = board.canvas('Money Center', hub, { lanes: 4 })
+  const freelance = board.canvas('Freelance Studio', money, { lanes: 4 })
+  const life = board.canvas('Life Systems', hub, { lanes: 4 })
+  const studio = board.canvas('Studio', hub, { lanes: 4 })
+  const lab = board.canvas('Automation Lab', hub, { lanes: 4, strict: true })
 
   // -- 1. Launch Board — the hub --------------------------------------------
 
