@@ -498,6 +498,9 @@ export function SettingsPanel() {
             </div>
           </main>
         </div>
+        <p className="pointer-events-none absolute bottom-4 left-1/2 z-20 -translate-x-1/2 select-none whitespace-nowrap text-center text-xs font-medium tracking-wide text-neutral-400/80">
+          grovepad. planted by The FlyingMount.
+        </p>
       </div>
     </div>,
     document.body,

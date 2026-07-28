@@ -12,10 +12,10 @@
   --gp-duration-snap: var(--gp-tune-snap, 150ms);
   --gp-ease-snap: cubic-bezier(0.2, 0.82, 0.2, 1);
   --gp-ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
-  --gp-surface-canvas: #1b1f1c;
+  --gp-surface-canvas: #000000;
   /* Base the workspace-tint mix starts from — dark in dark mode, light in
      light mode. The canvas element mixes 3% of the workspace accent into it. */
-  --gp-canvas-tint-base: #141815;
+  --gp-canvas-tint-base: #000000;
   --gp-surface-panel: oklch(15% 0.008 148 / 0.96);
   --gp-focus: oklch(88% 0.31 136 / 0.72);
   /* Customizer Defaults — light-theme widget glass stays warm charcoal (the

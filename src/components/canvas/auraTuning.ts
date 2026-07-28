@@ -71,7 +71,7 @@ export const DEFAULT_AURA_TUNING: AuraTuning = {
 
 const DEFAULT_CANVAS_COLORS: { dark: CanvasColorTuning; light: CanvasColorTuning } = {
   dark: {
-    canvasTintBase: '#0a0a0a',
+    canvasTintBase: '#000000',
     gridFine: 'rgb(163 230 53 / 0.13)',
   },
   light: {

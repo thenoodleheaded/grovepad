@@ -601,9 +601,9 @@ html[data-motion='reduced'] *::after {
   border: 0;
   background:
     radial-gradient(70% 65% at 50% 30%, rgb(40 72 50 / 0.18), transparent 72%),
-    rgb(0 0 0 / 0.58);
-  backdrop-filter: blur(18px) saturate(0.78);
-  -webkit-backdrop-filter: blur(18px) saturate(0.78);
+    rgb(0 0 0 / 0.65);
+  backdrop-filter: blur(28px) saturate(0.75);
+  -webkit-backdrop-filter: blur(28px) saturate(0.75);
 }
 
 .gp-settings-overlay[data-state='open'] {
@@ -648,15 +648,15 @@ html[data-motion='reduced'] *::after {
     -webkit-backdrop-filter: blur(0) saturate(1);
   }
   to {
-    backdrop-filter: blur(18px) saturate(0.78);
-    -webkit-backdrop-filter: blur(18px) saturate(0.78);
+    backdrop-filter: blur(28px) saturate(0.75);
+    -webkit-backdrop-filter: blur(28px) saturate(0.75);
   }
 }
 
 @keyframes gp-settings-backdrop-out {
   from {
-    backdrop-filter: blur(18px) saturate(0.78);
-    -webkit-backdrop-filter: blur(18px) saturate(0.78);
+    backdrop-filter: blur(28px) saturate(0.75);
+    -webkit-backdrop-filter: blur(28px) saturate(0.75);
   }
   to {
     background-color: rgb(0 0 0 / 0);
