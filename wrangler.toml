@@ -1,5 +1,11 @@
 name = "grovepad"
 compatibility_date = "2025-01-01"
+workers_dev = true
+
+routes = [
+  { pattern = "grovepad.app/*", zone_name = "grovepad.app" },
+  { pattern = "www.grovepad.app/*", zone_name = "grovepad.app" }
+]
 
 [assets]
 directory = "./dist"
