@@ -1,0 +1,212 @@
+/*
+  Shared stylesheet for Grovepad's static pages — privacy, terms, refunds,
+  support, pricing, help. These pages are plain HTML served straight from the
+  asset directory: they must render with no JavaScript, no font download and no
+  build step, because a checkout page and a legal page have to work even when
+  the app bundle does not.
+
+  The palette mirrors the app shell (pitch-black canvas, emerald accent) and
+  answers the reader's own light/dark preference.
+*/
+
+:root {
+  color-scheme: dark light;
+
+  --page-bg: #080a09;
+  --page-surface: #101312;
+  --page-border: #232826;
+  --page-ink: #e5e5e5;
+  --page-ink-strong: #fafafa;
+  --page-ink-soft: #8b8b8b;
+  --page-accent: #10b981;
+  --page-accent-ink: #34d399;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --page-bg: #f7f8f7;
+    --page-surface: #ffffff;
+    --page-border: #e2e5e3;
+    --page-ink: #26302b;
+    --page-ink-strong: #111814;
+    --page-ink-soft: #5d6862;
+    --page-accent: #047857;
+    --page-accent-ink: #047857;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--page-bg);
+  color: var(--page-ink);
+  font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial,
+    sans-serif;
+  font-size: 1rem;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+}
+
+.page {
+  max-width: 44rem;
+  margin: 0 auto;
+  padding: 3rem 1.5rem 5rem;
+}
+
+.page-nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1.25rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid var(--page-border);
+  margin-bottom: 2.5rem;
+}
+
+.page-nav a {
+  color: var(--page-ink-soft);
+  font-size: 0.8125rem;
+  text-decoration: none;
+}
+
+.page-nav a:hover {
+  color: var(--page-ink-strong);
+}
+
+.page-nav .page-mark {
+  margin-right: auto;
+  color: var(--page-ink-strong);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+h1 {
+  margin: 0 0 0.5rem;
+  color: var(--page-ink-strong);
+  font-size: clamp(1.75rem, 5vw, 2.25rem);
+  font-weight: 650;
+  line-height: 1.2;
+  letter-spacing: -0.015em;
+}
+
+h2 {
+  margin: 2.75rem 0 0.75rem;
+  color: var(--page-ink-strong);
+  font-size: 1.1875rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+h3 {
+  margin: 1.75rem 0 0.5rem;
+  color: var(--page-ink-strong);
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+p,
+li {
+  margin: 0 0 1rem;
+}
+
+ul,
+ol {
+  margin: 0 0 1rem;
+  padding-left: 1.25rem;
+}
+
+li {
+  margin-bottom: 0.5rem;
+}
+
+a {
+  color: var(--page-accent-ink);
+  text-underline-offset: 0.2em;
+}
+
+strong {
+  color: var(--page-ink-strong);
+  font-weight: 600;
+}
+
+.page-lede {
+  margin-bottom: 2rem;
+  color: var(--page-ink-soft);
+  font-size: 1.0625rem;
+}
+
+.page-meta {
+  margin-bottom: 2.5rem;
+  color: var(--page-ink-soft);
+  font-size: 0.8125rem;
+}
+
+.page-callout {
+  margin: 1.5rem 0;
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--page-border);
+  border-left: 3px solid var(--page-accent);
+  border-radius: 0.5rem;
+  background: var(--page-surface);
+}
+
+.page-callout p:last-child {
+  margin-bottom: 0;
+}
+
+table {
+  width: 100%;
+  margin: 1.5rem 0;
+  border-collapse: collapse;
+  font-size: 0.9375rem;
+}
+
+th,
+td {
+  padding: 0.625rem 0.75rem;
+  border-bottom: 1px solid var(--page-border);
+  text-align: left;
+  vertical-align: top;
+}
+
+th {
+  color: var(--page-ink-strong);
+  font-weight: 600;
+}
+
+.page-table-scroll {
+  overflow-x: auto;
+}
+
+.page-footer {
+  margin-top: 4rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--page-border);
+  color: var(--page-ink-soft);
+  font-size: 0.8125rem;
+}
+
+.page-footer a {
+  color: var(--page-ink-soft);
+}
+
+.page-button {
+  display: inline-block;
+  margin: 0.25rem 0;
+  padding: 0.625rem 1.125rem;
+  border-radius: 0.5rem;
+  background: var(--page-accent);
+  color: #ffffff;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.page-button:hover {
+  filter: brightness(1.08);
+}

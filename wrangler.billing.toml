@@ -1,0 +1,53 @@
+# The billing Worker.
+#
+# Deliberately its own deployment, separate from both the static site
+# (wrangler.toml) and the Canvas relay (wrangler.canvas-relay.toml). It is the
+# only place SUPABASE_SERVICE_ROLE_KEY exists, and that key bypasses every
+# row-level security policy in the database, so its blast radius is kept to a
+# Worker that does exactly two things and talks to exactly two hosts.
+#
+# Deploy:  npm run deploy:billing
+#
+# Secrets — set with `wrangler secret put <NAME> --config wrangler.billing.toml`,
+# never in this file, which is committed:
+#
+#   POLAR_WEBHOOK_SECRET        Endpoint secret from Polar (starts whsec_)
+#   POLAR_ACCESS_TOKEN          Organization access token, checkouts:write scope
+#   SUPABASE_SERVICE_ROLE_KEY   Supabase → Settings → API → service_role
+#   SUPABASE_ANON_KEY           Supabase → Settings → API → anon/publishable
+#
+# After deploying, point Polar's webhook endpoint at:
+#   https://grovepad.app/api/billing/webhook
+
+name = "grovepad-billing"
+main = "worker/billingWorker.ts"
+compatibility_date = "2026-07-28"
+workers_dev = false
+
+routes = [
+  { pattern = "grovepad.app/api/billing/*", zone_name = "grovepad.app" },
+  { pattern = "www.grovepad.app/api/billing/*", zone_name = "grovepad.app" }
+]
+
+# Nightly at 03:17 UTC. An odd minute rather than the hour: every cron on the
+# platform fires at :00, and the reconciliation has no reason to queue behind
+# them.
+[triggers]
+crons = ["17 3 * * *"]
+
+[vars]
+SUPABASE_URL = "https://YOUR_PROJECT_REF.supabase.co"
+GROVEPAD_SITE_ORIGIN = "https://grovepad.app"
+# https://api.polar.sh for live, https://sandbox-api.polar.sh while testing.
+POLAR_API_BASE = "https://api.polar.sh"
+# Product ids from Polar → Products. Until these are filled in, the checkout
+# endpoint answers 503 "That plan is not available yet" rather than charging
+# anyone for the wrong thing.
+# Grovepad Air Annual — $59.99/yr
+POLAR_PRODUCT_AIR_YEARLY = ""
+# Grovepad Air — $8.99/mo
+POLAR_PRODUCT_AIR_MONTHLY = ""
+# Grovepad Air Annual - Student — $19.99/yr
+POLAR_PRODUCT_AIR_STUDENT_YEARLY = ""
+# Grovepad Air Student — $4.99/mo
+POLAR_PRODUCT_AIR_STUDENT_MONTHLY = ""

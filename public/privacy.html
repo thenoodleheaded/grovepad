@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link
+      rel="icon"
+      type="image/png"
+      href="/favicon-dark.png"
+      media="(prefers-color-scheme: dark)"
+    />
+    <link rel="stylesheet" href="/pages.css" />
+    <meta name="theme-color" content="#080a09" />
+    <meta name="color-scheme" content="dark light" />
+    <title>Privacy — Grovepad</title>
+    <meta
+      name="description"
+      content="What Grovepad stores, what it never stores, and how to get your data out. Grovepad is local-first: without an account, nothing leaves your device."
+    />
+    <link rel="canonical" href="https://grovepad.app/privacy" />
+  </head>
+  <body>
+    <main class="page">
+      <nav class="page-nav">
+        <a class="page-mark" href="/">Grovepad</a>
+        <a href="/privacy">Privacy</a>
+        <a href="/terms">Terms</a>
+        <a href="/refunds">Refunds</a>
+        <a href="/support">Support</a>
+      </nav>
+
+      <h1>Privacy</h1>
+      <p class="page-lede">
+        Grovepad is built local-first. The short version: if you do not sign in, nothing you make
+        ever leaves your device. If you do sign in, we store the boards you asked us to sync and
+        almost nothing else.
+      </p>
+      <p class="page-meta">Last updated: 12 August 2026</p>
+
+      <h2>The short version</h2>
+      <ul>
+        <li>Your boards are stored on your own device first. That is the real copy.</li>
+        <li>
+          There is no advertising and no advertising tracker anywhere in Grovepad. We do not build
+          a profile of you.
+        </li>
+        <li>
+          We count one thing — that the app was opened — and you can switch even that off in
+          Settings. It is described in full <a href="#usage-counting">below</a>.
+        </li>
+        <li>We never sell or rent your data, and we never train anything on your boards.</li>
+        <li>You can export everything, at any time, for free, in open formats.</li>
+        <li>You can delete your account and your cloud data whenever you want.</li>
+      </ul>
+
+      <h2>Using Grovepad without an account</h2>
+      <p>
+        Guest mode is a real mode, not a trial. Your boards live in your browser's own storage on
+        that device. We do not receive them, cannot read them, and do not know they exist. If you
+        clear your browser storage or uninstall the app, they are gone — so export a copy if they
+        matter to you.
+      </p>
+      <p>
+        In guest mode the only network requests Grovepad makes are for the app files themselves,
+        the anonymous open count described below, and any optional integration you deliberately
+        turn on (also below).
+      </p>
+
+      <h2>What we store when you sign in</h2>
+      <p>Signing in creates an account so your boards can sync between your devices. We store:</p>
+      <ul>
+        <li>
+          <strong>Your account.</strong> Your email address and the sign-in identity your provider
+          gives us, plus a display name and a profile colour if you set them.
+        </li>
+        <li>
+          <strong>Your synced boards.</strong> The contents of the canvases you sync — widgets,
+          text, numbers, layout — stored as compressed documents.
+        </li>
+        <li>
+          <strong>Attachments.</strong> Pictures, audio, video and PDFs you drop onto a board.
+        </li>
+        <li>
+          <strong>Version history.</strong> Earlier snapshots of your boards, so you can go back.
+        </li>
+        <li>
+          <strong>Shared-canvas records.</strong> For a canvas you share, who is invited and what
+          they are allowed to do, plus the live editing state and any comments.
+        </li>
+        <li>
+          <strong>Subscription status.</strong> Whether your plan is trialling, active, or lapsed,
+          when the current period ends, and the customer identifier our payment provider gives us.
+        </li>
+      </ul>
+      <p>
+        Boards you have not chosen to sync stay on your device. Sharing is opt-in per canvas: a
+        private canvas is never registered with the server and its contents are never uploaded.
+      </p>
+
+      <h2>What we do not store</h2>
+      <ul>
+        <li>
+          <strong>Card numbers.</strong> We never see them. Payment details go directly to our
+          payment provider (below).
+        </li>
+        <li><strong>Your password</strong>, if you sign in with a provider that handles it.</li>
+        <li>
+          <strong>Your location</strong>, your contacts, your browsing history, or your device
+          identifiers.
+        </li>
+        <li>
+          <strong>Behavioural analytics.</strong> We do not record which widgets you use, what you
+          type, how long you stay, where you click, or what your boards are called. The single
+          usage event we do send is described below.
+        </li>
+      </ul>
+
+      <h2 id="usage-counting">Usage counting</h2>
+      <p>
+        Grovepad counts how many times the app is opened, and nothing else. This is how we know
+        whether anyone is using it — there is no other measurement anywhere in the product.
+      </p>
+      <ul>
+        <li>
+          <strong>Exactly one event exists</strong>, called <code>app_opened</code>. The only
+          detail we add to it is whether you opened Grovepad in a browser or as the installed app.
+        </li>
+        <li>
+          <strong>PostHog attaches what any website already sees:</strong> your browser and
+          operating system, the address of the page, and a rough country worked out from your
+          internet address. We have told PostHog to discard the address itself rather than store
+          it.
+        </li>
+        <li>
+          <strong>A random number is kept on your device</strong> so that opening the app twice is
+          not counted as two people. It is not linked to your account, your email, or anything you
+          have made, and clearing your browser storage throws it away.
+        </li>
+        <li>
+          <strong>It never carries content.</strong> No board text, no widget contents, no
+          filenames, no board or canvas names, no identifiers of things you made.
+        </li>
+        <li>
+          <strong>You can turn it off</strong> in Settings. It is on by default. When it is off,
+          the analytics code is never even downloaded — there is no request to block, because no
+          request is made.
+        </li>
+        <li>
+          <strong>We honour your browser's refusal.</strong> If you have Do Not Track or Global
+          Privacy Control switched on, counting does not run regardless of the Settings toggle.
+        </li>
+      </ul>
+      <p>
+        The counting is done by PostHog. If we ever add a second event, this list gets longer on
+        the same day — the events are enumerated here by name precisely so that cannot happen
+        quietly.
+      </p>
+
+      <h2>Companies that process data for us</h2>
+      <div class="page-table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Who</th>
+              <th>What they do</th>
+              <th>What they can see</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Supabase</td>
+              <td>Accounts, sign-in, database, live collaboration</td>
+              <td>Your account record and your synced board documents</td>
+            </tr>
+            <tr>
+              <td>Cloudflare</td>
+              <td>Serving the app, and storing attachments and board files</td>
+              <td>Standard web request logs, and the stored files</td>
+            </tr>
+            <tr>
+              <td>Polar</td>
+              <td>Selling and billing the subscription as merchant of record</td>
+              <td>Your billing details and purchase history — not your boards</td>
+            </tr>
+            <tr>
+              <td>PostHog</td>
+              <td>Counting app opens, if you leave usage counting on</td>
+              <td>That the app was opened, and on which surface — nothing else</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        Polar is the legal seller of Grovepad Air. That means Polar handles the payment, the
+        invoice, and the sales tax or VAT, and holds your billing information under
+        <a href="https://polar.sh/legal/privacy" rel="noreferrer">its own privacy policy</a>. We
+        receive only the fact that you have a subscription, when it renews, and an identifier to
+        match it to your account.
+      </p>
+
+      <h2>Optional things you turn on yourself</h2>
+      <p>These are off until you switch them on, and each one only sends what it needs to:</p>
+      <ul>
+        <li>
+          <strong>On-device AI.</strong> The built-in local model runs entirely inside your browser.
+          Your text is never sent anywhere.
+        </li>
+        <li>
+          <strong>Your own AI key.</strong> If you paste an API key from another provider, requests
+          go from your device to that provider under their terms. We do not proxy or store them.
+        </li>
+        <li>
+          <strong>Canvas LMS.</strong> Your school access token is stored on your device and passed
+          through our server only to reach your school's Canvas site. We do not keep the token or
+          the coursework.
+        </li>
+        <li>
+          <strong>Calendar.</strong> If you connect a calendar, we read the events you asked for to
+          show them on a board.
+        </li>
+      </ul>
+
+      <h2>Getting your data out</h2>
+      <p>
+        Export is free, always, on every plan, and it will never be put behind a payment. You can
+        export any board to JSON or Markdown from inside the app. Those are open formats you can
+        read without Grovepad. We consider this a promise, not a feature.
+      </p>
+
+      <h2>How long we keep things</h2>
+      <ul>
+        <li>
+          <strong>While your account is open:</strong> we keep your synced boards, attachments, and
+          version history so they are there when you open the app.
+        </li>
+        <li>
+          <strong>If a paid plan lapses:</strong> your cloud copies are kept and remain downloadable
+          for 90 days, with warnings inside the app, and are then deleted. Your local boards are
+          untouched and stay fully editable.
+        </li>
+        <li>
+          <strong>If you delete your account:</strong> your account record, synced boards,
+          attachments, version history and comments are deleted. Backups roll off within 30 days.
+        </li>
+        <li>
+          <strong>Billing records</strong> are kept by Polar for as long as tax law requires them
+          to be kept.
+        </li>
+      </ul>
+
+      <h2>Your rights</h2>
+      <p>
+        Wherever you live, you can ask us to show you what we hold, correct it, delete it, or hand
+        it to you in a portable format. In practice, export and account deletion inside the app do
+        all three faster than we could by email — but write to us and we will do it by hand if you
+        prefer. We reply within two working days.
+      </p>
+      <p>
+        If you are in the UK or the European Economic Area, you also have the right to complain to
+        your local data protection authority.
+      </p>
+
+      <h2>Children</h2>
+      <p>
+        Grovepad is not directed at children under 13, and we do not knowingly create accounts for
+        them. Guest mode requires no account at all. If you believe a child has an account with us,
+        write to us and we will delete it.
+      </p>
+
+      <h2>Security</h2>
+      <p>
+        Traffic is encrypted in transit. Stored board documents and attachments are encrypted at
+        rest by our hosting providers. Access to a shared canvas is enforced by the database itself,
+        not just by the app, so removing someone removes their access to the pictures on that board
+        in the same act. No system is perfect; if we ever have a breach that affects you, we will
+        tell you directly and promptly.
+      </p>
+
+      <h2>Changes to this policy</h2>
+      <p>
+        If we change something that matters, we will say so in the app before it takes effect, not
+        quietly edit this page. The date at the top always reflects the current version.
+      </p>
+
+      <h2>Contact</h2>
+      <p>
+        Email <a href="mailto:support@grovepad.app">support@grovepad.app</a>. A person reads it.
+      </p>
+
+      <div class="page-footer">
+        <p>
+          <a href="/">Grovepad</a> · <a href="/terms">Terms</a> ·
+          <a href="/refunds">Refunds</a> · <a href="/support">Support</a>
+        </p>
+      </div>
+    </main>
+  </body>
+</html>

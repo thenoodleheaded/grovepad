@@ -10,6 +10,7 @@ import { initNetworkStatusRuntime, registerProductionOfflineShell } from './netw
 import { useAuthStore } from '../store/useAuthStore'
 import { useCollaborationStore } from '../store/useCollaborationStore'
 import { initMcpBridgeRuntime } from './mcpBridgeRuntime'
+import { initSubscriptionRuntime } from './subscriptionRuntime'
 
 /** Combine service disposers into one idempotent application boundary. */
 export function composeRuntimeDisposer(disposers: readonly (() => void)[]): () => void {
@@ -78,6 +79,12 @@ const appRuntime = createRuntimeBoundary(() => [
       : undefined,
   }),
   initMcpBridgeRuntime(),
+  // ORDER CONTRACT: initSubscriptionRuntime must start before
+  // initSignedInCollaboration. Hosting a shared board is gated on the account's
+  // entitlement, so the entitlement has to be adopted before a session can ask
+  // for it. Starting the other way round reads the free default for one tick
+  // and refuses a paying host their own board.
+  initSubscriptionRuntime(),
   initSignedInCollaboration(),
 ])
 
