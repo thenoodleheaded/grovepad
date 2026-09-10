@@ -52,8 +52,8 @@ targets:
           - UIInterfaceOrientationPortraitUpsideDown
           - UIInterfaceOrientationLandscapeLeft
           - UIInterfaceOrientationLandscapeRight
-        CFBundleShortVersionString: 0.1.0
-        CFBundleVersion: "0.1.0"
+        CFBundleShortVersionString: 1.0.0
+        CFBundleVersion: "1"
         # Required: the Location widget calls navigator.geolocation. Without a
         # purpose string iOS terminates the process instead of prompting.
         NSLocationWhenInUseUsageDescription: Grovepad asks for your location only when you use a Location widget to drop your current position onto a board. It is never collected in the background.
@@ -107,8 +107,8 @@ targets:
       path: GrovepadNoteWidget/Info.plist
       properties:
         CFBundleDisplayName: Grovepad Note
-        CFBundleShortVersionString: 0.1.0
-        CFBundleVersion: "0.1.0"
+        CFBundleShortVersionString: 1.0.0
+        CFBundleVersion: "1"
         NSExtension:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension
     entitlements:

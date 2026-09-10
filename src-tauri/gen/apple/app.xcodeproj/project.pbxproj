@@ -13,7 +13,6 @@
 		3036F7131E55779ABF15BD58 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 02B7F8347F94B067E6B27396 /* LaunchScreen.storyboard */; };
 		31585529C029A01BE249A285 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1E81BD6B453D87B7F7B1597B /* CoreGraphics.framework */; };
 		324A1E9A4258E7911D4DAC39 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9FACFFCB6E3743955F72464C /* Security.framework */; };
-		36C1893A7382FCD5A6A74845 /* libapp.a in Resources */ = {isa = PBXBuildFile; fileRef = CF674524E34966183631754E /* libapp.a */; };
 		5022D556349CF7185A0A6212 /* GrovepadNoteWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4EBA22063EDBB94F8A201D7 /* GrovepadNoteWidget.swift */; };
 		53CDD0ACFBE8BDF1550B2E53 /* main.mm in Sources */ = {isa = PBXBuildFile; fileRef = 682535EEFE1DA20BE07B123C /* main.mm */; };
 		5C516481BCA83A182C2BCC94 /* assets in Resources */ = {isa = PBXBuildFile; fileRef = 3842AE2A64FB9933D0400EA4 /* assets */; };
@@ -68,7 +67,6 @@
 		9FACFFCB6E3743955F72464C /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
 		AF1DE57E7D9CF13BB2E0E038 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		CE1209BFDECB28E00189B168 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
-		CF674524E34966183631754E /* libapp.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libapp.a; sourceTree = "<group>"; };
 		D4EBA22063EDBB94F8A201D7 /* GrovepadNoteWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GrovepadNoteWidget.swift; sourceTree = "<group>"; };
 		D8F57162F5CC7AEDD55F173D /* WebKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WebKit.framework; path = System/Library/Frameworks/WebKit.framework; sourceTree = SDKROOT; };
 		F3673D372C5ABDD1AD6E7067 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
@@ -128,22 +126,6 @@
 			path = bindings;
 			sourceTree = "<group>";
 		};
-		5F72359403FB561BE1489F63 /* debug */ = {
-			isa = PBXGroup;
-			children = (
-				CF674524E34966183631754E /* libapp.a */,
-			);
-			path = debug;
-			sourceTree = "<group>";
-		};
-		70DD658F1D4B0FED51A79854 /* arm64 */ = {
-			isa = PBXGroup;
-			children = (
-				5F72359403FB561BE1489F63 /* debug */,
-			);
-			path = arm64;
-			sourceTree = "<group>";
-		};
 		78CBE3E5873199C0066F12DF /* Sources */ = {
 			isa = PBXGroup;
 			children = (
@@ -191,7 +173,6 @@
 		BAFB695BB8415511FEC74542 /* Externals */ = {
 			isa = PBXGroup;
 			children = (
-				70DD658F1D4B0FED51A79854 /* arm64 */,
 			);
 			path = Externals;
 			sourceTree = "<group>";
@@ -212,13 +193,6 @@
 				329C38BE5E8B40354375D0D0 /* bindings */,
 			);
 			path = app;
-			sourceTree = "<group>";
-		};
-		"TEMP_02C455E3-E88B-4967-8403-01D54FD5072A" /* x86_64 */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = x86_64;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -318,7 +292,6 @@
 				3036F7131E55779ABF15BD58 /* LaunchScreen.storyboard in Resources */,
 				27BDE3A69F6E324AA019B8E2 /* PrivacyInfo.xcprivacy in Resources */,
 				5C516481BCA83A182C2BCC94 /* assets in Resources */,
-				36C1893A7382FCD5A6A74845 /* libapp.a in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
