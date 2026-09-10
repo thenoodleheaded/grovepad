@@ -52,3 +52,51 @@ describe('auth initialization lifecycle', () => {
     expect(accountProfileColor(useAuthStore.getState().session)).toBe('#a78bfa')
   })
 })
+
+describe('deleting the account', () => {
+  it('asks the server first, then forgets the account on this device', async () => {
+    const rpc = vi.fn(async () => ({ error: null }))
+    const signOut = vi.fn(async () => ({ error: null }))
+    const clearLocalAccountData = vi.fn(async () => undefined)
+    vi.doMock('../lib/supabase', () => ({
+      supabaseConfigured: true,
+      getSupabaseClient: async () => ({ rpc, auth: { signOut } }),
+    }))
+    vi.doMock('../utils/signOutTeardown', () => ({ clearLocalAccountData }))
+    const { useAuthStore } = await import('./useAuthStore')
+    useAuthStore.setState({
+      session: { user: { id: 'person-1', email: 'person@example.com', user_metadata: {} } } as never,
+      rememberedAccount: { id: 'person-1', name: 'Mira', color: '#a78bfa' },
+    })
+
+    await useAuthStore.getState().deleteAccount()
+
+    // No argument: the function reads auth.uid() server-side, so a caller can
+    // never name somebody else's account.
+    expect(rpc).toHaveBeenCalledWith('delete_own_account')
+    expect(clearLocalAccountData).toHaveBeenCalled()
+    expect(useAuthStore.getState()).toMatchObject({ session: null, isGuest: false, rememberedAccount: null })
+  })
+
+  it('keeps the boards on this device when the server refuses to delete', async () => {
+    const rpc = vi.fn(async () => ({ error: { message: 'network unreachable' } }))
+    const signOut = vi.fn(async () => ({ error: null }))
+    const clearLocalAccountData = vi.fn(async () => undefined)
+    vi.doMock('../lib/supabase', () => ({
+      supabaseConfigured: true,
+      getSupabaseClient: async () => ({ rpc, auth: { signOut } }),
+    }))
+    vi.doMock('../utils/signOutTeardown', () => ({ clearLocalAccountData }))
+    const { useAuthStore } = await import('./useAuthStore')
+    const session = { user: { id: 'person-1', email: 'person@example.com', user_metadata: {} } } as never
+    useAuthStore.setState({ session })
+
+    await expect(useAuthStore.getState().deleteAccount()).rejects.toThrow('network unreachable')
+
+    // The whole point of deleting server-side first: a failed deletion must not
+    // cost somebody their boards, and must leave them still signed in.
+    expect(clearLocalAccountData).not.toHaveBeenCalled()
+    expect(signOut).not.toHaveBeenCalled()
+    expect(useAuthStore.getState().session).toBe(session)
+  })
+})

@@ -10,6 +10,7 @@ import { rememberExternalCalendarToken } from '../services/externalCalendarServi
 // ---------------------------------------------------------------------------
 
 const GUEST_KEY = 'grovepad:guest:v1'
+const LAST_ACCOUNT_KEY = 'grovepad:auth:last-account:v1'
 
 function loadGuestChoice(): boolean {
   try {
@@ -19,17 +20,61 @@ function loadGuestChoice(): boolean {
   }
 }
 
+/**
+ * The account that was signed in last time, kept so a boot that cannot reach
+ * the auth server does not look like a sign-out. Written on every successful
+ * session and erased only when somebody actually signs out.
+ */
+export interface RememberedAccount {
+  id: string
+  name: string
+  color: string
+}
+
+function loadRememberedAccount(): RememberedAccount | null {
+  try {
+    const raw = localStorage.getItem(LAST_ACCOUNT_KEY)
+    if (!raw) return null
+    const parsed: unknown = JSON.parse(raw)
+    if (typeof parsed !== 'object' || parsed === null) return null
+    const record = parsed as Record<string, unknown>
+    return typeof record.id === 'string' && typeof record.name === 'string' && typeof record.color === 'string'
+      ? { id: record.id, name: record.name, color: record.color }
+      : null
+  } catch {
+    return null
+  }
+}
+
+function rememberAccount(account: RememberedAccount | null): void {
+  try {
+    if (account) localStorage.setItem(LAST_ACCOUNT_KEY, JSON.stringify(account))
+    else localStorage.removeItem(LAST_ACCOUNT_KEY)
+  } catch {
+    // Storage unavailable — the app still works, it just cannot ride out an
+    // offline boot without showing the login page.
+  }
+}
+
 export interface AuthState {
   session: Session | null
   /** True until the initial getSession() resolves — prevents a login flash. */
   loading: boolean
   isGuest: boolean
+  /** Who was signed in last, so an unreachable auth server is not a sign-out. */
+  rememberedAccount: RememberedAccount | null
 
   continueAsGuest: () => void
   /** Leave guest mode and show the login page again. */
   exitGuest: () => void
   updateProfile: (profile: { displayName: string; profileColor: string }) => Promise<void>
   signOut: () => Promise<void>
+  /**
+   * Erase the account itself, not just this session. Required by Apple
+   * guideline 5.1.1(v) and Play's data-deletion policy for any app that can
+   * create an account. Irreversible.
+   */
+  deleteAccount: () => Promise<void>
 }
 
 const FALLBACK_PROFILE_COLORS = ['#34d399', '#60a5fa', '#a78bfa', '#fb7185', '#fbbf24', '#22d3ee'] as const
@@ -66,12 +111,30 @@ export function accountProfileColor(session: Session | null): string {
     : fallbackProfileColor(session.user.id)
 }
 
+/** Keep the remembered account in step with whatever session just arrived. A
+ * null session is NOT a reason to forget: only signOut() does that. */
+function recordAccount(session: Session | null): void {
+  if (!session) return
+  const account: RememberedAccount = {
+    id: session.user.id,
+    name: accountDisplayName(session),
+    color: accountProfileColor(session),
+  }
+  const current = useAuthStore.getState().rememberedAccount
+  if (current && current.id === account.id && current.name === account.name && current.color === account.color) {
+    return
+  }
+  rememberAccount(account)
+  useAuthStore.setState({ rememberedAccount: account })
+}
+
 const initialGuest = loadGuestChoice()
 
 export const useAuthStore = create<AuthState>()((set, get) => ({
   session: null,
   loading: supabaseConfigured && !initialGuest,
   isGuest: initialGuest,
+  rememberedAccount: loadRememberedAccount(),
 
   continueAsGuest: () => {
     try {
@@ -109,12 +172,43 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
   signOut: async () => {
     const supabase = await getSupabaseClient()
     await supabase?.auth.signOut()
-    try {
-      localStorage.removeItem(GUEST_KEY)
-    } catch {
-      // Ignore storage failures.
-    }
-    set({ session: null, isGuest: false })
+    // The board, its media, the collaboration cache and the calendar tokens all
+    // belong to the account that is leaving. Clearing only the session left them
+    // on the device for whoever signed in next — and because the board key is
+    // not per-account, that person could then sync somebody else's boards into
+    // their own cloud.
+    const { clearLocalAccountData } = await import('../utils/signOutTeardown')
+    await clearLocalAccountData()
+    // An explicit sign-out is the ONE thing that forgets the account. Every
+    // other path back to the login page must be able to recognize the person.
+    rememberAccount(null)
+    set({ session: null, isGuest: false, rememberedAccount: null })
+    // Nothing held in memory is trustworthy once the stores it mirrors are gone,
+    // so the app reboots clean rather than being patched back to empty.
+    globalThis.location?.reload()
+  },
+
+  deleteAccount: async () => {
+    const supabase = await getSupabaseClient()
+    if (!supabase) throw new Error('Account deletion needs a connection to Grovepad')
+
+    // The server does the deleting. delete_own_account() takes no argument and
+    // reads auth.uid(), so a caller cannot name somebody else's account. It
+    // removes the auth.users row, every table that cascades from it, and the
+    // caller's board-media objects, which are keyed by path and cascade from
+    // nothing.
+    const { error } = await supabase.rpc('delete_own_account')
+    if (error) throw new Error(error.message || 'Could not delete your account')
+
+    // Order matters. Only once the server has confirmed the account is gone is
+    // it safe to destroy the local copy; doing it first would lose the boards
+    // of somebody whose deletion then failed.
+    await supabase.auth.signOut().catch(() => undefined)
+    const { clearLocalAccountData } = await import('../utils/signOutTeardown')
+    await clearLocalAccountData()
+    rememberAccount(null)
+    set({ session: null, isGuest: false, rememberedAccount: null })
+    globalThis.location?.reload()
   },
 }))
 
@@ -144,9 +238,11 @@ export function ensureAuthInitialized(): Promise<void> {
       const { data } = await supabase.auth.getSession()
       rememberExternalCalendarToken(data.session)
       useAuthStore.setState({ session: data.session, loading: false })
+      recordAccount(data.session)
       supabase.auth.onAuthStateChange((_event, session) => {
         rememberExternalCalendarToken(session)
         useAuthStore.setState({ session, loading: false })
+        recordAccount(session)
       })
       authInitialized = true
     })

@@ -1,14 +1,20 @@
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from 'react'
 import { createPortal } from 'react-dom'
 import {
+  BarChart3,
   Blocks,
   Cloud,
   Database,
   Download,
+  Feather,
   Frame,
+  Gauge,
+  Gem,
+  GraduationCap,
   GitBranch,
   Grid3X3,
   Keyboard,
+  LayoutGrid,
   LockKeyhole,
   Moon,
   MousePointer2,
@@ -19,6 +25,7 @@ import {
   SlidersHorizontal,
   Sparkles,
   Sun,
+  Trash2,
   Upload,
   UserRound,
   Users,
@@ -27,24 +34,43 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import { supabaseConfigured } from '../../lib/supabase'
+import { useWidgetPickerPrefsStore } from '../../store/useWidgetPickerPrefsStore'
+import { STUDY_FOCUS_TYPES } from '../../widgets/studyFocus'
+import { analyticsConfigured, analyticsState, browserRefusesTracking } from '../../services/analytics'
 import { setCollaborativeCanvasShared } from '../../collaboration/collaborationController'
 import { canToggleCanvasSharing } from '../../collaboration/canvasSharing'
 import { accountDisplayName, accountProfileColor, PROFILE_COLORS, useAuthStore } from '../../store/useAuthStore'
-import { useCanvasStore } from '../../store/useCanvasStore'
 import { usePersistenceStatusStore } from '../../store/usePersistenceStatusStore'
 import { useMcpConnectorStore } from '../../store/useMcpConnectorStore'
-import { useSettingsStore, type AppPreferences } from '../../store/useSettingsStore'
+import {
+  useSettingsStore,
+  VISUAL_QUALITY_ORDER,
+  type AppPreferences,
+  type VisualQuality,
+} from '../../store/useSettingsStore'
 import { canEditCollaborativeCanvas, useCollaborationStore } from '../../store/useCollaborationStore'
 import { useThemeStore } from '../../store/useThemeStore'
 import { useToastStore } from '../../store/useToastStore'
 import { useWidgetStore } from '../../store/useWidgetStore'
-import { screenToWorld, type CanvasMeta } from '../../types/spatial'
+import type { CanvasMeta } from '../../types/spatial'
 import { importBoardFileOntoCanvas } from '../../utils/boardCanvasImport'
 import { buildGrovepadPackage, readGrovepadPackage } from '../../utils/grovepadPackage'
 import { localDayKey } from '../../utils/localDate'
+import { loadSkinGallery } from '../../utils/skinGalleryLoad'
 import { useOverlayDismiss } from '../../hooks/useOverlayDismiss'
 import { ShortcutReference } from './ShortcutsOverlay'
 import { ConfirmDialog } from './ConfirmDialog'
+import { DomainPackSettings } from './DomainPackSettings'
+
+/**
+ * The Skin Gallery is a reference board for building widgets, not a feature of
+ * the product: it drops a whole demo workspace beside the user's own work. It
+ * belongs on the dev server and nowhere else, so the deployed build never
+ * offers it. `import.meta.env.DEV` is true only under `vite dev` — every
+ * production bundle, Cloudflare included, folds this to false and drops the
+ * loader with it.
+ */
+const SKIN_GALLERY_ENABLED = import.meta.env.DEV
 
 const CATEGORIES = [
   { id: 'general' as const, label: 'General', icon: Palette },
@@ -54,7 +80,7 @@ const CATEGORIES = [
   { id: 'data' as const, label: 'Data', icon: Database },
 ] satisfies Array<{ id: 'general' | 'controls' | 'canvas' | 'account' | 'data'; label: string; icon: LucideIcon }>
 
-function PreferenceIsland({ title, icon: Icon, kind, checked, onChange, disabled = false, wide = false }: { title: string; icon: LucideIcon; kind: 'motion' | 'aura' | 'magnetic' | 'links' | 'sync' | 'shared' | 'mcp'; checked: boolean; onChange: (checked: boolean) => void; disabled?: boolean; wide?: boolean }) {
+function PreferenceIsland({ title, icon: Icon, kind, checked, onChange, disabled = false, wide = false }: { title: string; icon: LucideIcon; kind: 'motion' | 'aura' | 'magnetic' | 'links' | 'sync' | 'shared' | 'mcp' | 'usage' | 'study'; checked: boolean; onChange: (checked: boolean) => void; disabled?: boolean; wide?: boolean }) {
   return (
     <button
       type="button"
@@ -87,6 +113,53 @@ function ActionIsland({ title, icon: Icon, onClick, disabled = false, wide = fal
   )
 }
 
+/** Plain-language name and promise for each tier, richest first. */
+const VISUAL_QUALITY_CHOICES: Record<VisualQuality, { label: string; icon: LucideIcon; hint: string }> = {
+  high: { label: 'Full', icon: Gem, hint: 'Everything on: frosted glass, ambient glow behind your cards, full animation.' },
+  balanced: { label: 'Balanced', icon: Gauge, hint: 'Same look with lighter effects — softer frosting, no coloured glow, quicker movement.' },
+  low: { label: 'Light', icon: Feather, hint: 'Flat surfaces, no frosting, no glow, no animation. Best on older machines or on battery.' },
+}
+
+/** Why the usage counter is or is not sending anything, in plain words. The
+ * state is computed, never assumed, so the panel cannot claim to be counting
+ * while the browser or a missing key is quietly stopping it. */
+const USAGE_ANALYTICS_HINT: Record<ReturnType<typeof analyticsState>, string> = {
+  counting: 'On. One anonymous count each time the app opens — nothing about your boards, your text, or who you are. No other event exists.',
+  'opted-out': 'Off. Nothing is sent, and the counting code is never downloaded in the first place.',
+  'refused-by-browser': 'Your browser asks every site not to track it, so nothing is sent. That setting wins over this one.',
+  unconfigured: 'Nothing is counted in this build — no counting service is set up, so this switch has nothing to send to.',
+}
+
+function VisualQualityIsland({ value, onChange }: { value: VisualQuality; onChange: (value: VisualQuality) => void }) {
+  return (
+    <section className="gp-settings-canvas-card rounded-xl p-3" aria-label="Visual quality">
+      <div className="gp-settings-quality flex gap-1.5" role="radiogroup" aria-label="Visual quality">
+        {VISUAL_QUALITY_ORDER.map((quality) => {
+          const { label, icon: Icon } = VISUAL_QUALITY_CHOICES[quality]
+          const active = value === quality
+          return (
+            <button
+              key={quality}
+              type="button"
+              role="radio"
+              aria-checked={active}
+              data-active={active ? '' : undefined}
+              onClick={() => onChange(quality)}
+              className="gp-settings-quality-segment flex min-h-14 flex-1 flex-col items-center justify-center gap-1.5 rounded-[10px] px-2"
+            >
+              <Icon size={17} strokeWidth={active ? 2.1 : 1.75} aria-hidden />
+              <span className="text-[11px] font-semibold">{label}</span>
+            </button>
+          )
+        })}
+      </div>
+      <p className="gp-settings-quality-hint mt-2.5 px-0.5 text-[11px] leading-relaxed text-neutral-500">
+        {VISUAL_QUALITY_CHOICES[value].hint}
+      </p>
+    </section>
+  )
+}
+
 function GridVisibilityIsland({ value, onChange, label = 'Grid visibility', disabled = false }: { value: number; onChange: (value: number) => void; label?: string; disabled?: boolean }) {
   return (
     <label
@@ -110,6 +183,100 @@ function GridVisibilityIsland({ value, onChange, label = 'Grid visibility', disa
         <output className="w-9 text-right text-[10px] font-semibold tabular-nums text-neutral-300">{value}%</output>
       </span>
     </label>
+  )
+}
+
+/**
+ * Deleting the account, not just the session.
+ *
+ * Apple guideline 5.1.1(v) and Play's data-deletion policy both require an
+ * in-app delete path wherever an app can create an account, so this control is
+ * a submission requirement rather than a nicety.
+ *
+ * The confirmation is a typed word rather than a second button. Deletion is
+ * irreversible and takes the person's cloud boards with it, which is exactly
+ * the kind of action a mis-tap should not be able to reach. Local boards are
+ * untouched by the server call; the device copy is cleared afterwards because
+ * the account it belonged to no longer exists.
+ */
+function DeleteAccountSettings() {
+  const session = useAuthStore((state) => state.session)
+  const [confirming, setConfirming] = useState(false)
+  const [typed, setTyped] = useState('')
+  const [deleting, setDeleting] = useState(false)
+
+  if (!session) return null
+
+  const armed = typed.trim().toLowerCase() === 'delete'
+
+  const runDelete = async () => {
+    if (!armed || deleting) return
+    setDeleting(true)
+    try {
+      await useAuthStore.getState().deleteAccount()
+      // A reload follows inside deleteAccount, so there is no success state to
+      // render here.
+    } catch (error) {
+      setDeleting(false)
+      useToastStore.getState().addToast(
+        error instanceof Error ? error.message : 'Could not delete your account',
+        { tone: 'danger' },
+      )
+    }
+  }
+
+  if (!confirming) {
+    return (
+      <section className="gp-settings-profile rounded-xl p-3.5" aria-label="Delete account">
+        <p className="text-[11px] font-semibold text-neutral-300">Delete account</p>
+        <p className="mt-1 text-[11px] leading-relaxed text-neutral-500">
+          Permanently removes your account, your synced boards and your uploaded images. Boards saved
+          on this device are not sent anywhere, and exporting them first is the only way to keep them.
+        </p>
+        <div className="mt-3">
+          <ActionIsland title="Delete account" icon={Trash2} wide onClick={() => setConfirming(true)} />
+        </div>
+      </section>
+    )
+  }
+
+  return (
+    <form
+      className="gp-settings-profile rounded-xl p-3.5"
+      aria-label="Confirm account deletion"
+      onSubmit={(event) => { event.preventDefault(); void runDelete() }}
+    >
+      <p className="text-[11px] font-semibold text-neutral-300">This cannot be undone</p>
+      <p className="mt-1 text-[11px] leading-relaxed text-neutral-500">
+        Type <strong className="text-neutral-300">delete</strong> to confirm. Your account, cloud boards
+        and uploaded images are removed immediately.
+      </p>
+      <label className="gp-settings-field mt-3">
+        <span className="sr-only">Type delete to confirm</span>
+        <input
+          value={typed}
+          onChange={(event) => setTyped(event.target.value)}
+          autoComplete="off"
+          autoFocus
+          disabled={deleting}
+          placeholder="delete"
+        />
+      </label>
+      <div className="mt-3 flex gap-2">
+        <ActionIsland
+          title={deleting ? 'Deleting…' : 'Delete forever'}
+          icon={Trash2}
+          type="submit"
+          disabled={!armed || deleting}
+        />
+        <ActionIsland
+          title="Cancel"
+          icon={X}
+          disabled={deleting}
+          onClick={() => { setConfirming(false); setTyped('') }}
+        />
+      </div>
+    </form>
   )
 }
 
@@ -142,7 +309,7 @@ function AccountProfileSettings() {
       await useAuthStore.getState().updateProfile({ displayName, profileColor })
       useToastStore.getState().addToast('Profile updated')
     } catch (error) {
-      useToastStore.getState().addToast(error instanceof Error ? error.message : 'Could not update profile')
+      useToastStore.getState().addToast(error instanceof Error ? error.message : 'Could not update profile', { tone: 'danger' })
     } finally {
       setSaving(false)
     }
@@ -223,7 +390,7 @@ function CanvasSettings({ canvas }: { canvas: CanvasMeta }) {
       await setCollaborativeCanvasShared(next)
       useToastStore.getState().addToast(next ? 'Canvas shared with people you invite' : 'Canvas is private again')
     } catch (error) {
-      useToastStore.getState().addToast(error instanceof Error ? error.message : 'Could not change canvas sharing')
+      useToastStore.getState().addToast(error instanceof Error ? error.message : 'Could not change canvas sharing', { tone: 'danger' })
     } finally {
       setSharingTarget(null)
     }
@@ -303,15 +470,9 @@ function CanvasSettings({ canvas }: { canvas: CanvasMeta }) {
   )
 }
 
-function viewCenterWorld() {
-  const { pan, zoom, viewportSize } = useCanvasStore.getState()
-  return screenToWorld(
-    { x: viewportSize.width / 2, y: viewportSize.height / 2 },
-    { x: pan.x, y: pan.y, zoom },
-  )
-}
-
 export function SettingsPanel() {
+  const studyFocus = useWidgetPickerPrefsStore((state) => state.studyFocus)
+  const setStudyFocus = useWidgetPickerPrefsStore((state) => state.setStudyFocus)
   const settings = useSettingsStore()
   const theme = useThemeStore((state) => state.theme)
   const session = useAuthStore((state) => state.session)
@@ -369,11 +530,15 @@ export function SettingsPanel() {
       const link = document.createElement('a')
       link.href = url
       link.download = `grovepad-${localDayKey()}.grovepad`
+      document.body.appendChild(link)
       link.click()
-      URL.revokeObjectURL(url)
+      link.remove()
+      // Freed on the next turn: revoking synchronously can beat the download
+      // in some browsers and produce an empty file.
+      setTimeout(() => URL.revokeObjectURL(url), 10_000)
       useToastStore.getState().addToast('Grovepad package downloaded')
     } catch {
-      useToastStore.getState().addToast('Could not build the Grovepad package')
+      useToastStore.getState().addToast('Could not build the Grovepad package', { tone: 'danger' })
     }
   }
   const importPackage = async (file: File | undefined) => {
@@ -391,7 +556,8 @@ export function SettingsPanel() {
 
   const content = {
     general: (
-      <div>
+      <div className="space-y-2">
+        <VisualQualityIsland value={settings.visualQuality} onChange={(visualQuality) => update({ visualQuality })} />
         <div className="gp-settings-preference-grid grid grid-cols-2 gap-2 sm:grid-cols-4">
           <PreferenceIsland title="Motion" icon={Waves} kind="motion" checked={!settings.reduceMotion} onChange={(motion) => update({ reduceMotion: !motion })} />
           <PreferenceIsland title="Ambient glow" icon={Sparkles} kind="aura" checked={settings.canvasAura} onChange={(canvasAura) => update({ canvasAura })} />
@@ -421,6 +587,7 @@ export function SettingsPanel() {
       <div className="space-y-2">
         <AccountProfileSettings />
         <PreferenceIsland title="Cloud sync" icon={Cloud} kind="sync" wide disabled={!session || !supabaseConfigured} checked={Boolean(session && supabaseConfigured && syncEnabled)} onChange={(enabled) => { if (session && supabaseConfigured) usePersistenceStatusStore.getState().setSyncEnabled(enabled) }} />
+        <DeleteAccountSettings />
       </div>
     ),
     data: (
@@ -433,7 +600,34 @@ export function SettingsPanel() {
               ? 'Waiting for a local MCP client. Your board stays on this device.'
               : 'Off by default. Turn on to let a local AI client read outlines and preview or add trees.'}
         </p>
-        <ActionIsland title="Domain packs" icon={Blocks} wide onClick={() => { settings.setOpen(false); useWidgetStore.getState().openAddWidget(viewCenterWorld(), 'packs') }} />
+        <PreferenceIsland title="Usage counting" icon={BarChart3} kind="usage" wide disabled={!analyticsConfigured} checked={analyticsConfigured && settings.usageAnalytics} onChange={(usageAnalytics) => update({ usageAnalytics })} />
+        <p className="px-2 text-[11px] leading-relaxed text-neutral-500">
+          {USAGE_ANALYTICS_HINT[analyticsState({ configured: analyticsConfigured, optedIn: settings.usageAnalytics, browserRefuses: browserRefusesTracking() })]}
+        </p>
+        <PreferenceIsland title="Study focus" icon={GraduationCap} kind="study" wide checked={studyFocus} onChange={setStudyFocus} />
+        <p className="px-2 text-[11px] leading-relaxed text-neutral-500">
+          {studyFocus
+            ? `The widget picker and Cmd-K are showing only the ${STUDY_FOCUS_TYPES.size} study widgets — coursework, recall, and the notes, tasks, calendar and timer a session runs on. Everything else is only out of sight: nothing was removed from your boards or your account, and turning this off brings the full library straight back.`
+            : 'Narrows the widget picker and Cmd-K to study widgets only — coursework, recall, notes, tasks, calendar and timer. A viewing filter kept on this device: no widget is deleted, and cards already on your boards keep working either way.'}
+        </p>
+        <h2 className="flex items-center gap-2 px-2 pt-2 text-[11px] font-semibold text-neutral-100">
+          <Blocks size={13} strokeWidth={1.9} className="shrink-0 text-neutral-400" aria-hidden />
+          Domain packs
+        </h2>
+        <p className="px-2 text-[11px] leading-relaxed text-neutral-500">
+          Specialist toolkits for one kind of work. Turning a pack on adds its widgets to the
+          widget picker — turning it off tucks them away again.
+        </p>
+        <DomainPackSettings />
+        {SKIN_GALLERY_ENABLED && (
+          <>
+            <ActionIsland title="Load Skin Gallery" icon={LayoutGrid} wide onClick={() => { settings.setOpen(false); void loadSkinGallery() }} />
+            <p className="px-2 text-[11px] leading-relaxed text-neutral-500">
+              Adds a reference workspace holding every widget in every skin, each one shown open and at
+              rest. Your own workspaces are left alone, and loading it again just refreshes it.
+            </p>
+          </>
+        )}
       </div>
     ),
   }[settings.section]
@@ -448,7 +642,11 @@ export function SettingsPanel() {
       aria-hidden={!settings.open}
       aria-labelledby="gp-settings-title"
       onAnimationEnd={(event) => {
-        if (event.target === event.currentTarget && !settings.open) setRendered(false)
+        // The scrim's close animation is the panel's last frame, so its end is
+        // the moment the overlay may leave the DOM. The overlay carries no
+        // animation of its own — that would make it a backdrop root and cancel
+        // the scrim's blur of the board behind it.
+        if (event.animationName === 'gp-settings-backdrop-out' && !settings.open) setRendered(false)
       }}
     >
       <button type="button" tabIndex={-1} disabled={!settings.open} aria-label="Close settings" onClick={() => settings.setOpen(false)} className="gp-settings-backdrop absolute inset-0 cursor-default" />

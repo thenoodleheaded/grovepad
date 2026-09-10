@@ -69,12 +69,14 @@ categories):
   device IDs, etc.): **Not collected.**
 - **Data is encrypted in transit**: Yes (HTTPS/WSS to Supabase and, for the
   optional AI feature, to OpenAI).
-- **Users can request data deletion**: Yes — describe your actual account
-  deletion path once you decide it (Supabase gives you `auth.users`
-  cascade-delete via RLS `on delete cascade` already wired into every
-  collaboration table; if there's no in-app delete-account button yet,
-  either add one before submitting or provide a support-email deletion
-  process here).
+- **Users can request data deletion**: Yes, and it is in the app —
+  Settings → Account → Delete account, typed confirmation, immediate. It calls
+  `public.delete_own_account()`
+  ([migration](../supabase/migrations/20260911090000_delete_own_account.sql)),
+  which removes the `auth.users` row and everything cascading from it, plus the
+  caller's `board-media` storage objects, which are keyed by path and cascade
+  from nothing. `public.billing_events` is deliberately `on delete set null`:
+  the transaction record survives for tax and accounting, de-identified.
 
 ## Store listing assets you still need to produce
 
@@ -112,9 +114,9 @@ in the "App access" section of Play Console (Store presence → App content).
 
 ## Before you submit
 
-1. Decide on and (if missing) build an in-app "Delete my account" action, or
-   a documented support-email process — the data-safety form above commits
-   to one existing.
+1. ~~Decide on and build an in-app "Delete my account" action.~~ Done —
+   Settings → Account → Delete account. Apply the migration to the project
+   before submitting; the button fails until `delete_own_account()` exists.
 2. Write and publish the actual privacy policy page.
 3. Produce the screenshots and feature graphic.
 4. Push a `v*` tag once `ANDROID_KEYSTORE_*` secrets are confirmed (they
