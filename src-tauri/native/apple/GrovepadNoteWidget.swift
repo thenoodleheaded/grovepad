@@ -11,7 +11,6 @@ private struct NotePayload: Decodable {
     let text: String
     let color: String
     let mode: String
-    let attribution: String
 }
 
 private struct WidgetPayload: Decodable {
@@ -33,8 +32,7 @@ private struct NoteProvider: TimelineProvider {
                 title: "Today",
                 text: "Keep the important thought where you can see it.",
                 color: "yellow",
-                mode: "sticky",
-                attribution: ""
+                mode: "sticky"
             )
         )
     }
@@ -87,7 +85,7 @@ private struct NoteWidgetView: View {
         guard let text = entry.note?.text, !text.isEmpty else {
             return "Choose a Note in Grovepad to keep it here."
         }
-        return entry.note?.mode == "quote" ? "“\(text)”" : text
+        return text
     }
 
     var body: some View {
@@ -111,12 +109,6 @@ private struct NoteWidgetView: View {
                 .lineLimit(family == .systemSmall ? 6 : 5)
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
 
-            if let attribution = entry.note?.attribution, !attribution.isEmpty {
-                Text("— \(attribution)")
-                    .font(.caption2)
-                    .foregroundColor(inkBrown.opacity(0.75))
-                    .lineLimit(1)
-            }
         }
         .padding(family == .systemSmall ? 14 : 17)
         .grovepadWidgetBackground(background)

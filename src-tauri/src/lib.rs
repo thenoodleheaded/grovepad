@@ -11,11 +11,16 @@ struct OpenFilePayload {
     base64: String,
 }
 
-/// Holds a `.grovepad` path passed on the OS launch line until the frontend's
-/// listener has mounted and can pull it — avoids a startup race where Rust
-/// emits before anyone is listening.
+/// Holds a `.grovepad` path until the frontend's listener has mounted and can
+/// pull it — avoids a startup race where Rust emits before anyone is listening.
+/// Filled from the OS launch line on Windows/Linux, and from the macOS
+/// `RunEvent::Opened` Apple Event, which is the ONLY way a double-clicked
+/// document reaches a bundled .app (macOS never puts it in argv).
 struct AppState {
     pending_open: std::sync::Mutex<Option<std::path::PathBuf>>,
+    /// Flipped the first time the frontend pulls. Until then a pushed event has
+    /// no listener yet, so an open request must be parked instead of emitted.
+    frontend_ready: std::sync::atomic::AtomicBool,
 }
 
 fn is_grovepad_path(path: &std::path::Path) -> bool {
@@ -50,11 +55,33 @@ fn emit_open_file(app: &tauri::AppHandle, path: &std::path::Path) {
     }
 }
 
+/// Hand an OS open request to the frontend by whichever route can actually
+/// reach it. Emitting only works once the webview has registered its listener;
+/// before that — a cold start, where macOS delivers the document as an Apple
+/// Event long before any JS runs — the event would fall on the floor and the
+/// board would never load. So park the path instead and let the frontend's
+/// one mount-time pull collect it.
+fn deliver_open_file(app: &tauri::AppHandle, path: std::path::PathBuf) {
+    let state = app.state::<AppState>();
+    if state
+        .frontend_ready
+        .load(std::sync::atomic::Ordering::Acquire)
+    {
+        emit_open_file(app, &path);
+    } else if let Ok(mut pending) = state.pending_open.lock() {
+        *pending = Some(path);
+    }
+}
+
 /// Cold-start pull: the frontend calls this once on mount to ask "was I
 /// launched with a file?" instead of racing a pushed event against its own
-/// listener registration.
+/// listener registration. Reaching here also proves the listener is up, so
+/// every later open request can be pushed.
 #[tauri::command]
 fn take_pending_open_file(state: tauri::State<AppState>) -> Option<OpenFilePayload> {
+    state
+        .frontend_ready
+        .store(true, std::sync::atomic::Ordering::Release);
     let path = state.pending_open.lock().ok()?.take()?;
     read_open_file_payload(&path)
 }
@@ -75,7 +102,6 @@ struct NoteWidgetData {
     text: String,
     color: String,
     mode: String,
-    attribution: String,
 }
 
 fn validate_note_widget_payload(payload: &str) -> Result<(), String> {
@@ -94,12 +120,11 @@ fn validate_note_widget_payload(payload: &str) -> Result<(), String> {
         || note.id.chars().count() > 120
         || note.title.chars().count() > 120
         || note.text.chars().count() > 4_096
-        || note.attribution.chars().count() > 120
         || !matches!(
             note.color.as_str(),
             "yellow" | "pink" | "blue" | "green" | "purple"
         )
-        || !matches!(note.mode.as_str(), "plain" | "sticky" | "quote")
+        || !matches!(note.mode.as_str(), "plain" | "sticky")
     {
         return Err("Invalid Note widget fields".into());
     }
@@ -128,7 +153,7 @@ pub fn run() {
     let builder =
         tauri::Builder::default().plugin(tauri_plugin_single_instance::init(|app, argv, _cwd| {
             if let Some(path) = extract_grovepad_arg(&argv) {
-                emit_open_file(app, &path);
+                deliver_open_file(app, path);
             }
             if let Some(window) = app.get_webview_window("main") {
                 let _ = window.set_focus();
@@ -150,6 +175,7 @@ pub fn run() {
             let initial_open = extract_grovepad_arg(&std::env::args().collect::<Vec<_>>());
             app.manage(AppState {
                 pending_open: std::sync::Mutex::new(initial_open),
+                frontend_ready: std::sync::atomic::AtomicBool::new(false),
             });
             Ok(())
         })
@@ -160,12 +186,16 @@ pub fn run() {
         .build(tauri::generate_context!())
         .expect("error while building tauri application")
         .run(|app_handle, event| {
-            // macOS: "Open With" on an already-running app arrives as this
-            // Apple Event rather than a new process launch.
+            // macOS delivers EVERY document open as this Apple Event — both
+            // "Open With" on a running app and a cold-start double-click, which
+            // never reaches argv. On a cold start this fires long before the
+            // webview has a listener, so route it through deliver_open_file:
+            // it parks the path until the frontend's mount-time pull, and only
+            // emits once that pull has proved someone is listening.
             if let tauri::RunEvent::Opened { urls } = event {
                 for url in urls {
                     if let Ok(path) = url.to_file_path() {
-                        emit_open_file(app_handle, &path);
+                        deliver_open_file(app_handle, path);
                     }
                 }
             }
@@ -180,11 +210,11 @@ mod tests {
     fn validates_note_widget_contract_and_clear_payload() {
         assert!(validate_note_widget_payload(r#"{"schemaVersion":1,"note":null}"#).is_ok());
         assert!(validate_note_widget_payload(
-            r#"{"schemaVersion":1,"note":{"id":"n","title":"Title","text":"Body","color":"yellow","mode":"plain","attribution":""}}"#,
+            r#"{"schemaVersion":1,"note":{"id":"n","title":"Title","text":"Body","color":"yellow","mode":"plain"}}"#,
         )
         .is_ok());
         assert!(validate_note_widget_payload(
-            r#"{"schemaVersion":1,"note":{"id":"n","title":"Title","text":"Body","color":"orange","mode":"plain","attribution":""}}"#,
+            r#"{"schemaVersion":1,"note":{"id":"n","title":"Title","text":"Body","color":"orange","mode":"plain"}}"#,
         )
         .is_err());
     }
