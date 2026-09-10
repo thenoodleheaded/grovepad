@@ -20,10 +20,10 @@ targets:
       path: GrovepadNoteWidget.entitlements
       properties:
         com.apple.security.application-groups:
-          - group.com.grovepad.widgets
+          - group.app.grovepad.widgets
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.grovepad.desktop.GrovepadNoteWidget
+        PRODUCT_BUNDLE_IDENTIFIER: app.grovepad.NoteWidget
         PRODUCT_NAME: GrovepadNoteWidget
         SKIP_INSTALL: true
         APPLICATION_EXTENSION_API_ONLY: true

@@ -1,4 +1,4 @@
-package com.grovepad.desktop
+package app.grovepad
 
 import android.os.Bundle
 import androidx.activity.enableEdgeToEdge

@@ -1,7 +1,7 @@
 import SwiftUI
 import WidgetKit
 
-private let suiteName = "group.com.grovepad.widgets"
+private let suiteName = "group.app.grovepad.widgets"
 private let payloadKey = "note_widget_payload_v1"
 private let widgetKind = "GrovepadNoteWidget"
 

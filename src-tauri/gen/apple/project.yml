@@ -1,6 +1,6 @@
 name: app
 options:
-  bundleIdPrefix: com.grovepad.desktop
+  bundleIdPrefix: app.grovepad
   deploymentTarget:
     iOS: 14.0
 fileGroups: [../../src]
@@ -11,7 +11,8 @@ settingGroups:
   app:
     base:
       PRODUCT_NAME: Grovepad
-      PRODUCT_BUNDLE_IDENTIFIER: com.grovepad.desktop
+      PRODUCT_BUNDLE_IDENTIFIER: app.grovepad
+      DEVELOPMENT_TEAM: 4BV47RN242
 targetTemplates:
   app:
     type: application
@@ -53,11 +54,15 @@ targets:
           - UIInterfaceOrientationLandscapeRight
         CFBundleShortVersionString: 0.1.0
         CFBundleVersion: "0.1.0"
+        # Required: the Location widget calls navigator.geolocation. Without a
+        # purpose string iOS terminates the process instead of prompting.
+        NSLocationWhenInUseUsageDescription: Grovepad asks for your location only when you use a Location widget to drop your current position onto a board. It is never collected in the background.
+        ITSAppUsesNonExemptEncryption: false
     entitlements:
       path: app_iOS/app_iOS.entitlements
       properties:
         com.apple.security.application-groups:
-          - group.com.grovepad.widgets
+          - group.app.grovepad.widgets
     scheme:
       environmentVariables:
         RUST_BACKTRACE: full
@@ -96,6 +101,8 @@ targets:
     deploymentTarget: "14.0"
     sources:
       - path: ../../native/apple/GrovepadNoteWidget.swift
+      - path: ../../native/apple/PrivacyInfo.xcprivacy
+        buildPhase: resources
     info:
       path: GrovepadNoteWidget/Info.plist
       properties:
@@ -108,10 +115,11 @@ targets:
       path: ../../native/apple/GrovepadNoteWidget.entitlements
       properties:
         com.apple.security.application-groups:
-          - group.com.grovepad.widgets
+          - group.app.grovepad.widgets
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.grovepad.desktop.GrovepadNoteWidget
+        PRODUCT_BUNDLE_IDENTIFIER: app.grovepad.NoteWidget
         PRODUCT_NAME: GrovepadNoteWidget
+        DEVELOPMENT_TEAM: 4BV47RN242
         SKIP_INSTALL: true
         APPLICATION_EXTENSION_API_ONLY: true

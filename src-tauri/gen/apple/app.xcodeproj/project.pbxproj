@@ -8,15 +8,18 @@
 
 /* Begin PBXBuildFile section */
 		0B36B672C5830E0CC5727CA2 /* GrovepadNoteWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 44F873633B92C878295409A9 /* GrovepadNoteWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		27BDE3A69F6E324AA019B8E2 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 18E427AA93C101F0F7758606 /* PrivacyInfo.xcprivacy */; };
 		299814393FFBF154FAD94CA8 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F3673D372C5ABDD1AD6E7067 /* QuartzCore.framework */; };
 		3036F7131E55779ABF15BD58 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 02B7F8347F94B067E6B27396 /* LaunchScreen.storyboard */; };
 		31585529C029A01BE249A285 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1E81BD6B453D87B7F7B1597B /* CoreGraphics.framework */; };
 		324A1E9A4258E7911D4DAC39 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9FACFFCB6E3743955F72464C /* Security.framework */; };
+		36C1893A7382FCD5A6A74845 /* libapp.a in Resources */ = {isa = PBXBuildFile; fileRef = CF674524E34966183631754E /* libapp.a */; };
 		5022D556349CF7185A0A6212 /* GrovepadNoteWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4EBA22063EDBB94F8A201D7 /* GrovepadNoteWidget.swift */; };
 		53CDD0ACFBE8BDF1550B2E53 /* main.mm in Sources */ = {isa = PBXBuildFile; fileRef = 682535EEFE1DA20BE07B123C /* main.mm */; };
 		5C516481BCA83A182C2BCC94 /* assets in Resources */ = {isa = PBXBuildFile; fileRef = 3842AE2A64FB9933D0400EA4 /* assets */; };
 		618672DC8A5E0605441C9935 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0E2B15F176E4B041AE33EEEA /* UIKit.framework */; };
 		836D84C5F07860664DAF79C8 /* WebKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D8F57162F5CC7AEDD55F173D /* WebKit.framework */; };
+		9D0ABDE923B3627F59980152 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = F65A3A7BB6AFDBDDDB0C9639 /* PrivacyInfo.xcprivacy */; };
 		9D59FB167BB4E699DA17D1E9 /* MetalKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 04B56F58E2E44DDE1D67E7B7 /* MetalKit.framework */; };
 		C6BD59C055C986EA4A77FDA2 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AF1DE57E7D9CF13BB2E0E038 /* Assets.xcassets */; };
 		C869023DDFE275D42F3FBF29 /* libapp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 39EEC6A55698228E08917A52 /* libapp.a */; };
@@ -54,6 +57,7 @@
 		0E2B15F176E4B041AE33EEEA /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
 		1631E4CFBB715FFDBF919C8C /* main.rs */ = {isa = PBXFileReference; path = main.rs; sourceTree = "<group>"; };
 		17B52554D60D361AFE791C3E /* lib.rs */ = {isa = PBXFileReference; path = lib.rs; sourceTree = "<group>"; };
+		18E427AA93C101F0F7758606 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		1E81BD6B453D87B7F7B1597B /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
 		306B9C1792E7B1C53FA262A6 /* bindings.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = bindings.h; sourceTree = "<group>"; };
 		3842AE2A64FB9933D0400EA4 /* assets */ = {isa = PBXFileReference; lastKnownFileType = folder; path = assets; sourceTree = SOURCE_ROOT; };
@@ -64,9 +68,11 @@
 		9FACFFCB6E3743955F72464C /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
 		AF1DE57E7D9CF13BB2E0E038 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		CE1209BFDECB28E00189B168 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
+		CF674524E34966183631754E /* libapp.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libapp.a; sourceTree = "<group>"; };
 		D4EBA22063EDBB94F8A201D7 /* GrovepadNoteWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GrovepadNoteWidget.swift; sourceTree = "<group>"; };
 		D8F57162F5CC7AEDD55F173D /* WebKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WebKit.framework; path = System/Library/Frameworks/WebKit.framework; sourceTree = SDKROOT; };
 		F3673D372C5ABDD1AD6E7067 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
+		F65A3A7BB6AFDBDDDB0C9639 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		FBC720DFA1D01F55B0A32344 /* app_iOS.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = app_iOS.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -109,6 +115,7 @@
 			children = (
 				007E478DB8BC37A788C4730F /* app_iOS.entitlements */,
 				81E326B61ED92E1D1EECF952 /* Info.plist */,
+				18E427AA93C101F0F7758606 /* PrivacyInfo.xcprivacy */,
 			);
 			path = app_iOS;
 			sourceTree = "<group>";
@@ -119,6 +126,22 @@
 				306B9C1792E7B1C53FA262A6 /* bindings.h */,
 			);
 			path = bindings;
+			sourceTree = "<group>";
+		};
+		5F72359403FB561BE1489F63 /* debug */ = {
+			isa = PBXGroup;
+			children = (
+				CF674524E34966183631754E /* libapp.a */,
+			);
+			path = debug;
+			sourceTree = "<group>";
+		};
+		70DD658F1D4B0FED51A79854 /* arm64 */ = {
+			isa = PBXGroup;
+			children = (
+				5F72359403FB561BE1489F63 /* debug */,
+			);
+			path = arm64;
 			sourceTree = "<group>";
 		};
 		78CBE3E5873199C0066F12DF /* Sources */ = {
@@ -133,6 +156,7 @@
 			isa = PBXGroup;
 			children = (
 				D4EBA22063EDBB94F8A201D7 /* GrovepadNoteWidget.swift */,
+				F65A3A7BB6AFDBDDDB0C9639 /* PrivacyInfo.xcprivacy */,
 			);
 			name = apple;
 			path = ../../native/apple;
@@ -167,6 +191,7 @@
 		BAFB695BB8415511FEC74542 /* Externals */ = {
 			isa = PBXGroup;
 			children = (
+				70DD658F1D4B0FED51A79854 /* arm64 */,
 			);
 			path = Externals;
 			sourceTree = "<group>";
@@ -189,14 +214,7 @@
 			path = app;
 			sourceTree = "<group>";
 		};
-		"TEMP_E405F04E-239A-4898-9FEB-B806B89DE788" /* arm64 */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = arm64;
-			sourceTree = "<group>";
-		};
-		"TEMP_E4BC65F2-0F41-46B9-89E8-CBF0CD24A1F5" /* x86_64 */ = {
+		"TEMP_02C455E3-E88B-4967-8403-01D54FD5072A" /* x86_64 */ = {
 			isa = PBXGroup;
 			children = (
 			);
@@ -233,6 +251,7 @@
 			buildConfigurationList = A3267F691F133B12F6C24A1C /* Build configuration list for PBXNativeTarget "GrovepadNoteWidget" */;
 			buildPhases = (
 				B65DCB0FD20310962140627A /* Sources */,
+				18ECF74D0B4004B9148BC1D3 /* Resources */,
 			);
 			buildRules = (
 			);
@@ -254,6 +273,12 @@
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1430;
 				TargetAttributes = {
+					E86255CB8A1836C0BF0C0E14 = {
+						DevelopmentTeam = 4BV47RN242;
+					};
+					F6DB2CF190691B193DC7DDA6 = {
+						DevelopmentTeam = 4BV47RN242;
+					};
 				};
 			};
 			buildConfigurationList = B302E784349268C93E6F0A36 /* Build configuration list for PBXProject "app" */;
@@ -277,13 +302,23 @@
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		18ECF74D0B4004B9148BC1D3 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9D0ABDE923B3627F59980152 /* PrivacyInfo.xcprivacy in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		2FBCB8C3ED193E9C4A9FDB59 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 				C6BD59C055C986EA4A77FDA2 /* Assets.xcassets in Resources */,
 				3036F7131E55779ABF15BD58 /* LaunchScreen.storyboard in Resources */,
+				27BDE3A69F6E324AA019B8E2 /* PrivacyInfo.xcprivacy in Resources */,
 				5C516481BCA83A182C2BCC94 /* assets in Resources */,
+				36C1893A7382FCD5A6A74845 /* libapp.a in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -351,6 +386,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = app_iOS/app_iOS.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_TEAM = 4BV47RN242;
 				ENABLE_BITCODE = NO;
 				"EXCLUDED_ARCHS[sdk=iphoneos*]" = x86_64;
 				FRAMEWORK_SEARCH_PATHS = (
@@ -364,7 +400,7 @@
 				);
 				"LIBRARY_SEARCH_PATHS[arch=arm64]" = "$(inherited) $(PROJECT_DIR)/Externals/arm64/$(CONFIGURATION) $(SDKROOT)/usr/lib/swift $(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/$(PLATFORM_NAME) $(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift-5.0/$(PLATFORM_NAME)";
 				"LIBRARY_SEARCH_PATHS[arch=x86_64]" = "$(inherited) $(PROJECT_DIR)/Externals/x86_64/$(CONFIGURATION) $(SDKROOT)/usr/lib/swift $(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/$(PLATFORM_NAME) $(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift-5.0/$(PLATFORM_NAME)";
-				PRODUCT_BUNDLE_IDENTIFIER = com.grovepad.desktop;
+				PRODUCT_BUNDLE_IDENTIFIER = app.grovepad;
 				PRODUCT_NAME = Grovepad;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -377,6 +413,7 @@
 			buildSettings = {
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = ../../native/apple/GrovepadNoteWidget.entitlements;
+				DEVELOPMENT_TEAM = 4BV47RN242;
 				INFOPLIST_FILE = GrovepadNoteWidget/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -384,7 +421,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.grovepad.desktop.GrovepadNoteWidget;
+				PRODUCT_BUNDLE_IDENTIFIER = app.grovepad.NoteWidget;
 				PRODUCT_NAME = GrovepadNoteWidget;
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
@@ -458,6 +495,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = app_iOS/app_iOS.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_TEAM = 4BV47RN242;
 				ENABLE_BITCODE = NO;
 				"EXCLUDED_ARCHS[sdk=iphoneos*]" = x86_64;
 				FRAMEWORK_SEARCH_PATHS = (
@@ -471,7 +509,7 @@
 				);
 				"LIBRARY_SEARCH_PATHS[arch=arm64]" = "$(inherited) $(PROJECT_DIR)/Externals/arm64/$(CONFIGURATION) $(SDKROOT)/usr/lib/swift $(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/$(PLATFORM_NAME) $(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift-5.0/$(PLATFORM_NAME)";
 				"LIBRARY_SEARCH_PATHS[arch=x86_64]" = "$(inherited) $(PROJECT_DIR)/Externals/x86_64/$(CONFIGURATION) $(SDKROOT)/usr/lib/swift $(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/$(PLATFORM_NAME) $(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift-5.0/$(PLATFORM_NAME)";
-				PRODUCT_BUNDLE_IDENTIFIER = com.grovepad.desktop;
+				PRODUCT_BUNDLE_IDENTIFIER = app.grovepad;
 				PRODUCT_NAME = Grovepad;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -547,6 +585,7 @@
 			buildSettings = {
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = ../../native/apple/GrovepadNoteWidget.entitlements;
+				DEVELOPMENT_TEAM = 4BV47RN242;
 				INFOPLIST_FILE = GrovepadNoteWidget/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -554,7 +593,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.grovepad.desktop.GrovepadNoteWidget;
+				PRODUCT_BUNDLE_IDENTIFIER = app.grovepad.NoteWidget;
 				PRODUCT_NAME = GrovepadNoteWidget;
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;

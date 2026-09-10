@@ -1,17 +1,17 @@
-# Native Note widgets
+# Native Text widgets
 
-Grovepad can show one Note card in the operating system’s widget gallery on
-iPhone, iPad, Android, and macOS. The Note remains editable in Grovepad. The
+Grovepad can show one Text card in the operating system’s widget gallery on
+iPhone, iPad, Android, and macOS. The card remains editable in Grovepad. The
 native widget is a small, read-only copy that refreshes after the user pauses
 typing.
 
 ## How a person uses it
 
-1. In the installed Grovepad app, open a Note card’s context menu.
+1. In the installed Grovepad app, open a Text card’s context menu.
 2. Choose **Use in home-screen widget**.
 3. Open the device’s widget gallery and add **Grovepad Note**.
-4. To replace it, choose the same action on another Note. To clear it, choose
-   **Remove from home-screen widget** on the selected Note.
+4. To replace it, choose the same action on another Text card. To clear it,
+   choose **Remove from home-screen widget** on the selected card.
 
 The selected card ID is stored only on that device. It is intentionally not
 part of the board, cloud sync, undo history, exports, or duplicates.
@@ -19,7 +19,7 @@ part of the board, cloud sync, undo history, exports, or duplicates.
 ## Data and performance contract
 
 The frontend derives a versioned JSON snapshot containing only `id`, `title`,
-`text`, `color`, `mode`, and `attribution`. Text is capped at 4,096 characters,
+`text`, `color`, and `mode`. Text is capped at 4,096 characters,
 the whole payload is validated again in Rust, and native storage is not touched
 when the serialized snapshot is unchanged.
 
@@ -27,7 +27,7 @@ Typing is debounced for 240 ms. If an edit arrives while a native update is in
 flight, only the newest snapshot is sent next. Failures use three bounded
 retries and never interrupt local board editing.
 
-Apple uses App Group UserDefaults at `group.com.grovepad.widgets` and asks only
+Apple uses App Group UserDefaults at `group.app.grovepad.widgets` and asks only
 the `GrovepadNoteWidget` timeline to reload. Its timeline policy is `.never`, so
 there is no periodic wakeup. Android uses app-private SharedPreferences (the
 app and AppWidget share a UID), sends an explicit update broadcast only when
@@ -48,8 +48,8 @@ placed widgets exist, and declares `updatePeriodMillis=0`.
 ## Signing and release setup
 
 The App Group identifier must exist in the Apple Developer account and be
-enabled for both `com.grovepad.desktop` and
-`com.grovepad.desktop.GrovepadNoteWidget`. Select the same development team for
+enabled for both `app.grovepad` and
+`app.grovepad.NoteWidget`. Select the same development team for
 the app and widget targets in Xcode. Unsigned simulator builds verify code and
 layout, but shared App Group storage requires a correctly signed device build.
 

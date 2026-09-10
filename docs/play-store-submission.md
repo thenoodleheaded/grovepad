@@ -6,13 +6,30 @@ Grovepad's Android signing is fully wired (release keystore generated,
 [native-apps.md](native-apps.md)). This doc is everything left: the actual
 Play Console listing, which needs your account and your words, not code.
 
-## What this app actually does with data (verified against source, 2026-07-20)
+## What this app actually does with data (verified against source, 2026-09-10)
 
-No analytics, telemetry, ads, or crash-reporting SDK exists anywhere in the
-codebase (`rg` for the usual suspects — Firebase, Mixpanel, Amplitude,
-Sentry, PostHog, Crashlytics — returns nothing). The Android manifest
-requests exactly one permission: `INTERNET`. No camera, microphone,
-location, or contacts access anywhere in the web code.
+There are no ads and no crash-reporting SDK (`rg` for Firebase, Mixpanel,
+Amplitude, Sentry, Crashlytics returns nothing). There is exactly one
+analytics dependency, PostHog, and it sends exactly one event —
+`app_opened`, once per app start, carrying a single `surface: app | web`
+property. Session recording, autocapture, heatmaps, surveys, feature flags
+and exception capture are all switched off in
+[`src/services/analytics.ts`](../src/services/analytics.ts), and the SDK is a
+dynamic import behind a consent gate, so a user who turns usage counting off
+in Settings → Data never downloads it. The Android manifest requests exactly
+one permission: `INTERNET`. No camera, microphone, or contacts access anywhere
+in the web code.
+
+**Location is the exception, and it is used.** The Location widget calls
+`navigator.geolocation` (`getCurrentPosition` and `watchPosition`) in
+[`LocationWidget.tsx`](../src/components/widgets/modules/LocationWidget.tsx),
+foreground only, and only when the user presses the widget's own control. The
+resulting coordinates are board content: local always, and synced to Supabase
+like any other widget value if the user is signed in. Declare location on both
+stores — filing "location: not collected" would be a false privacy
+declaration. iOS carries the matching
+`NSLocationWhenInUseUsageDescription` purpose string; without it iOS
+terminates the process instead of prompting.
 
 | Data | Collected? | Where it goes | Required or optional |
 |---|---|---|---|
@@ -20,6 +37,7 @@ location, or contacts access anywhere in the web code.
 | Display name | Yes, if set | Supabase, shown to invited collaborators only | Optional |
 | Board/note content | Yes | Local IndexedDB always; Supabase Postgres too if signed in, for sync. Shared with another person only when you explicitly invite them to that canvas (RLS-gated by role) | Sync/sharing optional — guest mode is 100% local, zero network calls |
 | Live cursor/selection/camera position | Yes, while collaborating | Ephemeral Supabase Realtime presence channel; never written to a table | Only while a collaboration session is open |
+| App open count | Yes, unless switched off | PostHog (`app_opened` + `surface`, plus the browser/OS/approximate-country properties PostHog adds to any event). Never board content | Optional — Settings → Data → Usage counting; off means the SDK is never loaded |
 | OpenAI API key + pasted document text | Only if the user opts into "Import Document" AI parsing and supplies their own key | Directly from the user's device to `api.openai.com` — Grovepad's servers never see it | Fully optional, bring-your-own-key |
 
 Nothing here is sold, shared with advertisers, or used for anything besides
@@ -35,11 +53,20 @@ categories):
   shared with third parties. User can request deletion (see below).
 - **Personal info → Name**: Collected, optional, used for App functionality
   (shown to collaborators you invite). Not shared beyond people you invite.
-- **App activity → App interactions / User-generated content**: Collected,
-  used for App functionality (cloud sync). Not shared with third parties
-  except the specific people a user invites to a specific canvas.
-- **Everything else** (financial info, location, health, contacts, photos,
-  audio, device IDs, etc.): **Not collected.**
+- **App activity → App interactions**: Collected, **optional**, used for
+  Analytics. This is the `app_opened` count and nothing else. Not linked to
+  the user's identity, and processed by PostHog on our behalf rather than
+  shared with a third party for its own purposes.
+- **App activity → User-generated content**: Collected, used for App
+  functionality (cloud sync). Not shared with third parties except the
+  specific people a user invites to a specific canvas.
+- **Location → Approximate/Precise location**: Collected, **optional**, used
+  for App functionality. Only when the user asks a Location widget for a fix;
+  foreground only, never in the background. Stored as board content and
+  synced only if the user is signed in. Not shared, not used for tracking or
+  advertising.
+- **Everything else** (financial info, health, contacts, photos, audio,
+  device IDs, etc.): **Not collected.**
 - **Data is encrypted in transit**: Yes (HTTPS/WSS to Supabase and, for the
   optional AI feature, to OpenAI).
 - **Users can request data deletion**: Yes — describe your actual account

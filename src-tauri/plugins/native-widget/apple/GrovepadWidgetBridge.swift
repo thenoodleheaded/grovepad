@@ -1,7 +1,7 @@
 import Foundation
 import WidgetKit
 
-private let grovepadSuiteName = "group.com.grovepad.widgets"
+private let grovepadSuiteName = "group.app.grovepad.widgets"
 private let grovepadPayloadKey = "note_widget_payload_v1"
 private let grovepadWidgetKind = "GrovepadNoteWidget"
 
