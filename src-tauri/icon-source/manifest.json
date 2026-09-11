@@ -1,0 +1,7 @@
+{
+  "default": "default.png",
+  "android_bg": "android-background.png",
+  "android_fg": "android-foreground.png",
+  "android_fg_scale": 100,
+  "android_monochrome": "android-monochrome.png"
+}
