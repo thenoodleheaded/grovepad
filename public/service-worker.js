@@ -1,5 +1,5 @@
 const CACHE_PREFIX = 'grovepad-shell-'
-const CACHE_NAME = `${CACHE_PREFIX}v3`
+const CACHE_NAME = `${CACHE_PREFIX}v4`
 const INSTALL_SHELL = [
   '/manifest.webmanifest',
   '/favicon.png',

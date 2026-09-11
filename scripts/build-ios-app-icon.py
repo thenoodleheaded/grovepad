@@ -22,6 +22,7 @@ Run from the repository root:
 
 Outputs:
     public/brand/app-icon-ios.png                          1024x1024 light source
+    public/apple-touch-icon.png                            180x180 light, for the web app
     src-tauri/gen/apple/Assets.xcassets/AppIcon.appiconset/AppIcon-{light,dark,tinted}.png
 """
 
@@ -36,6 +37,8 @@ from PIL import Image, ImageDraw
 ROOT = Path(__file__).resolve().parent.parent
 APPICONSET = ROOT / "src-tauri/gen/apple/Assets.xcassets/AppIcon.appiconset"
 SOURCE_OUT = ROOT / "public/brand/app-icon-ios.png"
+TOUCH_ICON_OUT = ROOT / "public/apple-touch-icon.png"   # Safari "Add to Home Screen", light only
+TOUCH_ICON_SIZE = 180
 
 SIZE = 1024          # canonical iOS marketing size
 SS = 4               # supersampling factor for anti-aliased edges
@@ -211,6 +214,10 @@ def write_icons() -> list[Path]:
         if appearance == "light":
             image.save(SOURCE_OUT, optimize=True)
             written.append(SOURCE_OUT)
+            # Safari has no dark/tinted variants for home-screen web apps, so the
+            # light plate is the one that matches the native icon best.
+            image.resize((TOUCH_ICON_SIZE, TOUCH_ICON_SIZE), Image.LANCZOS).save(TOUCH_ICON_OUT, optimize=True)
+            written.append(TOUCH_ICON_OUT)
     return written
 
 
