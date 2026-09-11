@@ -63,7 +63,7 @@ export function AiGeneratorWidget({ data, widgetId, onChange }: AiGeneratorWidge
       )
     } catch {
       if (!controller.signal.aborted) {
-        useToastStore.getState().addToast('Generation could not finish — your prompt is unchanged')
+        useToastStore.getState().addToast('Generation could not finish — your prompt is unchanged', { tone: 'danger' })
       }
     } finally {
       if (requestRef.current === controller) requestRef.current = null

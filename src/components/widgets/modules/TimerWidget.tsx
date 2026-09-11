@@ -68,7 +68,7 @@ export function TimerWidget({ data, onChange }: TimerWidgetProps) {
           className="font-semibold leading-none tabular-nums transition-colors duration-300"
           style={{
             fontSize: 'clamp(22px, 20cqmin, 56px)',
-            color: urgent ? 'oklch(70% 0.2 22)' : isRunning ? 'var(--gp-widget-accent)' : 'rgb(212 212 212)',
+            color: urgent ? 'oklch(70% 0.2 22)' : isRunning ? 'var(--gp-accent-ink, var(--gp-widget-accent))' : 'var(--gp-widget-ink, rgb(212 212 212))',
           }}
         >
           {formatClock(remaining)}
@@ -110,7 +110,7 @@ function TimerKey({ label, onClick, children, disabled = false, accent = false }
       title={label}
       disabled={disabled}
       onClick={onClick}
-      style={accent ? { color: 'var(--gp-widget-accent)' } : undefined}
+      style={accent ? { color: 'var(--gp-accent-ink, var(--gp-widget-accent))' } : undefined}
       className={`flex h-8 w-8 items-center justify-center rounded-full transition-all duration-150 active:scale-90 disabled:pointer-events-none disabled:opacity-25 ${
         accent ? 'bg-white/[0.09] hover:bg-white/[0.14]' : 'text-neutral-400 hover:bg-white/[0.07] hover:text-neutral-100'
       }`}

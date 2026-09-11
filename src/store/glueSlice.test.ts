@@ -28,8 +28,8 @@ function createPair(gap = GLUE_GAP): [string, string] {
   const store = useWidgetStore.getState()
   const baseX = 40_000 + spawnCursor * 4_000
   spawnCursor += 1
-  const a = store.createWidget('Glue A', { x: baseX, y: 40_000 }, 'notes')
-  const b = store.createWidget('Glue B', { x: baseX + 2_000, y: 40_000 }, 'notes')
+  const a = store.createWidget('Glue A', { x: baseX, y: 40_000 }, 'text')
+  const b = store.createWidget('Glue B', { x: baseX + 2_000, y: 40_000 }, 'text')
   pin(a)
   pin(b)
   const first = useWidgetStore.getState().widgets[a]!
@@ -109,7 +109,7 @@ describe('glue clusters', () => {
     const store = useWidgetStore.getState()
     store.glueWidgets(b, a)
     const second = widget(b)
-    const c = store.createWidget('Glue C', { x: second.position.x + second.size.width + GLUE_GAP, y: second.position.y }, 'notes')
+    const c = store.createWidget('Glue C', { x: second.position.x + second.size.width + GLUE_GAP, y: second.position.y }, 'text')
     pin(c)
     useWidgetStore.getState().glueWidgets(c, b)
     useWidgetStore.getState().unglueWidget(a)
@@ -130,7 +130,7 @@ describe('glue clusters', () => {
     const c = store.createWidget('Glue C', {
       x: second.position.x + second.size.width + GLUE_GAP,
       y: second.position.y,
-    }, 'notes')
+    }, 'text')
     pin(c)
     useWidgetStore.getState().glueWidgets(c, b)
     expect(useWidgetStore.getState().widgetGlueIndex[a]).toBe(useWidgetStore.getState().widgetGlueIndex[c])
@@ -154,7 +154,7 @@ describe('glue clusters', () => {
     const store = useWidgetStore.getState()
     store.glueWidgets(b, a)
     const first = widget(a)
-    const e = store.createWidget('Glue E', { x: first.position.x + 20_000, y: 40_000 }, 'notes')
+    const e = store.createWidget('Glue E', { x: first.position.x + 20_000, y: 40_000 }, 'text')
     pin(e)
     const target = widget(e)
     const landing = { x: target.position.x - GLUE_GAP - first.size.width, y: target.position.y }
@@ -174,7 +174,7 @@ describe('glue clusters', () => {
     const c = store.createWidget('Glue C', {
       x: second.position.x + second.size.width + GLUE_GAP,
       y: second.position.y,
-    }, 'notes')
+    }, 'text')
     pin(c)
     useWidgetStore.getState().glueWidgets(c, b)
     const glueId = useWidgetStore.getState().widgetGlueIndex[a]!
@@ -266,6 +266,36 @@ describe('dragging glued widgets', () => {
     expect(useWidgetStore.getState().widgetGlueIndex[a]).toBeDefined()
   })
 
+  it('glues a selection as its own undo step, never riding the previous edit', () => {
+    // ⌘G, the Quick Add "glue" command and the touch Glue button have no drag
+    // to open a history step. Undo right after gluing must unweld only, and
+    // must not also take back the card that was added just before.
+    const [a, b] = createPair()
+    const store = useWidgetStore.getState()
+    const c = store.createWidget('Glue C', { x: 90_000, y: 90_000 }, 'text')
+
+    expect(useWidgetStore.getState().glueSelection([a, b, c])).toBe(true)
+    const glueId = useWidgetStore.getState().widgetGlueIndex[a]
+    expect(glueId).toBeDefined()
+    expect(useWidgetStore.getState().widgetGlueIndex[b]).toBe(glueId)
+
+    useWidgetStore.getState().undo()
+    expect(useWidgetStore.getState().widgets[c]).toBeDefined()
+    expect(useWidgetStore.getState().widgetGlueIndex[a]).toBeUndefined()
+    expect(useWidgetStore.getState().widgetGlueIndex[b]).toBeUndefined()
+  })
+
+  it('records nothing when the selection is already one cluster', () => {
+    const [a, b] = createPair()
+    expect(useWidgetStore.getState().glueSelection([a, b])).toBe(true)
+    expect(useWidgetStore.getState().glueSelection([b, a])).toBe(false)
+    expect(useWidgetStore.getState().glueSelection([a])).toBe(false)
+    // Had either no-op pushed an empty step, this single undo would land on
+    // it and the weld would survive.
+    useWidgetStore.getState().undo()
+    expect(useWidgetStore.getState().widgetGlueIndex[a]).toBeUndefined()
+  })
+
   it('persists glue clusters through a snapshot round trip', () => {
     const [a, b] = createPair()
     useWidgetStore.getState().glueWidgets(b, a)
@@ -337,7 +367,7 @@ describe('dragging glued widgets', () => {
     const c = store.createWidget('Glue C', {
       x: second.position.x + second.size.width + GLUE_GAP,
       y: second.position.y,
-    }, 'notes')
+    }, 'text')
     pin(c)
     useWidgetStore.getState().glueWidgets(c, b)
     const glueId = useWidgetStore.getState().widgetGlueIndex[a]!
@@ -386,7 +416,7 @@ describe('dragging glued widgets', () => {
     const wb = widget(b)
     const c = useWidgetStore
       .getState()
-      .createWidget('Glue C', { x: wb.position.x + 2_000, y: wb.position.y }, 'notes')
+      .createWidget('Glue C', { x: wb.position.x + 2_000, y: wb.position.y }, 'text')
     pin(c)
     place(c, wb.position.x + wb.size.width, wb.position.y)
     useWidgetStore.getState().glueWidgets(c, b)
@@ -409,7 +439,7 @@ describe('dragging glued widgets', () => {
     const wb = widget(b)
     const c = useWidgetStore
       .getState()
-      .createWidget('Glue C', { x: wb.position.x + 2_000, y: wb.position.y }, 'notes')
+      .createWidget('Glue C', { x: wb.position.x + 2_000, y: wb.position.y }, 'text')
     pin(c)
     place(c, wb.position.x + wb.size.width, wb.position.y)
     useWidgetStore.getState().glueWidgets(c, b)
@@ -612,7 +642,7 @@ describe('dragging glued widgets', () => {
     const wb = widget(b)
     const c = useWidgetStore
       .getState()
-      .createWidget('Glue C', { x: wb.position.x + 2_000, y: wb.position.y }, 'notes')
+      .createWidget('Glue C', { x: wb.position.x + 2_000, y: wb.position.y }, 'text')
     pin(c)
     place(c, wb.position.x + wb.size.width, wb.position.y)
     useWidgetStore.getState().glueWidgets(c, b)
@@ -664,7 +694,7 @@ describe('dragging glued widgets', () => {
     const wb = widget(b)
     const c = useWidgetStore
       .getState()
-      .createWidget('Glue C', { x: wb.position.x + 2_000, y: wb.position.y }, 'notes')
+      .createWidget('Glue C', { x: wb.position.x + 2_000, y: wb.position.y }, 'text')
     pin(c)
     place(c, wb.position.x + wb.size.width, wb.position.y)
     useWidgetStore.getState().glueWidgets(c, b)
@@ -695,10 +725,12 @@ describe('dragging glued widgets', () => {
   })
 
   it('never pastes a folded group as sub-floor icons', () => {
-    // The clipboard carries widget records, not glue records, so a pasted
-    // member of a collapsed group belongs to no cluster — and a 1×1 icon
-    // outside a folded cluster is below the aim-at floor with nothing to
-    // click. It comes back as a real card instead.
+    // A bare widget-array paste (no captured payload) carries no glue record,
+    // so a pasted member of a collapsed group belongs to no cluster — and a
+    // 1×1 icon outside a folded cluster is below the aim-at floor with
+    // nothing to click. It comes back as a real card instead. (A payload
+    // paste whose glue record travelled keeps the fold — see
+    // clipboardStructure.test.ts.)
     const [a, b] = createPair(0)
     useWidgetStore.getState().glueWidgets(b, a)
     const glueId = useWidgetStore.getState().widgetGlueIndex[a]!
@@ -725,7 +757,7 @@ describe('dragging glued widgets', () => {
 
     // A third widget, ungrouped and full-size, welded onto the folded block.
     const store = useWidgetStore.getState()
-    const c = store.createWidget('Glue C', { x: 90_000, y: 90_000 }, 'notes')
+    const c = store.createWidget('Glue C', { x: 90_000, y: 90_000 }, 'text')
     pin(c)
     useWidgetStore.getState().glueWidgets(c, a)
 
@@ -760,7 +792,7 @@ describe('dragging glued widgets', () => {
     const c = store.createWidget('Glue C', {
       x: second.position.x + second.size.width + GLUE_GAP,
       y: second.position.y,
-    }, 'notes')
+    }, 'text')
     pin(c)
     useWidgetStore.getState().glueWidgets(c, b)
     const glueId = useWidgetStore.getState().widgetGlueIndex[a]!

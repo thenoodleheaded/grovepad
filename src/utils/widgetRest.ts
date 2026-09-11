@@ -13,17 +13,24 @@ export const WIDGET_TITLE_ROW = GRID_SIZE // 40
 
 /**
  * Whether a widget actually shows that row right now. Mirrors WidgetCard's own
- * rule so the reserved space and the painted chrome can never disagree: an
- * icon and an icon-faced resting tile ARE their own identity mark and float no
- * capsule, and a glued member hands its name to the group frame — unless it is
- * pinned open, where that row carries its only Pin control.
+ * rule so the reserved space and the painted chrome can never disagree: an icon
+ * and an icon-faced resting tile ARE their own identity mark and float no
+ * capsule.
+ *
+ * Everything else floats one, INCLUDING a welded cluster member. A member used
+ * to hand its name to the group frame and hide, which made the strip read as
+ * free space: the clustermate above was packed straight into it and the group's
+ * own boundary line was drawn through where the name would have been. A card's
+ * name is part of that card's footprint in every arrangement.
+ *
+ * `options.glued` stays in the signature because callers speak in cluster terms
+ * and the distinction may return; it no longer changes the answer.
  */
-export function widgetShowsTitleRow(widget: Widget, options: { glued?: boolean } = {}): boolean {
+export function widgetShowsTitleRow(widget: Widget, _options: { glued?: boolean } = {}): boolean {
   if (widget.iconified === true) return false
   if (isWidgetResting(widget, { expandedWidgetId: null }) && restingFace(widget).model.kind === 'icon') {
     return false
   }
-  if (options.glued && widget.metadata.pinned !== true) return false
   return true
 }
 

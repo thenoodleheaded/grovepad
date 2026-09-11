@@ -17,7 +17,28 @@
   min-height: 0;
   flex-direction: column;
   gap: 0.5rem;
+  /* The backplate inset is held HERE rather than on the card's content box, so
+     the bleed below cancels against a box the picture may fill exactly. Paid
+     against the card's own padding instead, the stage hung one inset below
+     `.gp-widget-ui`, and the content-floor probe reads that hang as unfitted
+     content: it grew the card by it on every measurement pass while the hang
+     came straight back, so the card never stopped growing. */
+  padding: var(--gp-p0);
   color: var(--gp-widget-ink, #f5f5f5);
+}
+
+/* The card hands its inset to the renderer above; `.gp-widget-content` still
+   supplies the rounded overflow clip that shapes the bled picture's corners. */
+.gp-widget-content:not(.gp-widget-sheet-body):has(> .gp-widget-ui[data-widget-type='media']) {
+  padding: 0;
+}
+
+/* The sheet is the screen, and its inset is safe-area aware — it cannot be
+   handed to a renderer that only knows the backplate value. Fullscreen keeps
+   the original arrangement: the sheet holds the inset, the stage bleeds into
+   it. Nothing measures a sheet, so no growth follows the hang there. */
+.gp-widget-sheet-body .gp-media {
+  padding: 0;
 }
 
 .gp-widget-ui[data-widget-type='media'] {
@@ -249,7 +270,7 @@
 
 .gp-media-url:focus-within {
   border-bottom-color: color-mix(in oklab, var(--gp-widget-accent), transparent 42%);
-  color: color-mix(in oklab, var(--gp-widget-accent), white 12%);
+  color: color-mix(in oklab, var(--gp-accent-ink, var(--gp-widget-accent)), var(--gp-accent-lift, #fff) 12%);
 }
 
 /* ---------------------------------------------------------------- caption */
@@ -328,7 +349,7 @@
   gap: 0.32rem;
   border-radius: var(--gp-r2);
   padding: 0 0.4rem 0 0;
-  color: color-mix(in oklab, var(--gp-widget-accent), white 14%);
+  color: color-mix(in oklab, var(--gp-accent-ink, var(--gp-widget-accent)), var(--gp-accent-lift, #fff) 14%);
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.03em;
@@ -370,7 +391,7 @@
   align-items: center;
   justify-content: center;
   border-radius: 999px;
-  color: color-mix(in oklab, var(--gp-widget-accent), white 20%);
+  color: color-mix(in oklab, var(--gp-accent-ink, var(--gp-widget-accent)), var(--gp-accent-lift, #fff) 20%);
   background:
     conic-gradient(
       from 0deg,
@@ -783,7 +804,7 @@
   border: 0;
   border-radius: var(--gp-r2);
   padding: 0 0.5rem;
-  color: color-mix(in oklab, var(--gp-widget-accent), white 14%);
+  color: color-mix(in oklab, var(--gp-accent-ink, var(--gp-widget-accent)), var(--gp-accent-lift, #fff) 14%);
   font-size: 10px;
   font-weight: 620;
   letter-spacing: 0.03em;
@@ -918,4 +939,14 @@
     animation: none !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* ------------------------------------------------------------ light theme.
+   The remove glyph's hover rose (#fda4af) is tuned for dark glass; on the
+   silver card it lands at 1.26:1, so the icon disappears at the exact moment
+   it is being aimed at. Same hue, ink weight — matching the danger ink the
+   other families settled on during the 2026-08 light-mode contrast audit. */
+[data-theme='light'] .gp-media-thumb-remove:hover,
+[data-theme='light'] .gp-media-tile-remove:hover {
+  color: #be123c;
 }

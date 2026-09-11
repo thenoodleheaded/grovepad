@@ -13,11 +13,12 @@ const MUTATING_ACTIONS = [
   'settleWidgets', 'applyGhostDisplacement', 'untangleCanvas', 'autoScaleCanvas',
   'resizeWidget', 'resizeWidgetFromEdge', 'setWidgetScaleState',
   'updateWidgetData', 'updateWidgetTitle', 'toggleWidgetLocked', 'toggleWidgetFavorite',
-  'bringWidgetToFront', 'setWidgetHydration', 'updateWidgetMetadata',
-  'nudgeSelection', 'addRelation', 'toggleResolveRelation', 'updateRelation', 'deleteRelation',
+  'bringWidgetToFront', 'sendWidgetToBack', 'setWidgetHydration', 'updateWidgetMetadata',
+  'nudgeSelection', 'alignSelection', 'distributeSelection', 'lockWidgets',
+  'addRelation', 'toggleResolveRelation', 'updateRelation', 'deleteRelation',
   'addConnection', 'updateConnection', 'deleteConnection', 'applyWireWrites',
   'glueWidgets', 'unglueWidget',
-  'deleteWidgets', 'duplicateWidgets', 'pasteWidgets',
+  'deleteWidgets', 'cutWidgets', 'duplicateWidgets', 'pasteWidgets',
   'importMindmap', 'togglePack', 'commitGhostTree',
 ] as const satisfies readonly (keyof WidgetStoreState)[]
 

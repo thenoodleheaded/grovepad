@@ -22,7 +22,13 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-.env.local
+# Every env file except the template. This used to list only `.env.local`, so
+# `.env`, `.env.production` and friends were committable — and `.env` was in
+# fact committed to a public repository. The rule is the file shape, not one
+# filename, because the next secret always lands in the one that was not listed.
+.env
+.env.*
+!.env.example
 .claude/settings.local.json
 
 # Locally generated signing material — keystores, certs, and their
@@ -44,3 +50,7 @@ src-tauri/native/apple/build/
 
 # Benchmark run artifacts — blessed baselines are copied to bench/baselines/.
 /bench/results/
+
+# Local scratch and tool output, never part of the product
+tmp/_probe/
+graphify-out/

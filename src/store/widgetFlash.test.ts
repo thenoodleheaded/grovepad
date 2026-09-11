@@ -10,7 +10,7 @@ afterEach(() => {
 describe('widget flash ownership', () => {
   it('lets a repeated flash own its full lifetime', () => {
     vi.useFakeTimers()
-    const id = Object.keys(useWidgetStore.getState().widgets)[0]!
+    const id = useWidgetStore.getState().createWidget('Flash test', { x: 0, y: 0 }, 'text')
 
     useWidgetStore.getState().flashWidget(id)
     vi.advanceTimersByTime(1_000)

@@ -80,7 +80,7 @@
   background: var(--gp-contact-tint);
   content: '';
   pointer-events: none;
-  transition: background 130ms ease;
+  transition: background var(--gp-duration-snap) var(--gp-ease-snap);
 }
 
 .gp-contact-skin textarea {
@@ -290,7 +290,7 @@
   gap: 0.25rem;
   font-size: 0.6rem;
   text-decoration: none;
-  transition: border-color 130ms ease, background 130ms ease, color 130ms ease;
+  transition: border-color var(--gp-duration-snap) var(--gp-ease-snap), background var(--gp-duration-snap) var(--gp-ease-snap), color var(--gp-duration-snap) var(--gp-ease-snap);
 }
 
 .gp-contact-routes a span {
@@ -321,7 +321,7 @@
   gap: 0.25rem;
   font-size: 0.6rem;
   text-decoration: none;
-  transition: color 130ms ease;
+  transition: color var(--gp-duration-snap) var(--gp-ease-snap);
 }
 
 .gp-contact-link:hover {
@@ -403,7 +403,7 @@
   color: var(--gp-contact-faint);
   cursor: pointer;
   font-size: 0.6rem;
-  transition: outline-color 130ms ease, color 130ms ease;
+  transition: outline-color var(--gp-duration-snap) var(--gp-ease-snap), color var(--gp-duration-snap) var(--gp-ease-snap);
 }
 
 .gp-contact-skin .gp-contact-channels button::before {
@@ -561,7 +561,7 @@
   color: color-mix(in oklab, var(--gp-contact-alarm), var(--gp-contact-ink) 24%);
   gap: 0.1rem;
   text-decoration: none;
-  transition: transform 120ms ease, box-shadow 160ms ease, background 160ms ease;
+  transition: transform var(--gp-duration-snap) var(--gp-ease-snap), box-shadow var(--gp-duration-snap) var(--gp-ease-snap), background var(--gp-duration-snap) var(--gp-ease-snap);
 }
 
 a.gp-contact-call:hover {
@@ -719,7 +719,7 @@ a.gp-contact-call:active {
   height: 24px;
   border-radius: 50%;
   background: radial-gradient(circle, var(--gp-contact-tint), transparent 72%);
-  color: var(--gp-widget-accent);
+  color: var(--gp-accent-ink, var(--gp-widget-accent));
   place-items: center;
 }
 
@@ -855,7 +855,7 @@ a.gp-contact-call:active {
   color: var(--gp-contact-faint);
   cursor: pointer;
   place-items: center;
-  transition: color 120ms ease;
+  transition: color var(--gp-duration-snap) var(--gp-ease-snap);
 }
 
 .gp-contact-skin .gp-contact-stepper button:hover {
@@ -883,7 +883,7 @@ a.gp-contact-call:active {
   gap: 0.3rem;
   font-size: 0.64rem;
   font-weight: 600;
-  transition: outline-color 130ms ease, color 130ms ease, transform 120ms ease;
+  transition: outline-color var(--gp-duration-snap) var(--gp-ease-snap), color var(--gp-duration-snap) var(--gp-ease-snap), transform var(--gp-duration-snap) var(--gp-ease-snap);
 }
 
 .gp-contact-skin .gp-contact-log:hover::before {
@@ -1032,15 +1032,17 @@ a.gp-contact-call:active {
   color: var(--gp-contact-faint);
   cursor: pointer;
   opacity: 0;
+  pointer-events: none;
   place-items: center;
   transform: translateY(-50%);
-  transition: opacity 120ms ease, color 120ms ease;
+  transition: opacity var(--gp-duration-snap) var(--gp-ease-snap), color var(--gp-duration-snap) var(--gp-ease-snap);
 }
 
 .gp-contact-person:hover .gp-contact-remove,
 .gp-contact-person:focus-within .gp-contact-remove,
 .gp-contact-remove:focus-visible {
   opacity: 1;
+  pointer-events: auto;
 }
 
 .gp-contact-remove:hover {
@@ -1059,7 +1061,7 @@ a.gp-contact-call:active {
   cursor: pointer;
   gap: 0.3rem;
   font-size: 0.62rem;
-  transition: outline-color 130ms ease, color 130ms ease;
+  transition: outline-color var(--gp-duration-snap) var(--gp-ease-snap), color var(--gp-duration-snap) var(--gp-ease-snap);
 }
 
 .gp-contact-skin .gp-contact-add::before {
@@ -1149,7 +1151,7 @@ a.gp-contact-call:active {
   color: var(--gp-contact-ghost);
   cursor: pointer;
   place-items: center;
-  transition: color 120ms ease;
+  transition: color var(--gp-duration-snap) var(--gp-ease-snap);
 }
 
 .gp-contact-skin .gp-contact-order button:hover:not(:disabled) {
@@ -1200,7 +1202,7 @@ a.gp-contact-call:active {
   gap: 0.3rem;
   font-size: 0.64rem;
   text-decoration: none;
-  transition: border-color 130ms ease, background 130ms ease, color 130ms ease;
+  transition: border-color var(--gp-duration-snap) var(--gp-ease-snap), background var(--gp-duration-snap) var(--gp-ease-snap), color var(--gp-duration-snap) var(--gp-ease-snap);
 }
 
 .gp-contact-care-actions label {

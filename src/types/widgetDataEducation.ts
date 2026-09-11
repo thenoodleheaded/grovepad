@@ -82,20 +82,30 @@ export interface AssignmentData {
   items: AssignmentItem[]
 }
 
-export interface CornellData {
-  cues: string
-  notes: string
-  summary: string
-}
-
-interface FormulaItem {
+export interface FormulaItem {
   id: string
   name: string
   expression: string
 }
 
+export type FormulaSheetSkin =
+  | 'reference_sheet'
+  | 'equation_cards'
+  | 'exam_strip'
+  | 'derivation'
+  | 'unit_aware'
+  | 'worked_example'
+
 export interface FormulaSheetData {
   formulas: FormulaItem[]
+  skin?: FormulaSheetSkin
+  /**
+   * Only the three schema-extension skins write here: `derivation` keeps its
+   * ordered steps, `unit_aware` the unit named for each symbol, and
+   * `worked_example` one substitution per formula. The other three skins are
+   * renderer-ready and must never add a field to saved data.
+   */
+  skinStates?: Record<string, Record<string, unknown>>
 }
 
 export type CitationStyle = 'APA' | 'MLA' | 'Chicago'

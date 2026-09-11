@@ -60,7 +60,7 @@ describe('LocalAiService hybrid planning',()=>{
   })
 
   it('accepts and ranks a validated 40-node connected workspace',async()=>{
-    const nodes=Array.from({length:40},(_,index)=>({id:`n${index}`,t:index%3===0?'checklist':'notes',title:`Branch ${index}`}))
+    const nodes=Array.from({length:40},(_,index)=>({id:`n${index}`,t:index%3===0?'checklist':'text',title:`Branch ${index}`}))
     const relations=nodes.slice(1).map((_,index)=>({from:`n${Math.floor(index/3)}`,to:`n${index+1}`,type:'parent'}))
     const service=new LocalAiService({runtime,storage:null,enabled:true,adapterFactory:()=>fakeAdapter(JSON.stringify({v:1,c:.9,n:nodes,r:relations}))})
     const result=await service.predictThoughtCandidates('Create a full launch workspace with forty properly branched work areas',{}, {allowModel:true,mode:'deep'})
@@ -71,7 +71,7 @@ describe('LocalAiService hybrid planning',()=>{
   })
 
   it('commits a 40-node model plan as one connected, collision-free canvas graph',async()=>{
-    const nodes=Array.from({length:40},(_,index)=>({id:`n${index}`,t:index%4===0?'checklist':'notes',title:`Workstream ${index}`}))
+    const nodes=Array.from({length:40},(_,index)=>({id:`n${index}`,t:index%4===0?'checklist':'text',title:`Workstream ${index}`}))
     const relations=nodes.slice(1).map((_,index)=>({from:`n${Math.floor(index/3)}`,to:`n${index+1}`,type:'parent'}))
     const service=new LocalAiService({runtime,storage:null,enabled:true,adapterFactory:()=>fakeAdapter(JSON.stringify({v:1,c:.91,n:nodes,r:relations}))})
     const result=await service.predictThoughtCandidates('Build a detailed forty-part launch plan with branches and sub-branches',{}, {allowModel:true,mode:'deep'})
@@ -155,21 +155,21 @@ describe('LocalAiService hybrid planning',()=>{
 
   it('marks the lightest web model as router-only',async()=>{
     const lightRuntime={...runtime,profile:MODEL_PROFILES['webgpu-light'],memoryGb:4}
-    const service=new LocalAiService({runtime:lightRuntime,storage:null,enabled:true,adapterFactory:()=>fakeAdapter('{"v":1,"c":.9,"n":[{"id":"n0","t":"notes"}],"r":[]}')})
+    const service=new LocalAiService({runtime:lightRuntime,storage:null,enabled:true,adapterFactory:()=>fakeAdapter('{"v":1,"c":.9,"n":[{"id":"n0","t":"text"}],"r":[]}')})
     const result=await service.predictThoughtCandidates('deeply expand this plan',{}, {allowModel:true,mode:'deep'})
     expect(result.predictions.some(prediction=>prediction.id==='local-model')).toBe(false)
   })
 
   it('rejects an explicit deep plan that replaces its deterministic skeleton',async()=>{
     const skeleton=(await new LocalAiService({runtime,storage:null,enabled:false}).predictThoughtCandidates('make a checklist',{}, {allowModel:false})).predictions[0]!.plan
-    const service=new LocalAiService({runtime,storage:null,enabled:true,adapterFactory:()=>fakeAdapter('{"v":1,"c":.9,"n":[{"id":"replacement","t":"notes"}],"r":[]}')})
+    const service=new LocalAiService({runtime,storage:null,enabled:true,adapterFactory:()=>fakeAdapter('{"v":1,"c":.9,"n":[{"id":"replacement","t":"text"}],"r":[]}')})
     const result=await service.predictThoughtCandidates('deepen this checklist',{}, {allowModel:true,mode:'deep',skeleton})
     expect(result.predictions.some(prediction=>prediction.id==='local-model')).toBe(false)
   })
 
   it('accepts a deep plan and ignores a legacy g field entirely',async()=>{
     const payload=JSON.stringify({v:1,c:.9,
-      n:[{id:'n0',t:'notes',title:'Root'},{id:'n1',t:'notes',title:'Board'},{id:'n2',t:'flashcards',title:'Drills'}],
+      n:[{id:'n0',t:'text',title:'Root'},{id:'n1',t:'text',title:'Board'},{id:'n2',t:'flashcards',title:'Drills'}],
       r:[{from:'n0',to:'n1',type:'parent'},{from:'n0',to:'n2',type:'parent'}],
       g:[{id:'g0',members:['n1','n2'],label:'Study pair'}]})
     const service=new LocalAiService({runtime,storage:null,enabled:true,adapterFactory:()=>fakeAdapter(payload)})

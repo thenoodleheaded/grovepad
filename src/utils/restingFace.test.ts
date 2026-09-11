@@ -2,8 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { Widget } from '../types/spatial'
 import { GRID_SIZE, ICON_MIN_EDGE } from '../types/spatial'
 import {
-  NOTE_REST_LINE_LIMIT,
-  NOTE_REST_VERSION_LIMIT,
+  NOTE_REST_MAX_WIDTH,
   REST_ROW_LIMIT,
   restingFace,
 } from './restingFace'
@@ -69,7 +68,7 @@ describe('the resting-face law: content decides the face and the tile', () => {
   it('rests an empty widget as a bare icon at the 2x2 floor', () => {
     for (const [type, data] of [
       ['calculator', { input: '', history: [] }],
-      ['notes', { text: '' }],
+      ['text', { text: '' }],
       ['media', { url: '', caption: '' }],
       ['bar_chart', { bars: [] }],
     ] as const) {
@@ -88,90 +87,72 @@ describe('the resting-face law: content decides the face and the tile', () => {
     expect(face.size).toEqual({ width: 260, height: 180 })
   })
 
-  it('shows the widget\'s own words for text widgets', () => {
-    const face = restingFace(widget('notes', { text: 'Remember the milk' }))
-    expect(face.model).toMatchObject({
-      kind: 'note',
-      skin: 'plain',
-      lines: [{ kind: 'text', text: 'Remember the milk' }],
-    })
-    expect(face.size.height).toBe(GRID_SIZE)
+  it('rests a written note as its own page, at a fraction of the open card', () => {
+    // A Note face carries no preview: the tile renders the card's own page
+    // (TextRestPage) scaled down, so there is no reading here to assert —
+    // only which skin's page it is, and the box it is drawn in.
+    const face = restingFace(widget('text', { text: 'Remember the milk' }, {
+      size: { width: 320, height: 200 },
+    }))
+    expect(face.model).toEqual({ kind: 'note', skin: 'plain' })
+    // Narrower and shorter than the card, on the lattice, and never wider.
+    expect(face.size.width).toBeLessThan(320)
+    expect(face.size.height).toBeLessThan(200)
+    expect(face.size.width % GRID_SIZE).toBe(0)
+    expect(face.size.height % GRID_SIZE).toBe(0)
+  })
+
+  it('scales the Note tile with the card, so a wider note rests wider', () => {
+    const narrow = restingFace(widget('text', { text: 'Remember the milk' }, {
+      size: { width: 240, height: 160 },
+    }))
+    const wide = restingFace(widget('text', { text: 'Remember the milk' }, {
+      size: { width: 520, height: 160 },
+    }))
+    expect(wide.size.width).toBeGreaterThan(narrow.size.width)
+  })
+
+  it('rests a Sticky closer to its open size than the other skins', () => {
+    const plain = restingFace(widget('text', { text: 'Same words', mode: 'plain' }, {
+      size: { width: 400, height: 200 },
+    }))
+    const sticky = restingFace(widget('text', { text: 'Same words', mode: 'sticky' }, {
+      size: { width: 400, height: 200 },
+    }))
+    expect(sticky.size.width).toBeGreaterThan(plain.size.width)
   })
 
   it.each([
     'plain',
     'sticky',
-    'quote',
-    'daily_log',
-    'markdown_page',
     'typewriter',
-    'callout',
-    'versioned_note',
   ] as const)('gives the %s Note skin its own resting model', (mode) => {
-    const face = restingFace(widget('notes', {
+    const face = restingFace(widget('text', {
       text: '# Heading\n- First point\nA useful sentence',
       mode,
       color: 'pink',
-      attribution: 'Ada',
-      skinStates: {
-        daily_log: { date: '2026-07-26' },
-        callout: { tone: 'warning' },
-        versioned_note: {
-          snapshots: [
-            { id: 'v1', label: 'Today, 10:00', text: 'Earlier', createdAt: '2026-07-26T10:00:00Z' },
-          ],
-        },
-      },
     }))
     expect(face.model).toMatchObject({ kind: 'note', skin: mode })
   })
 
-  it('preserves Markdown structure and skin-specific Note details', () => {
-    const markdown = restingFace(widget('notes', {
-      mode: 'markdown_page',
-      text: '# Heading\n- First point\n> Quoted point\n```\nconst ready = true\n```',
+  it('keeps Note previews bounded regardless of document size', () => {
+    const face = restingFace(widget('text', {
+      mode: 'typewriter',
+      text: Array.from({ length: 100 }, (_, index) => `Line ${index} with enough text to wrap across the preview`).join('\n'),
     }))
-    if (markdown.model.kind !== 'note') throw new Error('expected Note face')
-    expect(markdown.model.lines.map((line) => line.kind)).toEqual([
-      'heading',
-      'bullet',
-      'quote',
-      'code',
-    ])
-
-    const sticky = restingFace(widget('notes', {
-      mode: 'sticky',
-      text: 'Pin this thought',
-      color: 'purple',
-    }))
-    expect(sticky.model).toMatchObject({ kind: 'note', skin: 'sticky', color: 'purple' })
-
-    const callout = restingFace(widget('notes', {
-      mode: 'callout',
-      text: 'Do not miss this',
-      skinStates: { callout: { tone: 'important' } },
-    }))
-    expect(callout.model).toMatchObject({ kind: 'note', skin: 'callout', tone: 'important' })
+    // The page is unbounded writing, but the TILE is not: it stays a fixed
+    // fraction of the card no matter how long the document.
+    expect(face.model).toEqual({ kind: 'note', skin: 'typewriter' })
+    expect(face.size.width).toBeLessThanOrEqual(NOTE_REST_MAX_WIDTH)
   })
 
-  it('keeps Note previews bounded regardless of document and history size', () => {
-    const face = restingFace(widget('notes', {
-      mode: 'versioned_note',
-      text: Array.from({ length: 100 }, (_, index) => `Line ${index} with enough text to wrap across the preview`).join('\n'),
-      skinStates: {
-        versioned_note: {
-          snapshots: Array.from({ length: 20 }, (_, index) => ({
-            id: `v${index}`,
-            label: `Version ${index}`,
-            text: `Snapshot ${index}`,
-            createdAt: '2026-07-26T10:00:00Z',
-          })),
-        },
-      },
+  it('rests a note with only ink as a note', () => {
+    const inked = restingFace(widget('text', {
+      mode: 'sticky',
+      text: '',
+      skinStates: { sticky: { strokes: [{ points: [0.1, 0.2, 0.3, 0.4] }] } },
     }))
-    if (face.model.kind !== 'note') throw new Error('expected Note face')
-    expect(face.model.lines).toHaveLength(NOTE_REST_LINE_LIMIT)
-    expect(face.model.versions).toHaveLength(NOTE_REST_VERSION_LIMIT)
+    expect(inked.model.kind).toBe('note')
   })
 
   it('keeps one-line faces one cell tall', () => {

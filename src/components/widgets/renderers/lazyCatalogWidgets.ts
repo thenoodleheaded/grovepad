@@ -4,6 +4,7 @@ export const AtlasWidget = lazy(async () => ({ default: (await import('../module
 export const AutomationCoreWidget = lazy(async () => ({ default: (await import('../modules/AutomationCoreWidgets')).AutomationCoreWidget }))
 export const ExpansionWidget = lazy(async () => ({ default: (await import('../modules/ExpansionWidgets')).ExpansionWidget }))
 export const LocationWidget = lazy(async () => ({ default: (await import('../modules/LocationWidget')).LocationWidget }))
+export const TripItineraryWidget = lazy(async () => ({ default: (await import('../modules/TripItineraryWidget')).TripItineraryWidget }))
 
 /** Same import literals as the lazy() wrappers above — Vite resolves them
  * to the same chunks, so firing one warms the exact module a first mount
@@ -13,4 +14,5 @@ export const CATALOG_WIDGET_MODULE_LOADERS: ReadonlyArray<() => Promise<unknown>
   () => import('../modules/AutomationCoreWidgets'),
   () => import('../modules/ExpansionWidgets'),
   () => import('../modules/LocationWidget'),
+  () => import('../modules/TripItineraryWidget'),
 ]

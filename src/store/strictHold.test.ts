@@ -4,7 +4,7 @@ import { makeRelation, makeWidget } from '../test/factories'
 import { buildBoardSnapshot } from '../utils/persistence'
 import { parsePersistedBoard } from '../utils/persistedBoardSchema'
 import { useWidgetStore } from './useWidgetStore'
-import { expandMovedWidgetIds, strictCarrierIds, strictHolderOf } from './widgetGraph'
+import { expandMovedWidgetIds, resolveStrictHold, strictCarrierIds } from './widgetGraph'
 
 // ---------------------------------------------------------------------------
 // Pure derivation — hand-built records, no store.
@@ -17,11 +17,42 @@ function record<T extends { id: string }>(items: T[]): Record<string, T> {
 const noGlue = { glues: {}, widgetGlueIndex: {} }
 
 describe('strict-hold derivation', () => {
-  it('a soft parent moves alone: no relation ever moves anyone by itself', () => {
+  it('hard by default: a plain parent line already carries the child', () => {
     const widgets = record([makeWidget({ id: 'p' }), makeWidget({ id: 'c' })])
     const relations = record([makeRelation({ id: 'r1', fromId: 'p', toId: 'c' })])
+    expect(expandMovedWidgetIds(['p'], { widgets, relations, ...noGlue }).sort()).toEqual(['c', 'p'])
+    expect(strictCarrierIds(widgets, relations).size).toBe(2)
+  })
+
+  it('a released parent moves alone, and the release reaches its whole branch', () => {
+    const widgets = record([
+      makeWidget({ id: 'p', metadata: { badges: [], strictHold: false } }),
+      makeWidget({ id: 'c' }),
+      makeWidget({ id: 'g' }),
+    ])
+    const relations = record([
+      makeRelation({ id: 'r1', fromId: 'p', toId: 'c' }),
+      makeRelation({ id: 'r2', fromId: 'c', toId: 'g' }),
+    ])
     expect(expandMovedWidgetIds(['p'], { widgets, relations, ...noGlue })).toEqual(['p'])
-    expect(strictCarrierIds(widgets, relations).size).toBe(0)
+    // The release is inherited downward exactly as a hold is: no hard pockets
+    // hiding inside a branch somebody deliberately relaxed.
+    expect(expandMovedWidgetIds(['c'], { widgets, relations, ...noGlue })).toEqual(['c'])
+    expect(resolveStrictHold('g', widgets, relations)).toEqual({ strict: false, inheritedFrom: 'p' })
+  })
+
+  it('a node re-holds its own branch inside a released tree', () => {
+    const widgets = record([
+      makeWidget({ id: 'p', metadata: { badges: [], strictHold: false } }),
+      makeWidget({ id: 'c', metadata: { badges: [], strictHold: true } }),
+      makeWidget({ id: 'g' }),
+    ])
+    const relations = record([
+      makeRelation({ id: 'r1', fromId: 'p', toId: 'c' }),
+      makeRelation({ id: 'r2', fromId: 'c', toId: 'g' }),
+    ])
+    expect(expandMovedWidgetIds(['p'], { widgets, relations, ...noGlue })).toEqual(['p'])
+    expect(expandMovedWidgetIds(['c'], { widgets, relations, ...noGlue }).sort()).toEqual(['c', 'g'])
   })
 
   it('a strict holder carries its whole parent-linked subtree', () => {
@@ -51,9 +82,9 @@ describe('strict-hold derivation', () => {
     expect(expandMovedWidgetIds(['mid'], { widgets, relations, ...noGlue }).sort()).toEqual(['leaf', 'mid'])
   })
 
-  it('a free node above a deep holder is untouched by strictness below it', () => {
+  it('a released node above a holder keeps its own release', () => {
     const widgets = record([
-      makeWidget({ id: 'top' }),
+      makeWidget({ id: 'top', metadata: { badges: [], strictHold: false } }),
       makeWidget({ id: 'holder', metadata: { badges: [], strictHold: true } }),
       makeWidget({ id: 'leaf' }),
     ])
@@ -86,7 +117,16 @@ describe('strict-hold derivation', () => {
       makeRelation({ id: 'r2', fromId: 'b', toId: 'a' }),
     ])
     expect(expandMovedWidgetIds(['a'], { widgets, relations, ...noGlue }).sort()).toEqual(['a', 'b'])
-    expect(strictHolderOf('b', widgets, relations)).toBe('a')
+    expect(resolveStrictHold('b', widgets, relations).strict).toBe(true)
+  })
+
+  it('resolves a cycle of undecided nodes to the default instead of hanging', () => {
+    const widgets = record([makeWidget({ id: 'a' }), makeWidget({ id: 'b' })])
+    const relations = record([
+      makeRelation({ id: 'r1', fromId: 'a', toId: 'b' }),
+      makeRelation({ id: 'r2', fromId: 'b', toId: 'a' }),
+    ])
+    expect(resolveStrictHold('a', widgets, relations)).toEqual({ strict: true, inheritedFrom: null })
   })
 
   it('family expansion never crosses canvases', () => {
@@ -117,9 +157,9 @@ describe('strict-hold derivation', () => {
     ).toEqual(['c', 'p', 'stranger'])
   })
 
-  it('names the nearest strict holder above a widget, and none for a free one', () => {
+  it("names where an inherited answer was decided, and nothing for a node's own", () => {
     const widgets = record([
-      makeWidget({ id: 'root', metadata: { badges: [], strictHold: true } }),
+      makeWidget({ id: 'root', metadata: { badges: [], strictHold: false } }),
       makeWidget({ id: 'mid' }),
       makeWidget({ id: 'leaf' }),
       makeWidget({ id: 'free' }),
@@ -128,9 +168,10 @@ describe('strict-hold derivation', () => {
       makeRelation({ id: 'r1', fromId: 'root', toId: 'mid' }),
       makeRelation({ id: 'r2', fromId: 'mid', toId: 'leaf' }),
     ])
-    expect(strictHolderOf('leaf', widgets, relations)).toBe('root')
-    expect(strictHolderOf('root', widgets, relations)).toBeNull()
-    expect(strictHolderOf('free', widgets, relations)).toBeNull()
+    expect(resolveStrictHold('leaf', widgets, relations).inheritedFrom).toBe('root')
+    expect(resolveStrictHold('root', widgets, relations)).toEqual({ strict: false, inheritedFrom: null })
+    // Nobody decided anything for a lone card: hard, and nothing to name.
+    expect(resolveStrictHold('free', widgets, relations)).toEqual({ strict: true, inheritedFrom: null })
   })
 })
 
@@ -147,14 +188,25 @@ afterEach(() => {
 describe('strict hold in the store', () => {
   function createFamily() {
     const store = useWidgetStore.getState()
-    const parentId = store.createWidget('Parent', { x: 0, y: 800 }, 'notes')
-    const childId = store.createWidget('Child', { x: 1200, y: 0 }, 'notes')
+    const parentId = store.createWidget('Parent', { x: 0, y: 800 }, 'text')
+    const childId = store.createWidget('Child', { x: 1200, y: 0 }, 'text')
     useWidgetStore.getState().addRelation(parentId, childId, 'parent')
     return { parentId, childId }
   }
 
-  it('soft by default: dragging the parent leaves the child where it is', () => {
+  it('hard by default: dragging the parent drags the child, nothing switched on', () => {
     const { parentId, childId } = createFamily()
+    const childBefore = useWidgetStore.getState().widgets[childId]!.position
+    useWidgetStore.getState().moveWidget(parentId, { x: 80, y: 40 }, 1)
+    expect(useWidgetStore.getState().widgets[childId]!.position).toEqual({
+      x: childBefore.x + 80,
+      y: childBefore.y + 40,
+    })
+  })
+
+  it('a released parent leaves the child where it is', () => {
+    const { parentId, childId } = createFamily()
+    useWidgetStore.getState().updateWidgetsMetadata([parentId], { strictHold: false })
     const childBefore = useWidgetStore.getState().widgets[childId]!.position
     useWidgetStore.getState().moveWidget(parentId, { x: 80, y: 40 }, 1)
     expect(useWidgetStore.getState().widgets[childId]!.position).toEqual(childBefore)
@@ -256,30 +308,43 @@ describe("the widget menu's soft/hard switch", () => {
     'utf8',
   )
 
-  it('asks the one owner whether the decision is already owned above', () => {
-    expect(menu).toContain('strictHolderOf(contextMenu.widgetId, state.widgets, state.relations)')
+  it('asks the one owner for the resolved answer, never the raw flag', () => {
+    // Hard-by-default means `metadata.strictHold` is usually absent, so reading
+    // the flag directly would draw every node as released.
+    expect(menu).toContain('resolveStrictHold(contextMenu.widgetId, state.widgets, state.relations)')
+    expect(menu).not.toContain('widget.metadata.strictHold')
   })
 
-  it('offers no switch inside a held tree — it names the holder, disabled', () => {
-    // The law: strictness is inherited downward and owned at the top, so a node
-    // already held cannot be softened here. The row must be inert, or the menu
-    // would promise a change the rules discard.
-    expect(menu).toContain('heldByTitle !== null ? (')
-    const heldRow = menu.slice(menu.indexOf('heldByTitle !== null ? ('), menu.indexOf(') : hasFamily ? ('))
-    expect(heldRow).toContain('Held strictly by ')
-    expect(heldRow).toContain('disabled')
-    expect(heldRow).not.toContain('updateWidgetsMetadata')
-  })
-
-  it('toggles both ways for a free parent, through the metadata owner', () => {
-    // Nothing about a hold is a one-way door: a holder that owns its own
-    // decision can always release it.
-    expect(menu).toContain("strictHold ? 'Release strict hold' : 'Hold family strictly'")
+  it('always switches — every node owns the hold on its own branch', () => {
+    // Nothing about a hold is a one-way door, and with hard as the default the
+    // release must be reachable at the node a person right-clicked, not only at
+    // the top of the tree.
+    expect(menu).toContain("? 'Release strict hold'")
+    expect(menu).toContain(": 'Hold family strictly'")
     expect(menu).toContain('updateWidgetsMetadata([widget.id], { strictHold: !strictHold })')
+    // The inert "held from above" row belongs to the old opt-in law.
+    expect(menu).not.toContain('Held strictly by')
+  })
+
+  it('names where a released answer came from when the node did not decide it', () => {
+    expect(menu).toContain('releasedByTitle !== null')
+    expect(menu).toContain('released by ')
   })
 
   it('stays hidden for a widget with no family to hold', () => {
     expect(menu).toContain("relation.type === 'parent' && relation.fromId === contextMenu.widgetId")
-    expect(menu).toContain(') : hasFamily ? (')
+    expect(menu).toContain('{hasFamily ? (')
+  })
+
+  it('is the only surface carrying the switch — a relation line never offers it', () => {
+    // A hold belongs to the parent node and reaches every descendant inheriting
+    // from it. Offering it on one edge reads as "glue these two", a promise the
+    // rules do not keep.
+    const lines = readFileSync(
+      new URL('../components/canvas/RelationLines.tsx', import.meta.url),
+      'utf8',
+    )
+    expect(lines).not.toContain('strictHold')
+    expect(lines).not.toContain('strictHolderOf')
   })
 })

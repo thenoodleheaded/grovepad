@@ -20,6 +20,7 @@ import {
   hourLabel,
   meetingPlannerState,
   meetingRows,
+  overlapBandState,
   overlapHours,
   sunReading,
   travelClockState,
@@ -201,7 +202,9 @@ export function WorldClockWidget({
       </div>
     )
   } else if (skin === 'overlap_band') {
-    const state = { window: workHours }
+    // Through the same repair Meeting Planner uses: an inverted window picked
+    // in the stepper would otherwise leave every hour of every city dead.
+    const state = overlapBandState({ window: workHours })
     const bands = zoneBands(zones, now, state.window)
     const shared = overlapHours(bands)
     const sharedSet = new Set(shared)

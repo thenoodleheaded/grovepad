@@ -1,22 +1,18 @@
 import type { ModuleType,
-  DailyAgendaData,
   DecisionMatrixData,
   FormWidgetData,
   InventoryData,
-  LineChartData,
   LogbookData,
   ModuleData,
   OutlineData,
-  PieChartData,
   ProcessData,
   RiskRegisterData,
   SwotData,
   TimesheetData,
   UnitConverterData,
-  WorldClockData,
 } from '../../types/spatial'
 import type { FieldDescriptor } from '../contracts/fields'
-import { num, text, bool, primaryZoneTime, formFieldFilled, decisionWinner, convertedUnit } from './valueHelpers'
+import { num, text, bool, formFieldFilled, decisionWinner, convertedUnit } from './valueHelpers'
 import {
   appendLogbookEntry,
   latestLogbookEntry,
@@ -67,32 +63,6 @@ export const PROFESSIONAL_FIELDS = {
         const value = first.type === 'checkbox' ? bool(v) : first.type === 'number' ? num(v) : text(v)
         return { ...form, fields: form.fields.map((field, index) => index === 0 ? { ...field, value } : field) }
       },
-    },
-  ],
-  daily_agenda: [
-    {
-      key: 'done_count',
-      label: 'Done',
-      valueType: 'number',
-      get: (d) => (d as DailyAgendaData).items.filter((item) => item.done).length,
-    },
-    {
-      key: 'all_done',
-      label: 'All done',
-      valueType: 'boolean',
-      get: (d) => {
-        const items = (d as DailyAgendaData).items
-        return items.length > 0 && items.every((item) => item.done)
-      },
-    },
-    {
-      key: 'next_item',
-      label: 'Next item',
-      valueType: 'text',
-      get: (d) =>
-        [...(d as DailyAgendaData).items]
-          .sort((a, b) => a.time.localeCompare(b.time))
-          .find((item) => !item.done)?.title ?? '',
     },
   ],
   process: [
@@ -264,77 +234,6 @@ export const PROFESSIONAL_FIELDS = {
       },
     },
   ],
-  line_chart: [
-    {
-      key: 'series',
-      label: 'Series',
-      valueType: 'series',
-      get: (d) => (d as LineChartData).points.map((point, index) => ({ t: index, v: point.value })),
-      set: (d, v) => {
-        if (!Array.isArray(v)) return d
-        return {
-          ...(d as LineChartData),
-          points: v.slice(-400).map((point) => ({
-            id: crypto.randomUUID(),
-            label: new Date(point.t).toLocaleDateString(),
-            value: point.v,
-          })),
-        }
-      },
-    },
-    {
-      key: 'latest',
-      label: 'Latest value',
-      valueType: 'number',
-      get: (d) => (d as LineChartData).points[(d as LineChartData).points.length - 1]?.value ?? 0,
-    },
-    {
-      key: 'average',
-      label: 'Average',
-      valueType: 'number',
-      get: (d) => {
-        const points = (d as LineChartData).points
-        return points.length ? points.reduce((sum, point) => sum + (Number.isFinite(point.value) ? point.value : 0), 0) / points.length : 0
-      },
-    },
-    {
-      key: 'max',
-      label: 'Maximum',
-      valueType: 'number',
-      get: (d) => {
-        const values = (d as LineChartData).points.map((point) => Number.isFinite(point.value) ? point.value : 0)
-        return values.length ? Math.max(...values) : 0
-      },
-    },
-  ],
-  pie_chart: [
-    {
-      key: 'total',
-      label: 'Total',
-      valueType: 'number',
-      get: (d) => (d as PieChartData).segments.reduce((sum, segment) => sum + (Number.isFinite(segment.value) ? Math.max(0, segment.value) : 0), 0),
-    },
-    {
-      key: 'largest_share',
-      label: 'Largest share %',
-      valueType: 'number',
-      get: (d) => {
-        const segments = (d as PieChartData).segments
-        const total = segments.reduce((sum, segment) => sum + (Number.isFinite(segment.value) ? Math.max(0, segment.value) : 0), 0)
-        const largest = segments.reduce((max, segment) => Math.max(max, Number.isFinite(segment.value) ? Math.max(0, segment.value) : 0), 0)
-        return total > 0 ? (largest / total) * 100 : 0
-      },
-    },
-    {
-      key: 'largest_label',
-      label: 'Largest segment',
-      valueType: 'text',
-      get: (d) => {
-        const segments = (d as PieChartData).segments
-        return segments.reduce<PieChartData['segments'][number] | null>((best, segment) => !best || segment.value > best.value ? segment : best, null)?.label ?? ''
-      },
-    },
-  ],
   unit_converter: [
     {
       key: 'input',
@@ -348,22 +247,6 @@ export const PROFESSIONAL_FIELDS = {
       label: 'Converted output',
       valueType: 'number',
       get: (d) => convertedUnit(d as UnitConverterData),
-    },
-  ],
-  world_clock: [
-    {
-      key: 'primary_time',
-      label: 'Primary time',
-      valueType: 'text',
-      get: (d) => primaryZoneTime((d as WorldClockData).zones),
-      timeSensitive: true,
-    },
-    {
-      key: 'zone_count',
-      label: 'Zones',
-      valueType: 'number',
-      unit: 'count',
-      get: (d) => (d as WorldClockData).zones.length,
     },
   ],
 } satisfies Partial<Record<ModuleType, FieldDescriptor[]>>

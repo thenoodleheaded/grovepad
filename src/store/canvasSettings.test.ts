@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { buildBoardSnapshot } from '../utils/persistence'
 import { parsePersistedBoard } from '../utils/persistedBoardSchema'
+import { GENERATION_GAP } from './generationFloor'
 import { useWidgetStore } from './useWidgetStore'
 
 const baseline = parsePersistedBoard(buildBoardSnapshot(useWidgetStore.getState()))!
@@ -48,21 +49,27 @@ describe('per-canvas settings', () => {
     })
   })
 
-  it('keeps a relation from moving either connected widget', () => {
-    const sourceId = useWidgetStore.getState().createWidget('Source', { x: 0, y: 400 }, 'notes')
-    const targetId = useWidgetStore.getState().createWidget('Target', { x: 1200, y: 0 }, 'notes')
+  it('a new parent line never moves the parent, and drops the child below it', () => {
+    // The height rule is the ONE thing linking rearranges: the parent holds its
+    // place, sideways placement is left alone, and the child lands under it.
+    const sourceId = useWidgetStore.getState().createWidget('Source', { x: 0, y: 400 }, 'text')
+    const targetId = useWidgetStore.getState().createWidget('Target', { x: 1200, y: 0 }, 'text')
     const sourceBefore = useWidgetStore.getState().widgets[sourceId]!.position
     const targetBefore = useWidgetStore.getState().widgets[targetId]!.position
 
     useWidgetStore.getState().addRelation(sourceId, targetId, 'parent')
 
-    expect(useWidgetStore.getState().widgets[sourceId]!.position).toEqual(sourceBefore)
-    expect(useWidgetStore.getState().widgets[targetId]!.position).toEqual(targetBefore)
+    const after = useWidgetStore.getState()
+    expect(after.widgets[sourceId]!.position).toEqual(sourceBefore)
+    expect(after.widgets[targetId]!.position.x).toBe(targetBefore.x)
+    // Measured against the parent's TOP plus a generation: the rule works on
+    // the boxes cards actually occupy at rest, not their dormant full size.
+    expect(after.widgets[targetId]!.position.y).toBeGreaterThan(sourceBefore.y + GENERATION_GAP)
   })
 
   it('keeps the drawn direction for a drag connection', () => {
-    const lowerSourceId = useWidgetStore.getState().createWidget('Lower source', { x: 0, y: 400 }, 'notes')
-    const upperTargetId = useWidgetStore.getState().createWidget('Upper target', { x: 1200, y: 0 }, 'notes')
+    const lowerSourceId = useWidgetStore.getState().createWidget('Lower source', { x: 0, y: 400 }, 'text')
+    const upperTargetId = useWidgetStore.getState().createWidget('Upper target', { x: 1200, y: 0 }, 'text')
 
     useWidgetStore.getState().startLinkDrag(lowerSourceId, { x: 1200, y: 0 }, { x: 0, y: 0 })
     useWidgetStore.getState().endLinkDrag(upperTargetId)
@@ -88,8 +95,8 @@ describe('per-canvas settings', () => {
     }
     useWidgetStore.getState().loadBoard(legacyBoard)
 
-    const lowerId = useWidgetStore.getState().createWidget('Lower', { x: 0, y: 400 }, 'notes')
-    const upperId = useWidgetStore.getState().createWidget('Upper', { x: 800, y: 0 }, 'notes')
+    const lowerId = useWidgetStore.getState().createWidget('Lower', { x: 0, y: 400 }, 'text')
+    const upperId = useWidgetStore.getState().createWidget('Upper', { x: 800, y: 0 }, 'text')
     const positionsBefore = {
       lower: useWidgetStore.getState().widgets[lowerId]!.position,
       upper: useWidgetStore.getState().widgets[upperId]!.position,
@@ -101,7 +108,12 @@ describe('per-canvas settings', () => {
       toId: upperId,
       type: 'parent',
     })
+    // The legacy canvas flag decides nothing: the parent still holds its place,
+    // and the child answers to the same height rule every board obeys.
     expect(useWidgetStore.getState().widgets[lowerId]!.position).toEqual(positionsBefore.lower)
-    expect(useWidgetStore.getState().widgets[upperId]!.position).toEqual(positionsBefore.upper)
+    expect(useWidgetStore.getState().widgets[upperId]!.position.x).toBe(positionsBefore.upper.x)
+    expect(useWidgetStore.getState().widgets[upperId]!.position.y).toBeGreaterThan(
+      positionsBefore.upper.y,
+    )
   })
 })

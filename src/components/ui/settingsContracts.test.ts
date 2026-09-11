@@ -11,6 +11,9 @@ const styles = readFileSync(new URL('../../styles/product/03-glass-chrome.css', 
 const tokens = readFileSync(new URL('../../styles/product/01-tokens-base.css', import.meta.url), 'utf8')
 const authStore = readFileSync(new URL('../../store/useAuthStore.ts', import.meta.url), 'utf8')
 const confirmDialog = readFileSync(new URL('./ConfirmDialog.tsx', import.meta.url), 'utf8')
+const skinGallery = readFileSync(new URL('../../utils/skinGalleryLoad.ts', import.meta.url), 'utf8')
+const packSettings = readFileSync(new URL('./DomainPackSettings.tsx', import.meta.url), 'utf8')
+const addModal = readFileSync(new URL('./AddWidgetModal.tsx', import.meta.url), 'utf8')
 
 describe('settings and chrome contracts', () => {
   it('uses five concise sections and keeps shortcuts inside settings', () => {
@@ -68,7 +71,9 @@ describe('settings and chrome contracts', () => {
     expect(styles).toContain('.gp-settings-progress-island:has(input:active)::after')
     expect(styles).toMatch(/\.gp-settings-progress-island::before[\s\S]*?transition: none;/)
     expect(styles).toContain('scaleX(1.32) skewX(-5deg)')
-    expect(styles).toContain('backdrop-filter: blur(14px)')
+    // Frosted glass is declared through the quality-tier blur token, never as a
+    // bare radius, so a visual quality mode can weaken or remove it.
+    expect(styles).toContain('backdrop-filter: blur(calc(14px * var(--gp-blur-scale, 1)))')
     expect(settings).not.toContain('gp-settings-row-icon')
     expect(settingsStore).toContain("SettingsSection = 'general' | 'controls' | 'canvas' | 'account' | 'data'")
     expect(settingsStore).toContain('reduceMotion: false')
@@ -92,6 +97,7 @@ describe('settings and chrome contracts', () => {
     const data = settings.slice(settings.indexOf('data: ('), settings.indexOf('}[settings.section]'))
 
     expect(general).toContain('Reset settings')
+    expect(general).toContain('<VisualQualityIsland')
     expect(general).not.toContain('GridVisibilityIsland')
     expect(canvas).toContain('Grovepad file')
     expect(canvas).toContain('<CanvasSettings canvas={activeCanvas} />')
@@ -101,10 +107,49 @@ describe('settings and chrome contracts', () => {
     expect(accountSection).toContain('<PreferenceIsland title="Cloud sync"')
     expect(data).toContain('<PreferenceIsland title="MCP connector"')
     expect(data).toContain('settings.mcpConnector')
-    expect(data).toContain('<ActionIsland title="Domain packs"')
+    expect(data).toContain('<PreferenceIsland title="Usage counting"')
+    expect(data).toContain('settings.usageAnalytics')
+    expect(data).toContain('<DomainPackSettings />')
     expect(data).not.toContain('Grovepad file')
     expect(data).not.toContain('Cloud sync')
     expect(data).not.toContain('Reset settings')
+  })
+
+  it('lets the .grovepad download start before it frees the blob', () => {
+    // Revoking on the line after link.click() beats the download in WebKit and
+    // Firefox — including the Tauri macOS webview — and writes a zero-byte
+    // file while the toast still says the export worked.
+    const exportPath = settings.slice(
+      settings.indexOf('const exportPackage'),
+      settings.indexOf('const importPackage'),
+    )
+    expect(exportPath).toContain('document.body.appendChild(link)')
+    expect(exportPath).toContain('link.remove()')
+    expect(exportPath).toContain('setTimeout(() => URL.revokeObjectURL(url), 10_000)')
+    expect(exportPath).not.toContain('link.click()\n      URL.revokeObjectURL(url)')
+  })
+
+  it('owns domain packs here, not as a detour inside the widget picker', () => {
+    // Adding a widget is a hot path; choosing which libraries exist at all is a
+    // setup decision. The picker must keep no route back into pack management.
+    expect(packSettings).toContain('togglePack')
+    expect(packSettings).toContain('toggleHiddenPackWidgetType')
+    expect(addModal).not.toContain('DOMAIN_PACKS')
+    expect(addModal).not.toContain('togglePack')
+    expect(addModal).not.toContain("'packs'")
+    // The picker still filters by the packs the board has switched on.
+    expect(addModal).toContain('activePacks.includes(def.pack)')
+  })
+
+  it('counts usage anonymously, says so in words, and can be switched off', () => {
+    // One event exists and the panel names it. Turning the switch off is not a
+    // request to stop sending — the SDK behind it is never downloaded at all.
+    expect(settingsStore).toContain('usageAnalytics: true')
+    expect(settings).toContain('<PreferenceIsland title="Usage counting"')
+    expect(settings).toContain('USAGE_ANALYTICS_HINT')
+    expect(settings).toContain('browserRefuses: browserRefusesTracking()')
+    // A build with no project key must not offer a switch that does nothing.
+    expect(settings).toContain('disabled={!analyticsConfigured}')
   })
 
   it('keeps local Claude access explicit and off by default', () => {
@@ -158,7 +203,7 @@ describe('settings and chrome contracts', () => {
     }
   })
 
-  it('uses one blurred modal backdrop and responsive settings panel', () => {
+  it('uses one dimmed modal backdrop and responsive settings panel', () => {
     expect(settings).toContain('gp-settings-backdrop')
     expect(settings).toContain('aria-modal="true"')
     expect(settings).toContain("data-state={settings.open ? 'open' : 'closed'}")
@@ -167,7 +212,10 @@ describe('settings and chrome contracts', () => {
     expect(styles).toContain('@keyframes gp-settings-backdrop-out')
     expect(styles).toContain('@keyframes gp-settings-shell-in')
     expect(styles).toContain('@keyframes gp-settings-shell-out')
-    expect(styles).toContain('backdrop-filter: blur(18px)')
+    // The scrim blurs the entire board and chrome behind an open panel, so
+    // settings is the only surface still legible. It is a full-viewport
+    // composite, affordable only because the overlay unmounts once closed.
+    expect(styles).toMatch(/\.gp-settings-backdrop \{[\s\S]*?backdrop-filter: blur\(/)
     expect(styles).toContain('.gp-settings-panel')
   })
 
@@ -197,5 +245,31 @@ describe('settings and chrome contracts', () => {
     for (const unnecessary of ['Address', 'Phone number', 'Date of birth', 'Company']) {
       expect(settings).not.toContain(unnecessary)
     }
+  })
+  it('adds the Skin Gallery workspace without disturbing the board already there', () => {
+    // The button is the only supported way in — a console paste is not a
+    // product surface, so the loader has to live behind Settings.
+    expect(settings).toContain('title="Load Skin Gallery"')
+    expect(settings).toContain('void loadSkinGallery()')
+    // ...and only on the dev server. The gallery drops a whole reference
+    // workspace beside the user's own work, which is a widget-building tool,
+    // not a product feature. `import.meta.env.DEV` folds to false in every
+    // production bundle, so the deployed build ships without the loader.
+    expect(settings).toContain('const SKIN_GALLERY_ENABLED = import.meta.env.DEV')
+    expect(settings).toContain('{SKIN_GALLERY_ENABLED && (')
+    // Merge, never replace: the loader carries the existing records across and
+    // only drops the gallery's own, so pressing it twice refreshes in place.
+    expect(skinGallery).toContain("const GALLERY_PREFIX = 'skinlab-'")
+    expect(skinGallery).toContain('...withoutGallery(state.workspaces)')
+    expect(skinGallery).toContain('...withoutGallery(state.canvases)')
+    expect(skinGallery).toContain('...withoutGallery(state.widgets)')
+    expect(skinGallery).toContain('relations: withoutGallery(state.relations)')
+    // A fetched fragment is untrusted, so it is validated before hydration and
+    // a failure leaves the board untouched.
+    expect(skinGallery).toContain('parsePersistedBoard(merged)')
+    expect(skinGallery.indexOf('parsePersistedBoard(merged)')).toBeLessThan(
+      skinGallery.indexOf('loadBoard(board)'),
+    )
+    expect(skinGallery).toContain("tone: 'danger'")
   })
 })

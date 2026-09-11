@@ -1,15 +1,15 @@
 import type {
-  AssignmentData, BarChartData, BudgetData,
-  CitationData, CodeData, DailyAgendaData, DecisionData, DecisionMatrixData,
-  FormWidgetData, FormulaSheetData, GoalTrackerData, GpaData, GradeCalcData,
-  InventoryData, KanbanData, LineChartData, LinksData, LogbookData,
+  BarChartData, BudgetData,
+  CitationData, CodeData, DecisionData, DecisionMatrixData,
+  FormWidgetData, FormulaSheetData, GoalTrackerData, GradeCalcData,
+  InventoryData, LinksData, LogbookData,
   MeetingNotesData, MetricsData, ModuleData, ModuleType, OutlineData,
-  PieChartData, PollData, ProcessData, ProsConsData, QuizData, ReadingListData,
-  RiskRegisterData, Size, SwotData, TableData, TimesheetData, VocabData,
-  Vector2D, WeeklyPlannerData, Widget, WorldClockData,
+  PollData, ProcessData, ProsConsData, ReadingListData,
+  RiskRegisterData, Size, SwotData, TableData, TimesheetData, 
+  Vector2D, Widget, 
 } from '../types/spatial'
 import { GRID_SIZE, snapToGrid } from '../types/spatial'
-import { CONSOLIDATED_WIDGET_MODES, publicWidgetTypeFor, widgetDefinition } from '../widgets/registry'
+import { widgetDefinition } from '../widgets/registry'
 import { clamp } from '../utils/math'
 import { MIN_WIDGET_HEIGHT, MIN_WIDGET_WIDTH } from './widgetLayoutConstants'
 
@@ -97,11 +97,6 @@ export function computeDataHeight(type: ModuleType, data: ModuleData): number {
       const rowHeight = skin === 'weighted_trade_off' ? 32 : 28
       return Math.max(C * 4, Math.ceil((rows * rowHeight + 148) / C) * C)
     }
-    case 'weekly_planner': {
-      const d = data as WeeklyPlannerData
-      const tasks = d.days.reduce((sum, day) => sum + day.length, 0)
-      return Math.max(C * 7, Math.ceil((tasks * 24 + 7 * 34 + 48) / C) * C)
-    }
     case 'goal_tracker': {
       const d = data as GoalTrackerData
       return Math.max(C * 4, Math.ceil((d.milestones.length * 28 + 148) / C) * C)
@@ -124,23 +119,10 @@ export function computeDataHeight(type: ModuleType, data: ModuleData): number {
       const d = data as DecisionData
       return Math.max(C * 4, Math.ceil((d.options.length * 28 + 152) / C) * C)
     }
-    case 'world_clock': {
-      const d = data as WorldClockData
-      return Math.max(C * 3, Math.ceil((d.zones.length * 32 + 80) / C) * C)
-    }
-    case 'kanban': {
-      const d = data as KanbanData
-      const tallest = Math.max(1, ...d.columns.map((c) => c.cards.length))
-      return Math.max(C * 5, Math.ceil((tallest * 34 + 130) / C) * C)
-    }
     case 'code': {
       const d = data as CodeData
       const lines = d.code.split('\n').length
       return Math.max(C * 4, Math.ceil((lines * 18 + 96) / C) * C)
-    }
-    case 'vocab': {
-      const d = data as VocabData
-      return Math.max(C * 4, Math.ceil((d.terms.length * 44 + 80) / C) * C)
     }
     case 'grade_calc': {
       const d = data as GradeCalcData
@@ -149,25 +131,48 @@ export function computeDataHeight(type: ModuleType, data: ModuleData): number {
         : d.components.length
       return Math.max(C * 4, Math.ceil((rowCount * 36 + 154) / C) * C)
     }
-    case 'gpa': {
-      const d = data as GpaData
-      return Math.max(C * 4, Math.ceil((d.courses.length * 32 + 128) / C) * C)
-    }
-    case 'assignment': {
-      const d = data as AssignmentData
-      return Math.max(C * 4, Math.ceil((d.items.length * 34 + 96) / C) * C)
-    }
     case 'formula_sheet': {
+      // Each skin stacks the same formulas differently, so each needs its own
+      // height. Only counts are read here — what the rows MEAN is the skin
+      // model's business, and sizing must not need to load it.
       const d = data as FormulaSheetData
-      return Math.max(C * 4, Math.ceil((d.formulas.length * 40 + 80) / C) * C)
+      const count = d.formulas.length
+      // Measured from the rendered card: heading, footer, gaps and padding.
+      // Where a skin can lay out in columns the single-column height is used,
+      // because slack at the bottom is a far smaller sin than a clipped row.
+      const chrome = 112
+      if (d.skin === 'equation_cards') {
+        // One equation per row at the card's own width, which is the point of
+        // the skin; a widened card packs them and simply gains slack.
+        return Math.max(C * 5, Math.ceil((count * 106 + chrome) / C) * C)
+      }
+      if (d.skin === 'exam_strip') {
+        // Two packed columns at the card's own width. Under-shooting only ever
+        // costs a scroll here, and a cheat sheet that wastes a page is worse.
+        return Math.max(C * 4, Math.ceil((Math.ceil(count / 2) * 42 + chrome) / C) * C)
+      }
+      if (d.skin === 'derivation') {
+        const steps = d.skinStates?.derivation?.steps
+        const stepRows = steps && typeof steps === 'object' && !Array.isArray(steps)
+          ? Object.values(steps as Record<string, unknown>)
+            .reduce((total: number, list) => total + (Array.isArray(list) ? list.length : 0), 0)
+          : 0
+        return Math.max(C * 5, Math.ceil((count * 104 + stepRows * 26 + chrome) / C) * C)
+      }
+      if (d.skin === 'unit_aware') {
+        // Measured against a five-symbol formula, whose unit grid wraps to two
+        // rows. A simpler formula leaves slack rather than losing its verdict.
+        return Math.max(C * 6, Math.ceil((count * 208 + chrome) / C) * C)
+      }
+      if (d.skin === 'worked_example') {
+        const opened = typeof d.skinStates?.worked_example?.openId === 'string' ? 1 : 0
+        return Math.max(C * 4, Math.ceil((count * 48 + opened * 140 + chrome) / C) * C)
+      }
+      return Math.max(C * 4, Math.ceil((count * 42 + chrome) / C) * C)
     }
     case 'citation': {
       const d = data as CitationData
       return Math.max(C * 4, Math.ceil((d.sources.length * 52 + 96) / C) * C)
-    }
-    case 'quiz': {
-      const d = data as QuizData
-      return Math.max(C * 4, Math.ceil((d.options.length * 34 + 140) / C) * C)
     }
     case 'outline': {
       const d = data as OutlineData
@@ -187,10 +192,6 @@ export function computeDataHeight(type: ModuleType, data: ModuleData): number {
             : 54
       const chrome = d.skin === 'rsvp' ? 236 : d.skin === 'feedback' ? 176 : 150
       return Math.max(C * 5, Math.ceil((d.fields.length * perField + chrome) / C) * C)
-    }
-    case 'daily_agenda': {
-      const d = data as DailyAgendaData
-      return Math.max(C * 4, Math.ceil((d.items.length * 34 + 100) / C) * C)
     }
     case 'process': {
       const d = data as ProcessData
@@ -222,14 +223,6 @@ export function computeDataHeight(type: ModuleType, data: ModuleData): number {
     case 'logbook': {
       const d = data as LogbookData
       return Math.max(C * 5, Math.ceil((d.entries.length * 54 + 100) / C) * C)
-    }
-    case 'line_chart': {
-      const d = data as LineChartData
-      return Math.max(C * 5, Math.ceil((Math.ceil(d.points.length / 3) * 32 + 176) / C) * C)
-    }
-    case 'pie_chart': {
-      const d = data as PieChartData
-      return Math.max(C * 5, Math.ceil((d.segments.length * 30 + 150) / C) * C)
     }
     case 'chore_rotation':
       return C * 8
@@ -269,13 +262,6 @@ export function computeDataWidth(type: ModuleType, data: ModuleData): number {
       const longest = d.items.reduce((max, item) => Math.max(max, item.label.length), 0)
       // Label plus fixed amount/currency/remove affordances and card insets.
       return clamp(snapToGrid(clamp(longest * 7 + 24, 120, 360) + 152), C * 5, C * 16)
-    }
-    case 'kanban': {
-      const d = data as KanbanData
-      const cols = d.columns.length
-      if (cols === 0) return 0
-      // Columns sit side by side; ~150px each keeps cards legible.
-      return clamp(snapToGrid(cols * 150 + 24), C * 6, C * 26)
     }
     default:
       return 0
@@ -327,19 +313,16 @@ export function buildWidget(
   position: Vector2D,
   size?: Size,
 ): Widget {
-  const publicType = publicWidgetTypeFor(type)
-  const def = widgetDefinition(publicType)
-  const mode = CONSOLIDATED_WIDGET_MODES[type]
-  const defaults = def.defaultData()
-  const data = mode ? ({ ...defaults, mode } as ModuleData) : defaults
-  const dataHeight = computeDataHeight(publicType, data)
+  const def = widgetDefinition(type)
+  const data = def.defaultData()
+  const dataHeight = computeDataHeight(type, data)
   const initialSize = size ?? {
     ...def.defaultSize,
     height: Math.max(def.defaultSize.height, dataHeight),
   }
   return {
     id,
-    type: publicType,
+    type,
     title,
     canvasId,
     position,
@@ -350,5 +333,5 @@ export function buildWidget(
 }
 
 // ---------------------------------------------------------------------------
-// Seed data — a starter workspace with its Origin canvas.
+// Seed data — the blank workspace shell lives in widgetSeeds.ts.
 // ---------------------------------------------------------------------------

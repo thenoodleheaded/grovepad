@@ -94,7 +94,7 @@
   min-width: 0;
   align-items: center;
   gap: 0.35rem;
-  color: var(--gp-widget-accent);
+  color: var(--gp-accent-ink, var(--gp-widget-accent));
   font-size: 0.56rem;
   font-weight: 700;
   letter-spacing: 0.13em;
@@ -208,7 +208,7 @@
   border-radius: 50%;
   color: color-mix(in oklab, var(--gp-form-ink), transparent 72%);
   background: transparent;
-  transition: color 140ms ease, background-color 140ms ease;
+  transition: color var(--gp-duration-snap) var(--gp-ease-snap), background-color var(--gp-duration-snap) var(--gp-ease-snap);
 }
 
 .gp-form-required[aria-pressed='true'] {
@@ -245,7 +245,7 @@
   border-radius: 50%;
   color: transparent;
   background: transparent;
-  transition: color 140ms ease, background-color 140ms ease;
+  transition: color var(--gp-duration-snap) var(--gp-ease-snap), background-color var(--gp-duration-snap) var(--gp-ease-snap);
 }
 
 .gp-island:hover > header > .gp-form-remove,
@@ -278,7 +278,7 @@
   color: var(--gp-form-muted);
   background: transparent;
   font-size: 0.64rem;
-  transition: color 140ms ease, border-color 140ms ease, background-color 140ms ease;
+  transition: color var(--gp-duration-snap) var(--gp-ease-snap), border-color var(--gp-duration-snap) var(--gp-ease-snap), background-color var(--gp-duration-snap) var(--gp-ease-snap);
 }
 
 .gp-form-check > span {
@@ -306,13 +306,13 @@
   border: 0;
   border-radius: 0.5rem;
   padding: 0 0.55rem;
-  color: color-mix(in oklab, var(--gp-widget-accent), white 20%);
+  color: color-mix(in oklab, var(--gp-accent-ink, var(--gp-widget-accent)), var(--gp-accent-lift, #fff) 20%);
   background: color-mix(in oklab, var(--gp-widget-accent), transparent 88%);
   font-size: 0.54rem;
   font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  transition: background-color 140ms ease;
+  transition: background-color var(--gp-duration-snap) var(--gp-ease-snap);
 }
 
 .gp-form-add:hover {
@@ -323,7 +323,7 @@
 
 .gp-form-question.gp-island {
   border-left: 2px solid color-mix(in oklab, var(--gp-widget-accent), transparent 78%);
-  transition: border-color 180ms ease;
+  transition: border-color var(--gp-duration-snap) var(--gp-ease-snap);
 }
 
 .gp-form-question-done.gp-island {
@@ -337,7 +337,7 @@
   flex: 0 0 auto;
   place-items: center;
   border-radius: 50%;
-  color: var(--gp-widget-accent);
+  color: var(--gp-accent-ink, var(--gp-widget-accent));
   background: color-mix(in oklab, var(--gp-widget-accent), transparent 86%);
   font-size: 0.46rem;
   font-variant-numeric: tabular-nums;
@@ -366,7 +366,7 @@
 
 .gp-form-score > svg {
   align-self: center;
-  color: var(--gp-widget-accent);
+  color: var(--gp-accent-ink, var(--gp-widget-accent));
 }
 
 .gp-form-score b {
@@ -391,7 +391,7 @@
   border-radius: 0.35rem;
   color: color-mix(in oklab, var(--gp-form-ink), transparent 76%);
   background: transparent;
-  transition: color 140ms ease, transform 140ms ease;
+  transition: color var(--gp-duration-snap) var(--gp-ease-snap), transform var(--gp-duration-snap) var(--gp-ease-snap);
 }
 
 .gp-form-rating button[aria-pressed='true'] {
@@ -447,7 +447,7 @@
   background: transparent;
   font-size: 0.62rem;
   font-weight: 650;
-  transition: color 160ms ease, border-color 160ms ease, background-color 160ms ease;
+  transition: color var(--gp-duration-snap) var(--gp-ease-snap), border-color var(--gp-duration-snap) var(--gp-ease-snap), background-color var(--gp-duration-snap) var(--gp-ease-snap);
 }
 
 .gp-form-reply-yes[aria-pressed='true'] {
@@ -481,7 +481,7 @@
   border-radius: 50%;
   color: var(--gp-form-muted);
   background: transparent;
-  transition: color 140ms ease, background-color 140ms ease;
+  transition: color var(--gp-duration-snap) var(--gp-ease-snap), background-color var(--gp-duration-snap) var(--gp-ease-snap);
 }
 
 .gp-form-stepper button:hover:not(:disabled) {
@@ -596,7 +596,7 @@
   font-weight: 700;
   letter-spacing: 0.07em;
   text-transform: uppercase;
-  transition: color 140ms ease, background-color 140ms ease;
+  transition: color var(--gp-duration-snap) var(--gp-ease-snap), background-color var(--gp-duration-snap) var(--gp-ease-snap);
 }
 
 .gp-form-verdict-pass[aria-pressed='true'] {
@@ -647,7 +647,7 @@
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  transition: color 140ms ease, background-color 140ms ease;
+  transition: color var(--gp-duration-snap) var(--gp-ease-snap), background-color var(--gp-duration-snap) var(--gp-ease-snap);
 }
 
 .gp-form-review button[aria-pressed='true'] {
@@ -675,7 +675,7 @@
   margin: 0.2rem 0 0;
   padding-bottom: 0.25rem;
   border-bottom: 1px solid var(--gp-form-line);
-  color: var(--gp-widget-accent);
+  color: var(--gp-accent-ink, var(--gp-widget-accent));
   font-size: 0.48rem;
   font-weight: 700;
   letter-spacing: 0.14em;
@@ -744,7 +744,7 @@
 
 .gp-form-rule > svg {
   flex: 0 0 auto;
-  color: var(--gp-widget-accent);
+  color: var(--gp-accent-ink, var(--gp-widget-accent));
 }
 
 .gp-form-rule select {
@@ -901,4 +901,13 @@
    card width until it was told to size to its own content. */
 .gp-form-stepper {
   justify-self: start;
+}
+
+/* ------------------------------------------------------------ light theme.
+   Status/danger/medal inks above are pastels tuned for dark glass; on the
+   light theme's silver cards they wash out below 2:1. Each keeps its hue
+   but drops to a deep ink (generated during the 2026-08 light-mode
+   contrast audit). */
+[data-theme='light'] .gp-form-rating button[aria-pressed='true'] {
+  color: #92400e;
 }

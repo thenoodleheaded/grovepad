@@ -66,6 +66,7 @@ export interface CanvasLmsFeed {
 
 type Fetcher = typeof fetch
 type UnknownRecord = Record<string, unknown>
+const CANVAS_RELAY_PATH = '/api/canvas-lms'
 
 function record(value: unknown): UnknownRecord {
   return value !== null && typeof value === 'object' && !Array.isArray(value)
@@ -281,17 +282,51 @@ async function canvasRequest(
   fetcher: Fetcher,
   signal?: AbortSignal,
 ): Promise<unknown> {
-  const response = await fetcher(`${connection.origin}${path}`, {
-    headers: {
-      Accept: 'application/json',
-      Authorization: `Bearer ${connection.token}`,
-    },
-    signal,
-  })
+  const useRelay = typeof window !== 'undefined'
+    && !('__TAURI_INTERNALS__' in window)
+    && (window.location.protocol === 'https:' || window.location.protocol === 'http:')
+  let response: Response
+  try {
+    response = useRelay
+      ? await fetcher(CANVAS_RELAY_PATH, {
+          method: 'POST',
+          headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            origin: connection.origin,
+            path,
+            token: connection.token,
+          }),
+          credentials: 'omit',
+          signal,
+        })
+      : await fetcher(`${connection.origin}${path}`, {
+          headers: {
+            Accept: 'application/json',
+            Authorization: `Bearer ${connection.token}`,
+          },
+          signal,
+        })
+  } catch (error) {
+    if (signal?.aborted) throw error
+    throw new Error(
+      useRelay
+        ? 'Grovepad’s secure Canvas relay could not be reached. Reload and try again.'
+        : 'Canvas could not be reached from this device.',
+    )
+  }
   if (response.status === 401 || response.status === 403) {
     throw new Error('Canvas refused this access token. Check it and try again.')
   }
   if (!response.ok) {
+    if (useRelay) {
+      const payload = await response.json().catch(() => null) as { error?: unknown } | null
+      if (typeof payload?.error === 'string' && payload.error.trim()) {
+        throw new Error(payload.error.trim())
+      }
+    }
     throw new Error(`Canvas could not be reached (${response.status}).`)
   }
   return response.json()

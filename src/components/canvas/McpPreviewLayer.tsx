@@ -57,7 +57,7 @@ function McpPreviewTree({ preview }: { preview: McpTreePreview }) {
     try {
       useMcpConnectorStore.getState().commitPreview(preview.previewId)
     } catch (cause) {
-      useToastStore.getState().addToast(cause instanceof Error ? cause.message : 'Could not add the AI tree')
+      useToastStore.getState().addToast(cause instanceof Error ? cause.message : 'Could not add the AI tree', { tone: 'danger' })
     }
   }
   const dismiss = () => {

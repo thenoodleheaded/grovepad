@@ -28,7 +28,7 @@ afterEach(() => {
 function createNotes(count: number): string[] {
   const store = useWidgetStore.getState()
   return Array.from({ length: count }, (_, index) =>
-    store.createWidget(`Reflow test ${index + 1}`, { x: 20_000 + index * 1_200, y: 20_000 }, 'notes'),
+    store.createWidget(`Reflow test ${index + 1}`, { x: 20_000 + index * 1_200, y: 20_000 }, 'text'),
   )
 }
 

@@ -10,14 +10,18 @@ import { WIDGET_SKIN_BLUEPRINTS } from './skinBlueprints.generated'
 import { cataloguedOpportunityCount, cataloguedSkinCount } from './skinCatalog'
 import { WIDGET_SKIN_OWNERSHIP } from './skinOwnership.generated'
 import { WIDGET_REGISTRY } from './registry'
+import { isDeletedWidgetType } from './deletedWidgetTypes'
 
 describe('complete widget skin catalogue', () => {
-  it('installs all 611 catalogue choices without letting planning labels hide them', () => {
-    expect(cataloguedOpportunityCount()).toBe(611)
-    expect(cataloguedSkinCount()).toBe(611)
+  it('installs all 597 catalogue choices without letting planning labels hide them', () => {
+    expect(cataloguedOpportunityCount()).toBe(597)
+    expect(cataloguedSkinCount()).toBe(597)
 
     for (const [untypedType, blueprints] of Object.entries(WIDGET_SKIN_BLUEPRINTS)) {
       const type = untypedType as ModuleType
+      // A deleted card's catalogue entries dissolved with it — the install
+      // skips them, so there is no definition to audit here either.
+      if (isDeletedWidgetType(untypedType)) continue
       const definition = WIDGET_REGISTRY[type]
       const installed = new Map(
         skinsFor({ type }, definition).map((skin) => [skin.value, skin]),
@@ -28,9 +32,18 @@ describe('complete widget skin catalogue', () => {
           blueprint.value as never
         ] as { kind: string } | undefined
         expect(ownership, `${type}.${blueprint.value} ownership`).toBeDefined()
+        // A widget may re-tune a catalogue skin's hue when the generated one
+        // fights the family it belongs to — the Canvas door's three skins are
+        // one green set, not three unrelated colours. It may never rename,
+        // re-describe, or drop a catalogue choice; that is what this guards.
+        const { accent: _accent, ...identity } = blueprint
         expect(installed.get(blueprint.value), `${type}.${blueprint.value}`).toMatchObject(
-          blueprint,
+          identity,
         )
+        expect(
+          installed.get(blueprint.value)?.accent,
+          `${type}.${blueprint.value} accent`,
+        ).toMatch(/^#[0-9a-f]{6}$/i)
       }
     }
   })

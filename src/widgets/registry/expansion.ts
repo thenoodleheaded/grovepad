@@ -1,8 +1,9 @@
 import {
-  Activity, Bell, CalendarSync, ChartSpline, ChefHat, CircleGauge, Clock3, Compass,
-  ContactRound, CreditCard, Crosshair, Dices, Dumbbell, Equal, FileClock, Gift,
-  HeartHandshake, ListRestart, MapPin, MapPinned, Pill, Radar, ReceiptText, Repeat2,
-  Route, Scale, ScanLine, Sigma, Split, Subtitles, Target, Utensils, WalletCards, Wrench,
+  Activity, Bell, CalendarRange, CalendarSync, ChartSpline, ChefHat, CircleGauge, Clock3, Compass,
+  ContactRound, CreditCard, Crosshair, Dumbbell, Equal, FileBadge, FileClock, Gift,
+  HeartHandshake, ListRestart, Map, MapPin, MapPinned, Pill, Radar, ReceiptText, Repeat2,
+  Route, Scale, ScanLine, Sigma, Split, Subtitles, Target, TicketCheck, Users, Utensils,
+  WalletCards, WifiOff, Wrench,
 } from 'lucide-react'
 import type { ModuleType } from '../../types/spatial'
 import { GRID_SIZE } from '../../types/spatial'
@@ -15,8 +16,8 @@ const today = () => localDayKey()
 const inDays = (days: number) => localDayKeyInDays(days)
 
 type ExpansionType = Extract<ModuleType,
-  'clock_pulse'|'comparator'|'aggregator'|'range_mapper'|'latch'|'random_picker'|'sequencer'|'template'|'recorder'|'notifier'|'location'|
-  'subscriptions'|'debt_payoff'|'expense_split'|'invoices'|'meal_planner'|'recipe'|'home_maintenance'|'chore_rotation'|'renewals_vault'|'medications'|'workout_plan'|'job_applications'|'okr'|'decision_journal'|'weekly_review'|'snippet_library'|'keep_in_touch'|'gifts_occasions'|'trip_itinerary'|'guest_list'
+  'clock_pulse'|'comparator'|'aggregator'|'range_mapper'|'latch'|'sequencer'|'template'|'recorder'|'notifier'|'location'|
+  'subscriptions'|'debt_payoff'|'expense_split'|'invoices'|'meal_planner'|'recipe'|'home_maintenance'|'chore_rotation'|'renewals_vault'|'medications'|'workout_plan'|'job_applications'|'decision_journal'|'weekly_review'|'snippet_library'|'keep_in_touch'|'gifts_occasions'|'trip_itinerary'|'guest_list'
 >
 
 export const EXPANSION_WIDGET_DEFINITIONS: Record<ExpansionType, WidgetDefinition> = {
@@ -25,7 +26,6 @@ export const EXPANSION_WIDGET_DEFINITIONS: Record<ExpansionType, WidgetDefinitio
   aggregator: { type:'aggregator', label:'Aggregator', description:'Average min max or count inputs', icon:Sigma, category:'automation', accent:'#c084fc', defaultSize:{width:300,height:C*5}, defaultData:()=>({label:'Combine',mode:'avg',slots:[0,0,0,0,0,0]}) },
   range_mapper: { type:'range_mapper', label:'Range Mapper', description:'Turn numbers into human status bands', icon:CircleGauge, category:'automation', accent:'#fbbf24', defaultSize:{width:300,height:C*5}, defaultData:()=>({label:'Status bands',input:0,bands:[{id:uid(),upTo:25,label:'Low',emoji:'🟢'},{id:uid(),upTo:75,label:'Medium',emoji:'🟡'},{id:uid(),upTo:Number.MAX_SAFE_INTEGER,label:'High',emoji:'🔴'}]}) },
   latch: { type:'latch', label:'Snapshot Latch', description:'Capture and hold a baseline', icon:ScanLine, category:'automation', accent:'#22d3ee', defaultSize:{width:280,height:C*4}, defaultData:()=>({label:'Baseline',current:0,held:0,heldAt:null}) },
-  random_picker: { type:'random_picker', label:'Random Picker', description:'Choose fairly with weighted options', icon:Dices, category:'automation', accent:'#fb7185', defaultSize:{width:300,height:C*5}, defaultData:()=>({label:'Decide for me',options:[{id:uid(),text:'Option A',weight:1},{id:uid(),text:'Option B',weight:1}],pick:'',history:[],lastRolledAt:null,noRepeatWindow:1}) },
   sequencer: { type:'sequencer', label:'Sequencer', description:'Advance through ordered stages', icon:ListRestart, category:'automation', accent:'#818cf8', defaultSize:{width:320,height:C*6}, defaultData:()=>({label:'Sequence',steps:[{id:uid(),text:'First step'},{id:uid(),text:'Second step'}],activeIndex:0,loop:false}) },
   template: { type:'template', label:'Text Composer', description:'Compose live values into sentences', icon:Subtitles, category:'automation', accent:'#34d399', defaultSize:{width:320,height:C*5}, defaultData:()=>({template:'You have {a} tasks and {b} left',slotA:'3',slotB:'$42',slotC:'',slotD:''}) },
   recorder: { type:'recorder', label:'Recorder', description:'Turn any number into history', icon:ChartSpline, category:'automation', accent:'#4ade80', defaultSize:{width:320,height:C*5}, defaultData:()=>({label:'History',input:0,samples:[],mode:'on_change',lastRecordedAt:null}) },
@@ -44,7 +44,7 @@ export const EXPANSION_WIDGET_DEFINITIONS: Record<ExpansionType, WidgetDefinitio
     // so five cells of height clipped the last control; six holds every skin.
     sizing: { minWidth: C * 6, minHeight: C * 6 },
     defaultData: () => ({ label:'My location', address:'', latitude:null, longitude:null, timezone:Intl.DateTimeFormat().resolvedOptions().timeZone, accuracyMeters:null, capturedAt:null }),
-    rendererOwnedSkinDetails: ['coordinates', 'geofence', 'route'],
+    rendererOwnedSkinDetails: ['coordinates', 'geofence', 'route', 'map'],
     // Declared by hand so each skin wears its own icon and hue. `skinField`
     // must stay 'skin': `LocationData` has no `mode`, and latitude/longitude
     // are the circuit's canonical output — appearance may never touch them.
@@ -104,6 +104,15 @@ export const EXPANSION_WIDGET_DEFINITIONS: Record<ExpansionType, WidgetDefinitio
         icon: Route,
         accent: '#818cf8',
       },
+      {
+        value: 'map',
+        label: 'Map',
+        description: 'The place as a spot on a map you can drag to, remembered by name and framing rather than numbers.',
+        implementation: 'schema-extension',
+        presentation: 'standard',
+        icon: Map,
+        accent: '#a3e635',
+      },
     ],
   },
 
@@ -119,12 +128,91 @@ export const EXPANSION_WIDGET_DEFINITIONS: Record<ExpansionType, WidgetDefinitio
   medications: { type:'medications', label:'Medications', description:'Doses taken today and refill runway', icon:Pill, category:'life', accent:'#38bdf8', defaultSize:{width:360,height:C*6}, defaultData:()=>({rows:[{id:uid(),name:'Medication',timesPerDay:2,takenToday:[false,false],pillsLeft:30,dailyUse:2}]}), pack:'life' },
   workout_plan: { type:'workout_plan', label:'Workout Plan', description:'Training volume and progression', icon:Dumbbell, category:'life', accent:'#4ade80', defaultSize:{width:400,height:C*8}, defaultData:()=>({days:[{id:uid(),label:'Today',exercises:[{id:uid(),name:'Squat',sets:3,reps:8,weight:40,done:false}]}],activeDay:0,lastSession:''}), pack:'life' },
   job_applications: { type:'job_applications', label:'Job Applications', description:'Pipeline with followup pressure', icon:Target, category:'life', accent:'#818cf8', defaultSize:{width:400,height:C*7}, defaultData:()=>({rows:[{id:uid(),company:'Company',role:'Role',stage:'applied',applied:today(),nextAction:'Follow up',followUpBy:inDays(7)}]}), pack:'life' },
-  okr: { type:'okr', label:'OKRs', description:'Weighted key results with live inputs', icon:Target, category:'life', accent:'#a3e635', defaultSize:{width:360,height:C*7}, defaultData:()=>({objective:'Meaningful objective',keyResults:[{id:uid(),label:'Key result',current:0,target:100,weight:1}]}), pack:'life' },
   decision_journal: { type:'decision_journal', label:'Decision Journal', description:'Review and score past decisions', icon:Scale, category:'life', accent:'#fbbf24', defaultSize:{width:380,height:C*7}, defaultData:()=>({entries:[{id:uid(),decision:'Decision',context:'',expected:'',confidence:70,decidedOn:today(),reviewOn:inDays(30)}]}), pack:'life' },
   weekly_review: { type:'weekly_review', label:'Weekly Review', description:'A recurring reflection ritual', icon:Activity, category:'life', accent:'#2dd4bf', defaultSize:{width:360,height:C*7}, defaultData:()=>({prompts:[{id:uid(),q:'What went well?',answer:''},{id:uid(),q:'What should change?',answer:''},{id:uid(),q:'What carries forward?',answer:''}],weekOf:today(),historyCount:0,streak:0,completedThisWeek:false}), pack:'life' },
   snippet_library: { type:'snippet_library', label:'Snippet Library', description:'Reusable text sorted by use', icon:Subtitles, category:'life', accent:'#60a5fa', defaultSize:{width:360,height:C*7}, defaultData:()=>({entries:[{id:uid(),title:'Quick reply',body:'Thanks — I will get back to you shortly.',tags:['email'],useCount:0}]}), pack:'life' },
   keep_in_touch: { type:'keep_in_touch', label:'Keep in Touch', description:'Relationship cadence and overdue contacts', icon:ContactRound, category:'life', accent:'#f472b6', defaultSize:{width:360,height:C*6}, defaultData:()=>({rows:[{id:uid(),name:'Nadia',cadenceDays:14,lastContact:today(),note:''}]}), pack:'life' },
   gifts_occasions: { type:'gifts_occasions', label:'Gifts & Occasions', description:'Occasions ideas and planned spend', icon:Gift, category:'life', accent:'#fb7185', defaultSize:{width:360,height:C*6}, defaultData:()=>({rows:[{id:uid(),person:'Someone',date:inDays(30),ideas:'',budget:50,bought:false}]}), pack:'life' },
-  trip_itinerary: { type:'trip_itinerary', label:'Trip Itinerary', description:'Daily legs bookings and confirmations', icon:MapPinned, category:'life', accent:'#38bdf8', defaultSize:{width:420,height:C*10}, defaultData:()=>({tripName:'Trip',startDate:inDays(30),days:[{id:uid(),date:inDays(30),legs:[{id:uid(),time:'09:00',what:'Arrival',where:'',confirmation:'',booked:false}]}]}), pack:'life' },
+  trip_itinerary: {
+    type: 'trip_itinerary',
+    label: 'Trip Itinerary',
+    description: 'Daily legs bookings and confirmations',
+    icon: MapPinned,
+    category: 'life',
+    accent: '#38bdf8',
+    defaultSize: { width: 420, height: C * 10 },
+    defaultData: () => ({ tripName:'Trip', startDate:inDays(30), skin:'days', days:[{id:uid(),date:inDays(30),legs:[{id:uid(),time:'09:00',what:'Arrival',where:'',confirmation:'',booked:false}]}] }),
+    pack: 'life',
+    // Declared by hand so each skin wears its own icon. `skinField` stays
+    // 'skin': days/legs are the canonical itinerary the circuit reads —
+    // appearance may never touch them.
+    skinField: 'skin',
+    rendererOwnedSkinDetails: ['map', 'group', 'travel_day'],
+    skins: [
+      {
+        value: 'days',
+        label: 'Days',
+        description: 'The current day-by-day itinerary.',
+        implementation: 'renderer-ready',
+        presentation: 'standard',
+        icon: CalendarRange,
+        accent: '#72e4b8',
+      },
+      {
+        value: 'timeline',
+        label: 'Timeline',
+        description: 'A continuous chronological travel plan.',
+        implementation: 'renderer-ready',
+        presentation: 'map',
+        icon: Route,
+        accent: '#e4a772',
+      },
+      {
+        value: 'bookings',
+        label: 'Bookings',
+        description: 'Prioritizes confirmations, addresses, and unbooked gaps.',
+        implementation: 'renderer-ready',
+        presentation: 'standard',
+        icon: TicketCheck,
+        accent: '#c772e4',
+      },
+      {
+        value: 'offline',
+        label: 'Offline',
+        description: 'A compact essential-details view designed for weak connectivity.',
+        implementation: 'renderer-ready',
+        presentation: 'compact',
+        icon: WifiOff,
+        accent: '#72e4a9',
+      },
+      {
+        value: 'map',
+        label: 'Map',
+        description: 'Places itinerary stops on a spatial route.',
+        implementation: 'schema-extension',
+        presentation: 'map',
+        icon: Map,
+        accent: '#a372e4',
+      },
+      {
+        value: 'group',
+        label: 'Group',
+        description: 'Adds participant, responsibility, and per-person visibility.',
+        implementation: 'schema-extension',
+        presentation: 'standard',
+        icon: Users,
+        accent: '#e472d5',
+      },
+      {
+        value: 'travel_day',
+        label: 'Travel Day',
+        description: 'Emphasizes transfers, buffers, documents, and local times.',
+        implementation: 'schema-extension',
+        presentation: 'map',
+        icon: FileBadge,
+        accent: '#e4a772',
+      },
+    ],
+  },
   guest_list: { type:'guest_list', label:'Guest List', description:'RSVP headcount and dietary needs', icon:HeartHandshake, category:'life', accent:'#c084fc', defaultSize:{width:360,height:C*7}, defaultData:()=>({rows:[{id:uid(),name:'Guest',status:'invited',plusOnes:0,dietary:''}]}), pack:'life' },
 }

@@ -9,9 +9,25 @@ const DEFAULT_POLL_TIMEOUT_MS = 15_000
 const DEFAULT_CLIENT_STALE_MS = 45_000
 const MAX_BODY_BYTES = 256 * 1024
 
+/**
+ * Ports Grovepad itself is served from. The check used to accept *any* port on
+ * localhost, which is far wider than it sounds: every dev server, notebook and
+ * local tool the user has ever run answers on some localhost port, and a page
+ * served from any of them could register with this bridge and drive the user's
+ * boards through the MCP tools. Narrowed to the ports Grovepad actually uses.
+ */
+const GROVEPAD_LOCAL_PORTS = new Set([
+  '5173', // vite dev (default)
+  '5180', // tauri devUrl
+  '4173', // vite preview (default)
+  '1420', // tauri dev shell
+])
+
 export function isAllowedBrowserOrigin(origin, additionalOrigins = []) {
   if (additionalOrigins.includes(origin)) return true
-  if (/^https?:\/\/(?:localhost|127\.0\.0\.1)(?::\d+)?$/.test(origin)) return true
+  const local = /^https?:\/\/(?:localhost|127\.0\.0\.1):(\d+)$/.exec(origin)
+  if (local) return GROVEPAD_LOCAL_PORTS.has(local[1])
+  if (origin === 'https://grovepad.app' || origin === 'https://www.grovepad.app') return true
   return origin === 'tauri://localhost'
     || origin === 'http://tauri.localhost'
     || origin === 'https://tauri.localhost'
@@ -21,9 +37,19 @@ function readJson(request) {
   return new Promise((resolve, reject) => {
     let body = ''
     request.setEncoding('utf8')
+    // Rejecting the promise does not detach this listener, so accumulation has
+    // to be stopped by hand — otherwise the cap is a threshold, not a bound,
+    // and the string keeps growing until V8 throws inside the listener. The
+    // socket is deliberately left alive so the 400 still reaches the caller.
+    let overflowed = false
     request.on('data', (chunk) => {
+      if (overflowed) return
       body += chunk
-      if (body.length > MAX_BODY_BYTES) reject(new Error('Request body is too large'))
+      if (body.length > MAX_BODY_BYTES) {
+        overflowed = true
+        body = ''
+        reject(new Error('Request body is too large'))
+      }
     })
     request.on('end', () => {
       if (!body) return resolve({})
@@ -119,6 +145,16 @@ export function createGrovepadBridge(options = {}) {
     try {
       if (request.method === 'POST' && request.url === '/bridge/register') {
         cleanClients()
+        // One connected app at a time. Registration was unauthenticated and the
+        // bridge then routed every tool call to whichever client had been seen
+        // most recently, so a second registrant could take the conversation over
+        // simply by polling more often — reading what the agent asked for and
+        // answering with whatever it liked. A live client now holds the slot
+        // until it goes stale, which a reload resolves on its own.
+        if (clients.size > 0) {
+          sendJson(response, 409, { error: 'Another Grovepad app is already connected to this bridge' })
+          return
+        }
         const token = randomUUID()
         clients.set(token, {
           token,

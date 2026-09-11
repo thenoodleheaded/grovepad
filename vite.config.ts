@@ -16,8 +16,41 @@ export default defineConfig({
         handler: () => [{ tag: 'meta', attrs: { name: 'grovepad-build', content: buildId }, injectTo: 'head' }],
       },
     },
+    {
+      // Finder drops `.DS_Store` into any folder somebody opens, including
+      // `public/`, and Vite copies that folder verbatim — so the files were
+      // published at grovepad.app and served to anyone who asked. They list the
+      // names of everything that was ever in the directory. Deleting them by
+      // hand does not hold, because Finder writes them straight back; the build
+      // has to be the thing that strips them.
+      name: 'grovepad-strip-ds-store',
+      apply: 'build',
+      async closeBundle() {
+        const { rm, readdir } = await import('node:fs/promises')
+        const { join } = await import('node:path')
+        const strip = async (dir: string): Promise<void> => {
+          const entries = await readdir(dir, { withFileTypes: true }).catch(() => [])
+          for (const entry of entries) {
+            const path = join(dir, entry.name)
+            if (entry.isDirectory()) await strip(path)
+            else if (entry.name === '.DS_Store') await rm(path, { force: true })
+          }
+        }
+        await strip('dist')
+      },
+    },
   ],
   server: {
+    proxy: {
+      '/api/canvas-lms': {
+        target: 'https://grovepad.app',
+        changeOrigin: true,
+        headers: {
+          Origin: 'https://grovepad.app',
+          'Sec-Fetch-Site': 'same-origin',
+        },
+      },
+    },
     watch: {
       // Tauri writes build artifacts (including .html reports) under
       // src-tauri/ while `tauri dev`/`tauri build` runs; without this the

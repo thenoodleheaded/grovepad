@@ -121,8 +121,18 @@ export async function createZip(entries: readonly ZipEntry[]): Promise<Uint8Arra
 }
 
 /** Extract every entry, decompressing and verifying each CRC-32. */
+/**
+ * Ceilings on what an untrusted archive may expand into. Set well above any
+ * board a person would actually make — a real `.grovepad` with a few hundred
+ * megabytes of media still opens — and well below what would take the tab down.
+ */
+const MAX_ZIP_ENTRIES = 10_000
+const MAX_ZIP_ENTRY_BYTES = 256 * 1024 * 1024
+const MAX_ZIP_TOTAL_BYTES = 1024 * 1024 * 1024
+
 export async function readZip(bytes: Uint8Array): Promise<Map<string, Uint8Array>> {
   if (bytes.length < 22) throw new Error('Not a ZIP archive')
+  let totalInflated = 0
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
 
   let eocd = -1
@@ -146,8 +156,8 @@ export async function readZip(bytes: Uint8Array): Promise<Map<string, Uint8Array
     const crc = view.getUint32(ptr + 16, true)
     const compSize = view.getUint32(ptr + 20, true)
     const nameLen = view.getUint16(ptr + 28, true)
-    const extraLen = view.getUint16(ptr + 32, true)
-    const commentLen = view.getUint16(ptr + 34, true)
+    const extraLen = view.getUint16(ptr + 30, true)
+    const commentLen = view.getUint16(ptr + 32, true)
     const localOffset = view.getUint32(ptr + 42, true)
     const name = decoder.decode(bytes.subarray(ptr + 46, ptr + 46 + nameLen))
 
@@ -155,8 +165,36 @@ export async function readZip(bytes: Uint8Array): Promise<Map<string, Uint8Array
     const localNameLen = view.getUint16(localOffset + 26, true)
     const localExtraLen = view.getUint16(localOffset + 28, true)
     const dataStart = localOffset + 30 + localNameLen + localExtraLen
+    // A `.grovepad` file arrives by email, download or drag-and-drop, so the
+    // archive is untrusted input. An entry name is not a label to trust either:
+    // an absolute or `..` path is only ever an attempt to escape whatever the
+    // caller writes these into.
+    if (name.startsWith('/') || name.includes('..') || name.includes('\\')) {
+      throw new Error(`ZIP entry has an unsafe name: ${name}`)
+    }
+    if (entries.size >= MAX_ZIP_ENTRIES) {
+      throw new Error('This Grovepad file has too many parts to open safely')
+    }
+
     const body = bytes.subarray(dataStart, dataStart + compSize)
+    // Inflation is where a bomb pays off: a few kilobytes on disk can become
+    // gigabytes in memory and take the tab down with it. The size the central
+    // directory declares is checked *before* anything is allocated, so a bomb is
+    // refused rather than buffered; the post-inflate checks below stay as the
+    // backstop for a header that lies about its own size.
+    const declaredSize = view.getUint32(ptr + 24, true)
+    if (declaredSize > MAX_ZIP_ENTRY_BYTES || totalInflated + declaredSize > MAX_ZIP_TOTAL_BYTES) {
+      throw new Error(`ZIP entry ${name} is too large to open safely`)
+    }
     const data = method === 0 ? body.slice() : await inflateRaw(body)
+    // Both the single entry and the running total are bounded.
+    if (data.byteLength > MAX_ZIP_ENTRY_BYTES) {
+      throw new Error(`ZIP entry ${name} is too large to open safely`)
+    }
+    totalInflated += data.byteLength
+    if (totalInflated > MAX_ZIP_TOTAL_BYTES) {
+      throw new Error('This Grovepad file expands to more than Grovepad will open')
+    }
     if (crc32(data) !== crc) throw new Error(`ZIP entry ${name} failed its checksum`)
     entries.set(name, data)
 

@@ -4,24 +4,27 @@ import { commandsFor } from './fields'
 import { widgetDefinition } from './registry'
 
 describe('Bullets widget skins', () => {
-  it('offers all six Bullets experiences through the skin field', () => {
+  it('offers the three Bullets experiences through the skin field', () => {
     const definition = widgetDefinition('bullets')
     expect(definition.skinField).toBe('skin')
     expect(definition.skins?.map((skin) => skin.value)).toEqual([
       'dots',
       'numbered',
-      'compact_chips',
-      'two_column',
       'nested_outline',
-      'rolling_log',
     ])
   })
 
   it('keeps the specialist controls inside the renderer', () => {
-    expect(widgetDefinition('bullets').rendererOwnedSkinDetails).toEqual([
-      'nested_outline',
-      'rolling_log',
-    ])
+    expect(widgetDefinition('bullets').rendererOwnedSkinDetails).toEqual(['nested_outline'])
+  })
+
+  it('lets the reader set the measure down to a six-cell floor', () => {
+    const { sizing } = widgetDefinition('bullets')
+    // A point wraps as a paragraph, so the width is the reader's to choose —
+    // but the height still follows the text.
+    expect(sizing?.fixed).toBeUndefined()
+    expect(sizing?.autoHeight).toBe(true)
+    expect(sizing?.minWidth).toBe(6 * 40)
   })
 
   it('preserves the chosen skin and its state when a circuit adds a bullet', () => {
@@ -30,16 +33,12 @@ describe('Bullets widget skins', () => {
     )
     const data: BulletsData = {
       items: [{ id: 'one', text: 'Existing' }],
-      skin: 'rolling_log',
-      skinStates: { rolling_log: { order: 'oldest' } },
+      skin: 'nested_outline',
+      skinStates: { nested_outline: { levels: { one: 0 }, collapsedIds: [] } },
     }
     const next = command?.run(data, 'From circuit') as BulletsData
-    expect(next.skin).toBe('rolling_log')
-    expect(next.skinStates?.rolling_log?.order).toBe('oldest')
-    const timestamp = Object.values(
-      next.skinStates?.rolling_log?.timestamps as Record<string, string>,
-    )[0]
-    expect(Number.isFinite(Date.parse(timestamp!))).toBe(true)
+    expect(next.skin).toBe('nested_outline')
+    expect(next.skinStates?.nested_outline?.collapsedIds).toEqual([])
     expect(next.items.map((item) => item.text)).toEqual(['Existing', 'From circuit'])
   })
 })

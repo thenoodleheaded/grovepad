@@ -48,8 +48,8 @@ describe('which skins a card has', () => {
   })
 
   it('offers a widget with no skins nothing to roll through', () => {
-    expect(skinsFor({ type: 'notes' }, {})).toEqual([])
-    expect(currentSkin({ type: 'notes', data: {} }, {})).toBeNull()
+    expect(skinsFor({ type: 'text' }, {})).toEqual([])
+    expect(currentSkin({ type: 'text', data: {} }, {})).toBeNull()
   })
 
   it('treats every Atlas preset as a skin of the one Tracker card', () => {
@@ -86,7 +86,7 @@ describe('the colour a card wears', () => {
   })
 
   it('falls back to the widget type’s accent when it has no skins', () => {
-    expect(widgetAccent({ type: 'notes', data: {}, metadata: {} }, { accent: '#e2e8f0' })).toBe('#e2e8f0')
+    expect(widgetAccent({ type: 'text', data: {}, metadata: {} }, { accent: '#e2e8f0' })).toBe('#e2e8f0')
   })
 })
 

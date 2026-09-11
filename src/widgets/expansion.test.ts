@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import type { DebtPayoffData, ExpenseSplitData, ModuleType } from '../types/spatial'
+import type { DebtPayoffData, ExpenseSplitData, ModuleData, ModuleType } from '../types/spatial'
 import { commandsFor, fieldsFor } from './fields'
 import { appendSample, projectDebtPayoff, settleExpenses } from './expansionMath'
 import { WIDGET_REGISTRY } from './registry'
 
 const EXPANSION_TYPES: ModuleType[] = [
-  'clock_pulse','comparator','aggregator','range_mapper','latch','random_picker','sequencer','template','recorder','notifier',
-  'subscriptions','debt_payoff','expense_split','invoices','meal_planner','recipe','home_maintenance','chore_rotation','renewals_vault','medications','workout_plan','job_applications','okr','decision_journal','weekly_review','snippet_library','keep_in_touch','gifts_occasions','trip_itinerary','guest_list',
+  'clock_pulse','comparator','aggregator','range_mapper','latch','sequencer','template','recorder','notifier',
+  'subscriptions','debt_payoff','expense_split','invoices','meal_planner','recipe','home_maintenance','chore_rotation','renewals_vault','medications','workout_plan','job_applications','decision_journal','weekly_review','snippet_library','keep_in_touch','gifts_occasions','trip_itinerary','guest_list',
 ]
 
 describe('widget expansion contracts', () => {
@@ -46,6 +46,28 @@ describe('widget expansion contracts', () => {
       {from:'Sam',to:'You',amount:100},
       {from:'Ali',to:'You',amount:100},
     ])
+  })
+
+  it('reports the highest band once the top ceiling is a real number', () => {
+    // The ∞ sentinel can be replaced with a finite ceiling from the card's own
+    // upper-bound input, and then an input can run off the end of the ladder.
+    // Clamping the not-found index to 0 reported the LOWEST band — the exact
+    // inverse of the truth for whatever comparator or notifier reads it.
+    const bands = [
+      { id:'low', upTo:25, label:'Low', emoji:'🟢' },
+      { id:'medium', upTo:75, label:'Medium', emoji:'🟡' },
+      { id:'high', upTo:100, label:'High', emoji:'🔴' },
+    ]
+    const fields = fieldsFor('range_mapper')
+    const read = (key: string, input: number) =>
+      fields.find((field) => field.key === key)!.get({ label:'Status bands', input, bands } as unknown as ModuleData)
+
+    expect(read('bandIndex', 200)).toBe(2)
+    expect(read('topBand', 200)).toBe(true)
+    expect(read('label', 200)).toBe('🔴 High')
+    // Inside the ladder nothing moves.
+    expect(read('bandIndex', 40)).toBe(1)
+    expect(read('topBand', 40)).toBe(false)
   })
 
   it('caps recorder series at 400 samples', () => {

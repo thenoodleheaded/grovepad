@@ -1,5 +1,6 @@
 import { BookOpen, Plus, Zap } from 'lucide-react'
 import { useCanvasWidgetCount } from '../../hooks/useCanvasWidgets'
+import { useAdaptiveInputStore } from '../../store/useAdaptiveInputStore'
 import { useCanvasStore } from '../../store/useCanvasStore'
 import { useWidgetStore } from '../../store/useWidgetStore'
 import { screenToWorld } from '../../types/spatial'
@@ -15,6 +16,8 @@ function viewCenterWorld() {
 export function EmptyCanvasState() {
   const isEmpty = useCanvasWidgetCount() === 0
   const shaping = useWidgetStore((state) => state.ghostConfig !== null)
+  // Keyboard hints only where a keyboard is plausible — on touch they are noise.
+  const hasKeyboard = useAdaptiveInputStore((state) => state.capabilities.hasFinePointer)
 
   if (!isEmpty || shaping) return null
 
@@ -25,10 +28,15 @@ export function EmptyCanvasState() {
       <section
         data-canvas-ui
         aria-label="Empty canvas actions"
-        className="gp-fade gp-empty-plate pointer-events-auto relative flex w-full max-w-[20rem] flex-col items-center overflow-hidden rounded-[30px] px-6 pb-7 pt-9 text-center"
+        className="gp-empty-plate pointer-events-auto relative flex w-full max-w-[20rem] flex-col items-center overflow-hidden rounded-[30px] px-6 pb-7 pt-9 text-center"
       >
         <span className="gp-empty-mark relative">
-          <img src="/brand/logo-light.png" alt="" aria-hidden className="relative block h-14 w-14" />
+          <img
+            src="/brand/logo_light_borderless.png"
+            alt=""
+            aria-hidden
+            className="relative block h-14 w-14"
+          />
         </span>
 
         <h1 className="mt-5 text-[17px] font-semibold leading-tight tracking-[-0.012em] text-white">
@@ -62,6 +70,14 @@ export function EmptyCanvasState() {
             Recipes
           </button>
         </div>
+
+        {hasKeyboard && (
+          <p className="mt-4 text-[11px] leading-relaxed text-neutral-500">
+            <kbd className="gp-empty-kbd">N</kbd> to capture ·{' '}
+            <kbd className="gp-empty-kbd">⌘K</kbd> to search ·{' '}
+            <kbd className="gp-empty-kbd">?</kbd> for every shortcut
+          </p>
+        )}
       </section>
     </div>
   )

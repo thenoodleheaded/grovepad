@@ -155,7 +155,23 @@ const Wire = memo(function Wire({
       )}
     </CanvasEdge>
   )
-})
+}, (prev, next) =>
+  // WireLayer subscribes to the whole widgets map and rebuilds every descriptor
+  // literal on any widget change — including each frame of a card drag — so the
+  // default shallow compare never matches. Compare the fields instead, the way
+  // RelationEdge does. `id` is the React key and cannot change for an element.
+  // Keep this list exhaustive: a missing field freezes that wire's paint.
+  prev.wire.d === next.wire.d &&
+  prev.wire.mid.x === next.wire.mid.x &&
+  prev.wire.mid.y === next.wire.mid.y &&
+  prev.wire.color === next.wire.color &&
+  prev.wire.isTrigger === next.wire.isTrigger &&
+  prev.wire.enabled === next.wire.enabled &&
+  prev.wire.damped === next.wire.damped &&
+  prev.wire.pulseKey === next.wire.pulseKey &&
+  prev.wire.valueLabel === next.wire.valueLabel &&
+  prev.onOpen === next.onOpen,
+)
 
 /** The live ghost wire while dragging from an output port. */
 function GhostWire() {

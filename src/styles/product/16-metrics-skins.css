@@ -59,7 +59,7 @@
   place-items: center;
   border: 0;
   border-radius: 8px;
-  color: color-mix(in oklab, var(--gp-widget-accent), white 12%);
+  color: color-mix(in oklab, var(--gp-accent-ink, var(--gp-widget-accent)), var(--gp-accent-lift, #fff) 12%);
   background: color-mix(in oklab, var(--gp-widget-accent), transparent 87%);
   box-shadow: inset 0 1px 0 color-mix(in oklab, white, transparent 92%);
 }
@@ -67,12 +67,12 @@
 .gp-metrics-studio-trigger {
   color: var(--gp-metrics-soft);
   background: var(--gp-metrics-wash);
-  transition: color 130ms ease, background 130ms ease, transform 130ms ease;
+  transition: color var(--gp-duration-snap) var(--gp-ease-snap), background var(--gp-duration-snap) var(--gp-ease-snap), transform var(--gp-duration-snap) var(--gp-ease-snap);
 }
 
 .gp-metrics-studio-trigger:hover,
 .gp-metrics-studio-trigger[aria-expanded='true'] {
-  color: color-mix(in oklab, var(--gp-widget-accent), white 12%);
+  color: color-mix(in oklab, var(--gp-accent-ink, var(--gp-widget-accent)), var(--gp-accent-lift, #fff) 12%);
   background: color-mix(in oklab, var(--gp-widget-accent), transparent 87%);
   transform: translateY(-1px);
 }
@@ -183,7 +183,7 @@
 .gp-metrics-footer button:hover,
 .gp-metrics-studio footer button:hover,
 .gp-metrics-empty button:hover {
-  color: color-mix(in oklab, var(--gp-widget-accent), white 14%);
+  color: color-mix(in oklab, var(--gp-accent-ink, var(--gp-widget-accent)), var(--gp-accent-lift, #fff) 14%);
   background: color-mix(in oklab, var(--gp-widget-accent), transparent 90%);
 }
 
@@ -240,7 +240,7 @@
     radial-gradient(circle at 100% 0, color-mix(in oklab, var(--gp-metric-tone, var(--gp-widget-accent)), transparent 84%), transparent 45%),
     color-mix(in oklab, #111827, transparent 18%);
   box-shadow: 0 8px 18px color-mix(in oklab, black, transparent 84%);
-  transition: border-color 130ms ease, transform 130ms ease;
+  transition: border-color var(--gp-duration-snap) var(--gp-ease-snap), transform var(--gp-duration-snap) var(--gp-ease-snap);
 }
 
 .gp-metrics-kpi-grid article:hover {
@@ -813,7 +813,7 @@ article[data-tone='positive'] .gp-metrics-signal i[data-light='positive'] {
 }
 
 .gp-metrics-targets article > header span {
-  color: color-mix(in oklab, var(--gp-widget-accent), white 8%);
+  color: color-mix(in oklab, var(--gp-accent-ink, var(--gp-widget-accent)), var(--gp-accent-lift, #fff) 8%);
   font-size: 5.7px;
 }
 
@@ -1070,7 +1070,7 @@ article[data-reached] .gp-metrics-target-track b {
 
 .gp-metrics-empty button {
   margin-top: 0.22rem;
-  color: color-mix(in oklab, var(--gp-widget-accent), white 14%);
+  color: color-mix(in oklab, var(--gp-accent-ink, var(--gp-widget-accent)), var(--gp-accent-lift, #fff) 14%);
   background: color-mix(in oklab, var(--gp-widget-accent), transparent 90%);
 }
 
@@ -1113,7 +1113,7 @@ article[data-reached] .gp-metrics-target-track b {
   height: 25px;
   place-items: center;
   border-radius: 7px;
-  color: color-mix(in oklab, var(--gp-widget-accent), white 10%);
+  color: color-mix(in oklab, var(--gp-accent-ink, var(--gp-widget-accent)), var(--gp-accent-lift, #fff) 10%);
   background: color-mix(in oklab, var(--gp-widget-accent), transparent 86%);
 }
 
@@ -1274,3 +1274,30 @@ article[data-reached] .gp-metrics-target-track b {
     transition: none;
   }
 }
+
+/* ------------------------------------------------------------ light theme.
+   Status/danger/medal inks above are pastels tuned for dark glass; on the
+   light theme's silver cards they wash out below 2:1. Each keeps its hue
+   but drops to a deep ink (generated during the 2026-08 light-mode
+   contrast audit). */
+[data-theme='light'] .gp-metrics-targets article[data-reached] > header b {
+  color: #047857;
+}
+
+[data-theme='light'] .gp-metrics-target-values [data-variance='positive'] strong {
+  color: #047857;
+}
+
+[data-theme='light'] .gp-metrics-target-values [data-variance='negative'] strong {
+  color: #be123c;
+}
+
+[data-theme='light'] .gp-metrics-studio-remove:hover {
+  color: #be123c;
+}
+
+/* Light theme: the trend tone token is a pastel for dark glass; deepened on
+   paper it keeps the up/down/pending identity for text, dots, and washes. */
+[data-theme='light'] [data-tone='positive'] { --gp-metric-tone: #047857; }
+[data-theme='light'] [data-tone='negative'] { --gp-metric-tone: #be123c; }
+[data-theme='light'] [data-tone='pending'] { --gp-metric-tone: #92400e; }

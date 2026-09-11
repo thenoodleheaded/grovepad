@@ -565,7 +565,12 @@ async function startCanvasSession(
     useCollaborationStore.setState({
       status: currentSession.connected && currentSession.awarenessConnected ? 'connected' : 'reconnecting',
     })
-    void syncDurableUpdates(currentSession).then(() => flushPending(currentSession))
+    // `online` fires before the network is usable, so this fetch fails often.
+    // Unterminated, that rejection is unhandled and silently skips the flush of
+    // everything queued while offline.
+    void syncDurableUpdates(currentSession)
+      .then(() => flushPending(currentSession))
+      .catch(reportRealtimeFailure)
   }
   const onOffline = () => useCollaborationStore.setState({ status: 'offline' })
   window.addEventListener('online', onOnline)
@@ -662,7 +667,43 @@ async function joinCanvasFromUrl(session: Session): Promise<boolean> {
   // Metadata is protected by membership RLS. A random or uninvited link cannot
   // create/claim a canvas and is handled by the normal error boundary below.
   const metadata = await repository.getCanvasMetadata(canvasId)
+
+  // The link is consumed from the URL either way, so a refresh cannot re-arm it
+  // and it cannot travel onward through history or a Referer header.
+  url.searchParams.delete('collaborate')
+  window.history.replaceState(null, '', url)
+
+  // A canvas that already exists here and was never shared is this person's own
+  // private board. Adopting the id would mark it shared and overwrite it with
+  // the sender's document, so the invite is refused outright rather than
+  // offered — there is no version of accepting it that keeps their board.
+  const local = useWidgetStore.getState().canvases[canvasId]
+  if (local && !local.shared) {
+    throw new Error('That link points at a canvas you already have, so it was not opened.')
+  }
+
+  // Confirmation is the whole fix. Accepting replaces board contents, so it has
+  // to be a decision somebody makes, not something a page load does to them.
+  useCollaborationStore.setState({ pendingInvite: { canvasId, name: metadata.name } })
+  return false
+}
+
+/** Apply an invite the user has explicitly accepted. Nothing else calls this. */
+export async function acceptPendingCanvasInvite(): Promise<void> {
+  const invite = useCollaborationStore.getState().pendingInvite
+  if (!invite) return
+  useCollaborationStore.setState({ pendingInvite: null })
+  await adoptSharedCanvas(invite.canvasId, invite.name)
+  restartForCurrentCanvas()
+}
+
+export function dismissPendingCanvasInvite(): void {
+  useCollaborationStore.setState({ pendingInvite: null })
+}
+
+async function adoptSharedCanvas(canvasId: string, canvasName: string): Promise<void> {
   const store = useWidgetStore.getState()
+  const metadata = { name: canvasName }
   if (!store.canvases[canvasId]) {
     const workspace = store.workspaces[store.activeWorkspaceId]
     if (!workspace) throw new Error('No local workspace is available for the shared canvas')
@@ -685,9 +726,6 @@ async function joinCanvasFromUrl(session: Session): Promise<boolean> {
   if (useWidgetStore.getState().activeCanvasId !== canvasId) {
     useWidgetStore.getState().navigateToCanvas(canvasId)
   }
-  url.searchParams.delete('collaborate')
-  window.history.replaceState(null, '', url)
-  return true
 }
 
 function setCollaborativeEditingWidget(widgetId: string | null): void {

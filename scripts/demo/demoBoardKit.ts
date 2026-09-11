@@ -33,8 +33,8 @@ import { widgetDefinition, WIDGET_REGISTRY } from '../../src/widgets/registry'
 import { commandsFor, fieldDescriptor } from '../../src/widgets/fields'
 import { dataWearingSkin } from '../../src/utils/widgetSkins'
 import { computeDataHeight, computeDataWidth } from '../../src/store/widgetSizing'
+import { ICONIFIED_SIZE } from '../../src/types/spatial'
 import {
-  ICONIFIED_SIZE,
   restingTileSize,
   widgetShowsTitleRow,
   WIDGET_TITLE_ROW,
@@ -77,7 +77,12 @@ export interface CardSpec {
   pinned?: boolean
   favorite?: boolean
   strictHold?: boolean
-  /** Overrides the content-derived card size when a board wants a wider card. */
+  /**
+   * Overrides the content-derived card size. Needed for the handful of cards
+   * whose renderer measures taller than `computeDataHeight` predicts — a card
+   * that grows on first mount shoves its neighbours, so the measured size is
+   * recorded here instead. Re-measure in the browser if the renderer changes.
+   */
   size?: Size
 }
 
@@ -133,7 +138,8 @@ class DemoCanvas {
   private readonly bottoms: number[]
   /** Lane each placed widget landed in; x is resolved once the canvas is full. */
   private readonly lane = new Map<string, number>()
-  private widest = 0
+  /** Widest footprint in each lane, so a wide card only widens its own lane. */
+  private readonly widths: number[]
   private readonly strict: boolean
   private nextStrictLane = 0
 
@@ -142,6 +148,7 @@ class DemoCanvas {
     this.id = id
     this.strict = options.strict === true
     this.bottoms = new Array<number>(options.lanes ?? 4).fill(ORIGIN.y)
+    this.widths = new Array<number>(options.lanes ?? 4).fill(0)
   }
 
   /** Resolve a slot name to the widget id it was placed under. */
@@ -185,7 +192,7 @@ class DemoCanvas {
           this.place(card.key, widget, lane)
           members.push(widget.id)
           const box = this.board.footprint(widget)
-          this.widest = Math.max(this.widest, box.width)
+          this.widths[lane] = Math.max(this.widths[lane]!, box.width)
           y += box.height + (index === cards.length - 1 ? 0 : GLUE_GAP)
         }
         if (isGlue(entry)) this.board.addGlue(entry.glue, members)
@@ -196,12 +203,19 @@ class DemoCanvas {
     return this
   }
 
-  /** Resolve every lane index into a world x, once the canvas is complete. */
+  /**
+   * Resolve every lane index into a world x, once the canvas is complete. Each
+   * lane is only as wide as its own widest card, so one broad card (a week
+   * meal grid, a wide table) does not push every other lane apart.
+   */
   settleLanes(): void {
-    const pitch = this.widest + COLUMN_GAP
-    for (const [id, lane] of this.lane) {
-      this.board.moveWidget(id, ORIGIN.x + lane * pitch)
+    const starts: number[] = []
+    let x = ORIGIN.x
+    for (const width of this.widths) {
+      starts.push(x)
+      x += width + COLUMN_GAP
     }
+    for (const [id, lane] of this.lane) this.board.moveWidget(id, starts[lane]!)
   }
 
   private shortestLane(): number {

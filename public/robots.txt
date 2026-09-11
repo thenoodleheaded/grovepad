@@ -1,6 +1,53 @@
-# Grovepad is a single-page app: every path serves the same shell, and boards
-# live behind sign-in. Only the root is real content; the canonical tag in
-# index.html folds any stray deep link back into it.
+# Grovepad renders in JavaScript. The served HTML carries a product description
+# in a JSON-LD block, a #root splash and a <noscript> block, so crawlers that do
+# not execute scripts still get real text. Boards themselves live behind sign-in
+# and are never crawlable.
+#
+# IMPORTANT: AI crawlers are currently blocked ABOVE this file, at the Cloudflare
+# edge, not here. Cloudflare prepends a "Cloudflare Managed Content" block to the
+# served robots.txt and additionally returns HTTP 403 to GPTBot and ClaudeBot.
+# Editing this file cannot undo that. Turn it off in the Cloudflare dashboard:
+#   Security -> Bots -> AI Crawl Control   (allow the crawlers)
+#   Security -> Settings -> Manage robots.txt   (disable the managed block)
+# Verify with:
+#   curl -s -o /dev/null -w '%{http_code}\n' -A 'GPTBot/1.2' https://grovepad.app
+# It must return 200, not 403.
+
+# Assistant crawlers are welcome. People ask AI assistants which app to use, and
+# an assistant that cannot fetch this page cannot name Grovepad.
+User-agent: GPTBot
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-SearchBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+User-agent: CCBot
+Allow: /
+
+User-agent: meta-externalagent
+Allow: /
+
+User-agent: Amazonbot
+Allow: /
+
 User-agent: *
 
 # Collaboration invites are private links, not public pages.

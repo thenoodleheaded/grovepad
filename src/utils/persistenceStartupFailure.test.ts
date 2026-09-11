@@ -1,12 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 // ---------------------------------------------------------------------------
-// Startup read failure must never let the seeded board reach durable storage.
+// Startup read failure must never let the initial board reach durable storage.
 //
-// useWidgetStore seeds a starter board at module scope, so between app start
-// and a successful read the store is ALWAYS holding demo content. If the read
-// fails and nothing notices, the first edit schedules a save that writes that
-// starter board over the user's real record — and the chip says "Saved".
+// useWidgetStore creates a blank board shell at module scope. If the read fails
+// and nothing notices, the first edit could still write that shell over the
+// user's real record — and the chip would say "Saved".
 //
 // The board database is the I/O seam, mocked so the read can reject on demand
 // and every write is observable. fake-indexeddb cannot fail a read to order.
@@ -71,15 +70,19 @@ async function bootPersistence() {
   return { boardDatabase, initPersistence, useWidgetStore, useCanvasStore, usePersistenceStatusStore, useToastStore }
 }
 
-/** An edit the store can make in node — no layout settling, no text measurement. */
+/** A self-contained edit the store can make in node. */
 function touchSomeWidget(useWidgetStore: { getState: () => never }): void {
   const state = useWidgetStore.getState() as unknown as {
     widgets: Record<string, unknown>
-    updateWidgetMetadata: (id: string, metadata: { pinned: boolean }) => void
+    createWidget: (
+      title: string,
+      position: { x: number; y: number },
+      type: 'text',
+    ) => string
   }
-  const id = Object.keys(state.widgets)[0]
-  expect(id, 'the seeded starter board should not be empty').toBeTruthy()
-  state.updateWidgetMetadata(id!, { pinned: true })
+  expect(Object.keys(state.widgets)).toHaveLength(0)
+  const id = state.createWidget('Persistence test', { x: 0, y: 0 }, 'text')
+  expect(id).toBeTruthy()
 }
 
 let dispose: (() => void) | null = null
@@ -114,7 +117,7 @@ describe('a startup read failure pauses saving instead of overwriting the record
       touchSomeWidget(mod.useWidgetStore as never)
       await vi.advanceTimersByTimeAsync(BOARD_SAVE_MS + 1)
 
-      // The whole point: the starter board must not reach disk.
+      // The whole point: the replacement shell must not reach disk.
       expect(mod.boardDatabase.writeBoardDatabase).not.toHaveBeenCalled()
       expect(mod.boardDatabase.writeMigratedBoardDatabase).not.toHaveBeenCalled()
       expect(mod.boardDatabase.saveRollingSnapshot).not.toHaveBeenCalled()
@@ -127,8 +130,8 @@ describe('a startup read failure pauses saving instead of overwriting the record
 
       const messages = mod.useToastStore.getState().toasts.map((toast) => toast.message)
       expect(messages.some((message) => /could not be opened/i.test(message))).toBe(true)
-      // The store is holding the STARTER board here, so telling the user to
-      // export a backup would capture seed widgets, not their data.
+      // The store only has the unsaved local shell here, so telling the user
+      // to export a backup would not recover the unread record.
       expect(messages.some((message) => /export a backup/i.test(message))).toBe(false)
     })
   }

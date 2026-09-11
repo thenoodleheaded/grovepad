@@ -77,7 +77,7 @@ function runPureCommand(widgetId: string, key: string): void {
   if (!widget) return
   const command = commandsFor(widget.type).find((entry) => entry.key === key)
   if (!command) return
-  store.updateWidgetData(widgetId, command.run(widget.data))
+  store.applyWireWrites(new Map<string, ModuleData>([[widgetId, command.run(widget.data)]]))
 }
 
 export function isAutomationRunning(widgetId: string): boolean {
@@ -119,9 +119,9 @@ export async function executeAutomationWidget(widgetId: string): Promise<void> {
   }
   if (type === 'idempotency_store') {
     const duplicate = data.items.some((item) => item.key === data.input || item.value === data.input)
-    store.updateWidgetData(widgetId, duplicate
-      ? { ...data, output: 'Duplicate ignored', lastError: '', lastRunAt: Date.now() }
-      : { ...data, output: data.input, count: data.count + 1, lastError: '', lastRunAt: Date.now(), items: [...data.items, { id: crypto.randomUUID(), key: data.input, value: data.input, status: 'done', at: Date.now() }] })
+    write(widgetId, duplicate
+      ? { output: 'Duplicate ignored', lastError: '', lastRunAt: Date.now() }
+      : { output: data.input, count: data.count + 1, lastError: '', lastRunAt: Date.now(), items: [...data.items, { id: crypto.randomUUID(), key: data.input, value: data.input, status: 'done', at: Date.now() }] })
     return
   }
   if (type === 'state_machine') {
@@ -133,9 +133,9 @@ export async function executeAutomationWidget(widgetId: string): Promise<void> {
       const next = data.input.trim()
       const allowed = (transitions as Record<string, unknown>)[current]
       if (!next || !Array.isArray(allowed) || !allowed.map(String).includes(next)) throw new Error(`Transition ${current || '(unset)'} → ${next || '(empty)'} is not allowed.`)
-      store.updateWidgetData(widgetId, { ...data, output: next, count: data.count + 1, lastRunAt: Date.now(), lastError: '' })
+      write(widgetId, { output: next, count: data.count + 1, lastRunAt: Date.now(), lastError: '' })
     } catch (error) {
-      store.updateWidgetData(widgetId, { ...data, lastError: error instanceof Error ? error.message : String(error), lastRunAt: Date.now() })
+      write(widgetId, { lastError: error instanceof Error ? error.message : String(error), lastRunAt: Date.now() })
     }
     return
   }
@@ -151,7 +151,7 @@ export async function executeAutomationWidget(widgetId: string): Promise<void> {
   if (type === 'widget_creator') {
     try {
       const config = parseAutomationConfig(data.config)
-      const requestedType = String(config.type ?? 'notes')
+      const requestedType = String(config.type ?? 'text')
       if (!MODULE_TYPE_SET.has(requestedType)) throw new Error(`Unknown widget type: ${requestedType}`)
       if (!isWidgetTypePublic(requestedType as never)) throw new Error(`${widgetDefinition(requestedType as never).label} is not available for creation in this beta.`)
       const titles = lines(data.input)
@@ -198,7 +198,7 @@ export async function executeAutomationWidget(widgetId: string): Promise<void> {
             x: self.position.x + (index - (titles.length - 1) / 2) * 360,
             y: self.position.y + self.size.height + 120,
           },
-          String(config.type ?? 'notes') as never,
+          String(config.type ?? 'text') as never,
         )
         store.addRelation(widgetId, id, 'parent')
         return id

@@ -4,11 +4,8 @@ export type CanvasNodeSkin =
   | 'portal'
   | 'cover'
   | 'live_thumbnail'
-  | 'dashboard_door'
-  | 'folder_index'
 
 export interface CanvasCoverState {
-  eyebrow: string
   subtitle: string
 }
 
@@ -31,12 +28,13 @@ export interface CanvasNodeSummary {
   typeCounts: Array<{ type: string; count: number }>
 }
 
+// Boards saved before Dashboard Door and Folder Index were retired still carry
+// those values; an unknown skin falls back to Portal rather than blanking the
+// card, so no old canvas door loses its way in.
 const CANVAS_NODE_SKINS = new Set<CanvasNodeSkin>([
   'portal',
   'cover',
   'live_thumbnail',
-  'dashboard_door',
-  'folder_index',
 ])
 
 export function canvasNodeSkin(raw: unknown): CanvasNodeSkin {
@@ -50,9 +48,6 @@ export function canvasCoverState(raw: unknown): CanvasCoverState {
     ? raw as Record<string, unknown>
     : {}
   return {
-    eyebrow: typeof state.eyebrow === 'string'
-      ? state.eyebrow.slice(0, 40)
-      : 'Open canvas',
     subtitle: typeof state.subtitle === 'string'
       ? state.subtitle.slice(0, 160)
       : '',

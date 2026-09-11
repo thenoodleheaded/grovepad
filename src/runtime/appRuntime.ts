@@ -1,3 +1,4 @@
+import { initAnalyticsRuntime } from './analyticsRuntime'
 import { initCircuitEngine } from '../engine/circuitEngine'
 import { initWidgetModulePrefetch } from '../engine/loader/idlePrefetch'
 import { useCanvasStore } from '../store/useCanvasStore'
@@ -11,6 +12,7 @@ import { useAuthStore } from '../store/useAuthStore'
 import { useCollaborationStore } from '../store/useCollaborationStore'
 import { initMcpBridgeRuntime } from './mcpBridgeRuntime'
 import { initSubscriptionRuntime } from './subscriptionRuntime'
+import { startMediaSync } from '../services/mediaSyncService'
 
 /** Combine service disposers into one idempotent application boundary. */
 export function composeRuntimeDisposer(disposers: readonly (() => void)[]): () => void {
@@ -79,6 +81,9 @@ const appRuntime = createRuntimeBoundary(() => [
       : undefined,
   }),
   initMcpBridgeRuntime(),
+  // Counting is independent of everything else here: it reads one preference,
+  // sends at most one event per app start, and no other service waits on it.
+  initAnalyticsRuntime(),
   // ORDER CONTRACT: initSubscriptionRuntime must start before
   // initSignedInCollaboration. Hosting a shared board is gated on the account's
   // entitlement, so the entitlement has to be adopted before a session can ask
@@ -86,6 +91,9 @@ const appRuntime = createRuntimeBoundary(() => [
   // and refuses a paying host their own board.
   initSubscriptionRuntime(),
   initSignedInCollaboration(),
+  // Last, so the sweep reads the hydrated board rather than the seed one. A
+  // signed-out or offline start finds nothing to do and costs nothing.
+  startMediaSync(),
 ])
 
 /** Start the canvas-owned services once and return their explicit teardown. */

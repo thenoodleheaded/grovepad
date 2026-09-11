@@ -106,12 +106,12 @@ function findLevels(source: string): RawLevelMatch[] {
 /** Study-appropriate widget rotations by subject category. Explicit and
  *  reviewable on purpose — this is taste, not pattern matching. */
 const STUDY_WIDGETS: Record<string, ModuleType[]> = {
-  math: ['formula_sheet', 'flashcards', 'quiz'],
-  science: ['formula_sheet', 'flashcards', 'quiz'],
-  language: ['vocab', 'flashcards', 'quiz'],
-  humanities: ['cornell', 'flashcards', 'quiz'],
-  coding: ['code', 'checklist', 'quiz'],
-  default: ['flashcards', 'quiz', 'cornell'],
+  math: ['formula_sheet', 'flashcards'],
+  science: ['formula_sheet', 'flashcards'],
+  language: ['flashcards'],
+  humanities: ['text', 'flashcards'],
+  coding: ['code', 'checklist', 'flashcards'],
+  default: ['flashcards', 'text'],
 }
 
 const SUBJECT_CATEGORIES: ReadonlyArray<[RegExp, string]> = [
@@ -290,7 +290,7 @@ function buildStructuralPlan(spec: StructuralSpec, source: string): ThoughtPlan 
   const relations: ProposedRelation[] = []
 
   const rootId = 's-root'
-  nodes.push(makeNode(rootId, 'notes', spec.topic, source, 0))
+  nodes.push(makeNode(rootId, 'text', spec.topic, source, 0))
 
   const studyRotation = studyWidgetsForSubject(`${spec.topic} ${source}`)
   let rotationCursor = 0
@@ -305,7 +305,7 @@ function buildStructuralPlan(spec: StructuralSpec, source: string): ThoughtPlan 
         const ordinal = parent.ordinal ? `${parent.ordinal}.${position + 1}` : `${position + 1}`
         const id = `s-${ordinal.replaceAll('.', '-')}`
         const title = `${level.noun} ${ordinal}`
-        nodes.push(makeNode(id, 'notes', title, source, levelIndex + 1))
+        nodes.push(makeNode(id, 'text', title, source, levelIndex + 1))
         relations.push({ fromTemporaryId: parent.id, toTemporaryId: id, type: 'parent' })
         next.push({ id, title, ordinal })
       }

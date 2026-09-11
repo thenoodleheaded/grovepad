@@ -1,18 +1,38 @@
-import type { NotesData, StickyNoteColor, Widget } from '../types/spatial'
+import type { TextData, StickyNoteColor, Widget } from '../types/spatial'
 
 const NATIVE_NOTE_WIDGET_SCHEMA_VERSION = 1 as const
 const NATIVE_NOTE_WIDGET_TITLE_MAX = 120
 export const NATIVE_NOTE_WIDGET_TEXT_MAX = 4_096
 
+/**
+ * The five colours every native renderer already switches on. The web sticky
+ * offers four more; a name the Swift/Glance side has never heard of would fall
+ * through its `switch` to a default, so the extras fold onto their nearest
+ * neighbour here instead of crossing the boundary as an unknown string.
+ */
 const NOTE_COLORS = new Set<StickyNoteColor>(['yellow', 'pink', 'blue', 'green', 'purple'])
+
+const NATIVE_COLOR_FOLD: Partial<Record<StickyNoteColor, StickyNoteColor>> = {
+  orange: 'yellow',
+  teal: 'green',
+  // Red folds to pink rather than to yellow: pink is the warm alarm tone on
+  // the native side, and a red note landing on yellow would lose that reading.
+  red: 'pink',
+  lime: 'green',
+}
+
+function nativeNoteColor(raw: unknown): StickyNoteColor {
+  const color = raw as StickyNoteColor
+  if (NOTE_COLORS.has(color)) return color
+  return NATIVE_COLOR_FOLD[color] ?? 'yellow'
+}
 
 interface NativeNoteWidgetNote {
   id: string
   title: string
   text: string
   color: StickyNoteColor
-  mode: 'plain' | 'sticky' | 'quote'
-  attribution: string
+  mode: 'plain' | 'sticky'
 }
 
 export interface NativeNoteWidgetSnapshot {
@@ -36,20 +56,19 @@ export function deriveNativeNoteWidgetSnapshot(
   widgets: Readonly<Record<string, Widget>>,
 ): NativeNoteWidgetSnapshot {
   const widget = selectedWidgetId ? widgets[selectedWidgetId] : undefined
-  if (!widget || widget.type !== 'notes') {
+  if (!widget || widget.type !== 'text') {
     return { schemaVersion: NATIVE_NOTE_WIDGET_SCHEMA_VERSION, note: null }
   }
 
-  const data = widget.data as NotesData
+  const data = widget.data as TextData
   return {
     schemaVersion: NATIVE_NOTE_WIDGET_SCHEMA_VERSION,
     note: {
       id: bounded(widget.id, NATIVE_NOTE_WIDGET_TITLE_MAX),
       title: bounded(widget.title, NATIVE_NOTE_WIDGET_TITLE_MAX),
       text: bounded(data.text, NATIVE_NOTE_WIDGET_TEXT_MAX),
-      color: NOTE_COLORS.has(data.color as StickyNoteColor) ? data.color as StickyNoteColor : 'yellow',
-      mode: data.mode === 'sticky' || data.mode === 'quote' ? data.mode : 'plain',
-      attribution: bounded(data.attribution, NATIVE_NOTE_WIDGET_TITLE_MAX),
+      color: nativeNoteColor(data.color),
+      mode: data.mode === 'sticky' ? 'sticky' : 'plain',
     },
   }
 }

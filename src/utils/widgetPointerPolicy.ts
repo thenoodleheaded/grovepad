@@ -25,7 +25,13 @@ interface WidgetPointerIntentInput {
   interactionMode: InteractionMode
   isInteractiveTarget: boolean
   isLocked: boolean
-  hasModifier: boolean
+  /**
+   * Shift or Option — the card-level gestures that may legitimately begin on
+   * an inner control. Cmd/Ctrl deliberately does not count: those press a
+   * control to open what it points at (a canvas in a new tab), and a relation
+   * drag has the card's whole body to start from.
+   */
+  hasCardGestureModifier: boolean
   wantsLink: boolean
   isTargetingLink: boolean
 }
@@ -35,7 +41,7 @@ export function resolveWidgetPointerIntent({
   interactionMode,
   isInteractiveTarget,
   isLocked,
-  hasModifier,
+  hasCardGestureModifier,
   wantsLink,
   isTargetingLink,
 }: WidgetPointerIntentInput): WidgetPointerIntent {
@@ -48,7 +54,7 @@ export function resolveWidgetPointerIntent({
     (pointerType === 'touch' || pointerType === 'pen') &&
     interactionMode === 'select'
   ) return 'select'
-  if (isInteractiveTarget && !hasModifier) return 'ignore'
+  if (isInteractiveTarget && !hasCardGestureModifier) return 'ignore'
   if (isLocked) return 'select'
   if (wantsLink && pointerType === 'mouse') return 'link'
   if (pointerType === 'touch') return 'select'

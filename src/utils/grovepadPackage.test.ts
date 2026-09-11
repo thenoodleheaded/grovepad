@@ -147,9 +147,11 @@ describe('drawing-family media completeness', () => {
           },
         }),
         legacy: makeWidget({
-          id: 'legacy', type: 'excalidraw', title: 'Old drawing', position: { x: 900, y: 0 },
-          // The legacy standalone type keeps ExcalidrawData at the TOP level.
-          data: { elements: [], appState: {}, files: [{ id: 'file2', mimeType: 'image/png', createdAt: 1 }], updatedAt: '2026-01-01T00:00:00.000Z' },
+          id: 'legacy', type: 'sketchpad', title: 'Old drawing', position: { x: 900, y: 0 },
+          // The standalone Excalidraw card is retired; a board saved with one
+          // arrives already migrated onto Sketchpad's Diagram skin, so its
+          // scene and embedded files live under `diagram`.
+          data: { height: 240, strokes: [], mode: 'diagram', diagram: { elements: [], appState: {}, files: [{ id: 'file2', mimeType: 'image/png', createdAt: 1 }], updatedAt: '2026-01-01T00:00:00.000Z' } },
         }),
         reference: makeWidget({
           id: 'reference', type: 'sketchpad', title: 'Reference', position: { x: 1200, y: 0 },

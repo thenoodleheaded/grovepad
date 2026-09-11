@@ -16,11 +16,29 @@ export const PERSISTED_DEVICE_VERSION = 1 as const
 
 type CanvasViews = Record<string, { pan: Vector2D; zoom: number }>
 
-/** Local-only navigation state. It must never enter cloud or exported board documents. */
-export interface BoardDeviceState {
+/** One open canvas tab. A pointer into `canvases`, never a copy of one. */
+export interface CanvasTab {
+  id: string
+  canvasId: string
+}
+
+/**
+ * Local-only navigation state. It must never enter cloud or exported board
+ * documents. `openTabs`/`activeTabId` arrived after v1 shipped and stay
+ * additive on the wire rather than taking a version bump: a build without
+ * tabs then still reads the payload as v1 and keeps its cameras instead of
+ * resetting navigation on rollback.
+ */
+export interface BoardNavigationState {
   activeWorkspaceId: string
   activeCanvasId: string
   canvasViews: CanvasViews
+}
+
+export interface BoardDeviceState extends BoardNavigationState {
+  openTabs: CanvasTab[]
+  /** Always names a tab in `openTabs`, and that tab points at `activeCanvasId`. */
+  activeTabId: string
 }
 
 export interface PersistedDeviceState extends BoardDeviceState {
@@ -51,8 +69,12 @@ export interface PersistedBoardDocumentState {
   persistenceRawActivePacks?: string[]
 }
 
-/** Runtime store shape: synced document plus local device navigation. */
-export interface PersistedBoardState extends PersistedBoardDocumentState, BoardDeviceState {}
+/**
+ * Serializer input: the synced document plus the navigation fields older board
+ * payloads still echo. Tabs are deliberately absent — the serializer must never
+ * be handed anything that could leak the tab row into a document.
+ */
+export interface PersistedBoardState extends PersistedBoardDocumentState, BoardNavigationState {}
 
 /**
  * Self-describing version-2 document written to IndexedDB, cloud, snapshots,
@@ -66,6 +88,10 @@ export interface PersistedBoard extends PersistedBoardDocumentState {
   canvasViews?: CanvasViews
 }
 
-/** Fully resolved reader output used to hydrate the runtime store. */
+/**
+ * Fully resolved reader output used to hydrate the runtime store. Board
+ * documents never carried tabs, so a hydrated board resolves only the legacy
+ * navigation fields; the tab row is device state the reader supplies alongside.
+ */
 export type HydratedPersistedBoard =
-  Omit<PersistedBoard, keyof BoardDeviceState> & BoardDeviceState
+  Omit<PersistedBoard, keyof BoardDeviceState> & BoardNavigationState

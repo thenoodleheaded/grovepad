@@ -41,6 +41,15 @@ DRAWING_WIDGET_SKINS = {
     'excalidraw': 'diagram',
 }
 
+RETIRED_NOTE_SKINS = {
+    'quote',
+    'cornell',
+    'callout',
+    'markdown_page',
+    'daily_log',
+    'versioned_note',
+}
+
 
 def document_lines() -> list[str]:
     """The document's paragraphs as plain text, in order."""
@@ -192,6 +201,16 @@ def resolve(inventory: dict, templates: list[dict], atlas: dict) -> list[dict]:
                 widget_type, skin = 'sketchpad', DRAWING_WIDGET_SKINS[widget_type]
             elif widget_type == 'sketchpad':
                 skin = skin or 'ink'
+            elif widget_type == 'notes' and skin in RETIRED_NOTE_SKINS:
+                # The catalogue snapshot predates the Note's reduction to Plain,
+                # Sticky, and Typewriter. A retired skin is still a writing card,
+                # so the slot keeps its place and wears the plain page.
+                skin = 'plain'
+
+            if widget_type == 'notes':
+                # The docx snapshot still calls this card "Note" / [notes]; the
+                # live widget was renamed to Text after the snapshot was taken.
+                widget_type = 'text'
 
             slots.append({'slot': letter, 'type': widget_type, 'skin': skin, 'title': title})
 

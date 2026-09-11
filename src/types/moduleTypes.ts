@@ -3,33 +3,25 @@
 // ---------------------------------------------------------------------------
 
 export type ModuleType =
-  | 'notes'
+  | 'text'
   | 'bullets'
   | 'checklist'
   | 'table'
   | 'sketchpad'
-  | 'excalidraw'
   | 'budget'
-  | 'progress'
   | 'ai_generator'
-  | 'timeline'
   | 'dialog'
   | 'game_tuner'
   | 'audio_player'
   | 'canvas_node'
-  | 'kanban'
-  | 'countdown'
   | 'habit'
   | 'links'
   | 'code'
-  | 'quote'
   | 'poll'
   | 'contact'
   | 'media'
   | 'metrics'
-  | 'sticky_note'
   | 'calendar'
-  | 'timer'
   | 'timekeeper'
   | 'tracker'
   | 'rating'
@@ -39,27 +31,16 @@ export type ModuleType =
   | 'bar_chart'
   | 'counter'
   | 'pros_cons'
-  | 'weekly_planner'
   | 'goal_tracker'
-  | 'stopwatch'
   | 'reading_list'
   | 'flashcards'
   | 'canvas_lms'
   | 'meeting_notes'
-  | 'priority_matrix'
   | 'decision'
-  | 'world_clock'
   | 'location'
-  | 'pomodoro'
-  | 'vocab'
   | 'grade_calc'
-  | 'gpa'
-  | 'assignment'
-  | 'cornell'
   | 'formula_sheet'
   | 'citation'
-  | 'study_goal'
-  | 'quiz'
   | 'text_input'
   | 'number_input'
   | 'toggle'
@@ -69,7 +50,6 @@ export type ModuleType =
   | 'date_picker'
   | 'outline'
   | 'form'
-  | 'daily_agenda'
   | 'process'
   | 'risk_register'
   | 'decision_matrix'
@@ -77,15 +57,12 @@ export type ModuleType =
   | 'timesheet'
   | 'inventory'
   | 'logbook'
-  | 'line_chart'
-  | 'pie_chart'
   | 'unit_converter'
   | 'clock_pulse'
   | 'comparator'
   | 'aggregator'
   | 'range_mapper'
   | 'latch'
-  | 'random_picker'
   | 'sequencer'
   | 'template'
   | 'recorder'
@@ -102,7 +79,6 @@ export type ModuleType =
   | 'medications'
   | 'workout_plan'
   | 'job_applications'
-  | 'okr'
   | 'decision_journal'
   | 'weekly_review'
   | 'snippet_library'
@@ -132,32 +108,24 @@ export type ModuleType =
 
 export const MODULE_TYPES: readonly ModuleType[] = [
   'canvas_node',
-  'notes',
+  'text',
   'bullets',
   'checklist',
   'table',
   'sketchpad',
-  'excalidraw',
   'budget',
-  'progress',
   'ai_generator',
-  'timeline',
   'dialog',
   'game_tuner',
   'audio_player',
-  'kanban',
-  'countdown',
   'habit',
   'links',
   'code',
-  'quote',
   'poll',
   'contact',
   'media',
   'metrics',
-  'sticky_note',
   'calendar',
-  'timer',
   'timekeeper',
   'tracker',
   'rating',
@@ -167,27 +135,16 @@ export const MODULE_TYPES: readonly ModuleType[] = [
   'bar_chart',
   'counter',
   'pros_cons',
-  'weekly_planner',
   'goal_tracker',
-  'stopwatch',
   'reading_list',
   'flashcards',
   'canvas_lms',
   'meeting_notes',
-  'priority_matrix',
   'decision',
-  'world_clock',
   'location',
-  'pomodoro',
-  'vocab',
   'grade_calc',
-  'gpa',
-  'assignment',
-  'cornell',
   'formula_sheet',
   'citation',
-  'study_goal',
-  'quiz',
   'text_input',
   'number_input',
   'toggle',
@@ -197,7 +154,6 @@ export const MODULE_TYPES: readonly ModuleType[] = [
   'date_picker',
   'outline',
   'form',
-  'daily_agenda',
   'process',
   'risk_register',
   'decision_matrix',
@@ -205,14 +161,12 @@ export const MODULE_TYPES: readonly ModuleType[] = [
   'timesheet',
   'inventory',
   'logbook',
-  'line_chart',
-  'pie_chart',
   'unit_converter',
-  'clock_pulse', 'comparator', 'aggregator', 'range_mapper', 'latch', 'random_picker',
+  'clock_pulse', 'comparator', 'aggregator', 'range_mapper', 'latch', 
   'sequencer', 'template', 'recorder', 'notifier',
   'subscriptions', 'debt_payoff', 'expense_split', 'invoices', 'meal_planner', 'recipe',
   'home_maintenance', 'chore_rotation', 'renewals_vault', 'medications', 'workout_plan',
-  'job_applications', 'okr', 'decision_journal', 'weekly_review', 'snippet_library',
+  'job_applications', 'decision_journal', 'weekly_review', 'snippet_library',
   'keep_in_touch', 'gifts_occasions', 'trip_itinerary', 'guest_list',
   'savings_circle', 'zakat', 'remittance_planner', 'price_book', 'utility_runway',
   'fuel_log', 'side_income', 'wishlist_saver', 'vitals_log', 'cycle_tracker',

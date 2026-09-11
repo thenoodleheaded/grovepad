@@ -95,7 +95,7 @@
   color: var(--gp-counter-soft);
   cursor: pointer;
   place-items: center;
-  transition: transform 130ms ease, border-color 130ms ease, color 130ms ease;
+  transition: transform var(--gp-duration-snap) var(--gp-ease-snap), border-color var(--gp-duration-snap) var(--gp-ease-snap), color var(--gp-duration-snap) var(--gp-ease-snap);
 }
 
 .gp-counter-pair button:hover {
@@ -142,7 +142,7 @@
   cursor: pointer;
   gap: 0.25rem;
   font-size: 0.6rem;
-  transition: color 130ms ease;
+  transition: color var(--gp-duration-snap) var(--gp-ease-snap);
 }
 
 .gp-counter-reset:hover,
@@ -289,7 +289,7 @@
     var(--gp-counter-wash);
   cursor: pointer;
   gap: 0.15rem;
-  transition: transform 110ms ease, background 140ms ease, border-color 140ms ease;
+  transition: transform 110ms ease, background var(--gp-duration-snap) var(--gp-ease-snap), border-color var(--gp-duration-snap) var(--gp-ease-snap);
 }
 
 .gp-counter-tap:hover {
@@ -434,7 +434,7 @@
   color: var(--gp-counter-soft);
   cursor: pointer;
   place-items: center;
-  transition: background 130ms ease, color 130ms ease, transform 130ms ease;
+  transition: background var(--gp-duration-snap) var(--gp-ease-snap), color var(--gp-duration-snap) var(--gp-ease-snap), transform var(--gp-duration-snap) var(--gp-ease-snap);
 }
 
 .gp-counter-arrow:hover {
@@ -550,7 +550,7 @@
   color: var(--gp-counter-soft);
   cursor: pointer;
   place-items: center;
-  transition: background 120ms ease, color 120ms ease;
+  transition: background var(--gp-duration-snap) var(--gp-ease-snap), color var(--gp-duration-snap) var(--gp-ease-snap);
 }
 
 .gp-counter-multi-controls button[data-primary] {
@@ -582,15 +582,17 @@
   color: var(--gp-counter-faint);
   cursor: pointer;
   opacity: 0;
+  pointer-events: none;
   place-items: center;
   transform: translateY(-50%);
-  transition: opacity 120ms ease, color 120ms ease;
+  transition: opacity var(--gp-duration-snap) var(--gp-ease-snap), color var(--gp-duration-snap) var(--gp-ease-snap);
 }
 
 .gp-counter-multi-row:hover .gp-counter-multi-remove,
 .gp-counter-multi-row:focus-within .gp-counter-multi-remove,
 .gp-counter-multi-remove:focus-visible {
   opacity: 1;
+  pointer-events: auto;
 }
 
 .gp-counter-multi-remove:hover {
@@ -610,7 +612,7 @@
   cursor: pointer;
   gap: 0.28rem;
   font-size: 0.62rem;
-  transition: border-color 130ms ease, background 130ms ease;
+  transition: border-color var(--gp-duration-snap) var(--gp-ease-snap), background var(--gp-duration-snap) var(--gp-ease-snap);
 }
 
 .gp-counter-add:hover {
@@ -694,7 +696,7 @@
   cursor: pointer;
   gap: 0.25rem;
   font-size: 0.62rem;
-  transition: border-color 130ms ease, color 130ms ease;
+  transition: border-color var(--gp-duration-snap) var(--gp-ease-snap), color var(--gp-duration-snap) var(--gp-ease-snap);
 }
 
 .gp-counter-rate-controls button:hover {
@@ -735,7 +737,7 @@
   color: var(--gp-counter-faint);
   cursor: pointer;
   font-size: 0.6rem;
-  transition: background 130ms ease, color 130ms ease;
+  transition: background var(--gp-duration-snap) var(--gp-ease-snap), color var(--gp-duration-snap) var(--gp-ease-snap);
 }
 
 .gp-counter-period-picker button[data-active] {

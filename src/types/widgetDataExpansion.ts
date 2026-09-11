@@ -87,9 +87,24 @@ interface ContactCadenceRow { id: string; name: string; cadenceDays: number; las
 export interface KeepInTouchData { rows: ContactCadenceRow[] }
 interface GiftOccasionRow { id: string; person: string; date: string; ideas: string; budget: number; bought: boolean }
 export interface GiftsOccasionsData { rows: GiftOccasionRow[] }
-interface TripLeg { id: string; time: string; what: string; where: string; confirmation: string; booked: boolean }
-interface TripDay { id: string; date: string; legs: TripLeg[] }
-export interface TripItineraryData { tripName: string; startDate: string; days: TripDay[] }
+export interface TripLeg { id: string; time: string; what: string; where: string; confirmation: string; booked: boolean }
+export interface TripDay { id: string; date: string; legs: TripLeg[] }
+export type TripItinerarySkinMode =
+  | 'days'
+  | 'timeline'
+  | 'bookings'
+  | 'offline'
+  | 'map'
+  | 'group'
+  | 'travel_day'
+export interface TripItineraryData {
+  tripName: string
+  startDate: string
+  days: TripDay[]
+  skin?: TripItinerarySkinMode
+  /** Optional specialist fields are isolated by skin and leg id. */
+  skinStates?: Record<string, Record<string, unknown>>
+}
 interface GuestRow { id: string; name: string; status: 'invited'|'yes'|'no'|'maybe'; plusOnes: number; dietary: string }
 export interface GuestListData { rows: GuestRow[] }
 
@@ -167,7 +182,7 @@ export interface LocationData {
   capturedAt: number | null
   /** Which way of using this place the card wears. Appearance only: every
    *  skin reads and writes the same coordinates, address, and timezone. */
-  skin?: 'pin' | 'coordinates' | 'local_time' | 'compass' | 'geofence' | 'route'
+  skin?: 'pin' | 'coordinates' | 'local_time' | 'compass' | 'geofence' | 'route' | 'map'
   /** Optional specialist state is isolated by skin so switching never loses it. */
   skinStates?: Record<string, Record<string, unknown>>
 }

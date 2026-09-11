@@ -6,7 +6,7 @@ describe('connection lifecycle in the widget store', () => {
     const store = useWidgetStore.getState()
     const a = store.createWidget('Source A', { x: 9000, y: 9000 }, 'counter')
     const b = store.createWidget('Source B', { x: 9000, y: 9400 }, 'counter')
-    const target = store.createWidget('Target', { x: 9600, y: 9000 }, 'progress')
+    const target = store.createWidget('Target', { x: 9600, y: 9000 }, 'goal_tracker')
 
     // Rejects self-wires and unknown fields.
     expect(

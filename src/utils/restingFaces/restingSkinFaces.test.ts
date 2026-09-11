@@ -142,7 +142,7 @@ describe('every skin an essential widget wears has a resting face', () => {
   it('covers every essential type and skin', () => {
     // A guard on the guard: if the registry loses its skins this suite would
     // quietly stop testing anything.
-    expect(cases.length).toBeGreaterThan(200)
+    expect(cases.length).toBeGreaterThan(180)
     expect(ESSENTIAL_TYPES).toContain('checklist')
     expect(ESSENTIAL_TYPES).not.toContain('budget')
   })
@@ -170,7 +170,7 @@ describe('every skin an essential widget wears has a resting face', () => {
   it('never rests a filled card as a bare icon', () => {
     // The exceptions are cards whose starter data really is empty: nothing to
     // draw is the one honest reason for the icon tile.
-    const allowedIcons = new Set(['excalidraw', 'kanban', 'quote', 'sticky_note', 'weekly_planner'])
+    const allowedIcons = new Set(['excalidraw', 'kanban', 'weekly_planner'])
     for (const { type, skin, data } of cases) {
       if (allowedIcons.has(type)) continue
       const { model } = restingFace(widget(type, data))
@@ -224,6 +224,63 @@ describe('a skin folds to the shape it is worn as', () => {
       kind: 'lines',
       mono: true,
       total: { left: 'Σ', right: '25' },
+    })
+  })
+
+  it('folds an Outline to the rows its skin decorates', () => {
+    const items = [
+      { id: 'a', text: 'Act one', depth: 0, collapsed: false },
+      { id: 'b', text: 'Opening scene', depth: 1, collapsed: false },
+      { id: 'c', text: 'Act two', depth: 0, collapsed: true },
+      { id: 'd', text: 'Hidden beat', depth: 1, collapsed: false },
+    ]
+    // The roman skin keeps its markers as row leads, at their real depths.
+    expect(face('outline', { items, skin: 'roman' })).toMatchObject({
+      kind: 'rows',
+      rows: [
+        { lead: 'I.', label: 'Act one', indent: 0 },
+        { lead: 'A.', label: 'Opening scene', indent: 1 },
+        { lead: 'II.', label: 'Act two', indent: 0 },
+      ],
+    })
+    // A collapsed branch stays folded on the tile, as it is on the open card.
+    expect(JSON.stringify(face('outline', { items, skin: 'tree' }))).not.toContain('Hidden beat')
+    // The delivery plan keeps its checkmarks, estimates, and completion meter.
+    expect(face('outline', {
+      items,
+      skin: 'work_breakdown',
+      skinStates: { work_breakdown: { items: { a: { complete: true, estimate: '3d' } } } },
+    })).toMatchObject({
+      kind: 'rows',
+      meter: 0.25,
+      rows: [
+        { label: 'Act one', done: true, value: '3d' },
+        { label: 'Opening scene', done: false },
+        { label: 'Act two', done: false },
+      ],
+    })
+  })
+
+  it('folds every canvas door to its own skin, at a fixed doorplate', () => {
+    // The door's content lives in the store, behind the door — so the model
+    // carries only skin identity plus the cover's pocket, and the tile is a
+    // fixed per-skin shape the live renderer fills. A tile that resized as the
+    // far canvas changed would drag anchors and welds around it.
+    for (const skin of ['portal', 'cover', 'live_thumbnail'] as const) {
+      const { model, size } = restingFace(widget('canvas_node', { canvasId: 'canvas-2', skin }))
+      expect(model, `canvas_node/${skin}`).toMatchObject({ kind: 'canvas', skin })
+      expect(size.width % GRID_SIZE, `canvas_node/${skin} width off-lattice`).toBe(0)
+      expect(size.height % GRID_SIZE, `canvas_node/${skin} height off-lattice`).toBe(0)
+    }
+    // The cover's pocket is the one piece of face content stored on this
+    // widget, so it must survive the fold.
+    expect(face('canvas_node', {
+      canvasId: 'canvas-2',
+      skin: 'cover',
+      skinStates: { cover: { subtitle: 'Where the plan lives' } },
+    })).toMatchObject({
+      kind: 'canvas',
+      subtitle: 'Where the plan lives',
     })
   })
 

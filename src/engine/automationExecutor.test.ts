@@ -13,7 +13,7 @@ afterEach(() => {
   useWidgetStore.getState().loadBoard(baseline)
 })
 
-function automation(type: 'http_request' | 'widget_creator' | 'idempotency_store' | 'state_machine') {
+function automation(type: 'http_request' | 'widget_creator' | 'idempotency_store' | 'state_machine' | 'queue') {
   const id = useWidgetStore.getState().createWidget(type, { x: 10_000, y: 10_000 }, type)
   return { id, data: useWidgetStore.getState().widgets[id]!.data as AutomationCoreData }
 }
@@ -87,9 +87,36 @@ describe('automation execution contracts', () => {
     expect(result.output).toBe('Duplicate ignored')
   })
 
+  it('keeps stateful bookkeeping off the undo stack', async () => {
+    // A wired or heartbeat-driven run must not push an undo entry or wipe the
+    // user's redo stack — the executor writes through applyWireWrites.
+    for (const type of ['queue', 'idempotency_store', 'state_machine'] as const) {
+      const { id, data } = automation(type)
+      useWidgetStore.getState().updateWidgetData(id, {
+        ...data,
+        input: type === 'state_machine' ? 'running' : 'event-42',
+        config: type === 'state_machine' ? '{"initial":"idle","transitions":{"idle":["running"]}}' : data.config,
+      })
+      useWidgetStore.getState().undo()
+      expect(useWidgetStore.getState().canRedo).toBe(true)
+      const undoDepth = useWidgetStore.getState().canUndo
+
+      await executeAutomationWidget(id)
+
+      const after = useWidgetStore.getState().widgets[id]!.data as AutomationCoreData
+      expect(after.lastRunAt).not.toBeNull()
+      expect(useWidgetStore.getState().canRedo).toBe(true)
+      expect(useWidgetStore.getState().canUndo).toBe(undoDepth)
+      useWidgetStore.getState().redo()
+      expect((useWidgetStore.getState().widgets[id]!.data as AutomationCoreData).input).toBe(
+        type === 'state_machine' ? 'running' : 'event-42',
+      )
+    }
+  })
+
   it('commits a Widget Creator batch in one undoable transaction', async () => {
     const creator = automation('widget_creator')
-    useWidgetStore.getState().updateWidgetData(creator.id, { ...creator.data, input: 'Alpha\nBeta', config: '{"type":"notes"}' })
+    useWidgetStore.getState().updateWidgetData(creator.id, { ...creator.data, input: 'Alpha\nBeta', config: '{"type":"text"}' })
     const before = new Set(Object.keys(useWidgetStore.getState().widgets))
     await executeAutomationWidget(creator.id)
     const created = Object.keys(useWidgetStore.getState().widgets).filter((id) => !before.has(id))

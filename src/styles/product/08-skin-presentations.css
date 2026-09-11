@@ -68,7 +68,7 @@
   output,
   [data-hero-value]
 ) {
-  color: var(--gp-widget-accent);
+  color: var(--gp-accent-ink, var(--gp-widget-accent));
   font-variant-numeric: tabular-nums;
 }
 
@@ -127,7 +127,7 @@
 }
 
 .gp-widget-ui[data-skin-presentation='steps'] :where(ol > li)::marker {
-  color: var(--gp-widget-accent);
+  color: var(--gp-accent-ink, var(--gp-widget-accent));
   font-weight: 700;
 }
 
@@ -137,7 +137,7 @@
 
 .gp-skin-details-trigger {
   border: 1px solid color-mix(in oklab, var(--gp-widget-accent), transparent 72%);
-  color: color-mix(in oklab, var(--gp-widget-accent), white 8%);
+  color: color-mix(in oklab, var(--gp-accent-ink, var(--gp-widget-accent)), var(--gp-accent-lift, #fff) 8%);
   background: color-mix(in oklab, var(--gp-surface-control, #171717), transparent 8%);
   box-shadow: 0 4px 14px rgb(0 0 0 / 0.18);
   opacity: 0.62;
@@ -160,7 +160,7 @@
     radial-gradient(circle at 8% 0%, color-mix(in oklab, var(--gp-widget-accent), transparent 84%), transparent 40%),
     color-mix(in oklab, var(--gp-surface-panel, #111), black 8%);
   box-shadow: 0 18px 48px rgb(0 0 0 / 0.42);
-  backdrop-filter: blur(18px);
+  backdrop-filter: blur(calc(18px * var(--gp-blur-scale, 1)));
 }
 
 [data-theme='light'] .gp-skin-details-panel {

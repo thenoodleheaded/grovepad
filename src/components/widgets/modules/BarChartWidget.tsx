@@ -447,7 +447,7 @@ export function BarChartWidget({ data, onChange }: BarChartWidgetProps) {
       {
         id: 'primary',
         name: data.title || 'Primary',
-        color: 'var(--gp-widget-accent)',
+        color: 'var(--gp-accent-ink, var(--gp-widget-accent))',
         values: Object.fromEntries(bars.map((bar) => [bar.id, Math.max(0, finiteChartValue(bar.value))])),
       },
       ...stacked.series,

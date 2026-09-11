@@ -8,16 +8,17 @@ function note(overrides: Partial<Widget> = {}): Widget {
     id: 'note-1',
     title: 'Launch thought',
     size: { width: 320, height: 200 },
-    data: { text: 'Ship the native widget', mode: 'sticky', color: 'purple', attribution: '' },
+    data: { text: 'Ship the native widget', mode: 'sticky', color: 'purple' },
     ...overrides,
   })
 }
 
 describe('native note widget snapshot', () => {
   it('extracts only bounded, widget-safe Note data', () => {
-    const widget = note({ data: { text: 'x'.repeat(NATIVE_NOTE_WIDGET_TEXT_MAX + 20), mode: 'quote', attribution: 'Ada' } })
+    const widget = note({ data: { text: 'x'.repeat(NATIVE_NOTE_WIDGET_TEXT_MAX + 20), mode: 'typewriter' } })
     const snapshot = deriveNativeNoteWidgetSnapshot(widget.id, { [widget.id]: widget })
-    expect(snapshot.note).toMatchObject({ id: 'note-1', title: 'Launch thought', mode: 'quote', color: 'yellow', attribution: 'Ada' })
+    // Only Plain and Sticky cross the boundary; every other skin arrives plain.
+    expect(snapshot.note).toMatchObject({ id: 'note-1', title: 'Launch thought', mode: 'plain', color: 'yellow' })
     expect(snapshot.note?.text).toHaveLength(NATIVE_NOTE_WIDGET_TEXT_MAX)
   })
 
@@ -25,7 +26,7 @@ describe('native note widget snapshot', () => {
     // An emoji (two UTF-16 units) straddling the cap must be dropped whole —
     // a lone surrogate would be rejected as invalid JSON by the Rust boundary.
     const text = 'x'.repeat(NATIVE_NOTE_WIDGET_TEXT_MAX - 1) + '🌲🌲'
-    const widget = note({ data: { text, mode: 'plain', color: 'yellow', attribution: '' } })
+    const widget = note({ data: { text, mode: 'plain', color: 'yellow' } })
     const snapshot = deriveNativeNoteWidgetSnapshot(widget.id, { [widget.id]: widget })
     const result = snapshot.note!.text
     expect(result).toHaveLength(NATIVE_NOTE_WIDGET_TEXT_MAX - 1)

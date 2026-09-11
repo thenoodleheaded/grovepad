@@ -58,11 +58,21 @@ targets:
         # purpose string iOS terminates the process instead of prompting.
         NSLocationWhenInUseUsageDescription: Grovepad asks for your location only when you use a Location widget to drop your current position onto a board. It is never collected in the background.
         ITSAppUsesNonExemptEncryption: false
+        # Declare the app's language. With none declared iOS treats the app as
+        # unlocalized, and Apple's Sign in with Apple sheet showed a raw string
+        # key (AUTHORIZE_BUTTON_TITLE_PASSWORD_MODERN) on its main button.
+        CFBundleLocalizations:
+          - en
+        CFBundleAllowMixedLocalizations: true
     entitlements:
       path: app_iOS/app_iOS.entitlements
       properties:
         com.apple.security.application-groups:
           - group.app.grovepad.widgets
+        # Apple's native sign-in sheet (NativeAuthPlugin.swift). The App ID
+        # app.grovepad must also have Sign in with Apple enabled in the portal.
+        com.apple.developer.applesignin:
+          - Default
     scheme:
       environmentVariables:
         RUST_BACKTRACE: full
@@ -89,7 +99,9 @@ targets:
       - sdk: UIKit.framework
       - sdk: WebKit.framework
     preBuildScripts:
-      - script: npm run -- tauri ios xcode-script -v --platform ${PLATFORM_DISPLAY_NAME:?} --sdk-root ${SDKROOT:?} --framework-search-paths "${FRAMEWORK_SEARCH_PATHS:?}" --header-search-paths "${HEADER_SEARCH_PATHS:?}" --gcc-preprocessor-definitions "${GCC_PREPROCESSOR_DEFINITIONS:-}" --configuration ${CONFIGURATION:?} ${FORCE_COLOR} ${ARCHS:?}
+      # Wraps `npm run -- tauri ios xcode-script` so Xcode's Run button works
+      # without `tauri ios build --open` running in a terminal.
+      - script: /bin/bash "${SRCROOT}/../../../scripts/ios/xcode-build-rust.sh" -v --platform ${PLATFORM_DISPLAY_NAME:?} --sdk-root ${SDKROOT:?} --framework-search-paths "${FRAMEWORK_SEARCH_PATHS:?}" --header-search-paths "${HEADER_SEARCH_PATHS:?}" --gcc-preprocessor-definitions "${GCC_PREPROCESSOR_DEFINITIONS:-}" --configuration ${CONFIGURATION:?} ${FORCE_COLOR} ${ARCHS:?}
         name: Build Rust Code
         basedOnDependencyAnalysis: false
         outputFiles:

@@ -18,6 +18,7 @@ import {
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import type { ModuleType } from '../types/spatial'
+import { isDeletedWidgetType } from './deletedWidgetTypes'
 import type { WidgetDefinition, WidgetSkinOption } from './contracts/registry'
 import {
   WIDGET_SKIN_BLUEPRINTS,
@@ -60,6 +61,9 @@ export function installCataloguedSkins(
     const type = untypedType as ModuleType
     const definition = registry[type]
     if (!definition) {
+      // A deleted card's catalogue entries dissolve with it — its content now
+      // lives as skins on the canonical widget, which has its own entries.
+      if (isDeletedWidgetType(untypedType)) continue
       throw new Error(`Skin catalogue references unknown widget type "${untypedType}"`)
     }
 

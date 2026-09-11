@@ -5,7 +5,7 @@ import { clearLiveWidgetSizing, setLiveWidgetSizing } from '../../store/liveWidg
 import { isWidgetSizingGestureActive, registerWidgetFloorProbe, subscribeWidgetSizingGestureEnd } from '../../store/widgetSizingGesture'
 import type { Size, Widget } from '../../types/spatial'
 import { GRID_SIZE, WIDGET_MAX_EDGE } from '../../types/spatial'
-import { CARD_INSET as CONTENT_FLOOR_INSET, SUBGRID, contentFitHeight, hasSignificantVerticalOverflow, measureWidgetContentFloor, naturalContentHeight, verticalContentFloor } from '../../utils/widgetContentFloor'
+import { CARD_INSET as CONTENT_FLOOR_INSET, SUBGRID, contentFitHeight, hasSignificantVerticalOverflow, inFlowScrollHeight, measureWidgetContentFloor, naturalContentHeight, verticalContentFloor } from '../../utils/widgetContentFloor'
 import { contentFloorAnomalies } from '../../utils/scaleDebugAnomalies'
 import { useScaleDebugStore } from '../../store/useScaleDebugStore'
 import { DEFAULT_SIZING, widgetDefinition } from '../../widgets/registry'
@@ -114,7 +114,19 @@ export function useContentFloor(
         if (!ready) return
         const fallback = { ...DEFAULT_SIZING, ...declaredSizing }
         const autoHeight = declaredSizing?.autoHeight === true
-        const overflowY = Math.max(0, ui.scrollHeight - ui.clientHeight)
+        // An autoWidth card has its own width owner: WidgetCard's
+        // handleWidthChange, fed by the renderer measuring the one line of text
+        // that decides the box. The content floor only ever sees that text
+        // AFTER it has been clipped to fit, so it can do no better than ratify
+        // the current width — and writing that back undoes the fit mid-flight.
+        const autoWidth = declaredSizing?.autoWidth === true
+        const growToWidth = autoWidth ? live.size.width : result.growTo.width
+        // Flow content only. Chrome a skin hangs OUTSIDE the card (Sticky's
+        // colour strip) is anchored to the card's own bottom edge, so growing
+        // to cover it moves it down by the same amount — a card that chases it
+        // never arrives and climbs to the maximum edge instead.
+        const contentBottom = inFlowScrollHeight(ui)
+        const overflowY = Math.max(0, contentBottom - ui.clientHeight)
 
         // autoHeight already fits every pass; only fixed-height cards can
         // strand a void. naturalContentHeight sees a compact stack's true
@@ -141,7 +153,7 @@ export function useContentFloor(
               overflowY,
               scrollHeight: ui.scrollHeight,
               clientHeight: ui.clientHeight,
-              growToWidth: result.growTo.width,
+              growToWidth,
               fitted,
               willShrink,
               autoHeight,
@@ -154,7 +166,7 @@ export function useContentFloor(
             }).filter((flag) => flag !== 'content-void' || !willShrink)) // a void about to be fixed is not a bug
             if (willShrink) {
               useWidgetStore.getState().resizeWidget(widgetId, {
-                width: result.growTo.width,
+                width: growToWidth,
                 height: fitted,
               })
               return
@@ -178,7 +190,7 @@ export function useContentFloor(
 
         const fittedHeight = autoHeight
           ? contentFitHeight(
-              ui.scrollHeight,
+              contentBottom,
               declaredSizing.minHeight ?? DEFAULT_SIZING.minHeight,
               // Auto-grow stops at the absolute ceiling; past it the card
               // holds its size and the content scrolls inside it.
@@ -186,21 +198,21 @@ export function useContentFloor(
             )
           : result.growTo.height
         const willGrow =
-          result.growTo.width > live.size.width ||
+          growToWidth > live.size.width ||
           (autoHeight ? fittedHeight !== live.size.height : fittedHeight > live.size.height)
         recordContentFloorDebug(widgetId, live.type, live.size, {
           phase: 'grow-floor',
           overflowY,
           scrollHeight: ui.scrollHeight,
           clientHeight: ui.clientHeight,
-          growToWidth: result.growTo.width,
+          growToWidth,
           growToHeight: fittedHeight,
           willGrow,
           autoHeight,
         }, overflowY > 4 && !willGrow ? ['overflow-not-grown'] : [])
         if (willGrow) {
           useWidgetStore.getState().resizeWidget(widgetId, {
-            width: result.growTo.width,
+            width: growToWidth,
             height: fittedHeight,
           })
         }
@@ -243,7 +255,11 @@ export function useContentFloor(
       if (isWidgetSizingGestureActive(widgetId)) return
       const live = useWidgetStore.getState().widgets[widgetId]
       if (!live || live.iconified) return
-      const overflow = Math.ceil(content.scrollHeight - content.clientHeight)
+      // Flow content only, for the same reason the pass above measures it:
+      // raw scrollHeight counts chrome hung outside the card, and this backstop
+      // would grow the card for it every time the last one landed.
+      const contentBottom = inFlowScrollHeight(content)
+      const overflow = Math.ceil(contentBottom - content.clientHeight)
       if (!hasSignificantVerticalOverflow(overflow)) return
 
       const maxHeight = Math.min(
@@ -252,7 +268,7 @@ export function useContentFloor(
       )
       const height = Math.min(
         maxHeight,
-        verticalContentFloor(content.scrollHeight, overflow, DEFAULT_SIZING.minHeight, 0),
+        verticalContentFloor(contentBottom, overflow, DEFAULT_SIZING.minHeight, 0),
       )
       if (height > live.size.height) {
         useWidgetStore.getState().resizeWidget(widgetId, { ...live.size, height })

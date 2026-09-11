@@ -58,7 +58,7 @@
 }
 
 .gp-widget-content [role='checkbox']:not(.gp-check-free)[aria-checked='true'] svg * {
-  color: var(--gp-widget-accent);
+  color: var(--gp-accent-ink, var(--gp-widget-accent));
 }
 
 [data-theme='light'] .gp-widget-content [role='checkbox']:not(.gp-check-free)[aria-checked='true'] {
@@ -328,11 +328,11 @@ html[data-has-coarse-pointer='true'] .gp-widget-move-handle {
 /* Text editing inside a card belongs to that card's hue: caret, focus ring,
    selection, and native form controls (range, radio, native checkbox). */
 .gp-widget-content {
-  accent-color: var(--gp-widget-accent);
+  accent-color: var(--gp-accent-ink, var(--gp-widget-accent));
 }
 
 .gp-widget-content :is(input, textarea, select) {
-  caret-color: var(--gp-widget-accent);
+  caret-color: var(--gp-accent-ink, var(--gp-widget-accent));
 }
 
 .gp-widget-content ::selection {
@@ -396,22 +396,74 @@ html[data-has-coarse-pointer='true'] .gp-widget-move-handle {
 }
 
 [data-theme='light'] .gp-backplate {
-  border-color: rgb(255 255 255 / .11);
+  border-color: rgb(46 50 56 / .24);
   box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / .14),
-    0 24px 58px rgb(26 36 29 / .2),
-    0 4px 14px rgb(26 36 29 / .11);
+    inset 0 1px 0 rgb(255 255 255 / .95),
+    inset 0 -1px 0 rgb(30 34 40 / .14),
+    /* A resting card owns a little of its accent on the neutral page, so it
+       reads as lit rather than as a flat pasted rectangle. */
+    0 0 22px color-mix(in oklab, var(--gp-widget-accent, #84cc16), transparent 88%),
+    0 24px 58px rgb(28 32 38 / .16),
+    0 4px 14px rgb(28 32 38 / .09);
 }
 
-/* Warm sage-charcoal rather than blue-gray, so the dark cards belong to the
-   same green family as the bright paper canvas they float on. */
+/* The rule above is 0-2-0 and this file loads after index.css, so it was
+   tying-and-beating index.css's equally-weighted `[data-selected]`,
+   `[data-link-source]` and `[data-rest-expanded]` glow rules — light theme
+   silently lost every accent glow while dark kept them (there `.gp-backplate`
+   is only 0-1-0 and loses cleanly). Restating them one class heavier is what
+   puts the glow back, so do not "simplify" the `.gp-widget-card` away. */
+[data-theme='light'] .gp-widget-card.gp-backplate[data-selected='true'] {
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / .95),
+    0 0 0 var(--gp-tune-select-ring, 3px) color-mix(in oklab, var(--gp-widget-accent), transparent 58%),
+    0 0 30px color-mix(in oklab, var(--gp-widget-accent), transparent 68%),
+    0 24px 58px rgb(28 32 38 / .16);
+}
+
+[data-theme='light'] .gp-widget-card.gp-backplate[data-link-source='true'] {
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / .95),
+    0 0 0 3px rgb(99 102 241 / .42),
+    0 0 26px rgb(99 102 241 / .32),
+    0 24px 58px rgb(28 32 38 / .16);
+}
+
+[data-theme='light'] .gp-widget-card.gp-backplate[data-rest-expanded='true'] {
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / .95),
+    0 0 34px color-mix(in oklab, var(--gp-widget-accent), transparent 72%),
+    0 34px 80px rgb(28 32 38 / calc(var(--gp-tune-expand-shadow, 0.58) * .4));
+}
+
+/* Expanding a card does not deselect it, and the two rules above are equally
+   specific — so without this the expand shadow simply won the tie and the
+   selection ring vanished the moment a selected card opened. index.css carries
+   the same combined rule for dark; this is its light twin. */
+[data-theme='light'] .gp-widget-card.gp-backplate[data-selected='true'][data-rest-expanded='true'] {
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / .95),
+    0 0 0 var(--gp-tune-select-ring, 3px) color-mix(in oklab, var(--gp-widget-accent), transparent 58%),
+    0 0 34px color-mix(in oklab, var(--gp-widget-accent), transparent 68%),
+    0 34px 80px rgb(28 32 38 / calc(var(--gp-tune-expand-shadow, 0.58) * .4));
+}
+
+/* Bright silver with a restrained reflection of the registry accent. The
+   alternating cool lightness bands make the card read as metal instead of a
+   white panel, and the content layer supplies dark-on-silver ink. */
 [data-theme='light'] .gp-backplate.gp-glass {
   background:
-    radial-gradient(120% 85% at 12% -4%, color-mix(in oklab, var(--gp-widget-accent, #84cc16), transparent 88%), transparent 56%),
-    radial-gradient(130% 100% at 14% 0%, rgb(255 255 255 / .12), transparent 52%),
-    linear-gradient(to bottom, rgb(255 255 255 / .07), transparent 9%),
-    radial-gradient(95% 65% at 90% 104%, color-mix(in oklab, var(--gp-widget-accent, #84cc16), transparent 92%), transparent 62%),
-    linear-gradient(160deg, oklch(36% .012 150 / .985), oklch(27.5% .01 150 / .99));
+    radial-gradient(120% 85% at 12% -4%, color-mix(in oklab, var(--gp-widget-accent, #84cc16), transparent 92%), transparent 56%),
+    radial-gradient(130% 100% at 14% 0%, rgb(255 255 255 / .78), transparent 52%),
+    linear-gradient(to bottom, rgb(255 255 255 / .58), transparent 12%),
+    radial-gradient(95% 65% at 90% 104%, color-mix(in oklab, var(--gp-widget-accent, #84cc16), transparent 97%), transparent 62%),
+    linear-gradient(
+      145deg,
+      color-mix(in oklab, var(--gp-widget-accent, #84cc16) 2%, oklch(92% .002 250)) 0%,
+      color-mix(in oklab, var(--gp-widget-accent, #84cc16) 3%, oklch(86.5% .004 245)) 42%,
+      color-mix(in oklab, var(--gp-widget-accent, #84cc16) 2%, oklch(91.5% .002 250)) 67%,
+      color-mix(in oklab, var(--gp-widget-accent, #84cc16) 3%, oklch(82.5% .005 245)) 100%
+    );
 }
 
 .gp-subpanel,

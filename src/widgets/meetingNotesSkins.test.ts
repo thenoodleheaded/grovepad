@@ -130,6 +130,119 @@ describe('Meeting Notes circuit and resting-face contract', () => {
     expect(face.rows[1]).toMatchObject({ label: 'Draft the changelog', done: true })
   })
 
+  it('folds minutes to ruled ledger lines with the owner on the right', () => {
+    const data = dataWithSkinState(
+      { ...base(), skin: 'minutes' },
+      'minutes',
+      { items: { one: { owner: 'Rae' } } },
+    ) as MeetingNotesData
+
+    const face = restingFace({
+      type: 'meeting_notes',
+      title: 'Launch sync',
+      size: { width: 340, height: 280 },
+      data,
+    }).model
+
+    expect(face.kind).toBe('lines')
+    if (face.kind !== 'lines') return
+    expect(face.eyebrow).toMatchObject({ label: 'Minutes' })
+    expect(face.lines[0]).toMatchObject({ left: 'Pick the launch date', right: 'Rae' })
+    expect(face.lines[1]).toMatchObject({ left: 'Draft the changelog', tone: 'good' })
+  })
+
+  it('folds a stand-up to its three lanes plus the asks', () => {
+    const data = dataWithSkinState(
+      { ...base(), skin: 'stand_up', notes: 'Ship the roller' },
+      'stand_up',
+      { yesterday: 'Fixed hydration', blockers: 'Waiting on design' },
+    ) as MeetingNotesData
+
+    const face = restingFace({
+      type: 'meeting_notes',
+      title: 'Daily',
+      size: { width: 340, height: 280 },
+      data,
+    }).model
+
+    expect(face).toMatchObject({
+      kind: 'columns',
+      columns: [
+        { label: 'Yesterday', items: [{ label: 'Fixed hydration' }] },
+        { label: 'Today', items: [{ label: 'Ship the roller' }] },
+        { label: 'Blockers', tone: 'bad', items: [{ label: 'Waiting on design' }] },
+        { label: 'Asks', items: [{ label: 'Pick the launch d…' }, {}] },
+      ],
+    })
+  })
+
+  it('folds a retrospective to its 2×2 quadrants, not four columns', () => {
+    const data = dataWithSkinState(
+      { ...base(), skin: 'retrospective' },
+      'retrospective',
+      { improve: 'Fewer meetings', learned: 'Ship smaller' },
+    ) as MeetingNotesData
+
+    const face = restingFace({
+      type: 'meeting_notes',
+      title: 'Sprint retro',
+      size: { width: 340, height: 280 },
+      data,
+    }).model
+
+    expect(face).toMatchObject({
+      kind: 'columns',
+      wrap: 2,
+      columns: [
+        { label: 'Went well' },
+        { label: 'Did not', items: [{ label: 'Fewer meetings' }] },
+        { label: 'Learned', items: [{ label: 'Ship smaller' }] },
+        { label: 'Next', items: [{ done: false }, { done: true }] },
+      ],
+    })
+  })
+
+  it('flags decisions whose review date has arrived while folded', () => {
+    const data = dataWithSkinState(
+      { ...base(), skin: 'decision_review' },
+      'decision_review',
+      { items: { one: { review: '2020-01-01' } } },
+    ) as MeetingNotesData
+
+    const face = restingFace({
+      type: 'meeting_notes',
+      title: 'Decisions',
+      size: { width: 340, height: 280 },
+      data,
+    }).model
+
+    expect(face.kind).toBe('rows')
+    if (face.kind !== 'rows') return
+    expect(face.eyebrow).toMatchObject({ note: '1 to revisit', tone: 'warn' })
+    expect(face.rows[0]).toMatchObject({ label: 'Pick the launch date', tone: 'warn' })
+  })
+
+  it('rests a handoff as numbered steps under its sign-off state', () => {
+    const data = dataWithSkinState(
+      { ...base(), skin: 'handoff' },
+      'handoff',
+      { acknowledgedBy: 'Rae', acknowledged: true },
+    ) as MeetingNotesData
+
+    const face = restingFace({
+      type: 'meeting_notes',
+      title: 'Handoff',
+      size: { width: 340, height: 280 },
+      data,
+    }).model
+
+    expect(face.kind).toBe('rows')
+    if (face.kind !== 'rows') return
+    expect(face.eyebrow).toMatchObject({ note: 'Accepted · Rae', tone: 'good' })
+    expect(face.rows[0]).toMatchObject({ lead: '1', label: 'Pick the launch date' })
+    expect(face.rows[1]).toMatchObject({ lead: '2' })
+  })
+
   it('falls back to the notes when a meeting has no action items yet', () => {
     const face = restingFace({
       type: 'meeting_notes',

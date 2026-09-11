@@ -44,15 +44,6 @@ export function isValidTimeZone(zone: string): boolean {
   }
 }
 
-export function daysUntil(date: string): number {
-  if (!date) return 0
-  const target = new Date(`${date}T00:00:00`)
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  const days = Math.ceil((target.getTime() - today.getTime()) / 86_400_000)
-  return Number.isFinite(days) ? days : 0
-}
-
 export function formFieldFilled(field: FormField): boolean {
   if (field.type === 'checkbox') return field.value === true
   return String(field.value).trim().length > 0

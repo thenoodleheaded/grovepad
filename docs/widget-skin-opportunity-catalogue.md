@@ -70,8 +70,6 @@ Current automation surface: no bindable fields; no trigger commands.
 - **Renderer-ready · Portal** — The current simple entrance into a child canvas.
 - **Renderer-ready · Cover** — A large title, subtitle, accent, and last-opened summary for presentation canvases.
 - **Schema-extension · Live Thumbnail** — A miniature, non-interactive preview of the child canvas contents.
-- **Schema-extension · Dashboard Door** — Shows child-widget counts, completion, alerts, and recent activity before entering.
-- **Schema-extension · Folder Index** — Lists the immediate child canvases and opens one directly.
 
 ## Notes & Content
 
@@ -83,10 +81,7 @@ Current automation surface: Items (number); Add bullet from wire.
 
 - **Renderer-ready · Dots** — The current lightweight unordered list.
 - **Renderer-ready · Numbered** — An ordered list for sequences, rankings, and instructions.
-- **Renderer-ready · Compact Chips** — Wraps very short items into a dense tag-like cloud.
-- **Renderer-ready · Two Column** — Balances a long list across two readable columns.
 - **Schema-extension · Nested Outline** — Adds indentation, collapse, and parent-child structure.
-- **Schema-extension · Rolling Log** — Appends timestamped bullets with newest-first or oldest-first order.
 
 ### Code Snippet (`code`)
 
@@ -129,17 +124,13 @@ Current automation surface: Actions done (boolean); Reopen all actions.
 - **Schema-extension · Decision Review** — Links each meeting decision to owner, rationale, and review date.
 - **Schema-extension · Handoff** — Captures current state, open risks, next action, and acknowledgement.
 
-### Note (`notes`)
+### Text (`text`)
 
-Current purpose: Plain, sticky, and quote skins in one writing card. Current skins: **Plain, Sticky, Quote**.
+Current purpose: Plain, sticky, and focused writing skins in one card. Current skins: **Plain, Sticky, Typewriter**.
 
 Current automation surface: Text (text, writable); no trigger commands.
 
-- **Renderer-ready · Daily Log** — Timestamped journal styling optimized for short dated entries.
-- **Renderer-ready · Markdown Page** — Reading-first typography with headings, code, lists, and links.
 - **Renderer-ready · Typewriter** — Distraction-free long-form writing with a narrow measure and current-line focus.
-- **Renderer-ready · Callout** — A concise warning, tip, decision, or important-fact treatment.
-- **Schema-extension · Versioned Note** — Keeps named snapshots and compares the current text with an earlier version.
 
 ### Outline (`outline`)
 
@@ -182,7 +173,7 @@ Current automation surface: Marked days (number), Today (text); no trigger comma
 - **Renderer-ready · Availability** — Emphasizes free and busy intervals rather than event details.
 - **Schema-extension · Shift Rota** — Adds assignee, role, and repeating shift patterns.
 - **Schema-extension · Birthday & Anniversary** — Repeats people-linked annual occasions.
-- **Renderer-ready · Connected Calendars** — Privately combines read-only Google and Outlook events without saving provider tokens or event details to the board.
+- **Renderer-ready · Connected Calendars** — Privately shows read-only Google Calendar events without saving provider tokens or event details to the board.
 
 ### Date (`date_picker`)
 
@@ -316,18 +307,6 @@ Current automation surface: Sources (number); no trigger commands.
 - **Renderer-ready · Footnotes** — Compact numbered notes optimized for manuscript work.
 - **Schema-extension · Literature Matrix** — Compares question, method, finding, limitation, and relevance.
 - **Schema-extension · Evidence Map** — Groups sources under the claims they support or challenge.
-
-### Cornell Notes (`cornell`)
-
-Current purpose: Cue column, notes, and a summary band. Current skins: **none**.
-
-Current automation surface: Notes (text, writable), Summary (text, writable); no trigger commands.
-
-- **Renderer-ready · Lecture** — Classic cues, notes, and summary with lecture metadata.
-- **Renderer-ready · Reading** — Question prompts, evidence notes, and chapter summary.
-- **Renderer-ready · Problem Solving** — Known facts, method, working, and final check.
-- **Renderer-ready · Interview** — Questions on the left, responses on the right, synthesis below.
-- **Renderer-ready · Research** — Claims, evidence, counterevidence, and synthesis.
 
 ### Formula Sheet (`formula_sheet`)
 

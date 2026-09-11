@@ -13,7 +13,7 @@ import {
 function widget(id: string, x: number, y: number): Widget {
   return {
     id,
-    type: 'notes',
+    type: 'text',
     title: id,
     canvasId: 'canvas',
     position: { x, y },
@@ -64,7 +64,7 @@ describe('widget viewport virtualization', () => {
     expect(candidates.every((candidate) => candidate.resting)).toBe(true)
   })
 
-  it('switches to images strictly below 60% unless the widget is urgent', () => {
+  it('switches to images strictly below 20% unless the widget is urgent', () => {
     expect(usesLightweightWidgetImage(RESTING_FACE_INTERACTION_ZOOM - 0.001, false)).toBe(true)
     expect(usesLightweightWidgetImage(RESTING_FACE_INTERACTION_ZOOM, false)).toBe(false)
     expect(usesLightweightWidgetImage(0.1, true)).toBe(false)
@@ -96,6 +96,22 @@ describe('progressive widget hydration', () => {
     expect(current.size - step.liveIds.size).toBe(5)
     expect(step.liveIds.has('w19')).toBe(true)
     expect(step.settled).toBe(false)
+  })
+
+  it('hands back the same set reference when a step changes nothing', () => {
+    const current: ReadonlySet<string> = new Set(['a', 'b'])
+    const step = nextProgressiveMountStep(current, ['a', 'b'], ['a'], 4, 4)
+    // The caller skips its commit on reference identity, so a no-op slice must
+    // not manufacture a fresh Set.
+    expect(step.liveIds).toBe(current)
+    expect(step.settled).toBe(true)
+  })
+
+  it('hands back a new set reference when a step really mounts something', () => {
+    const current: ReadonlySet<string> = new Set(['a'])
+    const step = nextProgressiveMountStep(current, ['a', 'b'], [], 4, 4)
+    expect(step.liveIds).not.toBe(current)
+    expect([...step.liveIds].sort()).toEqual(['a', 'b'])
   })
 
   it('eventually settles on exactly the requested live set', () => {

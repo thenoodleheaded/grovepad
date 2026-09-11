@@ -1,0 +1,40 @@
+# The account Worker — Sign in with Apple token revocation on account deletion.
+#
+# Its own deployment, separate from the site, billing and the Canvas relay. It
+# holds the Sign in with Apple private key and talks only to Supabase (to
+# confirm who is asking) and appleid.apple.com. It never holds the Supabase
+# service_role key: the account itself is still deleted by the database's
+# delete_own_account(), called by the signed-in person after revocation.
+#
+# Deploy:  npm run deploy:account
+#
+# Secrets — set with `wrangler secret put <NAME> --config wrangler.account.toml`,
+# never in this file, which is committed:
+#
+#   APPLE_PRIVATE_KEY      Full contents of the AuthKey_<KeyID>.p8 file
+#   ACCOUNT_STATE_SECRET   Any long random string (signs the website round trip)
+#   SUPABASE_ANON_KEY      Supabase → Settings → API → anon/publishable
+#
+# Apple Developer → Identifiers → Services ID app.grovepad.web → Sign in with
+# Apple → Configure must also list this Return URL:
+#   https://grovepad.app/api/account/apple/callback
+
+name = "grovepad-account"
+main = "worker/accountWorker.ts"
+compatibility_date = "2026-07-28"
+workers_dev = false
+
+routes = [
+  { pattern = "grovepad.app/api/account/*", zone_name = "grovepad.app" },
+  { pattern = "www.grovepad.app/api/account/*", zone_name = "grovepad.app" }
+]
+
+[vars]
+SUPABASE_URL = "https://ijzmhkyhjptaitfxjlcu.supabase.co"
+GROVEPAD_SITE_ORIGIN = "https://grovepad.app"
+APPLE_TEAM_ID = "4BV47RN242"
+APPLE_KEY_ID = "837TD7W9X8"
+# Tokens from the native sheet are issued to the bundle ID; from the website to
+# the Services ID. Each is redeemed and revoked with its own.
+APPLE_NATIVE_CLIENT_ID = "app.grovepad"
+APPLE_WEB_CLIENT_ID = "app.grovepad.web"

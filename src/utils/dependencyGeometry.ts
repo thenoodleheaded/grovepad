@@ -1,7 +1,10 @@
 import type { Vector2D } from '../types/spatial'
+import { LINE_STANDOFF } from './edgeRoute'
 import { clamp } from './math'
 
-const PORT_STANDOFF = 8
+/** Every line on the board keeps the same 0.3-cell gap from the card it
+ *  touches, dependencies included. */
+const PORT_STANDOFF = LINE_STANDOFF
 const PORT_INSET = 24
 
 export interface DependencyEndpointGeometry {

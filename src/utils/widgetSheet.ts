@@ -44,9 +44,47 @@ export function widgetOpensAsSheet(viewportClass: ViewportClass): boolean {
   return viewportClass === 'phone'
 }
 
-/** The sheet fully open: the clip is the whole layer and the corners are square,
- * because a screen has no corners of its own. */
-export const SHEET_OPEN_CLIP = 'inset(0px 0px 0px 0px round 0px)'
+/**
+ * The corner an opened sheet settles on. Larger than the full card's R0 of 22:
+ * the panel is several times the card's size, and a radius that reads as a
+ * soft corner at 360px reads as a nearly sharp one at 1200px.
+ */
+export const SHEET_OPEN_RADIUS = 30
+
+/**
+ * The band of board left showing around an opened sheet.
+ *
+ * The sheet stops just short of the edges rather than going fully bleed. That
+ * margin is the whole reason the blurred board behind is visible at all, so it
+ * has to be wide enough to read as a deliberate frame and never so wide that
+ * the widget stops feeling like it owns the screen.
+ *
+ * Proportional to the SHORTER side, because that is the one that runs out
+ * first: a 4% margin taken from a wide desktop's width would eat a phone's
+ * height. Clamped at both ends — under ~16px the frame reads as a rendering
+ * seam, and past ~56px the panel starts to look like an ordinary dialog.
+ */
+export function sheetOpenMargin(viewport: SheetViewport): number {
+  const shorter = Math.min(viewport.width, viewport.height)
+  return clamp(Math.round(shorter * 0.042), 16, 56)
+}
+
+/**
+ * The sheet fully open: inset by `sheetOpenMargin` on every side, with rounded
+ * corners.
+ *
+ * Interpolating between this and `sheetOriginClip` animates the corner radius
+ * too, so the tile's own 18px corner eases up to the panel's 30px over the
+ * flight instead of snapping at either end.
+ */
+export function sheetOpenClip(viewport: SheetViewport): string {
+  const margin = sheetOpenMargin(viewport)
+  // A radius can never exceed half the box it rounds, or the corners meet and
+  // the panel renders as a lozenge on a very small viewport.
+  const shortestSide = Math.min(viewport.width, viewport.height) - margin * 2
+  const radius = Math.max(0, Math.min(SHEET_OPEN_RADIUS, shortestSide / 2))
+  return `inset(${margin}px ${margin}px ${margin}px ${margin}px round ${radius}px)`
+}
 
 /**
  * The `clip-path` that frames exactly `origin` inside a viewport-sized layer.

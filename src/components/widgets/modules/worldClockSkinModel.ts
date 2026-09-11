@@ -130,7 +130,11 @@ export function workingWindow(raw: unknown): WorkingWindow {
   const end = boundedHour(state.end, DEFAULT_WORKING_WINDOW.end)
   // An inverted or empty window would render as a zero-width band and make
   // every hour read as "outside hours"; clamp to at least one hour instead.
-  return end > start ? { start, end } : { start, end: Math.min(23, start + 1) }
+  // The start is what moves when there is no room above it: capping the END at
+  // 23 leaves start 23 with a window of {23, 23}, which is the zero-width band
+  // this exists to prevent.
+  const from = Math.min(22, start)
+  return end > from ? { start: from, end } : { start: from, end: from + 1 }
 }
 
 export interface ZoneBand {

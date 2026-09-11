@@ -61,6 +61,45 @@ export function naturalContentHeight(ui: HTMLElement): number {
   return height
 }
 
+/**
+ * `scrollHeight` with out-of-flow chrome left out — the height the card's own
+ * FLOW content reaches, which is the only height a card may grow to fit.
+ *
+ * Raw `scrollHeight` counts absolutely-positioned descendants, and a card that
+ * grows to cover one anchored to its own bottom edge can never catch it: every
+ * grow moves that anchor down by exactly what was gained, so the next pass
+ * reads the same overflow again and the card climbs to the maximum edge.
+ * Sticky's colour strip (`top: 100%`, deliberately hung beneath the card) is
+ * exactly that shape, and it is why a Sticky note expanded without limit.
+ *
+ * Identical to `scrollHeight` in every other case: an in-flow child that
+ * overflows still sets the bottom edge here, so real overflow is still seen and
+ * still grown for. Layout pixels throughout, so the reading holds at any canvas
+ * zoom. Falls back to `scrollHeight` when there is no in-flow element child to
+ * measure — a renderer whose content is bare text nodes still has a height.
+ */
+export function inFlowScrollHeight(ui: HTMLElement): number {
+  let bottom = 0
+  let measured = false
+  for (const child of Array.from(ui.children)) {
+    const style = getComputedStyle(child)
+    if (style.position === 'absolute' || style.position === 'fixed') continue
+    if (style.display === 'none') continue
+    // An `instanceof HTMLElement` guard would be wrong here as well as
+    // untestable: an <svg> child is an Element, not an HTMLElement, and
+    // skipping it would drop real content out of the measurement.
+    const el = child as HTMLElement
+    // offsetTop is measured from the offsetParent's padding edge. Where that
+    // parent is some ancestor rather than this box, both offsets are taken
+    // from it, so their difference still reads as a distance inside this box.
+    const top = el.offsetParent === ui ? el.offsetTop : el.offsetTop - ui.offsetTop
+    bottom = Math.max(bottom, top + el.offsetHeight + px(style.marginBottom))
+    measured = true
+  }
+  if (!measured) return ui.scrollHeight
+  return bottom + px(getComputedStyle(ui).paddingBottom)
+}
+
 /** Snap a content-owned card height to the board grid in one idempotent step.
  * Unlike overflow repair, auto-height fitting is allowed to shrink a stale
  * default/saved height back to the renderer's natural content height. */
@@ -276,9 +315,15 @@ export function measureWidgetContentFloor(
   const intrinsicWidth = intrinsicElementWidth(root) + CARD_INSET
   const minWidth = Math.min(maxWidth, ceilSubgrid(Math.max(fallback.minWidth ?? 0, intrinsicWidth)))
   const overflowY = largestHiddenVerticalOverflow(root)
+  // Flow content only. This floor is published as a live minimum and the store
+  // clamps every size request up to it, so a floor that counted chrome hung
+  // beneath the card would ratchet: each pass raises the floor to the card's
+  // own height plus that chrome, the clamp lifts the card to meet it, and the
+  // chrome moves down with it. The card then climbs on its own, and even a
+  // correct request to shrink is clamped back up on arrival.
   const minHeight = Math.min(
     maxHeight,
-    verticalContentFloor(root.scrollHeight, overflowY, fallback.minHeight),
+    verticalContentFloor(inFlowScrollHeight(root), overflowY, fallback.minHeight),
   )
   // A card made only of fixed-height pieces has a real ceiling: past its own
   // content plus a cell of slack it is just empty space below the last

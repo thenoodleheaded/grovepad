@@ -8,7 +8,7 @@ import {
 } from './widgetRest'
 
 /** Resting content is too small to aim at reliably below this scale. */
-export const RESTING_FACE_INTERACTION_ZOOM = 0.6
+export const RESTING_FACE_INTERACTION_ZOOM = 0.2
 
 /** Camera movement can consume this screen-space gutter without remounting. */
 export const WIDGET_WINDOW_OVERSCAN_PX = 320
@@ -169,22 +169,31 @@ export function nextProgressiveMountStep(
 ): ProgressiveMountStep {
   const target = new Set(targetIds)
   const next = new Set(current)
+  // Whether this slice actually changed the live set. A step that releases,
+  // hydrates and urgently mounts nothing must hand back the SAME reference, or
+  // the caller's identity guard can never skip a no-op commit.
+  let mutated = false
   let released = 0
   for (const id of current) {
     if (target.has(id)) continue
     next.delete(id)
+    mutated = true
     released += 1
     if (released >= releaseBatch) break
   }
 
   for (const id of urgentIds) {
-    if (target.has(id)) next.add(id)
+    if (target.has(id) && !next.has(id)) {
+      next.add(id)
+      mutated = true
+    }
   }
 
   let hydrated = 0
   for (const id of targetIds) {
     if (next.has(id)) continue
     next.add(id)
+    mutated = true
     hydrated += 1
     if (hydrated >= hydrateBatch) break
   }
@@ -192,5 +201,5 @@ export function nextProgressiveMountStep(
   const settled =
     next.size === target.size &&
     [...next].every((id) => target.has(id))
-  return { liveIds: next, settled }
+  return { liveIds: mutated ? next : current, settled }
 }

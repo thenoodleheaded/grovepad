@@ -1,6 +1,5 @@
 set lock_timeout = '10s';
 set statement_timeout = '2min';
-
 -- Retain the legacy monolithic row during the compatibility window. New
 -- clients dual-write it while board_indexes + canvas_docs are authoritative.
 create table if not exists public.boards (
@@ -8,15 +7,12 @@ create table if not exists public.boards (
   data jsonb not null,
   updated_at timestamptz not null default clock_timestamp()
 );
-
 update public.boards
 set updated_at = clock_timestamp()
 where updated_at is null;
-
 alter table public.boards
   alter column updated_at set default clock_timestamp(),
   alter column updated_at set not null;
-
 create table if not exists public.board_indexes (
   user_id uuid primary key references auth.users(id) on delete cascade,
   doc jsonb not null,
@@ -26,7 +22,6 @@ create table if not exists public.board_indexes (
   updated_at timestamptz not null default clock_timestamp(),
   constraint board_indexes_format_check check (doc->>'format' = 'grovepad-board-index')
 );
-
 create table if not exists public.canvas_docs (
   user_id uuid not null references auth.users(id) on delete cascade,
   canvas_id text not null,
@@ -39,7 +34,6 @@ create table if not exists public.canvas_docs (
   constraint canvas_docs_id_check check (length(canvas_id) between 1 and 256),
   constraint canvas_docs_encoding_check check (meta->>'encoding' in ('gzip', 'identity'))
 );
-
 create table if not exists public.board_revisions (
   id bigint generated always as identity primary key,
   user_id uuid not null references auth.users(id) on delete cascade,
@@ -57,12 +51,10 @@ create table if not exists public.board_revisions (
   ),
   unique (user_id, document_kind, document_id, rev)
 );
-
 create index if not exists canvas_docs_user_updated_idx
   on public.canvas_docs (user_id, updated_at desc);
 create index if not exists board_revisions_lookup_idx
   on public.board_revisions (user_id, document_kind, document_id, rev desc);
-
 create or replace function public.grovepad_stamp_legacy_board()
 returns trigger
 language plpgsql
@@ -78,12 +70,10 @@ begin
   return new;
 end;
 $$;
-
 drop trigger if exists grovepad_stamp_legacy_board on public.boards;
 create trigger grovepad_stamp_legacy_board
 before insert or update on public.boards
 for each row execute function public.grovepad_stamp_legacy_board();
-
 create or replace function public.grovepad_stamp_cloud_document()
 returns trigger
 language plpgsql
@@ -109,17 +99,14 @@ begin
   return new;
 end;
 $$;
-
 drop trigger if exists grovepad_stamp_board_index on public.board_indexes;
 create trigger grovepad_stamp_board_index
 before insert or update on public.board_indexes
 for each row execute function public.grovepad_stamp_cloud_document();
-
 drop trigger if exists grovepad_stamp_canvas_doc on public.canvas_docs;
 create trigger grovepad_stamp_canvas_doc
 before insert or update on public.canvas_docs
 for each row execute function public.grovepad_stamp_cloud_document();
-
 create or replace function public.grovepad_archive_cloud_document()
 returns trigger
 language plpgsql
@@ -165,17 +152,14 @@ begin
   return new;
 end;
 $$;
-
 drop trigger if exists grovepad_archive_board_index on public.board_indexes;
 create trigger grovepad_archive_board_index
 after insert or update on public.board_indexes
 for each row execute function public.grovepad_archive_cloud_document();
-
 drop trigger if exists grovepad_archive_canvas_doc on public.canvas_docs;
 create trigger grovepad_archive_canvas_doc
 after insert or update on public.canvas_docs
 for each row execute function public.grovepad_archive_cloud_document();
-
 -- Replace every legacy policy on Grovepad-owned tables. PostgreSQL combines
 -- permissive policies with OR, so leaving an old broad policy in place would
 -- defeat a new restrictive owner policy.
@@ -196,41 +180,33 @@ begin
   end loop;
 end;
 $$;
-
 alter table public.boards enable row level security;
 alter table public.board_indexes enable row level security;
 alter table public.canvas_docs enable row level security;
 alter table public.board_revisions enable row level security;
-
 create policy grovepad_boards_owner_all
 on public.boards for all to authenticated
 using ((select auth.uid()) = user_id)
 with check ((select auth.uid()) = user_id);
-
 create policy grovepad_board_indexes_owner_all
 on public.board_indexes for all to authenticated
 using ((select auth.uid()) = user_id)
 with check ((select auth.uid()) = user_id);
-
 create policy grovepad_canvas_docs_owner_all
 on public.canvas_docs for all to authenticated
 using ((select auth.uid()) = user_id)
 with check ((select auth.uid()) = user_id);
-
 create policy grovepad_board_revisions_owner_select
 on public.board_revisions for select to authenticated
 using ((select auth.uid()) = user_id);
-
 revoke all on table public.boards from anon;
 revoke all on table public.board_indexes from anon;
 revoke all on table public.canvas_docs from anon;
 revoke all on table public.board_revisions from anon;
-
 grant select, insert, update, delete on table public.boards to authenticated;
 grant select, insert, update, delete on table public.board_indexes to authenticated;
 grant select, insert, update, delete on table public.canvas_docs to authenticated;
 grant select on table public.board_revisions to authenticated;
-
 revoke all on function public.grovepad_stamp_legacy_board() from public, anon, authenticated;
 revoke all on function public.grovepad_stamp_cloud_document() from public, anon, authenticated;
 revoke all on function public.grovepad_archive_cloud_document() from public, anon, authenticated;

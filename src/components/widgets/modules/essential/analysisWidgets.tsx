@@ -151,7 +151,7 @@ function SwotQuadrant({
 }) {
   return (
     <WidgetPanel grip={false} floor="rigid" className="group/swot flex min-h-0 flex-col p-3">
-      <div className="mb-1 flex items-center justify-between"><span className="text-[9px] font-semibold uppercase tracking-widest" style={{ color }}>{label}</span><span className=" text-[8px] text-neutral-700">{items.filter((item) => item.trim()).length}</span></div>
+      <div className="mb-1 flex items-center justify-between"><span className="text-[9px] font-semibold uppercase tracking-widest" style={{ color: `color-mix(in oklab, ${color}, black var(--gp-signal-ink-mix, 0%))` }}>{label}</span><span className=" text-[8px] text-neutral-700">{items.filter((item) => item.trim()).length}</span></div>
       <div className="min-h-0 flex-1 overflow-y-auto">
         {items.map((item, index) => (
           <div key={index} className="group/swot-row flex h-6 items-center gap-1">

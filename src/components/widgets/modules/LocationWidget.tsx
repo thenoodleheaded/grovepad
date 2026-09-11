@@ -1,8 +1,13 @@
 import {
   Check, ChevronDown, ChevronUp, Compass, Copy, Crosshair, ExternalLink,
-  LocateFixed, MapPin, Moon, Plus, Radar, Route, Sun, Sunrise, Sunset, Trash2,
+  LocateFixed, Map as MapGlyph, MapPin, Minus, Moon, Plus, Radar, Route, Sun,
+  Sunrise, Sunset, Trash2,
 } from 'lucide-react'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import {
+  useCallback, useEffect, useRef, useState,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type PointerEvent as ReactPointerEvent,
+} from 'react'
 import { useSharedClock } from '../../../hooks/useSharedClock'
 import { useTransientValue } from '../../../hooks/useTransientValue'
 import type { LocationData } from '../../../types/widgetDataExpansion'
@@ -27,13 +32,24 @@ import {
   GEOFENCE_PRESETS,
   geofenceRadius,
   locationPoint,
+  MAP_DEFAULT_ZOOM,
+  MAP_MAX_ZOOM,
+  MAP_MIN_ZOOM,
+  MAP_OPENING_VIEW,
+  MAP_OPENING_ZOOM,
+  mapScaleBar,
+  mapTiles,
   mapUrl,
+  mapZoom,
   NOTATION_LABELS,
+  panned,
+  projectPoint,
   placeName,
   routeReading,
   routeStops,
   sunReading,
   zonedReading,
+  zoomFraming,
   type CoordinateNotation,
   type GeoPoint,
   type LocationSkinMode,
@@ -53,6 +69,12 @@ interface DeviceFix extends GeoPoint {
 }
 
 type Patch = (next: Partial<LocationData>) => void
+
+/**
+ * The viewport size assumed before the box has been measured — and the only
+ * size it ever has on the server, where there is no layout to observe.
+ */
+const FALLBACK_BOX = { width: 320, height: 180 }
 
 /* ------------------------------------------------------------------ device */
 
@@ -218,11 +240,20 @@ function CoordinatePair({ data, patch }: { data: LocationData; patch: Patch }) {
   )
 }
 
-function MapLink({ point, compact = false }: { point: GeoPoint; compact?: boolean }) {
+function MapLink({
+  point,
+  compact = false,
+  zoom,
+}: {
+  point: GeoPoint
+  compact?: boolean
+  /** The framing to open at, for a skin that remembers one. */
+  zoom?: number
+}) {
   return (
     <a
       className="gp-loc-btn"
-      href={mapUrl(point)}
+      href={mapUrl(point, zoom)}
       target="_blank"
       rel="noreferrer"
       title="Open this point on OpenStreetMap"
@@ -747,7 +778,16 @@ function RouteSkin({ data, patch, capture, device, state, setState }: SkinProps)
   const reading = routeReading(origin, stops)
   const total = formatDistance(reading.totalMeters)
 
-  const writeStops = (next: RouteStop[]) => setState({ ...state, stops: next })
+  /**
+   * 'Add my position' finishes long after it was pressed, and the list stays
+   * editable meanwhile. Composing the new list onto the click-time state
+   * would drop every stop typed during the wait, so the write always starts
+   * from the state the card holds now.
+   */
+  const stateRef = useRef(state)
+  stateRef.current = state
+
+  const writeStops = (next: RouteStop[]) => setState({ ...stateRef.current, stops: next })
   const editStop = (id: string, patchStop: Partial<RouteStop>) => {
     writeStops(stops.map((stop) => (stop.id === id ? { ...stop, ...patchStop } : stop)))
   }
@@ -760,8 +800,9 @@ function RouteSkin({ data, patch, capture, device, state, setState }: SkinProps)
     writeStops(next)
   }
   const addStop = (stop: Partial<RouteStop> = {}) => {
-    if (!canAddStop(stops)) return
-    writeStops([...stops, {
+    const current = routeStops(stateRef.current)
+    if (!canAddStop(current)) return
+    writeStops([...current, {
       id: crypto.randomUUID(),
       label: '',
       latitude: null,
@@ -908,11 +949,295 @@ function RouteSkin({ data, patch, capture, device, state, setState }: SkinProps)
   )
 }
 
+/**
+ * The place as a spot on a map.
+ *
+ * Every other skin makes you meet the place as a coordinate pair: capture it,
+ * or type it. This one never shows a number. You drag the map until the
+ * crosshair sits on the doorway you mean and press save, and from then on the
+ * card remembers the place the way you would describe it — its name, its
+ * address, and the framing you left it at, so it reopens looking like the
+ * picture you recognized it by.
+ *
+ * The pin still moves nothing until a press: dragging changes only this
+ * component's own view. Latitude and longitude stay canonical underneath, so a
+ * wire reading this card cannot tell it is wearing a map.
+ */
+function MapSkin({ data, patch, write, capture, device, state, setState }: SkinProps) {
+  const saved = locationPoint(data)
+  // A card that has never held a place opens on the world rather than on a
+  // street-level view of the Atlantic.
+  const zoom = typeof state.zoom === 'number'
+    ? mapZoom(state)
+    : saved ? MAP_DEFAULT_ZOOM : MAP_OPENING_ZOOM
+
+  const [box, setBox] = useState(FALLBACK_BOX)
+  /** Where the view has been dragged to. Null means "sitting on the pin". */
+  const [drift, setDrift] = useState<GeoPoint | null>(null)
+  const [dragging, setDragging] = useState(false)
+  const [tilesFailed, setTilesFailed] = useState(false)
+  const frameRef = useRef<HTMLDivElement | null>(null)
+  const dragRef = useRef<{ id: number; x: number; y: number; from: GeoPoint; scale: number } | null>(null)
+  const everLoaded = useRef(false)
+  const now = useSharedClock(60_000)
+
+  const centre = drift ?? saved ?? MAP_OPENING_VIEW
+  const tiles = tilesFailed ? [] : mapTiles(centre, zoom, box.width, box.height)
+  const pin = saved ? projectPoint(saved, centre, zoom, box.width, box.height) : null
+  const scale = mapScaleBar(centre.latitude, zoom, Math.min(104, Math.max(48, box.width - 32)))
+  const framed = drift !== null || !saved
+
+  // The tile grid is cut to the box's own layout size, so it has to be
+  // measured rather than assumed. On the server there is nothing to measure
+  // and the fallback size renders a plausible view.
+  useEffect(() => {
+    const frame = frameRef.current
+    if (!frame || typeof ResizeObserver === 'undefined') return
+    const observer = new ResizeObserver(([entry]) => {
+      const rect = entry?.contentRect
+      if (!rect) return
+      setBox({ width: Math.round(rect.width), height: Math.round(rect.height) })
+    })
+    observer.observe(frame)
+    return () => observer.disconnect()
+  }, [])
+
+  const setZoom = (next: number) => {
+    setState({ ...state, zoom: Math.min(MAP_MAX_ZOOM, Math.max(MAP_MIN_ZOOM, next)) })
+  }
+
+  /**
+   * The one press that writes. What it saves is whatever the crosshair is
+   * over, and it makes no accuracy claim: a spot chosen by eye is exact to
+   * the eye, which is not a number of metres.
+   */
+  const saveSpot = () => {
+    // The framing goes down with the spot. Without it a card saved from a
+    // country-level view would snap to a street the instant it got
+    // coordinates, throwing away the picture the place was recognized by.
+    write({
+      latitude: Number(centre.latitude.toFixed(6)),
+      longitude: Number(centre.longitude.toFixed(6)),
+      accuracyMeters: null,
+      capturedAt: Date.now(),
+    }, { ...state, zoom })
+    setDrift(null)
+  }
+
+  const beginDrag = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (event.button !== 0) return
+    const frame = frameRef.current
+    if (!frame) return
+    // The canvas draws cards under a zoom transform, so a pointer travels more
+    // screen pixels than layout pixels. Comparing the painted box with the
+    // measured one recovers that factor without reaching into the canvas store.
+    const rect = frame.getBoundingClientRect()
+    const factor = box.width > 0 && rect.width > 0 ? rect.width / box.width : 1
+    frame.setPointerCapture(event.pointerId)
+    dragRef.current = {
+      id: event.pointerId,
+      x: event.clientX,
+      y: event.clientY,
+      from: centre,
+      scale: factor,
+    }
+    setDragging(true)
+  }
+
+  const continueDrag = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const drag = dragRef.current
+    if (!drag || drag.id !== event.pointerId) return
+    setDrift(panned(
+      drag.from,
+      zoom,
+      (event.clientX - drag.x) / drag.scale,
+      (event.clientY - drag.y) / drag.scale,
+    ))
+  }
+
+  const endDrag = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (dragRef.current?.id !== event.pointerId) return
+    frameRef.current?.releasePointerCapture(event.pointerId)
+    dragRef.current = null
+    setDragging(false)
+  }
+
+  // Arrow keys pan the same map the pointer does, so the skin is operable
+  // without one.
+  const nudge = (event: ReactKeyboardEvent<HTMLDivElement>) => {
+    const step = event.shiftKey ? 96 : 32
+    const moves: Record<string, [number, number]> = {
+      ArrowLeft: [step, 0],
+      ArrowRight: [-step, 0],
+      ArrowUp: [0, step],
+      ArrowDown: [0, -step],
+    }
+    const move = moves[event.key]
+    if (!move) return
+    event.preventDefault()
+    setDrift(panned(centre, zoom, move[0], move[1]))
+  }
+
+  return (
+    <div className="gp-loc gp-loc--map">
+      <header className="gp-loc-head">
+        <span className="gp-loc-glyph" aria-hidden><MapGlyph size={14} /></span>
+        <PlaceName size="small" value={data.label} onChange={(label) => patch({ label })} />
+        <span className="gp-loc-chip">{zoomFraming(zoom)}</span>
+      </header>
+
+      <div
+        ref={frameRef}
+        className="gp-loc-map gp-flat-visual-own"
+        data-widget-interactive="true"
+        data-dragging={dragging || undefined}
+        role="group"
+        tabIndex={0}
+        aria-label={saved
+          ? `Map around ${placeName(data.label, data.address)}, framed at ${zoomFraming(zoom).toLowerCase()} level. Arrow keys pan.`
+          : 'Map with no place saved yet. Arrow keys pan; save the spot under the crosshair.'}
+        onPointerDown={beginDrag}
+        onPointerMove={continueDrag}
+        onPointerUp={endDrag}
+        onPointerCancel={endDrag}
+        onKeyDown={nudge}
+      >
+        <div className="gp-loc-map-tiles" aria-hidden>
+          {tiles.map((tile) => (
+            <img
+              key={tile.key}
+              src={tile.url}
+              alt=""
+              draggable={false}
+              style={{ left: `${tile.left}px`, top: `${tile.top}px` }}
+              onLoad={() => { everLoaded.current = true }}
+              onError={() => { if (!everLoaded.current) setTilesFailed(true) }}
+            />
+          ))}
+        </div>
+
+        {pin?.onScreen && (
+          <span
+            className="gp-loc-map-pin"
+            style={{ left: `${pin.left}px`, top: `${pin.top}px` }}
+            aria-hidden
+          >
+            <MapPin size={20} />
+          </span>
+        )}
+
+        {framed && (
+          <span className="gp-loc-map-cross" aria-hidden>
+            <Crosshair size={22} />
+          </span>
+        )}
+
+        <div className="gp-loc-map-zoom">
+          <button
+            type="button"
+            aria-label="Zoom in"
+            disabled={zoom >= MAP_MAX_ZOOM}
+            onClick={() => setZoom(zoom + 1)}
+          >
+            <Plus size={12} aria-hidden />
+          </button>
+          <button
+            type="button"
+            aria-label="Zoom out"
+            disabled={zoom <= MAP_MIN_ZOOM}
+            onClick={() => setZoom(zoom - 1)}
+          >
+            <Minus size={12} aria-hidden />
+          </button>
+        </div>
+
+        <div className="gp-loc-map-foot">
+          <span className="gp-loc-map-scale" style={{ width: `${scale.widthPx}px` }}>{scale.label}</span>
+          {tilesFailed ? (
+            <button
+              type="button"
+              className="gp-loc-map-credit"
+              onClick={() => { everLoaded.current = false; setTilesFailed(false) }}
+            >
+              Map offline — retry
+            </button>
+          ) : (
+            <a
+              className="gp-loc-map-credit"
+              href="https://www.openstreetmap.org/copyright"
+              target="_blank"
+              rel="noreferrer"
+            >
+              © OpenStreetMap
+            </a>
+          )}
+        </div>
+      </div>
+
+      <div className="gp-loc-address gp-bare-field">
+        <input
+          value={data.address}
+          aria-label="Address or note"
+          placeholder="Address, floor, landmark…"
+          onChange={(event) => patch({ address: event.target.value })}
+        />
+      </div>
+
+      {saved && !framed
+        ? <Provenance data={data} now={now} />
+        : (
+          <p className="gp-loc-hint">
+            {saved
+              ? 'Drag until the crosshair is on the spot, then save it here.'
+              : 'Find the place on the map, or start from where you are.'}
+          </p>
+        )}
+
+      <footer className="gp-loc-actions">
+        {framed && (
+          <button type="button" className="gp-loc-btn gp-loc-btn--primary" onClick={saveSpot}>
+            <MapPin size={12} aria-hidden />
+            {saved ? 'Move pin here' : 'Save this spot'}
+          </button>
+        )}
+        {drift !== null && saved && (
+          <button type="button" className="gp-loc-btn" onClick={() => setDrift(null)}>
+            <Crosshair size={12} aria-hidden />
+            Back to pin
+          </button>
+        )}
+        <button
+          type="button"
+          className={saved || framed ? 'gp-loc-btn' : 'gp-loc-btn gp-loc-btn--primary'}
+          data-pending={device.pending || undefined}
+          onClick={() => {
+            setDrift(null)
+            if (typeof state.zoom !== 'number') setState({ ...state, zoom })
+            capture()
+          }}
+        >
+          <LocateFixed size={12} aria-hidden />
+          {device.pending ? 'Locating…' : 'Use my location'}
+        </button>
+        {saved && <MapLink point={saved} zoom={zoom} compact />}
+      </footer>
+
+      <Notice message={device.error} />
+    </div>
+  )
+}
+
 /* -------------------------------------------------------------------- root */
 
 interface SkinProps {
   data: LocationData
   patch: Patch
+  /**
+   * One write carrying both canonical fields and this skin's own state.
+   * `patch` and `setState` each rebuild the card from the same `data`, so
+   * calling them in turn would have the second silently discard the first.
+   */
+  write: (next: Partial<LocationData>, nextState?: WidgetSkinState) => void
   /** Writes a fresh device reading into the canonical place. */
   capture: () => void
   device: ReturnType<typeof useDeviceLocation>
@@ -921,39 +1246,51 @@ interface SkinProps {
 }
 
 /**
- * One place, six ways to use it. Whichever skin is worn, the card holds the
+ * One place, seven ways to use it. Whichever skin is worn, the card holds the
  * same coordinates, address, and timezone — a wire reading this widget cannot
  * tell which skin it is wearing. What changes is the question the card
  * answers: where is it, what are its exact numbers, what time is it there,
- * which way is it from here, am I inside it, and how far is the trip.
+ * which way is it from here, am I inside it, how far is the trip, and — for a
+ * place easier to point at than to spell — whereabouts on the map is it.
  */
 export function LocationWidget({ data, onChange, skin = 'pin' }: LocationWidgetProps) {
   const device = useDeviceLocation()
-  const patch: Patch = (next) => onChange({ ...data, ...next, skin })
-
   const state = skinStateFor(data, skin)
-  const setState = (next: WidgetSkinState) => {
-    onChange(dataWithSkinState({ ...data, skin } as ModuleData, skin, next) as LocationData)
+  /**
+   * A fix can take until the sensor's timeout to arrive, and the card stays
+   * editable the whole time. Rebuilding it from the `data` of the render that
+   * started the request would quietly undo everything typed while waiting, so
+   * the arriving fix is written onto whatever the card holds NOW.
+   */
+  const dataRef = useRef(data)
+  dataRef.current = data
+
+  const write = (next: Partial<LocationData>, nextState?: WidgetSkinState) => {
+    const merged = { ...dataRef.current, ...next, skin } as ModuleData
+    onChange((nextState ? dataWithSkinState(merged, skin, nextState) : merged) as LocationData)
   }
+  const patch: Patch = (next) => write(next)
+  const setState = (next: WidgetSkinState) => write({}, next)
 
   const capture = () => {
     device.locate((fix) => onChange({
-      ...data,
+      ...dataRef.current,
       skin,
       latitude: fix.latitude,
       longitude: fix.longitude,
       accuracyMeters: fix.accuracy,
-      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || data.timezone,
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || dataRef.current.timezone,
       capturedAt: fix.at,
     }))
   }
 
-  const props: SkinProps = { data, patch, capture, device, state, setState }
+  const props: SkinProps = { data, patch, write, capture, device, state, setState }
 
   if (skin === 'coordinates') return <CoordinatesSkin {...props} />
   if (skin === 'local_time') return <LocalTimeSkin {...props} />
   if (skin === 'compass') return <CompassSkin {...props} />
   if (skin === 'geofence') return <GeofenceSkin {...props} />
   if (skin === 'route') return <RouteSkin {...props} />
+  if (skin === 'map') return <MapSkin {...props} />
   return <PinSkin {...props} />
 }

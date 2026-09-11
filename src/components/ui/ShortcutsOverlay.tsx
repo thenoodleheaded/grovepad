@@ -6,12 +6,12 @@ import { useOverlayDismiss } from '../../hooks/useOverlayDismiss'
 import { useCanvasStore } from '../../store/useCanvasStore'
 import { frameCanvas } from '../../utils/cameraFraming'
 
-const ACTIONABLE = new Set(['Frame board', 'Zoom in / out', 'Reset zoom to 100%', 'Quick add — one card per line', 'Undo', 'Redo', 'Duplicate selection', 'Command palette — searches every canvas'])
+const ACTIONABLE = new Set(['Frame selection or board', 'Zoom in / out', 'Reset zoom to 100%', 'Quick add — one card per line', 'Undo', 'Redo', 'Duplicate selection', 'Command palette — searches every canvas'])
 
 function runShortcut(label: string) {
   const widgets = useWidgetStore.getState()
   const canvas = useCanvasStore.getState()
-  if (label === 'Frame board') frameCanvas('board', 150)
+  if (label === 'Frame selection or board') frameCanvas('selection-or-board', 150)
   else if (label === 'Zoom in / out') canvas.zoomToAnimated(canvas.zoom * 1.25, { x: canvas.viewportSize.width / 2, y: canvas.viewportSize.height / 2 })
   else if (label === 'Reset zoom to 100%') canvas.zoomToAnimated(1, { x: canvas.viewportSize.width / 2, y: canvas.viewportSize.height / 2 })
   else if (label === 'Quick add — one card per line') widgets.setQuickAddOpen(true)
@@ -52,9 +52,10 @@ const SECTIONS: ShortcutSection[] = [
       { keys: ['Space + Drag', 'Middle Drag'], label: 'Pan (grab)' },
       { keys: ['H'], label: 'Navigate tool' },
       { keys: ['V'], label: 'Select tool' },
-      { keys: ['F'], label: 'Frame board' },
-      { keys: ['+', '−'], label: 'Zoom in / out' },
-      { keys: ['0'], label: 'Reset zoom to 100%' },
+      { keys: ['W'], label: 'Toggle wire mode' },
+      { keys: ['F'], label: 'Frame selection or board' },
+      { keys: ['+', '−', '⌘+', '⌘−'], label: 'Zoom in / out' },
+      { keys: ['0', '⌘0'], label: 'Reset zoom to 100%' },
     ],
   },
   {
@@ -65,11 +66,15 @@ const SECTIONS: ShortcutSection[] = [
       { keys: ['Right-click'], label: 'Canvas / widget menu' },
       { keys: ['⌘ Drag card'], label: 'Draw a relation link' },
       { keys: ['⌘Z'], label: 'Undo' },
-      { keys: ['⇧⌘Z'], label: 'Redo' },
+      { keys: ['⇧⌘Z', '⌃Y'], label: 'Redo' },
       { keys: ['⌘D'], label: 'Duplicate selection' },
       { keys: ['⌘C'], label: 'Copy selection' },
-      { keys: ['⌘V'], label: 'Paste copied widgets' },
+      { keys: ['⌘X'], label: 'Cut selection' },
+      { keys: ['⌘V'], label: 'Paste widgets, images, or text' },
       { keys: ['F2'], label: 'Rename selected widget' },
+      { keys: ['⌘L'], label: 'Lock / unlock selection' },
+      { keys: ['⌘]', '⌘['], label: 'Bring to front / send to back' },
+      { keys: ['⌘S'], label: 'Autosave status — nothing to save by hand' },
     ],
   },
   {
@@ -78,19 +83,30 @@ const SECTIONS: ShortcutSection[] = [
       { keys: ['Click'], label: 'Select widget' },
       { keys: ['⌥ Drag'], label: 'Glue / unglue widget' },
       { keys: ['⇧ Click'], label: 'Toggle in selection' },
-      { keys: ['⇧ Drag'], label: 'Marquee select' },
+      { keys: ['⌘G', '⇧⌘G'], label: 'Glue / unglue the selection' },
+      { keys: ['Drag'], label: 'Marquee — replaces the selection' },
+      { keys: ['⇧ Drag'], label: 'Marquee — adds to the selection' },
+      { keys: ['⌥ Drag on canvas'], label: 'Marquee — removes from the selection' },
       { keys: ['⌘A'], label: 'Select all' },
-      { keys: ['Esc'], label: 'Clear selection' },
+      { keys: ['Esc'], label: 'Clear selection / exit wire mode' },
       { keys: ['⌫'], label: 'Delete selection' },
-      { keys: ['Arrows', '⇧ Arrows'], label: 'Nudge (fine / coarse)' },
+      { keys: ['Arrows', '⇧ Arrows', '⌥ Arrows'], label: 'Nudge (grid / coarse / fine)' },
+      { keys: ['X'], label: 'Start dependency link' },
+      { keys: ['⌘ Enter'], label: 'Widget menu on focused card' },
     ],
   },
   {
     title: 'Find & navigate',
     rows: [
-      { keys: ['⌘K'], label: 'Command palette — searches every canvas' },
+      { keys: ['⌘K', '⌘F'], label: 'Command palette — searches every canvas' },
+      { keys: ['⌥←', '⌥→'], label: 'View history back / forward' },
+      { keys: ['⌘,'], label: 'Settings' },
       { keys: ['Double-click canvas card'], label: 'Enter a canvas' },
       { keys: ['Breadcrumb click'], label: 'Jump back up the canvas path' },
+      { keys: ['⌘ Click'], label: 'Open a canvas in a background tab' },
+      { keys: ['⌘⇧ Click'], label: 'Open a canvas in a new tab and go there' },
+      { keys: ['⌘⌥←', '⌘⌥→'], label: 'Previous / next canvas tab' },
+      { keys: ['⌘⌥W'], label: 'Close the current canvas tab' },
       { keys: ['?'], label: 'This shortcut list' },
     ],
   },

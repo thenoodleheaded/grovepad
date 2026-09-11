@@ -29,6 +29,10 @@ describe('board hydration boundary', () => {
     expectedDocument.glues = {
       futureGlue: (expectedDocument.glues as Record<string, unknown>).futureGlue,
     }
+    // The fixture is frozen at the "notes" era; a renamed widget type reads
+    // back under its live name, so "alpha" is the one deliberate difference.
+    const expectedWidgets = expectedDocument.widgets as Record<string, Record<string, unknown>>
+    expectedWidgets.alpha = { ...expectedWidgets.alpha, type: 'text' }
     expect(buildBoardSnapshot(useWidgetStore.getState())).toEqual(expectedDocument)
   })
 
@@ -48,19 +52,22 @@ describe('board hydration boundary', () => {
   })
 
   it('never includes transient hydration state in a persisted snapshot', () => {
-    const widgetId = Object.keys(useWidgetStore.getState().widgets)[0]
-    expect(widgetId).toBeDefined()
-    useWidgetStore.getState().setWidgetHydration(widgetId!, true)
+    const widgetId = useWidgetStore.getState().createWidget(
+      'Hydration test',
+      { x: 0, y: 0 },
+      'text',
+    )
+    useWidgetStore.getState().setWidgetHydration(widgetId, true)
 
     const snapshot = buildBoardSnapshot(useWidgetStore.getState())
     expect(snapshot).toMatchObject({ format: 'grovepad-board', v: 2 })
-    expect(snapshot.widgets[widgetId!]).not.toHaveProperty('isHydrating')
-    expect(useWidgetStore.getState().widgets[widgetId!]?.isHydrating).toBe(true)
+    expect(snapshot.widgets[widgetId]).not.toHaveProperty('isHydrating')
+    expect(useWidgetStore.getState().widgets[widgetId]?.isHydrating).toBe(true)
   })
 
   it('replaces canonical board state and clears undo and redo history', () => {
     const store = useWidgetStore.getState()
-    const createdId = store.createWidget('Temporary', { x: 10_000, y: 10_000 }, 'notes')
+    const createdId = store.createWidget('Temporary', { x: 10_000, y: 10_000 }, 'text')
     expect(useWidgetStore.getState().canUndo).toBe(true)
     expect(useWidgetStore.getState().widgets[createdId]).toBeDefined()
 
@@ -76,13 +83,16 @@ describe('board hydration boundary', () => {
   })
 
   it('clears transient selection and linking state during hydration', () => {
-    const widgetId = Object.keys(useWidgetStore.getState().widgets)[0]
-    expect(widgetId).toBeDefined()
+    const widgetId = useWidgetStore.getState().createWidget(
+      'Selection test',
+      { x: 0, y: 0 },
+      'text',
+    )
     useWidgetStore.setState({
-      selectedIds: new Set([widgetId!]),
-      contextMenu: { widgetId: widgetId!, x: 10, y: 10 },
-      childLinkSource: widgetId!,
-      dependencyLinkSource: widgetId!,
+      selectedIds: new Set([widgetId]),
+      contextMenu: { widgetId, x: 10, y: 10 },
+      childLinkSource: widgetId,
+      dependencyLinkSource: widgetId,
     })
 
     useWidgetStore.getState().loadBoard(baseline)

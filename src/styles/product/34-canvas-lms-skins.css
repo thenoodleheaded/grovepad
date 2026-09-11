@@ -522,3 +522,12 @@
     animation: none;
   }
 }
+
+/* ------------------------------------------------------------ light theme.
+   Status/danger/medal inks above are pastels tuned for dark glass; on the
+   light theme's silver cards they wash out below 2:1. Each keeps its hue
+   but drops to a deep ink (generated during the 2026-08 light-mode
+   contrast audit). */
+[data-theme='light'] .gp-canvas-lms-error {
+  color: #b91c1c;
+}

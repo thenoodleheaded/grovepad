@@ -2,6 +2,7 @@ import 'fake-indexeddb/auto'
 import { beforeEach, describe, expect, it } from 'vitest'
 import * as Y from 'yjs'
 import {
+  countPendingUpdates,
   enqueuePendingUpdate,
   listPendingUpdates,
   readCachedCollaborationDocument,
@@ -36,6 +37,16 @@ describe('offline collaboration update queue', () => {
     await removePendingUpdates([first.id])
     expect((await listPendingUpdates('a')).map((entry) => entry.id)).toEqual(['second'])
     expect((await listPendingUpdates('b')).map((entry) => entry.id)).toEqual(['third'])
+  })
+
+  it('counts a canvas queue without materializing payloads', async () => {
+    await enqueuePendingUpdate('a', updateFor(1), 'first')
+    await enqueuePendingUpdate('a', updateFor(2), 'second')
+    await enqueuePendingUpdate('b', updateFor(3), 'third')
+
+    expect(await countPendingUpdates('a')).toBe(2)
+    expect(await countPendingUpdates('b')).toBe(1)
+    expect(await countPendingUpdates('missing')).toBe(0)
   })
 
   it('compacts an offline burst into one idempotent Yjs update', async () => {

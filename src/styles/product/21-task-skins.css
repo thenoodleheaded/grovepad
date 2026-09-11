@@ -34,12 +34,69 @@
   --gp-task-quiet: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 62%);
   --gp-task-done: #4ade80;
   --gp-task-late: #fb7185;
+  /* The list surface, named once. Every skin's ledger, board column, day
+     column and timeline is the SAME raised island, so they are all painted
+     from these tokens rather than each hand-mixing its own wash. On dark glass
+     an island is a lift of the card's own ink; on paper that recipe inverts
+     into a smudge, which is why the light block below re-points them to a real
+     white fill instead. */
+  --gp-task-surface: linear-gradient(
+    180deg,
+    color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 95%),
+    color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 97%)
+  );
+  --gp-task-surface-flat: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 96%);
+  --gp-task-surface-catchlight: inset 0 1px 0 color-mix(in oklab, white, transparent 93%);
+  --gp-task-surface-shadow: 0 7px 16px rgb(0 0 0 / 0.1);
+  /* The accent as INK — the value a label, chip or glyph is allowed to be
+     written in. The card's own colour is unchanged; text made of it is
+     lightened on dark glass and deepened on paper, so the same rule reads
+     against whatever it sits on. */
+  --gp-task-accent: var(--gp-widget-accent, #86efac);
+  --gp-task-accent-ink: color-mix(in oklab, var(--gp-task-accent) 90%, white);
+  --gp-task-lift: rgb(255 255 255 / 0.18);
+  --gp-task-flag: var(--gp-task-flag);
   container-type: inline-size;
   display: flex;
   min-height: 74px;
   flex-direction: column;
   gap: 0.5rem;
   color: var(--gp-widget-ink, #f5f5f5);
+}
+
+/* Paper.
+ *
+ * A light card is a silver plate, not black glass, so every rule above that
+ * builds a surface out of "a little of the card's ink" builds a grey smudge
+ * here — the island came out DARKER than the backplate and the two read as one
+ * flat sheet. On paper the order of light reverses: the island is the brightest
+ * thing on the card and the backplate is the ground it is raised off.
+ *
+ * The state colours reverse with it. Mint, spring green and rose were picked to
+ * glow on black; on white they are pale washes with nothing behind them, so
+ * each is deepened to the same hue at readable weight. Only the ink changes —
+ * the widget's accent, and therefore the card's own colour, is untouched.
+ */
+[data-theme='light'] .gp-tasks-skin {
+  --gp-task-rule: color-mix(in oklab, var(--gp-widget-ink, #222a25), transparent 88%);
+  --gp-task-rule-strong: color-mix(in oklab, var(--gp-widget-ink, #222a25), transparent 78%);
+  --gp-task-quiet: color-mix(in oklab, var(--gp-widget-ink, #222a25), transparent 42%);
+  --gp-task-done: #15803d;
+  --gp-task-late: #be123c;
+  --gp-task-surface: linear-gradient(180deg, rgb(255 255 255 / 0.94), rgb(255 255 255 / 0.72));
+  --gp-task-surface-flat: rgb(255 255 255 / 0.85);
+  --gp-task-surface-catchlight:
+    inset 0 1px 0 rgb(255 255 255 / 0.95),
+    inset 0 0 0 1px rgb(42 54 47 / 0.07);
+  --gp-task-surface-shadow: 0 1px 2px rgb(30 40 34 / 0.08), 0 8px 18px rgb(30 40 34 / 0.07);
+  /* Deepened toward black, NOT toward a green: each skin carries its own
+     accent (Day is amber, Board sky, Matrix pink), and mixing those into a
+     dark green turned every one of them the same olive. Mixing with black in
+     oklab drops lightness and leaves the hue where the skin put it. */
+  --gp-task-accent: color-mix(in oklab, var(--gp-widget-accent, #86efac), black 48%);
+  --gp-task-accent-ink: var(--gp-task-accent);
+  --gp-task-lift: rgb(30 40 34 / 0.09);
+  --gp-task-flag: #b45309;
 }
 
 /* Heading ---------------------------------------------------------------- */
@@ -58,7 +115,7 @@
   align-items: center;
   gap: 0.36rem;
   overflow: hidden;
-  color: color-mix(in oklab, var(--gp-widget-accent), white 10%);
+  color: var(--gp-task-accent-ink);
   font-size: 8.5px;
   font-weight: 700;
   letter-spacing: 0.095em;
@@ -96,8 +153,8 @@
   border-radius: inherit;
   background: linear-gradient(
     90deg,
-    color-mix(in oklab, var(--gp-widget-accent), transparent 30%),
-    var(--gp-widget-accent)
+    color-mix(in oklab, var(--gp-task-accent), transparent 30%),
+    var(--gp-task-accent)
   );
   transition: width 260ms var(--gp-ease-snap);
 }
@@ -111,14 +168,8 @@
   flex-direction: column;
   overflow: hidden;
   border-radius: var(--gp-r1, 10px);
-  background: linear-gradient(
-    180deg,
-    color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 95%),
-    color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 97%)
-  );
-  box-shadow:
-    inset 0 1px 0 color-mix(in oklab, white, transparent 93%),
-    0 7px 16px rgb(0 0 0 / 0.1);
+  background: var(--gp-task-surface);
+  box-shadow: var(--gp-task-surface-catchlight), var(--gp-task-surface-shadow);
 }
 
 /* Rows borrow the ledger's surface. WidgetPanel stays only as the owner of the
@@ -163,7 +214,7 @@
   background: transparent;
   font-size: 11.5px;
   line-height: 1.4;
-  caret-color: var(--gp-widget-accent);
+  caret-color: var(--gp-task-accent);
   text-overflow: ellipsis;
 }
 
@@ -224,7 +275,7 @@
    itself says "not triaged yet". */
 .gp-tasks-skin[data-tasks-skin='inbox'] .gp-task-check[aria-checked='false'] {
   border-color: transparent;
-  color: color-mix(in oklab, var(--gp-widget-accent), transparent 40%);
+  color: color-mix(in oklab, var(--gp-task-accent), transparent 40%);
 }
 
 .gp-task-remove {
@@ -262,22 +313,24 @@
 }
 
 .gp-tasks-skin :where(button, input, select):focus-visible {
-  outline: 1px solid color-mix(in oklab, var(--gp-widget-accent), transparent 26%);
+  outline: 1px solid color-mix(in oklab, var(--gp-task-accent), transparent 26%);
   outline-offset: 2px;
 }
 
+/* The glyph alone. It carries no word, so it is sized as a target rather than
+   as a line of text: square, centred, and the same 24px reach as the column
+   and day add buttons it now matches. */
 .gp-task-add {
   display: inline-flex;
+  min-width: 25px;
   min-height: 25px;
   align-items: center;
-  gap: 0.35rem;
+  justify-content: center;
   align-self: flex-start;
-  padding: 0.15rem 0.3rem;
+  padding: 0;
   border: 0;
   color: var(--gp-task-quiet);
   background: transparent;
-  font-size: 9px;
-  font-weight: 600;
   transition:
     color var(--gp-duration-snap) var(--gp-ease-snap),
     transform var(--gp-duration-snap) var(--gp-ease-snap);
@@ -285,7 +338,7 @@
 
 .gp-task-add:hover,
 .gp-task-add:focus-visible {
-  color: color-mix(in oklab, var(--gp-widget-accent), white 10%);
+  color: var(--gp-task-accent-ink);
   transform: translateX(1px);
 }
 
@@ -363,7 +416,7 @@
 .gp-task-basket h3 {
   margin: 0;
   padding-left: 0.15rem;
-  color: color-mix(in oklab, var(--gp-task-done), white 6%);
+  color: var(--gp-task-done);
   font-size: 8.5px;
   font-weight: 700;
   letter-spacing: 0.095em;
@@ -411,8 +464,8 @@
 }
 
 .gp-task-due[data-tone='today'] {
-  color: color-mix(in oklab, var(--gp-widget-accent), white 12%);
-  background: color-mix(in oklab, var(--gp-widget-accent), transparent 88%);
+  color: var(--gp-task-accent-ink);
+  background: color-mix(in oklab, var(--gp-task-accent), transparent 88%);
 }
 
 .gp-task-due[data-tone='none'] {
@@ -440,15 +493,28 @@
   padding-left: 0.5rem;
 }
 
+/* The clock is a control, so it is sized as one. It used to be exactly as tall
+   as the 11px line of text inside it, which left a 66×11 sliver to hit — the
+   time read as a label because that is all it behaved like. It now takes the
+   row's full height, and the reading tints on hover so the row says it can be
+   pressed before you press it. */
 .gp-task-slot {
   position: relative;
   display: inline-flex;
   width: 66px;
+  min-height: 26px;
   flex: 0 0 auto;
   align-items: center;
   justify-content: flex-end;
   gap: 0.45rem;
+  border-radius: var(--gp-r2, 8px);
   cursor: pointer;
+  transition: background-color var(--gp-duration-snap) var(--gp-ease-snap);
+}
+
+.gp-task-slot:hover,
+.gp-task-slot:focus-within {
+  background-color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 92%);
 }
 
 .gp-task-slot time {
@@ -485,7 +551,7 @@
   height: 5px;
   flex: 0 0 auto;
   border-radius: 50%;
-  background: color-mix(in oklab, var(--gp-widget-accent), transparent 45%);
+  background: color-mix(in oklab, var(--gp-task-accent), transparent 45%);
 }
 
 .gp-task-slot-dot::before,
@@ -494,7 +560,7 @@
   left: 2px;
   width: 1px;
   content: '';
-  background: color-mix(in oklab, var(--gp-widget-accent), transparent 84%);
+  background: color-mix(in oklab, var(--gp-task-accent), transparent 84%);
 }
 
 .gp-task-slot-dot::before { bottom: 100%; height: 14px; }
@@ -543,8 +609,8 @@
 }
 
 .gp-task-repeat[data-active] {
-  color: color-mix(in oklab, var(--gp-widget-accent), white 12%);
-  background-color: color-mix(in oklab, var(--gp-widget-accent), transparent 88%) !important;
+  color: var(--gp-task-accent-ink);
+  background-color: color-mix(in oklab, var(--gp-task-accent), transparent 88%) !important;
 }
 
 /* Dependencies ------------------------------------------------------------ */
@@ -568,8 +634,8 @@
   flex: 0 0 auto;
   place-items: center;
   border-radius: 50%;
-  color: color-mix(in oklab, #fbbf24, transparent 20%);
-  background: color-mix(in oklab, #fbbf24, transparent 88%);
+  color: color-mix(in oklab, var(--gp-task-flag), transparent 20%);
+  background: color-mix(in oklab, var(--gp-task-flag), transparent 88%);
 }
 
 .gp-task-blocker {
@@ -624,10 +690,10 @@
 }
 
 .gp-task-step-marker[data-current] {
-  border-color: color-mix(in oklab, var(--gp-widget-accent), transparent 40%);
-  color: color-mix(in oklab, var(--gp-widget-accent), white 14%);
-  background: color-mix(in oklab, var(--gp-widget-accent), transparent 86%);
-  box-shadow: 0 0 8px color-mix(in oklab, var(--gp-widget-accent), transparent 74%);
+  border-color: color-mix(in oklab, var(--gp-task-accent), transparent 40%);
+  color: var(--gp-task-accent-ink);
+  background: color-mix(in oklab, var(--gp-task-accent), transparent 86%);
+  box-shadow: 0 0 8px color-mix(in oklab, var(--gp-task-accent), transparent 74%);
 }
 
 .gp-task-done .gp-task-step-marker {
@@ -674,14 +740,14 @@
   border: 0;
   border-radius: var(--gp-r2, 8px);
   padding: 0.1rem 0.38rem;
-  color: color-mix(in oklab, var(--gp-widget-accent), white 10%);
+  color: var(--gp-task-accent-ink);
   background: transparent;
   font-size: 8.5px;
   font-weight: 650;
 }
 
 .gp-task-runbar button:hover:not(:disabled) {
-  background-color: color-mix(in oklab, var(--gp-widget-accent), transparent 90%) !important;
+  background-color: color-mix(in oklab, var(--gp-task-accent), transparent 90%) !important;
 }
 
 .gp-task-runbar button:disabled {
@@ -711,8 +777,8 @@
   overflow: hidden;
   border-radius: var(--gp-r1, 10px);
   padding-bottom: 0.2rem;
-  background: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 96%);
-  box-shadow: inset 0 1px 0 color-mix(in oklab, white, transparent 94%);
+  background: var(--gp-task-surface-flat);
+  box-shadow: var(--gp-task-surface-catchlight);
 }
 
 .gp-task-column > header,
@@ -740,11 +806,14 @@
   white-space: nowrap;
 }
 
+/* A column's count and a quadrant's hint sit ON a tinted head-band, so they
+   need the same quiet as the rest of the family rather than a fainter one of
+   their own — at 32% ink they were a grey ghost of a label on paper. */
 .gp-task-column > header small,
 .gp-task-day-column > header small,
 .gp-task-quadrant > header small {
   flex: 0 0 auto;
-  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 68%);
+  color: var(--gp-task-quiet);
   font-size: 8px;
   font-variant-numeric: tabular-nums;
 }
@@ -758,7 +827,7 @@
 
 /* One shaded head-band per column tells To do from Doing from Done without
    colouring every card in it. */
-.gp-task-column[data-status='doing'] > header { background: color-mix(in oklab, var(--gp-widget-accent), transparent 92%); }
+.gp-task-column[data-status='doing'] > header { background: color-mix(in oklab, var(--gp-task-accent), transparent 92%); }
 .gp-task-column[data-status='done'] > header { background: color-mix(in oklab, var(--gp-task-done), transparent 93%); }
 
 .gp-task-column-body {
@@ -807,8 +876,8 @@
 
 .gp-task-column-add:hover,
 .gp-task-column-add:focus-visible {
-  color: color-mix(in oklab, var(--gp-widget-accent), white 10%);
-  background-color: color-mix(in oklab, var(--gp-widget-accent), transparent 92%) !important;
+  color: var(--gp-task-accent-ink);
+  background-color: color-mix(in oklab, var(--gp-task-accent), transparent 92%) !important;
 }
 
 .gp-task-status-dot {
@@ -825,9 +894,9 @@
 }
 
 .gp-task-status-dot[data-status='doing'] {
-  border-color: color-mix(in oklab, var(--gp-widget-accent), transparent 30%);
-  background-color: color-mix(in oklab, var(--gp-widget-accent), transparent 45%) !important;
-  box-shadow: 0 0 7px color-mix(in oklab, var(--gp-widget-accent), transparent 55%);
+  border-color: color-mix(in oklab, var(--gp-task-accent), transparent 30%);
+  background-color: color-mix(in oklab, var(--gp-task-accent), transparent 45%) !important;
+  box-shadow: 0 0 7px color-mix(in oklab, var(--gp-task-accent), transparent 55%);
 }
 
 .gp-task-status-dot[data-status='done'] {
@@ -866,8 +935,8 @@
   height: 19px;
   place-items: center;
   border-radius: 50%;
-  color: color-mix(in oklab, var(--gp-widget-accent), white 14%);
-  background: color-mix(in oklab, var(--gp-widget-accent), transparent 87%);
+  color: var(--gp-task-accent-ink);
+  background: color-mix(in oklab, var(--gp-task-accent), transparent 87%);
   font-size: 7.5px;
   font-weight: 700;
   cursor: text;
@@ -926,8 +995,8 @@
   flex-direction: column;
   overflow: hidden;
   border-radius: var(--gp-r1, 10px);
-  background: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 96%);
-  box-shadow: inset 0 1px 0 color-mix(in oklab, white, transparent 94%);
+  background: var(--gp-task-surface-flat);
+  box-shadow: var(--gp-task-surface-catchlight);
 }
 
 .gp-task-timeline-scale {
@@ -991,10 +1060,10 @@
   padding: 0 1px;
   background: linear-gradient(
     90deg,
-    color-mix(in oklab, var(--gp-widget-accent), transparent 42%),
-    color-mix(in oklab, var(--gp-widget-accent), transparent 66%)
+    color-mix(in oklab, var(--gp-task-accent), transparent 42%),
+    color-mix(in oklab, var(--gp-task-accent), transparent 66%)
   );
-  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--gp-widget-accent), transparent 66%);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--gp-task-accent), transparent 66%);
   transition:
     left var(--gp-duration-snap) var(--gp-ease-snap),
     width var(--gp-duration-snap) var(--gp-ease-snap);
@@ -1036,7 +1105,7 @@
 .gp-task-phase-bar button:disabled { opacity: 0.2 !important; pointer-events: none; }
 
 .gp-task-phase-bar button:hover {
-  background-color: rgb(255 255 255 / 0.18) !important;
+  background-color: var(--gp-task-lift) !important;
 }
 
 /* Matrix ------------------------------------------------------------------ */
@@ -1049,7 +1118,7 @@
 
 .gp-task-quadrant[data-quadrant='0'] > header { background: color-mix(in oklab, var(--gp-task-late), transparent 92%); }
 .gp-task-quadrant[data-quadrant='1'] > header { background: color-mix(in oklab, #60a5fa, transparent 92%); }
-.gp-task-quadrant[data-quadrant='2'] > header { background: color-mix(in oklab, #fbbf24, transparent 92%); }
+.gp-task-quadrant[data-quadrant='2'] > header { background: color-mix(in oklab, var(--gp-task-flag), transparent 92%); }
 
 .gp-task-move {
   display: grid;
@@ -1073,8 +1142,8 @@
 }
 
 .gp-task-move:hover {
-  color: var(--gp-widget-accent);
-  background-color: color-mix(in oklab, var(--gp-widget-accent), transparent 90%) !important;
+  color: var(--gp-task-accent);
+  background-color: color-mix(in oklab, var(--gp-task-accent), transparent 90%) !important;
 }
 
 /* Narrow cards ------------------------------------------------------------ */

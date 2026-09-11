@@ -344,7 +344,7 @@
   border: 0;
   border-radius: 8px !important;
   padding: 0.2rem 0.4rem;
-  color: color-mix(in oklab, var(--gp-widget-accent), white 14%);
+  color: color-mix(in oklab, var(--gp-accent-ink, var(--gp-widget-accent)), var(--gp-accent-lift, #fff) 14%);
   background: color-mix(in oklab, var(--gp-widget-accent), transparent 91%) !important;
   font-size: 9.5px;
   font-weight: 620;
@@ -355,7 +355,7 @@
 }
 
 .gp-grades-add:hover {
-  color: color-mix(in oklab, var(--gp-widget-accent), white 28%);
+  color: color-mix(in oklab, var(--gp-accent-ink, var(--gp-widget-accent)), var(--gp-accent-lift, #fff) 28%);
   background: color-mix(in oklab, var(--gp-widget-accent), transparent 84%) !important;
 }
 
@@ -493,7 +493,7 @@
 .gp-grade-threshold output,
 .gp-grade-simulation output,
 .gp-grade-curve-control output {
-  color: color-mix(in oklab, var(--gp-widget-accent), white 18%);
+  color: color-mix(in oklab, var(--gp-accent-ink, var(--gp-widget-accent)), var(--gp-accent-lift, #fff) 18%);
   font-size: 11px;
   font-weight: 680;
   font-variant-numeric: tabular-nums;
@@ -506,7 +506,7 @@
   appearance: none;
   border-radius: 99px;
   background: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 85%);
-  accent-color: var(--gp-widget-accent);
+  accent-color: var(--gp-accent-ink, var(--gp-widget-accent));
 }
 
 .gp-grades input[type='range']::-webkit-slider-thumb {
@@ -661,7 +661,7 @@
 
 .gp-grade-choice button[aria-selected='true'] {
   border-color: color-mix(in oklab, var(--gp-widget-accent), transparent 65%);
-  color: color-mix(in oklab, var(--gp-widget-accent), white 16%);
+  color: color-mix(in oklab, var(--gp-accent-ink, var(--gp-widget-accent)), var(--gp-accent-lift, #fff) 16%);
   background: color-mix(in oklab, var(--gp-widget-accent), transparent 89%) !important;
 }
 
@@ -700,7 +700,7 @@
   place-items: center;
   border: 1px solid color-mix(in oklab, var(--gp-widget-accent), transparent 70%);
   border-radius: 13px;
-  color: color-mix(in oklab, var(--gp-widget-accent), white 18%);
+  color: color-mix(in oklab, var(--gp-accent-ink, var(--gp-widget-accent)), var(--gp-accent-lift, #fff) 18%);
   background: color-mix(in oklab, var(--gp-widget-accent), transparent 89%);
   font-size: 14px;
   font-weight: 720;
@@ -814,7 +814,7 @@
 }
 
 .gp-grade-stepper output {
-  color: color-mix(in oklab, var(--gp-widget-accent), white 15%);
+  color: color-mix(in oklab, var(--gp-accent-ink, var(--gp-widget-accent)), var(--gp-accent-lift, #fff) 15%);
   font-size: 10px;
   font-weight: 680;
   text-align: center;
@@ -922,7 +922,7 @@
 }
 
 .gp-grade-compare > div[data-curved] small {
-  color: color-mix(in oklab, var(--gp-widget-accent), white 18%);
+  color: color-mix(in oklab, var(--gp-accent-ink, var(--gp-widget-accent)), var(--gp-accent-lift, #fff) 18%);
 }
 
 .gp-grade-curve-scale {
@@ -947,7 +947,7 @@
   align-items: center;
   justify-content: center;
   gap: 0.45rem;
-  color: color-mix(in oklab, var(--gp-widget-accent), white 10%);
+  color: color-mix(in oklab, var(--gp-accent-ink, var(--gp-widget-accent)), var(--gp-accent-lift, #fff) 10%);
 }
 
 .gp-grade-curve-note p {
@@ -1044,4 +1044,45 @@
   .gp-grades-add {
     transition: none;
   }
+}
+
+/* ------------------------------------------------------------ light theme.
+   Status/danger/medal inks above are pastels tuned for dark glass; on the
+   light theme's silver cards they wash out below 2:1. Each keeps its hue
+   but drops to a deep ink (generated during the 2026-08 light-mode
+   contrast audit). */
+[data-theme='light'] .gp-grade-remove:hover {
+  color: #be123c;
+}
+
+[data-theme='light'] .gp-grades-footer > span[data-complete] {
+  color: #0f766e;
+}
+
+[data-theme='light'] .gp-grade-verdict {
+  color: #be123c;
+}
+
+[data-theme='light'] .gp-grade-verdict[data-passing] {
+  color: #0f766e;
+}
+
+[data-theme='light'] .gp-grade-delta {
+  color: #be123c;
+}
+
+[data-theme='light'] .gp-grade-delta[data-positive] {
+  color: #0f766e;
+}
+
+[data-theme='light'] .gp-grade-letter[data-tone='risk'] {
+  color: #be123c;
+}
+
+[data-theme='light'] .gp-grade-policy-list > div small {
+  color: #0f766e;
+}
+
+[data-theme='light'] .gp-grade-policy-list > div[data-dropped] small {
+  color: #be123c;
 }

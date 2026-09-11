@@ -24,6 +24,13 @@ export interface WidgetSizing {
   maxHeight?: number
   autoHeight?: boolean
   /**
+   * The card fits its own width to its content, snapped to the grid, the same
+   * way `autoHeight` fits its height. Only for cards whose width is decided by
+   * one line of text they do not author (a canvas's name), where a fixed box
+   * can only clip the name or pad it with empty glass.
+   */
+  autoWidth?: boolean
+  /**
    * The card is entirely content-driven: no resize handle, no manual size.
    * For widgets whose layout is a list of its own items, where every pixel of
    * the card is already decided by what the user typed — dragging an edge can
@@ -101,4 +108,12 @@ export interface WidgetDefinition {
    * contract — see utils/widgetRest.ts.
    */
   restingFace?: boolean
+  /**
+   * Whether the card wears the floating name row above its backplate. Set false
+   * for a card that already states its own name inside itself, where the row
+   * could only repeat it. Such a card publishes its skin trigger to its own
+   * renderer (see WidgetSkinTrigger) so skins stay changeable, and gives up the
+   * row's action buttons — deletion, renaming, and locking stay on right-click.
+   */
+  titleChrome?: boolean
 }

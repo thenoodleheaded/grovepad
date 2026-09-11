@@ -6,7 +6,7 @@ import { commandsFor, fieldDescriptor } from './fields'
 import { EXPANSION_WIDGET_DEFINITIONS } from './registry/expansion'
 import { WIDGET_REGISTRY } from './registry'
 
-const expected = ['pin', 'coordinates', 'local_time', 'compass', 'geofence', 'route']
+const expected = ['pin', 'coordinates', 'local_time', 'compass', 'geofence', 'route', 'map']
 
 const PLACE: LocationData = {
   label: 'Studio',
@@ -129,5 +129,30 @@ describe('Location skin registry contract', () => {
       rows: [{ label: 'Main street 12' }],
     })
     expect(face({ latitude: null, longitude: null })).toEqual({ kind: 'icon' })
+  })
+
+  /**
+   * The Map skin exists so a place can be kept without meeting its numbers.
+   * A folded map card that printed coordinates would hand back exactly what
+   * the skin was chosen to avoid.
+   */
+  it('folds a Map card to its name and framing, never to its coordinates', () => {
+    const face = restingFace({
+      type: 'location',
+      title: 'Location',
+      size: { width: 340, height: 280 },
+      data: {
+        ...PLACE,
+        skin: 'map',
+        skinStates: { map: { zoom: 13 } },
+      } as LocationData,
+    }).model
+
+    expect(face).toMatchObject({
+      kind: 'rows',
+      eyebrow: { label: 'Map', note: 'Neighbourhood' },
+      rows: [{ label: 'Studio', value: 'Main street 12' }],
+    })
+    expect(JSON.stringify(face)).not.toContain('41.3')
   })
 })

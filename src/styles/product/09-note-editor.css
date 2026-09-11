@@ -1,0 +1,1018 @@
+/*
+ * The writing surface.
+ *
+ * A textarea cannot style its own contents, so the formatting is painted on a
+ * second element sitting exactly behind it and the control on top keeps only
+ * its caret and its selection. Everything in this file exists to make those
+ * two boxes agree.
+ *
+ * THE ONE LAW: the paint and the control share every property that decides
+ * where a character lands — font, size, line-height, letter-spacing, padding,
+ * border width, wrapping, and the measure they wrap inside. They are declared
+ * ONCE, on `.gp-md-field`, and both children inherit. Setting a size on the
+ * textarea alone is how a highlighter overlay ends up drifting a pixel per
+ * line until the paint is a whole row off the caret at the bottom of an essay.
+ * If a skin wants different type, it restyles `.gp-md-field`, never a child.
+ *
+ * The colour rules of `09-note-skins.css` apply here in full: ink comes from
+ * `--gp-widget-ink`, accents mix toward `--gp-note-lift`, and no literal
+ * `white` appears in a value — this file has to work on bright paper as well
+ * as on dark glass.
+ */
+
+.gp-md-field {
+  position: relative;
+  /* The typography both layers use. Inherited by the control and the paint, so
+     a skin changes both at once by restyling this element. */
+  font-size: 1em;
+  line-height: 1.7;
+  letter-spacing: inherit;
+}
+
+/* Identical boxes, identical wrapping. `overflow-wrap: anywhere` on both is
+   load-bearing: a long unbroken URL breaking in two different places is the
+   same drift as a different font. */
+.gp-md-field > .gp-md-paint,
+.gp-md-field > textarea.gp-note-editor,
+.gp-md-field > textarea.gp-note-sticky-editor,
+.gp-md-still > .gp-md-paint {
+  margin: 0;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  letter-spacing: inherit;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  tab-size: 2;
+}
+
+.gp-md-field > .gp-md-paint {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  overflow: hidden;
+  color: var(--gp-widget-ink, #f5f5f5);
+  pointer-events: none;
+  user-select: none;
+}
+
+/* The still page has no control behind it, so the paint is the content itself
+   and takes its space in the flow. */
+.gp-md-still > .gp-md-paint {
+  position: static;
+  color: var(--gp-widget-ink, #f5f5f5);
+}
+
+.gp-md-still {
+  position: relative;
+}
+
+/*
+ * A highlighter is the one mark here that cannot be mixed from the card's
+ * accent. The Text card's accent is a near-white (#e2e8f0), and a near-white
+ * thinned over bright paper is nothing at all — the mark simply vanished in
+ * the light theme. So the highlighter carries its own hue, declared once and
+ * re-weighted for paper below, which is the same exception the sticky pad's
+ * swatches already take: the colour IS the meaning.
+ *
+ * Declared on BOTH hosts: a resting card paints through `.gp-md-still` and
+ * never has a `.gp-md-field` above it to inherit from.
+ */
+.gp-md-field,
+.gp-md-still {
+  --gp-md-highlighter: color-mix(in oklab, #fde047, transparent 64%);
+}
+
+/* Ink over paper needs the mark heavier, not lighter: the same weight that
+   glows on dark glass is a faint smudge on white. */
+[data-theme='light'] :is(.gp-md-field, .gp-md-still) {
+  --gp-md-highlighter: color-mix(in oklab, #fde047, transparent 28%);
+}
+
+/*
+ * The control on top contributes the caret and the selection and nothing else.
+ * `color: transparent` rather than `opacity: 0`: an invisible control would
+ * take the selection highlight with it, and the selection is the one piece of
+ * feedback the paint underneath genuinely cannot draw.
+ */
+.gp-md-field[data-painted] > textarea {
+  position: relative;
+  z-index: 1;
+  color: transparent;
+  background: transparent;
+  caret-color: var(--gp-accent-ink, var(--gp-widget-accent));
+}
+
+.gp-md-field[data-painted] > textarea::selection {
+  color: transparent;
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 62%);
+}
+
+/* A placeholder is drawn by the control, so it has to be legible there even
+   while the control's own text is transparent. */
+.gp-md-field[data-painted] > textarea::placeholder {
+  color: var(--gp-note-faint);
+  -webkit-text-fill-color: var(--gp-note-faint);
+}
+
+/* --- What the paint actually says ------------------------------------- */
+
+.gp-md-line {
+  display: inline;
+}
+
+/* Markers stay visible but recede. Hiding them outright would move every
+   character on the line and break the alignment the whole design rests on —
+   markdown that you can see is also markdown you can edit. */
+.gp-md-syntax {
+  color: var(--gp-note-faint);
+  font-weight: 400;
+}
+
+.gp-md-line[data-kind='heading'] {
+  color: var(--gp-widget-ink, #f5f5f5);
+  font-weight: 680;
+  letter-spacing: -0.005em;
+}
+
+/* Headings grow, but only a little: the line box has to keep its height or the
+   caret and the paint fall out of step. Weight and colour carry the hierarchy
+   instead, which is what a code editor does with its own headings. */
+.gp-md-line[data-kind='heading'][data-level='1'] { color: var(--gp-note-eyebrow-ink); font-weight: 720; }
+.gp-md-line[data-kind='heading'][data-level='2'] { font-weight: 690; }
+.gp-md-line[data-kind='heading'][data-level='3'] { font-weight: 660; }
+
+.gp-md-line[data-kind='quote'] {
+  color: var(--gp-note-quiet);
+  font-style: italic;
+}
+
+.gp-md-line[data-kind='code'],
+.gp-md-line[data-kind='fence'] {
+  color: var(--gp-note-quiet);
+}
+
+.gp-md-line[data-kind='divider'] {
+  color: var(--gp-note-faint);
+}
+
+.gp-md-line[data-kind='todo'][data-checked='true'] {
+  color: var(--gp-note-faint);
+  text-decoration: line-through;
+  text-decoration-color: var(--gp-note-faint);
+}
+
+/* A list marker is the one piece of syntax worth reading as a mark rather than
+   as characters, so it takes the accent instead of receding with the rest. */
+.gp-md-line[data-kind='bullet'] > .gp-md-marker,
+.gp-md-line[data-kind='ordered'] > .gp-md-marker,
+.gp-md-line[data-kind='todo'] > .gp-md-marker {
+  color: color-mix(in oklab, var(--gp-widget-accent), var(--gp-note-lift) var(--gp-note-lift-amount));
+}
+
+.gp-md-strong { font-weight: 700; }
+.gp-md-em { font-style: italic; }
+.gp-md-strike { text-decoration: line-through; }
+
+.gp-md-code {
+  border-radius: 3px;
+  background: color-mix(in oklab, var(--gp-widget-ink, #f5f5f5), transparent 92%);
+}
+
+.gp-md-mark {
+  border-radius: 2px;
+  /* Ink stays the document's own — a highlighter changes the paper under a
+     word, never the colour of the word. */
+  background: var(--gp-md-highlighter);
+}
+
+.gp-md-link {
+  color: var(--gp-accent-ink, var(--gp-widget-accent));
+  text-decoration: underline;
+  text-decoration-color: color-mix(in oklab, var(--gp-widget-accent), transparent 60%);
+  text-underline-offset: 2px;
+}
+
+.gp-md-citation {
+  color: var(--gp-note-eyebrow-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+/*
+ * Search hits are painted on their own layer BENEATH the formatting, so a
+ * match that starts inside a bold run still highlights the whole match.
+ *
+ * The layer carries the document's full text — that is what makes the hits
+ * land in the right place — but none of it may be visible, or the page shows
+ * every character twice. The selector has to out-specify `.gp-md-field >
+ * .gp-md-paint` above, which is what was painting that second copy.
+ */
+.gp-md-field > .gp-md-paint.gp-md-matches,
+.gp-md-still > .gp-md-paint.gp-md-matches {
+  z-index: 0;
+  color: transparent;
+}
+
+.gp-md-hit {
+  border-radius: 2px;
+  color: transparent;
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 76%);
+}
+
+.gp-md-hit[data-current] {
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 48%);
+}
+
+/*
+ * Focus dimming.
+ *
+ * Typewriter's tool. Everything but the line under the caret fades back, which
+ * is a change of colour only — no size, no position, nothing that could move a
+ * character out from under the caret.
+ */
+/* `:focus-within` is the whole rule. Dimming is for the act of writing — a
+   card nobody is typing in would otherwise sit on the board permanently faded,
+   which is not focus, it is just an unreadable note. */
+.gp-md-field[data-focus-mode] .gp-md-line {
+  transition: color var(--gp-duration-snap) var(--gp-ease-snap);
+}
+
+.gp-md-field[data-focus-mode]:focus-within .gp-md-line {
+  color: var(--gp-note-faint);
+}
+
+.gp-md-field[data-focus-mode]:focus-within .gp-md-line[data-active] {
+  color: var(--gp-widget-ink, #f5f5f5);
+}
+
+.gp-md-field[data-focus-mode]:focus-within .gp-md-line:not([data-active]) .gp-md-syntax,
+.gp-md-field[data-focus-mode]:focus-within .gp-md-line:not([data-active]) :is(.gp-md-strong, .gp-md-em, .gp-md-link, .gp-md-citation) {
+  color: inherit;
+}
+
+/* --- The card's own chrome --------------------------------------------- */
+
+/*
+ * Formatting on the card floats over the writing and appears only once the
+ * card is in use. Two reasons, and both are load-bearing: a resting Text card
+ * stays nothing but its words (which is what keeps `TextRestPage` an honest
+ * photograph of the open one), and a floating row cannot change the card's
+ * height, so nothing reflows when it appears.
+ */
+.gp-note-chrome {
+  position: absolute;
+  z-index: 3;
+  top: -2px;
+  right: -2px;
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  border-radius: var(--gp-r2);
+  padding: 2px 3px;
+  background: color-mix(in oklab, var(--gp-widget-ink, #101512), transparent 88%);
+  opacity: 0;
+  transform: translateY(-2px);
+  transition:
+    opacity var(--gp-duration-snap) var(--gp-ease-snap),
+    transform var(--gp-duration-snap) var(--gp-ease-snap);
+  pointer-events: none;
+}
+
+.gp-note-plain:hover .gp-note-chrome,
+.gp-note-plain:focus-within .gp-note-chrome {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+/* Keyboard focus must reveal the row even when the pointer is elsewhere —
+   otherwise tabbing into it lands on a control nobody can see. */
+.gp-note-chrome:focus-within {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.gp-note-chrome button {
+  display: inline-flex;
+  width: 22px;
+  height: 22px;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: var(--gp-r1, 6px);
+  color: var(--gp-note-quiet);
+  background: transparent;
+}
+
+.gp-note-chrome button:hover:not(:disabled),
+.gp-note-chrome button:focus-visible {
+  color: var(--gp-widget-ink, #fff);
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 84%) !important;
+}
+
+.gp-note-chrome-count {
+  padding: 0 0.3em 0 0.2em;
+  color: var(--gp-note-faint);
+  font-size: 0.68em;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+}
+
+/* Typewriter's progress chip sits in the toolbar it already has. */
+.gp-note-goal-chip {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.22em;
+  margin-left: auto;
+  border-radius: 999px;
+  padding: 0 0.4em;
+  color: var(--gp-note-eyebrow-ink);
+  font-size: 0.68em;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+}
+
+/* Sticky's field fills its sheet so the ink layer above it keeps its 0–1 box. */
+.gp-note-sticky-field {
+  height: 100%;
+}
+
+/* Typewriter writes on a wider-set line than a note does, and the paint has to
+   move with it — hence the change lands on the field, not on the control. */
+.gp-note-typewriter .gp-md-field,
+.gp-note-typewriter .gp-md-still {
+  line-height: 1.9;
+  letter-spacing: 0.01em;
+}
+
+/* ---------------------------------------------------------------------------
+ * The writing sheet
+ *
+ * The room to write in. A card on a board is the wrong shape for fifteen
+ * hundred words — it grows down the canvas while the rest of the board sits
+ * around it — so the same string gets a page here.
+ *
+ * Three things carry the design, and they are the three worth protecting:
+ *
+ * 1. THE MEASURE. The page is 34em of the reading type, centred, whatever the
+ *    screen is. Type that runs the full width of a laptop is the commonest
+ *    reason long-form writing feels wrong, and no styling makes up for it.
+ * 2. THE BOARD STAYS VISIBLE, BUT OUT OF FOCUS. The scrim blurs the canvas
+ *    rather than hiding it, so the sheet reads as something opened ON the
+ *    board — you have not left, you have leaned in.
+ * 3. IT COMES FROM THE CARD. The panel grows out of the clicked card's own
+ *    centre (see `growthOrigin`), which is what makes it one gesture rather
+ *    than a dialog that happened to appear.
+ * ------------------------------------------------------------------------ */
+
+/* The stage is what the sheet is inset within — generous, so the panel reads
+   as a sheet floating over the board rather than a takeover of the window. */
+.gp-md-stage {
+  padding: clamp(0px, 3.5vh, 44px) clamp(0px, 3.5vw, 56px);
+}
+
+/*
+ * The backdrop.
+ *
+ * Blur is stated through `--gp-blur-scale` — the visual-quality tiers turn it
+ * down on weak hardware and off entirely on the lightweight tier, and a
+ * hard-coded radius would ignore them.
+ */
+.gp-md-scrim {
+  background: color-mix(in oklab, black, transparent 42%);
+  backdrop-filter: blur(calc(18px * var(--gp-blur-scale, 1))) saturate(0.9);
+  /*
+   * A keyframe animation rather than a transition off a mounted flag.
+   *
+   * A transition needs the closed state painted before the open one can be
+   * moved to, which means waiting a frame in JS — and a frame that never
+   * arrives (a throttled tab, a hidden window) leaves the sheet stuck
+   * invisible. An animation with `both` fill simply plays on mount and holds
+   * its end state, so the worst case is that it is already open.
+   * It also overrides the shared `gp-fade`, whose `backwards` fill would hand
+   * the scrim back to transparent the moment it ended.
+   */
+  animation: gp-md-scrim-in 240ms var(--gp-ease-snap) both;
+}
+
+@keyframes gp-md-scrim-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+[data-theme='light'] .gp-md-scrim {
+  /* `gp-fade` on the shared scrim runs a `backwards`-filled opacity animation,
+     which would hand back to this rule's own `opacity: 0` the moment it ended
+     and flash the board. The ramp below owns the fade instead. */
+  animation: none;
+  background: color-mix(in oklab, #0b1210, transparent 62%);
+}
+
+.gp-md-sheet {
+  position: relative;
+  display: flex;
+  width: min(1240px, 100%);
+  height: 100%;
+  max-height: 100%;
+  flex-direction: column;
+  border-radius: clamp(14px, 1.6vw, 24px);
+  overflow: hidden;
+  /*
+   * Its own material rather than the shared panel glass: this surface holds a
+   * page of writing, so it is a shade deeper and quieter than the chrome, and
+   * the light on it runs off one corner the way it does on a card.
+   */
+  border: 1px solid color-mix(in oklab, var(--gp-widget-ink, #f5f5f5), transparent 88%);
+  background:
+    linear-gradient(
+      152deg,
+      color-mix(in oklab, var(--gp-widget-ink, #f5f5f5), transparent 94%) 0%,
+      transparent 46%
+    ),
+    color-mix(in oklab, #0c1210, transparent 4%);
+  box-shadow:
+    0 1px 0 color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 90%) inset,
+    0 40px 120px rgb(0 0 0 / 0.55),
+    0 8px 28px rgb(0 0 0 / 0.4);
+  color: var(--gp-widget-ink, #f5f5f5);
+  /* Not a card container: the skins size themselves from `cqi`, and a page
+     that is not inside a card has nothing for that to resolve against. */
+  container-type: normal;
+  min-height: 0;
+  font-size: 0.9rem;
+
+  /* The entrance. It grows out of the card it was opened from — the origin is
+     set inline, per card — and settles rather than snapping. */
+  animation: gp-md-sheet-in 360ms var(--gp-ease-spring) both;
+}
+
+@keyframes gp-md-sheet-in {
+  from {
+    opacity: 0;
+    transform: scale(0.93) translateY(12px);
+  }
+  60% {
+    opacity: 1;
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+[data-theme='light'] .gp-md-sheet {
+  border-color: color-mix(in oklab, #1e2622, transparent 86%);
+  background:
+    linear-gradient(152deg, rgb(255 255 255 / 0.9) 0%, transparent 52%),
+    color-mix(in oklab, #f4f6f4, transparent 2%);
+  box-shadow:
+    0 1px 0 rgb(255 255 255 / 0.7) inset,
+    0 40px 110px rgb(20 30 26 / 0.28),
+    0 8px 24px rgb(20 30 26 / 0.16);
+}
+
+/* Nothing here may fly on the lightweight tier or under a reduced-motion
+   preference — the sheet still has to open, it simply arrives already open. */
+@media (prefers-reduced-motion: reduce) {
+  .gp-md-sheet,
+  .gp-md-scrim {
+    animation-duration: 1ms;
+  }
+}
+
+/* --- Head --------------------------------------------------------------- */
+
+.gp-md-sheet-head {
+  display: flex;
+  min-height: 56px;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.7rem;
+  border-bottom: 1px solid var(--gp-note-hairline, rgb(255 255 255 / 0.07));
+  padding: 0.6rem 0.8rem 0.6rem 1.1rem;
+}
+
+.gp-md-sheet-name {
+  min-width: 0;
+  flex: 1;
+}
+
+/* The skin says what KIND of writing this is — a document, a note, a draft —
+   which is the one thing the title cannot say for itself. */
+.gp-md-sheet-eyebrow {
+  margin: 0 0 1px;
+  color: var(--gp-note-eyebrow-ink);
+  font-size: 0.62rem;
+  font-weight: 650;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.gp-md-sheet-title {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 1.02rem;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gp-md-sheet-count {
+  flex: 0 0 auto;
+  border-radius: 999px;
+  padding: 0.2rem 0.6rem;
+  background: color-mix(in oklab, var(--gp-widget-ink, #f5f5f5), transparent 94%);
+  color: var(--gp-note-quiet);
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.gp-md-sheet-count strong {
+  color: var(--gp-widget-ink, #f5f5f5);
+  font-weight: 650;
+}
+
+.gp-md-sheet-action {
+  display: inline-flex;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: var(--gp-r2);
+  color: var(--gp-note-quiet);
+  background: transparent;
+  transition:
+    color var(--gp-duration-snap) var(--gp-ease-snap),
+    background-color var(--gp-duration-snap) var(--gp-ease-snap);
+}
+
+.gp-md-sheet-action:hover,
+.gp-md-sheet-action:focus-visible,
+.gp-md-sheet-action[aria-pressed='true'] {
+  color: var(--gp-widget-ink, #fff);
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 84%) !important;
+}
+
+.gp-md-sheet-close:hover {
+  background: color-mix(in oklab, #fb4b53, transparent 82%) !important;
+}
+
+/* --- Body --------------------------------------------------------------- */
+
+.gp-md-sheet-body {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  gap: 0;
+}
+
+.gp-md-sheet-page {
+  position: relative;
+  min-height: 0;
+  flex: 1;
+  overflow-y: auto;
+  padding: clamp(1.4rem, 4vh, 2.8rem) clamp(1rem, 5vw, 3rem) clamp(2rem, 6vh, 3.5rem);
+  scroll-behavior: smooth;
+}
+
+/*
+ * A draft keeps a tail of empty space below the last line, and only a draft.
+ * It is what lets the sentence being written sit in the middle of the screen
+ * instead of pinned to the bottom edge — which is the entire point of a
+ * centred caret. On every other skin that tail is just a void under the words,
+ * which is exactly how this page used to look.
+ */
+.gp-md-sheet-page[data-tail] {
+  padding-bottom: 42vh;
+}
+
+.gp-md-sheet-page > .gp-md-sheet-measure {
+  width: min(100%, 34em);
+  margin: 0 auto;
+  /* The sheet sets its own reading size, in px: this page is not inside a card
+     container, so the `cqi` ratio the skins use has nothing to resolve
+     against. */
+  font-size: 15px;
+}
+
+/* The writing fills the page it was given, so a click anywhere below the last
+   line still lands in the text rather than on dead panel. */
+.gp-md-sheet-surface {
+  min-height: max(38vh, 12em);
+}
+
+/* --- Rail --------------------------------------------------------------- */
+
+.gp-md-sheet-rail {
+  display: flex;
+  width: 264px;
+  flex: 0 0 auto;
+  flex-direction: column;
+  border-left: 1px solid var(--gp-note-hairline, rgb(255 255 255 / 0.07));
+  padding: 0.35rem 0 1.6rem;
+  overflow-y: auto;
+  background: color-mix(in oklab, var(--gp-widget-ink, #f5f5f5), transparent 97%);
+  font-size: 0.76rem;
+}
+
+/* Each panel is a band with a rule under it, so the rail reads as a short list
+   of separate answers rather than one long column of grey text. */
+.gp-md-sheet-rail > * {
+  padding: 0.9rem 1.05rem;
+  border-bottom: 1px solid var(--gp-note-hairline, rgb(255 255 255 / 0.06));
+}
+
+.gp-md-sheet-rail > :last-child {
+  border-bottom: 0;
+}
+
+.gp-md-sheet-rail .gp-note-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 0.3em;
+  margin: 0 0 0.5rem;
+  font-size: 0.62rem;
+  letter-spacing: 0.11em;
+}
+
+/* On a narrow screen the rail goes under the page rather than squeezing the
+   measure: the measure is the thing worth protecting. */
+@media (max-width: 900px) {
+  .gp-md-sheet-body {
+    flex-direction: column;
+  }
+
+  .gp-md-sheet-rail {
+    width: auto;
+    border-top: 1px solid var(--gp-note-hairline, rgb(255 255 255 / 0.07));
+    border-left: 0;
+  }
+
+  .gp-md-sheet-page[data-tail] {
+    padding-bottom: 18vh;
+  }
+}
+
+/* --- Toolbar ------------------------------------------------------------ */
+
+.gp-md-toolbar {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.4rem;
+  border-bottom: 1px solid var(--gp-note-hairline, rgb(255 255 255 / 0.07));
+  padding: 0.45rem 0.9rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.gp-md-toolbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* The buttons sit in a well rather than loose on the surface, so the row reads
+   as one instrument instead of eleven floating glyphs. */
+.gp-md-toolgroup {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 1px;
+  border-radius: 10px;
+  padding: 2px;
+  background: color-mix(in oklab, var(--gp-widget-ink, #f5f5f5), transparent 95%);
+}
+
+.gp-md-toolbar button {
+  display: inline-flex;
+  width: 28px;
+  height: 28px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 7px;
+  color: var(--gp-note-quiet);
+  background: transparent;
+  transition:
+    color var(--gp-duration-snap) var(--gp-ease-snap),
+    background-color var(--gp-duration-snap) var(--gp-ease-snap);
+}
+
+.gp-md-toolbar button:hover:not(:disabled),
+.gp-md-toolbar button:focus-visible {
+  color: var(--gp-widget-ink, #fff);
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 80%) !important;
+}
+
+.gp-md-toolbar button:disabled {
+  cursor: default;
+  opacity: 0.28;
+}
+
+/* --- Find and replace --------------------------------------------------- */
+
+.gp-md-find {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  gap: 0.35rem;
+  border-bottom: 1px solid var(--gp-note-hairline, rgb(255 255 255 / 0.07));
+  padding: 0.6rem 0.9rem;
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 96%);
+}
+
+.gp-md-find-row {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.gp-md-find-row input[type='text'] {
+  min-width: 0;
+  flex: 1;
+  border: 1px solid var(--gp-note-hairline, rgb(255 255 255 / 0.1));
+  border-radius: var(--gp-r2);
+  padding: 0.3rem 0.55rem;
+  color: var(--gp-widget-ink, #f5f5f5);
+  background: color-mix(in oklab, var(--gp-widget-ink, #101512), transparent 94%);
+  font-size: 0.78rem;
+}
+
+.gp-md-find-row input[type='text']:focus-visible {
+  outline: 1px solid color-mix(in oklab, var(--gp-widget-accent), transparent 40%);
+  outline-offset: 0;
+}
+
+.gp-md-find-count {
+  flex: 0 0 auto;
+  min-width: 5.2em;
+  color: var(--gp-note-faint);
+  font-size: 0.7rem;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.gp-md-find-row > button {
+  display: inline-flex;
+  height: 27px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: var(--gp-r2);
+  padding: 0 0.5rem;
+  color: var(--gp-note-quiet);
+  background: transparent;
+  font-size: 0.72rem;
+}
+
+.gp-md-find-row > button:hover:not(:disabled),
+.gp-md-find-row > button:focus-visible {
+  color: var(--gp-widget-ink, #fff);
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 82%) !important;
+}
+
+.gp-md-find-row > button:disabled {
+  cursor: default;
+  opacity: 0.3;
+}
+
+.gp-md-find-flag {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.25rem;
+  color: var(--gp-note-faint);
+  font-size: 0.7rem;
+}
+
+/* --- Rail panels -------------------------------------------------------- */
+
+.gp-md-outline ol,
+.gp-md-bibliography ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.gp-md-outline li[data-level='2'] { padding-left: 0.75rem; }
+.gp-md-outline li[data-level='3'] { padding-left: 1.5rem; }
+.gp-md-outline li[data-level='4'],
+.gp-md-outline li[data-level='5'],
+.gp-md-outline li[data-level='6'] { padding-left: 2.25rem; }
+
+.gp-md-outline button {
+  display: flex;
+  width: 100%;
+  align-items: baseline;
+  gap: 0.5rem;
+  border: 0;
+  border-radius: var(--gp-r2);
+  padding: 0.28rem 0.4rem;
+  color: var(--gp-note-quiet);
+  background: transparent;
+  text-align: left;
+  transition:
+    color var(--gp-duration-snap) var(--gp-ease-snap),
+    background-color var(--gp-duration-snap) var(--gp-ease-snap);
+}
+
+.gp-md-outline button:hover,
+.gp-md-outline button:focus-visible {
+  color: var(--gp-widget-ink, #fff);
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 86%) !important;
+}
+
+/* A first-level heading is the document's own spine, so it holds the ink its
+   depth earns rather than being one more grey row. */
+.gp-md-outline li[data-level='1'] button {
+  color: var(--gp-widget-ink, #f5f5f5);
+  font-weight: 560;
+}
+
+.gp-md-outline-title {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gp-md-outline-words {
+  flex: 0 0 auto;
+  color: var(--gp-note-faint);
+  font-size: 0.68rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.gp-md-outline-empty {
+  margin: 0;
+  color: var(--gp-note-faint);
+  line-height: 1.55;
+}
+
+.gp-md-outline-empty code {
+  border-radius: 3px;
+  padding: 0 0.25em;
+  background: color-mix(in oklab, var(--gp-widget-ink, #f5f5f5), transparent 92%);
+}
+
+.gp-md-stats dl {
+  display: grid;
+  margin: 0;
+  gap: 0.2rem;
+}
+
+.gp-md-stats dl > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+/* A leader between the label and its number, so the eye crosses the gap. It is
+   drawn, not typed: a row of dots in the markup would be read aloud. */
+.gp-md-stats dt {
+  position: relative;
+  overflow: hidden;
+  color: var(--gp-note-faint);
+}
+
+.gp-md-stats dt::after {
+  content: '';
+  position: absolute;
+  bottom: 0.32em;
+  margin-left: 0.5em;
+  width: 100%;
+  border-bottom: 1px dotted var(--gp-note-hairline, rgb(255 255 255 / 0.12));
+}
+
+.gp-md-stats dd {
+  margin: 0;
+  color: var(--gp-widget-ink, #f5f5f5);
+  font-variant-numeric: tabular-nums;
+  font-weight: 560;
+}
+
+.gp-md-stats-compact {
+  margin: 0;
+  color: var(--gp-note-faint);
+  font-size: 0.7rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.gp-md-goal-track {
+  height: 5px;
+  margin: 0 0 0.4rem;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--gp-widget-ink, #f5f5f5), transparent 90%);
+  overflow: hidden;
+}
+
+.gp-md-goal-track > span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    color-mix(in oklab, var(--gp-widget-accent), transparent 40%),
+    var(--gp-widget-accent)
+  );
+  transition: width 320ms var(--gp-ease-spring);
+}
+
+.gp-md-goal-track > span[data-complete] {
+  background: color-mix(in oklab, #34d399, var(--gp-note-lift) var(--gp-note-lift-amount));
+}
+
+.gp-md-goal-reading {
+  margin: 0;
+  color: var(--gp-note-quiet);
+  font-variant-numeric: tabular-nums;
+}
+
+.gp-md-goal-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 0.55rem;
+}
+
+.gp-md-goal-presets button {
+  border: 0;
+  border-radius: 999px;
+  padding: 0.18rem 0.5rem;
+  color: var(--gp-note-quiet);
+  background: color-mix(in oklab, var(--gp-widget-ink, #f5f5f5), transparent 93%);
+  font-size: 0.68rem;
+  font-variant-numeric: tabular-nums;
+  transition:
+    color var(--gp-duration-snap) var(--gp-ease-snap),
+    background-color var(--gp-duration-snap) var(--gp-ease-snap);
+}
+
+.gp-md-goal-presets button:hover {
+  color: var(--gp-widget-ink, #fff);
+}
+
+.gp-md-goal-presets button[aria-pressed='true'] {
+  color: var(--gp-widget-ink, #fff);
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 70%) !important;
+}
+
+.gp-md-bibliography li {
+  margin-bottom: 0.5rem;
+  padding-left: 1.2em;
+  color: var(--gp-note-quiet);
+  line-height: 1.55;
+  /* A reference list hangs its second line in every style we format. */
+  text-indent: -1.2em;
+}
+
+.gp-md-bibliography li:last-child {
+  margin-bottom: 0;
+}
+
+.gp-md-bibliography-missing {
+  margin: 0.5rem 0 0;
+  color: color-mix(in oklab, #fb923c, var(--gp-note-lift) var(--gp-note-lift-amount));
+  line-height: 1.5;
+}
+
+.gp-md-export-row {
+  display: grid;
+  gap: 5px;
+  grid-template-columns: 1fr 1fr;
+}
+
+.gp-md-export-row button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  border: 1px solid var(--gp-note-hairline, rgb(255 255 255 / 0.08));
+  border-radius: 9px;
+  padding: 0.42rem 0.5rem;
+  color: var(--gp-note-quiet);
+  background: color-mix(in oklab, var(--gp-widget-ink, #f5f5f5), transparent 95%);
+  font-size: 0.72rem;
+  transition:
+    color var(--gp-duration-snap) var(--gp-ease-snap),
+    background-color var(--gp-duration-snap) var(--gp-ease-snap),
+    border-color var(--gp-duration-snap) var(--gp-ease-snap);
+}
+
+.gp-md-export-row button:hover,
+.gp-md-export-row button:focus-visible {
+  border-color: color-mix(in oklab, var(--gp-widget-accent), transparent 60%);
+  color: var(--gp-widget-ink, #fff);
+  background: color-mix(in oklab, var(--gp-widget-accent), transparent 80%) !important;
+}

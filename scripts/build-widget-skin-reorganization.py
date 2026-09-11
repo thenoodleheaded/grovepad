@@ -134,7 +134,6 @@ PROMOTE: dict[tuple[str, str], str] = {
 
 MOVE: dict[tuple[str, str], str] = {
     ("bullets", "Nested Outline"): "Outline",
-    ("bullets", "Rolling Log"): "Logbook",
     ("notes", "Daily Log"): "Logbook",
     ("logbook", "Travel Log"): "Trip Itinerary",
     ("calendar", "Birthday & Anniversary"): "Gifts & Occasions",
@@ -325,8 +324,8 @@ def role(entry: Entry) -> tuple[str, str]:
 
 def render() -> str:
     entries, order = load()
-    if len(entries) != 611:
-        raise SystemExit(f"Expected 611 opportunity entries, found {len(entries)}")
+    if len(entries) != 597:
+        raise SystemExit(f"Expected 597 opportunity entries, found {len(entries)}")
     if sum(map(len, LEGACY_SKINS.values())) != 82:
         raise SystemExit("Legacy skin inventory must contain 82 entries")
 

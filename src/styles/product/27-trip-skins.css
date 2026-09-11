@@ -1,0 +1,838 @@
+/*
+ * Purpose-built Trip Itinerary skins.
+ *
+ * The days/legs record is canonical. Specialist fields stay with their skin,
+ * while rows paint as one continuous itinerary on the card's single backplate —
+ * divider-separated regions of one surface, never a stack of glass cards
+ * (Article XIX, "a table is one island").
+ *
+ * Typography follows Article XVII: one label voice (9.5px / 650 / .085em /
+ * uppercase), one body voice (13px), and time/code numerals in a mono face at
+ * 9.5–10.5px. Nothing here invents a fourth size.
+ *
+ * Every control wrapper carries `.gp-bare-field` so the auto field-island
+ * detector in 06-field-islands.css leaves the backplate alone.
+ */
+
+.gp-widget-ui[data-widget-type='trip_itinerary'][data-skin-presentation] {
+  background-image: none;
+  padding-inline-start: 0;
+}
+
+.gp-widget-ui[data-widget-type='trip_itinerary'][data-skin-presentation]::before {
+  content: none;
+}
+
+.gp-trip {
+  --gp-trip-ink: var(--gp-widget-ink, #f5f5f5);
+  --gp-trip-body: color-mix(in oklab, var(--gp-trip-ink), transparent 8%);
+  --gp-trip-meta: color-mix(in oklab, var(--gp-trip-ink), transparent 44%);
+  --gp-trip-label: color-mix(in oklab, var(--gp-trip-ink), transparent 54%);
+  --gp-trip-line: color-mix(in oklab, var(--gp-trip-ink), transparent 90%);
+  --gp-trip-line-soft: color-mix(in oklab, var(--gp-trip-ink), transparent 95%);
+  --gp-trip-wash: color-mix(in oklab, var(--gp-trip-ink), transparent 96%);
+  --gp-trip-accent-ink: color-mix(in oklab, var(--gp-widget-accent), white 16%);
+  --gp-trip-accent-soft: color-mix(in oklab, var(--gp-widget-accent), transparent 87%);
+  --gp-trip-accent-line: color-mix(in oklab, var(--gp-widget-accent), transparent 72%);
+  --gp-trip-good: #34d399;
+  --gp-trip-warn: #fbbf24;
+  --gp-trip-bad: #fb7185;
+  /* Reserved lane for the hover-revealed remove button, so leg text never
+     runs under it and the button never shares a corner with anything. */
+  --gp-trip-gutter: 26px;
+  display: grid;
+  height: 100%;
+  min-height: 0;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 8px;
+  color: var(--gp-trip-body);
+  container-type: inline-size;
+}
+
+/* Controls borrow the card's typeface and nothing else. A `font: inherit`
+   shorthand would carry font-size at (0,1,1) and silently outrank every
+   single-class size rule below. */
+.gp-trip :is(button, input, code, kbd) {
+  font-family: inherit;
+}
+
+/* The catalogue's control reset gives text controls a 30px floor and a 12px
+   inline inset for generic field islands. These controls are lines of an
+   itinerary, so they reclaim their own box. */
+.gp-trip :is(input) {
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  color: inherit;
+  background: transparent;
+  caret-color: var(--gp-accent-ink, var(--gp-widget-accent));
+}
+
+.gp-trip input::placeholder {
+  color: var(--gp-trip-meta);
+  opacity: 0.7;
+}
+
+.gp-trip input:is([type='time'], [type='date'], [type='number']) {
+  font-variant-numeric: tabular-nums;
+  color-scheme: dark;
+}
+
+/* ------------------------------------------------------------------ header */
+
+.gp-trip-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 22px;
+  padding-inline: 2px;
+}
+
+.gp-trip-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 9.5px;
+  font-weight: 650;
+  letter-spacing: 0.085em;
+  text-transform: uppercase;
+  color: var(--gp-trip-label);
+  white-space: nowrap;
+}
+
+.gp-trip-eyebrow svg {
+  color: var(--gp-trip-accent-ink);
+}
+
+.gp-trip-phase {
+  font-size: 9.5px;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  padding: 2px 7px;
+  border-radius: 999px;
+  white-space: nowrap;
+  background: var(--gp-trip-wash);
+  color: var(--gp-trip-meta);
+}
+
+.gp-trip-phase[data-tone='ahead'] {
+  background: var(--gp-trip-accent-soft);
+  color: var(--gp-trip-accent-ink);
+}
+
+.gp-trip-phase[data-tone='underway'] {
+  background: color-mix(in oklab, var(--gp-trip-good), transparent 86%);
+  color: color-mix(in oklab, var(--gp-trip-good), white 20%);
+}
+
+.gp-trip-summary {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  margin-inline-start: auto;
+  font-size: 9.5px;
+  color: var(--gp-trip-meta);
+  white-space: nowrap;
+}
+
+.gp-trip-summary strong {
+  font-size: 12px;
+  font-weight: 650;
+  color: var(--gp-trip-body);
+  font-variant-numeric: tabular-nums;
+}
+
+.gp-trip-summary em {
+  font-style: normal;
+  font-weight: 650;
+  color: color-mix(in oklab, var(--gp-trip-warn), white 12%);
+}
+
+.gp-trip-start input {
+  width: 92px;
+  font-size: 9.5px;
+  color: var(--gp-trip-meta);
+}
+
+/* ------------------------------------------------------------ shared rows */
+
+.gp-trip-list {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-inline: 2px;
+  scrollbar-width: thin;
+}
+
+.gp-trip-row {
+  position: relative;
+  padding: 5px 0;
+  padding-inline-end: var(--gp-trip-gutter);
+  border-block-end: 1px solid var(--gp-trip-line-soft);
+}
+
+.gp-trip-row:last-child {
+  border-block-end: 0;
+}
+
+.gp-trip-copy {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.gp-trip-what {
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.gp-trip-where {
+  font-size: 10.5px;
+  color: var(--gp-trip-meta);
+}
+
+.gp-trip-time {
+  width: 66px;
+  flex: none;
+  font-size: 10.5px;
+  font-variant-numeric: tabular-nums;
+  color: var(--gp-trip-meta);
+}
+
+.gp-trip-when {
+  flex: none;
+  font-size: 9.5px;
+  color: var(--gp-trip-meta);
+  white-space: nowrap;
+}
+
+.gp-trip-booked {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border: 1.5px solid var(--gp-trip-line);
+  border-radius: 999px;
+  background: transparent;
+  color: transparent;
+  cursor: pointer;
+  transition: border-color var(--gp-duration-snap) var(--gp-ease-snap), background-color var(--gp-duration-snap) var(--gp-ease-snap), color var(--gp-duration-snap) var(--gp-ease-snap);
+}
+
+.gp-trip-booked[data-booked='true'] {
+  border-color: transparent;
+  background: color-mix(in oklab, var(--gp-trip-good), transparent 78%);
+  color: color-mix(in oklab, var(--gp-trip-good), white 18%);
+}
+
+.gp-trip-remove {
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline-end: 0;
+  translate: 0 -50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--gp-trip-meta);
+  opacity: 0;
+  pointer-events: none;
+  cursor: pointer;
+  transition: opacity var(--gp-duration-snap) var(--gp-ease-snap), background-color var(--gp-duration-snap) var(--gp-ease-snap);
+}
+
+.gp-trip-row:hover .gp-trip-remove,
+.gp-trip-day-head:hover .gp-trip-remove,
+.gp-trip-remove:focus-visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.gp-trip-remove:hover {
+  background: color-mix(in oklab, var(--gp-trip-bad), transparent 86%);
+  color: color-mix(in oklab, var(--gp-trip-bad), white 16%);
+}
+
+.gp-trip-detail {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.gp-trip-detail > span {
+  font-size: 9.5px;
+  font-weight: 650;
+  letter-spacing: 0.085em;
+  text-transform: uppercase;
+  color: var(--gp-trip-label);
+}
+
+.gp-trip-detail input {
+  font-size: 11.5px;
+}
+
+.gp-trip-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border: 1px dashed var(--gp-trip-line);
+  border-radius: 9px;
+  background: transparent;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--gp-trip-meta);
+  cursor: pointer;
+  transition: border-color var(--gp-duration-snap) var(--gp-ease-snap), color var(--gp-duration-snap) var(--gp-ease-snap), background-color var(--gp-duration-snap) var(--gp-ease-snap);
+}
+
+.gp-trip-add:hover {
+  border-color: var(--gp-trip-accent-line);
+  background: var(--gp-trip-accent-soft);
+  color: var(--gp-trip-accent-ink);
+}
+
+.gp-trip-footer {
+  display: flex;
+  justify-content: flex-start;
+  padding-inline: 2px;
+}
+
+.gp-trip-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  text-align: center;
+  padding: 18px 14px;
+  color: var(--gp-trip-meta);
+}
+
+.gp-trip-empty > span:first-child {
+  color: var(--gp-trip-accent-ink);
+}
+
+.gp-trip-empty strong {
+  font-size: 12px;
+  font-weight: 650;
+  color: var(--gp-trip-body);
+}
+
+.gp-trip-empty > span:last-child {
+  font-size: 10.5px;
+  max-inline-size: 30ch;
+  line-height: 1.45;
+}
+
+/* ------------------------------------------------------------------- days */
+
+.gp-trip-day {
+  display: flex;
+  flex-direction: column;
+}
+
+.gp-trip-day-head {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-block: 3px;
+  padding-inline-end: var(--gp-trip-gutter);
+  border-block-end: 1px solid var(--gp-trip-line);
+}
+
+.gp-trip-day-head strong {
+  font-size: 9.5px;
+  font-weight: 650;
+  letter-spacing: 0.085em;
+  text-transform: uppercase;
+  color: var(--gp-trip-accent-ink);
+  white-space: nowrap;
+}
+
+.gp-trip-day-date {
+  width: 88px;
+  font-size: 9.5px;
+  color: var(--gp-trip-meta);
+}
+
+.gp-trip-day-add {
+  margin-inline-start: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--gp-trip-meta);
+  cursor: pointer;
+  transition: background-color var(--gp-duration-snap) var(--gp-ease-snap), color var(--gp-duration-snap) var(--gp-ease-snap);
+}
+
+.gp-trip-day-add:hover {
+  background: var(--gp-trip-accent-soft);
+  color: var(--gp-trip-accent-ink);
+}
+
+.gp-trip-days-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.gp-trip-day-empty,
+.gp-trip-filter-empty,
+.gp-trip-offline-note {
+  font-size: 10.5px;
+  color: var(--gp-trip-meta);
+  padding-block: 6px;
+  margin: 0;
+}
+
+/* --------------------------------------------------------------- timeline */
+
+.gp-trip-timeline {
+  gap: 0;
+}
+
+.gp-trip-thread {
+  position: relative;
+  padding-inline-start: 18px;
+}
+
+/* The rail: one continuous line the whole journey hangs from. */
+.gp-trip-thread::before {
+  content: '';
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 5px;
+  width: 1.5px;
+  background: var(--gp-trip-line);
+}
+
+.gp-trip-thread:first-child::before {
+  inset-block-start: 10px;
+}
+
+.gp-trip-thread:last-child::before {
+  inset-block-end: auto;
+  height: 18px;
+}
+
+.gp-trip-thread-day {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding-block: 6px 2px;
+}
+
+.gp-trip-thread-day i {
+  position: absolute;
+  inset-inline-start: 2px;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--gp-trip-accent-ink);
+}
+
+.gp-trip-thread-day strong {
+  font-size: 9.5px;
+  font-weight: 650;
+  letter-spacing: 0.085em;
+  text-transform: uppercase;
+  color: var(--gp-trip-accent-ink);
+}
+
+.gp-trip-timeline-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.gp-trip-dot {
+  position: absolute;
+  inset-inline-start: -15px;
+  width: 6px;
+  height: 6px;
+  flex: none;
+  border-radius: 999px;
+  border: 1.5px solid var(--gp-trip-meta);
+  background: transparent;
+}
+
+.gp-trip-dot[data-booked='true'] {
+  border-color: transparent;
+  background: var(--gp-trip-good);
+}
+
+/* --------------------------------------------------------------- bookings */
+
+.gp-trip-booking-block > header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-block: 3px;
+  border-block-end: 1px solid var(--gp-trip-line);
+}
+
+.gp-trip-booking-block > header strong {
+  font-size: 9.5px;
+  font-weight: 650;
+  letter-spacing: 0.085em;
+  text-transform: uppercase;
+  color: var(--gp-trip-label);
+}
+
+.gp-trip-booking-block[data-tone='gap'] > header strong {
+  color: color-mix(in oklab, var(--gp-trip-warn), white 12%);
+}
+
+.gp-trip-booking-block[data-tone='clear'] > header strong {
+  color: color-mix(in oklab, var(--gp-trip-good), white 16%);
+}
+
+.gp-trip-booking-block > header span {
+  font-size: 9.5px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--gp-trip-wash);
+  color: var(--gp-trip-meta);
+}
+
+.gp-trip-booking-block[data-tone='gap'] > header span {
+  background: color-mix(in oklab, var(--gp-trip-warn), transparent 86%);
+  color: color-mix(in oklab, var(--gp-trip-warn), white 12%);
+}
+
+.gp-trip-booking-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.gp-trip-code input {
+  width: 74px;
+  font-variant-numeric: tabular-nums;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  color: color-mix(in oklab, var(--gp-trip-good), white 16%);
+  text-align: end;
+}
+
+/* ---------------------------------------------------------------- offline */
+
+/* Print-like: maximum contrast, mono numerals, zero controls, zero chrome.
+   The one skin built to be photographed or squinted at on 2G. */
+.gp-trip-offline {
+  gap: 10px;
+}
+
+.gp-trip-offline-day > header {
+  font-size: 9.5px;
+  font-weight: 650;
+  letter-spacing: 0.085em;
+  text-transform: uppercase;
+  color: var(--gp-trip-ink);
+  padding-block: 2px;
+  border-block-end: 1.5px solid var(--gp-trip-line);
+}
+
+.gp-trip-offline-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding-block: 4px;
+  border-block-end: 1px solid var(--gp-trip-line-soft);
+}
+
+.gp-trip-offline-row:last-child {
+  border-block-end: 0;
+}
+
+.gp-trip-offline-time {
+  flex: none;
+  width: 44px;
+  font-size: 10.5px;
+  font-variant-numeric: tabular-nums;
+  color: var(--gp-trip-ink);
+}
+
+.gp-trip-offline-what {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  font-size: 13px;
+  color: var(--gp-trip-ink);
+}
+
+.gp-trip-offline-what i {
+  font-style: normal;
+  font-size: 10.5px;
+  color: var(--gp-trip-meta);
+}
+
+.gp-trip-offline-row code {
+  flex: none;
+  font-variant-numeric: tabular-nums;
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: var(--gp-trip-wash);
+  color: var(--gp-trip-ink);
+}
+
+/* -------------------------------------------------------------------- map */
+
+.gp-trip-zone > header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-block: 3px;
+  border-block-end: 1px solid var(--gp-trip-line);
+}
+
+.gp-trip-zone > header i {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  border: 1.5px solid var(--gp-trip-accent-ink);
+}
+
+.gp-trip-zone > header strong {
+  font-size: 9.5px;
+  font-weight: 650;
+  letter-spacing: 0.085em;
+  text-transform: uppercase;
+  color: var(--gp-trip-accent-ink);
+}
+
+.gp-trip-zone > header span {
+  margin-inline-start: auto;
+  font-size: 9.5px;
+  color: var(--gp-trip-meta);
+  white-space: nowrap;
+}
+
+/* Stops hang off a short cluster rail — the route metaphor without a tile
+   server: order is the path, the cluster is the place. */
+.gp-trip-zone-track {
+  position: relative;
+  padding-inline-start: 14px;
+}
+
+.gp-trip-zone-track::before {
+  content: '';
+  position: absolute;
+  inset-block: 6px;
+  inset-inline-start: 4px;
+  width: 1.5px;
+  background: var(--gp-trip-accent-line);
+}
+
+.gp-trip-map-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.gp-trip-kind {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: 1px solid var(--gp-trip-line);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--gp-trip-meta);
+  cursor: pointer;
+  transition: border-color var(--gp-duration-snap) var(--gp-ease-snap), color var(--gp-duration-snap) var(--gp-ease-snap), background-color var(--gp-duration-snap) var(--gp-ease-snap);
+}
+
+.gp-trip-kind:hover {
+  border-color: var(--gp-trip-accent-line);
+  color: var(--gp-trip-accent-ink);
+}
+
+.gp-trip-kind[data-kind='stay'] {
+  color: var(--gp-trip-accent-ink);
+}
+
+.gp-trip-kind[data-kind='transit'] {
+  color: color-mix(in oklab, var(--gp-trip-warn), white 10%);
+}
+
+.gp-trip-map-row .gp-trip-detail {
+  flex: none;
+  width: 88px;
+}
+
+/* ------------------------------------------------------------------ group */
+
+.gp-trip-people {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding-block-end: 2px;
+}
+
+.gp-trip-person {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px;
+  border: 1px solid var(--gp-trip-line);
+  border-radius: 999px;
+  background: transparent;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--gp-trip-meta);
+  cursor: pointer;
+  transition: border-color var(--gp-duration-snap) var(--gp-ease-snap), color var(--gp-duration-snap) var(--gp-ease-snap), background-color var(--gp-duration-snap) var(--gp-ease-snap);
+}
+
+.gp-trip-person i {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 13px;
+  height: 13px;
+  border-radius: 999px;
+  background: var(--gp-trip-wash);
+  font-style: normal;
+  font-size: 8px;
+  font-weight: 700;
+}
+
+.gp-trip-person[data-active='true'] {
+  border-color: var(--gp-trip-accent-line);
+  background: var(--gp-trip-accent-soft);
+  color: var(--gp-trip-accent-ink);
+}
+
+.gp-trip-group-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.gp-trip-group-row .gp-trip-detail {
+  flex: none;
+  width: 84px;
+}
+
+/* ------------------------------------------------------------- travel day */
+
+.gp-trip-transfer-row {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.gp-trip-transfer-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.gp-trip-local {
+  flex: none;
+  font-size: 9.5px;
+  font-variant-numeric: tabular-nums;
+  color: var(--gp-trip-meta);
+  white-space: nowrap;
+}
+
+.gp-trip-leaveby {
+  flex: none;
+  font-size: 9.5px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--gp-trip-warn), transparent 86%);
+  color: color-mix(in oklab, var(--gp-trip-warn), white 12%);
+  white-space: nowrap;
+}
+
+.gp-trip-transfer-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.gp-trip-transfer-grid input[type='number'] {
+  appearance: textfield;
+}
+
+.gp-trip-transfer-grid input::-webkit-outer-spin-button,
+.gp-trip-transfer-grid input::-webkit-inner-spin-button {
+  appearance: none;
+}
+
+/* ------------------------------------------------------- narrow containers */
+
+@container (max-width: 380px) {
+  .gp-trip-start {
+    display: none;
+  }
+
+  .gp-trip-transfer-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@container (max-width: 320px) {
+  .gp-trip-phase {
+    display: none;
+  }
+
+  .gp-trip-when {
+    display: none;
+  }
+
+  .gp-trip-map-row .gp-trip-detail,
+  .gp-trip-group-row .gp-trip-detail {
+    width: 64px;
+  }
+}
+
+@container (max-width: 260px) {
+  .gp-trip-summary {
+    display: none;
+  }
+
+  .gp-trip-group-row .gp-trip-detail:last-of-type {
+    display: none;
+  }
+}
+
+/* ----------------------------------------------------------------- motion */
+
+@media (prefers-reduced-motion: reduce) {
+  .gp-trip :is(button, .gp-trip-remove, .gp-trip-add, .gp-trip-person, .gp-trip-kind, .gp-trip-booked) {
+    transition: none;
+  }
+}

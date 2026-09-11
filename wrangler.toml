@@ -9,4 +9,8 @@ routes = [
 
 [assets]
 directory = "./dist"
-not_found_handling = "single-page-application"
+# Grovepad has no client-side path routes: the app lives at "/" and uses query
+# params only. Serving index.html for every unmatched path made every wrong URL
+# return HTTP 200, which search engines treat as a soft 404 and count against
+# the whole site. 404.html returns a real 404 instead.
+not_found_handling = "404-page"

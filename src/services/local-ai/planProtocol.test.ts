@@ -14,7 +14,7 @@ function branchingPlan(nodeCount: number): Record<string, unknown> {
     c: 0.93,
     n: Array.from({ length: nodeCount }, (_, index) => ({
       id: `n${index}`,
-      t: index % 5 === 0 ? 'notes' : index % 3 === 0 ? 'checklist' : 'progress',
+      t: index % 5 === 0 ? 'text' : index % 3 === 0 ? 'checklist' : 'goal_tracker',
       title: `Branch node ${index}`,
       text: `Task ${index}`,
       c: 0.91,
@@ -42,23 +42,23 @@ describe('local AI plan protocol', () => {
       "v": 1,
       "c": 0.86,
       // Small models sometimes emit this comment.
-      "n": [{"id":"n0","t":"notes",}],
+      "n": [{"id":"n0","t":"text",}],
       "r": [],
     }\n\`\`\`\nDone.`
     expect(extractLocalAiPlanJson(raw)).toEqual({
       v: 1,
       c: 0.86,
-      n: [{ id: 'n0', t: 'notes' }],
+      n: [{ id: 'n0', t: 'text' }],
       r: [],
     })
   })
 
   it('prefers the actual plan over unrelated JSON embedded in prose', () => {
-    const raw = 'Ignore example {"ok":true}. Final answer: {"v":1,"c":0.9,"n":[{"id":"n0","t":"notes"}],"r":[]}'
+    const raw = 'Ignore example {"ok":true}. Final answer: {"v":1,"c":0.9,"n":[{"id":"n0","t":"text"}],"r":[]}'
     expect(extractLocalAiPlanJson(raw)).toEqual({
       v: 1,
       c: 0.9,
-      n: [{ id: 'n0', t: 'notes' }],
+      n: [{ id: 'n0', t: 'text' }],
       r: [],
     })
   })
@@ -69,7 +69,7 @@ describe('local AI plan protocol', () => {
     expect(plan?.nodes).toHaveLength(40)
     expect(plan?.relations).toHaveLength(39)
     expect(plan?.nodes[39]?.depth).toBeGreaterThan(1)
-    expect(plan?.nodes[0]?.data).toEqual(widgetDefinition('notes').defaultData())
+    expect(plan?.nodes[0]?.data).toEqual(widgetDefinition('text').defaultData())
     expect(plan?.nodes[0]?.metadata).toEqual({
       badges: [],
       sourceText: 'Task 0',
@@ -83,14 +83,14 @@ describe('local AI plan protocol', () => {
       confidence: 0.88,
       nodes: [{
         temporaryId: 'root',
-        widgetType: 'notes',
+        widgetType: 'text',
         title: 'Safe note',
         sourceText: 'Captured locally',
         data: { text: 'untrusted model value' },
       }],
       relations: [],
     }, 'Make a note')
-    expect(plan?.nodes[0]?.data).toEqual(widgetDefinition('notes').defaultData())
+    expect(plan?.nodes[0]?.data).toEqual(widgetDefinition('text').defaultData())
     expect(plan?.nodes[0]?.sourceText).toBe('Captured locally')
   })
 

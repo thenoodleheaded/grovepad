@@ -217,7 +217,6 @@ export function calendarRestingFace(data: Record<string, unknown>): RestingFaceM
       eyebrow: { label: 'Connected calendars', note: 'Private' },
       rows: [
         { key: 'google', label: 'Google Calendar', value: 'Open to view', tone: 'muted' },
-        { key: 'microsoft', label: 'Outlook Calendar', value: 'Open to view', tone: 'muted' },
       ],
       overflow: 0,
     }

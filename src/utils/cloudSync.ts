@@ -203,6 +203,62 @@ async function fetchDocumentBoard(
   return { board, updatedAt: timestamp(indexRow.updated_at), complete }
 }
 
+export interface CloudHead {
+  indexChecksum: string
+  canvasChecksums: Map<string, string>
+  updatedAt: string | null
+}
+
+/**
+ * Read only the checksums the cloud already stores — two small metadata
+ * queries, no canvas bodies. `canvas_docs.checksum` and
+ * `board_indexes.checksum` are hashes of the same canonical JSON that
+ * `fingerprintBoard` produces locally, so this answers "has anything moved?"
+ * for free and lets an unchanged account skip the whole transfer.
+ *
+ * Returns `'inconclusive'` whenever the cheap answer cannot be trusted — the
+ * documents schema is missing, or the retained legacy row is newer than the
+ * split-document generation — and the caller must do a full fetch instead.
+ */
+export async function fetchCloudHead(userId: string): Promise<CloudHead | null | 'inconclusive'> {
+  const supabase = await getSupabaseClient()
+  if (!supabase) throw new Error('Cloud client unavailable')
+  const [index, canvases, legacy] = await Promise.all([
+    supabase.from('board_indexes').select('checksum, updated_at').eq('user_id', userId).maybeSingle(),
+    supabase.from('canvas_docs').select('canvas_id, checksum').eq('user_id', userId),
+    supabase.from('boards').select('updated_at').eq('user_id', userId).maybeSingle(),
+  ])
+  const schemaError = index.error ?? canvases.error
+  if (schemaError) {
+    if (isMissingCloudDocumentSchema(schemaError)) return 'inconclusive'
+    throw schemaError
+  }
+  // A deployment without the retained legacy table is not an error here; it
+  // only means there is no older row that could outrank the index.
+  if (legacy.error && !isMissingCloudDocumentSchema(legacy.error)) throw legacy.error
+  if (!index.data) {
+    // No split generation. A legacy row still counts as a cloud board, and
+    // only the full fetch knows how to read one.
+    return legacy.data || legacy.error ? 'inconclusive' : null
+  }
+  const indexChecksum = isRecord(index.data) ? stringField(index.data.checksum) : null
+  const indexUpdatedAt = isRecord(index.data) ? timestamp(index.data.updated_at) : null
+  if (!indexChecksum) return 'inconclusive'
+  const legacyUpdatedAt = !legacy.error && isRecord(legacy.data)
+    ? timestamp(legacy.data.updated_at)
+    : null
+  // Same precedence rule fetchCloudBoard applies: a legacy row stamped after
+  // the index means a stale client wrote past our last committed generation.
+  if (isLater(legacyUpdatedAt, indexUpdatedAt)) return 'inconclusive'
+  const canvasChecksums = new Map<string, string>()
+  for (const raw of (canvases.data ?? []) as CloudMetadataRow[]) {
+    const canvasId = stringField(raw.canvas_id)
+    const checksum = stringField(raw.checksum)
+    if (canvasId && checksum) canvasChecksums.set(canvasId, checksum)
+  }
+  return { indexChecksum, canvasChecksums, updatedAt: indexUpdatedAt }
+}
+
 /** Fetch authoritative split documents, falling back to the retained legacy row. */
 export async function fetchCloudBoard(userId: string): Promise<CloudBoardResult | null> {
   const supabase = await getSupabaseClient()

@@ -1,13 +1,37 @@
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import type { Widget } from '../../types/spatial'
 import { WidgetRestingFace } from './WidgetRestingFace'
+
+// Static server render reads a zustand store's INITIAL state, so the canvas
+// door tests hand the hook a fixed board instead of seeding the live store.
+vi.mock('../../store/useWidgetStore', () => {
+  const farWidget = (id: string, completed: boolean) => ({
+    id,
+    type: 'text',
+    title: 'Card',
+    canvasId: 'far-canvas',
+    position: { x: 0, y: 0 },
+    size: { width: 160, height: 120 },
+    data: { text: '', mode: 'plain' },
+    metadata: { badges: [], completed },
+  })
+  const state = {
+    canvases: {
+      'far-canvas': { id: 'far-canvas', name: 'Research den', workspaceId: 'ws-1', parentCanvasId: 'canvas-1' },
+      'child-a': { id: 'child-a', name: 'Sources', workspaceId: 'ws-1', parentCanvasId: 'far-canvas' },
+    },
+    widgets: { 'far-1': farWidget('far-1', true), 'far-2': farWidget('far-2', false) },
+    canvasViews: {},
+  }
+  return { useWidgetStore: (selector: (value: typeof state) => unknown) => selector(state) }
+})
 
 function noteWidget(mode: string): Widget {
   return {
     id: `note-${mode}`,
-    type: 'notes',
-    title: 'Note',
+    type: 'text',
+    title: 'Text',
     canvasId: 'canvas-1',
     position: { x: 0, y: 0 },
     size: { width: 320, height: 200 },
@@ -15,17 +39,6 @@ function noteWidget(mode: string): Widget {
       mode,
       text: '# A clear heading\n- First point\n- Second point',
       color: 'blue',
-      attribution: 'Ada Lovelace',
-      skinStates: {
-        daily_log: { date: '2026-07-26' },
-        callout: { tone: 'decision' },
-        versioned_note: {
-          snapshots: [
-            { id: 'v1', label: 'Today, 10:00', text: 'Earlier draft', createdAt: '2026-07-26T10:00:00Z' },
-            { id: 'v2', label: 'Yesterday', text: 'First draft', createdAt: '2026-07-25T10:00:00Z' },
-          ],
-        },
-      },
     },
     metadata: { badges: [] },
   } as Widget
@@ -35,12 +48,7 @@ describe('Note resting faces', () => {
   it.each([
     'plain',
     'sticky',
-    'quote',
-    'daily_log',
-    'markdown_page',
     'typewriter',
-    'callout',
-    'versioned_note',
   ] as const)('renders the %s skin as its own compact anatomy', (mode) => {
     const markup = renderToStaticMarkup(<WidgetRestingFace widget={noteWidget(mode)} />)
 
@@ -51,17 +59,56 @@ describe('Note resting faces', () => {
     expect(markup).not.toContain('<button')
   })
 
-  it('carries the saved callout tone and version labels into the face', () => {
-    const callout = renderToStaticMarkup(
-      <WidgetRestingFace widget={noteWidget('callout')} />,
+  it('keeps the sticky tint and its ink on the resting page', () => {
+    const markup = renderToStaticMarkup(
+      <WidgetRestingFace widget={noteWidget('sticky')} />,
     )
-    expect(callout).toContain('data-rest-callout-tone="decision"')
-    expect(callout).toContain('Decision')
+    expect(markup).toContain('data-note-color="blue"')
+    expect(markup).toContain('gp-note-sticky-sheet')
+  })
+})
 
-    const versioned = renderToStaticMarkup(
-      <WidgetRestingFace widget={noteWidget('versioned_note')} />,
+function doorWidget(skin: string, skinStates?: Record<string, unknown>): Widget {
+  return {
+    id: `door-${skin}`,
+    type: 'canvas_node',
+    title: 'Research den',
+    canvasId: 'canvas-1',
+    position: { x: 0, y: 0 },
+    size: { width: 280, height: 80 },
+    data: { canvasId: 'far-canvas', skin, ...(skinStates ? { skinStates } : {}) },
+    metadata: { badges: [] },
+  } as unknown as Widget
+}
+
+describe('Canvas door resting faces', () => {
+  it('rests the portal as its door strip, saying the live name and nothing else', () => {
+    const markup = renderToStaticMarkup(<WidgetRestingFace widget={doorWidget('portal')} />)
+    expect(markup).toContain('data-rest-summary="canvas"')
+    expect(markup).toContain('Research den')
+    // A door does not narrate going through itself, or tally what is behind it.
+    expect(markup).not.toContain('Step inside')
+    expect(markup).not.toContain('2 cards')
+    expect(markup).not.toContain('<button')
+  })
+
+  it('rests the live thumbnail as a miniature of the far canvas', () => {
+    const markup = renderToStaticMarkup(<WidgetRestingFace widget={doorWidget('live_thumbnail')} />)
+    // Two far cards fold to two positioned rectangles inside the miniature.
+    expect(markup.match(/left:/g)?.length).toBe(2)
+    expect(markup).toContain('Research den')
+  })
+
+  it('rests the cover with its own pocket over the live name', () => {
+    const markup = renderToStaticMarkup(
+      <WidgetRestingFace
+        widget={doorWidget('cover', { cover: { eyebrow: 'Chapter one', subtitle: 'Where the plan lives' } })}
+      />,
     )
-    expect(versioned).toContain('Today, 10:00')
-    expect(versioned).toContain('Yesterday')
+    // The subtitle is the cover's one pocket of its own words; the retired
+    // eyebrow is not carried forward.
+    expect(markup).not.toContain('Chapter one')
+    expect(markup).toContain('Where the plan lives')
+    expect(markup).toContain('Research den')
   })
 })

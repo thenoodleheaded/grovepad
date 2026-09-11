@@ -18,7 +18,7 @@ afterEach(() => {
 
 describe('widget scale states', () => {
   it('preserves the full size through an icon round trip', () => {
-    const id = Object.keys(useWidgetStore.getState().widgets)[0]!
+    const id = useWidgetStore.getState().createWidget('Notes', { x: 0, y: 0 }, 'text')
     const widget = useWidgetStore.getState().widgets[id]!
     useWidgetStore.getState().setWidgetScaleState(id, 'icon')
     let scaled = useWidgetStore.getState().widgets[id]!
@@ -36,7 +36,7 @@ describe('widget scale states', () => {
   })
 
   it('clamps an icon to its own square range during ordinary resize attempts', () => {
-    const id = Object.keys(useWidgetStore.getState().widgets)[0]!
+    const id = useWidgetStore.getState().createWidget('Notes', { x: 0, y: 0 }, 'text')
     useWidgetStore.getState().setWidgetScaleState(id, 'icon')
 
     useWidgetStore.getState().resizeWidget(id, { width: 4000, height: 4000 })
@@ -47,7 +47,7 @@ describe('widget scale states', () => {
   })
 
   it('keeps icon scaling continuous until the committed release snaps it', () => {
-    const id = Object.keys(useWidgetStore.getState().widgets)[0]!
+    const id = useWidgetStore.getState().createWidget('Notes', { x: 0, y: 0 }, 'text')
     useWidgetStore.getState().setWidgetScaleState(id, 'icon')
 
     useWidgetStore.getState().resizeWidget(id, { width: 97.5, height: 97.5 }, false)
@@ -68,7 +68,7 @@ describe('widget scale states', () => {
   })
 
   it('keeps the opposite icon corner pinned when release changes its size', () => {
-    const id = Object.keys(useWidgetStore.getState().widgets)[0]!
+    const id = useWidgetStore.getState().createWidget('Notes', { x: 0, y: 0 }, 'text')
     useWidgetStore.getState().setWidgetScaleState(id, 'icon')
     const start = useWidgetStore.getState().widgets[id]!
     const pinned = {
@@ -129,7 +129,7 @@ describe('widget scale states', () => {
   })
 
   it('holds the ceiling even when a live content floor demands more', () => {
-    const id = useWidgetStore.getState().createWidget('Notes', { x: 0, y: 0 }, 'notes')
+    const id = useWidgetStore.getState().createWidget('Notes', { x: 0, y: 0 }, 'text')
     setLiveWidgetSizing(id, { minWidth: 99_999, minHeight: 99_999 })
     useWidgetStore.getState().resizeWidget(id, { width: 400, height: 400 })
 
@@ -138,7 +138,7 @@ describe('widget scale states', () => {
   })
 
   it('applies a mounted content floor to programmatic resize paths', () => {
-    const id = useWidgetStore.getState().createWidget('Notes', { x: 0, y: 0 }, 'notes')
+    const id = useWidgetStore.getState().createWidget('Notes', { x: 0, y: 0 }, 'text')
     setLiveWidgetSizing(id, { minWidth: 444, minHeight: 280 })
     useWidgetStore.getState().resizeWidget(id, { width: 100, height: 100 })
     expect(useWidgetStore.getState().widgets[id]!.size).toEqual({ width: 444, height: 280 })
@@ -161,8 +161,8 @@ describe('widget scale states', () => {
 
 describe('retired name-pill state', () => {
   it('restores a board saved mid-pill to its dormant full card', () => {
+    const id = useWidgetStore.getState().createWidget('Notes', { x: 0, y: 0 }, 'text')
     const snapshot = buildBoardSnapshot(useWidgetStore.getState())
-    const id = Object.keys(snapshot.widgets)[0]!
     const raw = JSON.parse(JSON.stringify(snapshot)) as typeof snapshot
     const widget = raw.widgets[id]! as typeof snapshot.widgets[string] & { collapsed?: boolean }
     widget.collapsed = true
@@ -181,7 +181,7 @@ describe('retired name-pill state', () => {
 
 describe('edge-anchored resize', () => {
   it('pins the opposite side, so a left drag walks the origin', () => {
-    const id = useWidgetStore.getState().createWidget('Notes', { x: 400, y: 400 }, 'notes')
+    const id = useWidgetStore.getState().createWidget('Notes', { x: 400, y: 400 }, 'text')
     const before = useWidgetStore.getState().widgets[id]!
     const right = before.position.x + before.size.width
 
@@ -198,7 +198,7 @@ describe('edge-anchored resize', () => {
   })
 
   it('leaves the origin alone when the dragged side is the right one', () => {
-    const id = useWidgetStore.getState().createWidget('Notes', { x: 400, y: 400 }, 'notes')
+    const id = useWidgetStore.getState().createWidget('Notes', { x: 400, y: 400 }, 'text')
     const before = useWidgetStore.getState().widgets[id]!
 
     useWidgetStore.getState().resizeWidgetFromEdge(
@@ -213,7 +213,7 @@ describe('edge-anchored resize', () => {
 
 describe('re-centred scale states', () => {
   it('lands an icon on the middle of the box the user could see — the resting tile', () => {
-    const id = useWidgetStore.getState().createWidget('Notes', { x: 400, y: 400 }, 'notes')
+    const id = useWidgetStore.getState().createWidget('Notes', { x: 400, y: 400 }, 'text')
     const before = useWidgetStore.getState().widgets[id]!
     // A resting-eligible widget shows its tile (top-left-anchored at the
     // stored position), so that tile — not the dormant full card — is the box
@@ -234,7 +234,7 @@ describe('re-centred scale states', () => {
   })
 
   it('re-centres on the tile the user could actually see, not the dormant card', () => {
-    const id = useWidgetStore.getState().createWidget('Notes', { x: 400, y: 400 }, 'notes')
+    const id = useWidgetStore.getState().createWidget('Notes', { x: 400, y: 400 }, 'text')
     const before = useWidgetStore.getState().widgets[id]!
     const tile = { width: 40, height: 40 }
 
@@ -248,7 +248,7 @@ describe('re-centred scale states', () => {
   })
 
   it('returns a widget to its exact starting position across a round trip', () => {
-    const id = useWidgetStore.getState().createWidget('Notes', { x: 400, y: 400 }, 'notes')
+    const id = useWidgetStore.getState().createWidget('Notes', { x: 400, y: 400 }, 'text')
     const before = useWidgetStore.getState().widgets[id]!
 
     useWidgetStore.getState().setWidgetScaleState(id, 'icon')
@@ -260,7 +260,7 @@ describe('re-centred scale states', () => {
   })
 
   it('lands at an exact remembered icon square instead of the 2×2 floor', () => {
-    const id = useWidgetStore.getState().createWidget('Notes', { x: 400, y: 400 }, 'notes')
+    const id = useWidgetStore.getState().createWidget('Notes', { x: 400, y: 400 }, 'text')
 
     useWidgetStore.getState().setWidgetScaleState(id, 'icon', {
       toSize: { width: 97.5, height: 97.5 },
@@ -272,7 +272,7 @@ describe('re-centred scale states', () => {
   })
 
   it('clamps a remembered square that has drifted outside the icon range', () => {
-    const id = useWidgetStore.getState().createWidget('Notes', { x: 400, y: 400 }, 'notes')
+    const id = useWidgetStore.getState().createWidget('Notes', { x: 400, y: 400 }, 'text')
 
     useWidgetStore.getState().setWidgetScaleState(id, 'icon', {
       toSize: { width: 4000, height: 4000 },
@@ -290,8 +290,8 @@ describe('re-centred scale states', () => {
  */
 function gluedIconPair(): [string, string] {
   const store = useWidgetStore.getState()
-  const icon = store.createWidget('Peek', { x: 60_000, y: 60_000 }, 'notes')
-  const mate = store.createWidget('Mate', { x: 62_000, y: 60_000 }, 'notes')
+  const icon = store.createWidget('Peek', { x: 60_000, y: 60_000 }, 'text')
+  const mate = store.createWidget('Mate', { x: 62_000, y: 60_000 }, 'text')
   useWidgetStore.getState().setWidgetScaleState(icon, 'icon')
   const square = useWidgetStore.getState().widgets[icon]!
   const widgets = useWidgetStore.getState().widgets
@@ -322,7 +322,7 @@ describe('an expansion returns to the state it opened from', () => {
   }
 
   it('writes nothing to the board when an icon is peeked open and closed', () => {
-    const id = useWidgetStore.getState().createWidget('Notes', { x: 400, y: 400 }, 'notes')
+    const id = useWidgetStore.getState().createWidget('Notes', { x: 400, y: 400 }, 'text')
     useWidgetStore.getState().setWidgetScaleState(id, 'icon')
     // Grow the icon to an in-between size — nothing about the peek may round
     // it to 2×2 or 3×3, because nothing about the peek touches it at all.
@@ -343,7 +343,7 @@ describe('an expansion returns to the state it opened from', () => {
   })
 
   it('costs no undo step, so undo still reverses the click before it', () => {
-    const id = useWidgetStore.getState().createWidget('Notes', { x: 400, y: 400 }, 'notes')
+    const id = useWidgetStore.getState().createWidget('Notes', { x: 400, y: 400 }, 'text')
     useWidgetStore.getState().setWidgetScaleState(id, 'icon')
     peekIconOpen(id)
     useWidgetRestStore.getState().collapseWidget()
@@ -368,7 +368,7 @@ describe('an expansion returns to the state it opened from', () => {
   })
 
   it('leaves a card opened from rest to the resting system on collapse', () => {
-    const id = useWidgetStore.getState().createWidget('Notes', { x: 400, y: 400 }, 'notes')
+    const id = useWidgetStore.getState().createWidget('Notes', { x: 400, y: 400 }, 'text')
     const before = useWidgetStore.getState().widgets[id]!
     useWidgetRestStore.getState().expandWidget(
       id,

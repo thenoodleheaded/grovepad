@@ -57,7 +57,34 @@ deliberately does not spawn one, so an already-running editor/browser dev
 session is reused instead of fighting over the port.
 
 `npm run tauri:android:dev` and `npm run tauri:ios:dev` do the same against an
-emulator/simulator or a connected device.
+emulator/simulator or a connected device. On iOS, prefer running from Xcode
+(below): the dev server is blocked by iOS local-network permission, so the app
+never gets past the static HTML shell.
+
+### Running on an iPhone straight from Xcode
+
+Open `src-tauri/gen/apple/app.xcodeproj`, choose the `app_iOS` scheme and the
+connected iPhone, and press Run. No terminal command is needed.
+
+Tauri's own "Build Rust Code" step (`tauri ios xcode-script`) only works while
+`tauri ios dev|build --open` is running, because it asks that command for its
+build settings over a loopback WebSocket. The project instead runs
+[xcode-build-rust.sh](../scripts/ios/xcode-build-rust.sh), which:
+
+1. defers untouched to a running `tauri ios dev|build --open`, if there is one;
+2. otherwise runs `npm run build` when anything under `src/`, `public/`, or the
+   frontend config is newer than `dist/index.html` (the frontend is baked into
+   the app, so a Run after a code change rebuilds it);
+3. starts [xcodeCliOptionsServer.mjs](../scripts/ios/xcodeCliOptionsServer.mjs),
+   a stand-in that answers with the settings `tauri ios build` sends
+   (`tauri/custom-protocol`, `--lib`), then runs the normal Tauri step.
+
+The script also adds the Homebrew rustup and `~/.cargo/bin` folders to PATH,
+because Xcode runs build steps without the shell's PATH. The first device build
+compiles the whole Rust app for `aarch64-apple-ios` and takes several minutes
+and a few GB of disk. If `tauri ios init` ever regenerates the Xcode project,
+point its "Build Rust Code" step back at the script (see
+[project.yml](../src-tauri/gen/apple/project.yml)).
 
 ## Release builds
 

@@ -179,11 +179,6 @@ export function weekdayText(day: string): string {
   return formatDay(day, { weekday: 'short' })
 }
 
-/** "September 2026" — the month band's caption. */
-export function monthYearText(day: string): string {
-  return formatDay(day, { month: 'long', year: 'numeric' })
-}
-
 /** The month number (1–12) of a day, or null. */
 export function monthOfDay(day: string): number | null {
   const start = dayStart(day)

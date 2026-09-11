@@ -97,7 +97,7 @@
 }
 
 .gp-toggle-state[data-on] {
-  color: color-mix(in oklab, var(--gp-widget-accent), white 14%);
+  color: color-mix(in oklab, var(--gp-accent-ink, var(--gp-widget-accent)), var(--gp-accent-lift, #fff) 14%);
 }
 
 /* The emitted boolean, never dressed up as the skin's own language. */
@@ -113,7 +113,7 @@
 }
 
 .gp-toggle-state[data-on] code {
-  color: color-mix(in oklab, var(--gp-widget-accent), white 20%);
+  color: color-mix(in oklab, var(--gp-accent-ink, var(--gp-widget-accent)), var(--gp-accent-lift, #fff) 20%);
   background: color-mix(in oklab, var(--gp-widget-accent), transparent 88%);
 }
 
@@ -458,7 +458,8 @@
   border: 0;
   border-radius: var(--gp-r1) !important;
   padding: 0;
-  color: var(--gp-toggle-status);
+  /* Signal-ink mix: identical on dark glass (0%), deep ink on paper. */
+  color: color-mix(in oklab, var(--gp-toggle-status), black var(--gp-signal-ink-mix, 0%));
   text-align: left;
 }
 

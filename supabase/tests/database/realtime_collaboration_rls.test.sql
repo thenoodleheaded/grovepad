@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(27);
+select plan(28);
 
 select has_table('public', 'canvas_collaborations', 'collaboration canvas table exists');
 select has_table('public', 'canvas_members', 'membership table exists');

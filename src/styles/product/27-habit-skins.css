@@ -61,7 +61,7 @@
   flex: 0 0 auto;
   place-items: center;
   border-radius: var(--gp-r2);
-  color: color-mix(in oklab, var(--gp-widget-accent), white 12%);
+  color: color-mix(in oklab, var(--gp-accent-ink, var(--gp-widget-accent)), var(--gp-accent-lift, #fff) 12%);
   background: color-mix(in oklab, var(--gp-widget-accent), transparent 87%);
   box-shadow: inset 0 1px 0 color-mix(in oklab, white, transparent 88%);
 }
@@ -171,7 +171,7 @@
 }
 
 .gp-habit-day[data-done] {
-  color: color-mix(in oklab, var(--gp-widget-accent), white 12%);
+  color: color-mix(in oklab, var(--gp-accent-ink, var(--gp-widget-accent)), var(--gp-accent-lift, #fff) 12%);
 }
 
 .gp-habit-day[data-done] .gp-habit-day-mark {
@@ -322,7 +322,7 @@
 .gp-habit-month-foot i[data-level='bright'] { margin-inline-end: 2px; background: var(--gp-widget-accent); }
 
 .gp-habit-month-foot strong {
-  color: color-mix(in oklab, var(--gp-widget-accent), white 8%);
+  color: color-mix(in oklab, var(--gp-accent-ink, var(--gp-widget-accent)), var(--gp-accent-lift, #fff) 8%);
   font-size: 17px;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.04em;
@@ -382,7 +382,7 @@
 }
 
 .gp-habit-day[data-shape='link'][data-done] .gp-habit-day-mark {
-  border-color: color-mix(in oklab, var(--gp-widget-accent), white 8%);
+  border-color: color-mix(in oklab, var(--gp-accent-ink, var(--gp-widget-accent)), var(--gp-accent-lift, #fff) 8%);
   background: color-mix(in oklab, var(--gp-widget-accent), black 12%);
 }
 
@@ -401,7 +401,7 @@
 }
 
 .gp-habit-chain-message[data-live] {
-  color: color-mix(in oklab, var(--gp-widget-accent), white 10%);
+  color: color-mix(in oklab, var(--gp-accent-ink, var(--gp-widget-accent)), var(--gp-accent-lift, #fff) 10%);
   background: color-mix(in oklab, var(--gp-widget-accent), transparent 91%);
 }
 
@@ -436,7 +436,7 @@
 
 .gp-habit-score-ring strong {
   align-self: end;
-  color: color-mix(in oklab, var(--gp-widget-accent), white 10%);
+  color: color-mix(in oklab, var(--gp-accent-ink, var(--gp-widget-accent)), var(--gp-accent-lift, #fff) 10%);
   font-size: 25px;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.055em;
@@ -546,7 +546,7 @@
 }
 
 .gp-widget-ui .gp-habit-day-picker button[aria-selected='true'] {
-  color: color-mix(in oklab, var(--gp-widget-accent), white 12%);
+  color: color-mix(in oklab, var(--gp-accent-ink, var(--gp-widget-accent)), var(--gp-accent-lift, #fff) 12%);
   background: color-mix(in oklab, var(--gp-widget-accent), transparent 85%);
   box-shadow: inset 0 1px 0 color-mix(in oklab, white, transparent 90%);
 }
@@ -681,7 +681,7 @@
 }
 
 .gp-widget-ui .gp-habit-target-main > button:hover {
-  color: var(--gp-widget-accent);
+  color: var(--gp-accent-ink, var(--gp-widget-accent));
   transform: scale(1.06);
 }
 
@@ -705,7 +705,7 @@
 .gp-habit-target-readout > strong {
   grid-row: 1 / 3;
   grid-column: 2;
-  color: color-mix(in oklab, var(--gp-widget-accent), white 10%);
+  color: color-mix(in oklab, var(--gp-accent-ink, var(--gp-widget-accent)), var(--gp-accent-lift, #fff) 10%);
   font-size: 28px;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.05em;
@@ -810,7 +810,7 @@
 .gp-habit-frequency-hero strong {
   grid-row: 1 / 3;
   grid-column: 2;
-  color: color-mix(in oklab, var(--gp-widget-accent), white 10%);
+  color: color-mix(in oklab, var(--gp-accent-ink, var(--gp-widget-accent)), var(--gp-accent-lift, #fff) 10%);
   font-size: 28px;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.05em;
@@ -851,7 +851,7 @@
 }
 
 .gp-widget-ui .gp-habit-frequency-target button:hover:not(:disabled) {
-  color: var(--gp-widget-accent);
+  color: var(--gp-accent-ink, var(--gp-widget-accent));
   background: color-mix(in oklab, var(--gp-habit-ink), transparent 92%);
 }
 

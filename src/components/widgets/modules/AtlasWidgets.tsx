@@ -35,7 +35,7 @@ function ObjectHero({type,data}:{type:AtlasType;data:AtlasWidgetData}){
   if(spec.visual==='vessel')return <div data-field-key={spec.heroField} data-visual={spec.visual} className="gp-atlas-object relative h-28 overflow-hidden rounded-[26px] border gp-hairline bg-white/[0.025]"><div className="gp-atlas-liquid absolute inset-x-0 bottom-0 transition-[height] duration-500" style={{height:`${progress}%`,background:`linear-gradient(180deg,${spec.accent}88,${spec.accent}30)`}}/><div className="absolute inset-x-5 top-4 flex justify-between  text-[9px] text-white/50"><span>{Math.round(progress)}%</span><DropletMarks/></div></div>
   if(circularObjects.has(spec.visual))return <div data-field-key={spec.heroField} data-visual={spec.visual} className="gp-atlas-object relative flex h-28 items-center justify-center overflow-hidden rounded-2xl border gp-hairline bg-white/[0.02]"><svg viewBox="0 0 160 100" className="h-full w-full"><path d="M24 78 A58 58 0 0 1 136 78" fill="none" stroke="#ffffff12" strokeWidth="12" strokeLinecap="round"/><path d="M24 78 A58 58 0 0 1 136 78" fill="none" stroke={spec.accent} strokeOpacity=".78" strokeWidth="8" strokeLinecap="round" pathLength="100" strokeDasharray={`${progress} 100`}/><line x1="80" y1="78" x2={80+48*Math.cos(Math.PI-(progress/100)*Math.PI)} y2={78-48*Math.sin((progress/100)*Math.PI)} stroke={spec.accent} strokeWidth="2" strokeLinecap="round"/><circle cx="80" cy="78" r="5" fill={spec.accent}/></svg><span className="absolute bottom-2  text-[10px] text-neutral-400">{Math.round(progress)}%</span></div>
   if(objectCollections.has(spec.visual))return <div data-field-key={spec.heroField} data-visual={spec.visual} className="gp-atlas-object relative h-28 overflow-hidden rounded-2xl border gp-hairline bg-white/[0.02] p-3"><div className="flex h-full items-end justify-center gap-2">{data.items.slice(0,5).map((item,index)=><div key={item.id} className="gp-atlas-piece relative flex min-w-10 flex-1 items-center justify-center rounded-xl border gp-hairline transition-all duration-300" style={{height:`${38+((item.value+index*17)%55)}%`,color:item.done?'#a3e635':spec.accent,background:item.done?'rgba(163,230,53,.12)':`${spec.accent}12`,opacity:item.status==='waiting'?.55:1}}><Icon size={Math.max(13,22-index)} strokeWidth={1.5}/><span className="absolute -bottom-3 max-w-full truncate text-[7px] uppercase text-neutral-600">{item.label}</span></div>)}</div></div>
-  return <div data-field-key={spec.heroField} data-visual={spec.visual} className="gp-atlas-object flex h-28 items-center justify-center rounded-2xl border gp-hairline" style={{color:spec.accent}}><Icon size={44} strokeWidth={1.3}/></div>
+  return <div data-field-key={spec.heroField} data-visual={spec.visual} className="gp-atlas-object flex h-28 items-center justify-center rounded-2xl border gp-hairline" style={{color:`color-mix(in oklab, ${spec.accent}, black var(--gp-signal-ink-mix, 0%))`}}><Icon size={44} strokeWidth={1.3}/></div>
 }
 function DropletMarks(){return <span aria-hidden className="flex gap-1"><i className="h-1 w-1 rounded-full bg-white/30"/><i className="h-1 w-1 rounded-full bg-white/20"/><i className="h-1 w-1 rounded-full bg-white/10"/></span>}
 
@@ -48,7 +48,7 @@ function DialFace({type,data}:{type:AtlasType;data:AtlasWidgetData}){
   return <div data-field-key={spec.heroField} data-visual="dial" className="gp-atlas-object relative flex h-32 items-center justify-center overflow-hidden rounded-2xl border gp-hairline bg-white/[0.02]">
     <svg viewBox="0 0 160 96" className="absolute inset-0 h-full w-full"><path d="M20 82 A60 60 0 0 1 140 82" fill="none" stroke="#ffffff10" strokeWidth="10" strokeLinecap="round"/><path d="M20 82 A60 60 0 0 1 140 82" fill="none" stroke={spec.accent} strokeOpacity=".8" strokeWidth="10" strokeLinecap="round" pathLength="100" strokeDasharray={`${progress} 100`}/></svg>
     <div className="relative flex flex-col items-center">
-      <span className="gp-value max-w-[13ch] truncate text-2xl font-semibold" style={{color:spec.accent}}>{display(hero?hero.get(data):data.primary)}</span>
+      <span className="gp-value max-w-[13ch] truncate text-2xl font-semibold" style={{color:`color-mix(in oklab, ${spec.accent}, black var(--gp-signal-ink-mix, 0%))`}}>{display(hero?hero.get(data):data.primary)}</span>
       <span className="gp-label truncate text-[9px]">{hero?.label??'Progress'}</span>
       <span className="text-[9px] text-neutral-500">{Math.round(progress)}% of {display(data.target)}</span>
     </div>
@@ -100,7 +100,7 @@ function ScheduleRows({type,data}:{type:AtlasType;data:AtlasWidgetData}){
     return <div key={label} className="flex min-h-8 items-center gap-2 rounded-xl border gp-hairline px-2" style={{background:next?`${spec.accent}14`:'rgba(255,255,255,0.02)'}}>
       <span aria-hidden className="h-2 w-2 shrink-0 rounded-full" style={{background:next?spec.accent:'#52525b'}}/>
       <span className="min-w-0 flex-1 truncate text-[11px] capitalize text-neutral-300">{String(label).replaceAll('_',' ')}</span>
-      <span className="shrink-0 text-[11px] tabular-nums" style={{color:next?spec.accent:'#a1a1aa'}}>{String(time)}</span>
+      <span className="shrink-0 text-[11px] tabular-nums" style={{color:`color-mix(in oklab, ${next?spec.accent:'#a1a1aa'}, black var(--gp-signal-ink-mix, 0%))`}}>{String(time)}</span>
     </div>
   })}</div>
 }
@@ -132,9 +132,9 @@ function CompactLine({type,data,onChange}:{type:AtlasType;data:AtlasWidgetData;o
   const hero=fieldsFor(type).find(field=>field.key===spec.heroField)
   return <div className="flex items-center gap-2">
     <span data-field-key={spec.heroField} className="flex min-w-0 flex-1 items-center gap-2 rounded-xl border gp-hairline bg-white/[0.02] px-2.5 py-2">
-      <Icon size={14} strokeWidth={1.6} style={{color:spec.accent}}/>
+      <Icon size={14} strokeWidth={1.6} style={{color:`color-mix(in oklab, ${spec.accent}, black var(--gp-signal-ink-mix, 0%))`}}/>
       <span className="gp-label min-w-0 flex-1 truncate text-[9px]">{hero?.label??spec.label}</span>
-      <span className="gp-value shrink-0 truncate text-[13px] font-semibold" style={{color:spec.accent}}>{display(hero?hero.get(data):data.primary)}</span>
+      <span className="gp-value shrink-0 truncate text-[13px] font-semibold" style={{color:`color-mix(in oklab, ${spec.accent}, black var(--gp-signal-ink-mix, 0%))`}}>{display(hero?hero.get(data):data.primary)}</span>
     </span>
     <Commands type={type} data={data} limit={1} onChange={onChange}/>
   </div>

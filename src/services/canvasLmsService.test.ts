@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   fetchCanvasLmsFeed,
   normalizeCanvasAnnouncements,
@@ -6,6 +6,10 @@ import {
   normalizeCanvasPlannerItems,
   parseCanvasOrigin,
 } from './canvasLmsService'
+
+afterEach(() => {
+  vi.unstubAllGlobals()
+})
 
 describe('Canvas LMS service', () => {
   it('accepts only a secure school origin', () => {
@@ -93,5 +97,76 @@ describe('Canvas LMS service', () => {
         'Bearer student-secret-token',
       )
     }
+  })
+
+  it('keeps native-app reads direct instead of calling the website relay', async () => {
+    vi.stubGlobal('window', {
+      location: { protocol: 'http:' },
+      __TAURI_INTERNALS__: {},
+    })
+    const fetcher = vi.fn<typeof fetch>()
+      .mockResolvedValueOnce(new Response('[]', { status: 200 }))
+      .mockResolvedValueOnce(new Response('[]', { status: 200 }))
+      .mockResolvedValueOnce(new Response('[]', { status: 200 }))
+
+    await fetchCanvasLmsFeed({
+      origin: 'https://canvas.ou.edu',
+      token: 'student-secret-token',
+    }, undefined, fetcher)
+
+    const [url, options] = fetcher.mock.calls[0] ?? []
+    expect(String(url)).toMatch(/^https:\/\/canvas\.ou\.edu\/api\/v1\//)
+    expect(new Headers(options?.headers).get('Authorization')).toBe(
+      'Bearer student-secret-token',
+    )
+  })
+
+  it('uses the same-origin no-storage relay in the website build', async () => {
+    vi.stubGlobal('window', { location: { protocol: 'https:' } })
+    const fetcher = vi.fn<typeof fetch>()
+      .mockResolvedValueOnce(new Response(JSON.stringify([{
+        id: 42,
+        name: 'Interaction Design',
+      }]), { status: 200, headers: { 'Content-Type': 'application/json' } }))
+      .mockResolvedValueOnce(new Response('[]', {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }))
+      .mockResolvedValueOnce(new Response('[]', {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }))
+
+    await fetchCanvasLmsFeed({
+      origin: 'https://canvas.ou.edu',
+      token: 'student-secret-token',
+    }, undefined, fetcher)
+
+    expect(fetcher).toHaveBeenCalledTimes(3)
+    for (const [url, options] of fetcher.mock.calls) {
+      expect(url).toBe('/api/canvas-lms')
+      expect(options?.method).toBe('POST')
+      expect(new Headers(options?.headers).has('Authorization')).toBe(false)
+      const body = JSON.parse(String(options?.body)) as {
+        origin: string
+        path: string
+        token: string
+      }
+      expect(body.origin).toBe('https://canvas.ou.edu')
+      expect(body.path).toMatch(/^\/api\/v1\//)
+      expect(body.token).toBe('student-secret-token')
+    }
+  })
+
+  it('shows a relay explanation instead of the browser’s opaque fetch error', async () => {
+    vi.stubGlobal('window', { location: { protocol: 'https:' } })
+    const fetcher = vi.fn<typeof fetch>().mockRejectedValue(new TypeError('Failed to fetch'))
+
+    await expect(fetchCanvasLmsFeed({
+      origin: 'https://canvas.ou.edu',
+      token: 'student-secret-token',
+    }, undefined, fetcher)).rejects.toThrow(
+      'Grovepad’s secure Canvas relay could not be reached. Reload and try again.',
+    )
   })
 })

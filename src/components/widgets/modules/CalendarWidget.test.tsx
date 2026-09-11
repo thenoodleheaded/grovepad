@@ -75,7 +75,7 @@ describe('purpose-built Calendar skins', () => {
     expect(occasions).toContain('Dec 10')
   })
 
-  it('offers private read-only Google and Outlook connections', () => {
+  it('offers a private read-only Google connection and no Outlook', () => {
     const markup = renderToStaticMarkup(
       <CalendarWidget
         data={{ ...base, skin: 'connected_calendars' }}
@@ -84,7 +84,7 @@ describe('purpose-built Calendar skins', () => {
       />,
     )
     expect(markup).toContain('Google Calendar')
-    expect(markup).toContain('Outlook Calendar')
+    expect(markup).not.toContain('Outlook')
     expect(markup).toContain('events and access tokens are never saved on the board')
   })
 })

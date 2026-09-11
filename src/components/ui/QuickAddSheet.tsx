@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
-import { BrainCircuit, Check, ChevronLeft, ChevronRight, CornerDownLeft, Sparkles, Telescope, X } from 'lucide-react'
+import { BrainCircuit, Check, ChevronLeft, ChevronRight, CornerDownLeft, Sparkles, SquareChevronRight, Telescope, X } from 'lucide-react'
 import { useCanvasStore } from '../../store/useCanvasStore'
 import { useToastStore } from '../../store/useToastStore'
 import { useWidgetStore } from '../../store/useWidgetStore'
@@ -17,6 +17,36 @@ import {
 import { buildScaffold } from '../../utils/scaffoldPlanner'
 import { recordScenarioChoice, resolveArchetypeById, resolveScenario } from '../../utils/scenarioResolver'
 import { quickAddStatusPresentation } from '../../utils/quickAddStatus'
+import {
+  QUICK_ADD_RECENT_LIMIT,
+  readQuickAddRecents,
+  recordQuickAddRecent,
+} from '../../store/quickAddRecents'
+import {
+  COMMAND_EXAMPLES,
+  parseCommandLine,
+  suggestCommands,
+  type CommandContext,
+  type CommandTokenRole,
+} from '../../utils/commandLine'
+import { executeCommand } from '../../utils/commandExecutor'
+import { skinsFor } from '../../utils/widgetSkins'
+import { widgetDefinition } from '../../widgets/registry'
+
+/**
+ * Inline colour per token role — the way the bar shows it understood you.
+ * Colour and glow only: the mirror overlay must keep the textarea's exact
+ * glyph metrics, so no role may change font weight or size.
+ */
+const TOKEN_STYLES: Record<CommandTokenRole, { className: string; glow?: string }> = {
+  verb: { className: 'text-emerald-300', glow: '0 0 14px rgba(52, 211, 153, 0.45)' },
+  noun: { className: 'text-sky-300', glow: '0 0 12px rgba(125, 211, 252, 0.3)' },
+  value: { className: 'text-violet-300', glow: '0 0 12px rgba(196, 181, 253, 0.3)' },
+  count: { className: 'text-amber-300' },
+  title: { className: 'text-neutral-200' },
+  filler: { className: 'text-neutral-500' },
+  unknown: { className: 'text-neutral-400' },
+}
 
 const EXAMPLES = ['plan my week', 'i want to make a game', 'trip to japan?', 'get my life together']
 
@@ -87,6 +117,8 @@ export function QuickAddSheet() {
   const canvasName = useWidgetStore((state) => state.canvases[state.activeCanvasId]?.name)
 
   const [text, setText] = useState('')
+  // Read once on mount: the row must not reshuffle under the user mid-session.
+  const [recents, setRecents] = useState<string[]>(() => readQuickAddRecents())
   const [aiStatus, setAiStatus] = useState<QuickAddAiStatus>(currentAiStatus)
   const [startingModel, setStartingModel] = useState(false)
   const [interpretation, setInterpretation] = useState<ThoughtInterpretation | null>(null)
@@ -96,6 +128,7 @@ export function QuickAddSheet() {
   const [deepPending, setDeepPending] = useState(false)
   const [answerLabel, setAnswerLabel] = useState<string | null>(null)
   const [anchor, setAnchor] = useState<Vector2D | null>(null)
+  const [suggestionIndex, setSuggestionIndex] = useState(0)
 
   const previewIndex = useQuickAddPreviewStore((state) => state.index)
   const previewCandidates = useQuickAddPreviewStore((state) => state.candidates)
@@ -154,11 +187,36 @@ export function QuickAddSheet() {
     [widgets, activeCanvasId],
   )
 
+  // --- Command line -------------------------------------------------------
+  // A first word that matches a verb turns the line into a command over the
+  // selection; anything else falls through to the thought interpreter.
+  const commandContext = useMemo<CommandContext>(() => {
+    const selected = [...selectedIds]
+      .map((id) => widgets[id])
+      .filter((widget): widget is NonNullable<typeof widget> => Boolean(widget))
+    const first = selected[0]
+    const uniform = first !== undefined && selected.every((widget) => widget.type === first.type)
+    const skinOptions = uniform
+      ? skinsFor(first, widgetDefinition(first.type)).map(({ value, label }) => ({ value, label }))
+      : []
+    return { selectionCount: selected.length, skinOptions }
+  }, [selectedIds, widgets])
+
+  const commandParse = useMemo(
+    () => parseCommandLine(text, commandContext),
+    [text, commandContext],
+  )
+  const commandSuggestions = useMemo(
+    () => (commandParse ? [] : suggestCommands(text)),
+    [text, commandParse],
+  )
+  const commandIntent = commandParse !== null || commandSuggestions.length > 0
+
   // World anchor for the blueprint: fixed at first keystroke so the tree
   // grows in place instead of swimming while the user types.
   useEffect(() => {
     if (!open) return
-    if (!text.trim()) {
+    if (!text.trim() || commandIntent) {
       setAnchor(null)
       useQuickAddPreviewStore.getState().clear()
       return
@@ -171,7 +229,7 @@ export function QuickAddSheet() {
         { x: pan.x, y: pan.y, zoom },
       )
     })
-  }, [open, text])
+  }, [open, text, commandIntent])
 
   // --- Pass 1 + 2: deterministic per keystroke, fast router after a pause --
   useEffect(() => {
@@ -180,7 +238,7 @@ export function QuickAddSheet() {
     predictionAbortRef.current = controller
     let modelResultApplied = false
 
-    if (!text.trim()) {
+    if (!text.trim() || commandIntent) {
       setInterpretation(null)
       return () => controller.abort()
     }
@@ -243,7 +301,7 @@ export function QuickAddSheet() {
       window.clearTimeout(modelTimer)
       controller.abort()
     }
-  }, [text, selectedWidget?.title, selectedWidget?.type, aiStatus.enabled])
+  }, [text, selectedWidget?.title, selectedWidget?.type, aiStatus.enabled, commandIntent])
 
   const downloadModel = useCallback(() => {
     if (startingModel) return
@@ -482,6 +540,19 @@ export function QuickAddSheet() {
       })
   }, [deepPending, text, selectedWidget?.title, selectedWidget?.type])
 
+  // What you added before comes first; the stock examples fill the rest of the
+  // row, so the strip stays one line whether you are new here or not.
+  const contextChips = useMemo(() => {
+    const seen = new Set(recents.map((entry) => entry.toLowerCase()))
+    return [
+      ...recents.map((label) => ({ label, isRecent: true })),
+      ...EXAMPLES.filter((example) => !seen.has(example.toLowerCase())).map((label) => ({
+        label,
+        isRecent: false,
+      })),
+    ].slice(0, QUICK_ADD_RECENT_LIMIT)
+  }, [recents])
+
   const createAll = useCallback(() => {
     const state = useQuickAddPreviewStore.getState()
     const candidate = state.candidates[state.index]
@@ -489,6 +560,7 @@ export function QuickAddSheet() {
     if (!candidate || !plan || plan.nodes.length === 0 || !state.anchor) return
     const parentId = selectedWidgetId
     useWidgetStore.getState().commitThoughtPlan(plan, { x: state.anchor.x, y: state.anchor.y }, parentId)
+    setRecents(recordQuickAddRecent(text))
 
     if (candidate.id.startsWith('dir:') && scenario) {
       recordScenarioChoice(scenario.archetypeId, candidate.id.slice(4), text)
@@ -504,6 +576,29 @@ export function QuickAddSheet() {
     )
     close()
   }, [scenario, text, selectedWidgetId, close])
+
+  const runCommand = useCallback(() => {
+    if (!commandParse || commandParse.issue) return
+    const result = executeCommand(commandParse)
+    // A failure must not wear the same face as a success: danger tone keeps
+    // "Nothing here is glued" visually distinct from "Glued 3 cards".
+    useToastStore.getState().addToast(result.message, {
+      ...(result.ok ? {} : { tone: 'danger' as const }),
+      ...(result.undoable
+        ? { action: { label: 'Undo', run: () => useWidgetStore.getState().undo() } }
+        : {}),
+    })
+    if (result.ok) {
+      setRecents(recordQuickAddRecent(text))
+      close()
+    }
+  }, [commandParse, text, close])
+
+  const completeSuggestion = useCallback((completion: string) => {
+    setText(completion)
+    setSuggestionIndex(0)
+    textareaRef.current?.focus()
+  }, [])
 
   if (!open) return null
 
@@ -537,36 +632,105 @@ export function QuickAddSheet() {
         >
           {/* Row 1 — input */}
           <div className="flex items-start gap-2.5 px-4 pt-3">
-            <Sparkles size={15} className="mt-[7px] shrink-0 text-emerald-400/80" aria-hidden />
-            <textarea
-              ref={textareaRef}
-              value={text}
-              rows={singleLine ? 1 : Math.min(3, text.split('\n').length)}
-              placeholder="What's on your mind?"
-              enterKeyHint={singleLine ? 'done' : 'enter'}
-              autoCapitalize="sentences"
-              spellCheck
-              onChange={(e) => {
-                interactionLockedRef.current = false
-                selectedIdRef.current = null
-                setText(e.target.value)
-                setAnswerLabel(null)
-                setDeepResult(null)
-              }}
-              onKeyDown={(e) => {
-                if ((e.altKey || e.metaKey || e.ctrlKey) && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
-                  e.preventDefault()
-                  cycleCandidates(e.key === 'ArrowRight' ? 1 : -1)
-                  return
+            <span className="mt-[7px] shrink-0" aria-hidden>
+              {commandParse ? (
+                <SquareChevronRight
+                  key="command"
+                  size={15}
+                  className="gp-qa-fade text-emerald-300"
+                  style={{ filter: 'drop-shadow(0 0 6px rgba(52, 211, 153, 0.5))' }}
+                />
+              ) : (
+                <Sparkles key="thought" size={15} className="gp-qa-fade text-emerald-400/80" />
+              )}
+            </span>
+            <div className="relative min-w-0 flex-1">
+              {/* Mirror overlay: the same text, coloured per token. The textarea's
+                  own glyphs turn transparent underneath, so the caret rides over
+                  painted words that always match its metrics exactly. */}
+              {commandParse && singleLine && (
+                <div
+                  aria-hidden
+                  className="pointer-events-none absolute inset-0 max-h-24 overflow-hidden whitespace-pre-wrap break-words py-1.5 text-[14px] leading-relaxed"
+                >
+                  {(() => {
+                    const parts: ReactNode[] = []
+                    let cursor = 0
+                    for (const [index, token] of commandParse.tokens.entries()) {
+                      const at = text.indexOf(token.text, cursor)
+                      if (at < 0) return text
+                      if (at > cursor) parts.push(text.slice(cursor, at))
+                      const style = TOKEN_STYLES[token.role]
+                      parts.push(
+                        <span
+                          key={index}
+                          className={`${style.className} transition-colors duration-150`}
+                          style={style.glow ? { textShadow: style.glow } : undefined}
+                        >
+                          {token.text}
+                        </span>,
+                      )
+                      cursor = at + token.text.length
+                    }
+                    if (cursor < text.length) parts.push(text.slice(cursor))
+                    return parts
+                  })()}
+                </div>
+              )}
+              <textarea
+                ref={textareaRef}
+                value={text}
+                rows={singleLine ? 1 : Math.min(3, text.split('\n').length)}
+                placeholder={
+                  selectedIds.size > 0
+                    ? `${selectedIds.size} selected — type a command or a thought`
+                    : "What's on your mind?"
                 }
-                if (e.key !== 'Enter') return
-                if (e.metaKey || e.ctrlKey || (singleLine && !e.shiftKey)) {
-                  e.preventDefault()
-                  createAll()
-                }
-              }}
-              className="max-h-24 w-full resize-none bg-transparent py-1.5 text-[14px] leading-relaxed text-neutral-100 outline-none placeholder:text-neutral-600"
-            />
+                enterKeyHint={singleLine ? 'done' : 'enter'}
+                autoCapitalize="sentences"
+                spellCheck={!commandParse}
+                onChange={(e) => {
+                  interactionLockedRef.current = false
+                  selectedIdRef.current = null
+                  setText(e.target.value)
+                  setSuggestionIndex(0)
+                  setAnswerLabel(null)
+                  setDeepResult(null)
+                }}
+                onKeyDown={(e) => {
+                  if (commandSuggestions.length > 0) {
+                    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                      e.preventDefault()
+                      setSuggestionIndex((current) => {
+                        const delta = e.key === 'ArrowDown' ? 1 : -1
+                        return (current + delta + commandSuggestions.length) % commandSuggestions.length
+                      })
+                      return
+                    }
+                    if (e.key === 'Tab' || e.key === 'Enter') {
+                      e.preventDefault()
+                      const chosen = commandSuggestions[suggestionIndex] ?? commandSuggestions[0]
+                      if (chosen) completeSuggestion(chosen.completion)
+                      return
+                    }
+                  }
+                  if ((e.altKey || e.metaKey || e.ctrlKey) && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
+                    e.preventDefault()
+                    cycleCandidates(e.key === 'ArrowRight' ? 1 : -1)
+                    return
+                  }
+                  if (e.key !== 'Enter') return
+                  if (e.metaKey || e.ctrlKey || (singleLine && !e.shiftKey)) {
+                    e.preventDefault()
+                    if (commandParse) runCommand()
+                    else createAll()
+                  }
+                }}
+                className={`max-h-24 w-full resize-none bg-transparent py-1.5 text-[14px] leading-relaxed outline-none placeholder:text-neutral-600 ${
+                  commandParse && singleLine ? 'text-transparent caret-emerald-300' : 'text-neutral-100'
+                }`}
+              />
+            </div>
             <div className="gp-quick-add-status mt-1 flex shrink-0 items-center gap-1.5">
               <span
                 className={`inline-flex items-center gap-1.5 rounded-full border border-white/[0.055] bg-white/[0.025] px-2 py-1 text-[9px] font-medium ${aiPresentation.tone}`}
@@ -602,16 +766,22 @@ export function QuickAddSheet() {
 
           {/* Row 2 — context strip */}
           {!text.trim() ? (
-            <div className="gp-qa-fade flex flex-wrap items-center gap-1.5 px-4 pb-3 pt-2">
-              {EXAMPLES.map((example, index) => (
+            <>
+            <div className="gp-qa-fade flex flex-wrap items-center gap-1.5 px-4 pb-2 pt-2">
+              {contextChips.map(({ label, isRecent }, index) => (
                 <button
-                  key={example}
+                  key={label}
                   type="button"
-                  onClick={() => setText(example)}
-                  className="gp-qa-rise rounded-full border border-white/[0.06] px-2.5 py-1 text-[10.5px] text-neutral-500 transition-colors hover:border-white/10 hover:text-neutral-300"
+                  title={isRecent ? 'Something you added before' : undefined}
+                  onClick={() => setText(label)}
+                  className={`gp-qa-rise max-w-[15rem] truncate rounded-full border px-2.5 py-1 text-[10.5px] transition-colors ${
+                    isRecent
+                      ? 'border-white/[0.12] text-neutral-400 hover:border-white/20 hover:text-neutral-200'
+                      : 'border-white/[0.06] text-neutral-500 hover:border-white/10 hover:text-neutral-300'
+                  }`}
                   style={{ animationDelay: `${index * 50}ms` }}
                 >
-                  {example}
+                  {label}
                 </button>
               ))}
               {canDownloadModel && (
@@ -624,6 +794,84 @@ export function QuickAddSheet() {
                   {startingModel ? 'Starting…' : 'Download model'}
                 </button>
               )}
+            </div>
+            {/* The quiet teaching row: real commands, one tap away. */}
+            <div className="gp-qa-fade flex flex-wrap items-center gap-1.5 border-t border-white/[0.04] px-4 pb-3 pt-2">
+              <SquareChevronRight size={11} className="shrink-0 text-neutral-600" aria-hidden />
+              {COMMAND_EXAMPLES.map((example) => (
+                <button
+                  key={example}
+                  type="button"
+                  onClick={() => setText(example)}
+                  className="rounded-md bg-white/[0.03] px-1.5 py-0.5 text-[9.5px] font-medium text-emerald-300/70 transition-colors hover:bg-white/[0.07] hover:text-emerald-200"
+                >
+                  {example}
+                </button>
+              ))}
+              <span className="ml-auto hidden text-[9px] text-neutral-600 sm:inline">
+                commands act on your selection
+              </span>
+            </div>
+            </>
+          ) : commandParse ? (
+            /* Command mode — the parsed reading and its one-press run. */
+            <div className="gp-qa-fade flex items-center gap-2.5 px-4 pb-2.5 pt-1.5">
+              <span className="shrink-0 rounded-full border border-white/[0.06] bg-white/[0.04] px-2 py-0.5 text-[8.5px] font-semibold uppercase tracking-widest text-neutral-500">
+                {commandParse.spec.family}
+              </span>
+              {commandParse.issue ? (
+                <span key={commandParse.issue} className="gp-qa-fade min-w-0 flex-1 truncate text-[11px] text-amber-300/85">
+                  {commandParse.issue}
+                </span>
+              ) : (
+                <>
+                  <span key={commandParse.summary} className="gp-qa-fade min-w-0 flex-1 truncate text-[12px] font-medium text-neutral-100">
+                    {commandParse.summary}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={runCommand}
+                    data-tone="primary"
+                    className="gp-popup-action shrink-0"
+                  >
+                    Run
+                    <CornerDownLeft size={11} aria-hidden />
+                  </button>
+                </>
+              )}
+            </div>
+          ) : commandSuggestions.length > 0 ? (
+            /* Verb suggestions — the vocabulary reveals itself as you type. */
+            <div className="gp-qa-fade py-1" role="listbox" aria-label="Command suggestions">
+              {commandSuggestions.map((suggestion, index) => (
+                <button
+                  key={suggestion.spec.id}
+                  type="button"
+                  role="option"
+                  aria-selected={index === suggestionIndex}
+                  onMouseEnter={() => setSuggestionIndex(index)}
+                  onClick={() => completeSuggestion(suggestion.completion)}
+                  className={`flex w-full items-center gap-2.5 px-4 py-1.5 text-left transition-colors ${
+                    index === suggestionIndex ? 'bg-white/[0.05]' : ''
+                  }`}
+                >
+                  <SquareChevronRight
+                    size={11}
+                    className={index === suggestionIndex ? 'shrink-0 text-emerald-300' : 'shrink-0 text-neutral-600'}
+                    aria-hidden
+                  />
+                  <span className="shrink-0 text-[11.5px] font-semibold text-emerald-300">
+                    {suggestion.spec.verbs[0]}
+                  </span>
+                  <span className="shrink-0 text-[10px] text-neutral-500">{suggestion.spec.usage}</span>
+                  <span className="ml-auto min-w-0 truncate text-[10px] text-neutral-500">
+                    {suggestion.spec.description}
+                  </span>
+                  {index === suggestionIndex && (
+                    <kbd className="shrink-0 rounded border border-white/10 px-1 text-[8.5px] text-neutral-500">tab</kbd>
+                  )}
+                </button>
+              ))}
             </div>
           ) : (
             <>

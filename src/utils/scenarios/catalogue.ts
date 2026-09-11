@@ -4,17 +4,17 @@ import type { ArchetypeSpec, ScenarioDomain } from './contracts'
 type CompactEntry = readonly [id: string, label: string, trigger: string, widgets?: readonly ModuleType[], tone?: 'standard' | 'gentle']
 
 const DOMAIN_WIDGETS: Record<ScenarioDomain, readonly ModuleType[]> = {
-  learning: ['study_goal', 'checklist', 'reading_list'],
-  career: ['kanban', 'checklist', 'contact'],
+  learning: ['goal_tracker', 'checklist', 'reading_list'],
+  career: ['checklist', 'contact'],
   money: ['budget', 'goal_tracker', 'table'],
   home: ['checklist', 'budget', 'calendar'],
-  health: ['logbook', 'calendar', 'notes'],
+  health: ['logbook', 'calendar', 'text'],
   people: ['checklist', 'contact', 'calendar'],
-  travel: ['daily_agenda', 'checklist', 'budget'],
+  travel: ['checklist', 'budget'],
   creative: ['outline', 'checklist', 'media'],
-  food: ['weekly_planner', 'checklist', 'budget'],
+  food: ['checklist', 'budget'],
   admin: ['checklist', 'calendar', 'links'],
-  business: ['kanban', 'metrics', 'budget'],
+  business: ['checklist', 'metrics', 'budget'],
   community: ['calendar', 'contact', 'checklist'],
 }
 
@@ -25,9 +25,9 @@ function titleFor(type: ModuleType, label: string): string {
   if (type === 'budget') return `${label} budget`
   if (type === 'calendar') return `${label} dates`
   if (type === 'contact') return `${label} people`
-  if (type === 'notes') return `${label} notes`
+  if (type === 'text') return `${label} notes`
   if (type === 'reading_list' || type === 'links') return `${label} resources`
-  if (type === 'metrics' || type === 'goal_tracker' || type === 'study_goal') return `${label} progress`
+  if (type === 'metrics' || type === 'goal_tracker') return `${label} progress`
   return `${label} ${type.replaceAll('_', ' ')}`
 }
 
@@ -71,7 +71,7 @@ const LEARNING_ARCHETYPES = compact('learning', [
 ])
 
 const CAREER_ARCHETYPES = compact('career', [
-  ['interview-prep', 'Interview preparation', 'interview (?:on|this|next)|prepar(?:e|ing) for (?:a |an )?(?:job )?interview|interview prep', ['flashcards', 'checklist', 'countdown']],
+  ['interview-prep', 'Interview preparation', 'interview (?:on|this|next)|prepar(?:e|ing) for (?:a |an )?(?:job )?interview|interview prep', ['flashcards', 'checklist', 'timekeeper']],
   ['new-job', 'Starting a new job', 'starting a new job|new job monday|first week at work'],
   ['promotion-push', 'Promotion push', 'want a promotion|asking for a raise|promotion plan'],
   ['performance-review', 'Performance review', 'performance review|self assessment|review season'],
@@ -83,7 +83,7 @@ const CAREER_ARCHETYPES = compact('career', [
   ['career-change', 'Career change', 'changing careers?|switching careers?|career pivot'],
   ['conference-trip', 'Conference', 'going to a conference|conference trip'],
   ['presentation-prep', 'Presentation preparation', 'giving a talk|presentation coming|prepare my presentation'],
-  ['resignation', 'Resignation', 'resigning|handing in my notice|leaving my job', ['checklist', 'timeline', 'notes'], 'gentle'],
+  ['resignation', 'Resignation', 'resigning|handing in my notice|leaving my job', ['checklist', 'text'], 'gentle'],
   ['portfolio-build', 'Portfolio', 'build my portfolio|need a portfolio|showcase my work'],
   ['client-management', 'Client management', 'manage clients|client work|juggling clients'],
 ])
@@ -141,9 +141,9 @@ const PEOPLE_ARCHETYPES = compact('people', [
   ['new-baby', 'New baby', 'having a baby|new baby|expecting a baby'],
   ['kids-activities', 'Kids activities', 'kids activities|children schedules?|juggling the kids'],
   ['new-pet', 'New pet', 'new pet|getting a dog|getting a cat|adopting a pet'],
-  ['eldercare', 'Eldercare', 'eldercare|caring for (?:my )?(?:mom|dad|parent)|aging parent', ['notes', 'contact', 'calendar'], 'gentle'],
+  ['eldercare', 'Eldercare', 'eldercare|caring for (?:my )?(?:mom|dad|parent)|aging parent', ['text', 'contact', 'calendar'], 'gentle'],
   ['family-tree', 'Family tree', 'family tree|family history|genealogy'],
-  ['co-parenting', 'Co-parenting', 'co-parenting|shared custody', ['calendar', 'notes', 'contact'], 'gentle'],
+  ['co-parenting', 'Co-parenting', 'co-parenting|shared custody', ['calendar', 'text', 'contact'], 'gentle'],
   ['long-distance', 'Long-distance relationship', 'long distance relationship|partner lives away'],
   ['celebration-surprise', 'Celebration surprise', 'surprise party|plan a surprise|special celebration'],
   ['dinner-party', 'Dinner party', 'dinner party|hosting dinner|people coming for dinner'],
@@ -189,14 +189,14 @@ const ADMIN_ARCHETYPES = compact('admin', [
   ['immigration-process', 'Immigration process', 'immigration process|visa application|residency application'],
   ['insurance-claim', 'Insurance claim', 'insurance claim|file a claim'],
   ['benefits-application', 'Benefits application', 'benefits application|apply for benefits'],
-  ['estate-planning', 'Estate planning', 'estate planning|write a will|organize my affairs', ['notes', 'checklist', 'contact'], 'gentle'],
+  ['estate-planning', 'Estate planning', 'estate planning|write a will|organize my affairs', ['text', 'checklist', 'contact'], 'gentle'],
   ['find-provider', 'Find a provider', 'find a doctor|find a therapist|find a contractor|choose a provider'],
-  ['life-reset', 'Life reset', 'get my life together|life together|fresh start|reset my life', ['priority_matrix', 'checklist', 'habit']],
-  ['sort-my-thoughts', 'Sort things out', "help|where do i (?:even )?start|what (?:do|should) i do first|make this make sense|too much going on|overwhelmed|a million ideas|too many ideas|brain dump|untangle", ['priority_matrix', 'checklist', 'notes']],
-  ['get-productive', 'Get productive', 'make me productive|be (?:more )?productive|stop procrastinating|procrastinat(?:e|ing|ion)|get focused|deep work|waste less time', ['daily_agenda', 'pomodoro', 'habit']],
-  ['new-routine', 'New routine', '(?:new|better|daily|morning|evening) routine|build a routine|need a routine|stick to a routine', ['sequencer', 'habit', 'weekly_planner']],
+  ['life-reset', 'Life reset', 'get my life together|life together|fresh start|reset my life', ['checklist', 'habit']],
+  ['sort-my-thoughts', 'Sort things out', "help|where do i (?:even )?start|what (?:do|should) i do first|make this make sense|too much going on|overwhelmed|a million ideas|too many ideas|brain dump|untangle", ['checklist', 'text']],
+  ['get-productive', 'Get productive', 'make me productive|be (?:more )?productive|stop procrastinating|procrastinat(?:e|ing|ion)|get focused|deep work|waste less time', ['checklist', 'timekeeper', 'habit']],
+  ['new-routine', 'New routine', '(?:new|better|daily|morning|evening) routine|build a routine|need a routine|stick to a routine', ['sequencer', 'habit', 'checklist']],
   ['room-refresh', 'Room refresh', 'fix my room|clean my room|organi[sz]e my room|room makeover|sort out my room', ['checklist', 'sketchpad', 'budget']],
-  ['school-organization', 'School organization', 'organi[sz]e school|school stuff|keep up with school|on top of school|school work is', ['assignment', 'weekly_planner', 'study_goal']],
+  ['school-organization', 'School organization', 'organi[sz]e school|school stuff|keep up with school|on top of school|school work is', ['checklist', 'goal_tracker']],
   ['money-basics', 'Money basics', 'less broke|stop being broke|save more money|no money left|money is tight|money stress', ['budget', 'subscriptions', 'goal_tracker']],
   ['moving-house', 'Moving', 'moving (?:out|house|home|apartment|to a new)|move out|(?:buy|need) for moving|moving checklist|packing to move', ['checklist', 'budget', 'calendar']],
 ])

@@ -2,62 +2,17 @@ import type { Vector2D } from '../types/spatial'
 import { clamp } from './math'
 
 /**
- * How an edge's tangents should leave and enter its endpoints.
- * - 'vertical': out of the bottom of one card, into the top of the other —
- *   the org-chart flow used by parent→child edges.
- * - 'auto': tangents follow the dominant axis of the connection, so a link
- *   that runs mostly sideways leaves horizontally and one that runs mostly
- *   up/down leaves vertically.
+ * Circuit wire geometry. Card-to-card relation and dependency lines are NOT
+ * here — they belong to `edgeRoute.ts`, which anchors them on real borders.
+ * A wire is different in kind: it runs port to port, always exiting right and
+ * entering left like a circuit trace, so it keeps its own curve.
  */
-export type CurveAxis = 'auto' | 'vertical'
 
 interface CubicCurveGeometry {
   start: Vector2D
   c1: Vector2D
   c2: Vector2D
   end: Vector2D
-}
-
-/**
- * Cubic-bezier control points for a natural "flow" curve. The tangents
- * extend along the chosen axis from each endpoint, which makes edges ease
- * out of one card and ease into the other instead of bowing sideways.
- * Pure math, computed once per edge — no per-frame cost.
- */
-function controlPoints(
-  start: Vector2D,
-  end: Vector2D,
-  axis: CurveAxis,
-): { c1: Vector2D; c2: Vector2D } {
-  const dx = end.x - start.x
-  const dy = end.y - start.y
-
-  if (axis === 'vertical') {
-    // Parent edges anchor bottom→top, so tangents always exit downward and
-    // enter from above — even when the child sits beside or above its
-    // parent, the line loops around legibly like a hand-drawn branch.
-    const reach = clamp(Math.abs(dy) * 0.55 + Math.abs(dx) * 0.12, 28, 180)
-    return {
-      c1: { x: start.x, y: start.y + reach },
-      c2: { x: end.x, y: end.y - reach },
-    }
-  }
-
-  // Auto: follow the dominant axis, signed toward the other endpoint.
-  if (Math.abs(dx) >= Math.abs(dy)) {
-    const reach = clamp(Math.abs(dx) * 0.45, 24, 150)
-    const dir = dx >= 0 ? 1 : -1
-    return {
-      c1: { x: start.x + dir * reach, y: start.y },
-      c2: { x: end.x - dir * reach, y: end.y },
-    }
-  }
-  const reach = clamp(Math.abs(dy) * 0.45, 24, 150)
-  const dir = dy >= 0 ? 1 : -1
-  return {
-    c1: { x: start.x, y: start.y + dir * reach },
-    c2: { x: end.x, y: end.y - dir * reach },
-  }
 }
 
 function pointOnCubic(curve: CubicCurveGeometry, t: number): Vector2D {
@@ -76,107 +31,6 @@ function pointOnCubic(curve: CubicCurveGeometry, t: number): Vector2D {
       3 * curve.c2.y * mt * t2 +
       curve.end.y * t2 * t,
   }
-}
-
-/** Cubic geometry shared by SVG rendering, hit testing, and obstacle routing. */
-function curvedGeometry(
-  start: Vector2D,
-  end: Vector2D,
-  axis: CurveAxis = 'auto',
-): CubicCurveGeometry {
-  const { c1, c2 } = controlPoints(start, end, axis)
-  return { start, c1, c2, end }
-}
-
-/** SVG path `d` for a smooth flow curve between two points. */
-export function curvedPath(start: Vector2D, end: Vector2D, axis: CurveAxis = 'auto'): string {
-  const { c1, c2 } = curvedGeometry(start, end, axis)
-  return `M ${start.x} ${start.y} C ${c1.x} ${c1.y} ${c2.x} ${c2.y} ${end.x} ${end.y}`
-}
-
-/**
- * Stable card-to-card route. Each endpoint first travels a short, bounded
- * distance along its card's outward normal, then the escaped points connect
- * with a cubic whose endpoint tangents follow those same normals. Unlike the
- * old single radial cubic, distant or reversed cards cannot pull controls
- * hundreds of pixels backward and create a seemingly random loop when an
- * anchor changes sides.
- */
-export function anchoredCurvePath(
-  start: Vector2D,
-  startCenter: Vector2D,
-  end: Vector2D,
-  endCenter: Vector2D,
-): string {
-  const distance = Math.hypot(end.x - start.x, end.y - start.y)
-  const escape = clamp(distance * 0.08, 10, 30)
-  const startNormal = unitAway(start, startCenter)
-  const endNormal = unitAway(end, endCenter)
-  const escapedStart = addScaled(start, startNormal, escape)
-  const escapedEnd = addScaled(end, endNormal, escape)
-  const middle = boundedMiddleGeometry(
-    escapedStart,
-    escapedEnd,
-    startNormal,
-    endNormal,
-  )
-  const startC1 = addScaled(start, startNormal, escape * 0.55)
-  const startC2 = addScaled(escapedStart, startNormal, -escape * 0.18)
-  const endC1 = addScaled(escapedEnd, endNormal, -escape * 0.18)
-  const endC2 = addScaled(end, endNormal, escape * 0.55)
-  return [
-    `M ${start.x} ${start.y}`,
-    `C ${startC1.x} ${startC1.y} ${startC2.x} ${startC2.y} ${escapedStart.x} ${escapedStart.y}`,
-    `C ${middle.c1.x} ${middle.c1.y} ${middle.c2.x} ${middle.c2.y} ${escapedEnd.x} ${escapedEnd.y}`,
-    `C ${endC1.x} ${endC1.y} ${endC2.x} ${endC2.y} ${end.x} ${end.y}`,
-  ].join(' ')
-}
-
-export function anchoredCurveMidpoint(
-  start: Vector2D,
-  startCenter: Vector2D,
-  end: Vector2D,
-  endCenter: Vector2D,
-): Vector2D {
-  const distance = Math.hypot(end.x - start.x, end.y - start.y)
-  const escape = clamp(distance * 0.08, 10, 30)
-  const startNormal = unitAway(start, startCenter)
-  const endNormal = unitAway(end, endCenter)
-  const escapedStart = addScaled(start, startNormal, escape)
-  const escapedEnd = addScaled(end, endNormal, escape)
-  return pointOnCubic(
-    boundedMiddleGeometry(escapedStart, escapedEnd, startNormal, endNormal),
-    0.5,
-  )
-}
-
-function boundedMiddleGeometry(
-  start: Vector2D,
-  end: Vector2D,
-  startNormal: Vector2D,
-  endNormal: Vector2D,
-): CubicCurveGeometry {
-  // Keep both joins tangent-continuous with the short endpoint escapes.
-  // Dominant-axis controls made the middle cubic turn abruptly at each join,
-  // which showed up as a small angular break beside the cards.
-  const reach = clamp(Math.hypot(end.x - start.x, end.y - start.y) * 0.3, 4, 120)
-  return {
-    start,
-    c1: addScaled(start, startNormal, reach),
-    c2: addScaled(end, endNormal, reach),
-    end,
-  }
-}
-
-function unitAway(point: Vector2D, center: Vector2D): Vector2D {
-  const dx = point.x - center.x
-  const dy = point.y - center.y
-  const length = Math.hypot(dx, dy) || 1
-  return { x: dx / length, y: dy / length }
-}
-
-function addScaled(point: Vector2D, direction: Vector2D, amount: number): Vector2D {
-  return { x: point.x + direction.x * amount, y: point.y + direction.y * amount }
 }
 
 export interface FlowCurve {

@@ -23,6 +23,7 @@ import {
   getFuturePersistedBoardVersion,
   migrateLegacyBoard,
   parsePersistedBoard,
+  remapLegacyRootCanvasId,
   serializePersistedBoard,
 } from './persistedBoardSchema'
 import {
@@ -30,7 +31,14 @@ import {
   serializePersistedDeviceState,
 } from './persistedDeviceState'
 import { canonicalJson } from './cloudDocuments'
-import { mergePersistedBoardWorkspaces } from './boardWorkspaceMerge'
+import { mergeBoardsThreeWay } from './boardThreeWayMerge'
+import {
+  fingerprintBoard,
+  fingerprintsMatch,
+  readSyncBaseline,
+  writeSyncBaseline,
+  type BoardFingerprint,
+} from './syncBaseline'
 
 export type { PersistedBoard } from '../types/persistence'
 export { parsePersistedBoard } from './persistedBoardSchema'
@@ -60,14 +68,28 @@ let futureVersionWriteLock = false
 let pendingLegacyMigrationSource: unknown = null
 
 // ---------------------------------------------------------------------------
-// Cloud sync quota — sync is opt-in (usePersistenceStatusStore.syncEnabled)
-// and, when on, reconciles with Supabase at most once per day automatically.
-// A successful reconcile stamps localStorage per user; "Sync now" bypasses
-// the quota. Debounced saves never touch the network.
+// Cloud sync cadence — sync is opt-in (usePersistenceStatusStore.syncEnabled)
+// and, when on, keeps this device and the account in step continuously rather
+// than once a day.
+//
+// The old daily reconcile is what made the conflict prompt inevitable: a
+// board edited all day and uploaded once a day is guaranteed to differ from
+// the cloud at the next check, and with nothing recording what the two sides
+// last agreed on, "you edited here" was indistinguishable from "somebody
+// edited there". Syncing often removes the drift; the baseline in
+// syncBaseline.ts removes the ambiguity in whatever drift is left.
+//
+// Frequent is not expensive here. A check reads two small checksum columns
+// (fetchCloudHead) and stops there when nothing moved; an upload re-sends only
+// the canvases whose checksums changed. Debounced local saves still never
+// touch the network — the push below is its own idle timer.
 // ---------------------------------------------------------------------------
 
 const SYNC_STAMP_PREFIX = 'grovepad:cloud-sync:last:'
-const AUTO_SYNC_INTERVAL_MS = 24 * 60 * 60 * 1000
+/** Floor between automatic checks. Focus changes and idle edits both land here. */
+const CLOUD_CHECK_INTERVAL_MS = 5 * 60 * 1000
+/** Quiet time after the last board edit before this device uploads. */
+const CLOUD_PUSH_IDLE_MS = 20_000
 
 function lastSyncStamp(userId: string): number | null {
   try {
@@ -87,11 +109,6 @@ function writeSyncStamp(userId: string, at: number): void {
   }
 }
 
-/** True when the daily automatic sync window has elapsed for this user. */
-function isAutoSyncDue(lastAt: number | null, now: number): boolean {
-  return lastAt === null || now - lastAt >= AUTO_SYNC_INTERVAL_MS
-}
-
 const loadCloudSync = () => import('./cloudSync')
 
 interface PersistedView {
@@ -99,7 +116,7 @@ interface PersistedView {
   zoom: number
 }
 
-interface PersistenceWidgetState extends PersistedBoardState {
+interface PersistenceWidgetState extends PersistedBoardState, BoardDeviceState {
   loadBoard: (
     board: HydratedPersistedBoard,
     options?: { restorePersistedDeviceState?: boolean },
@@ -161,7 +178,10 @@ export function loadPersistedBoard(): HydratedPersistedBoard | null {
     })
   }
   const v2 = parsePersistedBoard(raw)
-  if (v2) return v2
+  // Boards written before canvas ids were minted per install all call their root
+  // canvas the same thing, and that id is a cloud primary key. Move off it here,
+  // where every load funnels through, so no other layer has to know about it.
+  if (v2) return remapLegacyRootCanvasId(v2)
   const legacy = readJson(BOARD_KEY_V1)
   const migrated = migrateLegacyBoard(legacy)
   if (migrated) {
@@ -265,9 +285,6 @@ export function buildBoardSnapshot(state: PersistedBoardState): PersistedBoard {
   return serializePersistedBoard(state)
 }
 
-type CloudConflictChoice = 'local' | 'cloud' | 'merge'
-
-let conflictResolver: ((choice: CloudConflictChoice) => void) | null = null
 let activePersistenceDispose: (() => void) | null = null
 let runtimeSyncTrigger: ((force: boolean) => void) | null = null
 /**
@@ -289,12 +306,6 @@ let localBoardHydration: Promise<void> = Promise.resolve()
  */
 export function whenLocalBoardHydrated(): Promise<void> {
   return localBoardHydration
-}
-
-export function resolveCloudConflict(choice: CloudConflictChoice): void {
-  conflictResolver?.(choice)
-  conflictResolver = null
-  usePersistenceStatusStore.getState().setConflict(null)
 }
 
 /** Run a cloud reconcile now (the "Sync now" button). No-op for guests or
@@ -322,12 +333,18 @@ export function initPersistence<
   // on disk to protect", which the shared catch below cannot otherwise tell
   // apart — the seed write it also covers lives inside the same `.then`.
   let diskProvenEmpty = false
-  let runtimeConflictResolver: ((choice: CloudConflictChoice) => void) | null = null
+  // Bumped by every document-changing store update. reconcile() snapshots it
+  // alongside the board so it can tell, after its network round trip, whether
+  // the user edited the document while the fetch was in the air — adopting or
+  // merging onto a stale snapshot would silently drop those edits.
+  let documentEpoch = 0
+  let scheduleCloudPush: (() => void) | null = null
+  let cancelCloudPush: (() => void) | null = null
   const view = loadPersistedView()
   if (view) canvasStore.getState().setView(view.pan, view.zoom)
   try {
     if (localStorage.getItem(DIRTY_KEY)) {
-      useToastStore.getState().addToast('The previous session closed before its final save — a local snapshot may help')
+      useToastStore.getState().addToast('The previous session closed before its final save — a local snapshot may help', { tone: 'danger' })
     }
   } catch { /* storage unavailable */ }
 
@@ -342,7 +359,7 @@ export function initPersistence<
             foundVersion: futureVersion,
             source: 'local',
           })
-          useToastStore.getState().addToast('This board needs a newer Grovepad — saving is disabled to protect it')
+          useToastStore.getState().addToast('This board needs a newer Grovepad — saving is disabled to protect it', { tone: 'danger' })
         }
         return
       }
@@ -371,7 +388,7 @@ export function initPersistence<
       // after an IndexedDB read or atomic migration transaction fails. This
       // used to return early unless a legacy migration was pending, which is
       // never true on a modern install — so an ordinary failed read was
-      // swallowed, and the starter board the store seeds at module scope was
+      // swallowed, and the blank board shell created at module scope was
       // written over the user's real record on their very first edit.
       localWritesBlocked = true
       if (!disposed) {
@@ -379,10 +396,11 @@ export function initPersistence<
         useToastStore.getState().addToast(
           pendingLegacyMigrationSource !== null
             ? 'Legacy board migration could not be protected — saving is paused; export a backup now'
-            // Not "export a backup": the store is holding the starter board at
-            // this point, so an export here would capture seed widgets, not the
+            // Not "export a backup": the store is holding the blank board
+            // shell at this point, so an export here would not contain the
             // record we failed to read.
             : 'Your saved board could not be opened — saving is paused so it is not overwritten. Reload to try again.',
+          { tone: 'danger' },
         )
       }
     })
@@ -417,7 +435,7 @@ export function initPersistence<
           usePersistenceStatusStore.getState().setLocalSave('error')
           if (!storageToastShown) {
             storageToastShown = true
-            useToastStore.getState().addToast('Changes are not being saved — export a backup now')
+            useToastStore.getState().addToast('Changes are not being saved — export a backup now', { tone: 'danger' })
           }
         })
       // Cloud writes are deliberately absent here: sync is quota-gated in
@@ -425,15 +443,28 @@ export function initPersistence<
     })
   })
 
-  // ── Cloud sync: opt-in, reconciled on sign-in/activity under a daily quota ─
+  // ── Cloud sync: opt-in, reconciled against the last-synced baseline ───────
   if (supabaseConfigured) {
     let reconcileToken = 0
+    let lastCheckAt = 0
     invalidateReconcile = () => { reconcileToken += 1 }
+
+    const markSynced = (at: number) => {
+      usePersistenceStatusStore.getState().setCloudSync('synced')
+      usePersistenceStatusStore.getState().setLastSyncedAt(at)
+    }
+
+    /** Record what both sides now agree on, so the next merge has lineage. */
+    const rememberBaseline = async (
+      userId: string,
+      board: PersistedBoard,
+      print: BoardFingerprint,
+      cloudUpdatedAt: string | null,
+    ) => {
+      await writeSyncBaseline({ userId, board, ...print, cloudUpdatedAt, at: Date.now() })
+    }
+
     const reconcile = async (userId: string | null, force = false) => {
-      // A visible conflict owns the reconcile pipeline until the user chooses.
-      // Starting another visibility/manual sync here would invalidate the
-      // awaiting token and replace its resolver, leaving a misleading dialog.
-      if (runtimeConflictResolver !== null) return
       const token = ++reconcileToken
       const status = usePersistenceStatusStore.getState()
       if (!status.syncEnabled) {
@@ -444,121 +475,196 @@ export function initPersistence<
         status.setCloudSync('guest')
         return
       }
-      const stamp = lastSyncStamp(userId)
-      if (!force && !isAutoSyncDue(stamp, Date.now())) {
-        // Synced within the last day — trust the stamp, skip the network.
+      const startedAt = Date.now()
+      if (!force && startedAt - lastCheckAt < CLOUD_CHECK_INTERVAL_MS) {
+        // Checked moments ago. Say so from the stamp rather than re-asking the
+        // network every time the window regains focus.
         status.setCloudSync('synced')
-        status.setLastSyncedAt(stamp)
+        if (status.lastSyncedAt === null) status.setLastSyncedAt(lastSyncStamp(userId))
         return
       }
+      lastCheckAt = startedAt
       usePersistenceStatusStore.getState().setCloudSync('saving')
       try {
         await localReady
         // A board we refuse to write to disk must not reach the cloud either.
         // pushCloudBoard DELETES remote canvas rows absent from what it is
-        // handed, so pushing the seeded starter board over a real cloud record
+        // handed, so pushing the blank local shell over a real cloud record
         // destroys more than the local overwrite would.
         if (localWritesBlocked) {
           usePersistenceStatusStore.getState().setCloudSync('error')
           return
         }
-        const { fetchCloudBoard, pushCloudBoard } = await loadCloudSync()
-        const cloudResult = await fetchCloudBoard(userId)
-        if (disposed || token !== reconcileToken) return // a newer session superseded this fetch
-        if (cloudResult) {
-          const local = buildBoardSnapshot(widgetStore.getState())
-          const cloud = cloudResult.board
-          const cloudSnapshot = serializePersistedBoard(cloud)
-          const differs = canonicalJson(local) !== canonicalJson(cloudSnapshot)
-          if (Object.keys(local.widgets).length > 0 && differs) {
-            usePersistenceStatusStore.getState().setConflict({
-              local,
-              cloud,
-              cloudUpdatedAt: cloudResult.updatedAt,
-            })
-            let resolveThisConflict: (choice: CloudConflictChoice) => void = () => {}
-            const choice = await new Promise<CloudConflictChoice>((resolve) => {
-              resolveThisConflict = resolve
-              runtimeConflictResolver = resolveThisConflict
-              conflictResolver = resolveThisConflict
-            })
-            if (conflictResolver === resolveThisConflict) conflictResolver = null
-            if (runtimeConflictResolver === resolveThisConflict) runtimeConflictResolver = null
-            if (disposed || token !== reconcileToken) return
-            if (choice === 'cloud') {
-              widgetStore.getState().loadBoard(cloud)
-              if (cloudResult.source === 'legacy') {
-                await pushCloudBoard(userId, cloudSnapshot)
-              }
-            } else if (choice === 'merge') {
-              const current = widgetStore.getState()
-              const mergedSnapshot = mergePersistedBoardWorkspaces(cloudSnapshot, local, {
-                incomingLabel: 'Local',
-              })
-              const merged = parsePersistedBoard({
-                ...mergedSnapshot,
-                activeWorkspaceId: current.activeWorkspaceId,
-                activeCanvasId: current.activeCanvasId,
-                canvasViews: current.canvasViews,
-              })
-              if (!merged) throw new Error('Merged board failed validation')
-              widgetStore.getState().loadBoard(merged)
-              await pushCloudBoard(userId, mergedSnapshot)
-            } else {
-              await pushCloudBoard(userId, local)
-            }
-          } else {
-            widgetStore.getState().loadBoard(cloud)
-            if (cloudResult.source === 'legacy') {
-              await pushCloudBoard(userId, cloudSnapshot)
-            }
+        const local = buildBoardSnapshot(widgetStore.getState())
+        const localEpoch = documentEpoch
+        const [baseline, localPrint] = await Promise.all([
+          readSyncBaseline(userId),
+          fingerprintBoard(local),
+        ])
+        if (disposed || token !== reconcileToken) return
+        const { fetchCloudBoard, fetchCloudHead, pushCloudBoard } = await loadCloudSync()
+
+        // Step one is deliberately not a board fetch. The cloud already stores
+        // the same checksums fingerprintBoard computes, so two small metadata
+        // reads settle most reconciles with no board crossing the network in
+        // either direction.
+        const head = await fetchCloudHead(userId)
+        if (disposed || token !== reconcileToken) return
+
+        const settle = async (
+          board: PersistedBoard,
+          print: BoardFingerprint,
+          cloudUpdatedAt: string | null,
+        ) => {
+          const syncedAt = Date.now()
+          writeSyncStamp(userId, syncedAt)
+          await rememberBaseline(userId, board, print, cloudUpdatedAt)
+          if (disposed || token !== reconcileToken) return
+          markSynced(syncedAt)
+        }
+
+        if (head === null) {
+          // No cloud board yet — first sign-in on this account. Seed it with
+          // whatever is here, including work done as a guest beforehand.
+          await pushCloudBoard(userId, local)
+          if (disposed || token !== reconcileToken) return
+          await settle(local, localPrint, null)
+          return
+        }
+
+        if (head !== 'inconclusive') {
+          const cloudPrint: BoardFingerprint = {
+            indexChecksum: head.indexChecksum,
+            canvasChecksums: Object.fromEntries(head.canvasChecksums),
           }
-        } else {
-          // First sign-in on this account — seed the cloud with whatever's local
-          // (including guest work made before signing in).
-          await pushCloudBoard(userId, buildBoardSnapshot(widgetStore.getState()))
+          // Already identical, whatever the baseline says. Nothing to transfer,
+          // and the lineage can be re-established for free.
+          if (fingerprintsMatch(localPrint, cloudPrint)) {
+            await settle(local, localPrint, head.updatedAt)
+            return
+          }
+          // Only this device moved: a plain upload, never a question. This is
+          // the case the old byte-comparison could not tell from a conflict,
+          // and it is by far the most common one.
+          if (baseline && fingerprintsMatch(cloudPrint, baseline)) {
+            await pushCloudBoard(userId, local)
+            if (disposed || token !== reconcileToken) return
+            await settle(local, localPrint, null)
+            return
+          }
+        }
+
+        // The cloud moved (or the cheap check could not be trusted). Only now
+        // is a full fetch worth its bytes.
+        const cloudResult = await fetchCloudBoard(userId)
+        if (disposed || token !== reconcileToken) return
+        // Everything past here — the adopt branch and the three-way merge —
+        // derives from `local`, snapshotted before the round trip. If the
+        // document moved meanwhile, that snapshot is stale and loading from it
+        // would discard the edit; the edit already scheduled a cloud push, so
+        // the next reconcile starts from a fresh snapshot.
+        if (documentEpoch !== localEpoch) return
+        if (!cloudResult) {
+          await pushCloudBoard(userId, local)
+          if (disposed || token !== reconcileToken) return
+          await settle(local, localPrint, null)
+          return
+        }
+        const cloudSnapshot = serializePersistedBoard(cloudResult.board)
+
+        // Only the cloud moved, or there is nothing here worth protecting:
+        // adopt the account's board outright.
+        const localUnchanged = baseline !== null && fingerprintsMatch(localPrint, baseline)
+        if (localUnchanged || Object.keys(local.widgets).length === 0) {
+          widgetStore.getState().loadBoard(cloudResult.board)
+          const cloudPrint = await fingerprintBoard(cloudSnapshot)
+          if (disposed || token !== reconcileToken) return
+          // A board still living in the retained monolithic row is rewritten
+          // as split documents on the way past.
+          if (cloudResult.source === 'legacy') await pushCloudBoard(userId, cloudSnapshot)
+          if (disposed || token !== reconcileToken) return
+          await settle(cloudSnapshot, cloudPrint, cloudResult.updatedAt)
+          return
+        }
+
+        // Both sides moved. The baseline says which side moved each record, so
+        // this resolves without asking; see boardThreeWayMerge.ts.
+        const merge = mergeBoardsThreeWay(baseline?.board ?? null, local, cloudSnapshot)
+        const current = widgetStore.getState()
+        const hydrated = parsePersistedBoard({
+          ...merge.board,
+          activeWorkspaceId: current.activeWorkspaceId,
+          activeCanvasId: current.activeCanvasId,
+          canvasViews: current.canvasViews,
+        })
+        if (!hydrated) throw new Error('Merged board failed validation')
+        // Re-serialized rather than pushed straight from the merge, so the
+        // document that lands in the cloud is exactly the one the store holds.
+        const mergedSnapshot = serializePersistedBoard(hydrated)
+        const mergedJson = canonicalJson(mergedSnapshot)
+        if (mergedJson !== canonicalJson(local)) widgetStore.getState().loadBoard(hydrated)
+        const mergedPrint = await fingerprintBoard(mergedSnapshot)
+        if (disposed || token !== reconcileToken) return
+        if (mergedJson !== canonicalJson(cloudSnapshot) || cloudResult.source === 'legacy') {
+          await pushCloudBoard(userId, mergedSnapshot)
         }
         if (disposed || token !== reconcileToken) return
-        const syncedAt = Date.now()
-        writeSyncStamp(userId, syncedAt)
-        usePersistenceStatusStore.getState().setCloudSync('synced')
-        usePersistenceStatusStore.getState().setLastSyncedAt(syncedAt)
+        await settle(mergedSnapshot, mergedPrint, null)
+        if (merge.keptBothTitles.length > 0) {
+          const count = merge.keptBothTitles.length
+          useToastStore.getState().addToast(
+            count === 1
+              ? `"${merge.keptBothTitles[0]}" was edited in two places — both versions are on the canvas`
+              : `${count} cards were edited in two places — both versions of each are on the canvas`,
+          )
+        }
       } catch (error) {
         // Cloud code is optional. Local persistence remains the source of truth
         // if its chunk cannot load or the network/client is unavailable.
         if (!disposed) {
-          usePersistenceStatusStore.getState().setCloudSync('error')
+          const status = usePersistenceStatusStore.getState()
+          const wasError = status.cloudSync === 'error'
+          status.setCloudSync('error')
           if (error instanceof FuturePersistedBoardVersionError) {
             usePersistenceStatusStore.getState().setCompatibilityBlock({
               foundVersion: error.foundVersion,
               source: 'cloud',
             })
+          } else if (!wasError && status.networkOnline) {
+            // Say it once, on the transition into failure — a recolored dot in
+            // the corner is not enough notice that sync stopped. Offline is
+            // not an error (the status line already says "Offline"), and a
+            // future-version block has its own full-screen explanation.
+            useToastStore.getState().addToast(
+              'Cloud sync hit a problem — your changes are safe on this device',
+              { tone: 'danger' },
+            )
           }
         }
       }
     }
 
     let lastUserId = useAuthStore.getState().session?.user.id ?? null
-    void reconcile(lastUserId)
+    void reconcile(lastUserId, true)
     unsubscribeAuth = useAuthStore.subscribe((state) => {
       const userId = state.session?.user.id ?? null
       if (userId === lastUserId) return
-      // Cancel a conflict owned by the previous account without writing either
-      // side. The invalidated reconcile returns immediately after resolution.
-      const pendingConflict = runtimeConflictResolver
-      if (pendingConflict) {
-        reconcileToken += 1
-        runtimeConflictResolver = null
-        if (conflictResolver === pendingConflict) conflictResolver = null
-        usePersistenceStatusStore.getState().setConflict(null)
-        pendingConflict('cloud')
-      }
       lastUserId = userId
-      void reconcile(userId)
+      // The throttle is per account: a fresh sign-in always checks.
+      lastCheckAt = 0
+      void reconcile(userId, true)
     })
 
-    // "Sync now" — bypasses the daily quota for the current session user.
+    // "Sync now" — bypasses the check interval for the current session user.
     runtimeSyncTrigger = (force) => { void reconcile(lastUserId, force) }
+
+    // Uploading shortly after the edits stop is what keeps the two sides from
+    // drifting far enough apart to need a merge at all.
+    const cloudPushSaver = debouncedSaver(CLOUD_PUSH_IDLE_MS, () => {
+      void reconcile(lastUserId, true)
+    })
+    scheduleCloudPush = () => cloudPushSaver.schedule()
+    cancelCloudPush = () => cloudPushSaver.cancel()
 
     // Enabling the toggle syncs immediately (that click is explicit intent);
     // disabling stops all cloud traffic until it is turned back on.
@@ -566,11 +672,12 @@ export function initPersistence<
     unsubscribeSyncPref = usePersistenceStatusStore.subscribe((state) => {
       if (state.syncEnabled === lastSyncEnabled) return
       lastSyncEnabled = state.syncEnabled
+      if (!state.syncEnabled) cloudPushSaver.cancel()
       void reconcile(lastUserId, state.syncEnabled)
     })
 
-    // Returning to the tab counts as "getting active": at most one automatic
-    // reconcile per day, enforced by the stamp check inside reconcile().
+    // Returning to the tab counts as getting active, throttled by
+    // CLOUD_CHECK_INTERVAL_MS inside reconcile().
     syncWhenActive = () => {
       if (document.visibilityState !== 'visible') return
       void reconcile(lastUserId)
@@ -611,10 +718,13 @@ export function initPersistence<
     const deviceChanged =
       state.activeWorkspaceId !== prev.activeWorkspaceId ||
       state.activeCanvasId !== prev.activeCanvasId ||
-      state.canvasViews !== prev.canvasViews
+      state.canvasViews !== prev.canvasViews ||
+      state.openTabs !== prev.openTabs ||
+      state.activeTabId !== prev.activeTabId
     if (!documentChanged && !deviceChanged) return
     if (deviceChanged) deviceSaver.schedule()
     if (!documentChanged) return
+    documentEpoch += 1
     try { localStorage.setItem(DIRTY_KEY, String(Date.now())) } catch { /* storage unavailable */ }
     // Pointer gestures already commit canonical state on release. Avoid
     // cancel/recreating persistence timers for every high-frequency drag or
@@ -624,12 +734,16 @@ export function initPersistence<
       return
     }
     boardSaver.schedule()
+    // Its own, much longer timer: local saving must never wait on the network,
+    // and the cloud must never see a keystroke-by-keystroke stream.
+    scheduleCloudPush?.()
   })
 
   const scheduleGestureSave = () => {
     if (!gestureDirty) return
     gestureDirty = false
     boardSaver.schedule()
+    scheduleCloudPush?.()
   }
   window.addEventListener('pointerup', scheduleGestureSave, true)
   window.addEventListener('pointercancel', scheduleGestureSave, true)
@@ -683,11 +797,7 @@ export function initPersistence<
     flushAll()
     disposed = true
     invalidateReconcile()
-    const pendingConflict = runtimeConflictResolver
-    runtimeConflictResolver = null
-    if (conflictResolver === pendingConflict) conflictResolver = null
-    pendingConflict?.('local')
-    usePersistenceStatusStore.getState().setConflict(null)
+    cancelCloudPush?.()
     runtimeSyncTrigger = null
     unsubscribeAuth?.()
     unsubscribeSyncPref?.()

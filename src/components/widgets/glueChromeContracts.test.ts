@@ -112,6 +112,40 @@ describe('the cluster group frame', () => {
     expect(settling).toContain('widgetShowsTitleRow')
   })
 
+  it('draws its own boundary lines off the SAME envelope it anchors from', () => {
+    // The lines used to come off a bare-box envelope while the frame rect came
+    // off the chrome one. They disagreed by exactly a member's name row, so the
+    // top line struck through the first card's title instead of standing above
+    // it. One exported envelope now, and no bare-box twin left to drift from.
+    expect(geometry).toContain('export function clusterChromeEnvelope')
+    expect(geometry).not.toContain('export function clusterEnvelope(')
+    expect(chrome).toContain('clusterChromeEnvelope(cluster.widgetIds, state.widgets)')
+    expect(chrome).toContain('const topLineY = envY - LINE_BAND')
+  })
+
+  it('leaves a welded member its own name, and the space that name occupies', () => {
+    // Membership is not an exception to the reserved strip. While a member hid
+    // its row, the strip read as free space: the clustermate above was packed
+    // into it and the group's line was drawn through it.
+    const rest = readFileSync(new URL('../../utils/widgetRest.ts', import.meta.url), 'utf8')
+    const shows = rest.slice(rest.indexOf('export function widgetShowsTitleRow'))
+    const body = shows.slice(0, shows.indexOf('\n}'))
+    // The option survives in the signature so callers can keep speaking in
+    // cluster terms, but nothing in the body may read it again.
+    expect(body).not.toContain('options.glued')
+    expect(card).toContain('const titleChromeHidden = capsuleHidden')
+  })
+
+  it('never lets a name row sit on the glass, in any card state', () => {
+    // One placement for every state — resting tile, full card, expanded card —
+    // because that strip is what WIDGET_TITLE_ROW reserves. The expanded card
+    // used to carry its row inside the backplate, the one state the reserved
+    // strip could not describe.
+    expect(card).toContain('gp-card-chrome pointer-events-none absolute bottom-full left-0 right-0')
+    expect(card).not.toContain("restExpanded ? 'top-0 left-2.5 right-2.5'")
+    expect(card).not.toContain('paddingTop: 44')
+  })
+
   it('wears a widget’s title anatomy: icon square, bold name, buttons right — no pill', () => {
     expect(chrome).toContain('<Group size={14} aria-hidden />')
     expect(chrome).toContain('className="gp-group-icon"')
@@ -283,7 +317,10 @@ describe('a card held open leaves every other card in the background', () => {
   it('withholds the magnetic tilt, the hover signal, and the outline resize', () => {
     expect(card).toContain('if (widget.metadata.locked || hoverInert) return')
     expect(card).toContain('!session && !widget.metadata.locked && !hoverInert')
-    expect(card).toContain('if (!hoverInert) edgeResize.onEdgeHoverMove(event)')
+    // The probe is also skipped once a move gesture owns the pointer: the card
+    // captures the pointer, so every pointermove of a drag lands here, and the
+    // edge it would arm cannot be pressed while the button is already down.
+    expect(card).toContain('if (!hoverInert && !dragRef.current) edgeResize.onEdgeHoverMove(event)')
     // A press on an invisible outline must not start a resize either.
     expect(card).toContain('!hoverInert &&\n      !linkingState.childLinkSource')
     // And a card that goes background under a resting pointer drops what it

@@ -103,4 +103,56 @@ describe('adaptive input runtime', () => {
       ),
     ).toBe(true)
   })
+  it('puts an iOS-scrolled document back once no field is being edited', () => {
+    const windowTarget = fakeEventTarget()
+    const viewportTarget = fakeEventTarget()
+    const matchMedia = () => Object.assign(fakeEventTarget(), { matches: false })
+    const visualViewport = Object.assign(viewportTarget, { width: 402, height: 874 })
+    const root = { dataset: {} as Record<string, string>, style: { setProperty: () => undefined } }
+    const input = { tagName: 'INPUT', isContentEditable: false }
+    const body = { tagName: 'BODY', isContentEditable: false }
+    const fakeDocument = { documentElement: root, activeElement: input as unknown }
+    const scrollTo = vi.fn()
+    const fakeWindow = {
+      ...windowTarget,
+      innerWidth: 402,
+      innerHeight: 874,
+      scrollX: 0,
+      scrollY: 0,
+      visualViewport,
+      matchMedia,
+      scrollTo,
+      requestAnimationFrame: (callback: FrameRequestCallback) => { callback(0); return 1 },
+      cancelAnimationFrame: vi.fn(),
+    }
+    vi.stubGlobal('document', fakeDocument)
+    vi.stubGlobal('window', fakeWindow)
+
+    const dispose = initAdaptiveInputRuntime()
+    expect(scrollTo).not.toHaveBeenCalled()
+
+    // Focusing a field: iOS lifts the document and the keyboard takes 336px.
+    fakeWindow.scrollY = 180
+    visualViewport.height = 538
+    viewportTarget.dispatch('resize')
+    expect(scrollTo).not.toHaveBeenCalled()
+
+    // Moving focus between fields must not yank the document mid-edit.
+    windowTarget.dispatch('focusout')
+    expect(scrollTo).not.toHaveBeenCalled()
+
+    // Done editing: keyboard gone, nothing focused, document restored.
+    fakeDocument.activeElement = body
+    visualViewport.height = 874
+    viewportTarget.dispatch('resize')
+    expect(scrollTo).toHaveBeenCalledWith(0, 0)
+
+    scrollTo.mockClear()
+    fakeWindow.scrollY = 64
+    windowTarget.dispatch('focusout')
+    expect(scrollTo).toHaveBeenCalledWith(0, 0)
+
+    dispose()
+    expect([...windowTarget.listeners.values()].every((listeners) => listeners.size === 0)).toBe(true)
+  })
 })

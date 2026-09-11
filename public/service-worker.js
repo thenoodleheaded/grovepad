@@ -3,6 +3,7 @@ const CACHE_NAME = `${CACHE_PREFIX}v3`
 const INSTALL_SHELL = [
   '/manifest.webmanifest',
   '/favicon.png',
+  '/favicon-dark.png',
   '/apple-touch-icon.png',
   '/app-icon-192.png',
   '/app-icon-512.png',

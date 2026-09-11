@@ -200,8 +200,6 @@ export const cameraEngine = {
     glideRaf = requestAnimationFrame(step)
   },
 
-  recordView: pushHistoryEntry,
-
   goBack(): void {
     const previous = backStack.pop()
     if (!previous) return

@@ -33,6 +33,22 @@ describe('widget pointer arbitration source contracts', () => {
     expect(card).not.toMatch(/function isInteractiveTarget\(target: EventTarget \| null\): boolean \{/)
   })
 
+  it('lets Cmd reach a control rather than starting a relation from it', () => {
+    // Cmd on a card's own button opens what that button points at. Only Shift
+    // and Option are card-level gestures that may begin on a control.
+    expect(policy).toContain("if (isInteractiveTarget && !hasCardGestureModifier) return 'ignore'")
+    expect(card).toContain('hasCardGestureModifier: e.shiftKey || e.altKey')
+  })
+
+  it('separates a Cmd click on a canvas card from a Cmd relation drag', () => {
+    // A resting canvas card exposes no button, so the press lands on bare card
+    // surface and the relation gesture would swallow it. The split is resolved
+    // at pointer-up, where a press can finally be told apart from a drag.
+    expect(card).toContain("widget.type === 'canvas_node'")
+    expect(card).toContain('canvasPressMoved({ x: link.originX, y: link.originY }')
+    expect(card).toContain('openCanvasFromClick(')
+  })
+
   it('pins the magnetic offset on press so a control cannot slide out from under it', () => {
     expect(magnetic).toContain('const freeze = useCallback(')
     expect(card).toContain('onPointerDownCapture={() => magneticHover.freeze()}')

@@ -1,14 +1,11 @@
 import {
-  BookOpen,
-  CalendarClock,
   Code2,
   FileText,
   FolderOpen,
-  History,
+  Image,
   List,
-  MessageSquareWarning,
+  Network,
   PenLine,
-  Quote,
   StickyNote,
 } from 'lucide-react'
 import type { WidgetDefinition } from '../contracts/registry'
@@ -24,49 +21,80 @@ export const STRUCTURE_NOTES_WIDGET_DEFINITIONS = {
     category: 'structure',
     accent: '#a3e635',
     defaultSize: { width: 280, height: C * 2 },
-    sizing: { minWidth: C * 5, minHeight: C * 2, autoHeight: true },
+    sizing: {
+      minWidth: C * 4,
+      minHeight: C * 2,
+      maxWidth: C * 12,
+      autoHeight: true,
+      autoWidth: true,
+      // Portal is one line: the name decides its width and its content decides
+      // its height, so an edge to drag could only add empty glass or clip the
+      // name back. The other two skins hold a picture worth sizing by hand.
+      fixed: (data) => ((data as { skin?: string } | null)?.skin ?? 'portal') === 'portal',
+    },
+    restingFace: false,
+    // The card already carries the canvas's name in its own face, so the
+    // floating name row above it could only say the same thing twice.
+    titleChrome: false,
     // canvasId is assigned by the store when the backing canvas is created.
     defaultData: () => ({ canvasId: '', skin: 'portal' }),
-    rendererOwnedSkinDetails: ['live_thumbnail', 'dashboard_door', 'folder_index'],
+    rendererOwnedSkinDetails: ['live_thumbnail'],
+    // Declared here rather than left to the generated catalogue, for the same
+    // reason the Note skins are: the catalogue falls back to one icon per
+    // presentation family, which put a generic sparkle where the door's folder
+    // belongs. A Canvas card's mark is now also its skin trigger (the card
+    // wears no name row), so the mark has to say which skin it is. The hues
+    // stay in one green family — this card is a doorway first, and three
+    // unrelated colours would read as three unrelated widgets.
+    skinField: 'skin',
+    skins: [
+      {
+        value: 'portal',
+        label: 'Portal',
+        description: 'The current simple entrance into a child canvas.',
+        implementation: 'renderer-ready',
+        presentation: 'standard',
+        icon: FolderOpen,
+        accent: '#a3e635',
+      },
+      {
+        value: 'cover',
+        label: 'Cover',
+        description:
+          'A large title, subtitle, accent, and last-opened summary for presentation canvases.',
+        implementation: 'renderer-ready',
+        presentation: 'cards',
+        icon: Image,
+        accent: '#7fd94b',
+      },
+      {
+        value: 'live_thumbnail',
+        label: 'Live Thumbnail',
+        description: 'A miniature, non-interactive preview of the child canvas contents.',
+        implementation: 'schema-extension',
+        presentation: 'standard',
+        icon: Network,
+        accent: '#5ec95f',
+      },
+    ],
   },
-  notes: {
-    type: 'notes',
-    label: 'Note',
-    description: 'Plain, sticky, and quote skins in one writing card',
+  text: {
+    type: 'text',
+    label: 'Text',
+    description: 'Plain, sticky, and focused writing skins in one card',
     icon: FileText,
     category: 'notes',
     accent: '#e2e8f0',
     defaultSize: { width: 320, height: C * 5 },
     sizing: { minWidth: C * 4, autoHeight: true },
-    defaultData: () => ({ text: '', mode: 'plain', color: 'yellow', attribution: '' }),
-    rendererOwnedSkinDetails: ['versioned_note'],
+    defaultData: () => ({ text: '', mode: 'plain', color: 'yellow' }),
     // Every Note skin is declared here so it wears an icon that says what it
     // is. The catalogue merge only fills gaps, and its generated entries fall
-    // back to one icon per presentation family — which put a bar chart on
-    // Markdown, a checklist on Typewriter, and a grid on Version History.
-    // The rest of each generated entry is repeated verbatim.
+    // back to one icon per presentation family — which put a checklist on
+    // Typewriter. The rest of each generated entry is repeated verbatim.
     skins: [
       { value: 'plain', label: 'Plain', icon: FileText, accent: '#e2e8f0' },
       { value: 'sticky', label: 'Sticky', icon: StickyNote, accent: '#fcd34d' },
-      { value: 'quote', label: 'Quote', icon: Quote, accent: '#c4b5fd' },
-      {
-        value: 'daily_log',
-        label: 'Daily Log',
-        description: 'Timestamped journal styling optimized for short dated entries.',
-        implementation: 'renderer-ready',
-        presentation: 'time',
-        icon: CalendarClock,
-        accent: '#e4a772',
-      },
-      {
-        value: 'markdown_page',
-        label: 'Markdown Page',
-        description: 'Reading-first typography with headings, code, lists, and links.',
-        implementation: 'renderer-ready',
-        presentation: 'chart',
-        icon: BookOpen,
-        accent: '#729ce4',
-      },
       {
         value: 'typewriter',
         label: 'Typewriter',
@@ -77,25 +105,6 @@ export const STRUCTURE_NOTES_WIDGET_DEFINITIONS = {
         icon: PenLine,
         accent: '#72cfe4',
       },
-      {
-        value: 'callout',
-        label: 'Callout',
-        description: 'A concise warning, tip, decision, or important-fact treatment.',
-        implementation: 'renderer-ready',
-        presentation: 'standard',
-        icon: MessageSquareWarning,
-        accent: '#e47572',
-      },
-      {
-        value: 'versioned_note',
-        label: 'Versioned Note',
-        description:
-          'Keeps named snapshots and compares the current text with an earlier version.',
-        implementation: 'schema-extension',
-        presentation: 'matrix',
-        icon: History,
-        accent: '#729ce4',
-      },
     ],
   },
   bullets: {
@@ -105,25 +114,16 @@ export const STRUCTURE_NOTES_WIDGET_DEFINITIONS = {
     icon: List,
     category: 'notes',
     accent: '#93c5fd',
-    // Bullets are a column of points and nothing else — the card is exactly
-    // its list, so there is no edge worth dragging.
+    // A point is a paragraph, so its measure is the reader's to set: the card
+    // is width-draggable down to six cells, and its height still follows the
+    // wrapped text rather than a dragged edge.
     defaultSize: { width: C * 6, height: C * 3 },
-    sizing: { minWidth: C * 5, autoHeight: true, fixed: true },
+    sizing: { minWidth: C * 6, autoHeight: true },
     defaultData: () => ({
       items: [{ id: crypto.randomUUID(), text: 'First point' }],
       skin: 'dots',
     }),
-    rendererOwnedSkinDetails: ['nested_outline', 'rolling_log'],
-  },
-  quote: {
-    type: 'quote',
-    label: 'Quote',
-    description: 'A pull-quote or callout with attribution',
-    icon: Quote,
-    category: 'notes',
-    accent: '#fbcfe8',
-    defaultSize: { width: 320, height: C * 4 },
-    defaultData: () => ({ text: 'The canvas stretches on, in every direction.', attribution: '' }),
+    rendererOwnedSkinDetails: ['nested_outline'],
   },
   code: {
     type: 'code',
@@ -134,16 +134,5 @@ export const STRUCTURE_NOTES_WIDGET_DEFINITIONS = {
     accent: '#7dd3fc',
     defaultSize: { width: 360, height: C * 5 },
     defaultData: () => ({ language: 'ts', code: '' }),
-  },
-  sticky_note: {
-    type: 'sticky_note',
-    label: 'Sticky Note',
-    description: 'A quick colored note — pick a hue, jot it down',
-    icon: StickyNote,
-    category: 'notes',
-    accent: '#fde047',
-    defaultSize: { width: 260, height: C * 4 },
-    sizing: { minWidth: C * 4, autoHeight: true },
-    defaultData: () => ({ text: '', color: 'yellow' }),
   },
 } satisfies Record<string, WidgetDefinition>

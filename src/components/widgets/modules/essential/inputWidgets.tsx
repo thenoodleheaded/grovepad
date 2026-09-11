@@ -47,7 +47,7 @@ export function NumberInputWidget({
           step={step}
           onChange={(event) => setValue(Number(event.target.value))}
           className={`${numericClass} gp-input--bare gp-hero min-w-0 flex-1 text-center`}
-          style={{ color: 'var(--gp-widget-accent)' }}
+          style={{ color: 'var(--gp-accent-ink, var(--gp-widget-accent))' }}
         />
         <SmallAction label="Increase" onClick={() => setValue(data.value + step)}>
           <Plus size={12} />

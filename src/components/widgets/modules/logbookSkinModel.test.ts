@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import type { LogbookData } from '../../../types/spatial'
 import {
   appendLogbookEntry,
@@ -8,6 +8,7 @@ import {
   logbookEntries,
   logbookEntryDetails,
   logbookOrder,
+  logbookServiceDue,
   logbookSkinMode,
   orderedLogbookEntries,
   removeLogbookEntry,
@@ -21,6 +22,16 @@ const base: LogbookData = {
     { id: 'three', timestamp: '2026-07-25T10:00:00.000Z', text: 'Issue', level: 'warning' },
   ],
 }
+
+// Day headings are local calendar days, so these read differently either side
+// of a UTC midnight. Pinned to one zone west of Greenwich so the assertions
+// mean the same thing on every machine.
+const originalTz = process.env.TZ
+beforeAll(() => { process.env.TZ = 'America/New_York' })
+afterAll(() => {
+  if (originalTz === undefined) delete process.env.TZ
+  else process.env.TZ = originalTz
+})
 
 describe('Logbook skin model', () => {
   it('falls back to Daily Log for stale skin values', () => {
@@ -59,6 +70,18 @@ describe('Logbook skin model', () => {
     const groups = logbookDayGroups(base.entries, 'newest')
     expect(groups.map((group) => group.day)).toEqual(['2026-07-25', '2026-07-24'])
     expect(groups[0]!.entries.map((entry) => entry.id)).toEqual(['three', 'two'])
+  })
+
+  it('files an evening entry under the local day it was written on', () => {
+    // 21:00 on Monday 31 August in New York is already Tuesday in UTC. Both
+    // lines were written on the same Monday and belong under one heading — the
+    // one the entry's own displayed time agrees with.
+    const groups = logbookDayGroups([
+      { id: 'afternoon', timestamp: '2026-08-31T18:00:00.000Z', text: 'Ran the check', level: 'note' },
+      { id: 'evening', timestamp: '2026-09-01T01:00:00.000Z', text: 'Wrote it up', level: 'note' },
+    ], 'newest')
+    expect(groups.map((group) => group.day)).toEqual(['2026-08-31'])
+    expect(groups[0]!.entries.map((entry) => entry.id)).toEqual(['evening', 'afternoon'])
   })
 
   it('isolates specialist details and display order by skin', () => {
@@ -123,5 +146,29 @@ describe('Logbook skin model', () => {
     expect(removed.entries.map((entry) => entry.id)).toEqual(['one', 'three'])
     expect(logbookEntryDetails(removed, 'incident_log')).not.toHaveProperty('two')
     expect(logbookEntryDetails(removed, 'travel_log')).not.toHaveProperty('two')
+  })
+})
+
+describe('logbookServiceDue', () => {
+  const dayFromToday = (offset: number): string => {
+    const now = new Date()
+    const day = new Date(now.getFullYear(), now.getMonth(), now.getDate() + offset, 12)
+    return `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`
+  }
+
+  it('reads overdue, due today, and due soon from a service date', () => {
+    expect(logbookServiceDue(dayFromToday(-1))).toEqual({ tone: 'overdue', label: '1 day overdue' })
+    expect(logbookServiceDue(dayFromToday(-3))).toEqual({ tone: 'overdue', label: '3 days overdue' })
+    expect(logbookServiceDue(dayFromToday(0))).toEqual({ tone: 'today', label: 'Due today' })
+    expect(logbookServiceDue(dayFromToday(1))).toEqual({ tone: 'soon', label: 'In 1 day' })
+    expect(logbookServiceDue(dayFromToday(14))).toEqual({ tone: 'soon', label: 'In 14 days' })
+  })
+
+  it('stays quiet for far-off, missing, or unusable dates', () => {
+    expect(logbookServiceDue(dayFromToday(15))).toBeNull()
+    expect(logbookServiceDue(undefined)).toBeNull()
+    expect(logbookServiceDue('')).toBeNull()
+    expect(logbookServiceDue('not-a-date')).toBeNull()
+    expect(logbookServiceDue('2026-13-99')).toBeNull()
   })
 })

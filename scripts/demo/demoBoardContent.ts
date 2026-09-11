@@ -141,19 +141,20 @@ export function buildLaunchShowcase(): DemoBoard {
   hub.column([
     {
       key: 'welcome',
-      type: 'notes',
+      type: 'text',
       title: 'Grovepad',
-      skin: 'callout',
+      skin: 'typewriter',
       data: {
         text: 'One surface for everything you are keeping track of.\n\nEvery card below opens a world. Nothing here lives in a folder.',
-        mode: 'callout',
+        mode: 'typewriter',
       },
+      size: { width: 320, height: 200 },
       accent: LIME,
       favorite: true,
     },
     {
       key: 'today-note',
-      type: 'notes',
+      type: 'text',
       title: 'Today',
       skin: 'sticky',
       data: { text: 'Calculus problem set\nRent transfer\nGym at 6', mode: 'sticky', color: 'yellow' },
@@ -238,7 +239,7 @@ export function buildLaunchShowcase(): DemoBoard {
       key: 'door-life',
       type: 'canvas_node',
       title: 'Life Systems',
-      skin: 'dashboard_door',
+      skin: 'live_thumbnail',
       accent: ROSE,
     },
   ])
@@ -263,13 +264,14 @@ export function buildLaunchShowcase(): DemoBoard {
       key: 'door-lab',
       type: 'canvas_node',
       title: 'Automation Lab',
-      skin: 'folder_index',
+      skin: 'cover',
       accent: AMBER,
     },
     {
       key: 'hub-status',
       type: 'status',
       title: 'Semester',
+      size: { width: 280, height: 160 },
       skin: 'pipeline',
       data: { label: 'Semester', value: 'in_progress' },
     },
@@ -290,12 +292,12 @@ export function buildLaunchShowcase(): DemoBoard {
   school.column([
     {
       key: 'term',
-      type: 'notes',
+      type: 'text',
       title: 'Autumn term',
-      skin: 'markdown_page',
+      skin: 'plain',
       data: {
-        mode: 'markdown_page',
-        text: '# Autumn term\n\n**Load** — 5 courses, 17 credits\n**Target** — hold a 3.7\n**Weak spot** — Calculus II series\n\nRevision blocks are 25 minutes. Two before dinner, one after.',
+        mode: 'plain',
+        text: 'Autumn term\n\nLoad — 5 courses, 17 credits\nTarget — hold a 3.7\nWeak spot — Calculus II series\n\nRevision blocks are 25 minutes. Two before dinner, one after.',
       },
       accent: AZURE,
     },
@@ -585,6 +587,7 @@ export function buildLaunchShowcase(): DemoBoard {
       key: 'sem-status',
       type: 'status',
       title: 'On track?',
+      size: { width: 280, height: 160 },
       skin: 'traffic_light',
       data: { label: 'On track?', value: 'blocked' },
     },
@@ -592,6 +595,7 @@ export function buildLaunchShowcase(): DemoBoard {
       key: 'sem-line',
       type: 'template',
       title: 'Where I stand',
+      size: { width: 320, height: 280 },
       skin: 'sentence',
       data: { template: '{a} — weakest topic is {b}', slotA: 'Solid', slotB: 'Series convergence', slotC: '', slotD: '' },
       accent: VIOLET,
@@ -635,13 +639,12 @@ export function buildLaunchShowcase(): DemoBoard {
   sprint.column([
     {
       key: 'brief',
-      type: 'notes',
+      type: 'text',
       title: 'Sprint brief',
-      skin: 'quote',
+      skin: 'typewriter',
       data: {
-        mode: 'quote',
+        mode: 'typewriter',
         text: 'Nine days to the Calculus final. The board keeps score so I do not have to.',
-        attribution: 'Sprint rules',
       },
       accent: AMBER,
     },
@@ -699,6 +702,7 @@ export function buildLaunchShowcase(): DemoBoard {
       key: 'effort',
       type: 'aggregator',
       title: 'Effort today',
+      size: { width: 320, height: 320 },
       skin: 'sum',
       data: { label: 'Effort today', mode: 'sum', slots: [0, 0, 0, 0, 0, 0] },
       accent: AZURE,
@@ -734,6 +738,7 @@ export function buildLaunchShowcase(): DemoBoard {
       key: 'line',
       type: 'template',
       title: 'Message',
+      size: { width: 320, height: 280 },
       skin: 'sentence',
       data: { template: 'Calculus: {a} at {b}% — {c} blocks done today', slotA: 'Nearly there', slotB: '74', slotC: '3', slotD: '' },
       accent: VIOLET,
@@ -759,6 +764,7 @@ export function buildLaunchShowcase(): DemoBoard {
       key: 'sprint-status',
       type: 'status',
       title: 'Readiness',
+      size: { width: 280, height: 160 },
       skin: 'badge',
       data: { label: 'Readiness', value: 'in_progress' },
     },
@@ -786,7 +792,7 @@ export function buildLaunchShowcase(): DemoBoard {
       skin: 'big_number',
       data: {
         tiles: [
-          { id: rid('tile'), label: 'Blocks today', value: '3', unit: '', trend: 'up' },
+          { id: rid('tile'), label: 'Effort today', value: '8', unit: '', trend: 'up' },
           { id: rid('tile'), label: 'Papers left', value: '1', unit: '', trend: 'down' },
         ],
       },
@@ -832,25 +838,23 @@ export function buildLaunchShowcase(): DemoBoard {
       accent: VIOLET,
     },
     {
-      key: 'cornell-1',
-      type: 'cornell',
+      key: 'lecture-1',
+      type: 'text',
       title: 'Lecture 14',
-      skin: 'lecture',
+      skin: 'plain',
       data: {
-        cues: 'Why does p > 1 matter?\nWhen is the ratio test useless?',
-        notes: 'p-series Σ 1/nᵖ converges exactly when p > 1. The integral test is the cleanest proof.\n\nRatio test returns L = 1 for every p-series, so it can never settle them.',
-        summary: 'Pick the test by the shape of the term, not by habit.',
+        mode: 'plain',
+        text: 'p-series Σ 1/nᵖ converges exactly when p > 1. The integral test is the cleanest proof.\n\nRatio test returns L = 1 for every p-series, so it can never settle them.\n\nPick the test by the shape of the term, not by habit.',
       },
     },
     {
-      key: 'cornell-2',
-      type: 'cornell',
+      key: 'lecture-2',
+      type: 'text',
       title: 'Reading — Kuhn',
-      skin: 'reading',
+      skin: 'plain',
       data: {
-        cues: 'What counts as a paradigm?\nIs normal science conservative?',
-        notes: 'Normal science solves puzzles inside a paradigm. Anomalies accumulate until a crisis makes a new frame thinkable.',
-        summary: 'Progress is not only accumulation; frames get replaced.',
+        mode: 'plain',
+        text: 'Normal science solves puzzles inside a paradigm. Anomalies accumulate until a crisis makes a new frame thinkable.\n\nProgress is not only accumulation; frames get replaced.',
       },
     },
   ])
@@ -875,6 +879,7 @@ export function buildLaunchShowcase(): DemoBoard {
       key: 'sources',
       type: 'citation',
       title: 'Sources',
+      size: { width: 372, height: 280 },
       skin: 'bibliography',
       data: {
         style: 'APA',
@@ -939,20 +944,20 @@ export function buildLaunchShowcase(): DemoBoard {
     },
   ])
 
-  vault.tree('vault-outline', ['cornell-1', 'cornell-2', 'formulas', 'sketch', 'cloze'])
-  vault.rel('sources', 'cornell-2', 'cousin')
-  vault.wire({ from: 'cornell-1', fromPort: 'summary', to: 'log', toPort: 'append' })
+  vault.tree('vault-outline', ['lecture-1', 'lecture-2', 'formulas', 'sketch', 'cloze'])
+  vault.rel('sources', 'lecture-2', 'cousin')
+  vault.wire({ from: 'lecture-1', fromPort: 'text', to: 'log', toPort: 'append' })
 
   // -- 5. Money Center ------------------------------------------------------
 
   money.column([
     {
       key: 'money-note',
-      type: 'notes',
+      type: 'text',
       title: 'The rule',
-      skin: 'callout',
+      skin: 'plain',
       data: {
-        mode: 'callout',
+        mode: 'plain',
         text: 'Pay the future first. Everything left is genuinely spendable.\n\nReview every Sunday. Move the surplus before Monday.',
       },
       accent: LIME,
@@ -1184,6 +1189,7 @@ export function buildLaunchShowcase(): DemoBoard {
       key: 'renewals',
       type: 'renewals_vault',
       title: 'Renewals',
+      size: { width: 360, height: 920 },
       skin: 'wallet',
       data: {
         rows: [
@@ -1232,6 +1238,7 @@ export function buildLaunchShowcase(): DemoBoard {
       key: 'money-line',
       type: 'template',
       title: 'Money line',
+      size: { width: 320, height: 280 },
       skin: 'sentence',
       data: { template: '{a} — debt free by {b}', slotA: 'Long haul', slotB: 'Nov 2028', slotC: '', slotD: '' },
       accent: VIOLET,
@@ -1297,6 +1304,7 @@ export function buildLaunchShowcase(): DemoBoard {
       key: 'invoices',
       type: 'invoices',
       title: 'Invoices',
+      size: { width: 360, height: 720 },
       skin: 'aging',
       data: {
         currency: '$',
@@ -1410,6 +1418,7 @@ export function buildLaunchShowcase(): DemoBoard {
       key: 'freelance-status',
       type: 'status',
       title: 'Cashflow',
+      size: { width: 280, height: 160 },
       skin: 'traffic_light',
       data: { label: 'Cashflow', value: 'blocked' },
     },
@@ -1427,6 +1436,7 @@ export function buildLaunchShowcase(): DemoBoard {
       key: 'chase-text',
       type: 'template',
       title: 'Chase note',
+      size: { width: 320, height: 280 },
       skin: 'email',
       data: { template: 'Hi {a} — just checking in on invoice {b}, now {c} days past due.', slotA: 'Northwind', slotB: 'INV-041', slotC: '4', slotD: '' },
     },
@@ -1479,7 +1489,7 @@ export function buildLaunchShowcase(): DemoBoard {
   life.column([
     {
       key: 'life-note',
-      type: 'notes',
+      type: 'text',
       title: 'House rules',
       skin: 'sticky',
       data: { mode: 'sticky', color: 'green', text: 'Bins out Tuesday.\nWater the plants Sunday.\nNobody cooks two nights running.' },
@@ -1553,6 +1563,7 @@ export function buildLaunchShowcase(): DemoBoard {
       key: 'workout',
       type: 'workout_plan',
       title: 'Training',
+      size: { width: 400, height: 604 },
       skin: 'strength',
       data: {
         skin: 'strength',
@@ -1588,6 +1599,7 @@ export function buildLaunchShowcase(): DemoBoard {
       key: 'meals',
       type: 'meal_planner',
       title: 'Meals',
+      size: { width: 1000, height: 400 },
       skin: 'week',
       data: {
         skin: 'week',
@@ -1858,12 +1870,12 @@ export function buildLaunchShowcase(): DemoBoard {
   studio.column([
     {
       key: 'studio-note',
-      type: 'notes',
+      type: 'text',
       title: 'The project',
-      skin: 'markdown_page',
+      skin: 'plain',
       data: {
-        mode: 'markdown_page',
-        text: '# Field Guide\n\nA small print zine about coastal birds.\n\n**Deadline** — print files in six weeks.\n**Open question** — 32 pages or 48?',
+        mode: 'plain',
+        text: 'Field Guide\n\nA small print zine about coastal birds.\n\nDeadline — print files in six weeks.\nOpen question — 32 pages or 48?',
       },
       accent: VIOLET,
     },
@@ -1980,6 +1992,7 @@ export function buildLaunchShowcase(): DemoBoard {
       key: 'swot',
       type: 'swot',
       title: 'Honest look',
+      size: { width: 560, height: 240 },
       skin: 'one_page',
       data: {
         strengths: ['Distinct illustration voice', 'Subject nobody local covers'],
@@ -1992,6 +2005,7 @@ export function buildLaunchShowcase(): DemoBoard {
       key: 'risks',
       type: 'risk_register',
       title: 'Risks',
+      size: { width: 488, height: 360 },
       skin: 'top_risks',
       data: {
         items: [
@@ -2100,6 +2114,7 @@ export function buildLaunchShowcase(): DemoBoard {
       key: 'studio-line',
       type: 'template',
       title: 'Where the project is',
+      size: { width: 320, height: 280 },
       skin: 'sentence',
       data: { template: '{a} · cover: {b} · next: {c}', slotA: '32 pages', slotB: 'Empty shoreline', slotC: 'Order a single proof copy', slotD: '' },
       accent: VIOLET,
@@ -2108,6 +2123,7 @@ export function buildLaunchShowcase(): DemoBoard {
       key: 'studio-status',
       type: 'status',
       title: 'Project',
+      size: { width: 280, height: 160 },
       skin: 'progress',
       data: { label: 'Field Guide', value: 'in_progress' },
     },
@@ -2132,11 +2148,11 @@ export function buildLaunchShowcase(): DemoBoard {
   lab.column([
     {
       key: 'lab-note',
-      type: 'notes',
+      type: 'text',
       title: 'How wiring works',
-      skin: 'callout',
+      skin: 'plain',
       data: {
-        mode: 'callout',
+        mode: 'plain',
         text: 'Drag from a port on one card to a port on another.\n\nBlue carries numbers, green carries yes/no, purple carries text, amber carries a series, and rose fires events.',
       },
       accent: AMBER,
@@ -2228,6 +2244,7 @@ export function buildLaunchShowcase(): DemoBoard {
       key: 'words',
       type: 'template',
       title: 'Sentence',
+      size: { width: 320, height: 280 },
       skin: 'sentence',
       data: { template: '{a} — {b} of {c} done this week', slotA: 'Behind', slotB: '12', slotC: '40', slotD: '' },
       accent: VIOLET,
@@ -2275,6 +2292,7 @@ export function buildLaunchShowcase(): DemoBoard {
       key: 'lab-status',
       type: 'status',
       title: 'Pace',
+      size: { width: 280, height: 160 },
       skin: 'traffic_light',
       data: { label: 'Pace', value: 'blocked' },
     },
@@ -2285,7 +2303,7 @@ export function buildLaunchShowcase(): DemoBoard {
       skin: 'big_number',
       data: {
         tiles: [
-          { id: rid('t'), label: 'Effort', value: '12', unit: '', trend: 'up' },
+          { id: rid('t'), label: 'Effort', value: '52', unit: '', trend: 'up' },
           { id: rid('t'), label: 'Target', value: '40', unit: '', trend: 'flat' },
         ],
       },

@@ -1,33 +1,20 @@
 import type {
-  AssignmentData,
   CanvasLmsData,
   CitationData,
-  CornellData,
   FormulaSheetData,
-  GpaData,
-  PomodoroData,
-  QuizData,
-  StudyGoalData,
-  VocabData,
 } from '../../../types/widgetDataEducation'
 import type { WidgetRendererFamily } from './contracts'
 import {
-  AssignmentWidget, CanvasLmsWidget, CitationWidget, CornellWidget, FormulaSheetWidget, GpaWidget,
-  PomodoroWidget, QuizWidget, StudyGoalWidget, VocabWidget,
+  CanvasLmsWidget, CitationWidget, FormulaSheetWidget, 
 } from './lazyEducationWidgets'
 
 export const educationWidgetRendererFamily: WidgetRendererFamily = {
   id: 'education',
   renderers: {
-    pomodoro: ({ widget, onUpdate }) => <PomodoroWidget data={widget.data as PomodoroData} onChange={onUpdate} />,
     canvas_lms: ({ widget }) => <CanvasLmsWidget data={widget.data as CanvasLmsData} />,
-    vocab: ({ widget, onUpdate }) => <VocabWidget data={widget.data as VocabData} onChange={onUpdate} />,
-    gpa: ({ widget, onUpdate }) => <GpaWidget data={widget.data as GpaData} onChange={onUpdate} />,
-    assignment: ({ widget, onUpdate }) => <AssignmentWidget data={widget.data as AssignmentData} onChange={onUpdate} />,
-    cornell: ({ widget, onUpdate }) => <CornellWidget data={widget.data as CornellData} onChange={onUpdate} />,
+    // The card resolves its own skin from `data.skin`, which keeps the skin
+    // model inside the lazy education chunk with the widget that reads it.
     formula_sheet: ({ widget, onUpdate }) => <FormulaSheetWidget data={widget.data as FormulaSheetData} onChange={onUpdate} />,
     citation: ({ widget, onUpdate }) => <CitationWidget data={widget.data as CitationData} onChange={onUpdate} />,
-    study_goal: ({ widget, onUpdate }) => <StudyGoalWidget data={widget.data as StudyGoalData} onChange={onUpdate} />,
-    quiz: ({ widget, onUpdate }) => <QuizWidget data={widget.data as QuizData} onChange={onUpdate} />,
   },
 }

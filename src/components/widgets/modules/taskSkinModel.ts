@@ -142,6 +142,11 @@ export interface DueReading {
  * Day keys are compared as local calendar days — parsing "2026-07-25" through
  * `new Date()` alone reads it as UTC midnight, which puts anyone west of
  * Greenwich a day behind their own due dates.
+ *
+ * The value is local midnight in milliseconds, NOT a rounded epoch day: rounding
+ * each date on its own collapses two calendar days onto one number across a DST
+ * change in a zone near UTC+12. Callers that want a day count round the
+ * DIFFERENCE of two of these, which is exact.
  */
 function dayNumber(key: string): number | null {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(key)
@@ -155,7 +160,7 @@ function dayNumber(key: string): number | null {
     date.getMonth() !== month - 1 ||
     date.getDate() !== day
   ) return null
-  return Math.round(date.getTime() / 86_400_000)
+  return date.getTime()
 }
 
 export function dueReading(raw: unknown, today: string = localDayKey()): DueReading {
@@ -164,7 +169,7 @@ export function dueReading(raw: unknown, today: string = localDayKey()): DueRead
   const now = dayNumber(today)
   if (due === null || now === null) return { key: '', label: 'No date', tone: 'none' }
 
-  const offset = due - now
+  const offset = Math.round((due - now) / 86_400_000)
   if (offset === 0) return { key, label: 'Today', tone: 'today' }
   if (offset === 1) return { key, label: 'Tomorrow', tone: 'soon' }
   if (offset === -1) return { key, label: 'Yesterday', tone: 'overdue' }

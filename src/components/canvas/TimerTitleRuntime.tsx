@@ -1,16 +1,14 @@
 import { useEffect } from 'react'
 import { useWidgetStore } from '../../store/useWidgetStore'
-import type { PomodoroData, TimekeeperData, TimerData } from '../../types/spatial'
+import type { TimekeeperData } from '../../types/spatial'
 import { grovepadPageTitle } from '../../utils/pageTitle'
 
 function activeDeadline(): number | null {
   let soonest: number | null = null
   for (const widget of Object.values(useWidgetStore.getState().widgets)) {
-    let endAt = widget.type === 'timer'
-      ? (widget.data as TimerData).endAt
-      : widget.type === 'pomodoro'
-        ? (widget.data as PomodoroData).endAt
-        : null
+    // Every countdown now lives inside Timekeeper: the standalone Timer and
+    // Pomodoro cards were retired, and old boards migrate to its skins on load.
+    let endAt: number | null = null
     if (widget.type === 'timekeeper') {
       const data = widget.data as TimekeeperData
       if (data.mode === 'countdown' || data.mode === 'hourglass') endAt = data.countdown.endAt

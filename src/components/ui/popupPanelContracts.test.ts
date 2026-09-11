@@ -64,9 +64,19 @@ describe('popup panel design contracts', () => {
     expect(documentImport).toContain('gp-popup-title-pill')
     expect(documentImport).toContain('gp-popup-island')
     expect(quickAdd).toContain('gp-popup-action')
-    expect(widgetLibrary).toContain('gp-popup-title-pill')
-    expect(widgetLibrary).toContain('gp-popup-island')
-    // Recipes browses like the widget library, so it wears the same anatomy.
+    // The widget library is a launcher, not a form: bare display title in the
+    // top-right corner, no title pill and no island under it.
+    expect(widgetLibrary).not.toContain('gp-popup-title-pill')
+    expect(widgetLibrary).not.toContain('gp-popup-island')
+    // It carries no shared action button either: domain packs moved to
+    // Settings → Data, so browsing the library offers nothing but the column.
+    expect(widgetLibrary).not.toContain('gp-popup-action')
+    // And no shared close chrome: a bare search line owns the whole header, and
+    // the panel closes on Esc or a click outside. Only a phone, which has
+    // neither, grows its own close button.
+    expect(widgetLibrary).not.toContain('gp-popup-close-naked')
+    expect(widgetLibrary).toContain('isPhone && (')
+    // Recipes browses as a reading list, so it keeps the pill/island anatomy.
     expect(recipes).toContain('gp-popup-title-pill')
     expect(recipes).toContain('gp-popup-island')
   })
@@ -74,7 +84,6 @@ describe('popup panel design contracts', () => {
   it('applies the compact popup menu material to every menu owner', () => {
     for (const path of [
       './AccountChip.tsx',
-      './CanvasContextMenu.tsx',
       './CanvasToolbar.tsx',
       './WidgetContextMenu.tsx',
     ]) {

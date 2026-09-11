@@ -20,10 +20,11 @@ import type {
 } from '../types/spatial'
 import { clampZoom, DOMAIN_PACKS, MODULE_TYPES } from '../types/spatial'
 import { AUTOMATION_CORE_SET } from '../widgets/automationCoreCatalog'
+import { DELETED_WIDGET_TYPES } from '../widgets/deletedWidgetTypes'
+import { currentWidgetType } from '../widgets/renamedWidgetTypes'
 import { widgetDefinition } from '../widgets/registry'
 
 const MODULE_TYPE_SET = new Set<string>(MODULE_TYPES)
-const RETIRED_WIDGET_TYPES = new Set(['divider'])
 const TRANSIENT_AUTOMATION_RUN_TYPES = new Set<string>(['http_request', 'webhook_sender', 'widget_creator'])
 const DOMAIN_PACK_SET = new Set<string>(DOMAIN_PACKS)
 const RELATION_TYPES: readonly RelationType[] = [
@@ -280,7 +281,7 @@ function isValidWidget(value: unknown, requireCanvasId: boolean): value is Widge
 function createOpaqueWidget(value: Record<string, unknown>): Widget {
   const placeholder: Record<PropertyKey, unknown> = {
     ...value,
-    type: 'notes',
+    type: 'text',
     data: { text: '' },
     metadata: { ...(value.metadata as Record<string, unknown>), locked: true },
     [OPAQUE_WIDGET_SOURCE]: value,
@@ -488,17 +489,102 @@ function parsePacks(raw: unknown): { known: DomainPack[]; rawStrings: string[] }
 }
 
 const MIGRATED_WORKSPACE_ID = 'ws-default'
-const MIGRATED_ROOT_CANVAS_ID = 'canvas-origin'
+
+/**
+ * The id a v1 board's single canvas becomes.
+ *
+ * This used to be the literal `'canvas-origin'`, matching the seed id every
+ * fresh install also used — so every account in the product shared one canvas
+ * id. Canvas ids are the primary key of `canvas_collaborations` and the folder
+ * name media is stored under, which turned a cosmetic constant into a
+ * cross-tenant namespace collision. Minted per migration now, like every other
+ * canvas id.
+ */
+export const LEGACY_SHARED_ROOT_CANVAS_ID = 'canvas-origin'
+const newCanvasId = (): string => crypto.randomUUID()
+
+/**
+ * Move a board off the shared `canvas-origin` id, once, on load.
+ *
+ * Boards saved before ids were minted per install all name their root canvas
+ * the same thing. That id is the primary key of `canvas_collaborations` and the
+ * folder media is filed under, so leaving it in place means one account can
+ * register the row every other account's default board resolves to. Rewriting
+ * it locally is what makes the collision go away for boards already on disk;
+ * new boards never have it.
+ *
+ * The board is only ever pushed to the cloud under the new id, so the effect of
+ * this is a fresh cloud document rather than a mutation of a shared one.
+ */
+export function remapLegacyRootCanvasId(
+  board: HydratedPersistedBoard,
+  mintId: () => string = newCanvasId,
+): HydratedPersistedBoard {
+  const from = LEGACY_SHARED_ROOT_CANVAS_ID
+  if (!board.canvases[from]) return board
+  const to = mintId()
+  const swap = (id: string | null | undefined): string | null | undefined => (id === from ? to : id)
+
+  const canvases: Record<string, CanvasMeta> = {}
+  for (const [id, canvas] of Object.entries(board.canvases)) {
+    const nextId = id === from ? to : id
+    canvases[nextId] = {
+      ...canvas,
+      id: nextId,
+      parentCanvasId: swap(canvas.parentCanvasId) ?? null,
+    }
+  }
+
+  const workspaces: Record<string, Workspace> = {}
+  for (const [id, workspace] of Object.entries(board.workspaces)) {
+    workspaces[id] = { ...workspace, rootCanvasId: swap(workspace.rootCanvasId) as string }
+  }
+
+  const widgets: Record<string, Widget> = {}
+  for (const [id, widget] of Object.entries(board.widgets)) {
+    const next: Widget = { ...widget, canvasId: swap(widget.canvasId) as string }
+    // A canvas-node card names the canvas it opens; missing it here would leave
+    // a portal pointing at an id nothing answers to.
+    const data = next.data as unknown as Record<string, unknown>
+    if (next.type === 'canvas_node' && data?.canvasId === from) {
+      next.data = { ...data, canvasId: to } as Widget['data']
+    }
+    widgets[id] = next
+  }
+
+  const canvasViews = board.canvasViews
+    ? Object.fromEntries(
+        Object.entries(board.canvasViews).map(([id, view]) => [id === from ? to : id, view]),
+      )
+    : board.canvasViews
+
+  return Object.assign(Object.create(Object.getPrototypeOf(board) as object), board, {
+    canvases,
+    workspaces,
+    widgets,
+    canvasViews,
+    activeCanvasId: swap(board.activeCanvasId),
+  }) as HydratedPersistedBoard
+}
 
 /** Wrap a v1 flat board in a default workspace and root canvas. */
 export function migrateLegacyBoard(parsed: unknown): HydratedPersistedBoard | null {
   if (!isRecord(parsed) || !isRecord(parsed.widgets)) return null
 
+  const rootCanvasId = newCanvasId()
   const widgets: Record<string, Widget> = {}
-  for (const [id, widget] of Object.entries(parsed.widgets)) {
-    if (!hasValidWidgetEnvelope(widget, false) || widget.id !== id) continue
-    if (RETIRED_WIDGET_TYPES.has(widget.type as string)) continue
-    const migratedWidget = { ...widget, canvasId: MIGRATED_ROOT_CANVAS_ID }
+  for (const [id, raw] of Object.entries(parsed.widgets)) {
+    if (!hasValidWidgetEnvelope(raw, false) || raw.id !== id) continue
+    // A deleted card is dropped outright rather than hydrated as a placeholder,
+    // so it cannot reappear on a canvas that used to hold it. Relations, wires,
+    // and glue that named it fall away with it: each of those parsers validates
+    // against the widgets that survived this loop.
+    if (DELETED_WIDGET_TYPES.has(raw.type as string)) continue
+    // A renamed card is still fully known, just under an old name — rewrite it
+    // to the live name before anything else looks at `type`, or it hydrates as
+    // an opaque, locked placeholder like a genuinely unrecognised future type.
+    const widget = { ...raw, type: currentWidgetType(raw.type as string) }
+    const migratedWidget = { ...widget, canvasId: rootCanvasId }
     widgets[id] = MODULE_TYPE_SET.has(widget.type as string)
       ? normalizeWidgetData(migratedWidget as unknown as Widget)
       : createOpaqueWidget(migratedWidget)
@@ -508,13 +594,13 @@ export function migrateLegacyBoard(parsed: unknown): HydratedPersistedBoard | nu
     [MIGRATED_WORKSPACE_ID]: {
       id: MIGRATED_WORKSPACE_ID,
       name: 'My Workspace',
-      rootCanvasId: MIGRATED_ROOT_CANVAS_ID,
+      rootCanvasId: rootCanvasId,
       createdAt: Date.now(),
     },
   }
   const canvases: Record<string, CanvasMeta> = {
-    [MIGRATED_ROOT_CANVAS_ID]: {
-      id: MIGRATED_ROOT_CANVAS_ID,
+    [rootCanvasId]: {
+      id: rootCanvasId,
       name: 'Origin',
       workspaceId: MIGRATED_WORKSPACE_ID,
       parentCanvasId: null,
@@ -536,7 +622,7 @@ export function migrateLegacyBoard(parsed: unknown): HydratedPersistedBoard | nu
     glues: glues.known,
     activePacks: packs.known,
     activeWorkspaceId: MIGRATED_WORKSPACE_ID,
-    activeCanvasId: MIGRATED_ROOT_CANVAS_ID,
+    activeCanvasId: rootCanvasId,
     canvasViews: {},
   }, parsed, {
     unknownRelations: relations.unknown,
@@ -578,9 +664,13 @@ export function parsePersistedBoard(parsed: unknown): HydratedPersistedBoard | n
   if (Object.keys(workspaces).length === 0) return null
 
   const widgets: Record<string, Widget> = {}
-  for (const [id, widget] of Object.entries(parsed.widgets)) {
-    if (!hasValidWidgetEnvelope(widget, true) || widget.id !== id) continue
-    if (RETIRED_WIDGET_TYPES.has(widget.type as string)) continue
+  for (const [id, raw] of Object.entries(parsed.widgets)) {
+    if (!hasValidWidgetEnvelope(raw, true) || raw.id !== id) continue
+    // See migrateLegacyBoard: deleted cards are dropped, never rehydrated.
+    if (DELETED_WIDGET_TYPES.has(raw.type as string)) continue
+    // See migrateLegacyBoard: a renamed card is rewritten to its live name
+    // before validity is checked, so it never falls into the opaque path.
+    const widget: Record<string, unknown> = { ...raw, type: currentWidgetType(raw.type as string) }
     if (typeof widget.canvasId !== 'string' || !canvases[widget.canvasId]) continue
     widgets[id] = isValidWidget(widget, true)
       ? normalizeWidgetData(widget)

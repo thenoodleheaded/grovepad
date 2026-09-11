@@ -8,7 +8,7 @@ const canvases: Record<string, CanvasMeta> = {
   child: { id: 'child', workspaceId: 'ws', parentCanvasId: 'root', name: 'Child' },
 }
 
-const widget = (id: string, canvasId: string, x: number, y: number, type: Widget['type'] = 'notes'): Widget =>
+const widget = (id: string, canvasId: string, x: number, y: number, type: Widget['type'] = 'text'): Widget =>
   makeWidget({
     id,
     type,

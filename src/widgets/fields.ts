@@ -1,6 +1,5 @@
-import type { ModuleType } from '../types/spatial'
-import type { CommandDescriptor, FieldDescriptor } from './contracts/fields'
-export type { CommandDescriptor, FieldDescriptor, FieldValue } from './contracts/fields'
+import type { CommandDescriptor, FieldDescriptor, FieldOwner } from './contracts/fields'
+export type { CommandDescriptor, FieldDescriptor, FieldOwner, FieldValue, SkinRendererType } from './contracts/fields'
 import { EXPANSION_COMMANDS, EXPANSION_FIELDS } from './fields/expansion'
 import { ATLAS_COMMANDS, ATLAS_FIELDS } from './fields/atlas'
 import { AUTOMATION_CORE_COMMANDS, AUTOMATION_CORE_FIELDS } from './fields/automationCore'
@@ -23,7 +22,7 @@ import { CORE_WIDGET_COMMANDS } from './fields/coreCommands'
 // slot on the card edge, so the wire layer and the port overlay agree on
 // coordinates without any DOM measurement.
 // ---------------------------------------------------------------------------
-const WIDGET_FIELDS: Partial<Record<ModuleType, FieldDescriptor[]>> = {
+const WIDGET_FIELDS: Partial<Record<FieldOwner, FieldDescriptor[]>> = {
   ...CORE_WIDGET_FIELDS,
   ...DATA_MEDIA_FIELDS,
   ...STUDY_FIELDS,
@@ -38,20 +37,20 @@ const WIDGET_FIELDS: Partial<Record<ModuleType, FieldDescriptor[]>> = {
 // Trigger commands — one-shot mutations a trigger connection can fire.
 // ---------------------------------------------------------------------------
 
-const WIDGET_COMMANDS: Partial<Record<ModuleType, CommandDescriptor[]>> = {
+const WIDGET_COMMANDS: Partial<Record<FieldOwner, CommandDescriptor[]>> = {
   ...CORE_WIDGET_COMMANDS,
   ...EXPANSION_COMMANDS,
   ...ATLAS_COMMANDS,
   ...AUTOMATION_CORE_COMMANDS,
 }
-export function fieldsFor(type: ModuleType): FieldDescriptor[] {
+export function fieldsFor(type: FieldOwner): FieldDescriptor[] {
   return WIDGET_FIELDS[type] ?? []
 }
 
-export function fieldDescriptor(type: ModuleType, key: string): FieldDescriptor | undefined {
+export function fieldDescriptor(type: FieldOwner, key: string): FieldDescriptor | undefined {
   return WIDGET_FIELDS[type]?.find((f) => f.key === key)
 }
 
-export function commandsFor(type: ModuleType): CommandDescriptor[] {
+export function commandsFor(type: FieldOwner): CommandDescriptor[] {
   return WIDGET_COMMANDS[type] ?? []
 }

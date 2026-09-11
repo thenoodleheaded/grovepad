@@ -650,7 +650,6 @@ export function CalendarWidget({
         </p>
         <div className="gp-calendar-provider-grid">
           {providerControl('google', 'Google Calendar', 'G')}
-          {providerControl('microsoft', 'Outlook Calendar', 'M')}
         </div>
         {externalError && <p className="gp-calendar-connect-error" role="status">{externalError}</p>}
         {!supabaseConfigured && (
@@ -663,7 +662,7 @@ export function CalendarWidget({
             <div className="gp-calendar-empty">
               <CalendarSync size={20} aria-hidden />
               <strong>Bring your schedule together</strong>
-              <span>Connect Google or Outlook for a private, read-only agenda.</span>
+              <span>Connect Google Calendar for a private, read-only agenda.</span>
             </div>
           ) : externalLoading && events.length === 0 ? (
             <div className="gp-calendar-empty">

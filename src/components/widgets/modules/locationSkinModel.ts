@@ -19,6 +19,7 @@ export type LocationSkinMode =
   | 'compass'
   | 'geofence'
   | 'route'
+  | 'map'
 
 const SKIN_MODES = new Set<LocationSkinMode>([
   'pin',
@@ -27,6 +28,7 @@ const SKIN_MODES = new Set<LocationSkinMode>([
   'compass',
   'geofence',
   'route',
+  'map',
 ])
 
 export function locationSkinMode(raw: unknown): LocationSkinMode {
@@ -158,9 +160,13 @@ export function formatCoordinates(point: GeoPoint, notation: CoordinateNotation)
   return `${point.latitude.toFixed(6)}, ${point.longitude.toFixed(6)}`
 }
 
-/** The one map address this widget ever produces, matching the `mapUrl` field. */
-export function mapUrl(point: GeoPoint): string {
-  return `https://www.openstreetmap.org/?mlat=${point.latitude}&mlon=${point.longitude}#map=15/${point.latitude}/${point.longitude}`
+/**
+ * The one map address this widget ever produces, matching the `mapUrl` field.
+ * A skin that remembers a framing passes it, so the map opens looking like
+ * the card did; every other skin gets the street-level default.
+ */
+export function mapUrl(point: GeoPoint, zoom = 15): string {
+  return `https://www.openstreetmap.org/?mlat=${point.latitude}&mlon=${point.longitude}#map=${zoom}/${point.latitude}/${point.longitude}`
 }
 
 /* ------------------------------------------------------------------ time */
@@ -510,6 +516,220 @@ export function routeReading(origin: GeoPoint | null, stops: readonly RouteStop[
   }
 
   return { legs, totalMeters, unlocated }
+}
+
+/* ------------------------------------------------------------------- map */
+
+/**
+ * The Map skin's geography: enough Web Mercator to draw a place on a slippy
+ * map and to move the pin by dragging that map instead of typing numbers.
+ *
+ * Every function here is pure and pixel-agnostic — it is handed a viewport
+ * size and hands back positions inside it. The renderer owns the drag, the
+ * image loading, and the canvas scale; this file owns the projection.
+ */
+
+export const MAP_TILE_PX = 256
+export const MAP_MIN_ZOOM = 2
+export const MAP_MAX_ZOOM = 19
+export const MAP_DEFAULT_ZOOM = 15
+
+/** Mercator cannot reach the poles; this is where the projection is cut. */
+const MERCATOR_LIMIT = 85.05112878
+
+/** A wide view of the inhabited world, for a card that holds no place yet. */
+export const MAP_OPENING_VIEW: GeoPoint = { latitude: 25, longitude: 10 }
+export const MAP_OPENING_ZOOM = 3
+
+export function clampZoom(raw: number): number {
+  if (!Number.isFinite(raw)) return MAP_DEFAULT_ZOOM
+  return Math.min(MAP_MAX_ZOOM, Math.max(MAP_MIN_ZOOM, Math.round(raw)))
+}
+
+/** The framing this card was left at. Persisted board data is untrusted. */
+export function mapZoom(state: Record<string, unknown>): number {
+  const raw = state.zoom
+  return typeof raw === 'number' ? clampZoom(raw) : MAP_DEFAULT_ZOOM
+}
+
+const ZOOM_WORDS: readonly (readonly [number, string])[] = [
+  [17, 'Building'],
+  [15, 'Street'],
+  [13, 'Neighbourhood'],
+  [10, 'City'],
+  [7, 'Region'],
+  [0, 'Country'],
+]
+
+/**
+ * What a zoom level means in words. The whole point of this skin is that the
+ * card remembers a framing rather than a number, so the framing needs a name
+ * a person would use.
+ */
+export function zoomFraming(zoom: number): string {
+  const clamped = clampZoom(zoom)
+  return ZOOM_WORDS.find(([from]) => clamped >= from)![1]
+}
+
+/* -------------------------------------------------------- the projection */
+
+/** Fractional tile column for a longitude, 0 at the antimeridian. */
+export function tileX(longitude: number, zoom: number): number {
+  return ((longitude + 180) / 360) * 2 ** zoom
+}
+
+/** Fractional tile row for a latitude, 0 at the top of the projection. */
+export function tileY(latitude: number, zoom: number): number {
+  const clamped = Math.min(MERCATOR_LIMIT, Math.max(-MERCATOR_LIMIT, latitude))
+  const radians = toRadians(clamped)
+  const mercator = Math.log(Math.tan(radians) + 1 / Math.cos(radians))
+  return ((1 - mercator / Math.PI) / 2) * 2 ** zoom
+}
+
+export function tileLongitude(x: number, zoom: number): number {
+  return (x / 2 ** zoom) * 360 - 180
+}
+
+export function tileLatitude(y: number, zoom: number): number {
+  const n = Math.PI * (1 - (2 * y) / 2 ** zoom)
+  return toDegrees(Math.atan(Math.sinh(n)))
+}
+
+/** Longitude folded back into −180…180, so panning east forever still maps. */
+export function wrapLongitude(value: number): number {
+  return ((((value + 180) % 360) + 360) % 360) - 180
+}
+
+/**
+ * One raster tile from OpenStreetMap. The column wraps around the world so a
+ * view straddling the antimeridian still asks for tiles that exist.
+ */
+export function tileUrl(x: number, y: number, zoom: number): string {
+  const span = 2 ** zoom
+  const column = ((Math.floor(x) % span) + span) % span
+  return `https://tile.openstreetmap.org/${zoom}/${column}/${Math.floor(y)}.png`
+}
+
+export interface MapTile {
+  key: string
+  url: string
+  /** Pixel offset of the tile's top-left corner inside the viewport. */
+  left: number
+  top: number
+}
+
+/**
+ * A hard ceiling on how many tiles one card may ask for. A card cannot get
+ * big enough to need this; a mismeasured viewport could, and asking a public
+ * tile server for hundreds of images because of a layout bug is not on.
+ */
+const MAX_TILES = 48
+
+/** Every tile needed to cover a viewport of this size centred on this point. */
+export function mapTiles(
+  centre: GeoPoint,
+  zoom: number,
+  width: number,
+  height: number,
+): MapTile[] {
+  if (!(width > 0) || !(height > 0)) return []
+  const span = 2 ** zoom
+  // Tile-space coordinate of the viewport's top-left corner.
+  const originX = tileX(centre.longitude, zoom) - width / 2 / MAP_TILE_PX
+  const originY = tileY(centre.latitude, zoom) - height / 2 / MAP_TILE_PX
+  const tiles: MapTile[] = []
+
+  for (let y = Math.floor(originY); (y - originY) * MAP_TILE_PX < height; y += 1) {
+    // Above the north edge or below the south edge there is no map to fetch.
+    if (y < 0 || y >= span) continue
+    for (let x = Math.floor(originX); (x - originX) * MAP_TILE_PX < width; x += 1) {
+      if (tiles.length >= MAX_TILES) return tiles
+      tiles.push({
+        key: `${zoom}/${x}/${y}`,
+        url: tileUrl(x, y, zoom),
+        left: Math.round((x - originX) * MAP_TILE_PX),
+        top: Math.round((y - originY) * MAP_TILE_PX),
+      })
+    }
+  }
+  return tiles
+}
+
+export interface ViewportPoint {
+  left: number
+  top: number
+  onScreen: boolean
+}
+
+/** Where a point falls inside a viewport centred somewhere else. */
+export function projectPoint(
+  point: GeoPoint,
+  centre: GeoPoint,
+  zoom: number,
+  width: number,
+  height: number,
+): ViewportPoint {
+  const span = 2 ** zoom
+  let dx = tileX(point.longitude, zoom) - tileX(centre.longitude, zoom)
+  // Cross the antimeridian the short way round, so a pin a degree away never
+  // flies the width of the world to get drawn.
+  if (dx > span / 2) dx -= span
+  if (dx < -span / 2) dx += span
+  const dy = tileY(point.latitude, zoom) - tileY(centre.latitude, zoom)
+  const left = width / 2 + dx * MAP_TILE_PX
+  const top = height / 2 + dy * MAP_TILE_PX
+  return {
+    left,
+    top,
+    onScreen: left >= 0 && left <= width && top >= 0 && top <= height,
+  }
+}
+
+/**
+ * The new centre after dragging the map by a pixel delta. Dragging content to
+ * the right walks the centre west, which is why the deltas subtract.
+ */
+export function panned(centre: GeoPoint, zoom: number, dxPx: number, dyPx: number): GeoPoint {
+  const span = 2 ** zoom
+  const x = tileX(centre.longitude, zoom) - dxPx / MAP_TILE_PX
+  // North and south stop at the edge of the projection rather than wrapping:
+  // dragging past the pole and arriving at the other one is nobody's intent.
+  const y = Math.min(span, Math.max(0, tileY(centre.latitude, zoom) - dyPx / MAP_TILE_PX))
+  return {
+    latitude: tileLatitude(y, zoom),
+    longitude: wrapLongitude(tileLongitude(x, zoom)),
+  }
+}
+
+/** Ground distance one screen pixel covers, which is what a scale bar is. */
+export function metersPerPixel(latitude: number, zoom: number): number {
+  const clamped = Math.min(MERCATOR_LIMIT, Math.max(-MERCATOR_LIMIT, latitude))
+  return (156_543.03392 * Math.cos(toRadians(clamped))) / 2 ** zoom
+}
+
+const SCALE_STEPS = [
+  10, 20, 50, 100, 200, 500,
+  1000, 2000, 5000, 10_000, 20_000, 50_000, 100_000, 200_000, 500_000,
+] as const
+
+export interface ScaleBar {
+  widthPx: number
+  label: string
+}
+
+/** The longest round distance that still fits in `maxPx`, and how wide it is. */
+export function mapScaleBar(latitude: number, zoom: number, maxPx: number): ScaleBar {
+  const perPixel = metersPerPixel(latitude, zoom)
+  let chosen: number = SCALE_STEPS[0]
+  for (const step of SCALE_STEPS) {
+    if (step / perPixel > maxPx) break
+    chosen = step
+  }
+  const reading = formatDistance(chosen)
+  return {
+    widthPx: Math.round(chosen / perPixel),
+    label: `${reading.value} ${reading.unit}`,
+  }
 }
 
 /* ------------------------------------------------------------------ misc */

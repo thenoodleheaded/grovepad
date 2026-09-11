@@ -152,7 +152,7 @@ function withScaffoldPlan(deterministic:ThoughtInterpretation,source:string):{in
 
 /** Placeholder-titled structure nodes the model is allowed to rename. */
 function structuralTitleTargets(plan:ThoughtPlan):ProposedNode[]{
-  return plan.nodes.filter(node=>node.widgetType==='notes').slice(0,24)
+  return plan.nodes.filter(node=>node.widgetType==='text').slice(0,24)
 }
 function titleEnrichPrompt(source:string,targets:readonly ProposedNode[]):string{
   return [

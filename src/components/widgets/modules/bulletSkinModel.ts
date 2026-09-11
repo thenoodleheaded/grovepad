@@ -1,21 +1,10 @@
 import type { BulletItem } from '../../../types/spatial'
 
-export type BulletSkin =
-  | 'dots'
-  | 'numbered'
-  | 'compact_chips'
-  | 'two_column'
-  | 'nested_outline'
-  | 'rolling_log'
+export type BulletSkin = 'dots' | 'numbered' | 'nested_outline'
 
 export interface BulletOutlineState {
   levels: Record<string, number>
   collapsedIds: string[]
-}
-
-export interface BulletLogState {
-  order: 'newest' | 'oldest'
-  timestamps: Record<string, string>
 }
 
 export interface VisibleOutlineItem {
@@ -26,14 +15,7 @@ export interface VisibleOutlineItem {
   collapsed: boolean
 }
 
-const BULLET_SKINS = new Set<BulletSkin>([
-  'dots',
-  'numbered',
-  'compact_chips',
-  'two_column',
-  'nested_outline',
-  'rolling_log',
-])
+const BULLET_SKINS = new Set<BulletSkin>(['dots', 'numbered', 'nested_outline'])
 
 export function bulletSkin(raw: unknown): BulletSkin {
   return typeof raw === 'string' && BULLET_SKINS.has(raw as BulletSkin)
@@ -100,52 +82,4 @@ export function visibleOutlineItems(
   })
 
   return result
-}
-
-export function bulletLogState(
-  raw: unknown,
-  items: readonly BulletItem[],
-): BulletLogState {
-  const state = safeRecord(raw)
-  const rawTimestamps = safeRecord(state.timestamps)
-  const itemIds = new Set(items.map((item) => item.id))
-  const timestamps: Record<string, string> = {}
-  for (const [id, value] of Object.entries(rawTimestamps)) {
-    if (
-      itemIds.has(id) &&
-      typeof value === 'string' &&
-      Number.isFinite(Date.parse(value))
-    ) {
-      timestamps[id] = value
-    }
-  }
-  return {
-    order: state.order === 'oldest' ? 'oldest' : 'newest',
-    timestamps,
-  }
-}
-
-export function orderedLogItems(
-  items: readonly BulletItem[],
-  state: BulletLogState,
-): BulletItem[] {
-  return items
-    .map((item, index) => ({
-      item,
-      index,
-      timestamp: state.timestamps[item.id]
-        ? Date.parse(state.timestamps[item.id]!)
-        : Number.NEGATIVE_INFINITY,
-    }))
-    .sort((left, right) => {
-      if (left.timestamp === right.timestamp) {
-        return state.order === 'newest'
-          ? right.index - left.index
-          : left.index - right.index
-      }
-      return state.order === 'newest'
-        ? right.timestamp - left.timestamp
-        : left.timestamp - right.timestamp
-    })
-    .map(({ item }) => item)
 }

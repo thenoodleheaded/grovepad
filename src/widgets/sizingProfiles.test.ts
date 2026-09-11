@@ -4,9 +4,9 @@ import { REVIEWED_WIDGET_SIZING, SIZING_REVIEW_TYPES } from './sizingProfiles'
 import { widgetDefinition, WIDGET_REGISTRY } from './registry'
 
 describe('reviewed widget sizing profiles', () => {
-  it('covers the 35-widget calibration set exactly once', () => {
-    expect(SIZING_REVIEW_TYPES).toHaveLength(35)
-    expect(new Set(SIZING_REVIEW_TYPES).size).toBe(35)
+  it('covers the 30-widget calibration set exactly once', () => {
+    expect(SIZING_REVIEW_TYPES).toHaveLength(30)
+    expect(new Set(SIZING_REVIEW_TYPES).size).toBe(30)
     expect(Object.keys(REVIEWED_WIDGET_SIZING).sort()).toEqual([...SIZING_REVIEW_TYPES].sort())
   })
 

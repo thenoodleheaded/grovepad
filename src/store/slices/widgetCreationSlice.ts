@@ -1,8 +1,7 @@
 import type { CanvasMeta } from '../../types/spatial'
 import { snapToGrid } from '../../types/spatial'
 import { layoutThoughtPlan, layoutWidth } from '../../utils/planLayout'
-import { consolidateWidgetData } from '../../utils/consolidatedWidgetData'
-import { isWidgetTypePublic, publicWidgetTypeFor, widgetDefinition } from '../../widgets/registry'
+import { isWidgetTypePublic, widgetDefinition } from '../../widgets/registry'
 import { useToastStore } from '../useToastStore'
 import { computeBlockedWidgetIds } from '../widgetGraph'
 import { appendDraftRelation, relationKey } from '../widgetRelationDrafts'
@@ -24,8 +23,7 @@ export function createWidgetCreationSlice({ set, get, pushHistory, markSpawned }
   },
 
   createWidget: (title, position, type) => {
-    const publicType = publicWidgetTypeFor(type)
-    if (!isWidgetTypePublic(publicType)) {
+    if (!isWidgetTypePublic(type)) {
       useToastStore.getState().addToast(widgetDefinition(type).unavailableReason ?? 'This widget is not available')
       return ''
     }
@@ -78,11 +76,10 @@ export function createWidgetCreationSlice({ set, get, pushHistory, markSpawned }
     // is looking instead of sprawling rightward off-screen.
     const nodeSizes: Record<string, { width: number; height: number }> = {}
     for (const node of plan.nodes) {
-      const consolidated = consolidateWidgetData(node.widgetType, node.data)
-      const defaultSize = widgetDefinition(consolidated.type).defaultSize
-      const dataHeight = consolidated.type === 'canvas_node'
+      const defaultSize = widgetDefinition(node.widgetType).defaultSize
+      const dataHeight = node.widgetType === 'canvas_node'
         ? 0
-        : computeDataHeight(consolidated.type, consolidated.data)
+        : computeDataHeight(node.widgetType, node.data)
       nodeSizes[node.temporaryId] = {
         width: defaultSize.width,
         height: dataHeight > 0 ? dataHeight : defaultSize.height,
@@ -92,8 +89,7 @@ export function createWidgetCreationSlice({ set, get, pushHistory, markSpawned }
     const treeWidth = layoutWidth(treePositions, nodeSizes)
 
     plan.nodes.forEach((node) => {
-      const consolidated = consolidateWidgetData(node.widgetType, node.data)
-      if (!isWidgetTypePublic(consolidated.type)) return
+      if (!isWidgetTypePublic(node.widgetType)) return
       if (node.existingWidgetId && widgets[node.existingWidgetId]) {
         ids.set(node.temporaryId, node.existingWidgetId)
         return
@@ -119,8 +115,8 @@ export function createWidgetCreationSlice({ set, get, pushHistory, markSpawned }
         }
         widget.data = { ...widget.data, canvasId: subCanvasId }
       } else {
-        const height = computeDataHeight(consolidated.type, consolidated.data)
-        widget.data = consolidated.data
+        const height = computeDataHeight(node.widgetType, node.data)
+        widget.data = node.data
         if (height > 0 && height !== widget.size.height) {
           widget.size = { ...widget.size, height }
         }

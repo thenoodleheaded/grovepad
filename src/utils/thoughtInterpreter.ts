@@ -1,8 +1,7 @@
 import type { ModuleData, ModuleType, RelationType, WidgetMetadata } from '../types/spatial'
-import { CONSOLIDATED_WIDGET_REPLACEMENTS, WIDGET_REGISTRY, widgetDefinition } from '../widgets/registry'
+import { WIDGET_REGISTRY, widgetDefinition } from '../widgets/registry'
 import { ATLAS_CATALOG, ATLAS_TYPES, atlasTypeForPhrase, defaultAtlasData } from '../widgets/atlasCatalog'
 import { AUTOMATION_CORE_CATALOG, AUTOMATION_CORE_TYPES } from '../widgets/automationCoreCatalog'
-import { localDayKey } from './localDate'
 import { buildVocabulary, fuzzyPhraseMatch, normalizeLanguage, tokenCoverage, type NormalizedLanguage } from './languageNormalization'
 
 export interface InterpretationWarning {
@@ -96,59 +95,41 @@ const MENTION = /@([\p{L}\d_.-]+)/gu
 /** Natural phrases that are stronger than a coincidental label mention. */
 const INTENT_PATTERNS: Partial<Record<ModuleType, RegExp>> = {
   canvas_node: /\b(sub-?canvas|nested canvas|new board)\b/i,
-  notes: /\b(note|jot|write this down)\b/i,
+  text: /\b(note|jot|write this down|sticky|post-?it)\b/i,
   bullets: /\b(bullet(?: point)?s?|unordered list)\b/i,
-  checklist: /\b(checklist|to-?do|task list|steps? to complete)\b/i,
+  checklist: /\b(checklist|to-?do|task list|steps? to complete|timeline|roadmap|phases?|milestones?|plan(?:ning)? (?:a |the )?(?:launch|release|rollout)|week(?:ly)? plan(?:ner)?|plan my week|priority matrix|eisenhower|urgent (?:and|vs) important|assignments?|homework|due task|kanban|to do doing done|workflow board|daily agenda)\b/i,
   table: /\b(table|rows? and columns?|tabular)\b/i,
   sketchpad: /\b(sketch|draw|doodle|whiteboard|graph paper|dot grid|storyboard|annotat(?:e|ion)|excalidraw|flowchart)\b/i,
   budget: /\b(budget|cost breakdown|expenses?)\b/i,
-  progress: /\b(progress|completion|percent complete)\b/i,
   ai_generator: /\b(ai generator|generate with ai|ai prompt)\b/i,
-  timeline: /\b(timeline|roadmap|phases?|milestones?|plan(?:ning)? (?:a |the )?(?:launch|release|rollout))\b/i,
   dialog: /\b(dialog(?:ue)?|conversation|script lines?)\b/i,
   game_tuner: /\b(game (?:mechanics? )?tuner|grip|drift|game feel)\b/i,
   audio_player: /\b(audio player|synth(?:esizer)?|signal chain|bpm)\b/i,
-  kanban: /\b(kanban|to do doing done|workflow board)\b/i,
-  countdown: /\b(countdown|days? until)\b/i,
   habit: /\b(habit(?: tracker)?|streak|daily habit)\b/i,
   links: /\b(link list|bookmarks?|urls?)\b/i,
   code: /\b(code snippet|source code|function|class)\b/i,
-  quote: /\b(quote|quotation|said by)\b/i,
   poll: /\b(poll|vote|survey choice)\b/i,
   contact: /\b(contact card|phone number|email address)\b/i,
   media: /\b(media|image|video|photo)\b/i,
   metrics: /\b(metrics?|kpis?|measurements?|dashboard stats?)\b/i,
-  sticky_note: /\b(sticky(?: note)?|post-?it)\b/i,
   calendar: /\b(monthly calendar|calendar month)\b/i,
-  timer: /\b(timer|time for \d+)\b/i,
-  timekeeper: /\b(timer|countdown timer|pomodoro|focus session|work break timer|stopwatch|lap time)\b/i,
+  timekeeper: /\b(timer|countdown|countdown timer|days? until|pomodoro|focus session|work break timer|stopwatch|lap time|world clock|time zones?)\b/i,
   tracker: new RegExp(`\\b(?:tracker|${ATLAS_TYPES.flatMap(type=>[ATLAS_CATALOG[type].label,type.replaceAll('_',' '),...ATLAS_CATALOG[type].aliases]).map(escapeRegex).join('|')})\\b`,'i'),
   rating: /\b(rating|stars?|score out of)\b/i,
   color_palette: /\b(colou?r palette|swatches?|hex colou?rs?)\b/i,
   mood_tracker: /\b(mood(?: tracker)?|feeling today)\b/i,
   calculator: /\b(calculator|calculate|arithmetic)\b/i,
-  bar_chart: /\b(bar (?:chart|graph)|compare values)\b/i,
+  bar_chart: /\b(bar (?:chart|graph)|compare values|line chart|trend line|values? over time|pie chart|donut chart|share breakdown)\b/i,
   counter: /\b(counter|tally|count up)\b/i,
   pros_cons: /\b(pros?\s*(?:and|&|\/)?\s*cons?|advantages?\s+(?:and|vs)\s+disadvantages?)\b/i,
-  weekly_planner: /\b(week(?:ly)? plan(?:ner)?|plan my week)\b/i,
-  goal_tracker: /\b(goal tracker|milestone goal|track (?:a )?goal)\b/i,
-  stopwatch: /\b(stopwatch|lap time)\b/i,
+  goal_tracker: /\b(goal tracker|milestone goal|track (?:a )?goal|progress|completion|percent complete|study goal|study target|revision goal|okrs?|objectives? and key results?|key results?)\b/i,
   reading_list: /\b(reading list|books? (?:to read|i want|i need|to finish)|articles? (?:to read|i want)|get through (?:these )?books?)\b/i,
-  flashcards: /\b(flashcards?|study cards?)\b/i,
+  flashcards: /\b(flashcards?|study cards?|vocab(?:ulary)?|word definitions?|glossary|quiz|multiple choice|test question)\b/i,
   meeting_notes: /\b(meeting notes?|minutes|agenda and actions?)\b/i,
-  priority_matrix: /\b(priority matrix|eisenhower|urgent (?:and|vs) important)\b/i,
-  decision: /\b(decision picker|choose between|which option)\b/i,
-  world_clock: /\b(world clock|time zones?)\b/i,
-  pomodoro: /\b(pomodoro|focus session|work break timer)\b/i,
-  vocab: /\b(vocab(?:ulary)?|word definitions?|glossary)\b/i,
-  grade_calc: /\b(grade calculator|weighted grades?|final grade)\b/i,
-  gpa: /\b(gpa|grade point average)\b/i,
-  assignment: /\b(assignments?|homework|due task)\b/i,
-  cornell: /\b(cornell notes?|cues and summary)\b/i,
+  decision: /\b(decision picker|choose between|which option|random picker|pick for me|choose randomly|whose turn|what should i)\b/i,
+  grade_calc: /\b(grade calculator|weighted grades?|final grade|gpa|grade point average)\b/i,
   formula_sheet: /\b(formula sheet|equations? reference)\b/i,
   citation: /\b(citations?|references?|bibliography|sources?)\b/i,
-  study_goal: /\b(study goal|study target|revision goal)\b/i,
-  quiz: /\b(quiz|multiple choice|test question)\b/i,
   text_input: /\b(text input|text value|input field)\b/i,
   number_input: /\b(number input|numeric value|slider value)\b/i,
   toggle: /\b(toggle|on\/?off|boolean switch)\b/i,
@@ -158,7 +139,6 @@ const INTENT_PATTERNS: Partial<Record<ModuleType, RegExp>> = {
   date_picker: /\b(date (?:and|&) time|date picker|target date)\b/i,
   outline: /\b(outline|nested list|hierarchy of ideas)\b/i,
   form: /\b(form builder|questionnaire|fill(?:able)? form)\b/i,
-  daily_agenda: /\b(daily agenda|today'?s schedule|day plan)\b/i,
   process: /\b(process|sop|standard operating procedure|procedure steps?)\b/i,
   risk_register: /\b(risk register|risk assessment|mitigation)\b/i,
   decision_matrix: /\b(decision matrix|weighted criteria|score options?|weigh .+ (?:across|against|using)|evaluate .+ (?:across|against|using)|compare .+ (?:criteria|reliability|cost and))\b/i,
@@ -166,15 +146,12 @@ const INTENT_PATTERNS: Partial<Record<ModuleType, RegExp>> = {
   timesheet: /\b(timesheet|billable hours?|time entries?)\b/i,
   inventory: /\b(inventory|stock levels?|quantities in stock)\b/i,
   logbook: /\b(logbook|activity log|journal entries?)\b/i,
-  line_chart: /\b(line chart|trend line|values? over time)\b/i,
-  pie_chart: /\b(pie chart|donut chart|share breakdown)\b/i,
   unit_converter: /\b(unit converter|convert .+ (?:to|into) .+)\b/i,
   clock_pulse: /\b(schedule pulse|automation schedule|daily trigger|weekly trigger)\b/i,
   comparator: /\b(compare (?:two )?numbers?|threshold check|greater than|less than)\b/i,
   aggregator: /\b(average|aggregate|combine (?:these )?numbers?|minimum|maximum)\b/i,
   range_mapper: /\b(range mapper|status bands?|number.*status)\b/i,
   latch: /\b(snapshot|baseline|remember (?:this )?value|hold (?:this )?value)\b/i,
-  random_picker: /\b(random picker|pick for me|choose randomly|whose turn|what should i)\b/i,
   sequencer: /\b(sequencer|step machine|advance steps?|morning routine)\b/i,
   template: /\b(text composer|template (?:with|from) values|compose (?:a )?message)\b/i,
   recorder: /\b(record (?:a )?(?:trend|history|value)|track this over time|automatic chart)\b/i,
@@ -191,7 +168,6 @@ const INTENT_PATTERNS: Partial<Record<ModuleType, RegExp>> = {
   medications: /\b(medications?|meds|pills|refill)\b/i,
   workout_plan: /\b(workout plan|sets? reps?|gym program|training volume)\b/i,
   job_applications: /\b(job applications?|application pipeline|follow up (?:on )?(?:jobs?|applications?))\b/i,
-  okr: /\b(okrs?|objectives? and key results?)\b/i,
   decision_journal: /\b(decision journal|review my decisions?)\b/i,
   weekly_review: /\b(weekly review|weekly reflection|retro(?:spective)?)\b/i,
   snippet_library: /\b(snippet library|canned replies?|reusable snippets?)\b/i,
@@ -210,19 +186,16 @@ const INTENT_PATTERNS: Partial<Record<ModuleType, RegExp>> = {
 }
 
 const SEMANTIC_EXAMPLES: Partial<Record<ModuleType, string>> = {
-  assignment: 'someone needs to handle this follow up delegate owner responsible due review submit deliver',
-  checklist: 'things I need to get done several actionable tasks tick each one off',
+  checklist: 'things I need to get done several actionable tasks tick each one off someone needs to handle this follow up delegate owner responsible due review submit deliver plan a launch release rollout sequence phases milestones over time',
   decision: 'which one should I choose alternatives either this or that make a choice',
   decision_matrix: 'weigh several providers compare options using cost quality speed reliability weighted evaluation',
   pros_cons: 'tradeoffs benefits drawbacks good and bad sides reasons for and against',
-  timeline: 'plan a launch release rollout sequence phases milestones over time',
   reading_list: 'books articles papers I want to read finish or get through',
   metrics: 'watch performance conversion retention revenue measure results after release',
   budget: 'keep track of spending prices costs expenses money allocation',
   process: 'how we do this repeatable sequence instructions procedure workflow steps',
   risk_register: 'what could go wrong likelihood impact prevention contingency mitigation',
   meeting_notes: 'what everyone discussed decisions made follow ups from the call',
-  daily_agenda: 'what I am doing today appointments schedule throughout the day',
   goal_tracker: 'outcome I am working toward milestones progress target achievement',
   inventory: 'what we have left quantities stock reorder low supply',
   contact: 'person details how to reach them phone email company',
@@ -240,8 +213,43 @@ const WIDGET_LANGUAGE_VOCABULARY = buildVocabulary(
 
 function uid(): string { return crypto.randomUUID() }
 
+// ---------------------------------------------------------------------------
+// Names people still say for cards that no longer exist.
+//
+// The cards themselves are gone — deleted from the type union, the registry,
+// and every saved board (see deletedWidgetTypes.ts). What survives is the
+// English: someone who asks for "a kanban" is asking for the widget that now
+// does that job, and the phrase has to land somewhere rather than fail. This
+// table therefore maps a spoken phrase to a LIVE widget type. It is not a
+// widget catalogue and nothing may create a card from its keys.
+// ---------------------------------------------------------------------------
+const LEGACY_WIDGET_PHRASES: Readonly<Record<string, ModuleType>> = {
+  sticky_note: 'text',
+  line_chart: 'bar_chart',
+  pie_chart: 'bar_chart',
+  progress: 'goal_tracker',
+  study_goal: 'goal_tracker',
+  okr: 'goal_tracker',
+  timer: 'timekeeper',
+  pomodoro: 'timekeeper',
+  stopwatch: 'timekeeper',
+  countdown: 'timekeeper',
+  world_clock: 'timekeeper',
+  excalidraw: 'sketchpad',
+  random_picker: 'decision',
+  gpa: 'grade_calc',
+  vocab: 'flashcards',
+  quiz: 'flashcards',
+  kanban: 'checklist',
+  assignment: 'checklist',
+  daily_agenda: 'checklist',
+  weekly_planner: 'checklist',
+  timeline: 'checklist',
+  priority_matrix: 'checklist',
+}
+
 function isConsolidatedLegacyType(type:ModuleType):boolean {
-  return type==='tracker'||Boolean(CONSOLIDATED_WIDGET_REPLACEMENTS[type])
+  return type==='tracker'
 }
 
 function cleanTitle(text: string): string {
@@ -311,26 +319,20 @@ function scoreIntents(source: string, lines: ParsedLine[], normalized: Normalize
   const checkboxCount = lines.filter((line) => line.checked !== undefined).length
   const actionCount = lines.filter((line) => ACTION_WORDS.test(line.text)).length
   const scores: Partial<Record<ModuleType, number>> = {
-    notes: 0.48,
+    text: 0.48,
     checklist: checkboxCount ? 0.72 + Math.min(.18, checkboxCount * .04) : (listLike ? .24 : 0) + (actionCount ? .36 : 0),
     decision: (source.includes('?') ? .4 : 0) + (/\b(or|choose|decide|which)\b/i.test(source) ? .4 : 0) - (listLike ? .18 : 0),
     pros_cons: /\b(pros?\s*(?:and|&|\/)?\s*cons?|advantages?\s+(?:and|vs)\s+disadvantages?|compare)\b/i.test(source) ? .9 : 0,
     budget: (source.match(MONEY) ?? []).length || /\bbudget\b/.test(lower) ? .88 : 0,
     metrics: /\b(track|metric|kpi|measure|percentage|percent)\b/.test(lower) ? .78 : 0,
-    timeline: /\b(timeline|deadline|milestone|phase|before|after)\b/.test(lower) && lines.length > 1 ? .74 : 0,
-    assignment: (ACTION_WORDS.test(source) ? .34 : 0) + ((source.match(MENTION) ?? []).length ? .32 : 0) + (detectDate(source) ? .3 : 0),
     links: (source.match(URL) ?? []).length ? .9 : 0,
     code: /```[\s\S]*```/.test(source) ? .96 : 0,
     bullets: listLike ? .58 : 0,
   }
-  for (const [legacyType, replacementType] of Object.entries(CONSOLIDATED_WIDGET_REPLACEMENTS) as Array<[ModuleType, ModuleType]>) {
-    const legacyScore = scores[legacyType] ?? 0
-    if (legacyScore > 0) scores[replacementType] = Math.max(scores[replacementType] ?? 0, legacyScore)
-    delete scores[legacyType]
-
-    const definition = WIDGET_REGISTRY[legacyType]
-    const label = definition.label.toLowerCase()
-    const typeWords = legacyType.replaceAll('_', ' ')
+  for (const [legacyPhrase, replacementType] of Object.entries(LEGACY_WIDGET_PHRASES)) {
+    // The deleted card has no registry entry, so its spoken name is its words.
+    const typeWords = legacyPhrase.replaceAll('_', ' ')
+    const label = typeWords
     const explicit = new RegExp(`\\b(?:add|create|make|new|turn (?:this )?into|use)\\s+(?:an?\\s+)?(?:${escapeRegex(label)}|${escapeRegex(typeWords)})(?=\\s*(?:widget\\b|$|:))`, 'i').test(normalized.correctedText)
     if (explicit) scores[replacementType] = Math.max(scores[replacementType] ?? 0, .98)
     else if (['add', 'create', 'make', 'new', 'turn', 'use'].some((action) => normalized.tokens.has(action)) && (fuzzyPhraseMatch(source,label) || fuzzyPhraseMatch(source,typeWords))) {
@@ -374,11 +376,10 @@ export function resolveWidgetMention(phrase: string): ModuleType | null {
   if (atlasType) return atlasType
   if (/^(?:time|timer|countdown timer|pomodoro(?: timer)?|focus timer|stopwatch|world clock|deadline countdown)$/.test(cleaned)) return 'timekeeper'
   if (/^(?:drawing|sketchpad|excalidraw|whiteboard|graph paper|dot grid|storyboard|annotation)$/.test(cleaned)) return 'sketchpad'
-  for (const [legacyType, replacementType] of Object.entries(CONSOLIDATED_WIDGET_REPLACEMENTS) as Array<[ModuleType, ModuleType]>) {
-    const definition = WIDGET_REGISTRY[legacyType]
-    const label = definition.label.toLowerCase()
-    const typeWords = legacyType.replaceAll('_', ' ')
-    if (cleaned === label || cleaned === typeWords || cleaned === `${label}s` || cleaned === `${typeWords}s`) return replacementType
+  for (const [legacyPhrase, replacementType] of Object.entries(LEGACY_WIDGET_PHRASES)) {
+    // The deleted card has no registry entry, so its spoken name is its words.
+    const typeWords = legacyPhrase.replaceAll('_', ' ')
+    if (cleaned === typeWords || cleaned === `${typeWords}s`) return replacementType
   }
   for (const definition of Object.values(WIDGET_REGISTRY)) {
     if (isConsolidatedLegacyType(definition.type)) continue
@@ -400,7 +401,6 @@ function dataFor(type: ModuleType, source: string, lines: ParsedLine[]): ModuleD
   const defaults = widgetDefinition(type).defaultData()
   const defaultRecord = defaults as unknown as Record<string, unknown>
   const numbers = [...source.matchAll(/-?\d+(?:\.\d+)?/g)].map((match) => Number(match[0]))
-  const percent = source.match(/(\d+(?:\.\d+)?)\s*%/)
   switch (type) {
     case 'tracker': return defaultAtlasData(atlasTypeForPhrase(source)??'price_book')
     case 'timekeeper': {
@@ -421,7 +421,6 @@ function dataFor(type: ModuleType, source: string, lines: ParsedLine[]): ModuleD
       const fenced = source.match(/```([^\n]*)\n?([\s\S]*?)```/)
       return { language: fenced?.[1]?.trim() || 'text', code: fenced?.[2]?.trim() ?? source }
     }
-    case 'assignment': return { items: [{ id: uid(), title: cleanTitle(source).replace(/\b(?:by|on)\s+(?:today|tomorrow|next\s+)?\w+(?:\s+\d{1,2}(?:,?\s+20\d{2})?)?/i, '').trim(), due: detectDate(source) ?? '', status: 'todo' }] }
     case 'decision': {
       const parts = source.replace(/\?+$/, '').split(/\s+or\s+/i).map(cleanTitle)
       const options = parts.length > 1 ? parts : titleLines
@@ -430,8 +429,11 @@ function dataFor(type: ModuleType, source: string, lines: ParsedLine[]): ModuleD
     case 'pros_cons': return { topic: cleanTitle(lines[0]?.text ?? source), pros: [{ id: uid(), text: '' }], cons: [{ id: uid(), text: '' }] }
     case 'budget': return { currency: source.includes('€') ? 'EUR' : source.includes('£') ? 'GBP' : 'USD', items: (source.match(MONEY) ?? []).map((amount, index) => ({ id: uid(), label: titleLines[index] ?? `Item ${index + 1}`, amount: Number(amount.replace(/[^\d.-]/g, '')) || 0 })) }
     case 'metrics': return { tiles: titleLines.map((label) => ({ id: uid(), label, value: '', unit: '', trend: 'flat' as const })) }
-    case 'timeline': return { totalUnits: Math.max(4, lines.length * 2), phases: lines.map((line, index) => ({ id: uid(), label: line.text, start: index * 2, span: 2 })) }
-    case 'notes': return { ...defaultRecord, text: source, mode: /sticky/i.test(source) ? 'sticky' : /quote/i.test(source) ? 'quote' : 'plain' } as ModuleData
+    case 'text': return {
+      ...defaultRecord,
+      text: source,
+      mode: /sticky|post-?it/i.test(source) ? 'sticky' : 'plain',
+    } as ModuleData
     case 'bar_chart': return { ...defaultRecord, mode: /line|trend/i.test(source) ? 'line' : /donut/i.test(source) ? 'donut' : /pie/i.test(source) ? 'pie' : 'bar', bars: lines.slice(1).map((line, index) => ({ id: uid(), label: line.text.replace(/[:=]\s*-?\d+(?:\.\d+)?\s*$/, ''), value: numbers[index] ?? 0, color: ['#38bdf8', '#a3e635', '#f472b6', '#fbbf24'][index % 4]! })) } as ModuleData
     case 'grade_calc': return { ...defaultRecord, mode: /gpa/i.test(source) ? 'gpa' : 'weighted' } as ModuleData
     case 'date_picker': return { ...defaultRecord, label: cleanTitle(lines[0]?.text ?? 'Target date'), date: detectDate(source) ?? defaultRecord.date, mode: /countdown|days until|deadline|due by/i.test(source) ? 'deadline' : 'date_time' } as ModuleData
@@ -447,20 +449,14 @@ function dataFor(type: ModuleType, source: string, lines: ParsedLine[]): ModuleD
     }
     case 'goal_tracker': return { ...defaultRecord, mode: /okr|key result/i.test(source) ? 'okr' : /study|hours/i.test(source) ? 'hours' : /milestone/i.test(source) ? 'milestones' : 'simple' } as ModuleData
     case 'flashcards': return { ...defaultRecord, mode: /vocab|term|definition/i.test(source) ? 'vocabulary' : /quiz|question/i.test(source) ? 'quiz' : 'flashcards', cards: lines.map((line) => { const [front, ...back] = line.text.split(/\s*[:—-]\s*/); return { id: uid(), front: front || line.text, back: back.join(' ') || '' } }), current: 0 } as ModuleData
-    case 'sticky_note': return { ...defaultRecord, text: source } as ModuleData
-    case 'quote': return { ...defaultRecord, text: cleanTitle(source.replace(/^quote\s*:?/i, '')) } as ModuleData
-    case 'progress': return { ...defaultRecord, label: cleanTitle(lines[0]?.text ?? source), percent: Math.min(100, Math.max(0, Number(percent?.[1] ?? numbers[0] ?? 0))) } as ModuleData
     case 'ai_generator': return { ...defaultRecord, prompt: source } as ModuleData
     case 'text_input': return { ...defaultRecord, label: cleanTitle(lines[0]?.text ?? 'Input'), value: lines.slice(1).map((line) => line.text).join('\n') } as ModuleData
     case 'number_input': return { ...defaultRecord, label: cleanTitle(lines[0]?.text ?? 'Value'), value: numbers[0] ?? 0 } as ModuleData
     case 'outline': return { items: lines.map((line) => ({ id: uid(), text: line.text, depth: line.depth, collapsed: false })) }
     case 'process': return { steps: lines.map((line, index) => ({ id: uid(), label: line.text, status: index === 0 ? 'active' as const : 'todo' as const })) } as ModuleData
     case 'reading_list': return { items: titleLines.map((title) => ({ id: uid(), title, status: 'queued' as const })) } as ModuleData
-    case 'vocab': return { terms: lines.map((line) => { const [term, ...definition] = line.text.split(/\s*[:—-]\s*/); return { id: uid(), term: term || line.text, definition: definition.join(' '), known: false } }) }
     case 'poll': return { question: lines[0]?.text ?? source, options: lines.slice(1).map((line) => ({ id: uid(), label: line.text, votes: 0 })) }
     case 'form': return { title: lines[0]?.text ?? 'Quick form', fields: lines.slice(1).map((line) => ({ id: uid(), label: line.text, type: 'text' as const, value: '', required: false })) }
-    case 'line_chart': return { ...defaultRecord, points: lines.slice(1).map((line, index) => ({ id: uid(), label: line.text.replace(/[:=]\s*-?\d+(?:\.\d+)?\s*$/, ''), value: numbers[index] ?? 0 })) } as ModuleData
-    case 'pie_chart': return { ...defaultRecord, segments: lines.slice(1).map((line, index) => ({ id: uid(), label: line.text.replace(/[:=]\s*-?\d+(?:\.\d+)?\s*$/, ''), value: numbers[index] ?? 0, color: ['#38bdf8', '#a3e635', '#f472b6', '#fbbf24'][index % 4]! })) } as ModuleData
     case 'counter': return { ...defaultRecord, label: cleanTitle(lines[0]?.text ?? source), count: numbers[0] ?? 0 } as ModuleData
     case 'rating': return { ...defaultRecord, label: cleanTitle(lines[0]?.text ?? source), value: Math.min(5, Math.max(0, numbers[0] ?? 0)) } as ModuleData
     case 'calculator': return { ...defaultRecord, expression: source.replace(/^.*?calculator\s*:?/i, '').trim() || '0' } as ModuleData
@@ -471,7 +467,6 @@ function dataFor(type: ModuleType, source: string, lines: ParsedLine[]): ModuleD
     }
     case 'dialog': return { lines: lines.map((line) => { const [character, ...cue] = line.text.split(':'); return { id: uid(), character: cue.length ? character!.trim() : '', cue: cue.length ? cue.join(':').trim() : line.text } }) }
     case 'table': return { rows: lines.map((line) => line.text.split(/\s*[|,\t]\s*/).filter(Boolean)) }
-    case 'daily_agenda': return { date: detectDate(source) ?? localDayKey(), items: lines.map((line) => { const time = line.text.match(/\b([01]?\d|2[0-3]):([0-5]\d)\b/)?.[0] ?? ''; return { id: uid(), time, title: line.text.replace(time, '').trim(), done: line.checked ?? false } }) }
     case 'logbook': return { entries: lines.map((line) => ({ id: uid(), timestamp: new Date().toISOString(), text: line.text, level: /warn|risk|issue/i.test(line.text) ? 'warning' as const : 'note' as const })) }
     case 'inventory': return { items: lines.map((line, index) => ({ id: uid(), name: line.text.replace(/[:=]\s*\d+.*$/, ''), quantity: numbers[index] ?? 1, minimum: 0, unit: 'pcs' })) }
     default: return defaults
@@ -619,7 +614,7 @@ function singlePlan(source: string, type: ModuleType, confidence: number, margin
   const nodes: ProposedNode[] = isOutline
     ? lines.map((line, index) => ({
         temporaryId: `node-${index + 1}`,
-        widgetType: line.checked !== undefined || ACTION_WORDS.test(line.text) ? 'checklist' : 'notes',
+        widgetType: line.checked !== undefined || ACTION_WORDS.test(line.text) ? 'checklist' : 'text',
         title: line.text.slice(0, 80),
         data: line.checked !== undefined || ACTION_WORDS.test(line.text) ? dataFor('checklist', line.text, [line]) : { text: line.text },
         sourceText: line.text,
@@ -644,8 +639,8 @@ function combinedPlan(source: string, clauses: string[], context: Interpretation
   if (clauses.length < 2) return null
   const nodes: ProposedNode[] = []
   clauses.forEach((clause, index) => {
-    const [type, score] = rankedIntents(clause, context)[0] ?? ['notes', .48]
-    const resolvedType = score >= .56 ? type : 'notes'
+    const [type, score] = rankedIntents(clause, context)[0] ?? ['text', .48]
+    const resolvedType = score >= .56 ? type : 'text'
     nodes.push({
       temporaryId: `clause-${index + 1}`,
       widgetType: resolvedType,
@@ -658,7 +653,7 @@ function combinedPlan(source: string, clauses: string[], context: Interpretation
     })
   })
   const usefulTypes = new Set(nodes.map((node) => node.widgetType))
-  if (usefulTypes.size === 1 && usefulTypes.has('notes')) return null
+  if (usefulTypes.size === 1 && usefulTypes.has('text')) return null
   const confidence = nodes.reduce((sum, node) => sum + node.confidence, 0) / nodes.length
   const relations = inferRelations(nodes)
   if (relations.length === 0 && nodes.length > 1) {
@@ -682,7 +677,7 @@ function combinedPlan(source: string, clauses: string[], context: Interpretation
 
 function predictionLabel(types: ModuleType[], combined = false): string {
   if (combined) return `Split into ${types.length} connected thoughts`
-  return widgetDefinition(types[0] ?? 'notes').label
+  return widgetDefinition(types[0] ?? 'text').label
 }
 
 function explainPrediction(plan: ThoughtPlan, meaning: ExtractedMeaning, context: InterpretationContext): string {
@@ -693,7 +688,7 @@ function explainPrediction(plan: ThoughtPlan, meaning: ExtractedMeaning, context
   if (meaning.amounts.length) facts.push(`found ${meaning.amounts.length} amount${meaning.amounts.length === 1 ? '' : 's'}`)
   if (meaning.urls.length) facts.push(`found ${meaning.urls.length} link${meaning.urls.length === 1 ? '' : 's'}`)
   if (context.selectedWidgetTitle) facts.push(`uses “${context.selectedWidgetTitle}” as canvas context`)
-  return facts.length ? facts.join(' · ') : `The language most closely matches ${widgetDefinition(plan.nodes[0]?.widgetType ?? 'notes').label}`
+  return facts.length ? facts.join(' · ') : `The language most closely matches ${widgetDefinition(plan.nodes[0]?.widgetType ?? 'text').label}`
 }
 
 export function interpretThoughtCandidates(sourceText: string, context: InterpretationContext = {}): ThoughtInterpretation {
@@ -710,12 +705,12 @@ export function interpretThoughtCandidates(sourceText: string, context: Interpre
   }
   ranked.slice(0, 4).forEach(([type, score]) => {
     if (predictions.some((prediction) => prediction.kind === 'single' && prediction.primaryTypes[0] === type)) return
-    const plan = singlePlan(source, score >= .56 ? type : 'notes', score)
+    const plan = singlePlan(source, score >= .56 ? type : 'text', score)
     predictions.push({ id: `single-${type}`, label: predictionLabel([type]), explanation: explainPrediction(plan, meaning, context), confidence: score, plan, primaryTypes: [type], kind: 'single' })
   })
-  if (!predictions.some((prediction) => prediction.primaryTypes.length === 1 && prediction.primaryTypes[0] === 'notes')) {
-    const notesPlan = singlePlan(source, 'notes', .5)
-    predictions.push({ id: 'fallback-notes', label: 'Keep as Notes', explanation: 'Preserves the original wording without assuming extra structure', confidence: .5, plan: notesPlan, primaryTypes: ['notes'], kind: 'fallback' })
+  if (!predictions.some((prediction) => prediction.primaryTypes.length === 1 && prediction.primaryTypes[0] === 'text')) {
+    const textPlan = singlePlan(source, 'text', .5)
+    predictions.push({ id: 'fallback-text', label: 'Keep as Text', explanation: 'Preserves the original wording without assuming extra structure', confidence: .5, plan: textPlan, primaryTypes: ['text'], kind: 'fallback' })
   }
   predictions.sort((a, b) => b.confidence - a.confidence)
   const limited = predictions.slice(0, 4)
@@ -740,7 +735,7 @@ export function interpretThoughtCandidates(sourceText: string, context: Interpre
  */
 export function isPresentablePrediction(prediction: ThoughtPrediction): boolean {
   if (prediction.kind === 'fallback') return false
-  const notesOnly = prediction.plan.nodes.every((node) => node.widgetType === 'notes')
+  const notesOnly = prediction.plan.nodes.every((node) => node.widgetType === 'text')
   if (notesOnly && prediction.confidence < 0.7) return false
   return prediction.confidence >= 0.56
 }

@@ -47,6 +47,8 @@ describe('College Canvas widget', () => {
     const html = renderToStaticMarkup(<CanvasLmsWidget data={{ skin: 'overview' }} />)
     expect(html).toContain('Connect your college Canvas')
     expect(html).toContain('Personal access token')
+    expect(html).toContain('saved only on this device')
+    expect(html).toContain('no-storage relay')
     expect(html).toContain('never saved in the board')
   })
 

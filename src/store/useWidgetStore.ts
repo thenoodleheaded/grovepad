@@ -4,6 +4,8 @@ import { resolvePersistedDeviceState } from '../utils/persistedDeviceState'
 import type { Connection } from '../types/circuit'
 import { widgetDefinition } from '../widgets/registry'
 import { useCanvasStore } from './useCanvasStore'
+import { resolveCanvasTabs } from './canvasTabs'
+import { recordCanvasVisit } from './canvasRecents'
 import { createHistorySession } from './widgetHistory'
 import type { WidgetStoreState } from './widgetStoreTypes'
 export type { WidgetStoreState } from './widgetStoreTypes'
@@ -17,7 +19,7 @@ import type {
 } from '../types/spatial'
 import { GRID_SIZE } from '../types/spatial'
 
-import { SEED_ROOT_CANVAS_ID, SEED_WORKSPACE_ID, createSeedCanvases, createSeedRelations, createSeedWidgets, createSeedWorkspaces } from './widgetSeeds'
+import { SEED_WORKSPACE_ID, createSeedCanvases, createSeedRelations, createSeedRootCanvasId, createSeedWidgets, createSeedWorkspaces } from './widgetSeeds'
 import { reconcileGlueClusters, unfoldReleasedFoldedMembers } from '../utils/glueGeometry'
 import { setGlueIndexProvider } from './widgetSettling'
 import { buildGlueIndex, computeBlockedWidgetIds } from './widgetGraph'
@@ -30,7 +32,7 @@ import { createSelectionSlice } from './slices/selectionSlice'
 import { createUiLinkingSlice } from './slices/uiLinkingSlice'
 
 export { compactSelectedTrees, untangleCanvasLayout } from './widgetUntangle'
-export { getCriticalPath, strictCarrierIds, strictHolderOf } from './widgetGraph'
+export { getCriticalPath, resolveStrictHold, strictCarrierIds } from './widgetGraph'
 
 
 interface HistorySnapshot {
@@ -71,10 +73,16 @@ function markSpawned(id: string): void {
 }
 
 // Hydrate from localStorage when a saved board exists (even an empty one —
-// deleting everything must survive a reload); otherwise seed a starter board.
+// deleting everything must survive a reload); otherwise create a blank board
+// shell. The workspace and root canvas keep navigation valid, but new accounts
+// receive no example cards or relationships.
 const persistedBoard = loadPersistedBoard()
-const initialWorkspaces = persistedBoard?.workspaces ?? createSeedWorkspaces()
-const initialCanvases = persistedBoard?.canvases ?? createSeedCanvases()
+// Minted once per fresh board, and shared by the workspace and the canvas it
+// points at so the two agree. A saved board brings its own ids and never calls
+// these.
+const seedRootCanvasId = createSeedRootCanvasId()
+const initialWorkspaces = persistedBoard?.workspaces ?? createSeedWorkspaces(seedRootCanvasId)
+const initialCanvases = persistedBoard?.canvases ?? createSeedCanvases(seedRootCanvasId)
 const loadedWidgets = persistedBoard?.widgets ?? createSeedWidgets()
 // Repair cards enlarged by the short-lived intrinsic-height initialization
 // loop. Only types exposed while that build was live are targeted; their new
@@ -120,8 +128,15 @@ const initialDeviceState = loadPersistedDeviceState(
   { workspaces: initialWorkspaces, canvases: initialCanvases },
   persistedBoard ?? {
     activeWorkspaceId: Object.keys(initialWorkspaces)[0] ?? SEED_WORKSPACE_ID,
-    activeCanvasId: SEED_ROOT_CANVAS_ID,
+    // Read off the workspace rather than a constant: the root canvas id is
+    // minted per board now, so there is no fixed id to fall back to.
+    activeCanvasId:
+      Object.values(initialWorkspaces)[0]?.rootCanvasId
+      ?? Object.keys(initialCanvases)[0]
+      ?? seedRootCanvasId,
     canvasViews: {},
+    openTabs: [],
+    activeTabId: '',
   },
 )
 const initialPersistenceUnknownFields = persistedBoard?.persistenceUnknownFields ?? {}
@@ -190,6 +205,11 @@ export const useWidgetStore = create<WidgetStoreState>()((set, get) => {
     } else {
       activeWorkspaceId = snapshot.canvases[activeCanvasId]!.workspaceId
     }
+    // Tabs are the one place a canvas id outlives the document, so a snapshot
+    // that no longer holds a canvas must retire the tabs pointing at it.
+    const tabs = resolveCanvasTabs({ ...state, activeCanvasId }, snapshot.canvases)
+    activeWorkspaceId =
+      snapshot.canvases[tabs.activeCanvasId]?.workspaceId ?? activeWorkspaceId
     set({
       widgets: snapshot.widgets,
       widgetStructureVersion: state.widgetStructureVersion + 1,
@@ -200,7 +220,9 @@ export const useWidgetStore = create<WidgetStoreState>()((set, get) => {
       canvases: snapshot.canvases,
       workspaces: snapshot.workspaces,
       activeWorkspaceId,
-      activeCanvasId,
+      activeCanvasId: tabs.activeCanvasId,
+      activeTabId: tabs.activeTabId,
+      openTabs: tabs.openTabs,
       blockedWidgetIds: computeBlockedWidgetIds(snapshot.relations),
       selectedIds,
       contextMenu: null,
@@ -224,11 +246,20 @@ export const useWidgetStore = create<WidgetStoreState>()((set, get) => {
     }
   }
 
-  /** Shared canvas-navigation core: park the camera, swap canvas, restore. */
-  const navigateToCanvasImpl = (canvasId: string) => {
+  /**
+   * Shared canvas-navigation core: park the camera, swap canvas, restore.
+   *
+   * `tabId` names the tab that should end up in front. Omitted, the active tab
+   * follows the user to the new canvas (browser-style: clicking into a nested
+   * canvas moves the tab you are already in). Passing a tab id activates that
+   * tab instead, which is what the tab row itself does.
+   */
+  const navigateToCanvasImpl = (canvasId: string, tabId?: string) => {
     const state = get()
     const target = state.canvases[canvasId]
-    if (!target || canvasId === state.activeCanvasId) return
+    if (!target) return
+    const nextTabId = tabId ?? state.activeTabId
+    if (canvasId === state.activeCanvasId && nextTabId === state.activeTabId) return
     const camera = useCanvasStore.getState()
     const canvasViews = {
       ...state.canvasViews,
@@ -237,6 +268,10 @@ export const useWidgetStore = create<WidgetStoreState>()((set, get) => {
     set({
       activeCanvasId: canvasId,
       activeWorkspaceId: target.workspaceId,
+      activeTabId: nextTabId,
+      openTabs: state.openTabs.map((tab) =>
+        tab.id === nextTabId && tab.canvasId !== canvasId ? { ...tab, canvasId } : tab,
+      ),
       canvasViews,
       selectedIds: new Set<string>(),
       contextMenu: null,
@@ -248,6 +283,9 @@ export const useWidgetStore = create<WidgetStoreState>()((set, get) => {
     const saved = canvasViews[canvasId]
     if (saved) camera.setView(saved.pan, saved.zoom)
     else camera.setView({ x: 0, y: 0 }, 1)
+    // Device-local trail: feeds the palette's recent-canvas rows and lets
+    // workspace switching land where the user last stood, not on the root.
+    recordCanvasVisit(canvasId)
   }
 
   const sliceContext = {
@@ -272,6 +310,8 @@ export const useWidgetStore = create<WidgetStoreState>()((set, get) => {
   activeWorkspaceId: initialDeviceState.activeWorkspaceId,
   activeCanvasId: initialDeviceState.activeCanvasId,
   canvasViews: initialDeviceState.canvasViews,
+  openTabs: initialDeviceState.openTabs,
+  activeTabId: initialDeviceState.activeTabId,
   persistenceUnknownFields: initialPersistenceUnknownFields,
   persistenceUnknownRelations: initialPersistenceUnknownRelations,
   persistenceUnknownConnections: initialPersistenceUnknownConnections,
@@ -338,6 +378,8 @@ export const useWidgetStore = create<WidgetStoreState>()((set, get) => {
       activeWorkspaceId: deviceState.activeWorkspaceId,
       activeCanvasId: deviceState.activeCanvasId,
       canvasViews: deviceState.canvasViews,
+      openTabs: deviceState.openTabs,
+      activeTabId: deviceState.activeTabId,
       persistenceUnknownFields: board.persistenceUnknownFields ?? {},
       persistenceUnknownRelations: board.persistenceUnknownRelations ?? {},
       persistenceUnknownConnections: board.persistenceUnknownConnections ?? {},

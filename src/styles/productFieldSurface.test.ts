@@ -11,9 +11,12 @@ const css = readdirSync(cssDir)
 
 describe('shared text-field surface contract', () => {
   it('enforces readable widget microcopy contrast in both themes', () => {
-    // Widget cards remain charcoal in the light canvas theme, so both themes
-    // intentionally use the light muted ink rather than dark-on-dark #525252.
-    expect(css.match(/--gp-widget-muted-text: #a3a3a3/g)).toHaveLength(2)
+    // Dark cards keep light muted ink; light-theme silver cards switch to a
+    // darker muted ink while explicit display wells restore the dark palette.
+    expect(css).toContain('--gp-widget-muted-text: #59645d')
+    expect(css).toContain('--gp-widget-ink: #222a25')
+    expect(css).toContain(".gp-widget-ui :where(.gp-well, .gp-display-well)")
+    expect(css).toContain('--gp-widget-muted-text: #a3a3a3')
     expect(css).toContain('.gp-widget-card :where(.text-neutral-600, .text-neutral-700)')
   })
   it('keeps text controls visually transparent and borderless', () => {
@@ -31,6 +34,28 @@ describe('shared text-field surface contract', () => {
     expect(css).not.toContain('.gp-field-island:focus-within')
     expect(css).toContain('):has(> :where(')
     expect(css).toContain('outline: 1px solid rgb(255 255 255 / .10)')
+  })
+
+  it('paints every island from ONE material, in both themes', () => {
+    // Three hand-written fills used to coexist: the island's own (white 10% →
+    // 5%), the field island's (8% → 3.5%), and the promoted legacy wrapper's
+    // copy of the latter — so two content groups at the same elevation inside
+    // one card read as two different materials. The recipe is tokens now, and
+    // the light theme re-points those tokens instead of re-declaring rules,
+    // which is how the promoted field islands used to get left behind on the
+    // dark recipe.
+    expect(css).toContain('--gp-island-fill:')
+    expect(css).toContain('--gp-island-catchlight:')
+    expect(css).toContain('--gp-island-contact:')
+    // The bottom stop is always half the top, so the gradient keeps its shape
+    // at any Fine-tune setting rather than flattening as the slider rises.
+    expect(css).toContain('--gp-island-lift: calc(var(--gp-tune-island-light, 16) / 100)')
+    expect(css).toContain('calc(var(--gp-island-lift) * 0.5)')
+    // No island anywhere hand-rolls a white gradient of its own any more.
+    expect(css).not.toContain('linear-gradient(180deg, rgb(255 255 255 / .08), rgb(255 255 255 / .035))')
+    expect(css).not.toContain('rgb(255 255 255 / calc(var(--gp-tune-island-light, 10) / 100))')
+    // The light theme owns the material through the tokens, not a second rule.
+    expect(css).not.toContain("[data-theme='light'] .gp-island,")
   })
 
   it('promotes the closest legacy field wrapper and flattens it inside an existing island', () => {

@@ -1,5 +1,7 @@
 import type { Connection } from '../types/circuit'
-import type { HydratedPersistedBoard } from '../types/persistence'
+import type { CanvasTab, HydratedPersistedBoard } from '../types/persistence'
+import type { WidgetClipboardPayload } from '../utils/widgetClipboard'
+import type { AlignMode, DistributeAxis } from '../utils/widgetAlignment'
 import type {
   CanvasMeta,
   DomainPack,
@@ -40,6 +42,10 @@ export interface WidgetStoreState {
   activeCanvasId: string
   /** Last camera per canvas so navigation restores where you left off. */
   canvasViews: Record<string, { pan: Vector2D; zoom: number }>
+  /** Device-local row of open canvases. One viewport still renders one canvas. */
+  openTabs: CanvasTab[]
+  /** Names a tab in `openTabs`; that tab always points at `activeCanvasId`. */
+  activeTabId: string
   /** Opaque future payload fields retained solely for lossless persistence. */
   persistenceUnknownFields: Record<string, unknown>
   persistenceUnknownRelations: Record<string, Record<string, unknown>>
@@ -53,8 +59,16 @@ export interface WidgetStoreState {
   /** Deletes a workspace and every canvas/widget beneath it. Guards the last one. */
   deleteWorkspace: (id: string) => void
   switchWorkspace: (id: string) => void
-  /** Enter a canvas: saves the current camera, restores the target's. */
+  /** Enter a canvas in the active tab: saves the current camera, restores the target's. */
   navigateToCanvas: (canvasId: string) => void
+  /** Open a canvas in its own tab, right of the active one. */
+  openCanvasTab: (canvasId: string, options?: { activate?: boolean }) => void
+  /** Close a tab. The last open tab is never closed. */
+  closeCanvasTab: (tabId: string) => void
+  /** Bring a tab forward, restoring the camera its canvas was left at. */
+  activateCanvasTab: (tabId: string) => void
+  /** Drag-reorder: drop the source tab where the target tab sits. */
+  reorderCanvasTab: (sourceTabId: string, targetTabId: string) => void
   renameCanvas: (canvasId: string, name: string) => void
   updateCanvasSettings: (
     canvasId: string,
@@ -142,13 +156,18 @@ export interface WidgetStoreState {
     options?: { absorbOffset?: Vector2D; from?: PinOrigin },
   ) => void
   toggleWidgetFavorite: (widgetId: string) => void
-  bringWidgetToFront: (widgetId: string) => void
+  /** `recordHistory` marks a deliberate restack; the incidental press-to-raise omits it. */
+  bringWidgetToFront: (widgetId: string, options?: { recordHistory?: boolean }) => void
+  sendWidgetToBack: (widgetId: string) => void
+  lockWidgets: (ids: string[], locked: boolean) => void
   setWidgetHydration: (widgetId: string, isHydrating: boolean) => void
   updateWidgetMetadata: (widgetId: string, metadata: Partial<WidgetMetadata>) => void
   /** One metadata patch across many widgets in a single history step — the
    *  group frame's bulk actions (complete all, favorite all). */
   updateWidgetsMetadata: (ids: readonly string[], metadata: Partial<WidgetMetadata>) => void
   nudgeSelection: (dx: number, dy: number) => void
+  alignSelection: (mode: AlignMode) => void
+  distributeSelection: (axis: DistributeAxis) => void
 
   canUndo: boolean
   canRedo: boolean
@@ -179,6 +198,12 @@ export interface WidgetStoreState {
   /** Weld two widgets (and whatever clusters they already belong to) into one
    *  glue cluster. Rides the in-flight drag's history step. */
   glueWidgets: (draggedId: string, targetId: string) => void
+  /** Weld a whole selection onto its first member as ONE undo step — the
+   *  path for ⌘G, the Quick Add "glue" command and the touch Glue button, which
+   *  have no drag to open a step for them. Returns false, recording nothing,
+   *  when no member would join (fewer than two, already one cluster, or every
+   *  other member sits on another canvas). */
+  glueSelection: (widgetIds: readonly string[]) => boolean
   /** Pull one widget off its cluster; dissolves a cluster left with < 2.
    *  `heldByPointer` marks a release the USER placed: the freed card holds
    *  exactly where it was dropped and the cluster gives way around it. Without
@@ -218,9 +243,20 @@ export interface WidgetStoreState {
   selectWidgets: (ids: string[]) => void
   clearSelection: () => void
 
-  deleteWidgets: (ids: string[]) => void
+  /** `asCut` only reframes the toast: a cut is a move in progress, not a loss. */
+  deleteWidgets: (ids: string[], options?: { asCut?: boolean }) => void
+  /** Snapshot onto the widget clipboard: cards plus every wire, glue cluster,
+   * relation, and canvas subtree wholly inside the copied set. */
+  copyWidgets: (ids: string[]) => void
+  /** Copy to the widget clipboard and remove, in one undoable step. */
+  cutWidgets: (ids: string[]) => void
   duplicateWidgets: (ids: string[]) => string[]
-  pasteWidgets: (sources: Widget[]) => string[]
+  /** Bare widget arrays paste as loose cards; a clipboard payload pastes its
+   * full captured structure. */
+  pasteWidgets: (
+    sources: Widget[] | WidgetClipboardPayload,
+    options?: { position?: { x: number; y: number } },
+  ) => string[]
 
   renamingWidgetId: string | null
   startRenaming: (id: string) => void
@@ -231,8 +267,7 @@ export interface WidgetStoreState {
   closeContextMenu: () => void
 
   addWidgetAt: Vector2D | null
-  addWidgetView: 'widgets' | 'packs'
-  openAddWidget: (worldPos: Vector2D, view?: 'widgets' | 'packs') => void
+  openAddWidget: (worldPos: Vector2D) => void
   closeAddWidget: () => void
 
   recipesOpen: boolean
@@ -245,6 +280,9 @@ export interface WidgetStoreState {
   importMindmap: (
     widgets: Record<string, Widget>,
     relations: Relation[],
+    /** Glue clusters authored by the importer. Members must already sit at a
+     * `GLUE_GAP` seam — this writes the weld, it does not move anyone. */
+    glues?: WidgetGlue[],
   ) => void
   quickAddOpen: boolean
   setQuickAddOpen: (open: boolean) => void
@@ -253,6 +291,10 @@ export interface WidgetStoreState {
   togglePack: (pack: DomainPack) => void
   paletteOpen: boolean
   setPaletteOpen: (open: boolean) => void
+  /** Pre-filled search text for the palette while it is open (the `find
+   * <text>` verb); cleared by the close in `setPaletteOpen(false)`. */
+  paletteInitialQuery: string | null
+  openPaletteSearch: (query: string) => void
   searchWidgets: (query: string) => SearchResult[]
 
   linkDrag: { sourceId: string; cursorWorld: Vector2D; dropScreen: Vector2D } | null

@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 import type { OutlineData, OutlineSkinMode } from '../../../types/spatial'
@@ -96,5 +97,32 @@ describe('purpose-built Outline skins', () => {
       expect(markup, skin).toContain('aria-label="Outdent Launch plan"')
       expect(markup, skin).toContain('aria-label="Remove Launch plan"')
     }
+  })
+})
+
+/**
+ * There is no DOM in this suite, so the contract is pinned on the source. The
+ * attachments field used to normalise on every keystroke, which erased a
+ * comma the instant it was typed at the end of the field — `filter(Boolean)`
+ * dropped the empty tail, the stored list came back identical, and React
+ * restored the old text over the new character. A second attachment could
+ * therefore never be started from the keyboard.
+ */
+describe('brief attachments can be extended from the keyboard', () => {
+  const source = readFileSync(new URL('./OutlineWidget.tsx', import.meta.url), 'utf8')
+  const field = source.slice(
+    source.indexOf('function AttachmentsField'),
+    source.indexOf('export function OutlineWidget'),
+  )
+
+  it('renders what was typed and splits the list only when the field is committed', () => {
+    expect(field).toContain("value={draft ?? attachments.join(', ')}")
+    expect(field).toContain('onChange={(event) => setDraft(event.target.value)}')
+    expect(field).toContain('onBlur={commit}')
+    expect(field).toContain("event.key === 'Enter'")
+  })
+
+  it('never rebuilds the stored list straight from a keystroke', () => {
+    expect(source).not.toMatch(/attachments: event\.target\.value/)
   })
 })

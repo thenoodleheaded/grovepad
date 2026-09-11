@@ -380,7 +380,8 @@ export function CanvasLmsWidget({ data }: CanvasLmsWidgetProps) {
             {loading ? 'Checking…' : 'Connect Canvas'}
           </button>
           <p className="gp-canvas-lms-private">
-            Your token and student details stay on this device. They are never saved in the board or shared with collaborators.
+            Your token is saved only on this device and passes through Grovepad’s secure,
+            no-storage relay during refresh. It is never saved in the board or shared with collaborators.
           </p>
         </form>
       )}

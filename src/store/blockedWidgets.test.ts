@@ -66,8 +66,8 @@ describe('blockedWidgetIds tracks every writer of relations', () => {
   it('keeps blockers that were already on the board', () => {
     // The merge must not drop existing entries while adding the imported ones.
     const store = useWidgetStore.getState()
-    const gate = store.createWidget('Existing gate', { x: 12_000, y: 12_000 }, 'notes')
-    const existing = store.createWidget('Existing blocked', { x: 12_800, y: 12_000 }, 'notes')
+    const gate = store.createWidget('Existing gate', { x: 12_000, y: 12_000 }, 'text')
+    const existing = store.createWidget('Existing blocked', { x: 12_800, y: 12_000 }, 'text')
     useWidgetStore.getState().addRelation(gate, existing, 'blocker')
     expect(useWidgetStore.getState().blockedWidgetIds.has(existing)).toBe(true)
 

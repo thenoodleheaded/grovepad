@@ -12,19 +12,15 @@ import type { ModuleData, ModuleType,
   DialogData,
   FlashcardsData,
   GameTunerData,
-  KanbanData,
   LinksData,
   MediaData,
   MeetingNotesData,
   MetricsData,
   MoodTrackerData,
-  PriorityMatrixData,
   ProsConsData,
   ReadingListData,
   SketchpadData,
   TableData,
-  TimelineData,
-  WeeklyPlannerData,
 } from '../../types/spatial'
 import type { FieldDescriptor, FieldValue } from '../contracts/fields'
 import { localDayKey } from '../../utils/localDate'
@@ -174,16 +170,6 @@ export const DATA_MEDIA_FIELDS = {
     // variable in that position rather than a name the wire cannot know.
     ...calculatorVariableFields(),
   ],
-  weekly_planner: [
-    {
-      key: 'done_count',
-      label: 'Done count',
-      valueType: 'number',
-      unit: 'count',
-      get: (d) =>
-        (d as WeeklyPlannerData).days.reduce((s, day) => s + day.filter((t) => t.done).length, 0),
-    },
-  ],
   meeting_notes: [
     {
       key: 'actions_done',
@@ -238,25 +224,6 @@ export const DATA_MEDIA_FIELDS = {
       valueType: 'number',
       unit: 'count',
       get: (d) => Math.max(0, (d as TableData).rows.length - 1),
-    },
-  ],
-  kanban: [
-    {
-      key: 'total_cards',
-      label: 'Total cards',
-      valueType: 'number',
-      unit: 'count',
-      get: (d) => (d as KanbanData).columns.reduce((s, c) => s + c.cards.length, 0),
-    },
-    {
-      key: 'done_count',
-      label: 'Last column',
-      valueType: 'number',
-      unit: 'count',
-      get: (d) => {
-        const cols = (d as KanbanData).columns
-        return cols[cols.length - 1]?.cards.length ?? 0
-      },
     },
   ],
   links: [
@@ -394,26 +361,6 @@ export const DATA_MEDIA_FIELDS = {
         if (deck.mode === 'quiz') return deck.quiz?.options.length ?? 0
         return deck.cards.length
       },
-    },
-  ],
-  priority_matrix: [
-    {
-      key: 'do_first_count',
-      label: 'Do-first items',
-      valueType: 'number',
-      get: (d) => (d as PriorityMatrixData).items.filter((i) => i.quadrant === 0).length,
-    },
-  ],
-  timeline: [
-    {
-      key: 'total_units',
-      label: 'Total units',
-      valueType: 'number',
-      get: (d) => (d as TimelineData).totalUnits,
-      set: (d, v) => ({
-        ...(d as TimelineData),
-        totalUnits: Math.max(1, Math.round(num(v))),
-      }),
     },
   ],
   ai_generator: [

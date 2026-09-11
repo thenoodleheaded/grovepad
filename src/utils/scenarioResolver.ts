@@ -79,23 +79,23 @@ const BASE_ARCHETYPES: readonly ArchetypeSpec[] = [
     topicFallback: 'Language',
     directions: [
       { id: 'hub', label: '{topic} learning hub', tagline: 'Goal, vocabulary, practice and streak in one place', widgets: [
-        { type: 'study_goal', title: '{topic} goal' },
-        { type: 'vocab', title: '{topic} vocabulary' },
+        { type: 'goal_tracker', title: '{topic} goal' },
+        { type: 'flashcards', title: '{topic} vocabulary' },
         { type: 'flashcards', title: '{topic} flashcards' },
         { type: 'habit', title: 'Daily {topic} practice' },
       ] },
       { id: 'vocabulary', label: 'Build vocabulary', tagline: 'Collect words and drill them', widgets: [
-        { type: 'vocab', title: '{topic} vocabulary' },
+        { type: 'flashcards', title: '{topic} vocabulary' },
         { type: 'flashcards', title: '{topic} flashcards' },
       ] },
       { id: 'routine', label: 'Create a routine', tagline: 'A weekly rhythm with focused sessions', widgets: [
-        { type: 'weekly_planner', title: '{topic} study week' },
-        { type: 'pomodoro', title: 'Study sessions' },
+        { type: 'checklist', title: '{topic} study week' },
+        { type: 'timekeeper', title: 'Study sessions' },
         { type: 'habit', title: 'Daily {topic} practice' },
       ] },
       { id: 'progress', label: 'Track progress', tagline: 'See how far you have come', widgets: [
-        { type: 'study_goal', title: '{topic} goal' },
-        { type: 'progress', title: '{topic} progress' },
+        { type: 'goal_tracker', title: '{topic} goal' },
+        { type: 'goal_tracker', title: '{topic} progress' },
       ] },
       { id: 'resources', label: 'Collect material', tagline: 'Readings, courses and links in one spot', widgets: [
         { type: 'reading_list', title: '{topic} reading' },
@@ -119,22 +119,22 @@ const BASE_ARCHETYPES: readonly ArchetypeSpec[] = [
     topicFallback: 'Exam',
     directions: [
       { id: 'hub', label: '{topic} prep base', tagline: 'Goal, schedule, countdown and drills together', widgets: [
-        { type: 'study_goal', title: '{topic} target' },
-        { type: 'weekly_planner', title: 'Revision week' },
-        { type: 'countdown', title: '{topic} day' },
+        { type: 'goal_tracker', title: '{topic} target' },
+        { type: 'checklist', title: 'Revision week' },
+        { type: 'timekeeper', title: '{topic} day' },
         { type: 'flashcards', title: '{topic} drills' },
       ] },
       { id: 'schedule', label: 'Build a study schedule', tagline: 'Plan the weeks that remain', widgets: [
-        { type: 'weekly_planner', title: 'Revision week' },
-        { type: 'countdown', title: '{topic} day' },
+        { type: 'checklist', title: 'Revision week' },
+        { type: 'timekeeper', title: '{topic} day' },
       ] },
       { id: 'practice', label: 'Practice questions', tagline: 'Drill until it sticks', widgets: [
-        { type: 'quiz', title: '{topic} practice' },
+        { type: 'flashcards', title: '{topic} practice' },
         { type: 'flashcards', title: '{topic} drills' },
       ] },
       { id: 'coverage', label: 'Cover the syllabus', tagline: 'Track every topic to done', widgets: [
         { type: 'checklist', title: '{topic} topics' },
-        { type: 'progress', title: 'Syllabus coverage' },
+        { type: 'goal_tracker', title: 'Syllabus coverage' },
       ] },
     ],
     question: { prompt: 'What would help most first?', options: [
@@ -158,8 +158,8 @@ const BASE_ARCHETYPES: readonly ArchetypeSpec[] = [
       ] },
       { id: 'routine', label: 'Practice routine', tagline: 'Regular focused sessions', widgets: [
         { type: 'habit', title: '{topic} practice streak' },
-        { type: 'pomodoro', title: 'Practice sessions' },
-        { type: 'weekly_planner', title: '{topic} week' },
+        { type: 'timekeeper', title: 'Practice sessions' },
+        { type: 'checklist', title: '{topic} week' },
       ] },
       { id: 'progress', label: 'Track improvement', tagline: 'Milestones and a practice log', widgets: [
         { type: 'goal_tracker', title: '{topic} goal' },
@@ -187,22 +187,22 @@ const BASE_ARCHETYPES: readonly ArchetypeSpec[] = [
     topicFallback: 'Project',
     directions: [
       { id: 'hub', label: '{topic} workspace', tagline: 'Board, plan and notes for the whole effort', widgets: [
-        { type: 'kanban', title: '{topic} board' },
-        { type: 'timeline', title: '{topic} plan' },
-        { type: 'notes', title: '{topic} notes' },
+        { type: 'checklist', title: '{topic} board' },
+        { type: 'checklist', title: '{topic} plan' },
+        { type: 'text', title: '{topic} notes' },
       ] },
       { id: 'plan', label: 'Plan it out', tagline: 'Phases, tasks and what could go wrong', widgets: [
-        { type: 'timeline', title: '{topic} plan' },
+        { type: 'checklist', title: '{topic} plan' },
         { type: 'checklist', title: 'First steps' },
         { type: 'risk_register', title: '{topic} risks' },
       ] },
       { id: 'track', label: 'Track the work', tagline: 'A board plus a progress pulse', widgets: [
-        { type: 'kanban', title: '{topic} board' },
-        { type: 'progress', title: '{topic} progress' },
+        { type: 'checklist', title: '{topic} board' },
+        { type: 'goal_tracker', title: '{topic} progress' },
       ] },
       { id: 'shape', label: 'Shape the idea', tagline: 'Capture and prioritise before committing', widgets: [
-        { type: 'notes', title: '{topic} idea' },
-        { type: 'priority_matrix', title: 'What matters first' },
+        { type: 'text', title: '{topic} idea' },
+        { type: 'checklist', title: 'What matters first' },
       ] },
     ],
     question: { prompt: 'Where are you with it?', options: [
@@ -225,11 +225,11 @@ const BASE_ARCHETYPES: readonly ArchetypeSpec[] = [
         { type: 'trip_itinerary', title: '{topic} itinerary' },
         { type: 'expense_split', title: '{topic} shared costs' },
         { type: 'checklist', title: '{topic}: to sort out' },
-        { type: 'countdown', title: 'Departure' },
+        { type: 'timekeeper', title: 'Departure' },
       ] },
       { id: 'itinerary', label: 'Sketch the itinerary', tagline: 'Days, order and pace', widgets: [
         { type: 'trip_itinerary', title: '{topic} itinerary' },
-        { type: 'timeline', title: '{topic} outline' },
+        { type: 'checklist', title: '{topic} outline' },
       ] },
       { id: 'budget', label: 'Set the budget', tagline: 'Costs before commitments', widgets: [
         { type: 'expense_split', title: '{topic} shared costs' },
@@ -237,7 +237,7 @@ const BASE_ARCHETYPES: readonly ArchetypeSpec[] = [
       ] },
       { id: 'logistics', label: 'Packing & booking', tagline: 'Everything to pack and reserve', widgets: [
         { type: 'checklist', title: 'Packing list' },
-        { type: 'countdown', title: 'Departure' },
+        { type: 'timekeeper', title: 'Departure' },
         { type: 'links', title: 'Bookings' },
       ] },
     ],
@@ -261,15 +261,15 @@ const BASE_ARCHETYPES: readonly ArchetypeSpec[] = [
         { type: 'metrics', title: '{topic} numbers' },
       ] },
       { id: 'routine', label: 'Weekly routine', tagline: 'Which days, which workouts', widgets: [
-        { type: 'weekly_planner', title: '{topic} week' },
+        { type: 'checklist', title: '{topic} week' },
         { type: 'habit', title: '{topic} streak' },
       ] },
       { id: 'progress', label: 'Track the numbers', tagline: 'Watch the trend, not the day', widgets: [
         { type: 'metrics', title: '{topic} numbers' },
-        { type: 'line_chart', title: '{topic} trend' },
+        { type: 'bar_chart', title: '{topic} trend' },
       ] },
       { id: 'plan', label: 'Training plan', tagline: 'A structured build-up', widgets: [
-        { type: 'timeline', title: '{topic} plan' },
+        { type: 'checklist', title: '{topic} plan' },
         { type: 'checklist', title: 'This week' },
       ] },
     ],
@@ -296,7 +296,7 @@ const BASE_ARCHETYPES: readonly ArchetypeSpec[] = [
         { type: 'habit', title: '{topic}' },
       ] },
       { id: 'routine', label: 'Anchor it to a routine', tagline: 'Give the habit a fixed home in the day', widgets: [
-        { type: 'daily_agenda', title: 'Daily rhythm' },
+        { type: 'checklist', title: 'Daily rhythm' },
         { type: 'habit', title: '{topic}' },
       ] },
       { id: 'reflect', label: 'Track & reflect', tagline: 'Notice what helps and what breaks it', widgets: [
@@ -325,15 +325,15 @@ const BASE_ARCHETYPES: readonly ArchetypeSpec[] = [
       ] },
       { id: 'budget', label: 'Monthly budget', tagline: 'Where the money goes each month', widgets: [
         { type: 'budget', title: 'Monthly budget' },
-        { type: 'pie_chart', title: 'Spending split' },
+        { type: 'bar_chart', title: 'Spending split' },
       ] },
       { id: 'goal', label: 'Savings goal', tagline: 'A number and a date to hit it', widgets: [
         { type: 'goal_tracker', title: '{topic} goal' },
-        { type: 'progress', title: 'Saved so far' },
+        { type: 'goal_tracker', title: 'Saved so far' },
       ] },
       { id: 'log', label: 'Spending log', tagline: 'Write it down, watch the trend', widgets: [
         { type: 'logbook', title: 'Spending log' },
-        { type: 'line_chart', title: 'Spend over time' },
+        { type: 'bar_chart', title: 'Spend over time' },
       ] },
     ],
     question: { prompt: 'What matters most right now?', options: [
@@ -353,7 +353,7 @@ const BASE_ARCHETYPES: readonly ArchetypeSpec[] = [
       { id: 'hub', label: '{topic} planner', tagline: 'Tasks, budget, countdown and people', widgets: [
         { type: 'checklist', title: '{topic} to-dos' },
         { type: 'budget', title: '{topic} budget' },
-        { type: 'countdown', title: 'The big day' },
+        { type: 'timekeeper', title: 'The big day' },
         { type: 'contact', title: 'Key people' },
       ] },
       { id: 'guests', label: 'Guest list', tagline: 'Who is coming and who to chase', widgets: [
@@ -362,7 +362,7 @@ const BASE_ARCHETYPES: readonly ArchetypeSpec[] = [
       ] },
       { id: 'logistics', label: 'Logistics', tagline: 'Everything that must happen, in order', widgets: [
         { type: 'checklist', title: '{topic} to-dos' },
-        { type: 'timeline', title: 'Run-up plan' },
+        { type: 'checklist', title: 'Run-up plan' },
       ] },
       { id: 'budget', label: 'Budget', tagline: 'Keep the costs honest', widgets: [
         { type: 'budget', title: '{topic} budget' },
@@ -394,7 +394,7 @@ const BASE_ARCHETYPES: readonly ArchetypeSpec[] = [
       { id: 'interview', label: 'Interview prep', tagline: 'Stories, answers and drills', widgets: [
         { type: 'flashcards', title: 'Interview answers' },
         { type: 'checklist', title: 'Prep list' },
-        { type: 'notes', title: 'Stories that land' },
+        { type: 'text', title: 'Stories that land' },
       ] },
       { id: 'network', label: 'Network', tagline: 'People who can open doors', widgets: [
         { type: 'contact', title: 'Contacts' },
@@ -418,11 +418,11 @@ const BASE_ARCHETYPES: readonly ArchetypeSpec[] = [
       { id: 'hub', label: 'Moving mission control', tagline: 'Tasks, costs and the countdown', widgets: [
         { type: 'checklist', title: 'Moving tasks' },
         { type: 'budget', title: 'Moving costs' },
-        { type: 'countdown', title: 'Moving day' },
+        { type: 'timekeeper', title: 'Moving day' },
       ] },
       { id: 'tasks', label: 'The task list', tagline: 'Everything, in the right order', widgets: [
         { type: 'checklist', title: 'Moving tasks' },
-        { type: 'timeline', title: 'Weeks until the move' },
+        { type: 'checklist', title: 'Weeks until the move' },
       ] },
       { id: 'costs', label: 'The costs', tagline: 'Deposits, movers, surprises', widgets: [
         { type: 'budget', title: 'Moving costs' },
@@ -458,8 +458,8 @@ const BASE_ARCHETYPES: readonly ArchetypeSpec[] = [
         { type: 'counter', title: 'Books finished' },
       ] },
       { id: 'notes', label: 'Capture what sticks', tagline: 'Notes and lines worth keeping', widgets: [
-        { type: 'notes', title: 'Reading notes' },
-        { type: 'quote', title: 'Lines worth keeping' },
+        { type: 'text', title: 'Reading notes' },
+        { type: 'text', title: 'Lines worth keeping' },
       ] },
     ],
     question: { prompt: 'What do you want from it?', options: [
@@ -481,7 +481,7 @@ const BASE_ARCHETYPES: readonly ArchetypeSpec[] = [
         { type: 'outline', title: '{topic} structure' },
         { type: 'citation', title: '{topic} sources' },
         { type: 'reading_list', title: 'To read' },
-        { type: 'notes', title: 'Working notes' },
+        { type: 'text', title: 'Working notes' },
       ] },
       { id: 'sources', label: 'Gather sources', tagline: 'Collect and cite as you go', widgets: [
         { type: 'citation', title: '{topic} sources' },
@@ -490,11 +490,11 @@ const BASE_ARCHETYPES: readonly ArchetypeSpec[] = [
       ] },
       { id: 'synthesis', label: 'Synthesise', tagline: 'Turn reading into structure', widgets: [
         { type: 'outline', title: '{topic} structure' },
-        { type: 'notes', title: 'Working notes' },
+        { type: 'text', title: 'Working notes' },
       ] },
       { id: 'questions', label: 'Open questions', tagline: 'What still needs answering', widgets: [
         { type: 'checklist', title: 'Open questions' },
-        { type: 'notes', title: 'Hypotheses' },
+        { type: 'text', title: 'Hypotheses' },
       ] },
     ],
     question: { prompt: 'Where are you in it?', options: [
@@ -540,12 +540,12 @@ const BASE_ARCHETYPES: readonly ArchetypeSpec[] = [
     topicFallback: 'Meals',
     directions: [
       { id: 'hub', label: 'Kitchen HQ', tagline: 'Menu, groceries and recipes together', widgets: [
-        { type: 'weekly_planner', title: 'Weekly menu' },
+        { type: 'checklist', title: 'Weekly menu' },
         { type: 'checklist', title: 'Groceries' },
         { type: 'links', title: 'Recipes to try' },
       ] },
       { id: 'menu', label: 'Weekly menu', tagline: 'Decide once, eat all week', widgets: [
-        { type: 'weekly_planner', title: 'Weekly menu' },
+        { type: 'checklist', title: 'Weekly menu' },
       ] },
       { id: 'groceries', label: 'Groceries & cost', tagline: 'Shop once, spend less', widgets: [
         { type: 'checklist', title: 'Groceries' },
@@ -553,7 +553,7 @@ const BASE_ARCHETYPES: readonly ArchetypeSpec[] = [
       ] },
       { id: 'recipes', label: 'Recipe box', tagline: 'Keep the keepers', widgets: [
         { type: 'links', title: 'Recipes to try' },
-        { type: 'notes', title: 'Tweaks that worked' },
+        { type: 'text', title: 'Tweaks that worked' },
       ] },
     ],
     question: { prompt: 'Whats the goal?', options: [
@@ -606,10 +606,10 @@ const BASE_ARCHETYPES: readonly ArchetypeSpec[] = [
       { id: 'hub', label: '{topic} project base', tagline: 'Tasks, costs, timing and sketches', widgets: [
         { type: 'checklist', title: '{topic} tasks' },
         { type: 'budget', title: '{topic} costs' },
-        { type: 'timeline', title: '{topic} phases' },
+        { type: 'checklist', title: '{topic} phases' },
       ] },
       { id: 'plan', label: 'Plan the work', tagline: 'Order matters when walls come down', widgets: [
-        { type: 'timeline', title: '{topic} phases' },
+        { type: 'checklist', title: '{topic} phases' },
         { type: 'checklist', title: '{topic} tasks' },
       ] },
       { id: 'costs', label: 'Cost it out', tagline: 'Materials, trades and buffer', widgets: [
@@ -643,7 +643,7 @@ const BASE_ARCHETYPES: readonly ArchetypeSpec[] = [
       ] },
       { id: 'structure', label: 'Structure it', tagline: 'Shape before sentences', widgets: [
         { type: 'outline', title: '{topic} outline' },
-        { type: 'notes', title: '{topic} ideas' },
+        { type: 'text', title: '{topic} ideas' },
       ] },
       { id: 'momentum', label: 'Build momentum', tagline: 'Words every day, counted', widgets: [
         { type: 'habit', title: 'Daily writing' },
@@ -671,16 +671,16 @@ const BASE_ARCHETYPES: readonly ArchetypeSpec[] = [
     directions: [
       { id: 'hub', label: '{topic} launchpad', tagline: 'Position, plan, money and work', widgets: [
         { type: 'swot', title: '{topic} position' },
-        { type: 'timeline', title: 'Road to launch' },
+        { type: 'checklist', title: 'Road to launch' },
         { type: 'budget', title: 'Runway' },
-        { type: 'kanban', title: 'The work' },
+        { type: 'checklist', title: 'The work' },
       ] },
       { id: 'validate', label: 'Validate the idea', tagline: 'Is it worth building?', widgets: [
         { type: 'swot', title: '{topic} position' },
         { type: 'pros_cons', title: 'Go / no-go' },
       ] },
       { id: 'plan', label: 'Plan the launch', tagline: 'Milestones and what could sink it', widgets: [
-        { type: 'timeline', title: 'Road to launch' },
+        { type: 'checklist', title: 'Road to launch' },
         { type: 'risk_register', title: 'What could go wrong' },
       ] },
       { id: 'numbers', label: 'Run the numbers', tagline: 'Costs, runway, break-even', widgets: [
@@ -711,11 +711,11 @@ const BASE_ARCHETYPES: readonly ArchetypeSpec[] = [
         { type: 'logbook', title: 'What affected it' },
       ] },
       { id: 'routine', label: 'Protect a routine', tagline: 'Small anchors through the day', widgets: [
-        { type: 'daily_agenda', title: 'A gentler day' },
+        { type: 'checklist', title: 'A gentler day' },
         { type: 'habit', title: 'Daily anchor' },
       ] },
       { id: 'unload', label: 'Get it out of your head', tagline: 'A private place to write', widgets: [
-        { type: 'notes', title: 'Brain dump' },
+        { type: 'text', title: 'Brain dump' },
       ] },
     ],
     question: { prompt: 'What would help today?', options: [
@@ -804,8 +804,18 @@ function hydratedData(type: ModuleType, source: string, title: string): ModuleDa
   // markdown autolinks), and a trailing '>' is a forbidden host code point.
   const urls = source.match(/https?:\/\/[^\s<>)]+/g) ?? []
 
-  if (type === 'countdown' && date) return { ...defaults, label: title, targetDate: date } as ModuleData
   if (type === 'date_picker' && date) return { ...defaults, label: title, date } as ModuleData
+  // A detected date is the whole point of the card the scenario asked for. The
+  // standalone Countdown was retired into Timekeeper, so the date now lands in
+  // the Deadline skin's pocket and the card opens already wearing that skin.
+  if (type === 'timekeeper' && date) {
+    const clock = defaults as unknown as { deadline?: Record<string, unknown> }
+    return {
+      ...defaults,
+      mode: 'deadline',
+      deadline: { ...(clock.deadline ?? {}), label: title, targetDate: date },
+    } as ModuleData
+  }
   if (type === 'budget' && amount !== null) {
     const currency = money?.includes('€') ? 'EUR' : money?.includes('£') ? 'GBP' : 'USD'
     return { ...defaults, currency, items: [{ id: crypto.randomUUID(), label: title, amount }] } as ModuleData
@@ -948,10 +958,25 @@ const SCENARIO_VOCABULARY = buildVocabulary(ARCHETYPES.flatMap((spec) => [
 
 const MATCH_NOISE = new Set(['want', 'need', 'start', 'try', 'plan', 'manage', 'make', 'help', 'thing', 'stuff'])
 
+/**
+ * An archetype's own vocabulary never changes — the specs are module
+ * constants — but the resolver re-derives it for all of them on every Quick
+ * Add keystroke, once in `scoreArchetype` before the candidate gate and again
+ * in `shortlistArchetypes` for every spec that gate rejected. Caching it on
+ * the spec removes the bulk of the per-keystroke cost. Every caller only
+ * reads the set (`has`, `size`, spread); it must stay that way, because the
+ * cached set is now shared.
+ */
+const ARCHETYPE_TOKEN_CACHE = new WeakMap<ArchetypeSpec, Set<string>>()
+
 function archetypeTokens(spec: ArchetypeSpec): Set<string> {
-  return normalizeLanguage([
+  const cached = ARCHETYPE_TOKEN_CACHE.get(spec)
+  if (cached) return cached
+  const tokens = normalizeLanguage([
     spec.id, spec.label, spec.topicFallback, ...(spec.keywords ?? []), ...spec.patterns.map((pattern) => pattern.source),
   ].join(' ')).tokens
+  ARCHETYPE_TOKEN_CACHE.set(spec, tokens)
+  return tokens
 }
 
 interface ArchetypeScore { spec: ArchetypeSpec; score: number; consumed: number; correctedSource: string }

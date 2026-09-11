@@ -13,58 +13,48 @@ describe('purpose-built Bullets skins', () => {
     skin: 'dots',
   }
 
+  const render = (skin: BulletSkin, data: BulletsData = base) => renderToStaticMarkup(
+    <BulletsWidget data={{ ...data, skin }} skin={skin} onChange={() => undefined} />,
+  )
+
   it.each([
     ['dots', 'gp-bullets-dots'],
     ['numbered', 'gp-bullets-numbered'],
-    ['compact_chips', 'gp-bullets-chips'],
-    ['two_column', 'gp-bullets-columns'],
     ['nested_outline', 'gp-bullets-outline'],
-    ['rolling_log', 'gp-bullets-log'],
   ] as const)('renders the %s experience with its own anatomy', (skin, className) => {
-    const markup = renderToStaticMarkup(
-      <BulletsWidget
-        data={{ ...base, skin: skin as BulletSkin }}
-        skin={skin as BulletSkin}
-        onChange={() => undefined}
-      />,
-    )
+    const markup = render(skin)
     expect(markup).toContain(className)
     expect(markup).toContain(`data-bullets-skin="${skin}"`)
   })
 
-  it('renders outline hierarchy and log chronology from isolated skin state', () => {
-    const outline = renderToStaticMarkup(
-      <BulletsWidget
-        data={{
-          ...base,
-          skin: 'nested_outline',
-          skinStates: {
-            nested_outline: { levels: { two: 1 }, collapsedIds: [] },
-          },
-        }}
-        skin="nested_outline"
-        onChange={() => undefined}
-      />,
-    )
-    const log = renderToStaticMarkup(
-      <BulletsWidget
-        data={{
-          ...base,
-          skin: 'rolling_log',
-          skinStates: {
-            rolling_log: {
-              order: 'newest',
-              timestamps: { one: '2026-07-25T10:00:00.000Z' },
-            },
-          },
-        }}
-        skin="rolling_log"
-        onChange={() => undefined}
-      />,
-    )
+  it('gives every point a wrapping field and no placeholder to read around', () => {
+    for (const skin of ['dots', 'numbered', 'nested_outline'] as const) {
+      const markup = render(skin)
+      // A textarea is what lets one point run to a second line; an input could
+      // only scroll its own tail out of sight.
+      expect(markup).toContain('<textarea')
+      expect(markup).not.toContain('placeholder')
+    }
+  })
+
+  it('leaves the add control as a bare plus', () => {
+    const markup = render('dots')
+    expect(markup).toContain('aria-label="Add bullet"')
+    expect(markup).not.toContain('Add bullet<')
+  })
+
+  it('numbers a sequence from one, with no leading zero', () => {
+    const markup = render('numbered')
+    expect(markup).toContain('>1</span>')
+    expect(markup).not.toContain('>01</span>')
+  })
+
+  it('renders outline hierarchy from isolated skin state', () => {
+    const outline = render('nested_outline', {
+      ...base,
+      skinStates: { nested_outline: { levels: { two: 1 }, collapsedIds: [] } },
+    })
     expect(outline).toContain('--gp-bullet-level:1')
     expect(outline).toContain('aria-label="Collapse First point"')
-    expect(log).toContain('Show oldest entries first')
-    expect(log).toContain('dateTime="2026-07-25T10:00:00.000Z"')
   })
 })

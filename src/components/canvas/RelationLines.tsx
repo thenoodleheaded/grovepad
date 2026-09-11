@@ -1,10 +1,10 @@
 import { memo, useCallback, useMemo, useState, type CSSProperties } from 'react'
 import { useShallow } from 'zustand/react/shallow'
-import { getCriticalPath, strictCarrierIds, strictHolderOf, useWidgetStore } from '../../store/useWidgetStore'
+import { getCriticalPath, strictCarrierIds, useWidgetStore } from '../../store/useWidgetStore'
 import { useOverlayLifecycle } from '../../store/useOverlayStore'
 import type { RelationType, Vector2D } from '../../types/spatial'
-import { GRID_SIZE, RELATION_LABELS } from '../../types/spatial'
-import { anchoredCurveMidpoint, anchoredCurvePath, curvedPath } from '../../utils/curve'
+import { RELATION_LABELS } from '../../types/spatial'
+import { routeEdge, routeEdgeToPoint, type EdgeNode } from '../../utils/edgeRoute'
 import { useWorldContentRect } from '../../hooks/useWorldContentRect'
 import { useWidgetRestStore } from '../../store/useWidgetRestStore'
 import { isWidgetResting, widgetWithEffectiveSize } from '../../utils/widgetRest'
@@ -14,7 +14,6 @@ import { treeRevealDelay } from '../../store/treeReveal'
 import { truncate } from '../../utils/text'
 import { ContextMenuSurface } from '../ui/ContextMenuSurface'
 import { widgetCenter } from '../../utils/widgetBounds'
-import { clamp } from '../../utils/math'
 import {
   CanvasEdge,
   CanvasEdgeLayer,
@@ -40,15 +39,6 @@ const TYPE_PRIORITY: Record<RelationType, number> = {
 }
 
 const MUTED_STROKE = '#525252'
-
-/** Gap left between a widget's border and any line touching it — keeps the
- *  stroke from visually merging into the glass edge. */
-const LINE_STANDOFF = GRID_SIZE * 0.3
-/** How far a border attachment stays clear of the card's rounded corner. */
-const CORNER_INSET = 24
-/** Extra breathing room left between a trimmed line end and the pill it's
- *  dodging, so the gap reads as deliberate rather than a rounding error. */
-const GAP_BUFFER = LINE_STANDOFF
 
 /** A widget's title capsule floats above its top edge (`-top-9`, h-8) — its
  *  footprint spans roughly [cardTop-36, cardTop-4]. It is left-aligned with
@@ -77,119 +67,11 @@ function estimatePillHalfWidth(label: string, chrome: number, boxWidth: number):
 }
 
 // ---------------------------------------------------------------------------
-// Anchor geometry — a line never derives from one fixed spot. Each endpoint
-// picks whichever point on its own border sits closest to the other card,
-// then dodges the other card's floating name pill if it would land under it.
+// Endpoint geometry. Where a line actually lands is decided by one owner,
+// `edgeRoute.ts`: this layer only says what each end IS (its box on screen and
+// the floating name capsule that has to stay clear) and, for a strict hold,
+// which half of the border the line may use.
 // ---------------------------------------------------------------------------
-
-interface RectGeo {
-  center: Vector2D
-  halfW: number
-  halfH: number
-}
-
-interface PillInfo {
-  cx: number
-  cy: number
-  rx: number
-  ry: number
-}
-
-interface EndpointGeo extends RectGeo {
-  pill: PillInfo | null
-}
-
-/** Nearest point on a rect's border to `towards`, held back from the
- *  rounded corners by CORNER_INSET so a line never appears to clip a card's
- *  curve. */
-function borderPoint(geo: RectGeo, towards: Vector2D): Vector2D {
-  const { center, halfW, halfH } = geo
-  const x = clamp(towards.x, center.x - halfW, center.x + halfW)
-  const y = clamp(towards.y, center.y - halfH, center.y + halfH)
-  let point: Vector2D
-  if (x !== towards.x || y !== towards.y) {
-    point = { x, y }
-  } else {
-    const dx = towards.x - center.x
-    const dy = towards.y - center.y
-    if (dx === 0 && dy === 0) {
-      point = center
-    } else {
-      const tx = dx === 0 ? Infinity : halfW / Math.abs(dx)
-      const ty = dy === 0 ? Infinity : halfH / Math.abs(dy)
-      const t = Math.min(tx, ty, 1)
-      point = { x: center.x + dx * t, y: center.y + dy * t }
-    }
-  }
-  return insetFromCorners(point, geo)
-}
-
-function insetFromCorners(point: Vector2D, geo: RectGeo): Vector2D {
-  const { center, halfW, halfH } = geo
-  const inset = Math.min(CORNER_INSET, halfW - 1, halfH - 1)
-  if (inset <= 0) return point
-  const onTop = point.y <= center.y - halfH + 0.5
-  const onBottom = point.y >= center.y + halfH - 0.5
-  if (onTop || onBottom) {
-    return { x: clamp(point.x, center.x - halfW + inset, center.x + halfW - inset), y: point.y }
-  }
-  const onLeft = point.x <= center.x - halfW + 0.5
-  const onRight = point.x >= center.x + halfW - 0.5
-  if (onLeft || onRight) {
-    return { x: point.x, y: clamp(point.y, center.y - halfH + inset, center.y + halfH - inset) }
-  }
-  return point
-}
-
-/** Pushes a point clear of the pill's rounded-capsule (stadium) silhouette,
- *  always exiting toward the far side, away from the card the pill floats
- *  above — never toward it, which would poke the "gap" straight through the
- *  card's own border. This is the "artificial pill shaped gap": a line due
- *  to land under a name pill stops just outside its curved edge instead of
- *  continuing underneath it. */
-function pushOutsidePill(point: Vector2D, pill: PillInfo): Vector2D {
-  const rx = pill.rx + GAP_BUFFER
-  const ry = pill.ry + GAP_BUFFER
-  const dx = point.x - pill.cx
-  if (Math.abs(dx) > rx) return point
-  // Vertical half-extent of the capsule at this x: full ry across the
-  // straight midsection, tapering per the rounded end-cap's circle equation
-  // once dx passes into it.
-  const straightHalf = Math.max(rx - ry, 0)
-  const capIntrusion = Math.max(Math.abs(dx) - straightHalf, 0)
-  const verticalReach =
-    capIntrusion > 0 ? Math.sqrt(Math.max(ry * ry - capIntrusion * capIntrusion, 0)) : ry
-  const farEdge = pill.cy - verticalReach
-  const nearEdge = pill.cy + verticalReach
-  if (point.y < farEdge || point.y > nearEdge) return point
-  return { x: point.x, y: farEdge }
-}
-
-function anchorPoint(geo: EndpointGeo, towards: Vector2D): Vector2D {
-  const padded: RectGeo = {
-    center: geo.center,
-    halfW: geo.halfW + LINE_STANDOFF,
-    halfH: geo.halfH + LINE_STANDOFF,
-  }
-  const raw = borderPoint(padded, towards)
-  return geo.pill ? pushOutsidePill(raw, geo.pill) : raw
-}
-
-/** Each side picks the point on its own border closest to the other
- *  widget's center, independently. Deliberately not iterative: chasing the
- *  other side's already-resolved point (rather than its center) creates an
- *  order-dependent fixed point whenever both borders comfortably contain
- *  the same coordinate — e.g. two widgets sitting side by side at nearly
- *  the same height can converge on either one's center y depending which
- *  side resolves first, even though every point on that flat stretch is an
- *  equally short connection. Resolving both sides directly off the real
- *  centers has no such ambiguity. */
-function pickAnchors(from: EndpointGeo, to: EndpointGeo): { start: Vector2D; end: Vector2D } {
-  return {
-    start: anchorPoint(from, to.center),
-    end: anchorPoint(to, from.center),
-  }
-}
 
 // ---------------------------------------------------------------------------
 // Merged edge descriptor
@@ -306,17 +188,6 @@ function LineContextMenu({
   const relation = useWidgetStore((state) => state.relations[relationId])
   const fromTitle = useWidgetStore((state) => state.widgets[relation?.fromId ?? '']?.title ?? '…')
   const toTitle = useWidgetStore((state) => state.widgets[relation?.toId ?? '']?.title ?? '…')
-  const parentStrict = useWidgetStore(
-    (state) => state.widgets[relation?.fromId ?? '']?.metadata.strictHold === true,
-  )
-  // Inheritance owns the toggle: inside a held subtree the strict decision
-  // lives at the holder above, so this menu only names it instead of offering
-  // a switch that the rules would ignore.
-  const heldByTitle = useWidgetStore((state) => {
-    if (!relation || relation.type !== 'parent') return null
-    const holderId = strictHolderOf(relation.fromId, state.widgets, state.relations)
-    return holderId ? state.widgets[holderId]?.title ?? null : null
-  })
   if (!relation) return null
   const resolvable = relation.type === 'blocker' || relation.type === 'conflict'
   const addParent = (parentId: string, childId: string) => {
@@ -324,7 +195,7 @@ function LineContextMenu({
     onClose()
   }
   return (
-    <ContextMenuSurface x={x} y={y} estimatedWidth={208} estimatedHeight={relation.type === 'parent' ? 300 : 244} onClose={onClose}>
+    <ContextMenuSurface x={x} y={y} estimatedWidth={208} estimatedHeight={244} onClose={onClose}>
         <p className="px-3 py-1.5  text-[10px] uppercase tracking-widest text-neutral-500">
           {RELATION_LABELS[relation.type]} link
         </p>
@@ -347,30 +218,6 @@ function LineContextMenu({
           ))}
         </div>
         <button type="button" onClick={() => { useWidgetStore.getState().updateRelation(relationId, { fromId: relation.toId, toId: relation.fromId }); onClose() }} className="block w-full px-3 py-1.5 text-left text-xs text-neutral-300 hover:bg-neutral-800">Reverse direction</button>
-        {relation.type === 'parent' && (
-          <>
-            <div className="my-1 border-t border-neutral-800" />
-            <p className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-neutral-500">
-              Family movement
-            </p>
-            {heldByTitle ? (
-              <p className="px-3 py-1.5 text-xs text-neutral-500">
-                Held strictly by <span className="text-neutral-300">{truncate(heldByTitle, 16)}</span> — release it there
-              </p>
-            ) : (
-              <button type="button"
-                onClick={() => {
-                  useWidgetStore.getState().updateWidgetsMetadata([relation.fromId], { strictHold: !parentStrict })
-                  onClose()
-                }}
-                className="block w-full px-3 py-1.5 text-left text-xs text-neutral-300 hover:bg-neutral-800">
-                {parentStrict
-                  ? 'Release strict hold'
-                  : `${truncate(fromTitle, 14)} holds its family strictly`}
-              </button>
-            )}
-          </>
-        )}
         <div className="my-1 border-t border-neutral-800" />
         <p className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-neutral-500">
           Add child link
@@ -403,8 +250,10 @@ function LineContextMenu({
 // Link drag preview line (world coordinates, no conversion needed)
 // ---------------------------------------------------------------------------
 
-function LinkDragLine({ sourceCenter, cursorWorld }: { sourceCenter: Vector2D; cursorWorld: Vector2D }) {
-  const d = curvedPath(sourceCenter, cursorWorld)
+function LinkDragLine({ source, cursorWorld }: { source: EdgeNode; cursorWorld: Vector2D }) {
+  // Leaves the card's border exactly where the committed line will, so the
+  // preview never starts under the card it is dragged from.
+  const d = routeEdgeToPoint(source, cursorWorld)
   return (
     <g>
       <path
@@ -440,7 +289,11 @@ const RelationLinkPreview = memo(function RelationLinkPreview() {
 
   return (
     <LinkDragLine
-      sourceCenter={widgetCenter(source)}
+      source={{
+        center: widgetCenter(source),
+        halfW: source.size.width / 2,
+        halfH: source.size.height / 2,
+      }}
       cursorWorld={linkDrag.cursorWorld}
     />
   )
@@ -488,8 +341,8 @@ export function RelationLines() {
   // Build merged edges: multiple relations between the same pair become one line
   const edges = useMemo((): MergedEdge[] => {
     const edgeMap = new Map<string, {
-      fromGeo: EndpointGeo
-      toGeo: EndpointGeo
+      fromGeo: EdgeNode
+      toGeo: EdgeNode
       type: RelationType
       isResolved: boolean
       highlighted: boolean
@@ -505,7 +358,7 @@ export function RelationLines() {
     // one load-bearing structure.
     const strictCarriers = strictCarrierIds(widgets, relations)
 
-    const endpointCache = new Map<string, EndpointGeo | null>()
+    const endpointCache = new Map<string, EdgeNode | null>()
     /** The node a widget links AS. A glued cluster is one node on the board, so
      * every member shares the cluster's id — one line reaches the group instead
      * of a separate line per welded card. */
@@ -513,7 +366,7 @@ export function RelationLines() {
       const glueId = widgetGlueIndex[widgetId]
       return glueId && (glues[glueId]?.widgetIds.length ?? 0) >= 2 ? `glue:${glueId}` : widgetId
     }
-    const endpointGeo = (widgetId: string): EndpointGeo | null => {
+    const endpointGeo = (widgetId: string): EdgeNode | null => {
       const glueId = widgetGlueIndex[widgetId]
       const cluster = glueId ? glues[glueId] : undefined
       if (cluster && cluster.widgetIds.length >= 2) {
@@ -526,7 +379,7 @@ export function RelationLines() {
         // while the empty canvas beside that row stays freely reachable.
         const env = clusterFrameEnvelope(cluster.widgetIds, widgets)
         const row = clusterTitleRowRect(cluster.widgetIds, widgets, cluster.name)
-        const result: EndpointGeo | null = env
+        const result: EdgeNode | null = env
           ? {
               center: { x: env.x + env.width / 2, y: env.y + env.height / 2 },
               halfW: env.width / 2,
@@ -560,7 +413,7 @@ export function RelationLines() {
       const w = widgetWithEffectiveSize(stored, restCtx)
       const center = widgetCenter(w)
       const pillHidden = w.iconified === true || restingHere
-      const result: EndpointGeo | null = {
+      const result: EdgeNode | null = {
         center,
         halfW: w.size.width / 2,
         halfH: w.size.height / 2,
@@ -644,11 +497,19 @@ export function RelationLines() {
     }
 
     return Array.from(edgeMap.entries(), ([key, edge]) => {
-      const { start, end } = pickAnchors(edge.fromGeo, edge.toGeo)
+      // A strict hold reads top-down: the line leaves the holding parent's
+      // bottom half and enters the child's upper half, at the closest points
+      // those halves allow. A soft link is free to use whichever borders face
+      // each other.
+      const route = routeEdge(
+        edge.fromGeo,
+        edge.toGeo,
+        edge.strict ? { from: 'lower', to: 'upper' } : undefined,
+      )
       return {
         key,
-        d: anchoredCurvePath(start, edge.fromGeo.center, end, edge.toGeo.center),
-        mid: anchoredCurveMidpoint(start, edge.fromGeo.center, end, edge.toGeo.center),
+        d: route.d,
+        mid: route.mid,
         type: edge.type,
         isResolved: edge.isResolved,
         highlighted: edge.highlighted,

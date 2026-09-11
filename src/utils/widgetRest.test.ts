@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { Widget } from '../types/spatial'
+import type { CanvasNodeData } from '../types/widgetData'
 import { GRID_SIZE, ICON_MIN_EDGE } from '../types/spatial'
 import { useWidgetRestStore } from '../store/useWidgetRestStore'
 import { makeWidget as makeBaseWidget } from '../test/factories'
@@ -20,7 +21,7 @@ import {
 
 function makeWidget(overrides: Partial<Widget> = {}): Widget {
   return makeBaseWidget({
-    type: 'line_chart',
+    type: 'bar_chart',
     title: 'Trend',
     canvasId: 'c1',
     size: { width: 400, height: 240 },
@@ -33,10 +34,27 @@ function makeWidget(overrides: Partial<Widget> = {}): Widget {
 const idleCtx = { expandedWidgetId: null }
 
 describe('resting decision', () => {
-  it('defaults every registered widget type to an energy-light resting face', () => {
+  it('defaults registered widgets to rest except the always-expanded Canvas widget', () => {
     for (const definition of Object.values(WIDGET_REGISTRY)) {
-      expect(definition.restingFace, definition.type).not.toBe(false)
-      expect(isWidgetResting(makeWidget({ type: definition.type }), idleCtx), definition.type).toBe(true)
+      const shouldRest = definition.type !== 'canvas_node'
+      expect(definition.restingFace !== false, definition.type).toBe(shouldRest)
+      expect(isWidgetResting(makeWidget({ type: definition.type }), idleCtx), definition.type).toBe(shouldRest)
+    }
+  })
+
+  it('keeps every Canvas skin expanded at idle', () => {
+    const skins: NonNullable<CanvasNodeData['skin']>[] = [
+      'portal',
+      'cover',
+      'live_thumbnail',
+    ]
+    for (const skin of skins) {
+      const canvasWidget = makeWidget({
+        type: 'canvas_node',
+        data: { canvasId: 'nested', skin } as CanvasNodeData,
+      })
+      expect(isWidgetResting(canvasWidget, idleCtx), skin).toBe(false)
+      expect(effectiveWidgetSize(canvasWidget, idleCtx), skin).toEqual(canvasWidget.size)
     }
   })
 
@@ -210,7 +228,7 @@ describe('peeking an icon open', () => {
     // Nothing remembered (an icon created as one) falls back to the type's
     // own default card rather than opening at the icon's little square.
     const fresh = icon({ expandedSize: undefined })
-    expect(expandedIconSize(fresh)).toEqual(WIDGET_REGISTRY.line_chart.defaultSize)
+    expect(expandedIconSize(fresh)).toEqual(WIDGET_REGISTRY.bar_chart.defaultSize)
   })
 
   it('hands geometry consumers a card, not an icon', () => {
@@ -236,6 +254,7 @@ describe('peeking an icon open', () => {
     // does reopen the widget, so it keeps committing the scale change (and its
     // neighbours making space is correct there).
     expect(iconPeeksOpen(icon())).toBe(true)
+    expect(iconPeeksOpen(icon({ type: 'canvas_node' }))).toBe(false)
     expect(iconPeeksOpen(icon({ type: 'not_a_registered_type' as Widget['type'] }))).toBe(false)
     // Pinned is already held open, and a full card was never an icon.
     expect(iconPeeksOpen(icon({ metadata: { badges: [], pinned: true } }))).toBe(false)

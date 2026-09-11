@@ -25,11 +25,14 @@ describe('persisted device state', () => {
       },
     }, topology)
 
-    expect(resolved).toEqual({
+    expect(resolved).toMatchObject({
       activeWorkspaceId: 'ws',
       activeCanvasId: 'child',
       canvasViews: { child: { pan: { x: 10, y: 20 }, zoom: 3 } },
     })
+    // A payload written before tabs existed still opens exactly one tab, on
+    // the canvas this device was last looking at.
+    expect(resolved.openTabs).toEqual([{ id: resolved.activeTabId, canvasId: 'child' }])
   })
 
   it('migrates legacy embedded navigation when no device document exists', () => {
@@ -59,6 +62,59 @@ describe('persisted device state', () => {
       activeWorkspaceId: 'ws',
       activeCanvasId: 'root',
       canvasViews: {},
+      activeTabId: resolved.activeTabId,
+      openTabs: [{ id: resolved.activeTabId, canvasId: 'root' }],
     })
+  })
+
+  it('round-trips an open tab row', () => {
+    const resolved = resolvePersistedDeviceState({
+      format: 'grovepad-device',
+      v: 1,
+      activeWorkspaceId: 'ws',
+      activeCanvasId: 'child',
+      canvasViews: {},
+      activeTabId: 'tab-b',
+      openTabs: [{ id: 'tab-a', canvasId: 'root' }, { id: 'tab-b', canvasId: 'child' }],
+    }, topology)
+
+    expect(resolved.activeTabId).toBe('tab-b')
+    expect(resolved.openTabs).toEqual([
+      { id: 'tab-a', canvasId: 'root' },
+      { id: 'tab-b', canvasId: 'child' },
+    ])
+  })
+
+  it('retires tabs whose canvas is gone from the document', () => {
+    // The canvas a tab points at can be deleted on another device between
+    // sessions, so the saved row is re-checked against the board on every read.
+    const resolved = resolvePersistedDeviceState({
+      format: 'grovepad-device',
+      v: 1,
+      activeWorkspaceId: 'ws',
+      activeCanvasId: 'deleted',
+      canvasViews: {},
+      activeTabId: 'tab-b',
+      openTabs: [{ id: 'tab-a', canvasId: 'root' }, { id: 'tab-b', canvasId: 'deleted' }],
+    }, topology)
+
+    expect(resolved.activeCanvasId).toBe('root')
+    expect(resolved.openTabs).toEqual([{ id: 'tab-a', canvasId: 'root' }])
+    expect(resolved.activeTabId).toBe('tab-a')
+  })
+
+  it('ignores a malformed tab row instead of failing the read', () => {
+    const resolved = resolvePersistedDeviceState({
+      format: 'grovepad-device',
+      v: 1,
+      activeWorkspaceId: 'ws',
+      activeCanvasId: 'child',
+      canvasViews: {},
+      activeTabId: 42,
+      openTabs: 'not-a-row',
+    }, topology)
+
+    expect(resolved.activeCanvasId).toBe('child')
+    expect(resolved.openTabs).toEqual([{ id: resolved.activeTabId, canvasId: 'child' }])
   })
 })

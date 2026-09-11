@@ -62,7 +62,7 @@ export function PomodoroWidget({ data, onChange }: PomodoroWidgetProps) {
       <div className="flex min-h-0 flex-1 flex-col items-center justify-center">
         <span
           className="font-semibold leading-none tabular-nums transition-colors duration-300"
-          style={{ fontSize: 'clamp(22px, 20cqmin, 56px)', color: isRunning ? ink : 'rgb(212 212 212)' }}
+          style={{ fontSize: 'clamp(22px, 20cqmin, 56px)', color: isRunning ? ink : 'var(--gp-widget-ink, rgb(212 212 212))' }}
         >
           {formatClock(remaining)}
         </span>

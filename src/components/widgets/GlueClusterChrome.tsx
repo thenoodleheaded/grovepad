@@ -2,10 +2,9 @@ import { memo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from
 import { useShallow } from 'zustand/react/shallow'
 import { Check, Group, Maximize2, Minimize2, Star, Trash2, Ungroup } from 'lucide-react'
 import { useWidgetStore } from '../../store/useWidgetStore'
-import { useWidgetRestStore } from '../../store/useWidgetRestStore'
 import { useDragReflowStore } from '../../store/dragReflow'
 import { requestWidgetDeletion } from '../../store/useWidgetDeletionDialogStore'
-import { clusterEnvelope, GLUE_FRAME_BAND } from '../../utils/glueGeometry'
+import { clusterChromeEnvelope, GLUE_FRAME_BAND } from '../../utils/glueGeometry'
 import type { WorldRect } from '../../utils/canvasView'
 
 /** The frame's reserved band, owned by glueGeometry so the drawn lines and the
@@ -59,17 +58,21 @@ const HIDDEN_VIEW: ClusterView = {
 const ClusterFrame = memo(function ClusterFrame({ glueId }: { glueId: string }) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [editing, setEditing] = useState(false)
-  const expandedWidgetId = useWidgetRestStore((state) => state.expandedWidgetId)
 
   const view = useWidgetStore(
     useShallow((state): ClusterView => {
       const cluster = state.glues[glueId]
       if (!cluster || cluster.widgetIds.length < 2) return HIDDEN_VIEW
-      const env: WorldRect | null = clusterEnvelope(cluster.widgetIds, state.widgets)
+      // Chrome envelope, not the bare boxes: a member's own name row floats
+      // above its card and is part of what the group encloses, so the top
+      // boundary line stands clear above that row instead of striking through
+      // the first card's title.
+      const env: WorldRect | null = clusterChromeEnvelope(cluster.widgetIds, state.widgets)
       if (!env) return HIDDEN_VIEW
-      // While a member floats out expanded, the frame would sit over stale
-      // resting-tile geometry — hide it until the cluster settles back.
-      const hidden = Boolean(expandedWidgetId && cluster.widgetIds.includes(expandedWidgetId))
+      // The frame stays put while a member floats out expanded. Expansion is
+      // view-only state, so the stored tiles this envelope is drawn from never
+      // move — the group keeps naming its own footprint under the raised card
+      // instead of blinking out from under the reader mid-read.
       const members = cluster.widgetIds
         .map((id) => state.widgets[id])
         .filter((w): w is NonNullable<typeof w> => Boolean(w))
@@ -80,7 +83,7 @@ const ClusterFrame = memo(function ClusterFrame({ glueId }: { glueId: string }) 
         height: env.height,
         name: cluster.name,
         collapsed: cluster.collapsed === true,
-        hidden,
+        hidden: false,
         allCompleted: members.length > 0 && members.every((w) => w.metadata.completed === true),
         allFavorite: members.length > 0 && members.every((w) => w.metadata.favorite === true),
         // Mirrors the widget rule: the Completed control only shows where

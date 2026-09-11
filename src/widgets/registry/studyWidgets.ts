@@ -1,22 +1,16 @@
 import {
-  AlignHorizontalDistributeCenter,
   BadgeCheck,
   BookMarked,
   BookOpen,
   BrainCircuit,
   Calculator,
-  CalendarClock,
   ChartSpline,
   ClipboardCheck,
   ClipboardList,
-  Clock3,
   FlaskConical,
   FunctionSquare,
-  Globe,
   Goal,
   LayoutGrid,
-  PlaneTakeoff,
-  Sunrise,
   GraduationCap,
   Hourglass,
   Languages,
@@ -24,7 +18,6 @@ import {
   ListMinus,
   NotebookPen,
   Target,
-  TimerReset,
 } from 'lucide-react'
 import type { WidgetDefinition } from '../contracts/registry'
 import { C, uid } from './definitionHelpers'
@@ -133,16 +126,6 @@ export const STUDY_WIDGET_DEFINITIONS = {
       { value: 'okr', label: 'OKR', icon: Target, accent: '#f472b6' },
     ],
   },
-  stopwatch: {
-    type: 'stopwatch',
-    label: 'Stopwatch',
-    description: 'Elapsed time with laps',
-    icon: Hourglass,
-    category: 'tracking',
-    accent: '#fde047',
-    defaultSize: { width: 240, height: C * 4 },
-    defaultData: () => ({ elapsedMs: 0, startedAt: null, laps: [] }),
-  },
   reading_list: {
     type: 'reading_list',
     label: 'Reading List',
@@ -152,67 +135,7 @@ export const STUDY_WIDGET_DEFINITIONS = {
     accent: '#fdba74',
     defaultSize: { width: 320, height: C * 4 },
     defaultData: () => ({
-      title: 'Chart',
       items: [{ id: uid(), title: '', status: 'queued' }],
-    }),
-  },
-  world_clock: {
-    type: 'world_clock',
-    label: 'World Clock',
-    description: 'Local time in the cities you care about',
-    icon: Globe,
-    category: 'data',
-    accent: '#67e8f9',
-    // Overlap Band and Meeting Planner lay 24 columns beside a city label, so
-    // the card starts wider than a plain list of readings would need.
-    defaultSize: { width: 360, height: C * 5 },
-    defaultData: () => ({
-      zones: ['America/New_York', 'Europe/London', 'Asia/Tokyo'],
-      skin: 'city_grid',
-    }),
-    skinField: 'skin',
-    // Only Travel Clock keeps anything of its own — the home/destination
-    // pairing. The rest re-read the stored zone list, so their controls stay
-    // session-local and the saved card holds nothing but cities.
-    rendererOwnedSkinDetails: ['travel_clock', 'sunlight'],
-    // Metadata mirrors the generated catalogue exactly; only the icon is ours.
-    skins: [
-      { value: 'city_grid', label: 'City Grid', description: 'Large digital times arranged by city.', implementation: 'renderer-ready', presentation: 'grid', icon: LayoutGrid, accent: '#e4a772' },
-      { value: 'analog_wall', label: 'Analog Wall', description: 'A wall-clock presentation for rapid daylight recognition.', implementation: 'renderer-ready', presentation: 'grid', icon: Clock3, accent: '#e4a772' },
-      { value: 'overlap_band', label: 'Overlap Band', description: 'Highlights the shared working hours across selected zones.', implementation: 'renderer-ready', presentation: 'standard', icon: AlignHorizontalDistributeCenter, accent: '#e472cd' },
-      { value: 'meeting_planner', label: 'Meeting Planner', description: 'Scrubs one local time and shows its equivalent everywhere.', implementation: 'renderer-ready', presentation: 'standard', icon: CalendarClock, accent: '#e4a772' },
-      { value: 'travel_clock', label: 'Travel Clock', description: 'Adds origin, destination, departure, and adaptation guidance.', implementation: 'schema-extension', presentation: 'map', icon: PlaneTakeoff, accent: '#e4a772' },
-      { value: 'sunlight', label: 'Sunlight', description: 'Adds sunrise, sunset, and local daylight state for every city.', implementation: 'schema-extension', presentation: 'standard', icon: Sunrise, accent: '#d572e4' },
-    ],
-  },
-  pomodoro: {
-    type: 'pomodoro',
-    label: 'Pomodoro Timer',
-    description: 'Work/break focus cycles with a session counter',
-    icon: TimerReset,
-    category: 'study',
-    accent: '#fb7185',
-    defaultSize: { width: 260, height: C * 5 },
-    defaultData: () => ({
-      label: 'Focus',
-      workMinutes: 25,
-      breakMinutes: 5,
-      phase: 'work',
-      endAt: null,
-      remainingSeconds: 25 * 60,
-      completed: 0,
-    }),
-  },
-  vocab: {
-    type: 'vocab',
-    label: 'Vocabulary',
-    description: 'Term & definition list with known toggles',
-    icon: Languages,
-    category: 'study',
-    accent: '#c4b5fd',
-    defaultSize: { width: 320, height: C * 5 },
-    defaultData: () => ({
-      terms: [{ id: uid(), term: '', definition: '', known: false }],
     }),
   },
   grade_calc: {
@@ -298,40 +221,6 @@ export const STUDY_WIDGET_DEFINITIONS = {
       },
     ],
   },
-  gpa: {
-    type: 'gpa',
-    label: 'GPA Tracker',
-    description: 'Courses & credits → your computed GPA',
-    icon: GraduationCap,
-    category: 'study',
-    accent: '#93c5fd',
-    defaultSize: { width: 320, height: C * 5 },
-    defaultData: () => ({
-      courses: [{ id: uid(), name: '', credits: 3, points: 4 }],
-    }),
-  },
-  assignment: {
-    type: 'assignment',
-    label: 'Assignments',
-    description: 'Homework tracker with due dates and status',
-    icon: ClipboardList,
-    category: 'study',
-    accent: '#fca5a5',
-    defaultSize: { width: 340, height: C * 5 },
-    defaultData: () => ({
-      items: [{ id: uid(), title: '', due: '', status: 'todo' }],
-    }),
-  },
-  cornell: {
-    type: 'cornell',
-    label: 'Cornell Notes',
-    description: 'Cue column, notes, and a summary band',
-    icon: NotebookPen,
-    category: 'study',
-    accent: '#fcd34d',
-    defaultSize: { width: 360, height: C * 6 },
-    defaultData: () => ({ cues: '', notes: '', summary: '' }),
-  },
   formula_sheet: {
     type: 'formula_sheet',
     label: 'Formula Sheet',
@@ -340,6 +229,9 @@ export const STUDY_WIDGET_DEFINITIONS = {
     category: 'study',
     accent: '#a5b4fc',
     defaultSize: { width: 320, height: C * 5 },
+    // The three skins that keep material of their own — steps, units, and a
+    // worked example — declare it here; the other three add nothing to a record.
+    rendererOwnedSkinDetails: ['derivation', 'unit_aware', 'worked_example'],
     defaultData: () => ({
       formulas: [{ id: uid(), name: '', expression: '' }],
     }),
@@ -355,33 +247,6 @@ export const STUDY_WIDGET_DEFINITIONS = {
     defaultData: () => ({
       style: 'APA',
       sources: [{ id: uid(), title: '', author: '', year: '' }],
-    }),
-  },
-  study_goal: {
-    type: 'study_goal',
-    label: 'Study Goal',
-    description: 'Logged vs target study hours with live progress',
-    icon: Target,
-    category: 'study',
-    accent: '#86efac',
-    defaultSize: { width: 300, height: C * 4 },
-    defaultData: () => ({ subject: '', targetHours: 10, loggedHours: 0 }),
-  },
-  quiz: {
-    type: 'quiz',
-    label: 'Quiz',
-    description: 'A self-check question — pick, then reveal the answer',
-    icon: BrainCircuit,
-    category: 'study',
-    accent: '#f9a8d4',
-    defaultSize: { width: 320, height: C * 5 },
-    defaultData: () => ({
-      prompt: '',
-      options: [
-        { id: uid(), text: '', correct: true },
-        { id: uid(), text: '', correct: false },
-      ],
-      picked: null,
     }),
   },
 } satisfies Record<string, WidgetDefinition>

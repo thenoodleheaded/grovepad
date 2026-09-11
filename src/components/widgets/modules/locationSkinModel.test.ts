@@ -11,7 +11,23 @@ import {
   geofenceRadius,
   locationPoint,
   locationSkinMode,
+  MAP_DEFAULT_ZOOM,
+  MAP_MAX_ZOOM,
+  MAP_TILE_PX,
+  mapScaleBar,
+  mapTiles,
+  mapZoom,
+  metersPerPixel,
   nextNotation,
+  panned,
+  projectPoint,
+  tileLatitude,
+  tileLongitude,
+  tileUrl,
+  tileX,
+  tileY,
+  wrapLongitude,
+  zoomFraming,
   placeName,
   routeReading,
   routeStops,
@@ -199,5 +215,144 @@ describe('Location skin model', () => {
     expect(placeName('Studio', 'Main street')).toBe('Studio')
     expect(placeName('  ', 'Main street')).toBe('Main street')
     expect(placeName('', '')).toBe('Untitled place')
+  })
+})
+
+describe('the map a place is remembered on', () => {
+  const TASHKENT = { latitude: 41.3111, longitude: 69.2797 }
+
+  it('keeps a framing it recognizes and falls back to street level', () => {
+    expect(mapZoom({ zoom: 12 })).toBe(12)
+    expect(mapZoom({})).toBe(MAP_DEFAULT_ZOOM)
+    expect(mapZoom({ zoom: 'close' })).toBe(MAP_DEFAULT_ZOOM)
+    // Persisted board data is untrusted: a zoom off either end is pulled back
+    // to a level tiles actually exist at.
+    expect(mapZoom({ zoom: 40 })).toBe(MAP_MAX_ZOOM)
+    expect(mapZoom({ zoom: -5 })).toBe(2)
+    expect(mapZoom({ zoom: 14.6 })).toBe(15)
+  })
+
+  it('names each framing the way a person would', () => {
+    expect(zoomFraming(18)).toBe('Building')
+    expect(zoomFraming(15)).toBe('Street')
+    expect(zoomFraming(13)).toBe('Neighbourhood')
+    expect(zoomFraming(11)).toBe('City')
+    expect(zoomFraming(8)).toBe('Region')
+    expect(zoomFraming(3)).toBe('Country')
+  })
+
+  /**
+   * The projection is the whole contract: get it wrong by a tile and the pin
+   * sits on the wrong street. These are the reference values of Web Mercator.
+   */
+  it('projects longitude and latitude onto the tile grid', () => {
+    // At zoom 0 the world is one tile, so Greenwich and the equator land dead
+    // centre of it.
+    expect(tileX(0, 0)).toBeCloseTo(0.5, 10)
+    expect(tileY(0, 0)).toBeCloseTo(0.5, 10)
+    expect(tileX(-180, 0)).toBeCloseTo(0, 10)
+    expect(tileX(180, 0)).toBeCloseTo(1, 10)
+    // The poles are past the edge of the projection and clamp to it.
+    expect(tileY(90, 0)).toBeCloseTo(0, 6)
+    expect(tileY(-90, 0)).toBeCloseTo(1, 6)
+    // Tashkent at zoom 15, the level a street is read at.
+    expect(Math.floor(tileX(TASHKENT.longitude, 15))).toBe(22689)
+    expect(Math.floor(tileY(TASHKENT.latitude, 15))).toBe(12247)
+  })
+
+  it('reads the grid back into a place unchanged', () => {
+    for (const zoom of [2, 9, 15, 19]) {
+      expect(tileLongitude(tileX(TASHKENT.longitude, zoom), zoom)).toBeCloseTo(TASHKENT.longitude, 9)
+      expect(tileLatitude(tileY(TASHKENT.latitude, zoom), zoom)).toBeCloseTo(TASHKENT.latitude, 9)
+    }
+  })
+
+  it('folds a longitude that has walked round the world', () => {
+    expect(wrapLongitude(200)).toBeCloseTo(-160, 10)
+    expect(wrapLongitude(-200)).toBeCloseTo(160, 10)
+    expect(wrapLongitude(69.2797)).toBeCloseTo(69.2797, 10)
+  })
+
+  it('asks a tile server only for tiles that exist', () => {
+    expect(tileUrl(22689, 12247, 15)).toBe('https://tile.openstreetmap.org/15/22689/12247.png')
+    // A column past the antimeridian wraps rather than 404ing.
+    expect(tileUrl(4, 1, 2)).toBe('https://tile.openstreetmap.org/2/0/1.png')
+    expect(tileUrl(-1, 1, 2)).toBe('https://tile.openstreetmap.org/2/3/1.png')
+  })
+
+  it('covers the viewport, and covers it only once', () => {
+    const tiles = mapTiles(TASHKENT, 15, 512, 256)
+    // A 512x256 box needs at most 3 columns and 2 rows once the centre lands
+    // mid-tile, and every tile is placed inside or overlapping the box.
+    expect(tiles.length).toBeGreaterThanOrEqual(6)
+    expect(tiles.length).toBeLessThanOrEqual(12)
+    expect(new Set(tiles.map((tile) => tile.key)).size).toBe(tiles.length)
+    for (const tile of tiles) {
+      expect(tile.left).toBeGreaterThan(-MAP_TILE_PX)
+      expect(tile.left).toBeLessThan(512)
+      expect(tile.top).toBeGreaterThan(-MAP_TILE_PX)
+      expect(tile.top).toBeLessThan(256)
+    }
+  })
+
+  it('draws nothing for a viewport with no size, and nothing above the pole', () => {
+    expect(mapTiles(TASHKENT, 15, 0, 0)).toEqual([])
+    // At zoom 2 the world is four rows; a view at the top of the projection
+    // has empty sky above it rather than tiles that do not exist.
+    const rows = new Set(mapTiles({ latitude: 84, longitude: 0 }, 2, 256, 512).map((tile) => tile.key.split('/')[2]))
+    expect([...rows].every((row) => Number(row) >= 0)).toBe(true)
+  })
+
+  it('puts the pin where the place is, relative to wherever the view sits', () => {
+    // A view centred on the place puts the pin in the middle of the box.
+    const centred = projectPoint(TASHKENT, TASHKENT, 15, 320, 200)
+    expect(centred.left).toBeCloseTo(160, 6)
+    expect(centred.top).toBeCloseTo(100, 6)
+    expect(centred.onScreen).toBe(true)
+
+    // Pan the view east and the pin slides west by the same amount.
+    const moved = panned(TASHKENT, 15, -40, 0)
+    const shifted = projectPoint(TASHKENT, moved, 15, 320, 200)
+    expect(shifted.left).toBeCloseTo(120, 4)
+    expect(shifted.top).toBeCloseTo(100, 4)
+
+    // Far enough away and it is honest about having left the box.
+    expect(projectPoint(TASHKENT, { latitude: 0, longitude: 0 }, 15, 320, 200).onScreen).toBe(false)
+  })
+
+  it('walks the centre opposite the drag, and stops at the poles', () => {
+    const dragged = panned(TASHKENT, 15, 256, 0)
+    // Dragging content one whole tile east moves the centre one tile west.
+    expect(tileX(dragged.longitude, 15)).toBeCloseTo(tileX(TASHKENT.longitude, 15) - 1, 6)
+    expect(dragged.latitude).toBeCloseTo(TASHKENT.latitude, 9)
+
+    // Dragging down forever arrives at the top of the projection, not beyond
+    // it. At zoom 2 the whole world is 1024px tall, so this drag runs well
+    // past the pole and still stops on it.
+    const north = panned(TASHKENT, 2, 0, 5_000)
+    expect(north.latitude).toBeCloseTo(85.0511, 3)
+    const south = panned(TASHKENT, 2, 0, -5_000)
+    expect(south.latitude).toBeCloseTo(-85.0511, 3)
+  })
+
+  it('measures the ground a pixel covers, thinning towards the poles', () => {
+    // The canonical figure: ~156 km per pixel at zoom 0 on the equator.
+    expect(metersPerPixel(0, 0)).toBeCloseTo(156_543.03, 1)
+    expect(metersPerPixel(0, 1)).toBeCloseTo(metersPerPixel(0, 0) / 2, 4)
+    expect(metersPerPixel(60, 10)).toBeCloseTo(metersPerPixel(0, 10) / 2, 1)
+  })
+
+  it('picks the longest round distance that still fits the bar', () => {
+    const street = mapScaleBar(TASHKENT.latitude, 17, 90)
+    expect(street.widthPx).toBeLessThanOrEqual(90)
+    expect(street.label).toBe('50 m')
+
+    const city = mapScaleBar(TASHKENT.latitude, 11, 90)
+    expect(city.widthPx).toBeLessThanOrEqual(90)
+    expect(city.label).toBe('5.0 km')
+  })
+
+  it('answers to its own skin name', () => {
+    expect(locationSkinMode('map')).toBe('map')
   })
 })

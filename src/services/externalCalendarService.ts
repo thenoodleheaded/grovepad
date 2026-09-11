@@ -1,7 +1,7 @@
 import type { Session } from '@supabase/supabase-js'
 import { getSupabaseClient, supabaseConfigured } from '../lib/supabase'
 
-export type ExternalCalendarProvider = 'google' | 'microsoft'
+export type ExternalCalendarProvider = 'google'
 
 export interface ExternalCalendar {
   provider: ExternalCalendarProvider
@@ -31,7 +31,6 @@ export interface ExternalCalendarFeed {
 
 const PROVIDER_TOKEN_KEYS: Record<ExternalCalendarProvider, string> = {
   google: 'grovepad:calendar:google-token:v1',
-  microsoft: 'grovepad:calendar:microsoft-token:v1',
 }
 const PENDING_PROVIDER_KEY = 'grovepad:calendar:pending-provider:v1'
 const MAX_CALENDARS = 6
@@ -39,7 +38,6 @@ const MAX_EVENTS_PER_CALENDAR = 40
 
 const PROVIDER_SCOPES: Record<ExternalCalendarProvider, string> = {
   google: 'https://www.googleapis.com/auth/calendar.readonly',
-  microsoft: 'email offline_access Calendars.Read',
 }
 
 function storage(): Storage | null {
@@ -62,12 +60,11 @@ function text(raw: unknown, fallback = ''): string {
 
 function providerFromAuthName(raw: unknown): ExternalCalendarProvider | null {
   if (raw === 'google') return 'google'
-  if (raw === 'azure') return 'microsoft'
   return null
 }
 
-function authProvider(provider: ExternalCalendarProvider): 'google' | 'azure' {
-  return provider === 'google' ? 'google' : 'azure'
+function authProvider(provider: ExternalCalendarProvider): 'google' {
+  return provider
 }
 
 function safeColor(raw: unknown, fallback: string): string {
@@ -92,7 +89,7 @@ export function rememberExternalCalendarToken(session: Session | null): void {
   const local = storage()
   if (!local) return
   const pending = local.getItem(PENDING_PROVIDER_KEY)
-  const provider = pending === 'google' || pending === 'microsoft'
+  const provider = pending === 'google'
     ? pending
     : providerFromAuthName(session.user.app_metadata.provider)
   if (!provider) return
@@ -103,7 +100,7 @@ export function rememberExternalCalendarToken(session: Session | null): void {
 export function connectedExternalCalendarProviders(): ExternalCalendarProvider[] {
   const local = storage()
   if (!local) return []
-  return (['google', 'microsoft'] as const).filter(
+  return (['google'] as const).filter(
     (provider) => Boolean(local.getItem(PROVIDER_TOKEN_KEYS[provider])),
   )
 }
@@ -178,29 +175,11 @@ function googleCalendarList(raw: unknown): ExternalCalendar[] {
   })
 }
 
-function microsoftCalendarList(raw: unknown): ExternalCalendar[] {
-  const items = record(raw).value
-  if (!Array.isArray(items)) return []
-  return items.slice(0, 250).flatMap((item) => {
-    const value = record(item)
-    const id = text(value.id)
-    const name = text(value.name)
-    if (!id || !name) return []
-    return [{
-      provider: 'microsoft' as const,
-      id,
-      name,
-      color: '#0078d4',
-      primary: value.isDefaultCalendar === true,
-    }]
-  })
-}
-
 export function externalCalendarsFromResponse(
-  provider: ExternalCalendarProvider,
+  _provider: ExternalCalendarProvider,
   raw: unknown,
 ): ExternalCalendar[] {
-  return provider === 'google' ? googleCalendarList(raw) : microsoftCalendarList(raw)
+  return googleCalendarList(raw)
 }
 
 function googleEvents(
@@ -233,41 +212,11 @@ function googleEvents(
   })
 }
 
-function microsoftEvents(
-  calendar: ExternalCalendar,
-  raw: unknown,
-): ExternalCalendarEvent[] {
-  const items = record(raw).value
-  if (!Array.isArray(items)) return []
-  return items.slice(0, MAX_EVENTS_PER_CALENDAR).flatMap((item) => {
-    const value = record(item)
-    const startValue = text(record(value.start).dateTime)
-    const endValue = text(record(value.end).dateTime)
-    const id = text(value.id)
-    if (!id || !startValue) return []
-    const url = safeHttpUrl(value.webLink)
-    return [{
-      provider: 'microsoft' as const,
-      id,
-      calendarId: calendar.id,
-      calendarName: calendar.name,
-      title: text(value.subject, 'Busy'),
-      start: startValue,
-      end: endValue || startValue,
-      allDay: value.isAllDay === true,
-      ...(url ? { url } : {}),
-      color: calendar.color,
-    }]
-  })
-}
-
 export function externalEventsFromResponse(
   calendar: ExternalCalendar,
   raw: unknown,
 ): ExternalCalendarEvent[] {
-  return calendar.provider === 'google'
-    ? googleEvents(calendar, raw)
-    : microsoftEvents(calendar, raw)
+  return googleEvents(calendar, raw)
 }
 
 async function providerJson(
@@ -276,17 +225,16 @@ async function providerJson(
   signal?: AbortSignal,
 ): Promise<unknown> {
   const token = providerToken(provider)
-  if (!token) throw new Error(`Reconnect ${provider === 'google' ? 'Google' : 'Outlook'} Calendar.`)
+  if (!token) throw new Error('Reconnect Google Calendar.')
   const response = await fetch(url, {
     headers: {
       Authorization: `Bearer ${token}`,
-      ...(provider === 'microsoft' ? { Prefer: 'outlook.timezone="UTC"' } : {}),
     },
     signal,
   })
   if (response.status === 401 || response.status === 403) {
     disconnectExternalCalendar(provider)
-    throw new Error(`Calendar access expired. Reconnect ${provider === 'google' ? 'Google' : 'Outlook'}.`)
+    throw new Error('Calendar access expired. Reconnect Google.')
   }
   if (!response.ok) throw new Error(`Calendar service returned ${response.status}.`)
   return response.json() as Promise<unknown>
@@ -305,21 +253,12 @@ async function fetchCalendarEvents(
   end: string,
   signal?: AbortSignal,
 ): Promise<ExternalCalendarEvent[]> {
-  const url = calendar.provider === 'google'
-    ? new URL(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendar.id)}/events`)
-    : new URL(`https://graph.microsoft.com/v1.0/me/calendars/${encodeURIComponent(calendar.id)}/calendarView`)
-  if (calendar.provider === 'google') {
-    url.searchParams.set('timeMin', start)
-    url.searchParams.set('timeMax', end)
-    url.searchParams.set('singleEvents', 'true')
-    url.searchParams.set('orderBy', 'startTime')
-    url.searchParams.set('maxResults', String(MAX_EVENTS_PER_CALENDAR))
-  } else {
-    url.searchParams.set('startDateTime', start)
-    url.searchParams.set('endDateTime', end)
-    url.searchParams.set('$orderby', 'start/dateTime')
-    url.searchParams.set('$top', String(MAX_EVENTS_PER_CALENDAR))
-  }
+  const url = new URL(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendar.id)}/events`)
+  url.searchParams.set('timeMin', start)
+  url.searchParams.set('timeMax', end)
+  url.searchParams.set('singleEvents', 'true')
+  url.searchParams.set('orderBy', 'startTime')
+  url.searchParams.set('maxResults', String(MAX_EVENTS_PER_CALENDAR))
   const raw = await providerJson(calendar.provider, url, signal)
   return externalEventsFromResponse(calendar, raw)
 }
@@ -330,9 +269,7 @@ export async function loadExternalCalendarMonth(
   month: number,
   signal?: AbortSignal,
 ): Promise<ExternalCalendarFeed> {
-  const listUrl = new URL(provider === 'google'
-    ? 'https://www.googleapis.com/calendar/v3/users/me/calendarList'
-    : 'https://graph.microsoft.com/v1.0/me/calendars')
+  const listUrl = new URL('https://www.googleapis.com/calendar/v3/users/me/calendarList')
   const calendars = externalCalendarsFromResponse(
     provider,
     await providerJson(provider, listUrl, signal),

@@ -21,7 +21,7 @@ import { isStrictCanvasSurface } from '../../utils/canvasEventTarget'
 import { canvasPressMoved } from '../../utils/canvasGesturePolicy'
 import { boundsForWidgets } from '../../utils/widgetBounds'
 import { stagePendingImport } from '../../utils/pendingImport'
-import { writeMediaBlob } from '../../utils/boardDatabase'
+import { storeMediaBlob } from '../../services/mediaSyncService'
 import { readGrovepadPackage } from '../../utils/grovepadPackage'
 import { importBoardFileOntoCanvas } from '../../utils/boardCanvasImport'
 import { startAppRuntime } from '../../runtime/appRuntime'
@@ -38,17 +38,20 @@ import { AutomationRuntime } from './AutomationRuntime'
 import { useCircuitStore } from '../../store/useCircuitStore'
 import { GlueClusterChrome } from '../widgets/GlueClusterChrome'
 import { WidgetLayer } from '../widgets/WidgetLayer'
-import { CanvasContextMenu } from '../ui/CanvasContextMenu'
 import { CanvasToolbar } from '../ui/CanvasToolbar'
+import { CanvasTabs } from '../ui/CanvasTabs'
+import { neighbourCanvasTabId } from '../../store/canvasTabs'
 import { SelectionActionBar } from '../ui/SelectionActionBar'
+import { CanvasModeDock } from '../ui/CanvasModeDock'
 import { WidgetFullscreenSheet } from '../widgets/WidgetFullscreenSheet'
+import { TextWritingSheet } from '../widgets/modules/TextWritingSheet'
 import { ShaperHUD } from '../ui/ShaperHUD'
 import { TargetingBanner } from '../ui/TargetingBanner'
 import { WidgetContextMenu } from '../ui/WidgetContextMenu'
 import { ZoomControls } from '../ui/ZoomControls'
 import { ToastContainer } from '../ui/ToastContainer'
 import { EmptyCanvasState } from '../ui/EmptyCanvasState'
-import { CloudConflictDialog } from '../ui/CloudConflictDialog'
+import { CanvasInviteDialog } from '../ui/CanvasInviteDialog'
 import { CanvasNavigator } from '../ui/CanvasNavigator'
 import { GuestBackupNudge } from '../ui/GuestBackupNudge'
 import { DeployUpdateBanner } from '../ui/DeployUpdateBanner'
@@ -56,8 +59,13 @@ import { CanvasTreeDrawer } from '../ui/CanvasTreeDrawer'
 import { TimerTitleRuntime } from './TimerTitleRuntime'
 import { WidgetDeletionDialog } from '../ui/WidgetDeletionDialog'
 import { requestWidgetDeletion } from '../../store/useWidgetDeletionDialogStore'
+import { clipboardWidgetCount, getClipboardPayload } from '../../utils/widgetClipboard'
 import { frameCanvas } from '../../utils/cameraFraming'
 import { SettingsPanel } from '../ui/SettingsPanel'
+import { ShortcutsOverlay } from '../ui/ShortcutsOverlay'
+import { usePersistenceStatusStore } from '../../store/usePersistenceStatusStore'
+import { persistenceStatusSummary } from '../../utils/persistenceStatus'
+import { useAuthStore } from '../../store/useAuthStore'
 import { useAdaptiveInputStore } from '../../store/useAdaptiveInputStore'
 import { useSettingsStore } from '../../store/useSettingsStore'
 import { canEditCollaborativeCanvas, useCollaborationStore } from '../../store/useCollaborationStore'
@@ -115,8 +123,6 @@ if (import.meta.env.DEV) {
   Object.assign(window, { __grovepad: { useWidgetStore, useCanvasStore, useAiDebugStore, useCircuitStore, useScaleDebugStore, usePerfDebugStore, useWidgetRestStore, useAuraTuningStore, useMcpConnectorStore, useDragReflowStore } })
 }
 
-/** In-memory clipboard — persists across interactions but not page reloads. */
-let clipboardWidgets: Widget[] = []
 
 function isEditableTarget(target: EventTarget | null): boolean {
   if (!(target instanceof HTMLElement)) return false
@@ -134,6 +140,17 @@ function zoomFromKeyboard(factor: number): void {
     x: canvas.viewportSize.width / 2,
     y: canvas.viewportSize.height / 2,
   })
+}
+
+function resetZoomKeepingFocus(): void {
+  const canvas = useCanvasStore.getState()
+  const state = useWidgetStore.getState()
+  const selected = [...state.selectedIds].map((id) => state.widgets[id]).filter((widget): widget is Widget => Boolean(widget))
+  const rect = boundsForWidgets(selected)
+  const focal = rect
+    ? { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 }
+    : screenToWorld({ x: canvas.viewportSize.width / 2, y: canvas.viewportSize.height / 2 }, { x: canvas.pan.x, y: canvas.pan.y, zoom: canvas.zoom })
+  canvas.animateView({ x: canvas.viewportSize.width / 2 - focal.x, y: canvas.viewportSize.height / 2 - focal.y }, 1, 220)
 }
 
 export function CanvasViewport() {
@@ -277,6 +294,25 @@ export function CanvasViewport() {
       const liveCollaborationRole = useCollaborationStore.getState().role
       const boardReadOnly = liveCollaborationRole !== null && !canEditCollaborativeCanvas(liveCollaborationRole)
 
+      // Tab shortcuts take the modifier combination the browser leaves free
+      // (plain Cmd/Ctrl+W and Cmd/Ctrl+Tab belong to the browser window), and
+      // are checked before the Alt+Arrow camera history below claims the keys.
+      if (mod && e.altKey && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
+        e.preventDefault()
+        const nextTabId = neighbourCanvasTabId(
+          state.openTabs,
+          state.activeTabId,
+          e.key === 'ArrowRight' ? 1 : -1,
+        )
+        if (nextTabId) state.activateCanvasTab(nextTabId)
+        return
+      }
+      if (mod && e.altKey && e.key.toLowerCase() === 'w') {
+        e.preventDefault()
+        state.closeCanvasTab(state.activeTabId)
+        return
+      }
+
       if (e.altKey && state.selectedIds.size === 0 && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
         e.preventDefault()
         if (cameraLockedByFollow) return
@@ -305,26 +341,92 @@ export function CanvasViewport() {
         } else if (key === 'c') {
           e.preventDefault()
           const ids = [...state.selectedIds]
-          if (ids.length > 0) {
-            clipboardWidgets = ids
-              .map((id) => state.widgets[id])
-              .filter((w): w is Widget => Boolean(w))
-            useToastStore.getState().addToast(
-              clipboardWidgets.length === 1
-                ? 'Copied 1 widget'
-                : `Copied ${clipboardWidgets.length} widgets`,
-            )
+          if (ids.length > 0) state.copyWidgets(ids)
+        } else if (key === 's') {
+          // Browsers offer "Save Page As" here; Grovepad autosaves. Answer
+          // the reflex with the truthful storage status, never a dialog.
+          e.preventDefault()
+          const persistence = usePersistenceStatusStore.getState()
+          const summary = persistenceStatusSummary({
+            localSave: persistence.localSave,
+            cloudSync: persistence.cloudSync,
+            syncEnabled: persistence.syncEnabled,
+            signedIn: useAuthStore.getState().session !== null,
+            networkOnline: persistence.networkOnline,
+            lastSyncedAt: persistence.lastSyncedAt,
+          })
+          if (summary.tone === 'error') {
+            useToastStore.getState().addToast(summary.longLabel, { tone: 'danger' })
+          } else {
+            useToastStore.getState().addToast(`Autosave is on — ${summary.longLabel}`)
           }
-        } else if (key === 'k') {
+        } else if (key === 'g') {
+          const ids = [...state.selectedIds]
+          if (ids.length > 0) {
+            e.preventDefault()
+            if (boardReadOnly) return
+            // glueWidgets/unglueWidget announce themselves; only the cases
+            // where nothing happened need a voice here.
+            if (e.shiftKey) {
+              let released = 0
+              for (const id of ids) {
+                if (state.unglueWidget(id)) released += 1
+              }
+              if (released === 0) useToastStore.getState().addToast('Nothing here is glued')
+            } else if (ids.length >= 2) {
+              state.glueSelection(ids)
+            } else {
+              useToastStore.getState().addToast('Select at least 2 widgets to glue')
+            }
+          }
+        } else if (key === 'k' || key === 'f') {
           e.preventDefault()
           state.setPaletteOpen(true)
-        } else if (key === 'v' && clipboardWidgets.length > 0) {
-          e.preventDefault()
-          if (boardReadOnly) return
-          if (clipboardWidgets.length > 0) {
-            state.pasteWidgets(clipboardWidgets)
+        } else if (key === 'x') {
+          const ids = [...state.selectedIds]
+          if (ids.length > 0) {
+            e.preventDefault()
+            if (boardReadOnly) return
+            state.cutWidgets(ids)
           }
+        } else if (key === 'y') {
+          e.preventDefault()
+          state.redo()
+        } else if (key === 'l') {
+          const ids = [...state.selectedIds]
+          if (ids.length > 0) {
+            e.preventDefault()
+            if (boardReadOnly) return
+            // Lock unless everything selected is already locked, so a mixed
+            // selection resolves one way instead of flipping card by card.
+            const allLocked = ids.every((id) => state.widgets[id]?.metadata.locked === true)
+            state.lockWidgets(ids, !allLocked)
+          }
+        } else if (key === ']' || key === '[') {
+          const ids = [...state.selectedIds]
+          if (ids.length > 0) {
+            e.preventDefault()
+            if (boardReadOnly) return
+            for (const id of ids) {
+              if (key === ']') state.bringWidgetToFront(id, { recordHistory: true })
+              else state.sendWidgetToBack(id)
+            }
+          }
+        } else if (key === ',') {
+          e.preventDefault()
+          useSettingsStore.getState().setOpen(true)
+        } else if (key === '0') {
+          e.preventDefault()
+          if (!cameraLockedByFollow) resetZoomKeepingFocus()
+        } else if (key === '=' || key === '+') {
+          e.preventDefault()
+          if (!cameraLockedByFollow) zoomFromKeyboard(1.25)
+        } else if (key === '-' || key === '_') {
+          e.preventDefault()
+          if (!cameraLockedByFollow) zoomFromKeyboard(1 / 1.25)
         }
+        // ⌘V is deliberately unhandled here: the window 'paste' listener sees the
+        // system clipboard and arbitrates between OS content and copied widgets.
         return
       }
       if (e.altKey && !e.key.startsWith('Arrow')) return
@@ -360,6 +462,12 @@ export function CanvasViewport() {
           if (state.selectedIds.size > 0) {
             e.preventDefault()
             state.clearSelection()
+            return
+          }
+          if (useCircuitStore.getState().circuitMode) {
+            e.preventDefault()
+            useCircuitStore.getState().setCircuitMode(false)
+            useAdaptiveInputStore.getState().setInteractionMode('navigate')
           }
           return
         case 'x':
@@ -404,11 +512,11 @@ export function CanvasViewport() {
           if (e.shiftKey) return
           e.preventDefault()
           if (cameraLockedByFollow) return
-          frameCanvas('board')
+          frameCanvas('selection-or-board')
           return
         case '?':
           e.preventDefault()
-          useSettingsStore.getState().setOpen(true, 'controls')
+          state.setShortcutsOpen(true)
           return
         case 'n':
         case 'N':
@@ -457,13 +565,7 @@ export function CanvasViewport() {
         case '0': {
           e.preventDefault()
           if (cameraLockedByFollow) return
-          const canvas = useCanvasStore.getState()
-          const selected = [...state.selectedIds].map((id) => state.widgets[id]).filter((widget): widget is Widget => Boolean(widget))
-          const rect = boundsForWidgets(selected)
-          const focal = rect
-            ? { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 }
-            : screenToWorld({ x: canvas.viewportSize.width / 2, y: canvas.viewportSize.height / 2 }, { x: canvas.pan.x, y: canvas.pan.y, zoom: canvas.zoom })
-          canvas.animateView({ x: canvas.viewportSize.width / 2 - focal.x, y: canvas.viewportSize.height / 2 - focal.y }, 1, 220)
+          resetZoomKeepingFocus()
           return
         }
       }
@@ -507,7 +609,7 @@ export function CanvasViewport() {
     const readImage = async (file: File, position: { x: number; y: number }) => {
       let bitmap: ImageBitmap
       try { bitmap = await createImageBitmap(file) } catch {
-        useToastStore.getState().addToast(`Could not read ${file.name}`)
+        useToastStore.getState().addToast(`Could not read ${file.name}`, { tone: 'danger' })
         return
       }
       const scale = Math.min(1, 1280 / Math.max(bitmap.width, bitmap.height))
@@ -520,7 +622,16 @@ export function CanvasViewport() {
       if (!blob) return
       const state = useWidgetStore.getState()
       const id = state.createWidget(file.name.replace(/\.[^.]+$/, '') || 'Image', position, 'media')
-      await writeMediaBlob(id, blob)
+      // storeMediaBlob rejects on a quota-exceeded or unavailable IndexedDB
+      // (a private window). Without this the widget keeps its empty default
+      // data forever: a blank Image card, no bytes, and no word to the user.
+      try {
+        await storeMediaBlob(id, blob)
+      } catch {
+        state.deleteWidgets([id])
+        useToastStore.getState().addToast(`Could not save ${file.name} — this device is out of storage`, { tone: 'danger' })
+        return
+      }
       state.updateWidgetData(id, { url: '', caption: '', altText: '', localBlobKey: id })
     }
 
@@ -530,27 +641,27 @@ export function CanvasViewport() {
         const { board, media } = await readGrovepadPackage(bytes)
         await importBoardFileOntoCanvas({ board, media, filename: file.name, position })
       } catch {
-        useToastStore.getState().addToast(`Could not import ${file.name}`)
+        useToastStore.getState().addToast(`Could not import ${file.name}`, { tone: 'danger' })
       }
     }
 
     const handleFiles = (files: File[], position: { x: number; y: number }) => {
       const packages = files.filter((file) => file.name.toLowerCase().endsWith('.grovepad'))
       const images = files.filter((file) => file.type.startsWith('image/'))
-      const jsonFiles = files.filter((file) => file.name.toLowerCase().endsWith('.json'))
+      // A .json is still never a Grovepad board — that door stays closed and
+      // .grovepad remains the only board file. It is forwarded to the importer
+      // only because a foreign app's board export (Trello) arrives as JSON;
+      // the importer maps a recognized export and rejects everything else with
+      // the same "use a .grovepad package" answer this used to give here.
       const documents = files.filter(
         (file) => !file.type.startsWith('image/')
-          && !file.name.toLowerCase().endsWith('.grovepad')
-          && !file.name.toLowerCase().endsWith('.json'),
+          && !file.name.toLowerCase().endsWith('.grovepad'),
       )
       packages.forEach((file, index) => void importGrovepadFile(file, {
         x: position.x + index * GRID_SIZE,
         y: position.y + index * GRID_SIZE,
       }))
       images.forEach((file, index) => void readImage(file, { x: position.x + index * GRID_SIZE, y: position.y + index * GRID_SIZE }))
-      if (jsonFiles.length > 0) {
-        useToastStore.getState().addToast('JSON files are no longer supported; use a .grovepad package')
-      }
       if (documents.length > 0) {
         stagePendingImport(documents)
         useWidgetStore.getState().setImportOpen(true)
@@ -573,7 +684,7 @@ export function CanvasViewport() {
       else void createFromText(event.dataTransfer?.getData('text/uri-list') || event.dataTransfer?.getData('text/plain') || '', position)
     }
     const onPaste = (event: ClipboardEvent) => {
-      if (isEditableTarget(event.target) || isOverlayOpen() || clipboardWidgets.length > 0) return
+      if (isEditableTarget(event.target) || isOverlayOpen()) return
       const role = useCollaborationStore.getState().role
       if (role !== null && !canEditCollaborativeCanvas(role)) return
       const files = [...(event.clipboardData?.files ?? [])]
@@ -582,9 +693,17 @@ export function CanvasViewport() {
         { x: canvas.viewportSize.width / 2, y: canvas.viewportSize.height / 2 },
         { x: canvas.pan.x, y: canvas.pan.y, zoom: canvas.zoom },
       )
+      // Arbitration: OS files (an image copied after the widgets) always win,
+      // copied widgets outrank whatever stale text is still on the OS clipboard,
+      // and plain text pastes only when no widgets are held.
       if (files.length > 0) {
         event.preventDefault()
         handleFiles(files, position)
+        return
+      }
+      if (clipboardWidgetCount() > 0) {
+        event.preventDefault()
+        useWidgetStore.getState().pasteWidgets(getClipboardPayload())
         return
       }
       const text = event.clipboardData?.getData('text/plain') ?? ''
@@ -632,6 +751,8 @@ export function CanvasViewport() {
     }
   }, [])
 
+  /** Double-click sculpts. Placing a single widget is the right button's job
+   *  now, so double-clicking bare canvas starts the tree shaper at that point. */
   const handleDoubleClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (isOverlayOpen()) return
     const role = useCollaborationStore.getState().role
@@ -645,6 +766,29 @@ export function CanvasViewport() {
       { x: pan.x, y: pan.y, zoom },
     )
     useWidgetStore.getState().startGhostShaper(world.x, world.y)
+  }
+
+  /** The right button places a widget. It opens the library exactly where you
+   *  clicked, which is what a canvas right-click was always reaching for — the
+   *  old menu's other rows all have keyboard homes (⌘A, ⌘V). */
+  const handleContextMenu = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (isOverlayOpen()) return
+    // Mid-sculpt the shaper owns the surface; a stray right-click must not
+    // drop a second surface on top of it.
+    if (useWidgetStore.getState().ghostConfig) return
+    const role = useCollaborationStore.getState().role
+    if (role !== null && !canEditCollaborativeCanvas(role)) return
+    if (!isStrictCanvasSurface(e.target, e.currentTarget)) return
+    const rect = viewportRef.current?.getBoundingClientRect()
+    if (!rect) return
+    e.preventDefault()
+    const { pan, zoom } = useCanvasStore.getState()
+    const world = screenToWorld(
+      { x: e.clientX - rect.left, y: e.clientY - rect.top },
+      { x: pan.x, y: pan.y, zoom },
+    )
+    useWidgetStore.getState().closeContextMenu()
+    useWidgetStore.getState().openAddWidget(world)
   }
 
   const handleCanvasPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
@@ -720,8 +864,16 @@ export function CanvasViewport() {
       aria-roledescription="Canvas board"
       aria-label="Board canvas. Press question mark for keyboard shortcuts, or open the canvas tree to browse widgets."
       className="gp-canvas-shell relative h-dvh w-screen touch-none select-none overflow-clip"
-      style={{ backgroundColor: `color-mix(in srgb, var(--gp-canvas-tint-base) 97%, ${workspaceTint})` }}
+      style={{
+        // One expression for both themes. The light theme used to short-circuit
+        // to a literal white here, which silently overrode every canvas token
+        // and tuning value underneath it — no setting could change the light
+        // board. The base colour and the accent's share are both theme tokens
+        // (01-tokens-base.css), so each theme tints its own paper.
+        backgroundColor: `color-mix(in srgb, var(--gp-canvas-tint-base) var(--gp-canvas-tint-strength, 97%), ${workspaceTint})`,
+      }}
       onDoubleClick={handleDoubleClick}
+      onContextMenu={handleContextMenu}
       onPointerDown={handleCanvasPointerDown}
       onPointerMove={handleCanvasPointerMove}
       onPointerUp={handleCanvasPointerUp}
@@ -751,6 +903,7 @@ export function CanvasViewport() {
       {canvasShared && <Suspense fallback={null}><RemoteCursorLayer /></Suspense>}
       {canvasShared && <Suspense fallback={null}><CollaborationChrome /></Suspense>}
       <CanvasToolbar />
+      <CanvasTabs />
       <TargetingBanner />
       {paletteOpen && (
         <Suspense fallback={null}>
@@ -758,7 +911,6 @@ export function CanvasViewport() {
         </Suspense>
       )}
       <ShaperHUD />
-      <CanvasContextMenu viewportRef={viewportRef} />
       <WidgetContextMenu />
       {AiDebugPanel && aiDebugOpen && (
         <Suspense fallback={null}>
@@ -781,6 +933,9 @@ export function CanvasViewport() {
         </Suspense>
       )}
       <ZoomControls />
+      {/* Thumb-reach Navigate/Select tools plus Undo/Redo. CSS shows it only on
+          phone and tablet widths or in a touch or Pencil session. */}
+      <CanvasModeDock />
       <CanvasNavigator />
       <CanvasTreeDrawer />
       <SelectionActionBar />
@@ -789,9 +944,10 @@ export function CanvasViewport() {
           so it sits above every canvas layer and none of the viewport's
           wheel/pointer listeners ever see its input. */}
       <WidgetFullscreenSheet />
+      <TextWritingSheet />
       <ToastContainer />
       <WidgetDeletionDialog />
-      <CloudConflictDialog />
+      <CanvasInviteDialog />
       <DeployUpdateBanner />
       <GuestBackupNudge />
       <EmptyCanvasState />
@@ -822,6 +978,7 @@ export function CanvasViewport() {
       )}
 
       <SettingsPanel />
+      <ShortcutsOverlay />
     </div>
   )
 }

@@ -32,9 +32,6 @@ export function mediaBlobKeysForWidget(widget: Widget): string[] {
     const key = (widget.data as { localBlobKey?: unknown }).localBlobKey
     return typeof key === 'string' && key ? [key] : []
   }
-  if (widget.type === 'excalidraw') {
-    return excalidrawKeys(widget.id, widget.data as ExcalidrawData)
-  }
   if (widget.type === 'sketchpad') {
     const data = widget.data as SketchpadData
     const keys = excalidrawKeys(widget.id, data.diagram)

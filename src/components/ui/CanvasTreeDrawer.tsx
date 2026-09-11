@@ -12,6 +12,7 @@ import {
   nextCanvasOutlineKey,
   type CanvasOutlineNavigationKey,
 } from '../../utils/canvasOutline'
+import { openCanvasFromClick, openCanvasInBackgroundTab } from '../../utils/canvasOpenIntent'
 import { frameCanvas } from '../../utils/cameraFraming'
 import { MODULE_LABELS } from '../../types/moduleLabels'
 
@@ -84,7 +85,12 @@ export function CanvasTreeDrawer() {
       a.id.localeCompare(b.id),
     )
   }
-  const outlineEntries = buildCanvasOutline(
+  // Built on demand, not per render: the outline regroups and re-sorts every
+  // canvas and widget in the workspace — the same work the rows above already
+  // did — and only arrow-key navigation ever reads it. Dragging a card hands
+  // this component a new `widgets` record every pointer frame, so an eager
+  // call paid for that second pass on every frame and threw it away.
+  const outlineEntries = () => buildCanvasOutline(
     canvases,
     widgets,
     activeWorkspaceId,
@@ -108,7 +114,7 @@ export function CanvasTreeDrawer() {
     if (!OUTLINE_NAV_KEYS.has(event.key)) return
     event.preventDefault()
     focusOutlineEntry(nextCanvasOutlineKey(
-      outlineEntries,
+      outlineEntries(),
       key,
       event.key as CanvasOutlineNavigationKey,
     ))
@@ -151,8 +157,13 @@ export function CanvasTreeDrawer() {
             aria-current={canvas.id === activeCanvasId ? 'page' : undefined}
             aria-expanded={((children.get(canvas.id)?.length ?? 0) + (widgetsByCanvas.get(canvas.id)?.length ?? 0)) > 0 ? true : undefined}
             data-outline-key={`canvas:${canvas.id}`}
-            onClick={() => useWidgetStore.getState().navigateToCanvas(canvas.id)}
-            onKeyDown={(event) => handleOutlineKey(event, `canvas:${canvas.id}`, () => useWidgetStore.getState().navigateToCanvas(canvas.id))}
+            onClick={(event) => openCanvasFromClick(canvas.id, event)}
+            onAuxClick={(event) => {
+              if (event.button !== 1) return
+              event.preventDefault()
+              openCanvasInBackgroundTab(canvas.id)
+            }}
+            onKeyDown={(event) => handleOutlineKey(event, `canvas:${canvas.id}`, () => openCanvasFromClick(canvas.id, event))}
             className="min-h-11 min-w-0 flex-1 truncate text-left"
           >
             {canvas.name}

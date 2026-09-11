@@ -100,7 +100,10 @@ describe('collaboration UI contracts', () => {
   it('hides multiplayer chrome for a private canvas', () => {
     expect(ui).toContain("state.canvases[state.activeCanvasId]?.shared === true")
     expect(ui).toContain('if (!canvasShared) return null')
-    expect(ui).toContain('if (!canvasShared) setOpen(false)')
+    // Unmounting on an unshared canvas kills the exit animation, so the
+    // hold-open flag has to be cleared alongside `open` — otherwise the next
+    // shared canvas mounts a ghost panel that plays the collapse.
+    expect(ui).toContain('if (canvasShared) return\n    setOpen(false)\n    setRendered(false)')
     expect(ui).not.toContain("if (!canvasShared || status === 'disabled') return null")
     expect(viewport).toContain('const canvasShared = activeCanvas?.shared === true')
     expect(viewport).toContain('{canvasShared && <Suspense fallback={null}><CollaborationWorldOverlay /></Suspense>}')

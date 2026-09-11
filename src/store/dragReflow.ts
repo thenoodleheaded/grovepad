@@ -497,13 +497,16 @@ function publish(
   // and anything a reflowed card has glided on top of.
   const pending = new Set<string>()
   const laneIds = new Set(lane.map((rect) => rect.id))
+  // Nothing writes to `shiftedById` below, so the snapshot is taken once for
+  // the whole scan rather than rebuilt per neighbour on every frame.
+  const shiftedRects = [...shiftedById.values()]
   for (const rect of baseline.neighbours) {
     const placed = shiftedById.get(rect.id) ?? rect
     const covered =
       intersectionArea(active, placed) > 0 && (rect.locked || !laneIds.has(rect.id))
     const crowded =
       !shiftedById.has(rect.id) &&
-      [...shiftedById.values()].some((moved) => intersectionArea(moved, placed) > 0)
+      shiftedRects.some((moved) => intersectionArea(moved, placed) > 0)
     if (covered || crowded) for (const id of rect.ids) pending.add(id)
   }
 

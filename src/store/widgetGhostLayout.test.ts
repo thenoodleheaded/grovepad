@@ -15,7 +15,7 @@ function node(
     order,
     x: 0,
     y: 0,
-    widgetTypes: Array.from({ length: count }, () => 'notes'),
+    widgetTypes: Array.from({ length: count }, () => 'text'),
   }
 }
 

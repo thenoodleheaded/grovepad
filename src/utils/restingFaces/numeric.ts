@@ -33,12 +33,17 @@ import {
   comparisonHolds,
   conditionalBranches,
   expressionText,
+  formulaBindings,
+  formulaInputs,
   formulaReading,
   formulaResultWord,
   formulaSkinMode,
   formulaOperator,
+  growthPeriods,
   growthProjection,
+  inputShares,
   OPERATOR_SYMBOL,
+  roleInput,
   simplifiedRatio,
   weightedRows,
 } from '../../components/widgets/modules/formulaSkinModel'
@@ -318,26 +323,46 @@ export function formulaRestingFace(data: Record<string, unknown>): RestingFaceMo
   const formula = data as unknown as FormulaData
   const skin = formulaSkinMode(data.skin)
   const reading = formulaReading(formula)
+  const inputs = formulaInputs(formula)
   const states = record(data.skinStates) ?? {}
   const state = record(states[skin]) ?? {}
   const answer = `${formatRestNumber(reading.value)}${reading.suffix}`
 
   if (skin === 'ratio') {
-    const simplified = simplifiedRatio(a, b)
+    // Two parts still fold to the pair; more than two fold to the shares
+    // themselves, because a split of four cannot be said as "3 : 1".
+    const part = roleInput(inputs, state, 'partKey', 0)
+    if (inputs.length === 2) {
+      const simplified = simplifiedRatio(a, b)
+      return {
+        kind: 'split',
+        divider: ':',
+        eyebrow: { label: 'Ratio', note: answer },
+        left: {
+          primary: formatRestNumber(simplified?.left ?? a),
+          secondary: inputs[0]!.title,
+          tone: 'accent',
+        },
+        right: { primary: formatRestNumber(simplified?.right ?? b), secondary: inputs[1]!.title },
+      }
+    }
+    const shares = inputShares(inputs)
     return {
-      kind: 'split',
-      divider: ':',
+      kind: 'bars',
       eyebrow: { label: 'Ratio', note: answer },
-      left: {
-        primary: formatRestNumber(simplified?.left ?? a),
-        secondary: 'A',
-        tone: 'accent',
-      },
-      right: { primary: formatRestNumber(simplified?.right ?? b), secondary: 'B' },
+      bars: inputs.slice(0, REST_BAR_LIMIT).map((input, index) => ({
+        key: input.key,
+        label: compact(input.title, 18),
+        value: `${Math.round(shares[index]! * 100)}%`,
+        fraction: clampFraction(shares[index]!),
+        tone: input.key === part.key ? undefined : ('muted' as const),
+      })),
     }
   }
 
   if (skin === 'percent_change') {
+    const from = roleInput(inputs, state, 'fromKey', 0)
+    const to = roleInput(inputs, state, 'toKey', 1)
     const rising = reading.value > 0
     return {
       kind: 'split',
@@ -347,29 +372,34 @@ export function formulaRestingFace(data: Record<string, unknown>): RestingFaceMo
         note: `${rising ? '+' : ''}${answer}`,
         tone: reading.value === 0 ? 'muted' : rising ? 'good' : 'bad',
       },
-      left: { primary: formatRestNumber(a), secondary: 'Was' },
-      right: { primary: formatRestNumber(b), secondary: 'Now', tone: rising ? 'good' : 'bad' },
+      left: { primary: formatRestNumber(from.value), secondary: 'Was' },
+      right: { primary: formatRestNumber(to.value), secondary: 'Now', tone: rising ? 'good' : 'bad' },
     }
   }
 
   if (skin === 'growth') {
     // Where the same rate takes the value — the projection IS the skin.
-    const projection = growthProjection(a, b).slice(0, REST_BAR_LIMIT)
+    const start = roleInput(inputs, state, 'startKey', 0)
+    const rate = roleInput(inputs, state, 'rateKey', 1)
+    const periods = growthPeriods(state)
+    const projection = growthProjection(start.value, rate.value, Math.max(REST_BAR_LIMIT, periods))
+      .slice(0, REST_BAR_LIMIT)
     const peak = Math.max(1, ...projection.map((value) => Math.abs(value)))
     return {
       kind: 'bars',
-      eyebrow: { label: 'Growth', note: `${formatRestNumber(b)}%` },
+      eyebrow: { label: 'Growth', note: `${formatRestNumber(rate.value)}%` },
       bars: projection.map((value, index) => ({
         key: `period-${index}`,
         label: `Period ${index + 1}`,
         value: formatRestNumber(value),
         fraction: Math.abs(value) / peak,
+        tone: index + 1 === periods ? undefined : ('muted' as const),
       })),
     }
   }
 
   if (skin === 'weighted_score') {
-    const rows = weightedRows(state, a, b)
+    const rows = weightedRows(formula)
     const weight = rows.reduce((total, row) => total + row.weight, 0)
     return {
       kind: 'bars',
@@ -386,15 +416,17 @@ export function formulaRestingFace(data: Record<string, unknown>): RestingFaceMo
 
   if (skin === 'conditional') {
     const comparator = comparatorOf(state)
-    const branches = conditionalBranches(state)
-    const holds = comparisonHolds(a, b, comparator)
+    const left = roleInput(inputs, state, 'leftKey', 0)
+    const right = roleInput(inputs, state, 'rightKey', 1)
+    const branches = conditionalBranches(state, formulaBindings(inputs))
+    const holds = comparisonHolds(left.value, right.value, comparator)
     return {
       kind: 'metric',
       primary: answer,
       secondary: holds ? 'Condition met' : 'Condition not met',
       tone: holds ? 'good' : 'muted',
       eyebrow: {
-        label: `A ${COMPARATOR_SYMBOL[comparator]} B`,
+        label: `${left.title} ${COMPARATOR_SYMBOL[comparator]} ${right.title}`,
         note: `${formatRestNumber(branches.whenTrue)} / ${formatRestNumber(branches.whenFalse)}`,
       },
     }
@@ -408,20 +440,32 @@ export function formulaRestingFace(data: Record<string, unknown>): RestingFaceMo
       eyebrow: { label: 'Expression', note: reading.note ? '!' : undefined },
       lines: [
         { key: 'source', left: compact(source || 'A + B', 24), dim: true },
-        { key: 'inputs', left: `A ${formatRestNumber(a)}   B ${formatRestNumber(b)}`, dim: true },
+        {
+          key: 'inputs',
+          left: compact(
+            inputs.map((input) => `${input.title} ${formatRestNumber(input.value)}`).join('   '),
+            30,
+          ),
+          dim: true,
+        },
       ],
       total: { key: 'result', left: '=', right: answer, tone: reading.note ? 'warn' : 'accent' },
     }
   }
 
-  // two_input: the sum as it is written, over the answer.
+  // two_input: the chain as it is written, over the answer.
   return {
     kind: 'lines',
     mono: true,
     eyebrow: { label: formulaResultWord(skin) },
     lines: [{
       key: 'sum',
-      left: `${formatRestNumber(a)} ${OPERATOR_SYMBOL[formulaOperator(data.operator)]} ${formatRestNumber(b)}`,
+      left: compact(
+        inputs
+          .map((input) => formatRestNumber(input.value))
+          .join(` ${OPERATOR_SYMBOL[formulaOperator(data.operator)]} `),
+        30,
+      ),
       dim: true,
     }],
     total: { key: 'result', left: '=', right: answer, tone: reading.note ? 'warn' : 'accent' },

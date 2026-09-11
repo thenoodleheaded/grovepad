@@ -1,3 +1,6 @@
+/// <reference types="node" />
+
+import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import {
   DEFAULT_WORKING_WINDOW,
@@ -102,6 +105,27 @@ describe('workingWindow', () => {
 
   it('repairs an inverted window instead of rendering nothing', () => {
     expect(workingWindow({ start: 18, end: 9 })).toEqual({ start: 18, end: 19 })
+    // The last hour of the day has no room above it, so the repair has to move
+    // the start down. Capping the end at 23 would leave {23, 23} — a window no
+    // hour can satisfy, which is the thing this repair exists to prevent.
+    expect(workingWindow({ start: 23, end: 9 })).toEqual({ start: 22, end: 23 })
+    expect(workingWindow({ start: 23, end: 23 })).toEqual({ start: 22, end: 23 })
+  })
+
+  it('leaves a repaired window with an hour a city can actually be in', () => {
+    const window = workingWindow({ start: 23, end: 9 })
+    const [utc] = zoneBands(['UTC'], WINTER, window)
+    expect(utc!.working.filter(Boolean)).toHaveLength(1)
+    expect(meetingRows(['UTC'], WINTER, 22, window)[0]!.comfortable).toBe(true)
+  })
+
+  it('is what the Overlap Band feeds its stepper window through', () => {
+    // Meeting Planner clamps through meetingPlannerState; the band renders the
+    // same stepper, so it has to clamp too or the two skins disagree about the
+    // same window and the band goes entirely dead.
+    const widget = readFileSync(new URL('./WorldClockWidget.tsx', import.meta.url), 'utf8')
+    expect(widget).toContain('overlapBandState({ window: workHours })')
+    expect(widget).not.toContain('const state = { window: workHours }')
   })
 })
 

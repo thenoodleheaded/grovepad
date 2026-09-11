@@ -1,6 +1,6 @@
 import { memo, useEffect, useMemo, useState } from 'react'
 import { Check, Star } from 'lucide-react'
-import type { MediaData, Widget } from '../../types/spatial'
+import type { MediaData, TextData, Widget } from '../../types/spatial'
 import { widgetDefinition } from '../../widgets/registry'
 import { widgetAccent } from '../../utils/widgetSkins'
 import {
@@ -11,7 +11,9 @@ import {
 } from '../../utils/sparkline'
 import { useWidgetClock } from '../../hooks/useWidgetClock'
 import {
+  paperInkRatio,
   restingFace,
+  TASK_REST_SCALE,
   type RestEyebrow,
   type RestNoteModel,
   type RestingFaceModel,
@@ -30,6 +32,8 @@ import {
   SplitFace,
   TimelineFace,
 } from './RestingFaceGrammars'
+import { CanvasNodeRestFace } from './CanvasNodeRestFace'
+import { TextRestPage } from './modules/TextRestPage'
 
 // ---------------------------------------------------------------------------
 // Resting faces: the widget's information drawn as itself, inside the exact
@@ -52,7 +56,7 @@ const SPARK_HEIGHT = 40
  * 12/10 padding applied here.
  */
 const STRETCH_FACES = new Set<RestingFaceModel['kind']>([
-  'columns', 'grid', 'bars', 'chips', 'lines', 'chain', 'timeline', 'split',
+  'columns', 'grid', 'bars', 'chips', 'lines', 'chain', 'timeline', 'split', 'canvas',
 ])
 
 /** Faces that already carry a lattice, a scale, or a ruling of their own. */
@@ -205,7 +209,7 @@ function ChartFace({ widget, accent, stats, plotted }: {
                 className={`leading-none tabular-nums ${
                   index === 0 ? 'text-[14px] font-semibold text-neutral-100' : 'text-[10px] font-medium text-neutral-400'
                 }`}
-                style={index === 0 ? { color: accent } : undefined}
+                style={index === 0 ? { color: `var(--gp-accent-ink, ${accent})` } : undefined}
               >
                 {stat.value}
               </span>
@@ -243,7 +247,8 @@ function RowsFace({ rows, overflow, accent, eyebrow, meter }: {
     <div className="flex w-full min-w-0 flex-col" aria-hidden>
       {eyebrow && <EyebrowLine eyebrow={eyebrow} accent={accent} />}
       {meter !== undefined && (
-        <span className="mb-[3px] flex h-[3px] w-full overflow-hidden rounded-full bg-white/[0.06]">
+        <span className="mb-[3px] flex h-[3px] w-full overflow-hidden rounded-full"
+          style={{ background: 'rgb(var(--gp-rest-lift) / 0.09)' }}>
           <span
             className="h-full rounded-full"
             style={{ width: `${Math.round(meter * 100)}%`, background: accent, opacity: 0.85 }}
@@ -261,24 +266,32 @@ function RowsFace({ rows, overflow, accent, eyebrow, meter }: {
               {row.lead}
             </span>
           )}
+          {/* The open card's bullet, kept on the folded tile: a marked list
+              folds to a marked list, never to bare lines of text. */}
+          {row.marker === 'dot' && (
+            <span
+              className="h-[5px] w-[5px] shrink-0 rounded-full"
+              style={{ background: accent, opacity: 0.75 }}
+            />
+          )}
           {row.done !== undefined && (
             row.done ? (
               <span
                 className="flex h-[9px] w-[9px] shrink-0 items-center justify-center rounded-full"
-                style={{ background: `${accent}26` }}
+                style={{ background: `color-mix(in oklab, ${accent}, transparent 85%)` }}
               >
-                <Check size={7} strokeWidth={4} style={{ color: accent }} />
+                <Check size={7} strokeWidth={4} style={{ color: `var(--gp-accent-ink, ${accent})` }} />
               </span>
             ) : (
               <span
                 className="h-[8px] w-[8px] shrink-0 rounded-full border"
-                style={{ borderColor: 'rgb(255 255 255 / 0.22)' }}
+                style={{ borderColor: 'rgb(var(--gp-rest-lift) /0.22)' }}
               />
             )
           )}
           <span
             className={`min-w-0 flex-1 truncate text-[10px] leading-4 ${
-              row.done ? 'text-neutral-600 line-through decoration-neutral-700' : 'text-neutral-200'
+              row.done ? 'text-neutral-600 line-through decoration-neutral-500' : 'text-neutral-200'
             }`}
           >
             {row.label}
@@ -287,7 +300,7 @@ function RowsFace({ rows, overflow, accent, eyebrow, meter }: {
             <span
               className="shrink-0 text-[10px] font-semibold leading-4 tabular-nums text-neutral-300"
               style={row.tone && row.tone !== 'neutral'
-                ? { color: row.tone === 'accent' ? accent : ROW_TONE_INK[row.tone] }
+                ? { color: row.tone === 'accent' ? `var(--gp-accent-ink, ${accent})` : ROW_TONE_INK[row.tone] }
                 : undefined}
             >
               {row.value}
@@ -300,11 +313,12 @@ function RowsFace({ rows, overflow, accent, eyebrow, meter }: {
           far through a checkable list the user is. Never both. */}
       {overflow > 0 ? (
         <span className="flex h-[14px] items-center gap-1 text-[8px] font-medium leading-[14px] text-neutral-600">
-          <span aria-hidden className="h-[3px] w-[3px] rounded-full bg-neutral-700" />
+          <span aria-hidden className="h-[3px] w-[3px] rounded-full bg-neutral-500" />
           {overflow} more
         </span>
       ) : completable.length > 1 && (
-        <span className="mt-[3px] flex h-[3px] w-full overflow-hidden rounded-full bg-white/[0.06]">
+        <span className="mt-[3px] flex h-[3px] w-full overflow-hidden rounded-full"
+          style={{ background: 'rgb(var(--gp-rest-lift) / 0.09)' }}>
           <span
             className="h-full rounded-full"
             style={{ width: `${(done / completable.length) * 100}%`, background: accent, opacity: 0.85 }}
@@ -315,268 +329,48 @@ function RowsFace({ rows, overflow, accent, eyebrow, meter }: {
   )
 }
 
-const STICKY_REST_COLORS = {
-  yellow: '#fcd34d',
-  pink: '#f472b6',
-  blue: '#38bdf8',
-  green: '#34d399',
-  purple: '#a78bfa',
-} as const
-
-const CALLOUT_REST_TREATMENTS = {
-  info: { label: 'Info', color: '#60a5fa' },
-  tip: { label: 'Tip', color: '#34d399' },
-  warning: { label: 'Warning', color: '#f59e0b' },
-  decision: { label: 'Decision', color: '#a78bfa' },
-  important: { label: 'Important', color: '#f472b6' },
-} as const
-
-const REST_LOG_DATE_FORMATTER = new Intl.DateTimeFormat(undefined, {
-  weekday: 'short',
-  month: 'short',
-  day: 'numeric',
-})
-
-function restLogDate(raw?: string): string {
-  if (!raw) return 'Daily log'
-  const parsed = new Date(`${raw}T12:00:00`)
-  return Number.isNaN(parsed.getTime()) ? 'Daily log' : REST_LOG_DATE_FORMATTER.format(parsed)
-}
-
 /**
- * A fixed-ceiling reading of the Note body. The model has already reduced
- * arbitrary writing to five lines, so every branch below has the same small,
- * predictable DOM cost.
+ * A resting Note is the open card, photographed.
+ *
+ * Rather than a second, smaller design, the tile renders the card's own page
+ * at the card's own width and then scales the whole thing down by exactly the
+ * ratio the tile's box was built from (see `modelSize`). Because type, rules,
+ * and spacing shrink together, the folded note holds every word the open one
+ * holds — the same lines break in the same places — and no sentence has to be
+ * cut to make it fit. One transform, no measurement, no editable control.
  */
-function NotePreviewLines({
-  model,
-  className = '',
-}: {
+function NoteFace({ widget, model, tile }: {
+  widget: Widget
   model: RestNoteModel
-  className?: string
+  tile: { width: number; height: number }
 }) {
-  return (
-    <div className={`flex min-h-0 min-w-0 flex-1 flex-col justify-center gap-[2px] ${className}`}>
-      {model.lines.map((line, index) => {
-        if (line.kind === 'rule') {
-          return <span key={index} className="my-[3px] h-px w-full bg-current opacity-15" />
-        }
-        if (line.kind === 'bullet') {
-          return (
-            <span key={index} className="flex min-w-0 items-center gap-1.5 text-[9.5px] leading-[12px] text-neutral-300">
-              <span aria-hidden className="h-[3px] w-[3px] shrink-0 rounded-full bg-current opacity-65" />
-              <span className="truncate">{line.text}</span>
-            </span>
-          )
-        }
-        if (line.kind === 'heading') {
-          return (
-            <strong key={index} className="truncate text-[11.5px] font-semibold leading-[14px] text-neutral-100">
-              {line.text}
-            </strong>
-          )
-        }
-        if (line.kind === 'quote') {
-          return (
-            <span key={index} className="truncate border-l border-current pl-1.5 text-[9.5px] italic leading-[13px] text-neutral-400">
-              {line.text}
-            </span>
-          )
-        }
-        if (line.kind === 'code') {
-          return (
-            <code key={index} className="truncate rounded-[3px] bg-black/25 px-1 py-px text-[8px] leading-[11px] text-neutral-300">
-              {line.text}
-            </code>
-          )
-        }
-        return (
-          <span key={index} className="truncate text-[10px] leading-[14px] text-neutral-300">
-            {line.text}
-          </span>
-        )
-      })}
-    </div>
-  )
-}
-
-/**
- * Eight compact editorial arrangements, each borrowing the same visual
- * grammar as its expanded Note skin. These are intentionally plain DOM and
- * gradients: no textarea, Markdown renderer, layout measurement, animation,
- * or effect is mounted while a card rests.
- */
-function NoteFace({ model, accent }: { model: RestNoteModel; accent: string }) {
-  if (model.skin === 'sticky') {
-    const color = STICKY_REST_COLORS[model.color ?? 'yellow']
-    return (
-      <div
-        data-rest-note-skin="sticky"
-        className="relative flex h-full w-full overflow-hidden rounded-[10px] px-3 pb-2 pt-3"
-        style={{
-          color,
-          background: `linear-gradient(145deg, ${color}22, ${color}0a 68%, transparent)`,
-          boxShadow: `inset 0 0 0 1px ${color}20`,
-        }}
-      >
-        <span
-          aria-hidden
-          className="absolute left-1/2 top-[3px] h-[4px] w-9 -translate-x-1/2 rounded-full"
-          style={{ background: `${color}55` }}
-        />
-        <span
-          aria-hidden
-          className="pointer-events-none absolute inset-x-3 bottom-2 top-4 opacity-25"
-          style={{
-            backgroundImage: `repeating-linear-gradient(180deg, transparent 0 13px, ${color} 13px 14px)`,
-          }}
-        />
-        <NotePreviewLines model={model} className="relative" />
-      </div>
-    )
-  }
-
-  if (model.skin === 'quote') {
-    return (
-      <div
-        data-rest-note-skin="quote"
-        className="relative flex h-full w-full flex-col overflow-hidden px-4 py-2.5 pl-7"
-      >
-        <span
-          aria-hidden
-          className="absolute bottom-2.5 left-3 top-6 w-[2px] rounded-full"
-          style={{ background: `linear-gradient(${accent}aa, transparent)` }}
-        />
-        <span
-          aria-hidden
-          className="absolute left-2 top-0 text-[31px] leading-none opacity-45"
-          style={{ color: accent }}
-        >
-          “
-        </span>
-        <NotePreviewLines model={model} className="italic" />
-        {model.attribution && (
-          <span className="mt-1 flex min-w-0 items-center gap-1.5 text-[8px] font-semibold uppercase tracking-[0.09em] text-neutral-500">
-            <span aria-hidden className="h-px w-3 shrink-0" style={{ background: `${accent}88` }} />
-            <span className="truncate">{model.attribution}</span>
-          </span>
-        )}
-      </div>
-    )
-  }
-
-  if (model.skin === 'daily_log') {
-    return (
-      <div data-rest-note-skin="daily_log" className="flex h-full w-full flex-col px-3 py-2.5">
-        <div className="flex h-5 items-center gap-1.5 border-b border-white/[0.07] pb-1 text-[8px] font-semibold uppercase tracking-[0.08em]">
-          <span aria-hidden className="h-[5px] w-[5px] rounded-full" style={{ background: accent, boxShadow: `0 0 6px ${accent}` }} />
-          <span className="truncate" style={{ color: accent }}>{restLogDate(model.date)}</span>
-        </div>
-        <div className="flex min-h-0 flex-1 gap-2 pt-1.5">
-          <span
-            aria-hidden
-            className="w-px shrink-0 rounded-full"
-            style={{ background: `linear-gradient(${accent}99, transparent)` }}
-          />
-          <NotePreviewLines model={model} />
-        </div>
-      </div>
-    )
-  }
-
-  if (model.skin === 'markdown_page') {
-    return (
-      <div data-rest-note-skin="markdown_page" className="flex h-full w-full flex-col px-3 py-2.5">
-        <div className="mb-1.5 flex h-4 items-center justify-between border-b border-white/[0.07] pb-1">
-          <span className="text-[8px] font-semibold uppercase tracking-[0.1em]" style={{ color: accent }}>
-            Markdown
-          </span>
-          <span className="rounded-[4px] bg-white/[0.05] px-1.5 py-px text-[7px] text-neutral-500">Read</span>
-        </div>
-        <NotePreviewLines model={model} />
-      </div>
-    )
-  }
-
-  if (model.skin === 'typewriter') {
-    return (
-      <div data-rest-note-skin="typewriter" className="flex h-full w-full flex-col px-3 py-2">
-        <div className="flex h-4 items-center border-b border-white/[0.07] text-[7.5px] font-medium uppercase tracking-[0.14em] text-neutral-500">
-          Draft
-        </div>
-        <div className="relative mx-auto flex min-h-0 w-[88%] flex-1 py-1.5">
-          <NotePreviewLines model={model} />
-          <span
-            aria-hidden
-            className="absolute inset-x-0 bottom-0 h-px"
-            style={{ background: `linear-gradient(90deg, transparent, ${accent}88, transparent)` }}
-          />
-        </div>
-      </div>
-    )
-  }
-
-  if (model.skin === 'callout') {
-    const treatment = CALLOUT_REST_TREATMENTS[model.tone ?? 'info']
-    return (
-      <div
-        data-rest-note-skin="callout"
-        data-rest-callout-tone={model.tone ?? 'info'}
-        className="relative flex h-full w-full flex-col overflow-hidden px-3 py-2.5 pl-4"
-        style={{ background: `radial-gradient(85% 90% at 0% 0%, ${treatment.color}18, transparent 72%)` }}
-      >
-        <span
-          aria-hidden
-          className="absolute bottom-2 left-2 top-2 w-[2px] rounded-full"
-          style={{ background: `linear-gradient(${treatment.color}, ${treatment.color}33)`, boxShadow: `0 0 8px ${treatment.color}66` }}
-        />
-        <span className="mb-1 text-[8px] font-bold uppercase tracking-[0.1em]" style={{ color: treatment.color }}>
-          {treatment.label}
-        </span>
-        <NotePreviewLines model={model} />
-      </div>
-    )
-  }
-
-  if (model.skin === 'versioned_note') {
-    return (
-      <div data-rest-note-skin="versioned_note" className="flex h-full w-full flex-col px-3 py-2.5">
-        <div className="mb-1 flex h-4 items-center justify-between border-b border-white/[0.07] pb-1">
-          <span className="text-[8px] font-semibold uppercase tracking-[0.1em]" style={{ color: accent }}>
-            Versions
-          </span>
-          <span aria-hidden className="flex gap-[2px]">
-            {[0, 1, 2].map((index) => (
-              <span key={index} className="h-[3px] w-[3px] rounded-full" style={{ background: index === 0 ? accent : 'rgb(255 255 255 / 0.12)' }} />
-            ))}
-          </span>
-        </div>
-        <NotePreviewLines model={model} />
-        {model.versions && model.versions.length > 0 && (
-          <div className="mt-1 flex flex-col gap-[2px] border-t border-white/[0.06] pt-1">
-            {model.versions.map((version, index) => (
-              <span key={`${version}-${index}`} className="flex min-w-0 items-center gap-1.5 text-[7.5px] leading-[11px] text-neutral-500">
-                <span aria-hidden className="h-[3px] w-[3px] shrink-0 rounded-full" style={{ background: index === 0 ? accent : 'rgb(255 255 255 / 0.16)' }} />
-                <span className="truncate">{version}</span>
-              </span>
-            ))}
-          </div>
-        )}
-      </div>
-    )
-  }
-
+  const scale = tile.width / Math.max(1, widget.size.width)
   return (
     <div
-      data-rest-note-skin="plain"
-      className="relative flex h-full w-full overflow-hidden px-3 py-2.5"
+      data-rest-note-skin={model.skin}
+      className="gp-note-rest relative h-full w-full overflow-hidden"
     >
-      <span
-        aria-hidden
-        className="pointer-events-none absolute inset-x-3 bottom-2 top-2 opacity-[0.07]"
-        style={{ backgroundImage: 'repeating-linear-gradient(180deg, transparent 0 13px, currentColor 13px 14px)' }}
-      />
-      <NotePreviewLines model={model} className="relative" />
+      <div
+        className="gp-note-rest-page"
+        style={{
+          width: widget.size.width,
+          // The tile's own height in unscaled units, not the card's. Tiles
+          // snap up to the grid, so scaling the card's exact height left a
+          // band of bare card under the page — most visible as a Sticky whose
+          // colour stopped short of the bottom. Only the height is stretched
+          // to the box; the width still sets the one scale, so the page keeps
+          // the card's proportions.
+          height: tile.height / Math.max(scale, 0.01),
+          transform: `scale(${scale})`,
+        }}
+      >
+        {/* The frame is the query container the skins size themselves against,
+            and it is exactly as wide as the open card's content column — so a
+            skin resolves the same type here as it does open, just scaled. */}
+        <div className="gp-note-rest-frame">
+          <TextRestPage data={widget.data as TextData} skin={model.skin} />
+        </div>
+      </div>
     </div>
   )
 }
@@ -685,12 +479,12 @@ function BooleanFace({ model, accent: cardAccent }: {
             ? {
               background: `${accent}2e`,
               boxShadow: `inset 0 0 0 1px ${accent}88${model.shape === 'power' ? `, 0 0 8px ${accent}66` : ''}`,
-              color: accent,
+              color: `var(--gp-accent-ink, ${accent})`,
             }
             : {
-              background: 'rgb(255 255 255 / 0.04)',
-              boxShadow: 'inset 0 0 0 1px rgb(255 255 255 / 0.14)',
-              color: 'rgb(115 115 115)',
+              background: 'rgb(var(--gp-rest-lift) /0.04)',
+              boxShadow: 'inset 0 0 0 1px rgb(var(--gp-rest-lift) /0.14)',
+              color: 'var(--gp-widget-muted-text, rgb(115 115 115))',
             }}
         >
           {model.shape === 'checkbox'
@@ -716,7 +510,7 @@ function BooleanFace({ model, accent: cardAccent }: {
         className="relative flex h-[15px] w-[26px] shrink-0 items-center rounded-full px-[2px] transition-colors"
         style={model.active
           ? { background: `${accent}30`, boxShadow: `inset 0 0 0 1px ${accent}66` }
-          : { background: 'rgb(255 255 255 / 0.05)', boxShadow: 'inset 0 1px 2px rgb(0 0 0 / 0.5)' }}
+          : { background: 'rgb(var(--gp-rest-lift) /0.05)', boxShadow: 'inset 0 1px 2px rgb(0 0 0 / 0.5)' }}
       >
         <span
           className="h-[11px] w-[11px] rounded-full transition-all"
@@ -799,8 +593,8 @@ function ClockFace({ widget, model, accent }: {
               key={chip.key}
               className="flex h-[17px] items-center truncate rounded-full px-[6px] text-[9px] font-medium leading-[17px]"
               style={chip.filled
-                ? { background: `${accent}2e`, color: accent, boxShadow: `inset 0 0 0 1px ${accent}55` }
-                : { color: 'rgb(115 115 115)', boxShadow: 'inset 0 0 0 1px rgb(255 255 255 / 0.1)' }}
+                ? { background: `${accent}2e`, color: `var(--gp-accent-ink, ${accent})`, boxShadow: `inset 0 0 0 1px ${accent}55` }
+                : { color: 'var(--gp-widget-muted-text, rgb(115 115 115))', boxShadow: 'inset 0 0 0 1px rgb(var(--gp-rest-lift) /0.1)' }}
             >
               {chip.text}
             </span>
@@ -817,7 +611,7 @@ function ClockFace({ widget, model, accent }: {
               {row.value !== undefined && (
                 <span
                   className="shrink-0 text-[9.5px] font-semibold leading-4 tabular-nums text-neutral-300"
-                  style={row.tone === 'accent' ? { color: accent } : undefined}
+                  style={row.tone === 'accent' ? { color: `var(--gp-accent-ink, ${accent})` } : undefined}
                 >
                   {row.value}
                 </span>
@@ -839,7 +633,7 @@ function StarsFace({ value, accent }: { value: number; accent: string }) {
           key={index}
           size={16}
           fill={index < filled ? accent : 'none'}
-          style={{ color: index < filled ? accent : 'var(--color-neutral-700, #404040)' }}
+          style={{ color: index < filled ? `var(--gp-accent-ink, ${accent})` : 'var(--color-neutral-700, #404040)', fill: index < filled ? `var(--gp-accent-ink, ${accent})` : 'none' }}
         />
       ))}
     </div>
@@ -868,8 +662,8 @@ function ImageFace({ data, alt }: { data: MediaData; alt: string }) {
     let objectUrl = ''
     let disposed = false
     if (!data.localBlobKey) { setLocalUrl(''); return }
-    void import('../../utils/boardDatabase')
-      .then(({ readMediaBlob }) => readMediaBlob(data.localBlobKey!))
+    void import('../../services/mediaSyncService')
+      .then(({ loadMediaBlob }) => loadMediaBlob(data.localBlobKey!))
       .then((blob) => {
         if (blob && !disposed) { objectUrl = URL.createObjectURL(blob); setLocalUrl(objectUrl) }
       })
@@ -955,7 +749,12 @@ function presentationDress(
 export const WidgetRestingFace = memo(function WidgetRestingFace({ widget }: { widget: Widget }) {
   const def = widgetDefinition(widget.type)
   const accent = widgetAccent(widget, def)
-  const { model, presentation } = restingFace(widget)
+  // The same accent, deepened for paper. Faces that draw the accent as a MARK
+  // — a tick, a filled meter, a board's bar — take this one, because a colour
+  // picked to glow on black reads as a pale wash on a white island. The faces
+  // that composite the accent as hex+alpha keep the raw value.
+  const markAccent = `color-mix(in oklab, ${accent}, var(--gp-rest-ink) var(--gp-rest-ink-share))`
+  const { model, presentation, size } = restingFace(widget)
 
   if (model.kind === 'icon') return null
   if (model.kind === 'image') {
@@ -979,18 +778,18 @@ export const WidgetRestingFace = memo(function WidgetRestingFace({ widget }: { w
         <RowsFace
           rows={model.rows}
           overflow={model.overflow}
-          accent={accent}
+          accent={markAccent}
           eyebrow={model.eyebrow}
           meter={model.meter}
         />
       )
       break
-    case 'note': face = <NoteFace model={model} accent={accent} />; break
+    case 'note': face = <NoteFace widget={widget} model={model} tile={size} />; break
     case 'text': face = <TextFace model={model} accent={accent} />; break
     case 'boolean': face = <BooleanFace model={model} accent={accent} />; break
     case 'metric': face = <MetricFace model={model} accent={accent} />; break
     case 'columns':
-      face = <ColumnsFace columns={model.columns} wrap={model.wrap} eyebrow={model.eyebrow} accent={accent} />
+      face = <ColumnsFace columns={model.columns} wrap={model.wrap} eyebrow={model.eyebrow} accent={markAccent} />
       break
     case 'grid':
       face = (
@@ -1004,7 +803,7 @@ export const WidgetRestingFace = memo(function WidgetRestingFace({ widget }: { w
         />
       )
       break
-    case 'bars': face = <BarsFace bars={model.bars} eyebrow={model.eyebrow} accent={accent} />; break
+    case 'bars': face = <BarsFace bars={model.bars} eyebrow={model.eyebrow} accent={markAccent} />; break
     case 'gauge':
       face = (
         <GaugeFace
@@ -1044,7 +843,7 @@ export const WidgetRestingFace = memo(function WidgetRestingFace({ widget }: { w
       )
       break
     case 'timeline':
-      face = <TimelineFace units={model.units} lanes={model.lanes} eyebrow={model.eyebrow} accent={accent} />
+      face = <TimelineFace units={model.units} lanes={model.lanes} eyebrow={model.eyebrow} accent={markAccent} />
       break
     case 'split':
       face = (
@@ -1065,8 +864,12 @@ export const WidgetRestingFace = memo(function WidgetRestingFace({ widget }: { w
           frames={model.frames}
           eyebrow={model.eyebrow}
           accent={accent}
+          inkRatio={paperInkRatio(model, widget.size) ?? undefined}
         />
       )
+      break
+    case 'canvas':
+      face = <CanvasNodeRestFace widget={widget} model={model} accent={accent} />
       break
   }
 
@@ -1075,7 +878,20 @@ export const WidgetRestingFace = memo(function WidgetRestingFace({ widget }: { w
       aria-hidden
       data-rest-summary={model.kind}
       data-rest-presentation={presentation}
-      style={presentationDress(presentation, accent, model.kind)}
+      style={{
+        ...presentationDress(presentation, accent, model.kind),
+        // A folded Tasks card is the same face, a tenth finer. The box lays out
+        // at the size the grammars measured (100 / scale) and the whole thing —
+        // type, padding, rules and all — is scaled back down into the tile
+        // restingFace.ts already shrank by the same number. One transform, so
+        // every row survives and none of them moves relative to the others.
+        ...(widget.type === 'checklist' ? {
+          width: `${100 / TASK_REST_SCALE}%`,
+          height: `${100 / TASK_REST_SCALE}%`,
+          transform: `scale(${TASK_REST_SCALE})`,
+          transformOrigin: 'top left',
+        } : {}),
+      }}
       className={`pointer-events-none absolute inset-0 flex ${
         model.kind === 'note' || model.kind === 'paper'
           ? 'items-stretch overflow-hidden'

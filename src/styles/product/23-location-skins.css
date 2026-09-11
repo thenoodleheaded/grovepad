@@ -1,8 +1,9 @@
 /*
  * Purpose-built Location skins.
  *
- * One place, six instruments over it: a pin, a coordinate readout, the clock
- * there, a compass to it, a fence around it, and a route on from it. Every
+ * One place, seven instruments over it: a pin, a coordinate readout, the
+ * clock there, a compass to it, a fence around it, a route on from it, and a
+ * map you drag to reach it. Every
  * skin paints on the card's one backplate (Article XIII) — readouts are
  * genuine wells because they show computed values, the dial, ring, and day
  * arc are flat visuals that own their paint, and every wrapper holding a text
@@ -73,7 +74,7 @@
   align-items: center;
   justify-content: center;
   border-radius: 7px;
-  color: color-mix(in oklab, var(--gp-widget-accent), white 8%);
+  color: color-mix(in oklab, var(--gp-accent-ink, var(--gp-widget-accent)), var(--gp-accent-lift, #fff) 8%);
   background: color-mix(in oklab, var(--gp-widget-accent), transparent 86%);
   box-shadow: inset 0 1px 0 color-mix(in oklab, white, transparent 88%);
 }
@@ -138,7 +139,7 @@
   flex: 0 0 auto;
   border-radius: 999px;
   padding: 2px 7px;
-  color: color-mix(in oklab, var(--gp-widget-accent), white 10%);
+  color: color-mix(in oklab, var(--gp-accent-ink, var(--gp-widget-accent)), var(--gp-accent-lift, #fff) 10%);
   background: color-mix(in oklab, var(--gp-widget-accent), transparent 88%);
   font-size: 9.5px;
   font-weight: 650;
@@ -246,7 +247,7 @@
   font-weight: 620;
   letter-spacing: 0.01em;
   text-decoration: none;
-  transition: background-color 140ms ease, color 140ms ease;
+  transition: background-color var(--gp-duration-snap) var(--gp-ease-snap), color var(--gp-duration-snap) var(--gp-ease-snap);
 }
 
 .gp-widget-ui .gp-loc-btn:hover {
@@ -264,17 +265,17 @@
 }
 
 .gp-widget-ui .gp-loc-btn--primary {
-  color: color-mix(in oklab, var(--gp-widget-accent), white 12%);
+  color: color-mix(in oklab, var(--gp-accent-ink, var(--gp-widget-accent)), var(--gp-accent-lift, #fff) 12%);
   background: color-mix(in oklab, var(--gp-widget-accent), transparent 90%);
 }
 
 .gp-widget-ui .gp-loc-btn--primary:hover {
-  color: color-mix(in oklab, var(--gp-widget-accent), white 20%);
+  color: color-mix(in oklab, var(--gp-accent-ink, var(--gp-widget-accent)), var(--gp-accent-lift, #fff) 20%);
   background: color-mix(in oklab, var(--gp-widget-accent), transparent 82%);
 }
 
 .gp-widget-ui .gp-loc-btn[aria-pressed='true'] {
-  color: color-mix(in oklab, var(--gp-widget-accent), white 18%);
+  color: color-mix(in oklab, var(--gp-accent-ink, var(--gp-widget-accent)), var(--gp-accent-lift, #fff) 18%);
   background: color-mix(in oklab, var(--gp-widget-accent), transparent 78%);
 }
 
@@ -400,7 +401,7 @@
   font-size: 9.5px;
   font-weight: 640;
   letter-spacing: 0.04em;
-  transition: background-color 140ms ease, color 140ms ease;
+  transition: background-color var(--gp-duration-snap) var(--gp-ease-snap), color var(--gp-duration-snap) var(--gp-ease-snap);
 }
 
 .gp-widget-ui .gp-loc-notations button:hover {
@@ -408,7 +409,7 @@
 }
 
 .gp-widget-ui .gp-loc-notations button[aria-pressed='true'] {
-  color: color-mix(in oklab, var(--gp-widget-accent), white 14%);
+  color: color-mix(in oklab, var(--gp-accent-ink, var(--gp-widget-accent)), var(--gp-accent-lift, #fff) 14%);
   background: color-mix(in oklab, var(--gp-widget-accent), transparent 84%);
   box-shadow: inset 0 1px 0 color-mix(in oklab, white, transparent 88%);
 }
@@ -441,7 +442,7 @@
   align-items: baseline;
   gap: 0.5rem;
   overflow: hidden;
-  color: color-mix(in oklab, var(--gp-widget-accent), white 18%);
+  color: color-mix(in oklab, var(--gp-accent-ink, var(--gp-widget-accent)), var(--gp-accent-lift, #fff) 18%);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -480,7 +481,7 @@
 }
 
 .gp-loc--time .gp-loc-clock strong {
-  color: color-mix(in oklab, var(--gp-widget-accent), white 12%);
+  color: color-mix(in oklab, var(--gp-accent-ink, var(--gp-widget-accent)), var(--gp-accent-lift, #fff) 12%);
   font-size: 34px;
   font-weight: 640;
   font-variant-numeric: tabular-nums;
@@ -536,7 +537,7 @@
   flex: 1 1 auto;
   flex-direction: column;
   gap: 1px;
-  color: color-mix(in oklab, var(--gp-widget-accent), white 6%);
+  color: color-mix(in oklab, var(--gp-accent-ink, var(--gp-widget-accent)), var(--gp-accent-lift, #fff) 6%);
 }
 
 /* The direct child only: the sunrise and sunset glyphs in the row below are
@@ -683,7 +684,7 @@
 }
 
 .gp-loc-hero strong {
-  color: color-mix(in oklab, var(--gp-widget-accent), white 12%);
+  color: color-mix(in oklab, var(--gp-accent-ink, var(--gp-widget-accent)), var(--gp-accent-lift, #fff) 12%);
   font-size: 27px;
   font-weight: 650;
   font-variant-numeric: tabular-nums;
@@ -759,7 +760,7 @@
 }
 
 .gp-loc-verdict[data-inside] strong {
-  color: color-mix(in oklab, var(--gp-widget-accent), white 12%);
+  color: color-mix(in oklab, var(--gp-accent-ink, var(--gp-widget-accent)), var(--gp-accent-lift, #fff) 12%);
 }
 
 .gp-loc-verdict span {
@@ -787,7 +788,7 @@
 .gp-widget-ui .gp-loc-radius-slider input[type='range'] {
   width: 100%;
   height: 18px;
-  accent-color: var(--gp-widget-accent);
+  accent-color: var(--gp-accent-ink, var(--gp-widget-accent));
   background: transparent;
 }
 
@@ -812,7 +813,7 @@
   font-size: 9.5px;
   font-weight: 640;
   font-variant-numeric: tabular-nums;
-  transition: background-color 140ms ease, color 140ms ease;
+  transition: background-color var(--gp-duration-snap) var(--gp-ease-snap), color var(--gp-duration-snap) var(--gp-ease-snap);
 }
 
 .gp-widget-ui .gp-loc-presets button:hover {
@@ -820,7 +821,7 @@
 }
 
 .gp-widget-ui .gp-loc-presets button[aria-pressed='true'] {
-  color: color-mix(in oklab, var(--gp-widget-accent), white 14%);
+  color: color-mix(in oklab, var(--gp-accent-ink, var(--gp-widget-accent)), var(--gp-accent-lift, #fff) 14%);
   background: color-mix(in oklab, var(--gp-widget-accent), transparent 84%);
   box-shadow: inset 0 1px 0 color-mix(in oklab, white, transparent 88%);
 }
@@ -970,7 +971,7 @@
 
 .gp-loc-stop-leg {
   flex: 0 0 auto;
-  color: color-mix(in oklab, var(--gp-widget-accent), white 8%);
+  color: color-mix(in oklab, var(--gp-accent-ink, var(--gp-widget-accent)), var(--gp-accent-lift, #fff) 8%);
   font-size: 10.5px;
   font-weight: 640;
   font-variant-numeric: tabular-nums;
@@ -1025,7 +1026,7 @@
   border-radius: 6px;
   color: var(--gp-loc-faint);
   background: transparent;
-  transition: background-color 140ms ease, color 140ms ease;
+  transition: background-color var(--gp-duration-snap) var(--gp-ease-snap), color var(--gp-duration-snap) var(--gp-ease-snap);
 }
 
 .gp-widget-ui .gp-loc-stop-tools button:hover {
@@ -1040,6 +1041,169 @@
 .gp-widget-ui .gp-loc-stop-tools button:disabled {
   opacity: 0.3;
   pointer-events: none;
+}
+
+/* -------------------------------------------------------------------- map.
+
+   The map is a flat visual that owns its own paint: real tiles on a drawn
+   graticule, with the pin, the crosshair, the scale, and the credit floating
+   over them. Tiles are painted for a bright page, so the dark theme turns
+   them over rather than letting a lit rectangle glare out of a charcoal card;
+   the light theme takes them nearly as drawn. */
+
+.gp-loc--map .gp-loc-map {
+  position: relative;
+  min-height: 96px;
+  flex: 1 1 auto;
+  overflow: hidden;
+  border-radius: var(--gp-r2);
+  background-color: color-mix(in oklab, var(--gp-loc-ink), transparent 92%);
+  /* The graticule under the tiles: what the card shows while they load, and
+     all it shows when they never arrive. */
+  background-image:
+    repeating-linear-gradient(
+      to right,
+      var(--gp-loc-rule) 0 1px,
+      transparent 1px 44px
+    ),
+    repeating-linear-gradient(
+      to bottom,
+      var(--gp-loc-rule) 0 1px,
+      transparent 1px 44px
+    );
+  box-shadow: inset 0 0 0 1px var(--gp-loc-rule);
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.gp-loc-map[data-dragging] {
+  cursor: grabbing;
+}
+
+.gp-loc-map:focus-visible {
+  outline: 2px solid color-mix(in oklab, var(--gp-widget-accent), transparent 30%);
+  outline-offset: -2px;
+}
+
+.gp-loc-map-tiles {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.gp-loc-map-tiles img {
+  position: absolute;
+  width: 256px;
+  height: 256px;
+  filter: invert(1) hue-rotate(180deg) brightness(0.92) saturate(0.72);
+  opacity: 0.92;
+  -webkit-user-drag: none;
+}
+
+.gp-loc-map-pin {
+  position: absolute;
+  /* A pin marks the place with its tip, not with its middle. */
+  transform: translate(-50%, -100%);
+  color: var(--gp-widget-accent, var(--gp-loc-ink));
+  filter: drop-shadow(0 1px 2px rgb(0 0 0 / 0.55));
+  pointer-events: none;
+}
+
+.gp-loc-map-cross {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: color-mix(in oklab, var(--gp-loc-ink), transparent 20%);
+  filter: drop-shadow(0 1px 2px rgb(0 0 0 / 0.5));
+  pointer-events: none;
+}
+
+.gp-loc-map-zoom {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+/* The catalogue's ghost-button rule (Article XIX, 06-field-islands.css) strips
+   every button's fill and shadow with `!important` and floors it at 28px
+   square. These two are map controls floating on imagery, not actions on the
+   card's plate: with no fill of their own they are invisible over the tiles,
+   and at 28px they eat the corner of a small map. So they win back exactly the
+   fill, the shadow, and their size — and nothing else.
+
+   Their contrast comes from the tiles beneath rather than from
+   `--gp-widget-surface`, which is a dark chip in both themes and disappeared
+   into the light theme's un-inverted map. */
+.gp-widget-ui .gp-loc-map-zoom button {
+  display: grid;
+  min-width: 0;
+  min-height: 0;
+  width: 22px;
+  height: 22px;
+  border: 0;
+  color: #f4f4f2;
+  background-color: rgb(18 20 19 / 0.62) !important;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.35) !important;
+  place-items: center;
+  cursor: pointer;
+}
+
+.gp-widget-ui .gp-loc-map-zoom button:hover {
+  color: var(--gp-accent-ink, var(--gp-widget-accent));
+}
+
+.gp-widget-ui .gp-loc-map-zoom button:disabled {
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.gp-loc-map-foot {
+  position: absolute;
+  right: 5px;
+  bottom: 4px;
+  left: 5px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 6px;
+  pointer-events: none;
+}
+
+.gp-loc-map-scale {
+  border-bottom: 2px solid color-mix(in oklab, var(--gp-loc-ink), transparent 35%);
+  border-left: 2px solid color-mix(in oklab, var(--gp-loc-ink), transparent 35%);
+  border-right: 2px solid color-mix(in oklab, var(--gp-loc-ink), transparent 35%);
+  padding: 0 2px 1px;
+  color: var(--gp-loc-ink);
+  text-shadow: 0 1px 2px rgb(0 0 0 / 0.55);
+  font-size: 9px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  text-align: center;
+}
+
+.gp-widget-ui .gp-loc-map-credit {
+  border: 0;
+  padding: 0;
+  color: color-mix(in oklab, var(--gp-loc-ink), transparent 30%);
+  background: transparent;
+  text-shadow: 0 1px 2px rgb(0 0 0 / 0.55);
+  font-size: 8.5px;
+  font-weight: 550;
+  text-decoration: none;
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.gp-widget-ui .gp-loc-map-credit:hover {
+  color: var(--gp-loc-ink);
+  text-decoration: underline;
 }
 
 /* ------------------------------------------------------- narrow and quiet */
@@ -1061,6 +1225,12 @@
   .gp-loc-notations {
     grid-auto-flow: row;
   }
+
+  /* Below this width the scale bar and the credit fight for the same line;
+     the scale is the one carrying information. */
+  .gp-loc-map-credit {
+    display: none;
+  }
 }
 
 @container (max-height: 190px) {
@@ -1072,6 +1242,10 @@
   .gp-loc--time .gp-loc-clock strong {
     font-size: 26px;
   }
+
+  .gp-loc--map .gp-loc-map {
+    min-height: 72px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1082,4 +1256,43 @@
   .gp-widget-ui .gp-loc-btn:active {
     transform: none;
   }
+}
+
+/* ------------------------------------------------------------ light theme.
+   Status/danger/medal inks above are pastels tuned for dark glass; on the
+   light theme's silver cards they wash out below 2:1. Each keeps its hue
+   but drops to a deep ink (generated during the 2026-08 light-mode
+   contrast audit). */
+[data-theme='light'] .gp-loc-notice {
+  color: #be123c;
+}
+
+[data-theme='light'] .gp-loc-zone input[data-invalid] {
+  color: #be123c;
+}
+
+[data-theme='light'] .gp-loc-verdict strong {
+  color: #92400e;
+}
+
+[data-theme='light'] .gp-widget-ui .gp-loc-stop-tools button:last-child:hover {
+  color: #be123c;
+}
+
+[data-theme='light'] .gp-loc-map-tiles img {
+  filter: saturate(0.86) contrast(0.94);
+  opacity: 1;
+}
+
+[data-theme='light'] .gp-loc-map-scale,
+[data-theme='light'] .gp-widget-ui .gp-loc-map-credit {
+  text-shadow: 0 1px 2px rgb(255 255 255 / 0.7);
+}
+
+/* Paper keeps the tiles the right way up, so the floating controls flip
+   instead — a dark chip on a bright map is the one that disappears. */
+[data-theme='light'] .gp-widget-ui .gp-loc-map-zoom button {
+  color: #222a25;
+  background-color: rgb(252 252 250 / 0.86) !important;
+  box-shadow: 0 1px 3px rgb(36 48 40 / 0.22) !important;
 }

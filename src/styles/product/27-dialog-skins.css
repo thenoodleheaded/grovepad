@@ -84,7 +84,7 @@
   align-items: center;
   justify-content: center;
   border-radius: 8px;
-  color: color-mix(in oklab, var(--gp-widget-accent), white 10%);
+  color: color-mix(in oklab, var(--gp-accent-ink, var(--gp-widget-accent)), var(--gp-accent-lift, #fff) 10%);
   background: var(--gp-script-tint);
   box-shadow: inset 0 1px 0 color-mix(in oklab, white, transparent 89%);
 }
@@ -155,7 +155,7 @@
 .gp-script-speaker input {
   width: 100%;
   padding: 0;
-  color: color-mix(in oklab, var(--gp-widget-accent), white 12%);
+  color: color-mix(in oklab, var(--gp-accent-ink, var(--gp-widget-accent)), var(--gp-accent-lift, #fff) 12%);
   font-size: 8.5px;
   font-weight: 760;
   letter-spacing: 0.105em;
@@ -222,7 +222,7 @@
 
 .gp-script-empty svg {
   margin-bottom: 0.2rem;
-  color: var(--gp-widget-accent);
+  color: var(--gp-accent-ink, var(--gp-widget-accent));
 }
 
 .gp-script-empty strong {
@@ -258,7 +258,7 @@
 }
 
 .gp-script-add:hover {
-  color: color-mix(in oklab, var(--gp-widget-accent), white 18%);
+  color: color-mix(in oklab, var(--gp-accent-ink, var(--gp-widget-accent)), var(--gp-accent-lift, #fff) 18%);
 }
 
 .gp-script-add span {
@@ -353,7 +353,7 @@
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  color: color-mix(in oklab, var(--gp-widget-accent), white 14%);
+  color: color-mix(in oklab, var(--gp-accent-ink, var(--gp-widget-accent)), var(--gp-accent-lift, #fff) 14%);
   background: var(--gp-script-tint);
   font-size: 7.5px;
   font-weight: 760;
@@ -431,7 +431,7 @@
   align-items: center;
   justify-content: center;
   border-radius: 8px;
-  color: var(--gp-widget-accent);
+  color: var(--gp-accent-ink, var(--gp-widget-accent));
   background: var(--gp-script-tint);
   font-family: var(--font-sans);
   font-size: 10px;
@@ -730,7 +730,7 @@
   min-width: 0;
   align-items: center;
   gap: 0.24rem;
-  color: color-mix(in oklab, var(--gp-widget-accent), white 8%);
+  color: color-mix(in oklab, var(--gp-accent-ink, var(--gp-widget-accent)), var(--gp-accent-lift, #fff) 8%);
 }
 
 .gp-script-time input {
@@ -747,7 +747,7 @@
   align-items: center;
   justify-content: center;
   gap: 1px;
-  color: var(--gp-widget-accent);
+  color: var(--gp-accent-ink, var(--gp-widget-accent));
 }
 
 .gp-script-wave i {
@@ -834,4 +834,25 @@
   .gp-script-add {
     transition: none;
   }
+}
+
+/* ------------------------------------------------------------ light theme.
+   Status/danger/medal inks above are pastels tuned for dark glass; on the
+   light theme's silver cards they wash out below 2:1. Each keeps its hue
+   but drops to a deep ink (generated during the 2026-08 light-mode
+   contrast audit). */
+[data-theme='light'] .gp-script-remove:hover {
+  color: #be123c;
+}
+
+[data-theme='light'] .gp-script-avatar[data-speaker='1'] {
+  color: #be123c;
+}
+
+[data-theme='light'] .gp-script-avatar[data-speaker='2'] {
+  color: #92400e;
+}
+
+[data-theme='light'] .gp-script-avatar[data-speaker='3'] {
+  color: #6d28d9;
 }

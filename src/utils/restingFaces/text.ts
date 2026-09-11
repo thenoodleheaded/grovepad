@@ -1,9 +1,7 @@
 import type { BulletItem } from '../../types/spatial'
 import {
-  bulletLogState,
   bulletOutlineState,
   bulletSkin,
-  orderedLogItems,
   visibleOutlineItems,
 } from '../../components/widgets/modules/bulletSkinModel'
 import {
@@ -17,7 +15,6 @@ import {
   compact,
   record,
   REST_CHIP_LIMIT,
-  REST_COLUMN_ITEM_LIMIT,
   REST_LINE_LIMIT,
   REST_ROW_LIMIT,
   type RestingFaceModel,
@@ -31,8 +28,6 @@ import {
 // to plain writing — a number, an indent, a chip, a prompt, a host — because
 // that structure is what someone chose the skin for.
 // ---------------------------------------------------------------------------
-
-const LOG_TIME = new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit' })
 
 function bulletItems(raw: unknown): BulletItem[] {
   if (!Array.isArray(raw)) return []
@@ -53,73 +48,25 @@ export function bulletsRestingFace(data: Record<string, unknown>): RestingFaceMo
   const skin = bulletSkin(data.skin)
   const states = record(data.skinStates) ?? {}
 
-  if (skin === 'compact_chips') {
-    const visible = items.slice(0, REST_CHIP_LIMIT)
-    return {
-      kind: 'chips',
-      chips: visible.map((item) => ({
-        key: item.id,
-        text: compact(item.text, 16),
-        filled: true,
-      })),
-      overflow: Math.max(0, items.length - visible.length),
-    }
-  }
-
-  if (skin === 'two_column') {
-    // Down the first column, then the second — the reading order the open
-    // card uses, so a folded list does not scramble the sequence.
-    const half = Math.ceil(Math.min(items.length, REST_COLUMN_ITEM_LIMIT * 2) / 2)
-    const left = items.slice(0, half)
-    const right = items.slice(half, half * 2)
-    return {
-      kind: 'columns',
-      columns: [left, right].filter((column) => column.length > 0).map((column, index) => ({
-        key: `column-${index}`,
-        label: index === 0 ? 'First' : 'Then',
-        items: column.map((item) => ({ key: item.id, label: compact(item.text, 18) })),
-        overflow: 0,
-      })),
-      eyebrow: { label: 'Two columns', note: String(items.length) },
-    }
-  }
-
+  // A folded Bullets card is the open card's island and nothing else: the same
+  // markers against the same points, minus the heading, the add control, and
+  // any way to type into it. No eyebrow — the list IS the label.
   if (skin === 'nested_outline') {
     const state = bulletOutlineState(states.nested_outline, items)
     const visible = visibleOutlineItems(items, state).slice(0, REST_ROW_LIMIT)
     return {
       kind: 'rows',
-      eyebrow: { label: 'Outline', note: String(items.length) },
       // The indent IS the information — a folded outline that lost its levels
       // is just a list. A collapsed parent keeps its ellipsis so the tile never
       // silently drops the children hiding underneath it.
       rows: visible.map((entry) => ({
         key: entry.item.id,
         indent: entry.level,
+        marker: 'dot' as const,
         label: compact(entry.item.text, 26),
         ...(entry.collapsed ? { value: '···', tone: 'muted' as const } : {}),
       })),
       overflow: Math.max(0, items.length - visible.length),
-    }
-  }
-
-  if (skin === 'rolling_log') {
-    const state = bulletLogState(states.rolling_log, items)
-    const ordered = orderedLogItems(items, state)
-    const visible = ordered.slice(0, REST_ROW_LIMIT)
-    return {
-      kind: 'rows',
-      eyebrow: { label: 'Log', note: state.order === 'newest' ? 'Newest first' : 'Oldest first' },
-      rows: visible.map((item) => {
-        const stamp = state.timestamps[item.id]
-        const at = stamp ? Date.parse(stamp) : Number.NaN
-        return {
-          key: item.id,
-          ...(Number.isFinite(at) ? { lead: LOG_TIME.format(new Date(at)) } : {}),
-          label: compact(item.text, 26),
-        }
-      }),
-      overflow: Math.max(0, ordered.length - visible.length),
     }
   }
 
@@ -128,7 +75,9 @@ export function bulletsRestingFace(data: Record<string, unknown>): RestingFaceMo
     kind: 'rows',
     rows: visible.map((item, index) => ({
       key: item.id,
-      ...(skin === 'numbered' ? { lead: `${index + 1}.` } : {}),
+      ...(skin === 'numbered'
+        ? { lead: `${index + 1}` }
+        : { marker: 'dot' as const }),
       label: compact(item.text, 32),
     })),
     overflow: Math.max(0, items.length - visible.length),
@@ -230,18 +179,34 @@ export function codeRestingFace(data: Record<string, unknown>): RestingFaceModel
   if (!code.trim()) return { kind: 'icon' }
   // The first lines as written, monospaced and un-wrapped: indentation is
   // most of what makes a snippet recognisable at a glance.
+  const skin = typeof data.skin === 'string' ? data.skin : ''
   const source = code.replace(/\r\n?/g, '\n').split('\n')
-  const lines = source.filter((line) => line.trim()).slice(0, REST_LINE_LIMIT)
+  // A snippet skin is a smaller window on the same file, so it keeps fewer
+  // lines rather than a different shape.
+  const budget = skin === 'compact_snippet' ? 2 : REST_LINE_LIMIT
+  const lines = source.filter((line) => line.trim()).slice(0, budget)
   return {
     kind: 'lines',
     mono: true,
     eyebrow: { label: compact(language || 'Code', 14), note: `${source.length} lines` },
     // Clipped, never `compact`ed: collapsing whitespace would strip the
     // indentation, and indentation is half of what makes a snippet legible.
-    lines: lines.map((line, index) => ({
-      key: `line-${index}`,
-      left: line.length > 30 ? `${line.slice(0, 29).trimEnd()}…` : line.trimEnd(),
-    })),
+    lines: lines.map((line, index) => {
+      const trimmed = line.trimEnd()
+      const clipped = trimmed.length > 30 ? `${trimmed.slice(0, 29).trimEnd()}…` : trimmed
+      return {
+        key: `line-${index}`,
+        // A terminal is a transcript of commands and a diff is coloured by its
+        // gutter: both are what make those skins legible at a glance, and both
+        // are already in the text the card holds.
+        left: skin === 'terminal' ? `$ ${clipped}` : clipped,
+        ...(skin === 'diff' && /^\s*\+/.test(line)
+          ? { tone: 'good' as const }
+          : skin === 'diff' && /^\s*-/.test(line)
+            ? { tone: 'bad' as const }
+            : {}),
+      }
+    }),
   }
 }
 
@@ -267,6 +232,20 @@ export function linksRestingFace(data: Record<string, unknown>): RestingFaceMode
     }))
     .filter((link) => link.label || link.url)
   if (links.length === 0) return { kind: 'icon' }
+  // A bookmark grid is a wall of named tiles rather than a list of rows, and
+  // that is the one skin here whose open card is a different shape.
+  if (data.skin === 'bookmark_grid') {
+    const shown = links.slice(0, REST_CHIP_LIMIT)
+    return {
+      kind: 'chips',
+      chips: shown.map((link) => ({
+        key: link.key,
+        text: compact(link.label || hostOf(link.url) || link.url, 14),
+        filled: true,
+      })),
+      overflow: Math.max(0, links.length - shown.length),
+    }
+  }
   const visible = links.slice(0, REST_ROW_LIMIT)
   return {
     kind: 'rows',

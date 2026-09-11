@@ -11,11 +11,11 @@ A useful test is: if changing it would make existing information disappear, beco
 ## Result
 
 - **693 choices reviewed**: 82 original choices plus 611 expansion proposals.
-- **208** expansion ideas remain true visual/view skins.
-- **112** stay inside their widget as deeper capabilities.
+- **199** expansion ideas remain true visual/view skins.
+- **109** stay inside their widget as deeper capabilities.
 - **158** become visible controls or settings, not title-roller skins.
 - **59** become starter presets, not appearance choices.
-- **23** move to an already-existing better owner.
+- **21** move to an already-existing better owner.
 - **51** proposal entries form **38** distinct new widget families.
 - **39** new widgets are defined in total, including Location.
 
@@ -75,7 +75,6 @@ A useful test is: if changing it would make existing information disappear, beco
 | **Incident Response** | State Machine · Incident |
 | **Jet Lag Plan** | World Clock · Travel Clock |
 | **Keep in Touch** | Contact Card · Relationship |
-| **Logbook** | Bullets · Rolling Log; Note · Daily Log |
 | **Metrics** | Chart · Gauge; Chart · Progress Ring |
 | **Outline** | Bullets · Nested Outline |
 | **Overlap Finder** | World Clock · Overlap Band; World Clock · Meeting Planner |
@@ -216,13 +215,12 @@ Every proposal appears once below. The descriptions remain in the [opportunity c
 ### Canvas (`canvas_node`)
 
 - **Skin:** Portal, Cover.
-- **Capability in this widget:** Live Thumbnail, Dashboard Door, Folder Index.
+- **Capability in this widget:** Live Thumbnail.
 
 ### Bullets (`bullets`)
 
-- **Skin:** Dots, Numbered, Compact Chips, Two Column.
+- **Skin:** Dots, Numbered.
 - **Move → **Outline**:** Nested Outline.
-- **Move → **Logbook**:** Rolling Log.
 
 ### Code Snippet (`code`)
 
@@ -239,11 +237,9 @@ Every proposal appears once below. The descriptions remain in the [opportunity c
 
 - **Starter preset:** Agenda, Minutes, Stand-up, Retrospective, One-to-One, Decision Review, Handoff.
 
-### Note (`notes`)
+### Text (`text`)
 
-- **Move → **Logbook**:** Daily Log.
-- **Skin:** Markdown Page, Typewriter, Callout.
-- **Capability in this widget:** Versioned Note.
+- **Skin:** Typewriter.
 
 ### Outline (`outline`)
 
@@ -321,10 +317,6 @@ Every proposal appears once below. The descriptions remain in the [opportunity c
 - **Skin:** Bibliography, Source Cards, Annotated, Footnotes.
 - **New widget → **Literature Matrix**:** Literature Matrix.
 - **New widget → **Evidence Map**:** Evidence Map.
-
-### Cornell Notes (`cornell`)
-
-- **Skin:** Lecture, Reading, Problem Solving, Interview, Research.
 
 ### Formula Sheet (`formula_sheet`)
 

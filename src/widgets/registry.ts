@@ -77,54 +77,11 @@ export const WIDGET_REGISTRY: Record<ModuleType, WidgetDefinition> = {
   ...AUTOMATION_CORE_DEFINITIONS,
 }
 
-/** Former standalone cards that are now modes of one canonical widget. They
- * remain registered so old boards hydrate exactly as saved, but are omitted
- * from every new-widget surface. */
-export const CONSOLIDATED_WIDGET_REPLACEMENTS: Partial<Record<ModuleType, ModuleType>> = {
-  sticky_note: 'notes',
-  quote: 'notes',
-  line_chart: 'bar_chart',
-  pie_chart: 'bar_chart',
-  progress: 'goal_tracker',
-  timer: 'timekeeper',
-  pomodoro: 'timekeeper',
-  stopwatch: 'timekeeper',
-  countdown: 'timekeeper',
-  world_clock: 'timekeeper',
-  excalidraw: 'sketchpad',
-  random_picker: 'decision',
-  gpa: 'grade_calc',
-  study_goal: 'goal_tracker',
-  okr: 'goal_tracker',
-  vocab: 'flashcards',
-  quiz: 'flashcards',
-  kanban: 'checklist',
-  assignment: 'checklist',
-  daily_agenda: 'checklist',
-  weekly_planner: 'checklist',
-  timeline: 'checklist',
-  priority_matrix: 'checklist',
-}
-
-export const CONSOLIDATED_WIDGET_MODES: Partial<Record<ModuleType, string>> = {
-  sticky_note: 'sticky', quote: 'quote', line_chart: 'line', pie_chart: 'donut',
-  progress: 'simple', timer: 'countdown', pomodoro: 'pomodoro',
-  stopwatch: 'stopwatch', countdown: 'deadline', world_clock: 'world_clock',
-  excalidraw: 'diagram',
-  random_picker: 'weighted', gpa: 'gpa', study_goal: 'hours', okr: 'okr',
-  vocab: 'vocabulary', quiz: 'quiz',
-  kanban: 'board', assignment: 'assignments', daily_agenda: 'day',
-  weekly_planner: 'week', timeline: 'timeline', priority_matrix: 'matrix',
-}
-
-export function publicWidgetTypeFor(type:ModuleType):ModuleType {
-  return CONSOLIDATED_WIDGET_REPLACEMENTS[type] ?? type
-}
-
-for (const [legacyType, replacementType] of Object.entries(CONSOLIDATED_WIDGET_REPLACEMENTS) as Array<[ModuleType, ModuleType]>) {
-  WIDGET_REGISTRY[legacyType].availability = 'existing-only'
-  WIDGET_REGISTRY[legacyType].unavailableReason = `${WIDGET_REGISTRY[legacyType].label} now lives inside ${WIDGET_REGISTRY[replacementType].label}.`
-}
+// Widgets that were folded into another widget as one of its skins are no
+// longer registered at all. Boards saved while they were their own cards have
+// those records DROPPED on load (see deletedWidgetTypes.ts), so nothing here —
+// no replacement table, no 'existing-only' availability — needs to know they
+// ever existed.
 
 // Apply the domain pack requirements from MODULE_PACK_REQUIREMENTS dynamically
 for (const type of Object.keys(WIDGET_REGISTRY) as ModuleType[]) {
@@ -146,6 +103,9 @@ installCataloguedSkins(WIDGET_REGISTRY)
 for (const [type, sizing] of Object.entries(REVIEWED_WIDGET_SIZING) as Array<
   [keyof typeof REVIEWED_WIDGET_SIZING, WidgetSizing]
 >) {
+  // Profiles calibrated for retired cards dissolve with them; the canonical
+  // widget that absorbed each one carries its own profile.
+  if (!WIDGET_REGISTRY[type]) continue
   WIDGET_REGISTRY[type].sizing = { ...WIDGET_REGISTRY[type].sizing, ...sizing }
 }
 

@@ -4,6 +4,7 @@ import { ghostGestureIds, ghostGestureState, gestureGhostId, layoutGhostTree } f
 import { buildGlueIndex, computeBlockedWidgetIds } from '../widgetGraph'
 import { appendDraftRelation, relationKey } from '../widgetRelationDrafts'
 import { buildWidget, fuzzyScore } from '../widgetSizing'
+import { contentExcerpt, widgetContentText } from '../../utils/widgetSearchText'
 import { settleWidgetsByCanvas } from '../widgetSettling'
 import { layoutCommittedTree } from '../treeCommitLayout'
 import { buildTreeRevealSchedule, registerTreeReveal } from '../treeReveal'
@@ -21,9 +22,7 @@ export function createUiLinkingSlice({ set, get, pushHistory, initialPacks }: Wi
   },
 
   addWidgetAt: null,
-  addWidgetView: 'widgets',
-  openAddWidget: (worldPos, view = 'widgets') =>
-    set({ addWidgetAt: worldPos, addWidgetView: view }),
+  openAddWidget: (worldPos) => set({ addWidgetAt: worldPos }),
   closeAddWidget: () => {
     set((state) => (state.addWidgetAt ? { addWidgetAt: null } : state))
   },
@@ -40,7 +39,7 @@ export function createUiLinkingSlice({ set, get, pushHistory, initialPacks }: Wi
   setImportOpen: (importOpen) =>
     set((state) => (state.importOpen === importOpen ? state : { importOpen })),
 
-  importMindmap: (widgets, relations) => {
+  importMindmap: (widgets, relations, glues) => {
     pushHistory()
     set((state) => {
       const nextWidgets = { ...state.widgets, ...widgets }
@@ -50,10 +49,21 @@ export function createUiLinkingSlice({ set, get, pushHistory, initialPacks }: Wi
         nextRelations[r.id] = r
       })
 
+      // Imported clusters arrive already welded — the adapter placed their
+      // members a seam apart, so this records the bond without moving anyone.
+      // A cluster needs two members to exist at all.
+      const nextGlues = glues && glues.length > 0 ? { ...state.glues } : state.glues
+      if (glues) {
+        for (const glue of glues) {
+          if (glue.widgetIds.length >= 2) nextGlues[glue.id] = glue
+        }
+      }
+
       return {
         widgets: nextWidgets,
         widgetStructureVersion: state.widgetStructureVersion + 1,
         relations: nextRelations,
+        glues: nextGlues,
         // Derived from relations, so it has to be rebuilt in the same set() as
         // every other writer does. Imported blockers arrive unresolved, and
         // nothing later in the import flow recomputes this.
@@ -77,27 +87,52 @@ export function createUiLinkingSlice({ set, get, pushHistory, initialPacks }: Wi
     })),
 
   paletteOpen: false,
+  // Closing clears any pending pre-fill; while open the query stays readable,
+  // because React StrictMode runs the palette's open effect twice in dev and
+  // a consume-on-read would hand the second run an empty box.
   setPaletteOpen: (paletteOpen) =>
-    set((state) => (state.paletteOpen === paletteOpen ? state : { paletteOpen })),
+    set((state) =>
+      state.paletteOpen === paletteOpen
+        ? state
+        : { paletteOpen, ...(paletteOpen ? {} : { paletteInitialQuery: null }) },
+    ),
+
+  paletteInitialQuery: null,
+  openPaletteSearch: (query) => set({ paletteOpen: true, paletteInitialQuery: query }),
 
   searchWidgets: (query) => {
     if (!query.trim()) return []
     const { widgets, canvases, activeWorkspaceId, activeCanvasId } = get()
     const results: SearchResult[] = []
+    const scores = new Map<string, number>()
     for (const w of Object.values(widgets)) {
       const canvas = canvases[w.canvasId]
       if (!canvas || canvas.workspaceId !== activeWorkspaceId) continue
       const titleScore = fuzzyScore(query, w.title)
       const typeScore = fuzzyScore(query, MODULE_LABELS[w.type])
-      if (Math.max(titleScore, typeScore) === 0) continue
+      // Body text counts only on a real hit (substring or every word) — the
+      // loose subsequence rule would match almost any letters against a
+      // paragraph, drowning the list in noise.
+      const content = widgetContentText(w.data)
+      const rawContentScore = content ? fuzzyScore(query, content) : 0
+      const contentScore = rawContentScore >= 2 ? rawContentScore : 0
+      const score = Math.max(titleScore, typeScore, contentScore)
+      if (score === 0) continue
       const onOtherCanvas = w.canvasId !== activeCanvasId
+      const typeLabel = MODULE_LABELS[w.type]
+      // A pure content hit explains itself: the row shows the matched text.
+      const subtitle =
+        contentScore > 0 && titleScore === 0 && typeScore === 0
+          ? `${typeLabel} · “${contentExcerpt(content, query)}”`
+          : onOtherCanvas
+            ? `${typeLabel} · ${canvas.name}`
+            : typeLabel
+      scores.set(w.id, score)
       results.push({
         id: w.id,
         type: 'widget',
         title: w.title,
-        subtitle: onOtherCanvas
-          ? `${MODULE_LABELS[w.type]} · ${canvas.name}`
-          : MODULE_LABELS[w.type],
+        subtitle,
         canvasId: w.canvasId,
         position: {
           x: w.position.x + w.size.width / 2,
@@ -105,7 +140,23 @@ export function createUiLinkingSlice({ set, get, pushHistory, initialPacks }: Wi
         },
       })
     }
-    return results.sort((a, b) => fuzzyScore(query, b.title) - fuzzyScore(query, a.title))
+    // Canvases are first-class results: workspace roots have no widget card
+    // anywhere, so this is the only way search can reach them at all.
+    for (const canvas of Object.values(canvases)) {
+      if (canvas.workspaceId !== activeWorkspaceId || canvas.id === activeCanvasId) continue
+      const score = fuzzyScore(query, canvas.name)
+      if (score === 0) continue
+      scores.set(canvas.id, score)
+      results.push({
+        id: canvas.id,
+        type: 'canvas',
+        title: canvas.name,
+        subtitle: canvas.parentCanvasId ? 'Canvas' : 'Workspace root',
+        canvasId: canvas.id,
+        position: { x: 0, y: 0 },
+      })
+    }
+    return results.sort((a, b) => (scores.get(b.id) ?? 0) - (scores.get(a.id) ?? 0))
   },
 
   linkDrag: null,

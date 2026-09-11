@@ -175,9 +175,11 @@ export function TaskSpatialSkin({ skin, surface, heading }: TaskSpatialSkinProps
         <div className="gp-task-week">
           {columns.map((dayItems, day) => (
             <section key={WEEKDAY_LABELS[day]} className="gp-task-day-column">
+              {/* The day name alone. A per-day done/total tally repeated seven
+                  times said nothing the ticked rows beneath it do not already
+                  say, and it crowded the label it sat beside. */}
               <header>
                 <span>{WEEKDAY_LABELS[day]}</span>
-                {dayItems.length > 0 && <small>{dayItems.filter((item) => item.done).length}/{dayItems.length}</small>}
               </header>
               <div className="gp-task-column-body">
                 {dayItems.map((item) => card(item, {

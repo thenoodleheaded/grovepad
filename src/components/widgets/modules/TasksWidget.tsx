@@ -78,6 +78,28 @@ const EYEBROWS: Record<TaskSkin, { label: string; icon: typeof ListChecks }> = {
   routine: { label: 'Routine', icon: RotateCcw },
 }
 
+/**
+ * Day's clock and Assignments' date are read as words ("9:00 AM", "2 days
+ * late"), so the real control is a native picker stretched invisibly over that
+ * label. Focus alone opened nothing — the field took the caret and showed no
+ * caret, which is a control that looks broken. Asking for the picker outright
+ * is what makes the label editable; `showPicker` throws when the browser has
+ * no picker or the call is not gesture-backed, and typing still works either
+ * way, so a failure here costs nothing.
+ */
+function openNativePicker(event: { currentTarget: HTMLInputElement }) {
+  try {
+    event.currentTarget.showPicker?.()
+  } catch {
+    /* no picker on this platform, or not user-activated — the field still types */
+  }
+}
+
+/**
+ * What the add button MEANS in each skin. It prints nothing — the button is
+ * the bare glyph, the way every column and day add button already is — so the
+ * word survives only as the accessible name a screen reader reads.
+ */
 const ADD_LABELS: Partial<Record<TaskSkin, string>> = {
   inbox: 'Capture',
   shopping: 'Add item',
@@ -231,7 +253,10 @@ export function TasksWidget({
     else inputRefs.current.delete(id)
   }
 
-  const taskInput = (item: ChecklistItem, placeholder = 'Task  ↵ adds another') => (
+  // The placeholder names the thing being typed and stops there. It used to
+  // trail "↵ adds another", which printed a keyboard lesson on every empty row
+  // of every skin — the same sentence, repeated down the card.
+  const taskInput = (item: ChecklistItem, placeholder = 'Task') => (
     <input
       ref={registerInput(item.id)}
       value={item.label}
@@ -250,7 +275,13 @@ export function TasksWidget({
       aria-checked={item.done}
       aria-label={`${item.done ? 'Reopen' : 'Complete'} ${item.label.trim() || 'untitled task'}`}
       onClick={() => toggle(item.id)}
-      className="gp-task-check"
+      // `gp-check-free` is the documented opt-out from the shared checkbox
+      // paint in 04-controls.css, which colours any checked box in the card's
+      // ACCENT and outranks this family's own rules on specificity. Worn by
+      // Tasks it made "done" pink on Priority Matrix, sky blue on Board and
+      // amber on Day — the one mark that must mean finished, saying instead
+      // which skin you happen to be wearing.
+      className="gp-task-check gp-check-free"
       data-shape={shape}
     >
       <Check size={shape === 'square' ? 12 : 10} strokeWidth={3} aria-hidden />
@@ -338,7 +369,7 @@ export function TasksWidget({
         {heading(<small>{progress.total - progress.done} to sort</small>)}
         <div className="gp-task-ledger">
           {[...items].reverse().map((item) => row(item, {
-            placeholder: 'Capture a thought  ↵ adds another',
+            placeholder: 'Capture a thought',
             leading: item.done
               ? check(item)
               : (
@@ -348,7 +379,13 @@ export function TasksWidget({
                   aria-checked={false}
                   aria-label={`Complete ${item.label.trim() || 'untitled task'}`}
                   onClick={() => toggle(item.id)}
-                  className="gp-task-check"
+                  // `gp-check-free` is the documented opt-out from the shared checkbox
+      // paint in 04-controls.css, which colours any checked box in the card's
+      // ACCENT and outranks this family's own rules on specificity. Worn by
+      // Tasks it made "done" pink on Priority Matrix, sky blue on Board and
+      // amber on Day — the one mark that must mean finished, saying instead
+      // which skin you happen to be wearing.
+      className="gp-task-check gp-check-free"
                   data-shape="circle"
                 >
                   <CircleDashed size={12} aria-hidden />
@@ -437,6 +474,8 @@ export function TasksWidget({
                     type="date"
                     value={due.key}
                     aria-label={`Due date for ${item.label.trim() || 'untitled task'}`}
+                    onClick={openNativePicker}
+                    onFocus={openNativePicker}
                     onChange={(event) => commit(patchItem(item.id, { due: event.target.value }))}
                   />
                 </span>
@@ -462,6 +501,8 @@ export function TasksWidget({
                   type="time"
                   value={taskTime(item.time)}
                   aria-label={`Time for ${item.label.trim() || 'untitled task'}`}
+                  onClick={openNativePicker}
+                  onFocus={openNativePicker}
                   onChange={(event) => commit(patchItem(item.id, { time: event.target.value }))}
                 />
                 <span className="gp-task-slot-dot" aria-hidden />
@@ -640,6 +681,7 @@ export function TasksWidget({
       <button
         type="button"
         className="gp-task-add"
+        aria-label={ADD_LABELS[skin] ?? 'Add task'}
         onClick={() => addTask(
           skin === 'inbox'
             ? {}
@@ -647,7 +689,6 @@ export function TasksWidget({
         )}
       >
         <Plus size={11} aria-hidden />
-        {ADD_LABELS[skin] ?? 'Add task'}
       </button>
     </div>
   )

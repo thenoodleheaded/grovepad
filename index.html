@@ -2,7 +2,18 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <!-- The mark is borderless, so it carries no plate to sit on and its ink has
+         to follow the browser's tab colour instead: dark mark on light chrome,
+         light mark on dark chrome. The unqualified link stays first so a browser
+         that ignores `media` still lands on the dark mark, which degrades far
+         better on dark chrome than the light mark does on white. -->
     <link rel="icon" type="image/png" href="/favicon.png" />
+    <link
+      rel="icon"
+      type="image/png"
+      href="/favicon-dark.png"
+      media="(prefers-color-scheme: dark)"
+    />
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="preconnect" href="https://cdn.fontshare.com" crossorigin />
@@ -17,32 +28,796 @@
     <meta name="apple-mobile-web-app-title" content="Grovepad" />
     <meta
       name="description"
-      content="Grovepad is a fast, spatial thinking canvas for connected notes, plans, data, and decisions."
+      content="Grovepad is a board where your notes do the math. Drag in trackers, tables and calculators that actually compute, then wire one into another. Free, offline, no account."
     />
-    <title>grovepad | loading</title>
+    <title>Grovepad — the board where your notes do the math</title>
     <link rel="canonical" href="https://grovepad.app/" />
 
     <!-- Link previews (Slack, iMessage, WhatsApp, LinkedIn, Discord, …). -->
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Grovepad" />
     <meta property="og:url" content="https://grovepad.app/" />
-    <meta property="og:title" content="Grovepad — Connected thinking canvas" />
+    <meta property="og:title" content="Grovepad — the board where your notes do the math" />
     <meta
       property="og:description"
-      content="Grovepad is a fast, spatial thinking canvas for connected notes, plans, data, and decisions."
+      content="Drag in trackers, tables and calculators that actually compute, then wire one into another. Free, offline, no account."
     />
     <meta property="og:image" content="https://grovepad.app/og-image.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta
       property="og:image:alt"
-      content="Grovepad wordmark over the tagline: a thinking canvas that connects."
+      content="Grovepad wordmark over the tagline: the board where your notes do the math."
     />
     <meta property="og:locale" content="en_US" />
     <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Grovepad — the board where your notes do the math" />
+    <meta
+      name="twitter:description"
+      content="Drag in trackers, tables and calculators that actually compute, then wire one into another. Free, offline, no account."
+    />
+    <meta name="twitter:image" content="https://grovepad.app/og-image.png" />
+
+    <!--
+      Crawler-readable description of the product. Grovepad renders in JavaScript,
+      so search engines and AI crawlers that do not execute scripts would otherwise
+      see an empty document. This block and the #root splash below are the only
+      product text present in the served HTML.
+    -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "Grovepad",
+        "url": "https://grovepad.app/",
+        "applicationCategory": "ProductivityApplication",
+        "operatingSystem": "Web, macOS, Windows, Linux, iOS, Android",
+        "description": "Grovepad is a local-first spatial canvas where the notes compute. Put calculators, trackers, tables and charts on an infinite board, then wire one widget into another so a value flows between them. Works fully offline with no account.",
+        "featureList": [
+          "Infinite canvas of working widgets, not static cards",
+          "Widgets that compute: calculators, formulas, budgets, grade and GPA tools, unit converters",
+          "Wire one widget into another so values flow between them",
+          "Boards nest: any widget can open a whole child canvas",
+          "Works fully offline with no account, stored on your own device",
+          "Optional cloud sync across devices",
+          "Drawing and sketching on the same board",
+          "Desktop, iOS and Android builds with home-screen widgets"
+        ],
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD",
+          "description": "Free to use offline with no account."
+        }
+      }
+    </script>
+
+    <style>
+      /* -----------------------------------------------------------------------
+       * Boot splash — everything painted before the app bundle mounts, and the
+       * crawler-and-no-script view of the product. The <h1>/<p> text is real
+       * content; every `.gp-splash-field` layer below it is decoration.
+       *
+       * Two rules shape this block:
+       *
+       * 1. The cinematic layers are scoped to `.gp-splash--boot`, so the
+       *    <noscript> copy of the same markup stays a plain static document.
+       * 2. Every animation is transform / opacity / background-position only,
+       *    so the whole sequence runs on the compositor. This is the one moment
+       *    in the app's life where the main thread is guaranteed to be busy —
+       *    it is parsing and executing the bundle that will replace this splash.
+       *
+       * These class names and tokens are deliberately reachable after the mount:
+       * this <style> lives in <head> and outlives #root, so `AppBootScreen`
+       * re-uses `.gp-splash-field` to continue the same scene without a cut.
+       * --------------------------------------------------------------------- */
+      :root {
+        --gp-splash-accent: 74 222 128;
+        --gp-splash-cool: 96 140 255;
+        --gp-splash-ink: 250 250 250;
+        --gp-splash-ground: #080a09;
+        --gp-splash-cell: 46px;
+        --gp-splash-out: cubic-bezier(0.16, 1, 0.3, 1);
+      }
+
+      .gp-splash {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+        padding: 2rem;
+        text-align: center;
+        background: var(--gp-splash-ground);
+        color: #d4d4d4;
+        font-family:
+          ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      }
+      .gp-splash h1 {
+        margin: 0;
+        max-width: 22ch;
+        font-size: clamp(1.25rem, 4vw, 1.75rem);
+        font-weight: 600;
+        line-height: 1.25;
+        color: #fafafa;
+      }
+      .gp-splash p {
+        margin: 0;
+        max-width: 46ch;
+        font-size: 0.875rem;
+        line-height: 1.5;
+        color: #737373;
+      }
+      /* Only ever seen without JavaScript — the crawler-and-no-script view. */
+      .gp-splash-shots {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 1.5rem;
+        margin: 0.5rem 0;
+        width: 100%;
+        max-width: 60rem;
+      }
+      .gp-splash-shots figure {
+        margin: 0;
+        flex: 1 1 18rem;
+        max-width: 28rem;
+      }
+      .gp-splash-shots img {
+        display: block;
+        width: 100%;
+        height: auto;
+        border-radius: 0.75rem;
+        border: 1px solid #262626;
+      }
+      .gp-splash-shots figcaption {
+        margin-top: 0.5rem;
+        font-size: 0.75rem;
+        line-height: 1.4;
+        color: #737373;
+      }
+      .gp-splash .gp-splash-mark {
+        font-size: 0.625rem;
+        font-weight: 500;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+        color: #525252;
+      }
+
+      /* == The field ========================================================
+       * Four stacked layers, back to front: aurora (colour), grid (the board
+       * itself, drifting so it reads as infinite), the SVG board of cards and
+       * wires, and a vignette that pulls the eye back to the headline.
+       *
+       * Everything here is held far below the copy in contrast on purpose — it
+       * is the room the headline stands in, not a second thing to read.
+       * ===================================================================== */
+      .gp-splash--boot {
+        overflow: hidden;
+      }
+
+      .gp-splash-field {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+        pointer-events: none;
+        /* A slow camera settle: the scene arrives already in motion. */
+        animation: gp-splash-field-in 1.8s var(--gp-splash-out) both;
+      }
+
+      /* React replaces #root the instant the bundle mounts, but this <style>
+         lives in <head> and survives it — so `AppBootScreen` re-uses the field
+         above to carry the same scene across the handoff instead of cutting to
+         a bare screen. It arrives with the camera already settled: the push-in
+         played once, in the splash. */
+      .gp-splash-field--settled {
+        animation: none;
+        opacity: 1;
+        transform: none;
+      }
+
+      .gp-splash-aurora,
+      .gp-splash-grid,
+      .gp-splash-vignette {
+        position: absolute;
+        inset: 0;
+      }
+
+      .gp-splash-aurora {
+        background:
+          radial-gradient(46% 42% at 50% 2%, rgb(var(--gp-splash-accent) / 0.07), transparent 70%),
+          radial-gradient(54% 48% at 88% 100%, rgb(var(--gp-splash-cool) / 0.055), transparent 72%),
+          radial-gradient(42% 40% at 6% 84%, rgb(var(--gp-splash-accent) / 0.035), transparent 70%);
+      }
+
+      /* Oversized and translated by exactly one cell, so the loop is seamless
+         and the drift stays a compositor transform rather than a repaint. */
+      .gp-splash-grid {
+        inset: -16%;
+        background-image:
+          linear-gradient(to right, rgb(var(--gp-splash-ink) / 0.026) 1px, transparent 1px),
+          linear-gradient(to bottom, rgb(var(--gp-splash-ink) / 0.026) 1px, transparent 1px);
+        background-size: var(--gp-splash-cell) var(--gp-splash-cell);
+        -webkit-mask-image: radial-gradient(
+          66% 60% at 50% 50%,
+          transparent 10%,
+          #000 48%,
+          transparent 88%
+        );
+        mask-image: radial-gradient(66% 60% at 50% 50%, transparent 10%, #000 48%, transparent 88%);
+        animation: gp-splash-drift 26s linear infinite both;
+      }
+
+      .gp-splash-vignette {
+        background:
+          radial-gradient(118% 100% at 50% 48%, transparent 30%, rgb(0 0 0 / 0.74) 100%),
+          linear-gradient(
+            to bottom,
+            rgb(0 0 0 / 0.4),
+            transparent 24%,
+            transparent 70%,
+            rgb(0 0 0 / 0.46)
+          );
+      }
+
+      /* == The board ========================================================
+       * Six cards wired to each other, parked in two clusters that leave the
+       * middle fifth of the frame empty for the copy. The mask empties that
+       * band again for good measure; the long wire crossing under the headline
+       * survives it only as a hint that the board carries on past the edges.
+       * ===================================================================== */
+      .gp-splash-board {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        -webkit-mask-image: radial-gradient(44% 48% at 50% 50%, transparent 32%, #000 86%);
+        mask-image: radial-gradient(44% 48% at 50% 50%, transparent 32%, #000 86%);
+        animation: gp-splash-board-drift 34s ease-in-out infinite both;
+      }
+
+      .gp-splash-card {
+        transform-box: fill-box;
+        transform-origin: 50% 50%;
+        animation: gp-splash-card-in 1.05s var(--gp-splash-out) both;
+        animation-delay: var(--d, 0s);
+      }
+
+      .gp-splash-plate {
+        fill: rgb(var(--gp-splash-ink) / 0.017);
+        stroke: rgb(var(--gp-splash-ink) / 0.055);
+        stroke-width: 1;
+      }
+
+      .gp-splash-row {
+        fill: rgb(var(--gp-splash-ink) / 0.05);
+      }
+
+      .gp-splash-row--head {
+        fill: rgb(var(--gp-splash-ink) / 0.1);
+      }
+
+      /* The one row per card that a wire is feeding — the whole point of the
+         product, stated in the smallest possible way. */
+      .gp-splash-row--lit {
+        fill: rgb(var(--gp-splash-accent) / 0.3);
+      }
+
+      .gp-splash-spark {
+        fill: none;
+        stroke: rgb(var(--gp-splash-accent) / 0.34);
+        stroke-width: 2.2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      .gp-splash-port {
+        fill: rgb(var(--gp-splash-accent) / 0.38);
+      }
+
+      .gp-splash-focus {
+        animation: gp-splash-focus-in 2.4s ease-out both;
+        animation-delay: var(--d, 0s);
+      }
+
+      /* `pathLength="1000"` normalises every wire, so one set of dash numbers
+         draws paths of wildly different real lengths at the same rate. */
+      .gp-splash-wire-base,
+      .gp-splash-wire-glow,
+      .gp-splash-wire-core {
+        fill: none;
+      }
+
+      .gp-splash-wire-base {
+        stroke: url(#gp-splash-wire-ink);
+        stroke-width: 1.4;
+        stroke-dasharray: 1000;
+        stroke-dashoffset: 1000;
+        animation: gp-splash-wire-draw 1.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+        animation-delay: var(--d, 0s);
+      }
+
+      /* The travelling value. Two strokes rather than a drop-shadow: an SVG
+         filter on a moving stroke rasterises on the CPU, which is exactly the
+         thread we are trying to leave alone here. */
+      .gp-splash-wire-glow,
+      .gp-splash-wire-core {
+        stroke: rgb(var(--gp-splash-accent) / 1);
+        stroke-linecap: round;
+        stroke-dasharray: 26 974;
+        stroke-dashoffset: 1000;
+        animation: gp-splash-wire-pulse 3.6s cubic-bezier(0.45, 0, 0.5, 1) infinite both;
+        animation-delay: calc(var(--d, 0s) + 1.15s);
+      }
+
+      .gp-splash-wire-glow {
+        stroke-width: 7;
+        opacity: 0.12;
+      }
+
+      .gp-splash-wire-core {
+        stroke-width: 1.9;
+        opacity: 0.8;
+      }
+
+      /* == The copy ========================================================= */
+      .gp-splash-copy {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.85rem;
+      }
+
+      .gp-splash--boot .gp-splash-mark {
+        color: rgb(var(--gp-splash-ink) / 0.4);
+        animation: gp-splash-eyebrow 1.25s var(--gp-splash-out) 0.14s both;
+      }
+
+      .gp-splash--boot h1 {
+        max-width: 17ch;
+        font-size: clamp(1.6rem, 5.4vw, 3.15rem);
+        font-weight: 700;
+        line-height: 1.08;
+        letter-spacing: -0.022em;
+        /* Focus pull: the title resolves out of a blur rather than fading in. */
+        animation: gp-splash-title 1.25s var(--gp-splash-out) 0.28s both;
+      }
+
+      .gp-splash--boot p {
+        max-width: 54ch;
+        font-size: clamp(0.875rem, 1.5vw, 1rem);
+        color: #8a908e;
+        animation: gp-splash-rise 1.1s var(--gp-splash-out) 0.52s both;
+      }
+
+      /* A rare specular glint across the headline. Every stop is near-white, so
+         no frame of this ever costs the text its contrast, and the travel stays
+         inside 0%–100% so the 300%-wide image always covers the box. Guarded by
+         @supports because the resting colour is transparent while it is on. */
+      @supports (-webkit-background-clip: text) or (background-clip: text) {
+        .gp-splash--boot h1 {
+          background-image: linear-gradient(
+            100deg,
+            rgb(var(--gp-splash-ink)) 0 42%,
+            rgb(216 255 231) 47%,
+            #ffffff 50%,
+            rgb(216 255 231) 53%,
+            rgb(var(--gp-splash-ink)) 58% 100%
+          );
+          background-size: 300% 100%;
+          background-position: 0% 0;
+          background-repeat: no-repeat;
+          -webkit-background-clip: text;
+          background-clip: text;
+          -webkit-text-fill-color: transparent;
+          color: transparent;
+          animation:
+            gp-splash-title 1.25s var(--gp-splash-out) 0.28s both,
+            gp-splash-glint 6s ease-in-out 1.6s infinite both;
+        }
+      }
+
+      /* The splash had no sign of life before this: a hairline that says the
+         bundle is still on its way. */
+      .gp-splash-progress {
+        position: relative;
+        margin-top: 1.1rem;
+        width: min(168px, 42vw);
+        height: 1px;
+        overflow: hidden;
+        border-radius: 999px;
+        background: rgb(var(--gp-splash-ink) / 0.09);
+        animation: gp-splash-rise 1s var(--gp-splash-out) 0.82s both;
+      }
+
+      .gp-splash-progress span {
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgb(var(--gp-splash-accent) / 0.85),
+          transparent
+        );
+        animation: gp-splash-scan 1.9s cubic-bezier(0.65, 0, 0.35, 1) 1s infinite both;
+      }
+
+      @keyframes gp-splash-field-in {
+        from {
+          opacity: 0;
+          transform: scale(1.09);
+        }
+        to {
+          opacity: 1;
+          transform: none;
+        }
+      }
+
+      @keyframes gp-splash-drift {
+        to {
+          transform: translate3d(var(--gp-splash-cell), var(--gp-splash-cell), 0);
+        }
+      }
+
+      @keyframes gp-splash-board-drift {
+        0%,
+        100% {
+          transform: translate3d(0, 0, 0);
+        }
+        50% {
+          transform: translate3d(-12px, 8px, 0);
+        }
+      }
+
+      @keyframes gp-splash-card-in {
+        from {
+          opacity: 0;
+          transform: translateY(26px) scale(0.965);
+        }
+        to {
+          opacity: 1;
+          transform: none;
+        }
+      }
+
+      @keyframes gp-splash-focus-in {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+
+      @keyframes gp-splash-wire-draw {
+        to {
+          stroke-dashoffset: 0;
+        }
+      }
+
+      @keyframes gp-splash-wire-pulse {
+        0% {
+          stroke-dashoffset: 1000;
+          opacity: 0;
+        }
+        7% {
+          opacity: 1;
+        }
+        52% {
+          stroke-dashoffset: 40;
+          opacity: 1;
+        }
+        62%,
+        100% {
+          stroke-dashoffset: 0;
+          opacity: 0;
+        }
+      }
+
+
+
+      @keyframes gp-splash-eyebrow {
+        from {
+          opacity: 0;
+          letter-spacing: 0.62em;
+        }
+        to {
+          opacity: 1;
+          letter-spacing: 0.22em;
+        }
+      }
+
+      @keyframes gp-splash-title {
+        from {
+          opacity: 0;
+          transform: translateY(22px);
+          filter: blur(13px);
+        }
+        to {
+          opacity: 1;
+          transform: none;
+          filter: blur(0);
+        }
+      }
+
+      @keyframes gp-splash-glint {
+        0% {
+          background-position: 0% 0;
+        }
+        22%,
+        100% {
+          background-position: 100% 0;
+        }
+      }
+
+      @keyframes gp-splash-rise {
+        from {
+          opacity: 0;
+          transform: translateY(14px);
+        }
+        to {
+          opacity: 1;
+          transform: none;
+        }
+      }
+
+      @keyframes gp-splash-scan {
+        from {
+          transform: translateX(-100%);
+        }
+        to {
+          transform: translateX(100%);
+        }
+      }
+
+      /* Below this width the card clusters would crowd the copy rather than
+         frame it, so the scene keeps only its ground. */
+      @media (max-width: 720px) {
+        .gp-splash-board {
+          display: none;
+        }
+      }
+
+      /* The app's own reduced-motion rules live in a stylesheet that has not
+         loaded yet at splash time, so this block has to stand on its own: the
+         full scene, held still. */
+      @media (prefers-reduced-motion: reduce) {
+        .gp-splash *,
+        .gp-splash *::before,
+        .gp-splash *::after,
+        .gp-splash-field {
+          animation: none !important;
+          transition: none !important;
+        }
+        .gp-splash-field,
+        .gp-splash-card,
+        .gp-splash-focus,
+        .gp-splash-copy > *,
+        .gp-splash-progress {
+          opacity: 1;
+          transform: none;
+          filter: none;
+        }
+        .gp-splash-wire-base {
+          stroke-dashoffset: 0;
+        }
+        .gp-splash-wire-glow,
+        .gp-splash-wire-core {
+          opacity: 0;
+        }
+        .gp-splash--boot .gp-splash-mark {
+          letter-spacing: 0.22em;
+        }
+        .gp-splash--boot h1 {
+          background-image: none;
+          -webkit-text-fill-color: rgb(var(--gp-splash-ink));
+          color: rgb(var(--gp-splash-ink));
+        }
+        .gp-splash-progress span {
+          background: rgb(var(--gp-splash-accent) / 0.45);
+        }
+      }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div class="gp-splash gp-splash--boot" aria-busy="true">
+        <!-- Decoration only. The board is drawn in one 1600x900 SVG so the cards
+             and the wires between them share a coordinate space and stay
+             attached at every viewport size; the two clusters sit outside the
+             middle fifth of the frame, which belongs to the copy. -->
+        <div class="gp-splash-field" aria-hidden="true">
+          <div class="gp-splash-aurora"></div>
+          <div class="gp-splash-grid"></div>
+          <svg
+            class="gp-splash-board"
+            viewBox="0 0 1600 900"
+            preserveAspectRatio="xMidYMid slice"
+            aria-hidden="true"
+            focusable="false"
+          >
+            <defs>
+              <linearGradient id="gp-splash-wire-ink" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="rgb(74 222 128)" stop-opacity=".05" />
+                <stop offset="1" stop-color="rgb(74 222 128)" stop-opacity=".26" />
+              </linearGradient>
+              <radialGradient id="gp-splash-focus-ink">
+                <stop offset="0" stop-color="rgb(74 222 128)" stop-opacity=".1" />
+                <stop offset="1" stop-color="rgb(74 222 128)" stop-opacity="0" />
+              </radialGradient>
+              <path id="gp-splash-w1" pathLength="1000" d="M198 300 C198 348 249 358 249 404" />
+              <path id="gp-splash-w2" pathLength="1000" d="M249 514 C249 554 174 566 174 612" />
+              <path id="gp-splash-w3" pathLength="1000" d="M1395 282 C1395 328 1412 340 1412 384" />
+              <path id="gp-splash-w4" pathLength="1000" d="M1324 433 C1262 433 1371 506 1371 566" />
+              <path id="gp-splash-w5" pathLength="1000" d="M348 459 C660 700 1010 736 1280 612" />
+            </defs>
+
+            <circle class="gp-splash-focus" cx="249" cy="460" r="250" fill="url(#gp-splash-focus-ink)" />
+            <circle
+              class="gp-splash-focus"
+              style="--d: 0.9s"
+              cx="1390"
+              cy="310"
+              r="230"
+              fill="url(#gp-splash-focus-ink)"
+            />
+
+            <g class="gp-splash-wire" style="--d: 0.6s">
+              <use class="gp-splash-wire-base" href="#gp-splash-w1" />
+              <use class="gp-splash-wire-glow" href="#gp-splash-w1" />
+              <use class="gp-splash-wire-core" href="#gp-splash-w1" />
+            </g>
+            <g class="gp-splash-wire" style="--d: 0.82s">
+              <use class="gp-splash-wire-base" href="#gp-splash-w2" />
+              <use class="gp-splash-wire-glow" href="#gp-splash-w2" />
+              <use class="gp-splash-wire-core" href="#gp-splash-w2" />
+            </g>
+            <g class="gp-splash-wire" style="--d: 0.72s">
+              <use class="gp-splash-wire-base" href="#gp-splash-w3" />
+              <use class="gp-splash-wire-glow" href="#gp-splash-w3" />
+              <use class="gp-splash-wire-core" href="#gp-splash-w3" />
+            </g>
+            <g class="gp-splash-wire" style="--d: 0.94s">
+              <use class="gp-splash-wire-base" href="#gp-splash-w4" />
+              <use class="gp-splash-wire-glow" href="#gp-splash-w4" />
+              <use class="gp-splash-wire-core" href="#gp-splash-w4" />
+            </g>
+            <!-- The long one, crossing under the copy: the board carries on past
+                 the edges of what the headline is standing on. -->
+            <g class="gp-splash-wire" style="--d: 1.1s">
+              <use class="gp-splash-wire-base" href="#gp-splash-w5" />
+              <use class="gp-splash-wire-glow" href="#gp-splash-w5" />
+              <use class="gp-splash-wire-core" href="#gp-splash-w5" />
+            </g>
+
+            <g class="gp-splash-card" style="--d: 0.18s">
+              <rect class="gp-splash-plate" x="110" y="200" width="176" height="100" rx="16" />
+              <rect class="gp-splash-row gp-splash-row--head" x="132" y="226" width="66" height="6" rx="3" />
+              <rect class="gp-splash-row" x="132" y="248" width="130" height="6" rx="3" />
+              <rect class="gp-splash-row" x="132" y="266" width="100" height="6" rx="3" />
+              <rect class="gp-splash-row gp-splash-row--lit" x="132" y="284" width="58" height="6" rx="3" />
+              <circle class="gp-splash-port" cx="198" cy="300" r="4" />
+            </g>
+
+            <g class="gp-splash-card" style="--d: 0.32s">
+              <rect class="gp-splash-plate" x="150" y="404" width="198" height="110" rx="18" />
+              <rect class="gp-splash-row gp-splash-row--head" x="172" y="430" width="72" height="6" rx="3" />
+              <rect class="gp-splash-row" x="172" y="452" width="150" height="6" rx="3" />
+              <rect class="gp-splash-row" x="172" y="470" width="124" height="6" rx="3" />
+              <rect class="gp-splash-row gp-splash-row--lit" x="172" y="488" width="90" height="6" rx="3" />
+              <circle class="gp-splash-port" cx="249" cy="404" r="4" />
+              <circle class="gp-splash-port" cx="249" cy="514" r="4" />
+              <circle class="gp-splash-port" cx="348" cy="459" r="4" />
+            </g>
+
+            <g class="gp-splash-card" style="--d: 0.46s">
+              <rect class="gp-splash-plate" x="96" y="612" width="156" height="86" rx="14" />
+              <rect class="gp-splash-row gp-splash-row--head" x="118" y="636" width="58" height="6" rx="3" />
+              <rect class="gp-splash-row" x="118" y="658" width="108" height="6" rx="3" />
+              <rect class="gp-splash-row gp-splash-row--lit" x="118" y="676" width="74" height="6" rx="3" />
+              <circle class="gp-splash-port" cx="174" cy="612" r="4" />
+            </g>
+
+            <g class="gp-splash-card" style="--d: 0.26s">
+              <rect class="gp-splash-plate" x="1300" y="178" width="190" height="104" rx="16" />
+              <rect class="gp-splash-row gp-splash-row--head" x="1322" y="204" width="64" height="6" rx="3" />
+              <rect class="gp-splash-row" x="1322" y="226" width="140" height="6" rx="3" />
+              <rect class="gp-splash-row" x="1322" y="244" width="110" height="6" rx="3" />
+              <rect class="gp-splash-row gp-splash-row--lit" x="1322" y="262" width="68" height="6" rx="3" />
+              <circle class="gp-splash-port" cx="1395" cy="282" r="4" />
+            </g>
+
+            <g class="gp-splash-card" style="--d: 0.4s">
+              <rect class="gp-splash-plate" x="1324" y="384" width="176" height="98" rx="16" />
+              <rect class="gp-splash-row gp-splash-row--head" x="1346" y="408" width="56" height="6" rx="3" />
+              <polyline
+                class="gp-splash-spark"
+                points="1346,464 1372,448 1398,456 1424,432 1450,440 1476,420"
+              />
+              <circle class="gp-splash-port" cx="1412" cy="384" r="4" />
+              <circle class="gp-splash-port" cx="1324" cy="433" r="4" />
+            </g>
+
+            <g class="gp-splash-card" style="--d: 0.54s">
+              <rect class="gp-splash-plate" x="1280" y="566" width="182" height="92" rx="15" />
+              <rect class="gp-splash-row gp-splash-row--head" x="1302" y="590" width="68" height="6" rx="3" />
+              <rect class="gp-splash-row" x="1302" y="612" width="134" height="6" rx="3" />
+              <rect class="gp-splash-row gp-splash-row--lit" x="1302" y="630" width="90" height="6" rx="3" />
+              <circle class="gp-splash-port" cx="1371" cy="566" r="4" />
+              <circle class="gp-splash-port" cx="1280" cy="612" r="4" />
+            </g>
+          </svg>
+          <div class="gp-splash-vignette"></div>
+        </div>
+
+        <div class="gp-splash-copy">
+          <span class="gp-splash-mark">Grovepad</span>
+          <h1>The board where your notes do the math</h1>
+          <p>
+            Drag in trackers, tables and calculators that actually compute, then wire one into
+            another. Free, offline, no account.
+          </p>
+          <div class="gp-splash-progress" aria-hidden="true"><span></span></div>
+        </div>
+      </div>
+    </div>
+
+    <noscript>
+      <div class="gp-splash" style="position: static; min-height: 100vh">
+        <span class="gp-splash-mark">Grovepad</span>
+        <h1>The board where your notes do the math</h1>
+        <p>
+          Grovepad is a local-first spatial canvas. You put working widgets on an infinite board:
+          calculators, formulas, budgets, grade and GPA tools, habit and goal trackers, tables,
+          charts, timers, kanban, outlines and drawings. Then you wire one widget into another so a
+          value flows between them. Any widget can open into a whole child canvas, so a board is a
+          tree rather than one flat wall.
+        </p>
+        <p>
+          Grovepad works fully offline with no account. Boards are stored on your own device and are
+          private by default. Cloud sync across devices is optional. Grovepad runs in the browser and
+          as a desktop app for macOS, Windows and Linux, plus iOS and Android builds with
+          home-screen widgets.
+        </p>
+        <div class="gp-splash-shots">
+          <figure>
+            <img
+              src="/screens/notes.webp"
+              width="1440"
+              height="900"
+              alt="A Grovepad board of lecture notes: a formula sheet, a source list, definitions and a study log laid out side by side on one canvas."
+            />
+            <figcaption>Notes, sources and definitions on one canvas.</figcaption>
+          </figure>
+          <figure>
+            <img
+              src="/screens/math.webp"
+              width="1440"
+              height="900"
+              alt="A Grovepad money board: a monthly budget, a ledger with a running total, a savings rate and a debt payoff plan, with values flowing between the cards."
+            />
+            <figcaption>A budget, a ledger and a payoff plan that add themselves up.</figcaption>
+          </figure>
+          <figure>
+            <img
+              src="/screens/wires.webp"
+              width="1440"
+              height="900"
+              alt="A Grovepad automation board: cards wired to each other, where a weekly target and hours done feed a pace calculation that arms an alert."
+            />
+            <figcaption>Wire one card into another and the value flows.</figcaption>
+          </figure>
+        </div>
+
+        <p>Grovepad needs JavaScript to run. Please enable JavaScript to open a board.</p>
+      </div>
+    </noscript>
+
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

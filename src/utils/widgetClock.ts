@@ -26,7 +26,9 @@ export interface WidgetClock {
   urgent: boolean
 }
 
-const CLOCK_TYPES = new Set<ModuleType>(['timer', 'pomodoro', 'stopwatch', 'timekeeper'])
+// One clock widget: Timekeeper. Timer, Pomodoro, Stopwatch and World Clock
+// were retired into its skins, and old boards migrate to them on load.
+const CLOCK_TYPES = new Set<ModuleType>(['timekeeper'])
 
 export function isClockWidget(type: ModuleType): boolean {
   return CLOCK_TYPES.has(type)
@@ -120,9 +122,6 @@ function activeClockData(widget: Pick<Widget, 'type' | 'data'>): {
   kind: 'timer' | 'pomodoro' | 'stopwatch'
 } | null {
   const data = record(widget.data)
-  if (widget.type === 'timer') return { data, kind: 'timer' }
-  if (widget.type === 'pomodoro') return { data, kind: 'pomodoro' }
-  if (widget.type === 'stopwatch') return { data, kind: 'stopwatch' }
   if (widget.type === 'timekeeper') {
     if (data.mode === 'countdown') return { data: record(data.countdown), kind: 'timer' }
     if (data.mode === 'hourglass') return { data: record(data.countdown), kind: 'timer' }

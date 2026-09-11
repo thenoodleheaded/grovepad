@@ -9,6 +9,18 @@ const SKIN_LABELS = {
   announcements: 'Announcements',
 } as const
 
+/** What each view will fetch once the card is opened. Naming the subject is
+ * the most a folded card may say: it is the one thing that tells the five
+ * views apart, and it is this widget's own setting rather than anybody's
+ * record. */
+const SKIN_SUBJECTS = {
+  overview: 'Term at a glance',
+  courses: 'Enrolled courses',
+  assignments: 'Upcoming work',
+  grades: 'Marks and feedback',
+  announcements: 'Course notices',
+} as const
+
 /**
  * The folded card never repeats student records. It communicates the selected
  * view and the privacy boundary; live Canvas details appear only after opening.
@@ -19,7 +31,7 @@ export function canvasLmsRestingFace(data: Record<string, unknown>): RestingFace
     kind: 'rows',
     eyebrow: { label: SKIN_LABELS[skin], note: 'Private' },
     rows: [
-      { key: 'source', label: 'Canvas LMS', value: 'Open to sync', tone: 'accent' },
+      { key: 'source', label: SKIN_SUBJECTS[skin], value: 'Open to sync', tone: 'accent' },
       { key: 'privacy', label: 'Student data', value: 'This device', tone: 'muted' },
     ],
     overflow: 0,

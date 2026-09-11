@@ -30,4 +30,15 @@ describe('MCP preview UI contracts', () => {
   it('renders previews only for the canvas they target', () => {
     expect(layer).toContain('preview.canvasId === activeCanvasId')
   })
+
+  // A `?? []` literal here re-allocates on the closed-preview path, so the
+  // fold-out effect's deps change on the re-render `setLeaving` triggers and
+  // its cleanup cancels the 240ms timer before `leaving` drains. The stale
+  // chips then paint in the NEXT Quick Add preview — opaque under
+  // prefers-reduced-motion, which disables the fold animation.
+  it('feeds the fold-out hook a stable empty chip list when no scene exists', () => {
+    expect(quickAdd).toContain('const NO_CHIPS: PreviewChip[] = []')
+    expect(quickAdd).toContain('useLeavingChips(scene?.chips ?? NO_CHIPS)')
+    expect(quickAdd).not.toContain('useLeavingChips(scene?.chips ?? [])')
+  })
 })

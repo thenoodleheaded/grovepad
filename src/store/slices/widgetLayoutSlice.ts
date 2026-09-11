@@ -18,9 +18,59 @@ import { applyWidgetDelta, applyWidgetPositions, movedIdsForWidget, uniqueExisti
 import { buildGlueIndex, expandMovedWidgetIds } from '../widgetGraph'
 import { MIN_WIDGET_HEIGHT, MIN_WIDGET_WIDTH } from '../widgetLayoutConstants'
 import { fitWidgetSize, computeDataHeight, computeDataWidth } from '../widgetSizing'
-import { settleWidgetLayout } from '../widgetSettling'
+import { settleWithGenerationFloor } from '../generationFloor'
 import { compactSelectedTrees, untangleCanvasLayout } from '../widgetUntangle'
 import type { WidgetStoreSlice, WidgetStoreSliceContext } from '../widgetStoreSliceContext'
+import { boundsForWidgets } from '../../utils/widgetBounds'
+import { alignUnitDeltas, distributeUnitDeltas, type MoveUnit, type UnitDeltas } from '../../utils/widgetAlignment'
+
+/**
+ * Partition the selection into move units (each glue/strict family moves as a
+ * block), ask for per-unit deltas, and apply them as one undoable, settled
+ * arrangement. Locked widgets stay put, exactly as they do under a nudge.
+ */
+function applySelectionDeltas(
+  get: WidgetStoreSliceContext['get'],
+  set: WidgetStoreSliceContext['set'],
+  pushHistory: WidgetStoreSliceContext['pushHistory'],
+  deltasFor: (units: MoveUnit[]) => UnitDeltas,
+): void {
+  const current = get()
+  const selected = uniqueExistingIds([...current.selectedIds], current.widgets)
+  if (selected.length < 2) return
+  const assigned = new Set<string>()
+  const units: MoveUnit[] = []
+  for (const id of selected) {
+    // A locked card cannot move, so it carries nobody: expanding a family from
+    // one would march the children off on their own and tear the family apart.
+    if (assigned.has(id) || current.widgets[id]?.metadata.locked) continue
+    const family = uniqueExistingIds(expandMovedWidgetIds([id], current), current.widgets)
+    for (const memberId of family) assigned.add(memberId)
+    const movable = family.filter((memberId) => !current.widgets[memberId]?.metadata.locked)
+    if (movable.length === 0) continue
+    const bounds = boundsForWidgets(movable.map((memberId) => current.widgets[memberId]!))
+    if (bounds) units.push({ ids: movable, bounds })
+  }
+  const deltas = deltasFor(units)
+  if (deltas.size === 0) return
+  pushHistory('arrange')
+  set((state) => {
+    const positions: Record<string, Vector2D> = {}
+    for (const [id, delta] of deltas) {
+      const widget = state.widgets[id]
+      if (!widget) continue
+      positions[id] = { x: widget.position.x + delta.dx, y: widget.position.y + delta.dy }
+    }
+    const widgets = applyWidgetPositions(state.widgets, positions)
+    if (widgets === state.widgets) return state
+    const movedIds = Object.keys(positions)
+    return {
+      widgets: settleWithGenerationFloor(widgets, movedIds, state.widgetGlueIndex, state.relations, {
+        anchorIds: movedIds,
+      }),
+    }
+  })
+}
 
 function fullSizing(widget: Widget) {
   return mergeWidgetSizing(widgetDefinition(widget.type).sizing, getLiveWidgetSizing(widget.id))
@@ -88,7 +138,11 @@ export function createWidgetLayoutSlice({ set, get, pushHistory }: WidgetStoreSl
       if (snapped === state.widgets) return state
       // Landing on the grid is a position change like any other, so it runs
       // the overlap check rather than trusting the caller to.
-      return { widgets: settleWidgetLayout(snapped, [id], state.widgetGlueIndex, { anchorIds: [id] }) }
+      return {
+        widgets: settleWithGenerationFloor(snapped, [id], state.widgetGlueIndex, state.relations, {
+          anchorIds: [id],
+        }),
+      }
     })
   },
 
@@ -101,7 +155,14 @@ export function createWidgetLayoutSlice({ set, get, pushHistory }: WidgetStoreSl
       const expanded = expandMovedWidgetIds(uniqueExistingIds(ids, state.widgets), state)
       const validIds = uniqueExistingIds(expanded, state.widgets)
       if (validIds.length === 0) return state
-      const settled = settleWidgetLayout(state.widgets, validIds, state.widgetGlueIndex)
+      // The drop is where the height rule lands: the card was free to be dragged
+      // anywhere, and it comes to rest a full generation below its parent.
+      const settled = settleWithGenerationFloor(
+        state.widgets,
+        validIds,
+        state.widgetGlueIndex,
+        state.relations,
+      )
       // Release-time housekeeping: clusters must always equal what visibly
       // touches. Any interaction that left a member floating free of its
       // group splits here, so a "member" that no longer touches anything can
@@ -130,7 +191,12 @@ export function createWidgetLayoutSlice({ set, get, pushHistory }: WidgetStoreSl
       // overlap check on everything it just placed.
       const moved = applyWidgetPositions(state.widgets, positions)
       return {
-        widgets: settleWidgetLayout(moved, Object.keys(positions), state.widgetGlueIndex),
+        widgets: settleWithGenerationFloor(
+          moved,
+          Object.keys(positions),
+          state.widgetGlueIndex,
+          state.relations,
+        ),
       }
     })
   },
@@ -307,7 +373,11 @@ export function createWidgetLayoutSlice({ set, get, pushHistory }: WidgetStoreSl
     // pulls back together and stays one welded block.
     if (sizeChanged && shouldSettle) {
       set((state) => {
-        let settled = settleWidgetLayout(state.widgets, [id], state.widgetGlueIndex, { anchorIds: [id] })
+        // A card that grew taller pushes its children down as well: the height
+        // rule answers to the new box, not the one it was dropped at.
+        let settled = settleWithGenerationFloor(state.widgets, [id], state.widgetGlueIndex, state.relations, {
+          anchorIds: [id],
+        })
         const glueId = state.widgetGlueIndex[id]
         const cluster = glueId ? state.glues[glueId] : undefined
         if (cluster) settled = closeClusterGaps(settled, cluster.widgetIds, [id])
@@ -375,7 +445,7 @@ export function createWidgetLayoutSlice({ set, get, pushHistory }: WidgetStoreSl
     // branch runs INSTEAD of resizeWidget's own settle, not after it.
     if (snap) {
       set((state) => {
-        let settled = settleWidgetLayout(state.widgets, [id], state.widgetGlueIndex, {
+        let settled = settleWithGenerationFloor(state.widgets, [id], state.widgetGlueIndex, state.relations, {
           anchorIds: [id],
         })
         const glueId = state.widgetGlueIndex[id]
@@ -451,7 +521,9 @@ export function createWidgetLayoutSlice({ set, get, pushHistory }: WidgetStoreSl
       const widgets = { ...state.widgets, [id]: next }
       // Icon <-> full is the single largest box change a card can make, and it
       // re-centres the card as well — so it always re-runs the overlap check.
-      let settled = settleWidgetLayout(widgets, [id], state.widgetGlueIndex, { anchorIds: [id] })
+      let settled = settleWithGenerationFloor(widgets, [id], state.widgetGlueIndex, state.relations, {
+        anchorIds: [id],
+      })
       if (!cluster) return { widgets: settled }
       // A member that grew made space through the reflow above; one that
       // SHRANK left a hole nothing closes on its own. Pull the cluster back
@@ -534,7 +606,7 @@ export function createWidgetLayoutSlice({ set, get, pushHistory }: WidgetStoreSl
         // card for the same reason every other size change here is — otherwise
         // the settle grid-snaps and can displace the card being typed in.
         if (size.width !== w.size.width || size.height !== w.size.height) {
-          widgets = settleWidgetLayout(widgets, [widgetId], state.widgetGlueIndex, {
+          widgets = settleWithGenerationFloor(widgets, [widgetId], state.widgetGlueIndex, state.relations, {
             anchorIds: [widgetId],
           })
         }
@@ -564,7 +636,9 @@ export function createWidgetLayoutSlice({ set, get, pushHistory }: WidgetStoreSl
       // the overlap check like any other.
       const renamed = withWidget(state.widgets, widgetId, (w) => ({ ...w, title }))
       return {
-        widgets: settleWidgetLayout(renamed, [widgetId], state.widgetGlueIndex, { anchorIds: [widgetId] }),
+        widgets: settleWithGenerationFloor(renamed, [widgetId], state.widgetGlueIndex, state.relations, {
+          anchorIds: [widgetId],
+        }),
         canvases,
       }
     })
@@ -585,6 +659,14 @@ export function createWidgetLayoutSlice({ set, get, pushHistory }: WidgetStoreSl
   },
 
 
+  alignSelection: (mode) => {
+    applySelectionDeltas(get, set, pushHistory, (units) => alignUnitDeltas(units, mode))
+  },
+
+  distributeSelection: (axis) => {
+    applySelectionDeltas(get, set, pushHistory, (units) => distributeUnitDeltas(units, axis))
+  },
+
   nudgeSelection: (dx, dy) => {
     const current = get()
     if (current.selectedIds.size === 0) return
@@ -593,8 +675,13 @@ export function createWidgetLayoutSlice({ set, get, pushHistory }: WidgetStoreSl
     // left its whole parent-linked family standing where it was. Glue clusters
     // only survived by accident, because selectWidget already expands a click
     // to every member.
+    // Expanded from the cards that can actually move: a locked holder stays
+    // put, so it carries nobody — otherwise its family would walk off without
+    // it. Locked members inside a moving family are filtered again below.
     const expanded = expandMovedWidgetIds(
-      uniqueExistingIds([...current.selectedIds], current.widgets),
+      uniqueExistingIds([...current.selectedIds], current.widgets).filter(
+        (widgetId) => !current.widgets[widgetId]?.metadata.locked,
+      ),
       current,
     )
     const ids = uniqueExistingIds(expanded, current.widgets).filter(
@@ -614,7 +701,9 @@ export function createWidgetLayoutSlice({ set, get, pushHistory }: WidgetStoreSl
       // undone by its own settle and full cards could not be fine-positioned
       // at all.
       return {
-        widgets: settleWidgetLayout(widgets, ids, state.widgetGlueIndex, { anchorIds: ids }),
+        widgets: settleWithGenerationFloor(widgets, ids, state.widgetGlueIndex, state.relations, {
+          anchorIds: ids,
+        }),
       }
     })
   },

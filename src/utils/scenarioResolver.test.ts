@@ -50,8 +50,8 @@ describe('scenario catalogue', () => {
   it('fills a detected deadline into countdown cards', () => {
     const result = resolveScenario('studying for my exam on July 20')
     const countdown = result?.directions.flatMap((direction) => direction.plan.nodes)
-      .find((node) => node.widgetType === 'countdown')
-    expect(countdown?.data).toMatchObject({ targetDate: expect.stringMatching(/-07-20$/) })
+      .find((node) => node.widgetType === 'timekeeper')
+    expect(countdown?.data).toMatchObject({ deadline: { targetDate: expect.stringMatching(/-07-20$/) } })
   })
 
   it('splits an explicit compound thought into two local clusters', () => {
@@ -65,7 +65,7 @@ describe('scenario catalogue', () => {
     expect(result?.archetypeId).toBe('language-learning')
     expect(result?.topic).toBe('Spanish')
     expect(result?.directions[0]?.plan.nodes.map((node) => node.widgetType)).toEqual(
-      expect.arrayContaining(['study_goal', 'vocab', 'flashcards', 'habit']),
+      expect.arrayContaining(['goal_tracker', 'flashcards', 'habit']),
     )
   })
 

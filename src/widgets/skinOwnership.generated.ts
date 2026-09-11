@@ -53,14 +53,6 @@ export const WIDGET_SKIN_OWNERSHIP = {
     "live_thumbnail": {
       "kind": "capability",
       "target": "Canvas"
-    },
-    "dashboard_door": {
-      "kind": "capability",
-      "target": "Canvas"
-    },
-    "folder_index": {
-      "kind": "capability",
-      "target": "Canvas"
     }
   },
   "bullets": {
@@ -72,21 +64,9 @@ export const WIDGET_SKIN_OWNERSHIP = {
       "kind": "skin",
       "target": "Bullets"
     },
-    "compact_chips": {
-      "kind": "skin",
-      "target": "Bullets"
-    },
-    "two_column": {
-      "kind": "skin",
-      "target": "Bullets"
-    },
     "nested_outline": {
       "kind": "move",
       "target": "Outline"
-    },
-    "rolling_log": {
-      "kind": "move",
-      "target": "Logbook"
     }
   },
   "code": {
@@ -175,26 +155,10 @@ export const WIDGET_SKIN_OWNERSHIP = {
       "target": "Meeting Notes"
     }
   },
-  "notes": {
-    "daily_log": {
-      "kind": "move",
-      "target": "Logbook"
-    },
-    "markdown_page": {
-      "kind": "skin",
-      "target": "Note"
-    },
+  "text": {
     "typewriter": {
       "kind": "skin",
-      "target": "Note"
-    },
-    "callout": {
-      "kind": "skin",
-      "target": "Note"
-    },
-    "versioned_note": {
-      "kind": "capability",
-      "target": "Note"
+      "target": "Text"
     }
   },
   "outline": {
@@ -545,28 +509,6 @@ export const WIDGET_SKIN_OWNERSHIP = {
     "evidence_map": {
       "kind": "new-widget",
       "target": "Evidence Map"
-    }
-  },
-  "cornell": {
-    "lecture": {
-      "kind": "skin",
-      "target": "Cornell Notes"
-    },
-    "reading": {
-      "kind": "skin",
-      "target": "Cornell Notes"
-    },
-    "problem_solving": {
-      "kind": "skin",
-      "target": "Cornell Notes"
-    },
-    "interview": {
-      "kind": "skin",
-      "target": "Cornell Notes"
-    },
-    "research": {
-      "kind": "skin",
-      "target": "Cornell Notes"
     }
   },
   "formula_sheet": {

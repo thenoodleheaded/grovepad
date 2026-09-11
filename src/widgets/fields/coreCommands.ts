@@ -1,36 +1,26 @@
 import type { ModuleType,
-  AssignmentData,
   BranchGateData,
   BulletsData,
   ChecklistData,
   CounterData,
-  DailyAgendaData,
   DecisionData,
   FlashcardsData,
   FormWidgetData,
   GoalTrackerData,
   HabitData,
-  KanbanData,
   LinksData,
   MeetingNotesData,
+  MoodTrackerData,
   NumberInputData,
   PollData,
-  PomodoroData,
   ProcessData,
-  ProgressData,
-  QuizData,
   RatingData,
   ReadingListData,
   RiskRegisterData,
   SketchpadData,
-  StudyGoalData,
   StatusData,
-  TimerData,
   TimekeeperData,
   ToggleData,
-  VocabData,
-  WeeklyPlannerData,
-  WorldClockData,
 } from '../../types/spatial'
 import type { CommandDescriptor } from '../contracts/fields'
 import { text, isValidTimeZone } from './valueHelpers'
@@ -74,23 +64,6 @@ export const CORE_WIDGET_COMMANDS = {
           }
         }
         return { ...value, strokes: [] }
-      },
-    },
-  ],
-  stopwatch: [
-    {
-      key: 'reset',
-      label: 'Reset stopwatch',
-      run: () => ({ elapsedMs: 0, startedAt: null, laps: [] }),
-    },
-  ],
-  timer: [
-    {
-      key: 'reset',
-      label: 'Reset timer',
-      run: (d) => {
-        const t = d as TimerData
-        return { ...t, remainingSeconds: t.durationSeconds, endAt: null }
       },
     },
   ],
@@ -189,27 +162,9 @@ export const CORE_WIDGET_COMMANDS = {
           id: crypto.randomUUID(),
           text: text(payload ?? '').trim() || 'New item',
         }
-        const next = { ...data, items: [...data.items, item] }
-        if (data.skin !== 'rolling_log') return next
-        const logState = data.skinStates?.rolling_log ?? {}
-        const timestamps = logState.timestamps &&
-          typeof logState.timestamps === 'object' &&
-          !Array.isArray(logState.timestamps)
-          ? logState.timestamps as Record<string, unknown>
-          : {}
-        return {
-          ...next,
-          skinStates: {
-            ...data.skinStates,
-            rolling_log: {
-              ...logState,
-              timestamps: {
-                ...timestamps,
-                [item.id]: new Date().toISOString(),
-              },
-            },
-          },
-        }
+        // The worn skin and its own state ride along untouched — a wire adds a
+        // point to the list, it does not reshape the card.
+        return { ...data, items: [...data.items, item] }
       },
     },
   ],
@@ -222,27 +177,11 @@ export const CORE_WIDGET_COMMANDS = {
         const value = text(payload ?? '').trim()
         const looksLikeUrl = /^https?:\/\//i.test(value)
         return {
+          ...(d as LinksData),
           items: [
             ...(d as LinksData).items,
             { id: crypto.randomUUID(), label: looksLikeUrl ? '' : value, url: looksLikeUrl ? value : '' },
           ],
-        }
-      },
-    },
-  ],
-  kanban: [
-    {
-      key: 'add_item',
-      label: 'Add card from wire',
-      acceptsPayload: true,
-      run: (d, payload) => {
-        const kd = d as KanbanData
-        if (kd.columns.length === 0) return kd
-        const card = { id: crypto.randomUUID(), label: text(payload ?? '').trim() || 'New card' }
-        return {
-          columns: kd.columns.map((column, index) =>
-            index === 0 ? { ...column, cards: [...column.cards, card] } : column,
-          ),
         }
       },
     },
@@ -256,26 +195,6 @@ export const CORE_WIDGET_COMMANDS = {
         ...(d as DecisionData),
         options: [...(d as DecisionData).options, text(payload ?? '').trim() || 'New option'],
       }),
-    },
-  ],
-  world_clock: [
-    {
-      key: 'add_zone',
-      label: 'Add timezone from wire',
-      acceptsPayload: true,
-      run: (d, payload) => {
-        const zone = text(payload ?? '').trim()
-        const wd = d as WorldClockData
-        if (!zone || wd.zones.includes(zone) || !isValidTimeZone(zone)) return wd
-        return { zones: [...wd.zones, zone] }
-      },
-    },
-  ],
-  progress: [
-    {
-      key: 'reset',
-      label: 'Reset to 0%',
-      run: (d) => ({ ...(d as ProgressData), percent: 0 }),
     },
   ],
   rating: [
@@ -306,7 +225,7 @@ export const CORE_WIDGET_COMMANDS = {
     {
       key: 'reset',
       label: 'Clear the week',
-      run: () => ({ days: Array(7).fill(null) }),
+      run: (d) => ({ ...(d as MoodTrackerData), days: Array(7).fill(null) }),
     },
   ],
   flashcards: [
@@ -329,22 +248,6 @@ export const CORE_WIDGET_COMMANDS = {
       },
     },
   ],
-  weekly_planner: [
-    {
-      key: 'uncheck_all',
-      label: 'Uncheck all tasks',
-      run: (d) => ({
-        days: (d as WeeklyPlannerData).days.map((day) => day.map((t) => ({ ...t, done: false }))),
-      }),
-    },
-    {
-      key: 'check_all',
-      label: 'Check all tasks',
-      run: (d) => ({
-        days: (d as WeeklyPlannerData).days.map((day) => day.map((t) => ({ ...t, done: true }))),
-      }),
-    },
-  ],
   meeting_notes: [
     {
       key: 'uncheck_all',
@@ -356,6 +259,19 @@ export const CORE_WIDGET_COMMANDS = {
     },
   ],
   goal_tracker: [
+    {
+      // Inherited from the retired Progress card, whose only command this was.
+      // It belongs to the Simple skin, which is what that card became.
+      key: 'reset',
+      label: 'Reset to 0%',
+      run: (d) => {
+        const goal = d as GoalTrackerData
+        return {
+          ...goal,
+          simple: { label: (goal.simple?.label ?? goal.goal) || 'Progress', percent: 0 },
+        }
+      },
+    },
     {
       key: 'uncheck_all',
       label: 'Reset milestones',
@@ -378,63 +294,9 @@ export const CORE_WIDGET_COMMANDS = {
       key: 'reset',
       label: 'Re-queue everything',
       run: (d) => ({
+        ...(d as ReadingListData),
         items: (d as ReadingListData).items.map((i) => ({ ...i, status: 'queued' as const })),
       }),
-    },
-  ],
-  pomodoro: [
-    {
-      key: 'reset',
-      label: 'Reset timer & sessions',
-      run: (d) => {
-        const p = d as PomodoroData
-        return {
-          ...p,
-          phase: 'work' as const,
-          endAt: null,
-          remainingSeconds: p.workMinutes * 60,
-          completed: 0,
-        }
-      },
-    },
-  ],
-  vocab: [
-    {
-      key: 'reset',
-      label: 'Mark all unknown',
-      run: (d) => ({
-        terms: (d as VocabData).terms.map((t) => ({ ...t, known: false })),
-      }),
-    },
-  ],
-  assignment: [
-    {
-      key: 'check_all',
-      label: 'Mark all done',
-      run: (d) => ({
-        items: (d as AssignmentData).items.map((i) => ({ ...i, status: 'done' as const })),
-      }),
-    },
-    {
-      key: 'reset',
-      label: 'Reset all to to-do',
-      run: (d) => ({
-        items: (d as AssignmentData).items.map((i) => ({ ...i, status: 'todo' as const })),
-      }),
-    },
-  ],
-  study_goal: [
-    {
-      key: 'reset',
-      label: 'Reset logged hours',
-      run: (d) => ({ ...(d as StudyGoalData), loggedHours: 0 }),
-    },
-  ],
-  quiz: [
-    {
-      key: 'reset',
-      label: 'Clear answer',
-      run: (d) => ({ ...(d as QuizData), picked: null }),
     },
   ],
   number_input: [
@@ -479,35 +341,23 @@ export const CORE_WIDGET_COMMANDS = {
       }),
     },
   ],
-  daily_agenda: [
-    {
-      key: 'uncheck_all',
-      label: 'Reopen all agenda items',
-      run: (d) => ({ ...(d as DailyAgendaData), items: (d as DailyAgendaData).items.map((item) => ({ ...item, done: false })) }),
-    },
-    {
-      key: 'check_all',
-      label: 'Complete all agenda items',
-      run: (d) => ({ ...(d as DailyAgendaData), items: (d as DailyAgendaData).items.map((item) => ({ ...item, done: true })) }),
-    },
-  ],
   process: [
     {
       key: 'reset',
       label: 'Restart process',
-      run: (d) => ({ steps: (d as ProcessData).steps.map((step, index) => ({ ...step, status: index === 0 ? 'active' as const : 'todo' as const })) }),
+      run: (d) => ({ ...(d as ProcessData), steps: (d as ProcessData).steps.map((step, index) => ({ ...step, status: index === 0 ? 'active' as const : 'todo' as const })) }),
     },
     {
       key: 'check_all',
       label: 'Complete process',
-      run: (d) => ({ steps: (d as ProcessData).steps.map((step) => ({ ...step, status: 'done' as const })) }),
+      run: (d) => ({ ...(d as ProcessData), steps: (d as ProcessData).steps.map((step) => ({ ...step, status: 'done' as const })) }),
     },
   ],
   risk_register: [
     {
       key: 'reset',
       label: 'Reopen all risks',
-      run: (d) => ({ items: (d as RiskRegisterData).items.map((item) => ({ ...item, status: 'open' as const })) }),
+      run: (d) => ({ ...(d as RiskRegisterData), items: (d as RiskRegisterData).items.map((item) => ({ ...item, status: 'open' as const })) }),
     },
   ],
 } satisfies Partial<Record<ModuleType, CommandDescriptor[]>>

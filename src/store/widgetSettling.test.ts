@@ -8,7 +8,7 @@ function card(id: string, x: number, y: number, width = 160, height = 80): Widge
   return {
     id,
     canvasId: 'c1',
-    type: 'notes',
+    type: 'text',
     title: id,
     position: { x, y },
     size: { width, height },

@@ -217,7 +217,8 @@ export interface WidgetGlue {
 
 export interface SearchResult {
   id: string
-  type: 'widget' | 'action'
+  /** 'canvas' results navigate INTO the canvas named by `id` on execute. */
+  type: 'widget' | 'action' | 'canvas'
   title: string
   subtitle: string
   position: Vector2D

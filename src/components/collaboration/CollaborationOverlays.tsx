@@ -543,8 +543,13 @@ export function CollaborationChrome() {
     if (open) setRendered(true)
   }, [open])
 
+  // An unshared canvas unmounts the panel outright below, so its exit
+  // animation never reports back and `rendered` would be stranded true — the
+  // next shared canvas would then mount a ghost panel replaying its collapse.
   useEffect(() => {
-    if (!canvasShared) setOpen(false)
+    if (canvasShared) return
+    setOpen(false)
+    setRendered(false)
   }, [canvasShared])
 
   useEffect(() => {

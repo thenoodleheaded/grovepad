@@ -267,8 +267,8 @@ function useLocalAnnotationSource(key: string): string {
     }
     let objectUrl = ''
     let cancelled = false
-    void import('../../../utils/boardDatabase')
-      .then(({ readMediaBlob }) => readMediaBlob(key))
+    void import('../../../services/mediaSyncService')
+      .then(({ loadMediaBlob }) => loadMediaBlob(key))
       .then((blob) => {
         if (!blob || cancelled) return
         objectUrl = URL.createObjectURL(blob)
@@ -316,8 +316,8 @@ function AnnotationView({
     if (!file || (!file.type.startsWith('image/') && file.type !== 'application/pdf')) return
     const suffix = globalThis.crypto?.randomUUID?.() ?? String(Date.now())
     const localBlobKey = `annotation:${widgetId}:${suffix}`
-    const { writeMediaBlob } = await import('../../../utils/boardDatabase')
-    await writeMediaBlob(localBlobKey, file)
+    const { storeMediaBlob } = await import('../../../services/mediaSyncService')
+    await storeMediaBlob(localBlobKey, file)
     update({
       localBlobKey,
       mimeType: file.type,

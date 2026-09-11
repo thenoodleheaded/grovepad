@@ -10,6 +10,7 @@ Run this checklist after every implementation phase, against a production build 
 - [ ] Open a resting tile, drag one side of the open card far out, then close it: only that side moved, and the tile lands back on the exact spot it opened from.
 - [ ] Click an icon that sits inside a glued group: the card opens over its neighbours without moving any of them, Escape closes it back into the same icon at the same spot, and Undo afterwards reverses whatever you did BEFORE the click. Then open it again and press Pin: only now does the group make space, in one undo step, with the card staying exactly where it was drawn.
 - [ ] At phone width (under 640px), tap a resting tile: it grows out of that tile into a fullscreen sheet, edits save, and the chevron, Escape, or a pull-down on the header folds it back onto the same tile with the board untouched behind it. Tap an icon: it opens the same way and is still an icon afterwards.
+- [ ] On a real phone, with two cards on the board: the bottom dock shows Navigate, Select, Undo and Redo and overlaps nothing. Tap one card, tap Select more, tap the other: the bar reads 2 selected. Tap Glue, then Undo in the dock: only the weld comes undone. The ⋯ menu's Shape a tree starts the shaper.
 - [ ] Create a second widget and connect compatible output and input ports; confirm the value propagates.
 - [ ] Create a dependency and a relation; confirm their distinct line visuals, routing, selection, and deletion behavior.
 - [ ] Pan and zoom the canvas, including far-zoom proxy mode, and confirm widgets and lines remain aligned.

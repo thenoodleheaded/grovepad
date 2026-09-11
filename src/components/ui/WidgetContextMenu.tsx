@@ -1,16 +1,14 @@
 import type { ReactNode } from 'react'
 import {
-  Cable,
-  CheckSquare,
   Copy,
   Droplets,
   FolderOpen,
-  GitMerge,
   LockKeyhole,
   UnlockKeyhole,
   Magnet,
   MonitorSmartphone,
-  MousePointer2,
+  PenLine,
+  Scissors,
   Trash2,
   Waypoints,
 } from 'lucide-react'
@@ -19,7 +17,7 @@ import { createPortal } from 'react-dom'
 import { useShallow } from 'zustand/react/shallow'
 import { useOverlayLifecycle } from '../../store/useOverlayStore'
 import { useToastStore } from '../../store/useToastStore'
-import { strictHolderOf, useWidgetStore } from '../../store/useWidgetStore'
+import { resolveStrictHold, useWidgetStore } from '../../store/useWidgetStore'
 import { useNativeWidgetStore } from '../../store/useNativeWidgetStore'
 import { requestWidgetDeletion } from '../../store/useWidgetDeletionDialogStore'
 import { clampPopover } from '../../utils/popoverPosition'
@@ -78,13 +76,19 @@ export function WidgetContextMenu() {
         )
       : false,
   )
-  // Strictness is inherited downward and owned at the top: a node already held
-  // by an ancestor is hard whatever it says about itself, so it never offers
-  // its own switch — it names the holder, and the hold is released up there.
-  const heldByTitle = useWidgetStore((state) => {
+  // Hard parenting is the default, so what this row shows is the RESOLVED
+  // answer: the node's own flag, else the nearest released ancestor's, else
+  // hard. Two reads of the same resolution — the state to show, and the
+  // ancestor to name when the node did not decide for itself.
+  const strictHold = useWidgetStore((state) =>
+    contextMenu
+      ? resolveStrictHold(contextMenu.widgetId, state.widgets, state.relations).strict
+      : true,
+  )
+  const releasedByTitle = useWidgetStore((state) => {
     if (!contextMenu) return null
-    const holderId = strictHolderOf(contextMenu.widgetId, state.widgets, state.relations)
-    return holderId ? state.widgets[holderId]?.title ?? null : null
+    const { inheritedFrom } = resolveStrictHold(contextMenu.widgetId, state.widgets, state.relations)
+    return inheritedFrom ? state.widgets[inheritedFrom]?.title ?? null : null
   })
   const { nativeWidgetId, nativeWidgetSyncStatus } = useNativeWidgetStore(useShallow((state) => ({
     nativeWidgetId: state.selectedWidgetId,
@@ -125,11 +129,10 @@ export function WidgetContextMenu() {
 
   const isSelected = selectedIds.includes(widget.id)
   const actionIds = isSelected ? selectedIds : [widget.id]
-  const strictHold = widget.metadata.strictHold === true
   // Height is what keeps the menu on screen near the bottom edge, so the
   // estimate counts the tallest the menu gets: every conditional row present,
   // including the strict-hold switch.
-  const { x: left, y: top } = clampPopover(contextMenu.x, contextMenu.y, 220, 380)
+  const { x: left, y: top } = clampPopover(contextMenu.x, contextMenu.y, 220, 550)
 
   const close = () => useWidgetStore.getState().closeContextMenu()
   const run = (action: () => void) => {
@@ -174,13 +177,7 @@ export function WidgetContextMenu() {
             <FolderOpen size={13} aria-hidden />
           </MenuButton>
         )}
-        <MenuButton
-          label="Select only"
-          onClick={() => run(() => useWidgetStore.getState().selectWidget(widget.id, false))}
-        >
-          <MousePointer2 size={13} aria-hidden />
-        </MenuButton>
-        {widget.type === 'notes' && isNativeWidgetHost() && nativeWidgetSyncStatus !== 'unsupported' && (
+        {widget.type === 'text' && isNativeWidgetHost() && nativeWidgetSyncStatus !== 'unsupported' && (
           <MenuButton
             label={nativeWidgetId === widget.id ? 'Remove from home-screen widget' : 'Use in home-screen widget'}
             onClick={() => run(() => {
@@ -197,20 +194,42 @@ export function WidgetContextMenu() {
           </MenuButton>
         )}
         <MenuButton
-          label={isSelected ? 'Remove from selection' : 'Add to selection'}
-          onClick={() => run(() => useWidgetStore.getState().selectWidget(widget.id, true))}
-        >
-          <CheckSquare size={13} aria-hidden />
-        </MenuButton>
-        <MenuButton
           label={actionIds.length > 1 ? `Duplicate ${actionIds.length}` : 'Duplicate'}
           onClick={() => run(() => useWidgetStore.getState().duplicateWidgets(actionIds))}
         >
           <Copy size={13} aria-hidden />
         </MenuButton>
         <MenuButton
-          label={widget.metadata.locked ? 'Unlock widget' : 'Lock widget'}
-          onClick={() => run(() => useWidgetStore.getState().toggleWidgetLocked(widget.id))}
+          label={actionIds.length > 1 ? `Copy ${actionIds.length}` : 'Copy'}
+          onClick={() => run(() => useWidgetStore.getState().copyWidgets(actionIds))}
+        >
+          <Copy size={13} aria-hidden />
+        </MenuButton>
+        <MenuButton
+          label={actionIds.length > 1 ? `Cut ${actionIds.length}` : 'Cut'}
+          onClick={() => run(() => useWidgetStore.getState().cutWidgets(actionIds))}
+        >
+          <Scissors size={13} aria-hidden />
+        </MenuButton>
+        <MenuButton
+          label="Rename (F2)"
+          onClick={() => run(() => useWidgetStore.getState().startRenaming(widget.id))}
+        >
+          <PenLine size={13} aria-hidden />
+        </MenuButton>
+        <MenuButton
+          label={
+            actionIds.length > 1
+              ? widget.metadata.locked ? `Unlock ${actionIds.length}` : `Lock ${actionIds.length}`
+              : widget.metadata.locked ? 'Unlock widget' : 'Lock widget'
+          }
+          onClick={() =>
+            run(() => {
+              // The clicked card decides the direction, so a mixed selection
+              // resolves to one predictable state instead of flipping each card.
+              useWidgetStore.getState().lockWidgets(actionIds, !widget.metadata.locked)
+            })
+          }
         >
           {widget.metadata.locked ? <UnlockKeyhole size={13} aria-hidden /> : <LockKeyhole size={13} aria-hidden />}
         </MenuButton>
@@ -222,32 +241,21 @@ export function WidgetContextMenu() {
             <Droplets size={13} aria-hidden />
           </MenuButton>
         )}
-        <div className="my-1 border-t border-neutral-800" />
-        <MenuButton
-          label="Connect to…"
-          onClick={() => run(() => useWidgetStore.getState().startChildLink(widget.id))}
-        >
-          <GitMerge size={13} aria-hidden />
-        </MenuButton>
-        <MenuButton
-          label="Make prerequisite for… (X)"
-          onClick={() => run(() => useWidgetStore.getState().startDependencyLink(widget.id))}
-        >
-          <Cable size={13} aria-hidden />
-        </MenuButton>
-        {heldByTitle !== null ? (
-          // Inside a held tree there are no soft pockets: this node cannot be
-          // softened here, so the row is a statement, not a switch.
+        {hasFamily ? (
+          <div className="my-1 border-t border-neutral-800" />
+        ) : null}
+        {hasFamily ? (
+          // Hard by default, and every node owns the hold on its own branch:
+          // the row always switches. An answer a node inherited names where it
+          // was decided instead of refusing to move.
           <MenuButton
-            label={`Held strictly by ${truncate(heldByTitle, 14)}`}
-            disabled
-            onClick={() => {}}
-          >
-            <Magnet size={13} aria-hidden />
-          </MenuButton>
-        ) : hasFamily ? (
-          <MenuButton
-            label={strictHold ? 'Release strict hold' : 'Hold family strictly'}
+            label={
+              strictHold
+                ? 'Release strict hold'
+                : releasedByTitle !== null
+                  ? `Hold family strictly (released by ${truncate(releasedByTitle, 12)})`
+                  : 'Hold family strictly'
+            }
             onClick={() =>
               run(() =>
                 useWidgetStore

@@ -48,10 +48,12 @@
 .gp-widget-sheet-scrim {
   position: absolute;
   inset: 0;
-  /* Deep, but not opaque: the board has to stay legible behind the growing
-     mask for its recede to be visible at all. The panel's own material is
-     ~98% opaque, so nothing ghosts through the sheet itself. */
-  background: rgb(3 6 12 / 0.62);
+  /* Gentle, because the only place this is ever seen is the band of board
+     around an open sheet — the panel's own material is ~98% opaque, so none of
+     it shows through the sheet itself. It used to be a near-blackout, which was
+     free when the sheet covered every pixel; against a visible frame that same
+     value just crushed the blurred board to flat black. */
+  background: rgb(3 6 12 / 0.38);
   opacity: 0;
   /* Opacity only — the one property a compositor animates without repainting. */
   transition: opacity var(--gp-sheet-motion) var(--gp-ease-sheet);
@@ -69,10 +71,17 @@
   display: flex;
   flex-direction: column;
   inset: 0;
-  /* The corners belong to the clip, not to the box: the flight rounds them to
-     the tile's own radius and squares them off as it fills the screen. A
-     border-radius inherited from the card material would sit *inside* that and
-     leave four notches of bare page at the corners of an open sheet. */
+  /* The BOX stays the whole viewport even though the sheet reads as an inset
+     panel. Every rectangle in the flight — the tile it grows from, the frame it
+     settles into — is in viewport coordinates, and keeping the box equal to the
+     viewport is what lets the clip use them directly. The margin is taken out
+     with padding instead, so only the content moves inward and the clip maths
+     never has to know about it. */
+  padding: var(--gp-sheet-margin, 0px);
+  /* The corners belong to the clip, not to the box: the flight eases them from
+     the tile's own radius up to the panel's. A border-radius inherited from the
+     card material would sit *inside* that clip and cut four notches out of the
+     panel's own rounded corners. */
   border-radius: 0;
   /* The panel takes initial focus so the trap has somewhere neutral to land;
      it is a container, not a control, so it shows no focus ring. */
@@ -81,6 +90,29 @@
     clip-path var(--gp-sheet-motion) var(--gp-ease-sheet),
     transform var(--gp-sheet-motion) var(--gp-ease-sheet);
   will-change: clip-path;
+}
+
+/* The panel's own edge. A drop shadow cannot be used here: `clip-path` clips an
+   element's shadow along with its paint, so an outer glow would be sliced off
+   at exactly the corner it is meant to soften. An inset ring lives inside the
+   clip, follows the animating corner radius for free, and costs no extra layer.
+   Separation from the board comes from the blur behind instead. */
+.gp-widget-sheet[data-open]::after {
+  content: '';
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 0.08),
+    inset 0 1px 0 rgb(255 255 255 / 0.1);
+  pointer-events: none;
+}
+
+[data-theme='light'] .gp-widget-sheet[data-open]::after {
+  box-shadow:
+    inset 0 0 0 1px rgb(16 26 20 / 0.1),
+    inset 0 1px 0 rgb(255 255 255 / 0.5);
 }
 
 /* Safe-area and keyboard insets live on the content, never on the panel: the
@@ -159,11 +191,15 @@
   font-size: 15px;
   font-weight: 600;
   line-height: 1.2;
-  /* A card keeps light-on-dark internals in both themes, so the sheet's own
-     chrome does too rather than following the page's text colour. */
+  /* Dark-theme sheet chrome stays light; silver light-theme sheets override
+     this with their dark material ink below. */
   color: #e5e5e5;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+[data-theme='light'] .gp-widget-sheet-title {
+  color: #222a25;
 }
 
 .gp-widget-sheet-close {
@@ -178,6 +214,16 @@
 
 .gp-widget-sheet-close:active {
   color: #e5e5e5;
+}
+
+/* Silver light-theme sheets: the close glyph's grey is tuned for dark chrome
+   and reads at ~2:1 on paper — it deepens to the muted material ink. */
+[data-theme='light'] .gp-widget-sheet-close {
+  color: #59645d;
+}
+
+[data-theme='light'] .gp-widget-sheet-close:active {
+  color: #222a25;
 }
 
 .gp-widget-sheet-body {
@@ -211,8 +257,20 @@ html[data-widget-sheet] .gp-canvas-shell {
   /* Slightly above centre: a phone's content sits high, and pushing away from
      the upper third reads as depth rather than as a zoom. */
   transform-origin: 50% 42%;
+  /* Held at zero rather than left as `none` so both ends of the transition are
+     the same filter function. `none` -> `blur()` is an interpolation browsers
+     are not equally good at, and the one that fails renders as the board
+     snapping into focus at the end of an otherwise smooth close. */
+  filter: blur(0px);
   transition:
     transform var(--gp-sheet-motion) var(--gp-ease-sheet),
+    /* Shorter than the rest on purpose. Every frame of a changing blur radius
+       re-rasterises a viewport-sized texture of the whole board, so this is the
+       one genuinely expensive part of the flight — finishing it in the first
+       60% keeps that cost off the frames where the panel is still growing, and
+       the board being fully soft before the sheet settles is what you want to
+       see anyway. */
+    filter calc(var(--gp-sheet-motion) * 0.6) var(--gp-ease-sheet),
     opacity var(--gp-sheet-motion) var(--gp-ease-sheet);
   /* Deliberately no `will-change` here. The browser promotes this for the
      duration of the transition and hands the memory straight back; declaring it
@@ -223,8 +281,21 @@ html[data-widget-sheet] .gp-canvas-shell {
 }
 
 html[data-widget-sheet='open'] .gp-canvas-shell {
-  transform: scale(1.08);
-  opacity: 0.3;
+  /* Softer push than the full-bleed sheet used. The board is no longer hidden
+     behind the panel — a band of it frames the sheet on every side — so this
+     movement is now something the user actually watches rather than a parallax
+     they only feel. */
+  transform: scale(1.05);
+  /* The blur is what makes the band read as "behind" rather than as a border.
+     Applied to the board itself, NOT as a full-screen `backdrop-filter` over
+     it: filtering a viewport-sized backdrop is the cost this project already
+     removed from the settings overlay, and it buys nothing here because the
+     thing being blurred is a single element that is already being animated. */
+  filter: blur(calc(18px * var(--gp-blur-scale, 1)));
+  /* Raised from the old 0.3. Under a full-bleed sheet the board was invisible
+     and could be dimmed to almost nothing for free; now it is on show, and at
+     0.3 under the scrim the blur would be too dark to see at all. */
+  opacity: 0.55;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -245,6 +316,19 @@ html[data-widget-sheet='open'] .gp-canvas-shell {
   html[data-widget-sheet='open'] .gp-canvas-shell {
     transform: none;
     opacity: 1;
+    /* `none`, not `blur(0px)`: with no transition to keep both ends matched,
+       a zero blur would only pin a pointless full-board texture. */
+    filter: none;
     transition: none;
   }
+}
+
+/* The Light visual-quality tier deletes work rather than scaling it down, and
+   `--gp-blur-scale: 0` would still leave a filter function in place for the
+   compositor to allocate a board-sized texture for. Removed outright instead —
+   this is the tier chosen on older machines and on battery, and a viewport-
+   sized blur is the single most expensive thing on this screen. */
+html[data-quality='low'][data-widget-sheet] .gp-canvas-shell,
+html[data-quality='low'][data-widget-sheet='open'] .gp-canvas-shell {
+  filter: none;
 }

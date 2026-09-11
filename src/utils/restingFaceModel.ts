@@ -1,4 +1,4 @@
-import type { NoteCalloutTone, NoteSkinMode } from '../components/widgets/modules/noteSkinModel'
+import type { TextSkinMode } from '../components/widgets/modules/textSkinModel'
 import type { SkinPresentation } from '../widgets/skinBlueprints.generated'
 
 // ---------------------------------------------------------------------------
@@ -40,6 +40,9 @@ export interface RestRow {
   /** A small leading label the open card puts before the row: a clock time, a
    * step number, a rank. Rendered ahead of the completion glyph. */
   lead?: string
+  /** The open card's own bullet, for lists whose rows are marked rather than
+   * checked. A folded list must wear the marker it wears open. */
+  marker?: 'dot'
   /** Outline depth. Real indentation, not padded text: spaces inside a
    * truncating label are collapsed and would flatten the tree. */
   indent?: number
@@ -114,22 +117,19 @@ export interface RestReadout {
   tone?: RestTone
 }
 
-export type RestNoteLineKind = 'text' | 'heading' | 'bullet' | 'quote' | 'code' | 'rule'
-
-export interface RestNoteLine {
-  kind: RestNoteLineKind
-  text: string
-}
-
+/**
+ * The one grammar that carries no reading of its own.
+ *
+ * Every other face reduces its widget to a bounded summary. A Note cannot be
+ * summarized without deciding which sentence the writer may keep, so the tile
+ * draws the card's OWN page instead and scales it down — the model only has to
+ * say which skin's page that is. The reading is the widget's data, read at
+ * paint time by `TextRestPage`, and the tile's box is a fixed fraction of the
+ * open card's, so the arrangement is identical and nothing is truncated.
+ */
 export interface RestNoteModel {
   kind: 'note'
-  skin: NoteSkinMode
-  lines: readonly RestNoteLine[]
-  color?: 'yellow' | 'pink' | 'blue' | 'green' | 'purple'
-  attribution?: string
-  date?: string
-  tone?: NoteCalloutTone
-  versions?: readonly string[]
+  skin: TextSkinMode
 }
 
 export type RestingFaceModel =
@@ -155,9 +155,10 @@ export type RestingFaceModel =
   | RestNoteModel
   | { kind: 'rows'; rows: readonly RestRow[]; overflow: number; eyebrow?: RestEyebrow; meter?: number }
   /**
-   * The one LIVE face: a ticking readout the renderer subscribes to. Everything
-   * around it is static context, so a folded interval trainer can show its
-   * rounds and a lap timer its splits without a second subscription.
+   * A LIVE face (see also `canvas`): a ticking readout the renderer subscribes
+   * to. Everything around it is static context, so a folded interval trainer
+   * can show its rounds and a lap timer its splits without a second
+   * subscription.
    */
   | {
       kind: 'clock'
@@ -226,10 +227,37 @@ export type RestingFaceModel =
   | {
       kind: 'paper'
       pattern: 'plain' | 'grid' | 'dots' | 'board' | 'frames'
-      /** Pre-simplified SVG path data in a 0–100 × 0–100 box. */
+      /** Pre-simplified SVG path data in a 0–100 × 0–100 box. When `ink` is
+       * present the box is the drawn picture's own bounding box, so the paths
+       * fill it edge to edge and the WHOLE drawing is always inside it. */
       strokes: readonly string[]
+      /**
+       * The drawn picture's bounding box, so the tile can take the picture's
+       * own shape. A `surface` frame is fractions of the drawing surface —
+       * multiply by the widget's footprint for the true ratio, because stroke
+       * points are stored relative to the canvas the pen moved over. A `scene`
+       * frame (diagram scenes) is already in scene units, so width over
+       * height IS the ratio.
+       */
+      ink?: { width: number; height: number; frame: 'surface' | 'scene' }
       frames?: number
       eyebrow?: RestEyebrow
+    }
+  /**
+   * A door into another canvas. The other live face, alongside `clock`: what
+   * the tile shows — the canvas's name, its miniature, its pulse — lives in
+   * the STORE, on the far side of the door, not in this widget's data. So the
+   * model carries only what this widget itself knows (the skin worn, the
+   * cover's own pocket) and the renderer subscribes for the rest, exactly the
+   * way the clock face subscribes to time. Bounded like everything else: the
+   * renderer clamps children, preview rectangles, and metric rows before
+   * drawing.
+   */
+  | {
+      kind: 'canvas'
+      skin: 'portal' | 'cover' | 'live_thumbnail'
+      /** The cover's user-authored subtitle, already compacted. */
+      subtitle?: string
     }
 
 export interface RestingFace {
@@ -250,7 +278,6 @@ export interface RestingFace {
 // ---------------------------------------------------------------------------
 
 export const REST_ROW_LIMIT = 6
-export const REST_COLUMN_LIMIT = 7
 export const REST_COLUMN_ITEM_LIMIT = 3
 export const REST_CELL_LIMIT = 42
 export const REST_BAR_LIMIT = 4
@@ -258,9 +285,23 @@ export const REST_CHIP_LIMIT = 8
 export const REST_LINE_LIMIT = 5
 export const REST_NODE_LIMIT = 4
 export const REST_LANE_LIMIT = 4
-export const REST_STROKE_LIMIT = 6
-export const NOTE_REST_LINE_LIMIT = 5
-export const NOTE_REST_VERSION_LIMIT = 3
+export const REST_STROKE_LIMIT = 32
+/** Total sampled points across a whole ink preview. Strokes share it, so a
+ * drawing with two strokes keeps their full gesture while a drawing with
+ * thirty strokes gets a few points each — the tile's cost never grows. */
+export const REST_INK_POINT_BUDGET = 224
+/**
+ * The Note tile is a scaled photograph of the open card, so its "bound" is a
+ * ratio rather than a row count: at this fraction of the card's own box the
+ * whole page is on screen at roughly two thirds size. Sticky keeps a gentler
+ * one — a pad you scribble on wants to stay readable more than it wants to
+ * shrink, so its tile stays closer to the card it folds from.
+ */
+export const NOTE_REST_SCALE = 0.64
+export const NOTE_REST_SCALE_STICKY = 0.78
+/** Floors and ceilings, so one enormous card cannot rest as a wall. */
+export const NOTE_REST_MIN_WIDTH = 120
+export const NOTE_REST_MAX_WIDTH = 320
 
 // ---------------------------------------------------------------------------
 // Shared reading helpers.

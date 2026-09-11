@@ -1,10 +1,9 @@
-import type { DatePickerData, FormField, FormWidgetData, LogbookData, MeetingNotesData, ModuleType, PollData, ProsConsData, ProsConsItem, Size, Widget } from '../types/spatial'
+import type { DatePickerData, FormField, FormWidgetData, ModuleType, PollData, ProsConsData, ProsConsItem, Size, Widget } from '../types/spatial'
 import { GRID_SIZE, ICON_MIN_EDGE } from '../types/spatial'
 import {
-  noteCalloutTone,
-  noteVersionSnapshots,
-  type NoteSkinMode,
-} from '../components/widgets/modules/noteSkinModel'
+  stickyStrokes,
+  type TextSkinMode,
+} from '../components/widgets/modules/textSkinModel'
 import {
   dateDay,
   dateReading,
@@ -18,12 +17,6 @@ import {
   shortDayText,
 } from '../components/widgets/modules/dateSkinModel'
 import {
-  logbookEntries,
-  logbookEntryDetails,
-  logbookSkinMode,
-  orderedLogbookEntries,
-} from '../components/widgets/modules/logbookSkinModel'
-import {
   EMOJI_CHOICES,
   formatRating,
   npsBand,
@@ -32,10 +25,7 @@ import {
   ratingSkinMode,
   trafficChoice,
 } from '../components/widgets/modules/ratingSkinModel'
-import {
-  meetingItemDetails,
-  meetingNotesSkinMode,
-} from '../components/widgets/modules/meetingNotesSkinModel'
+import { meetingNotesRestingFace } from './restingFaces/meeting'
 import {
   habitBestRun,
   habitDoneCount,
@@ -74,10 +64,17 @@ import {
   dressWithCatalogueSkin,
   skinDetails,
 } from './restingFaces/catalogue'
+import { budgetRestingFace } from './restingFaces/budget'
 import { calendarRestingFace } from './restingFaces/calendar'
+import { logbookRestingFace } from './restingFaces/logbook'
 import { canvasLmsRestingFace } from './restingFaces/canvasLms'
+import { ATLAS_TYPE_SET, type AtlasType } from '../widgets/atlasCatalog'
+import { AUTOMATION_CORE_SET, type AutomationCoreType } from '../widgets/automationCoreCatalog'
 import { trackerRestingFace } from './restingFaces/atlas'
-import { goalRestingFace, progressRestingFace } from './restingFaces/goal'
+import { automationCoreRestingFace } from './restingFaces/automation'
+import { catalogRestingFace } from './restingFaces/catalog'
+import { expansionRestingFace } from './restingFaces/expansion'
+import { goalRestingFace } from './restingFaces/goal'
 import {
   locationRestingFace,
   toggleRestingFace,
@@ -99,6 +96,7 @@ import {
   formulaRestingFace,
   numberInputRestingFace,
 } from './restingFaces/numeric'
+import { outlineRestingFace } from './restingFaces/outline'
 import { tableRestingFace } from './restingFaces/table'
 import { tasksRestingFace } from './restingFaces/tasks'
 import { timekeeperRestingFace } from './restingFaces/time'
@@ -110,15 +108,15 @@ import {
   formatRestDuration,
   formatRestNumber,
   record,
-  NOTE_REST_LINE_LIMIT,
-  NOTE_REST_VERSION_LIMIT,
+  NOTE_REST_MAX_WIDTH,
+  NOTE_REST_MIN_WIDTH,
+  NOTE_REST_SCALE,
+  NOTE_REST_SCALE_STICKY,
   REST_ROW_LIMIT,
   type RestEyebrow,
   type RestingFace,
   type RestingFaceModel,
   type RestLine,
-  type RestNoteLine,
-  type RestNoteLineKind,
   type RestReadout,
   type RestRow,
 } from './restingFaceModel'
@@ -150,8 +148,6 @@ export type {
   RestLane,
   RestLine,
   RestNode,
-  RestNoteLine,
-  RestNoteLineKind,
   RestNoteModel,
   RestReadout,
   RestRow,
@@ -160,16 +156,15 @@ export type {
   RestingFaceModel,
 } from './restingFaceModel'
 export {
-  NOTE_REST_LINE_LIMIT,
-  NOTE_REST_VERSION_LIMIT,
+  NOTE_REST_MAX_WIDTH,
+  NOTE_REST_SCALE,
+  NOTE_REST_SCALE_STICKY,
   REST_ROW_LIMIT,
 } from './restingFaceModel'
 
 const MARK_SAMPLE_LIMIT = 24
 const TEXT_CLAMP = 220
 const TEXT_LINE_LIMIT = 6
-const NOTE_REST_TEXT_LIMIT = 420
-const NOTE_REST_LINE_CHARS = 58
 
 // Layout constants shared with WidgetRestingFace.tsx — change together.
 const REST_PAD_X = 12
@@ -181,6 +176,17 @@ const ROW_GLYPH = 16
 const ROW_VALUE_GAP = 10
 /** One outline step, matching RowsFace's indent in WidgetRestingFace.tsx. */
 const ROW_INDENT = 9
+
+/**
+ * A folded Tasks card draws itself a tenth smaller than the shared grammars
+ * measure it — every row, column, bar and span still there, in the same places,
+ * just finer. WidgetRestingFace.tsx renders the face at full size and scales it
+ * by exactly this number, so the shrink is one transform: nothing is
+ * re-measured, and no row has to be cut to fit. The box is scaled here for the
+ * same reason the note tile scales both together — the drawing and the box it
+ * lands in must agree, or the last row falls outside the card.
+ */
+export const TASK_REST_SCALE = 0.9
 const MIN_TILE = GRID_SIZE
 const MAX_TILE_WIDTH = 240
 const CHART_WIDTH = 140
@@ -223,6 +229,18 @@ const CLOCK_READOUT_WIDTH = 92
 const CLOCK_READOUT_HEIGHT = 28
 const PAPER_WIDTH = GRID_SIZE * 4
 const PAPER_HEIGHT = GRID_SIZE * 3
+
+/**
+ * The fixed doorplate each canvas skin folds to (see the `canvas` case in
+ * `modelSize`). On-lattice by construction; the portal is a strip because its
+ * open card is one, and the two-dimensional skins (miniature, index) get the
+ * height their bounded live content needs.
+ */
+const CANVAS_TILES = {
+  portal: { width: GRID_SIZE * 4, height: GRID_SIZE * 2 },
+  cover: { width: GRID_SIZE * 5, height: GRID_SIZE * 3 },
+  live_thumbnail: { width: GRID_SIZE * 5, height: GRID_SIZE * 4 },
+} as const satisfies Record<string, Size>
 
 const ARRAY_KEYS = [
   'items', 'rows', 'entries', 'steps', 'tasks', 'cards', 'options', 'tiles',
@@ -275,135 +293,36 @@ function measureFaceText(text: string): number {
   return text.length * 5.6
 }
 
-const NOTE_SKINS = new Set<NoteSkinMode>([
-  'plain',
-  'sticky',
-  'quote',
-  'daily_log',
-  'markdown_page',
-  'typewriter',
-  'callout',
-  'versioned_note',
-])
+const NOTE_SKINS = new Set<TextSkinMode>(['plain', 'sticky', 'typewriter'])
 
-function noteSkin(type: ModuleType, raw: unknown): NoteSkinMode {
-  if (type === 'sticky_note') return 'sticky'
-  if (type === 'quote') return 'quote'
-  return typeof raw === 'string' && NOTE_SKINS.has(raw as NoteSkinMode)
-    ? raw as NoteSkinMode
+function noteSkin(raw: unknown): TextSkinMode {
+  return typeof raw === 'string' && NOTE_SKINS.has(raw as TextSkinMode)
+    ? raw as TextSkinMode
     : 'plain'
 }
 
 /**
- * A Note preview is deliberately a tiny tokenizer rather than a mounted
- * editor or the full Markdown renderer. It reads a bounded prefix, emits at
- * most five short lines, and preserves just enough syntax to keep Markdown
- * visibly Markdown-shaped.
+ * A Note face carries no preview text at all.
+ *
+ * Every other grammar summarizes; a Note cannot be summarized without choosing
+ * which of the writer's sentences may survive, and choosing wrongly is how a
+ * folded note ends "…" mid-thought. So the tile renders the card's own page
+ * (see `TextRestPage`) inside a box that is a fixed fraction of the open
+ * card's, and the model only has to name the skin whose page that is.
+ *
+ * The one reading still done here is emptiness: a note with nothing in it,
+ * nowhere, rests as a bare icon like every other empty card.
  */
-function notePreviewLines(raw: string, skin: NoteSkinMode): RestNoteLine[] {
-  const source = raw.slice(0, NOTE_REST_TEXT_LIMIT).replace(/\r\n?/g, '\n')
-  const result: RestNoteLine[] = []
-  let inCode = false
-
-  const push = (kind: RestNoteLineKind, value: string) => {
-    let remaining = value.replace(/\s+/g, ' ').trim()
-    if (kind === 'rule') {
-      result.push({ kind, text: '' })
-      return
-    }
-    while (remaining && result.length < NOTE_REST_LINE_LIMIT) {
-      if (remaining.length <= NOTE_REST_LINE_CHARS) {
-        result.push({ kind, text: remaining })
-        break
-      }
-      const breakAt = Math.max(
-        1,
-        remaining.lastIndexOf(' ', NOTE_REST_LINE_CHARS),
-      )
-      result.push({ kind, text: remaining.slice(0, breakAt).trimEnd() })
-      remaining = remaining.slice(breakAt).trimStart()
-    }
-  }
-
-  for (const rawLine of source.split('\n')) {
-    if (result.length >= NOTE_REST_LINE_LIMIT) break
-    const line = rawLine.trim()
-    if (!line) continue
-
-    if (skin === 'markdown_page') {
-      if (/^```/.test(line)) {
-        inCode = !inCode
-        continue
-      }
-      if (inCode) {
-        push('code', line)
-        continue
-      }
-      const heading = line.match(/^#{1,3}\s+(.+)$/)
-      if (heading) {
-        push('heading', heading[1] ?? '')
-        continue
-      }
-      const bullet = line.match(/^(?:[-*+]|\d+[.)])\s+(.+)$/)
-      if (bullet) {
-        push('bullet', bullet[1] ?? '')
-        continue
-      }
-      const quote = line.match(/^>\s?(.+)$/)
-      if (quote) {
-        push('quote', quote[1] ?? '')
-        continue
-      }
-      if (/^(?:---+|___+|\*\*\*+)$/.test(line)) {
-        push('rule', '')
-        continue
-      }
-    }
-
-    push('text', line)
-  }
-
-  return result
-}
-
-function noteRestModel(type: ModuleType, data: Record<string, unknown>): RestingFaceModel {
-  const skin = noteSkin(type, data.mode)
-  const text = typeof data.text === 'string' ? data.text : ''
+function noteRestModel(data: Record<string, unknown>): RestingFaceModel {
+  const skin = noteSkin(data.mode)
   const states = record(data.skinStates) ?? {}
   const state = record(states[skin]) ?? {}
-  const lines = notePreviewLines(text, skin)
-  const attribution = skin === 'quote' && typeof data.attribution === 'string'
-    ? compact(data.attribution.slice(0, 100), 48)
-    : ''
-  const versions = skin === 'versioned_note'
-    ? noteVersionSnapshots(state.snapshots)
-      .slice(0, NOTE_REST_VERSION_LIMIT)
-      .map((snapshot) => compact(snapshot.label, 34))
-    : []
+  const written = typeof data.text === 'string' ? data.text : ''
 
-  if (lines.length === 0 && !attribution && versions.length === 0) return { kind: 'icon' }
+  const inked = skin === 'sticky' && stickyStrokes(state.strokes).length > 0
+  if (!written.trim() && !inked) return { kind: 'icon' }
 
-  const color = skin === 'sticky' && (
-    data.color === 'yellow' ||
-    data.color === 'pink' ||
-    data.color === 'blue' ||
-    data.color === 'green' ||
-    data.color === 'purple'
-  ) ? data.color : undefined
-  const date = skin === 'daily_log' && typeof state.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(state.date)
-    ? state.date
-    : undefined
-
-  return {
-    kind: 'note',
-    skin,
-    lines,
-    ...(color ? { color } : {}),
-    ...(attribution ? { attribution } : {}),
-    ...(date ? { date } : {}),
-    ...(skin === 'callout' ? { tone: noteCalloutTone(state.tone) } : {}),
-    ...(versions.length > 0 ? { versions } : {}),
-  }
+  return { kind: 'note', skin }
 }
 
 function humanize(key: string): string {
@@ -471,9 +390,16 @@ function itemValue(value: unknown): string | undefined {
 
 function rowsFromArray(values: readonly unknown[]): { rows: RestRow[]; overflow: number } | null {
   const rows: RestRow[] = []
-  for (let index = 0; index < values.length && rows.length < REST_ROW_LIMIT; index++) {
+  // Only rows that yielded a label count as shown; everything else overflows.
+  // Counted in the same pass that builds the rows — a second `itemLabel` walk
+  // over the whole array just to size the overflow doubled the read of a
+  // thousand-row card.
+  let labeled = 0
+  for (let index = 0; index < values.length; index++) {
     const label = itemLabel(values[index])
     if (label === null) continue
+    labeled += 1
+    if (rows.length >= REST_ROW_LIMIT) continue
     const item = record(values[index])
     rows.push({
       key: item && typeof item.id === 'string' ? item.id : `row-${index}`,
@@ -483,8 +409,6 @@ function rowsFromArray(values: readonly unknown[]): { rows: RestRow[]; overflow:
     })
   }
   if (rows.length === 0) return null
-  // Only rows that yielded a label count as shown; everything else overflows.
-  const labeled = values.filter((value) => itemLabel(value) !== null).length
   return { rows, overflow: Math.max(0, labeled - rows.length) }
 }
 
@@ -538,23 +462,40 @@ function specialModel(type: ModuleType, data: Record<string, unknown>): RestingF
   // Skinned families answer for themselves: each module below reads the same
   // skin model the open card reads, so the folded tile wears the same shape.
   if (type === 'tracker') return trackerRestingFace(data)
+  // The fifty Atlas systems are also fifty standalone types, and they persist
+  // the identical envelope — so a Fuel Log card folds through the same six
+  // shapes a Tracker wearing Fuel Log does, named by its own type.
+  if (ATLAS_TYPE_SET.has(type)) return trackerRestingFace(data, type as AtlasType)
+  if (AUTOMATION_CORE_SET.has(type)) {
+    return automationCoreRestingFace(type as AutomationCoreType, data)
+  }
+  // The Expansion family: one renderer, one vitals strip, thirty different
+  // lists underneath it.
+  const expansion = expansionRestingFace(type, data)
+  if (expansion) return expansion
+  // The rest of the catalogue. Returns null for the skins whose base face
+  // below is already the right one (a plain switch, a swatch strip), so those
+  // keep it rather than being re-described here.
+  const catalogued = catalogRestingFace(type, data)
+  if (catalogued) return catalogued
   if (type === 'checklist') return tasksRestingFace(data)
   if (type === 'table') return tableRestingFace(data)
   if (type === 'goal_tracker') return goalRestingFace(data)
-  if (type === 'progress') return progressRestingFace(data)
   if (type === 'counter') return counterRestingFace(data)
   if (type === 'calculator') return calculatorRestingFace(data)
   if (type === 'formula') return formulaRestingFace(data)
   if (type === 'number_input') return numberInputRestingFace(data)
   if (type === 'bullets') return bulletsRestingFace(data)
+  if (type === 'outline') return outlineRestingFace(data)
   if (type === 'links') return linksRestingFace(data)
   if (type === 'media') return mediaRestingFace(data)
   if (type === 'sketchpad') return sketchpadRestingFace(data)
-  if (type === 'bar_chart' || type === 'line_chart' || type === 'pie_chart') {
+  if (type === 'bar_chart') {
     const series = CHART_ARRAY_KEYS.map((key) => data[key]).find(Array.isArray)
     if (!Array.isArray(series) || series.length === 0) return { kind: 'icon' }
     return { kind: 'chart', stats: chartStats(series, typeof data.unit === 'string' ? data.unit : '') }
   }
+  if (type === 'budget') return budgetRestingFace(data)
   if (type === 'calendar') return calendarRestingFace(data)
   if (type === 'canvas_lms') return canvasLmsRestingFace(data)
   if (type === 'location') return locationRestingFace(data)
@@ -608,36 +549,7 @@ function specialModel(type: ModuleType, data: Record<string, unknown>): RestingF
       secondary: mediumDayText(reading.day),
     }
   }
-  if (type === 'logbook') {
-    const logData = data as unknown as LogbookData
-    const entries = logbookEntries(data.entries)
-    if (entries.length === 0) return { kind: 'icon' }
-    const skin = logbookSkinMode(data.skin)
-    const details = logbookEntryDetails(logData, skin)
-    const visible = orderedLogbookEntries(entries, 'newest').slice(0, 4)
-    const valueFor = (entry: (typeof visible)[number]): string => {
-      const detail = details[entry.id] ?? {}
-      if (skin === 'incident_log') return detail.status ?? entry.level
-      if (skin === 'lab_notebook') return detail.conclusion ? 'Conclusion' : detail.hypothesis ? 'Hypothesis' : 'Experiment'
-      if (skin === 'change_log') return detail.version || detail.changeKind || 'Change'
-      if (skin === 'maintenance_log') return detail.nextService || detail.asset || 'Service'
-      if (skin === 'audit_trail') return detail.actor || detail.source || 'Event'
-      if (skin === 'travel_log') return detail.place || detail.distance || 'Waypoint'
-      return new Intl.DateTimeFormat('en', {
-        hour: '2-digit',
-        minute: '2-digit',
-      }).format(new Date(entry.timestamp))
-    }
-    return {
-      kind: 'rows',
-      rows: visible.map((entry) => ({
-        key: entry.id,
-        label: compact(entry.text || 'Empty entry', 28),
-        value: compact(valueFor(entry), 16),
-      })),
-      overflow: Math.max(0, entries.length - visible.length),
-    }
-  }
+  if (type === 'logbook') return logbookRestingFace(data)
   if (type === 'pros_cons') {
     const sheet = data as unknown as ProsConsData
     const skin = prosConsSkinMode(sheet.skin)
@@ -794,48 +706,10 @@ function specialModel(type: ModuleType, data: Record<string, unknown>): RestingF
       : { kind: 'boolean', label: enabled ? 'On' : 'Off', active: enabled }
   }
   if (type === 'timekeeper') return timekeeperRestingFace(data)
-  if (type === 'timer' || type === 'stopwatch' || type === 'pomodoro') {
-    // Retired standalone types kept for old-board hydration: the dial is the
-    // face, and the card's own outline carries the marks.
-    return { kind: 'clock', shape: 'dial' }
+  if (type === 'text') {
+    return noteRestModel(data)
   }
-  if (type === 'notes' || type === 'sticky_note' || type === 'quote') {
-    return noteRestModel(type, data)
-  }
-  /**
-   * A meeting rests as the work it left behind. It was previously grouped with
-   * Code and read `text`/`content`/`body` — none of which a meeting has — so
-   * every card rested as a bare icon no matter how full it was. The trailing
-   * value is whatever the worn skin made that item mean.
-   */
-  if (type === 'meeting_notes') {
-    const meeting = data as unknown as MeetingNotesData
-    const actions = Array.isArray(meeting.actions) ? meeting.actions : []
-    const skin = meetingNotesSkinMode(meeting.skin)
-    if (actions.length > 0) {
-      const details = meetingItemDetails(meeting, skin)
-      const visible = actions.slice(0, 4)
-      const valueFor = (id: string): string => {
-        const detail = details[id] ?? {}
-        if (skin === 'agenda') return detail.minutes ? `${detail.minutes} min` : ''
-        if (skin === 'decision_review') return detail.review || detail.owner || ''
-        return detail.owner || detail.due || ''
-      }
-      return {
-        kind: 'rows',
-        rows: visible.map((action) => ({
-          key: action.id,
-          label: compact(action.text || 'Untitled item', 28),
-          done: action.done,
-          value: compact(valueFor(action.id), 16) || undefined,
-        })),
-        overflow: Math.max(0, actions.length - visible.length),
-      }
-    }
-    const notes = typeof meeting.notes === 'string' ? meeting.notes : ''
-    if (!notes.trim()) return { kind: 'icon' }
-    return { kind: 'text', text: compact(notes, TEXT_CLAMP) }
-  }
+  if (type === 'meeting_notes') return meetingNotesRestingFace(data)
   if (type === 'code') return codeRestingFace(data)
   /**
    * A Text Input's content is the string it emits, and `value` is not one of
@@ -979,40 +853,19 @@ function modelSize(model: RestingFaceModel, widget: Pick<Widget, 'size' | 'title
       }
     }
     case 'note': {
-      const skinFloor = {
-        plain: 140,
-        sticky: 160,
-        quote: 180,
-        daily_log: 200,
-        markdown_page: 200,
-        typewriter: 200,
-        callout: 180,
-        versioned_note: 220,
-      }[model.skin]
-      let widest = 0
-      for (const line of model.lines) {
-        const scale = line.kind === 'heading' ? 1.18 : line.kind === 'code' ? 0.9 : 1
-        widest = Math.max(widest, measureFaceText(line.text) * scale)
-      }
-      if (model.attribution) widest = Math.max(widest, measureFaceText(model.attribution) + 24)
-      for (const version of model.versions ?? []) {
-        widest = Math.max(widest, measureFaceText(version) + 42)
-      }
-
-      const header = model.skin === 'plain' || model.skin === 'sticky' || model.skin === 'quote' ? 0 : 20
-      const footer = model.skin === 'quote' && model.attribution ? 16
-        : model.skin === 'versioned_note' && model.versions?.length
-          ? 8 + model.versions.length * 13
-          : 0
-      return {
-        width: Math.min(MAX_TILE_WIDTH, snap(Math.max(skinFloor, REST_PAD_X * 2 + widest))),
-        height: snap(
-          PAD_Y * 2 +
-          header +
-          Math.max(1, model.lines.length) * REST_TEXT_LINE_HEIGHT +
-          footer,
-        ),
-      }
+      // A photograph, not a summary: the tile is the card's own box at a fixed
+      // fraction, so the page inside it is the same page in the same places.
+      // Both axes share ONE ratio — the width the grid actually gave us — or
+      // the scaled page would no longer fit the height it was scaled for.
+      const scale = model.skin === 'sticky' ? NOTE_REST_SCALE_STICKY : NOTE_REST_SCALE
+      const width = snap(Math.min(
+        NOTE_REST_MAX_WIDTH,
+        Math.max(NOTE_REST_MIN_WIDTH, widget.size.width * scale),
+      ))
+      const ratio = width / Math.max(1, widget.size.width)
+      // `snap` only ever rounds up, so the tile is never shorter than the page
+      // it holds — the rounding slack becomes margin, never a cut line.
+      return { width, height: snap(widget.size.height * ratio) }
     }
     case 'rows': {
       let widest = 0
@@ -1240,15 +1093,70 @@ function modelSize(model: RestingFaceModel, widget: Pick<Widget, 'size' | 'title
         height: snap(PAD_Y * 2 + (model.eyebrow ? EYEBROW_HEIGHT : 0) + 30),
       }
     }
-    case 'paper':
-      return {
-        width: PAPER_WIDTH,
-        height: snap(PAPER_HEIGHT + (model.eyebrow ? EYEBROW_HEIGHT : 0)),
+    case 'paper': {
+      const ratio = paperInkRatio(model, widget.size)
+      if (ratio === null) {
+        return {
+          width: PAPER_WIDTH,
+          height: snap(PAPER_HEIGHT + (model.eyebrow ? EYEBROW_HEIGHT : 0)),
+        }
       }
+      // Same footprint area as the fixed paper tile, reshaped to the drawn
+      // picture: a wide banner folds wide, a tall figure folds tall. The
+      // renderer letterboxes the ink to the exact ratio, so the lattice snap
+      // (and a long title's capsule floor) can widen the tile without ever
+      // stretching the picture.
+      const area = PAPER_WIDTH * PAPER_HEIGHT
+      const width = Math.min(MAX_WIDE_TILE, Math.max(GRID_SIZE * 2, snap(Math.sqrt(area * ratio))))
+      const height = Math.min(MAX_WIDE_TILE, Math.max(GRID_SIZE * 2, snap(width / ratio)))
+      return {
+        width,
+        height: snap(height + (model.eyebrow ? EYEBROW_HEIGHT : 0)),
+      }
+    }
+    case 'canvas':
+      // A canvas door is the one face whose content cannot be measured from
+      // this widget's data — it lives in the store, behind the door. So each
+      // skin gets a fixed doorplate its live renderer fills, the way the clock
+      // dial gets a fixed square: the shape IS the skin's identity, and a tile
+      // that resized as someone edited the far canvas would drag every anchor
+      // and weld around it. Fresh object each call — the caller mutates width.
+      return { ...CANVAS_TILES[model.skin] }
   }
 }
 
+/**
+ * The true width-over-height ratio of a paper face's drawn picture, or null
+ * when nothing is drawn. Stroke points are stored relative to the drawing
+ * surface, so a `surface` ink box is multiplied out by the widget's own
+ * footprint — the same stretch the open card applies when it paints. A
+ * `scene` box (diagram) is already in scene units. Clamped so a
+ * ruler-straight line still folds into a usable tile. Shared by the sizer
+ * above and PaperFace's letterbox — the two must agree, or the tile and the
+ * ink would disagree about the picture's shape.
+ */
+export function paperInkRatio(
+  model: Extract<RestingFaceModel, { kind: 'paper' }>,
+  size: Size,
+): number | null {
+  const ink = model.ink
+  if (!ink || model.strokes.length === 0) return null
+  const raw = ink.frame === 'surface'
+    ? (ink.width * Math.max(1, size.width)) / Math.max(1, ink.height * Math.max(1, size.height))
+    : ink.width / Math.max(1e-6, ink.height)
+  if (!Number.isFinite(raw) || raw <= 0) return null
+  return Math.min(3, Math.max(1 / 3, raw))
+}
+
 const faceCache = new WeakMap<object, RestingFace>()
+
+/**
+ * Families whose folded tile IS the open card's own island, drawn smaller and
+ * uneditable. The catalogue's generic dress would print the skin's name across
+ * the top of it, saying a second time what the title capsule and the skin
+ * roller already say, and pushing the content down a line to do it.
+ */
+const SELF_DRESSED_FACES = new Set<ModuleType>(['bullets'])
 
 /**
  * The resting face for one widget: what it shows and the exact tile it needs.
@@ -1263,11 +1171,21 @@ export function restingFace(widget: Pick<Widget, 'type' | 'data' | 'size' | 'tit
   const base = specialModel(widget.type, data) ?? genericModel(data)
   // A catalogued skin dresses the open card rather than replacing its body, so
   // the tile takes the same dress and whatever the base face left blank.
-  const blueprint = cataloguedSkin(widget.type, data)
+  const blueprint = SELF_DRESSED_FACES.has(widget.type)
+    ? null
+    : cataloguedSkin(widget.type, data)
   const model = blueprint
     ? dressWithCatalogueSkin(base, blueprint, skinDetails(data, blueprint.value))
     : base
   const size = modelSize(model, widget)
+  // A folded Tasks card wears the same drawing a tenth smaller (TASK_REST_SCALE).
+  // The bare icon and the bare image keep their own floors: one is the icon
+  // scale state, the other is the picture's stored footprint, and neither is a
+  // drawing this shrink applies to.
+  if (widget.type === 'checklist' && model.kind !== 'icon' && model.kind !== 'image') {
+    size.width = snap(size.width * TASK_REST_SCALE)
+    size.height = snap(size.height * TASK_REST_SCALE)
+  }
   // Every face except the bare icon and the bare image stays wide enough for
   // its floating title capsule; content can exceed that, never undercut it.
   // Re-snapped after the max: the capsule floor is text-measured, and an

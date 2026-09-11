@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { AUTH_STORAGE_KEY, durableAuthStorage } from './durableAuthStorage'
 
 // ---------------------------------------------------------------------------
 // Supabase client — configured entirely through Vite env vars so credentials
@@ -32,7 +33,18 @@ export function getSupabaseClient(): Promise<SupabaseClient | null> {
   if (!config) return Promise.resolve(null)
   if (!clientPromise) {
     clientPromise = import('@supabase/supabase-js')
-      .then(({ createClient }) => createClient(config.url, config.anonKey))
+      .then(({ createClient }) => createClient(config.url, config.anonKey, {
+        auth: {
+          // Spelled out rather than left to the defaults, because staying
+          // signed in across an app update depends on every one of them.
+          storage: durableAuthStorage,
+          storageKey: AUTH_STORAGE_KEY,
+          persistSession: true,
+          autoRefreshToken: true,
+          detectSessionInUrl: true,
+          flowType: 'pkce',
+        },
+      }))
       .catch((error: unknown) => {
         clientPromise = null
         throw error

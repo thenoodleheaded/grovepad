@@ -20,6 +20,7 @@ import { persistenceStatusSummary } from '../../utils/persistenceStatus'
 /** Top-bar account presence: avatar + menu when signed in, sign-in when not. */
 export function AccountChip() {
   const session = useAuthStore((state) => state.session)
+  const rememberedAccount = useAuthStore((state) => state.rememberedAccount)
   const isGuest = useAuthStore((state) => state.isGuest)
   const [open, setOpen] = useState(false)
   const anchorRef = useRef<HTMLButtonElement>(null)
@@ -47,9 +48,11 @@ export function AccountChip() {
   }, [open])
 
   const email = session?.user.email ?? ''
-  const profileName = accountDisplayName(session)
-  const profileColor = accountProfileColor(session)
-  const initial = session ? profileName[0]!.toUpperCase() : null
+  // With no live session the chip still names the account it is holding open
+  // offline, rather than calling a signed-in person a guest.
+  const profileName = session ? accountDisplayName(session) : rememberedAccount?.name ?? accountDisplayName(null)
+  const profileColor = session ? accountProfileColor(session) : rememberedAccount?.color ?? accountProfileColor(null)
+  const initial = session || rememberedAccount ? profileName[0]!.toUpperCase() : null
 
   const openMenu = () => {
     const rect = anchorRef.current?.getBoundingClientRect()
@@ -77,7 +80,7 @@ export function AccountChip() {
       download(new Blob([bytes as BlobPart], { type: 'application/octet-stream' }), `grovepad-${today()}.grovepad`)
       useToastStore.getState().addToast('Grovepad package downloaded')
     } catch {
-      useToastStore.getState().addToast('Could not build the Grovepad package')
+      useToastStore.getState().addToast('Could not build the Grovepad package', { tone: 'danger' })
     }
     setOpen(false)
   }
@@ -273,7 +276,7 @@ export function AccountChip() {
               const recoverableCurrentBoard = parsePersistedBoard(currentBoard)
               void (async () => {
                 if (!recoverableCurrentBoard) {
-                  useToastStore.getState().addToast('Restore stopped because the current board could not be protected')
+                  useToastStore.getState().addToast('Restore stopped because the current board could not be protected', { tone: 'danger' })
                   return
                 }
                 let rollback: (() => void) | null = null
@@ -286,7 +289,7 @@ export function AccountChip() {
                     load: (next) => useWidgetStore.getState().loadBoard(next),
                   })
                 } catch {
-                  useToastStore.getState().addToast('Restore stopped because the current board could not be protected')
+                  useToastStore.getState().addToast('Restore stopped because the current board could not be protected', { tone: 'danger' })
                   return
                 }
                 useToastStore.getState().addToast('Local snapshot restored; your previous board is protected', {
@@ -295,7 +298,7 @@ export function AccountChip() {
                 })
               })()
             } else {
-              useToastStore.getState().addToast('That local snapshot is no longer readable')
+              useToastStore.getState().addToast('That local snapshot is no longer readable', { tone: 'danger' })
             }
           }
         }}

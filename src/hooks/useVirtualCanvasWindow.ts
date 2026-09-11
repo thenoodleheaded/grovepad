@@ -33,7 +33,7 @@ function makeWindow(camera = readCamera()): VirtualCanvasWindow {
 
 /**
  * Camera panning remains imperative. React only receives a new virtual window
- * after the viewport consumes its safety gutter or crosses the 60% LOD line.
+ * after the viewport consumes its safety gutter or crosses the 20% LOD line.
  */
 export function useVirtualCanvasWindow(): VirtualCanvasWindow {
   const [virtualWindow, setVirtualWindow] = useState(makeWindow)

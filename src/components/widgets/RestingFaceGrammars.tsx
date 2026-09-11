@@ -113,9 +113,9 @@ export function ColumnsFace({ columns, wrap, eyebrow, accent }: {
                   <span
                     key={item.key}
                     className={`flex h-[11px] min-w-0 items-center gap-1 rounded-[3px] px-1 text-[8.5px] leading-[11px] ${
-                      item.done ? 'text-neutral-600 line-through decoration-neutral-700' : 'text-neutral-300'
+                      item.done ? 'text-neutral-600 line-through decoration-neutral-500' : 'text-neutral-300'
                     }`}
-                    style={{ background: 'rgb(255 255 255 / 0.045)' }}
+                    style={{ background: 'rgb(var(--gp-rest-lift) /0.045)' }}
                   >
                     <span className="min-w-0 flex-1 truncate">{item.label}</span>
                     {item.value && (
@@ -196,7 +196,7 @@ export function GridFace({ cols, header, cells, eyebrow, dense, accent }: {
                       ? { background: wash(tint, '00'), backgroundColor: tint, opacity: 0.22 + cell.fill! * 0.7, color: '#0a0a0a' }
                       : cell.tone === 'muted'
                         ? { color: 'rgb(82 82 82)' }
-                        : { background: 'rgb(255 255 255 / 0.045)', color: ink(cell.tone, accent) }
+                        : { background: 'rgb(var(--gp-rest-lift) /0.045)', color: ink(cell.tone, accent) }
                 }
               >
                 {cell.text}
@@ -235,7 +235,7 @@ export function BarsFace({ bars, eyebrow, accent }: {
             <span
               key={bar.key}
               className="relative flex h-[14px] min-w-0 items-center overflow-hidden rounded-[4px] px-1.5"
-              style={{ background: 'rgb(255 255 255 / 0.05)' }}
+              style={{ background: 'rgb(var(--gp-rest-lift) /0.05)' }}
             >
               <span
                 aria-hidden
@@ -279,7 +279,7 @@ export function GaugeFace({ progress, primary, secondary, caption, tone, eyebrow
   const dial = (
     <div className="flex w-full min-w-0 items-center gap-2.5">
       <svg width="46" height="46" viewBox="0 0 46 46" className="shrink-0 -rotate-90" aria-hidden>
-        <circle cx="23" cy="23" r="19" fill="none" stroke="rgb(255 255 255 / 0.08)" strokeWidth="5" />
+        <circle cx="23" cy="23" r="19" fill="none" stroke="rgb(var(--gp-rest-lift) /0.08)" strokeWidth="5" />
         <circle
           cx="23"
           cy="23"
@@ -336,7 +336,7 @@ export function ChipsFace({ chips, overflow, eyebrow, accent }: {
               className="flex h-[17px] max-w-full items-center truncate rounded-full px-[6px] text-[9px] font-medium leading-[17px]"
               style={chip.filled
                 ? { background: wash(tint, '2e'), color: tint, boxShadow: `inset 0 0 0 1px ${wash(tint, '55')}` }
-                : { color: 'rgb(163 163 163)', boxShadow: 'inset 0 0 0 1px rgb(255 255 255 / 0.1)' }}
+                : { color: 'rgb(163 163 163)', boxShadow: 'inset 0 0 0 1px rgb(var(--gp-rest-lift) /0.1)' }}
             >
               {chip.text}
             </span>
@@ -421,12 +421,12 @@ export function ChainFace({ nodes, shape, overflow, eyebrow, accent }: {
               <span aria-hidden className="relative flex h-4 w-[8px] shrink-0 items-center justify-center">
                 <span
                   className="h-[5px] w-[5px] rounded-full"
-                  style={{ background: node.current ? accent : 'rgb(255 255 255 / 0.28)' }}
+                  style={{ background: node.current ? accent : 'rgb(var(--gp-rest-lift) /0.28)' }}
                 />
                 {index < nodes.length - 1 && (
                   <span
                     className="absolute left-1/2 top-[11px] h-[5px] w-px -translate-x-1/2"
-                    style={{ background: 'rgb(255 255 255 / 0.16)' }}
+                    style={{ background: 'rgb(var(--gp-rest-lift) /0.16)' }}
                   />
                 )}
               </span>
@@ -460,7 +460,7 @@ export function ChainFace({ nodes, shape, overflow, eyebrow, accent }: {
               <span
                 aria-hidden
                 className="flex w-[12px] shrink-0 items-center justify-center text-[8px] leading-none"
-                style={{ color: 'rgb(255 255 255 / 0.32)' }}
+                style={{ color: 'rgb(var(--gp-rest-lift) /0.32)' }}
               >
                 {shape === 'doubly' ? '⇄' : '→'}
               </span>
@@ -468,10 +468,10 @@ export function ChainFace({ nodes, shape, overflow, eyebrow, accent }: {
             <span
               className="flex h-[30px] w-[46px] shrink-0 flex-col justify-center gap-[1px] overflow-hidden rounded-[5px] px-1"
               style={{
-                background: 'rgb(255 255 255 / 0.045)',
+                background: 'rgb(var(--gp-rest-lift) /0.045)',
                 boxShadow: node.current
                   ? `inset 0 0 0 1px ${wash(accent, '77')}`
-                  : 'inset 0 0 0 1px rgb(255 255 255 / 0.07)',
+                  : 'inset 0 0 0 1px rgb(var(--gp-rest-lift) /0.07)',
               }}
             >
               <span className="truncate text-[9px] font-medium leading-[11px] text-neutral-200">
@@ -519,7 +519,7 @@ export function TimelineFace({ units, lanes, eyebrow, accent }: {
           aria-hidden
           className="flex h-[4px] w-full"
           style={{
-            backgroundImage: `repeating-linear-gradient(90deg, rgb(255 255 255 / 0.14) 0 1px, transparent 1px ${(100 / total).toFixed(3)}%)`,
+            backgroundImage: `repeating-linear-gradient(90deg, rgb(var(--gp-rest-lift) /0.14) 0 1px, transparent 1px ${(100 / total).toFixed(3)}%)`,
           }}
         />
       </div>
@@ -530,12 +530,13 @@ export function TimelineFace({ units, lanes, eyebrow, accent }: {
             <span key={lane.key} className="flex h-[15px] min-w-0 items-center gap-2">
               <span
                 className={`w-[34%] shrink-0 truncate text-[9px] leading-[15px] ${
-                  lane.done ? 'text-neutral-600 line-through decoration-neutral-700' : 'text-neutral-300'
+                  lane.done ? 'text-neutral-600 line-through decoration-neutral-500' : 'text-neutral-300'
                 }`}
               >
                 {lane.label}
               </span>
-              <span className="relative h-[7px] min-w-0 flex-1 overflow-hidden rounded-full bg-white/[0.05]">
+              <span className="relative h-[7px] min-w-0 flex-1 overflow-hidden rounded-full"
+              style={{ background: 'rgb(var(--gp-rest-lift) / 0.08)' }}>
                 <span
                   className="absolute inset-y-0 rounded-full"
                   style={{
@@ -592,24 +593,32 @@ export function SplitFace({ left, right, divider, eyebrow, accent }: {
 
 const PAPER_PATTERNS: Record<string, string | undefined> = {
   plain: undefined,
-  grid: 'linear-gradient(rgb(255 255 255 / 0.055) 1px, transparent 1px), linear-gradient(90deg, rgb(255 255 255 / 0.055) 1px, transparent 1px)',
-  dots: 'radial-gradient(rgb(255 255 255 / 0.13) 1px, transparent 1px)',
+  grid: 'linear-gradient(rgb(var(--gp-rest-lift) /0.055) 1px, transparent 1px), linear-gradient(90deg, rgb(var(--gp-rest-lift) /0.055) 1px, transparent 1px)',
+  dots: 'radial-gradient(rgb(var(--gp-rest-lift) /0.13) 1px, transparent 1px)',
   board: undefined,
   frames: undefined,
 }
 
 /** A drawing surface keeps its own ruling — squared paper stays squared — with
  * a bounded, already-simplified ink preview laid over it. Never the live
- * canvas: a folded sketch mounts no drawing surface at all. */
-export function PaperFace({ pattern, strokes, frames, eyebrow, accent }: {
+ * canvas: a folded sketch mounts no drawing surface at all. When `inkRatio`
+ * is given the paths hold the drawn picture's own bounding box, and the svg
+ * letterboxes it to that exact ratio — the whole picture, never stretched,
+ * whatever shape the snapped tile ended up. */
+export function PaperFace({ pattern, strokes, frames, eyebrow, accent, inkRatio }: {
   pattern: 'plain' | 'grid' | 'dots' | 'board' | 'frames'
   strokes: readonly string[]
   frames?: number
   eyebrow?: RestEyebrow
   accent: string
+  inkRatio?: number
 }) {
   const board = pattern === 'board'
   const ruled = PAPER_PATTERNS[pattern]
+  // Fading strokes down the list marked "how much more there is" when the
+  // preview kept only six; a full-picture preview keeps every stroke, so late
+  // ones fade only gently and never below legibility.
+  const strokeOpacity = (index: number) => (board ? 0.85 : Math.max(0.45, 0.9 - index * 0.02))
   return (
     <div className="flex h-full w-full min-w-0 flex-col overflow-hidden rounded-[10px] px-2 py-1.5"
       style={{ background: board ? 'rgb(245 245 245 / 0.055)' : 'rgb(0 0 0 / 0.16)' }}
@@ -625,31 +634,33 @@ export function PaperFace({ pattern, strokes, frames, eyebrow, accent }: {
               <span
                 key={index}
                 className="h-full min-w-0 flex-1 rounded-[4px]"
-                style={{ boxShadow: 'inset 0 0 0 1px rgb(255 255 255 / 0.1)' }}
+                style={{ boxShadow: 'inset 0 0 0 1px rgb(var(--gp-rest-lift) /0.1)' }}
               />
             ))}
           </span>
         )}
         {strokes.length > 0 && (
           <svg
-            viewBox="0 0 100 100"
-            preserveAspectRatio="none"
+            viewBox={inkRatio ? `0 0 ${(100 * inkRatio).toFixed(2)} 100` : '0 0 100 100'}
+            preserveAspectRatio={inkRatio ? 'xMidYMid meet' : 'none'}
             className="absolute inset-0 h-full w-full"
             aria-hidden
           >
-            {strokes.map((path, index) => (
-              <path
-                key={index}
-                d={path}
-                fill="none"
-                stroke={board ? 'rgb(38 38 38)' : accent}
-                strokeWidth="1.6"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                opacity={board ? 0.85 : 0.9 - index * 0.08}
-                vectorEffect="non-scaling-stroke"
-              />
-            ))}
+            <g transform={inkRatio ? `scale(${inkRatio.toFixed(4)} 1)` : undefined}>
+              {strokes.map((path, index) => (
+                <path
+                  key={index}
+                  d={path}
+                  fill="none"
+                  stroke={board ? 'rgb(38 38 38)' : accent}
+                  strokeWidth="1.6"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  opacity={strokeOpacity(index)}
+                  vectorEffect="non-scaling-stroke"
+                />
+              ))}
+            </g>
           </svg>
         )}
       </div>

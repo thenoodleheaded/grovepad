@@ -41,6 +41,7 @@ import {
   logbookEntries,
   logbookEntryDetails,
   logbookOrder,
+  logbookServiceDue,
   logbookSkinMode,
   logbookWarningCount,
   orderedLogbookEntries,
@@ -139,26 +140,6 @@ function longDay(day: string): string {
     month: 'long',
     day: 'numeric',
   }).format(parsed)
-}
-
-/** Whole days from today to a `yyyy-mm-dd` service date, or null if unusable. */
-function daysUntil(day: string): number | null {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return null
-  const due = new Date(`${day}T12:00:00`)
-  if (Number.isNaN(due.getTime())) return null
-  const now = new Date()
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12)
-  return Math.round((due.getTime() - today.getTime()) / 86_400_000)
-}
-
-function serviceDue(day: string | undefined): { tone: string; label: string } | null {
-  if (!day) return null
-  const days = daysUntil(day)
-  if (days === null) return null
-  if (days < 0) return { tone: 'overdue', label: days === -1 ? '1 day overdue' : `${-days} days overdue` }
-  if (days === 0) return { tone: 'today', label: 'Due today' }
-  if (days <= 14) return { tone: 'soon', label: `In ${days} ${days === 1 ? 'day' : 'days'}` }
-  return null
 }
 
 function nextIn<T>(values: readonly T[], current: T): T {
@@ -502,7 +483,7 @@ export function LogbookWidget({
       <div className="gp-logbook-list gp-logbook-maintenance">
         {ordered.map((entry) => {
           const detail = details[entry.id] ?? {}
-          const due = serviceDue(detail.nextService)
+          const due = logbookServiceDue(detail.nextService)
           return row(entry, (
             <>
               <header className="gp-logbook-maintenance-head">

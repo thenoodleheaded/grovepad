@@ -66,7 +66,7 @@
 .gp-budget-studio-trigger {
   color: var(--gp-budget-soft);
   background: var(--gp-budget-wash);
-  transition: color 140ms ease, background 140ms ease, transform 140ms ease;
+  transition: color var(--gp-duration-snap) var(--gp-ease-snap), background var(--gp-duration-snap) var(--gp-ease-snap), transform var(--gp-duration-snap) var(--gp-ease-snap);
 }
 
 .gp-budget-studio-trigger:hover,
@@ -164,7 +164,7 @@
   border: 0;
   color: var(--gp-budget-soft);
   background: transparent;
-  transition: color 130ms ease, transform 130ms ease;
+  transition: color var(--gp-duration-snap) var(--gp-ease-snap), transform var(--gp-duration-snap) var(--gp-ease-snap);
 }
 
 .gp-budget-footer button:hover,
@@ -1351,7 +1351,7 @@
   box-shadow:
     inset 0 1px 0 color-mix(in oklab, white, transparent 90%),
     0 16px 32px rgb(0 0 0 / 24%);
-  backdrop-filter: blur(18px) saturate(1.1);
+  backdrop-filter: blur(calc(18px * var(--gp-blur-scale, 1))) saturate(1.1);
   animation: gp-budget-studio-in 150ms ease-out both;
 }
 
@@ -1396,7 +1396,7 @@
   border-radius: 8px;
   color: var(--gp-budget-soft);
   background: transparent;
-  transition: color 130ms ease, background 130ms ease;
+  transition: color var(--gp-duration-snap) var(--gp-ease-snap), background var(--gp-duration-snap) var(--gp-ease-snap);
 }
 
 .gp-budget-studio > header button:hover,
@@ -1569,4 +1569,73 @@
     animation-duration: 0.001ms !important;
     transition-duration: 0.001ms !important;
   }
+}
+
+/* ------------------------------------------------------------ light theme.
+   Status/danger/medal inks above are pastels tuned for dark glass; on the
+   light theme's silver cards they wash out below 2:1. Each keeps its hue
+   but drops to a deep ink (generated during the 2026-08 light-mode
+   contrast audit). */
+[data-theme='light'] .gp-budget-number-field > [role='alert'] {
+  color: #b91c1c;
+}
+
+[data-theme='light'] .gp-budget-number-field[data-invalid] input {
+  color: #b91c1c;
+}
+
+[data-theme='light'] .gp-budget-hero-well[data-tone='negative'] strong {
+  color: #be123c;
+}
+
+[data-theme='light'] .gp-budget-envelope-grid article[data-over] .gp-budget-envelope-reading b {
+  color: #be123c;
+}
+
+[data-theme='light'] .gp-budget-zero-orbit[data-balanced] strong {
+  color: #065f46;
+}
+
+[data-theme='light'] .gp-budget-cashflow-list article > button {
+  color: #be123c;
+}
+
+[data-theme='light'] .gp-budget-cashflow-list article[data-kind='income'] > button {
+  color: #065f46;
+}
+
+[data-theme='light'] .gp-budget-cashflow-list article > b {
+  color: #be123c;
+}
+
+[data-theme='light'] .gp-budget-cashflow-list article[data-kind='income'] > b {
+  color: #065f46;
+}
+
+[data-theme='light'] .gp-budget-project-strip > span[data-status='paid'] strong {
+  color: #065f46;
+}
+
+[data-theme='light'] .gp-budget-studio > header button:hover,
+[data-theme='light'] .gp-budget-studio-list article > button:hover {
+  color: #be123c;
+}
+
+/* Light theme: the 50/30/20 bucket hues are pastels tuned for dark glass —
+   as legend text on silver they read below 1.1:1. The token feeds text and
+   bar fills alike, so the deep version keeps the bucket identity while both
+   gain contrast on paper. */
+[data-theme='light'] .gp-budget-rule-bars article,
+[data-theme='light'] .gp-budget-rule-lines button {
+  --gp-rule-color: #0369a1;
+}
+
+[data-theme='light'] .gp-budget-rule-bars article[data-bucket='wants'],
+[data-theme='light'] .gp-budget-rule-lines button[data-bucket='wants'] {
+  --gp-rule-color: #a21caf;
+}
+
+[data-theme='light'] .gp-budget-rule-bars article[data-bucket='savings'],
+[data-theme='light'] .gp-budget-rule-lines button[data-bucket='savings'] {
+  --gp-rule-color: #047857;
 }

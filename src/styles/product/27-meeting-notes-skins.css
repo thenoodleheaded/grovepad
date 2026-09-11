@@ -97,7 +97,7 @@
   flex-shrink: 0;
   align-items: center;
   gap: 0.34rem;
-  color: var(--gp-widget-accent);
+  color: var(--gp-accent-ink, var(--gp-widget-accent));
   font-size: 0.56rem;
   font-weight: 700;
   letter-spacing: 0.13em;
@@ -155,7 +155,7 @@
   display: inline-flex;
   align-items: center;
   gap: 0.32rem;
-  color: var(--gp-widget-accent);
+  color: var(--gp-accent-ink, var(--gp-widget-accent));
   font-size: 0.6rem;
   font-weight: 700;
   letter-spacing: 0.2em;
@@ -242,7 +242,7 @@
   align-items: center;
   justify-content: center;
   border-radius: 999px;
-  color: color-mix(in oklab, var(--gp-widget-accent), white 30%);
+  color: color-mix(in oklab, var(--gp-accent-ink, var(--gp-widget-accent)), var(--gp-accent-lift, #fff) 30%);
   background: color-mix(in oklab, var(--gp-widget-accent), transparent 82%);
   font-size: 0.46rem;
   font-weight: 700;
@@ -393,7 +393,7 @@
 }
 
 .gp-meeting-check:hover {
-  border-color: color-mix(in oklab, var(--gp-widget-accent), white 20%);
+  border-color: color-mix(in oklab, var(--gp-accent-ink, var(--gp-widget-accent)), var(--gp-accent-lift, #fff) 20%);
 }
 
 .gp-meeting-check[aria-checked='true'] {
@@ -460,7 +460,7 @@
 }
 
 .gp-meeting-add:hover {
-  color: color-mix(in oklab, var(--gp-widget-accent), white 24%);
+  color: color-mix(in oklab, var(--gp-accent-ink, var(--gp-widget-accent)), var(--gp-accent-lift, #fff) 24%);
 }
 
 .gp-meeting-empty {
@@ -547,7 +547,7 @@
   margin-top: 0.28rem;
   border: 1px solid color-mix(in oklab, var(--gp-widget-accent), transparent 60%);
   border-radius: 999px;
-  color: color-mix(in oklab, var(--gp-widget-accent), white 26%);
+  color: color-mix(in oklab, var(--gp-accent-ink, var(--gp-widget-accent)), var(--gp-accent-lift, #fff) 26%);
   background: var(--gp-widget-bg, #16181a);
   font-size: 0.55rem;
   font-weight: 700;
@@ -644,7 +644,7 @@
 }
 
 .gp-meeting-lane--today > span {
-  color: color-mix(in oklab, var(--gp-widget-accent), white 22%);
+  color: color-mix(in oklab, var(--gp-accent-ink, var(--gp-widget-accent)), var(--gp-accent-lift, #fff) 22%);
 }
 
 .gp-meeting-lane--blocked > span {
@@ -873,4 +873,58 @@
   .gp-meeting :is(.gp-meeting-check, .gp-meeting-remove, .gp-meeting-add, .gp-meeting-stamp) {
     transition: none;
   }
+}
+
+/* ------------------------------------------------------------ light theme.
+   The section inks above are pastels tuned for dark glass; on silver cards
+   they wash out to ~1.2:1. Each keeps its hue but drops to a deep ink. The
+   lane/quad hue tokens also feed borders and tints, so darkening the token
+   deepens the whole grammar consistently. */
+[data-theme='light'] .gp-meeting-summary em {
+  color: #92400e;
+}
+
+[data-theme='light'] .gp-meeting-remove:hover {
+  color: #b91c1c;
+}
+
+[data-theme='light'] .gp-meeting-due[data-overdue='true'],
+[data-theme='light'] .gp-meeting-review[data-due='true'] {
+  color: #92400e;
+}
+
+[data-theme='light'] .gp-meeting-lane {
+  --gp-lane-hue: #475569;
+}
+
+[data-theme='light'] .gp-meeting-lane--blocked {
+  --gp-lane-hue: #be123c;
+}
+
+[data-theme='light'] .gp-meeting-lane--blocked > span {
+  color: #be123c;
+}
+
+[data-theme='light'] .gp-meeting-lane--today > span {
+  color: var(--gp-accent-ink, var(--gp-widget-accent));
+}
+
+[data-theme='light'] .gp-meeting-notes--risks > span {
+  color: #92400e;
+}
+
+[data-theme='light'] .gp-meeting-quadrant--kept {
+  --gp-quad-hue: #047857;
+}
+
+[data-theme='light'] .gp-meeting-quadrant--dropped {
+  --gp-quad-hue: #be123c;
+}
+
+[data-theme='light'] .gp-meeting-quadrant--learned {
+  --gp-quad-hue: #1d4ed8;
+}
+
+[data-theme='light'] .gp-meeting-stamp[aria-checked='true'] {
+  color: #065f46;
 }

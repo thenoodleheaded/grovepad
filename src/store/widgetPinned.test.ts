@@ -12,7 +12,8 @@ afterEach(() => {
   useWidgetStore.getState().loadBoard(baseline)
 })
 
-const firstId = () => Object.keys(useWidgetStore.getState().widgets)[0]!
+const createTestWidget = () =>
+  useWidgetStore.getState().createWidget('Pin test', { x: 0, y: 0 }, 'text')
 
 /**
  * An icon welded to the left edge of a neighbour, far from the seed board. The
@@ -21,8 +22,8 @@ const firstId = () => Object.keys(useWidgetStore.getState().widgets)[0]!
  */
 function gluedIconPair(): [string, string] {
   const store = useWidgetStore.getState()
-  const icon = store.createWidget('Peek', { x: 60_000, y: 60_000 }, 'notes')
-  const mate = store.createWidget('Mate', { x: 62_000, y: 60_000 }, 'notes')
+  const icon = store.createWidget('Peek', { x: 60_000, y: 60_000 }, 'text')
+  const mate = store.createWidget('Mate', { x: 62_000, y: 60_000 }, 'text')
   useWidgetStore.getState().setWidgetScaleState(icon, 'icon')
   const square = useWidgetStore.getState().widgets[icon]!
   const widgets = useWidgetStore.getState().widgets
@@ -41,7 +42,7 @@ function gluedIconPair(): [string, string] {
 
 describe('pinned widgets', () => {
   it('toggles, and holds the card out of rest while pinned', () => {
-    const id = firstId()
+    const id = createTestWidget()
     const ctx = { expandedWidgetId: null }
     expect(isWidgetResting(useWidgetStore.getState().widgets[id]!, ctx)).toBe(true)
 
@@ -57,7 +58,7 @@ describe('pinned widgets', () => {
   it('leaves position locking alone', () => {
     // Pin and lock are separate promises now: pin holds a card open, lock
     // holds it still. Toggling one must not quietly do the other's job.
-    const id = firstId()
+    const id = createTestWidget()
     useWidgetStore.getState().toggleWidgetPinned(id)
     expect(useWidgetStore.getState().widgets[id]!.metadata.locked).toBeFalsy()
     useWidgetStore.getState().toggleWidgetLocked(id)
@@ -71,7 +72,7 @@ describe('pinned widgets', () => {
     // agree — and the result lands ON the grid, because the settle pass
     // anchors a pinned card without re-snapping it: an off-grid pin would
     // shove its whole cluster off rhythm by exactly that fraction.
-    const id = firstId()
+    const id = createTestWidget()
     const before = useWidgetStore.getState().widgets[id]!
     useWidgetStore.getState().toggleWidgetPinned(id, { absorbOffset: { x: -140, y: -60 } })
 
@@ -94,7 +95,7 @@ describe('pinned widgets', () => {
     // Open an icon, pin it (the card is now an ordinary full card), then let
     // it go. It has to come back as the icon it was — at the same square, on
     // the same spot — instead of dropping onto a resting tile it never showed.
-    const id = firstId()
+    const id = createTestWidget()
     useWidgetStore.getState().setWidgetScaleState(id, 'icon')
     const iconSize = { ...useWidgetStore.getState().widgets[id]!.size }
     useWidgetStore.getState().setWidgetScaleState(id, 'full')
@@ -127,7 +128,7 @@ describe('pinned widgets', () => {
     // pressed. Pinning is where that peek finally becomes a board change, so
     // the swap happens HERE — at the box the peek was already drawn at, so
     // nothing resizes under the user — and it costs one history step.
-    const id = firstId()
+    const id = createTestWidget()
     useWidgetStore.getState().setWidgetScaleState(id, 'icon')
     const icon = useWidgetStore.getState().widgets[id]!
     const card = expandedIconSize(icon)
@@ -181,7 +182,7 @@ describe('pinned widgets', () => {
   })
 
   it('still falls back to the resting face for a card pinned from rest', () => {
-    const id = firstId()
+    const id = createTestWidget()
     useWidgetStore.getState().toggleWidgetPinned(id, { from: { kind: 'rest' } })
     useWidgetStore.getState().toggleWidgetPinned(id)
     const widget = useWidgetStore.getState().widgets[id]!
@@ -190,7 +191,7 @@ describe('pinned widgets', () => {
   })
 
   it('carries the pin memory through a save/load round trip, and drops a stale one', () => {
-    const id = firstId()
+    const id = createTestWidget()
     useWidgetStore.getState().toggleWidgetPinned(id, {
       from: { kind: 'icon', width: 120, height: 120 },
     })
@@ -204,7 +205,7 @@ describe('pinned widgets', () => {
   })
 
   it('is undoable and survives a save/load round trip', () => {
-    const id = firstId()
+    const id = createTestWidget()
     useWidgetStore.getState().toggleWidgetPinned(id)
     useWidgetStore.getState().undo()
     expect(useWidgetStore.getState().widgets[id]!.metadata.pinned).toBeFalsy()

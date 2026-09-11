@@ -20,13 +20,13 @@ describe('beta report store regressions', () => {
   it('keeps consecutive picker creations from overlapping at their resting footprints', () => {
     const origin = { x: 1200, y: 1200 }
     const ids = [
-      useWidgetStore.getState().createWidget('Audit Note', origin, 'notes'),
+      useWidgetStore.getState().createWidget('Audit Note', origin, 'text'),
       useWidgetStore.getState().createWidget('Tasks', origin, 'checklist'),
       useWidgetStore.getState().createWidget('Toggle', origin, 'toggle'),
       useWidgetStore.getState().createWidget('Calculator', origin, 'calculator'),
       useWidgetStore.getState().createWidget('Number Input', origin, 'number_input'),
       useWidgetStore.getState().createWidget('Table', origin, 'table'),
-      useWidgetStore.getState().createWidget('Timer', origin, 'timer'),
+      useWidgetStore.getState().createWidget('Timer', origin, 'timekeeper'),
     ]
     const widgets = ids.map((id) =>
       restingFootprintWidget(useWidgetStore.getState().widgets[id]!),
@@ -61,7 +61,7 @@ describe('beta report store regressions', () => {
   })
 
   it('round-trips exact world geometry independently of the camera', () => {
-    const id = useWidgetStore.getState().createWidget('Geometry', { x: 1200, y: -840 }, 'notes')
+    const id = useWidgetStore.getState().createWidget('Geometry', { x: 1200, y: -840 }, 'text')
     const before = useWidgetStore.getState().widgets[id]!
     useCanvasStore.getState().setView({ x: -500, y: 900 }, 0.4)
     useWidgetStore.getState().snapshotHistory('drag:test')
@@ -78,8 +78,8 @@ describe('beta report store regressions', () => {
   })
 
   it('makes framing atomic, padded, and board-scoped regardless of selection', () => {
-    const selected = useWidgetStore.getState().createWidget('Selected', { x: 0, y: 0 }, 'notes')
-    const remote = useWidgetStore.getState().createWidget('Remote', { x: 5000, y: 3000 }, 'notes')
+    const selected = useWidgetStore.getState().createWidget('Selected', { x: 0, y: 0 }, 'text')
+    const remote = useWidgetStore.getState().createWidget('Remote', { x: 5000, y: 3000 }, 'text')
     useWidgetStore.getState().selectWidget(selected, false)
     const targets = widgetsForFrame(useWidgetStore.getState(), 'board')
     expect(targets.map((widget) => widget.id)).toEqual(expect.arrayContaining([selected, remote]))
@@ -97,11 +97,11 @@ describe('beta report store regressions', () => {
     const owner = useWidgetStore.getState().createWidget('Nested', { x: 0, y: 0 }, 'canvas_node')
     const childCanvas = (useWidgetStore.getState().widgets[owner]!.data as { canvasId: string }).canvasId
     useWidgetStore.getState().navigateToCanvas(childCanvas)
-    const child = useWidgetStore.getState().createWidget('Child', { x: 0, y: 0 }, 'notes')
+    const child = useWidgetStore.getState().createWidget('Child', { x: 0, y: 0 }, 'text')
     const nestedOwner = useWidgetStore.getState().createWidget('Deeper', { x: 400, y: 0 }, 'canvas_node')
     const deeperCanvas = (useWidgetStore.getState().widgets[nestedOwner]!.data as { canvasId: string }).canvasId
     useWidgetStore.getState().navigateToCanvas(deeperCanvas)
-    const grandchild = useWidgetStore.getState().createWidget('Grandchild', { x: 0, y: 0 }, 'notes')
+    const grandchild = useWidgetStore.getState().createWidget('Grandchild', { x: 0, y: 0 }, 'text')
 
     const impact = analyzeWidgetDeletion(useWidgetStore.getState(), [owner])
     expect(impact.removedCanvasIds).toEqual(new Set([childCanvas, deeperCanvas]))
@@ -122,5 +122,23 @@ describe('beta report store regressions', () => {
     useWidgetStore.getState().undo()
     expect(useWidgetStore.getState().widgets[created[0]!]).toBeUndefined()
     expect(useWidgetStore.getState().widgets[generator]?.data).toEqual({ prompt: 'One checklist', status: 'done' })
+  })
+
+  it('leaves a fine-nudged card where the user put it when a wire delivers a value', () => {
+    const target = useWidgetStore.getState().createWidget('Wired', { x: 4000, y: 4000 }, 'text')
+    useWidgetStore.getState().selectWidget(target, false)
+    // ⌥+Arrow is the one-pixel fine nudge, and it anchors precisely so the
+    // off-grid placement survives its own settle.
+    useWidgetStore.getState().nudgeSelection(1, 1)
+    const placed = { ...useWidgetStore.getState().widgets[target]!.position }
+    expect(placed.x % 40 === 0 && placed.y % 40 === 0).toBe(false)
+
+    // A delivery that does not change the card's dimensions must not settle it
+    // at all: the settle was unanchored, so it grid-snapped the card the user
+    // had just fine-positioned, with no history entry to undo it.
+    useWidgetStore.getState().applyWireWrites(new Map([[target, { text: 'delivered' }]]))
+
+    expect(useWidgetStore.getState().widgets[target]!.data).toEqual({ text: 'delivered' })
+    expect(useWidgetStore.getState().widgets[target]!.position).toEqual(placed)
   })
 })

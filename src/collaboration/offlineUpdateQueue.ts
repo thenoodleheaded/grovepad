@@ -72,6 +72,17 @@ export async function listPendingUpdates(canvasId: string): Promise<PendingColla
   }
 }
 
+export async function countPendingUpdates(canvasId: string): Promise<number> {
+  const database = await openDatabase()
+  try {
+    const transaction = database.transaction(STORE_NAME)
+    const index = transaction.objectStore(STORE_NAME).index(CANVAS_INDEX)
+    return await requestResult(index.count(canvasId))
+  } finally {
+    database.close()
+  }
+}
+
 export async function enqueuePendingUpdate(
   canvasId: string,
   payload: Uint8Array,
@@ -89,8 +100,8 @@ export async function enqueuePendingUpdate(
     database.close()
   }
 
+  if (await countPendingUpdates(canvasId) <= MERGE_THRESHOLD) return pending
   const all = await listPendingUpdates(canvasId)
-  if (all.length <= MERGE_THRESHOLD) return pending
   const merged: PendingCollaborationUpdate = {
     id: newId(),
     canvasId,

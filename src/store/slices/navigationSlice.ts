@@ -4,6 +4,13 @@ import type { CanvasMeta, CanvasNodeData, Relation, Widget, WidgetGlue } from '.
 import { useCanvasStore } from '../useCanvasStore'
 import { useToastStore } from '../useToastStore'
 import { planBoardCanvasEmbedding } from '../../utils/boardCanvasEmbedding'
+import {
+  closeCanvasTab,
+  insertCanvasTab,
+  reorderCanvasTabs,
+  resolveCanvasTabs,
+} from '../canvasTabs'
+import { lastVisitedCanvasIn, readCanvasVisits } from '../canvasRecents'
 import { buildGlueIndex, computeBlockedWidgetIds } from '../widgetGraph'
 import { settleWidgetLayout } from '../widgetSettling'
 import type { WidgetStoreSlice, WidgetStoreSliceContext } from '../widgetStoreSliceContext'
@@ -46,6 +53,11 @@ export function createNavigationSlice({ set, get, pushHistory, navigateToCanvas,
   renameWorkspace: (id, name) => {
     const trimmed = name.trim()
     if (!trimmed) return
+    const existing = get().workspaces[id]
+    if (!existing || existing.name === trimmed) return
+    // Tagged so a name typed one keystroke at a time collapses into one undo
+    // step rather than a hundred.
+    pushHistory(`workspace-name:${id}`)
     set((state) => {
       const ws = state.workspaces[id]
       if (!ws || ws.name === trimmed) return state
@@ -63,6 +75,7 @@ export function createNavigationSlice({ set, get, pushHistory, navigateToCanvas,
     const source = ordered.find((workspace) => workspace.id === sourceId)!
     const remaining = ordered.filter((workspace) => workspace.id !== sourceId)
     remaining.splice(remaining.findIndex((workspace) => workspace.id === targetId), 0, source)
+    pushHistory()
     set((current) => ({
       workspaces: Object.fromEntries(
         remaining.map((workspace, index) => [workspace.id, { ...current.workspaces[workspace.id]!, sortIndex: index }]),
@@ -126,15 +139,25 @@ export function createNavigationSlice({ set, get, pushHistory, navigateToCanvas,
     })
     // If we were inside the deleted workspace, land on another one's root.
     const after = get()
-    if (!after.workspaces[after.activeWorkspaceId] || !after.canvases[after.activeCanvasId]) {
-      const fallback = Object.values(after.workspaces)[0]
-      if (fallback) {
-        set({ activeWorkspaceId: fallback.id, activeCanvasId: fallback.rootCanvasId })
-        const saved = after.canvasViews[fallback.rootCanvasId]
-        const camera = useCanvasStore.getState()
-        if (saved) camera.setView(saved.pan, saved.zoom)
-        else camera.setView({ x: 0, y: 0 }, 1)
-      }
+    const landedOutside =
+      !after.workspaces[after.activeWorkspaceId] || !after.canvases[after.activeCanvasId]
+    const fallback = landedOutside ? Object.values(after.workspaces)[0] : undefined
+    const activeCanvasId = fallback?.rootCanvasId ?? after.activeCanvasId
+    // Background tabs can be parked deep inside the workspace that just went
+    // away, so the whole row is repaired, not only the tab in front.
+    const tabs = resolveCanvasTabs({ ...after, activeCanvasId }, after.canvases)
+    set({
+      activeWorkspaceId:
+        after.canvases[tabs.activeCanvasId]?.workspaceId ?? after.activeWorkspaceId,
+      activeCanvasId: tabs.activeCanvasId,
+      activeTabId: tabs.activeTabId,
+      openTabs: tabs.openTabs,
+    })
+    if (landedOutside && tabs.activeCanvasId !== after.activeCanvasId) {
+      const saved = after.canvasViews[tabs.activeCanvasId]
+      const camera = useCanvasStore.getState()
+      if (saved) camera.setView(saved.pan, saved.zoom)
+      else camera.setView({ x: 0, y: 0 }, 1)
     }
     useToastStore.getState().addToast(`Deleted workspace “${ws.name}”`, {
       action: { label: 'Undo', run: () => get().undo() },
@@ -144,14 +167,52 @@ export function createNavigationSlice({ set, get, pushHistory, navigateToCanvas,
   switchWorkspace: (id) => {
     const ws = get().workspaces[id]
     if (!ws) return
-    navigateToCanvas(ws.rootCanvasId)
+    // Land where the user last stood in this workspace, not on its root —
+    // the same courtesy per-canvas camera memory already extends within one.
+    const remembered = lastVisitedCanvasIn(readCanvasVisits(), get().canvases, id)
+    navigateToCanvas(remembered ?? ws.rootCanvasId)
   },
 
   navigateToCanvas: (canvasId) => navigateToCanvas(canvasId),
 
+  openCanvasTab: (canvasId, options) => {
+    const state = get()
+    if (!state.canvases[canvasId]) return
+    const activate = options?.activate ?? true
+    const next = insertCanvasTab(state, canvasId, { activate })
+    set({ openTabs: next.openTabs })
+    // A background tab is bookkeeping only; an activated one is a real
+    // navigation, so it goes through the shared core to park the camera it is
+    // leaving and restore the one it lands on.
+    if (activate) navigateToCanvas(canvasId, next.activeTabId)
+  },
+
+  closeCanvasTab: (tabId) => {
+    const state = get()
+    const next = closeCanvasTab(state, tabId)
+    if (!next) return
+    set({ openTabs: next.openTabs })
+    if (next.activeTabId !== state.activeTabId) {
+      navigateToCanvas(next.activeCanvasId, next.activeTabId)
+    }
+  },
+
+  activateCanvasTab: (tabId) => {
+    const tab = get().openTabs.find((entry) => entry.id === tabId)
+    if (!tab) return
+    navigateToCanvas(tab.canvasId, tab.id)
+  },
+
+  reorderCanvasTab: (sourceTabId, targetTabId) => {
+    set((state) => ({ openTabs: reorderCanvasTabs(state.openTabs, sourceTabId, targetTabId) }))
+  },
+
   renameCanvas: (canvasId, name) => {
     const trimmed = name.trim()
     if (!trimmed) return
+    const existing = get().canvases[canvasId]
+    if (!existing || existing.name === trimmed) return
+    pushHistory(`canvas-name:${canvasId}`)
     set((state) => {
       const canvas = state.canvases[canvasId]
       if (!canvas || canvas.name === trimmed) return state
@@ -174,6 +235,10 @@ export function createNavigationSlice({ set, get, pushHistory, navigateToCanvas,
   },
 
   updateCanvasSettings: (canvasId, settings) => {
+    if (!get().canvases[canvasId]) return
+    // Dragging the grid-intensity slider is one continuous adjustment, so all
+    // of its writes coalesce into a single undo step per canvas.
+    pushHistory(`canvas-settings:${canvasId}`)
     set((state) => {
       const canvas = state.canvases[canvasId]
       if (!canvas) return state

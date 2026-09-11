@@ -35,7 +35,7 @@ export function initNativeFileOpen(): () => void {
       const { board, media } = await readGrovepadPackage(bytes)
       await importBoardFileOntoCanvas({ board, media, filename: payload.name })
     } catch {
-      useToastStore.getState().addToast(`Could not open ${payload.name}`)
+      useToastStore.getState().addToast(`Could not open ${payload.name}`, { tone: 'danger' })
     }
   }
 

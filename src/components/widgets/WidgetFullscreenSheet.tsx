@@ -10,7 +10,8 @@ import { createOwnedTimeout, type OwnedTimeout } from '../../utils/ownedTimeout'
 import { restGlideMs } from '../../utils/widgetRest'
 import { widgetAccent } from '../../utils/widgetSkins'
 import {
-  SHEET_OPEN_CLIP,
+  sheetOpenClip,
+  sheetOpenMargin,
   sheetDragDismisses,
   sheetDragScrim,
   sheetDragTravel,
@@ -193,6 +194,13 @@ export function WidgetFullscreenSheet() {
   // directly here because the stage's box IS the viewport: the safe-area insets
   // live on its children for exactly this reason (see 33-widget-sheet.css).
   const from = sheetOriginCenter(flight.from)
+  // The panel's box stays the whole viewport — the clip maths and the tile
+  // rectangles are all in viewport coordinates and must stay that way. The
+  // margin is held off the content with padding instead, which means the
+  // stage's own box starts `margin` in from each edge. `transform-origin` is
+  // resolved against that box, so the tapped tile's viewport centre has to be
+  // shifted by the same amount or the sheet grows from beside its icon.
+  const margin = sheetOpenMargin(flight.viewport)
 
   return createPortal(
     <div className="gp-widget-sheet-layer" role="dialog" aria-modal="true" aria-label={`${widget.title}, full screen`}>
@@ -211,15 +219,17 @@ export function WidgetFullscreenSheet() {
         data-open={opened || undefined}
         data-dragging={dragging || undefined}
         style={{
-          clipPath: opened ? SHEET_OPEN_CLIP : sheetOriginClip(flight.from, flight.viewport),
+          clipPath: opened ? sheetOpenClip(flight.viewport) : sheetOriginClip(flight.from, flight.viewport),
+          '--gp-sheet-margin': `${margin}px`,
           transform: dragTravel > 0 ? `translate3d(0, ${dragTravel}px, 0)` : undefined,
           '--gp-widget-accent': accent,
+          '--gp-widget-accent-source': accent,
         } as CSSProperties}
       >
         <div
           className="gp-widget-sheet-stage"
           data-open={opened || undefined}
-          style={{ transformOrigin: `${from.x}px ${from.y}px` }}
+          style={{ transformOrigin: `${from.x - margin}px ${from.y - margin}px` }}
         >
         <header
           className="gp-widget-sheet-head"
@@ -242,7 +252,7 @@ export function WidgetFullscreenSheet() {
         >
           <span aria-hidden className="gp-widget-sheet-grip" />
           <div className="gp-widget-sheet-identity">
-            <Icon size={16} style={{ color: accent }} aria-hidden />
+            <Icon size={16} style={{ color: `var(--gp-accent-ink, ${accent})` }} aria-hidden />
             <h2 className="gp-widget-sheet-title">{widget.title}</h2>
           </div>
           <button

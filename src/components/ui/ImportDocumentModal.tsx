@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { BrainCircuit, FileText, FileUp, Sparkles, X, Loader2 } from 'lucide-react'
+import type { Relation, Widget, WidgetGlue } from '../../types/spatial'
 import { useWidgetStore } from '../../store/useWidgetStore'
 import { useCanvasStore } from '../../store/useCanvasStore'
 import { boundsForWidgets } from '../../utils/widgetBounds'
@@ -9,13 +10,20 @@ import { documentImportAvailable } from '../../utils/commandPaletteAvailability'
 import { useAiDebugStore, type AiCallPhase } from '../../store/useAiDebugStore'
 import { extractFileContent } from '../../utils/documentReader'
 import { layoutMindmap } from '../../utils/mindmapLayout'
+import {
+  describeTrelloImport,
+  mapTrelloBoard,
+  type TrelloImportResult,
+} from '../../utils/trelloImport'
 import { importTypeCatalog, IMPORT_SELECTABLE_TYPES } from '../../widgets/registry'
 import { DialogShell } from './DialogShell'
 
 const MAX_FILES = 5
-const ACCEPTED = '.pdf,.md,.markdown,.txt,.csv'
-const ACCEPTED_EXTENSIONS = new Set(['pdf', 'md', 'markdown', 'txt', 'csv'])
+const ACCEPTED = '.pdf,.md,.markdown,.txt,.csv,.json'
+const ACCEPTED_EXTENSIONS = new Set(['pdf', 'md', 'markdown', 'txt', 'csv', 'json'])
 const HYDRATION_CONCURRENCY = 3
+/** World-unit breathing room between two board exports imported together. */
+const BOARD_GAP = 160
 
 function isAcceptedDocument(file: File): boolean {
   const extension = file.name.split('.').pop()?.toLowerCase()
@@ -46,6 +54,53 @@ async function runWithConcurrency<T>(
 
 function throwIfAborted(signal: AbortSignal): void {
   if (signal.aborted) throw new DOMException('Import cancelled', 'AbortError')
+}
+
+interface StagedBoardExport {
+  fileName: string
+  result: TrelloImportResult
+}
+
+/**
+ * Split the staged files into board exports from rival apps and everything
+ * else. An export already carries its own structure — lists, cards, checked
+ * items — so mapping it is both free and more faithful than asking a model to
+ * infer that structure back out of flattened text.
+ *
+ * A `.json` file that is not a recognized export is REJECTED rather than
+ * passed along as a document. Grovepad retired raw-JSON board files in favour
+ * of `.grovepad` packages, and someone dropping an old JSON backup here is
+ * asking to restore a board — digesting it as prose would answer a question
+ * they did not ask and quietly destroy the expectation. Recognized foreign
+ * exports are the single exception to that closed door.
+ */
+async function partitionBoardExports(
+  staged: readonly StagedFile[],
+  canvasId: string,
+  signal: AbortSignal,
+): Promise<{ boards: StagedBoardExport[]; remaining: StagedFile[]; rejected: StagedFile[] }> {
+  const boards: StagedBoardExport[] = []
+  const remaining: StagedFile[] = []
+  const rejected: StagedFile[] = []
+  for (const file of staged) {
+    if (!file.name.toLowerCase().endsWith('.json')) {
+      remaining.push(file)
+      continue
+    }
+    const text = await extractFileContent(file.fileObject)
+    throwIfAborted(signal)
+    let parsed: unknown
+    try {
+      parsed = JSON.parse(text)
+    } catch {
+      rejected.push(file)
+      continue
+    }
+    const result = mapTrelloBoard(parsed, canvasId)
+    if (result) boards.push({ fileName: file.name, result })
+    else rejected.push(file)
+  }
+  return { boards, remaining, rejected }
 }
 
 interface OpenAiCallOptions {
@@ -202,36 +257,6 @@ function getHydrationPayloadSchema(type: string) {
         required: ['items'],
         additionalProperties: false,
       };
-    case 'kanban':
-      return {
-        type: 'object',
-        properties: {
-          columns: {
-            type: 'array',
-            items: {
-              type: 'object',
-              properties: {
-                label: { type: 'string', description: 'e.g. To Do, In Progress, Done' },
-                cards: {
-                  type: 'array',
-                  items: {
-                    type: 'object',
-                    properties: {
-                      label: { type: 'string', description: 'Task summary card' },
-                    },
-                    required: ['label'],
-                    additionalProperties: false,
-                  },
-                },
-              },
-              required: ['label', 'cards'],
-              additionalProperties: false,
-            },
-          },
-        },
-        required: ['columns'],
-        additionalProperties: false,
-      };
     case 'budget':
       return {
         type: 'object',
@@ -251,62 +276,6 @@ function getHydrationPayloadSchema(type: string) {
           },
         },
         required: ['currency', 'items'],
-        additionalProperties: false,
-      };
-    case 'weekly_planner':
-      return {
-        type: 'object',
-        properties: {
-          days: {
-            type: 'array',
-            description: 'Must contain exactly 7 arrays, representing tasks for Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday in order.',
-            items: {
-              type: 'array',
-              items: {
-                type: 'object',
-                properties: {
-                  text: { type: 'string', description: 'Activity or task text' },
-                  done: { type: 'boolean', description: 'Defaults to false' },
-                },
-                required: ['text', 'done'],
-                additionalProperties: false,
-              },
-            },
-          },
-        },
-        required: ['days'],
-        additionalProperties: false,
-      };
-    case 'timeline':
-      return {
-        type: 'object',
-        properties: {
-          totalUnits: { type: 'integer', description: 'Total timeline length (e.g. 10 weeks or days)' },
-          phases: {
-            type: 'array',
-            items: {
-              type: 'object',
-              properties: {
-                label: { type: 'string', description: 'Phase or milestone label' },
-                start: { type: 'integer', description: '0-indexed unit start index' },
-                span: { type: 'integer', description: 'Length of phase in units' },
-              },
-              required: ['label', 'start', 'span'],
-              additionalProperties: false,
-            },
-          },
-        },
-        required: ['totalUnits', 'phases'],
-        additionalProperties: false,
-      };
-    case 'progress':
-      return {
-        type: 'object',
-        properties: {
-          label: { type: 'string', description: 'Label of task or milestone tracked' },
-          percent: { type: 'integer', description: 'Current progress percentage (0 to 100)' },
-        },
-        required: ['label', 'percent'],
         additionalProperties: false,
       };
     case 'ai_generator':
@@ -331,16 +300,6 @@ function getHydrationPayloadSchema(type: string) {
           },
         },
         required: ['items'],
-        additionalProperties: false,
-      };
-    case 'quote':
-      return {
-        type: 'object',
-        properties: {
-          text: { type: 'string', description: 'The quote or callout text' },
-          attribution: { type: 'string', description: 'Who said or wrote it; empty string if unknown' },
-        },
-        required: ['text', 'attribution'],
         additionalProperties: false,
       };
     case 'table':
@@ -388,26 +347,6 @@ function getHydrationPayloadSchema(type: string) {
           },
         },
         required: ['cards'],
-        additionalProperties: false,
-      };
-    case 'vocab':
-      return {
-        type: 'object',
-        properties: {
-          terms: {
-            type: 'array',
-            items: {
-              type: 'object',
-              properties: {
-                term: { type: 'string', description: 'The word or phrase' },
-                definition: { type: 'string', description: 'Its meaning' },
-              },
-              required: ['term', 'definition'],
-              additionalProperties: false,
-            },
-          },
-        },
-        required: ['terms'],
         additionalProperties: false,
       };
     case 'meeting_notes':
@@ -485,7 +424,7 @@ function getHydrationPayloadSchema(type: string) {
         required: ['strengths', 'weaknesses', 'opportunities', 'threats'],
         additionalProperties: false,
       };
-    case 'notes':
+    case 'text':
     default:
       return {
         type: 'object',
@@ -506,8 +445,8 @@ function getHydrationPayloadSchema(type: string) {
  * it for its function without us overwriting its shape with a bad payload.
  */
 const HYDRATABLE_TYPES = new Set([
-  'notes', 'checklist', 'kanban', 'budget', 'weekly_planner', 'timeline', 'progress', 'ai_generator',
-  'bullets', 'quote', 'table', 'pros_cons', 'flashcards', 'vocab', 'meeting_notes', 'outline',
+  'text', 'checklist', 'kanban', 'budget', 'weekly_planner', 'timeline', 'progress', 'ai_generator',
+  'bullets', 'table', 'pros_cons', 'flashcards', 'vocab', 'meeting_notes', 'outline',
   'decision', 'poll', 'swot',
 ])
 
@@ -521,17 +460,6 @@ function formatHydrationData(type: string, rawData: any) {
           done: !!it.done
         }))
       };
-    case 'kanban':
-      return {
-        columns: (rawData.columns || []).map((col: any) => ({
-          id: crypto.randomUUID(),
-          label: col.label || 'Column',
-          cards: (col.cards || []).map((c: any) => ({
-            id: crypto.randomUUID(),
-            label: c.label || ''
-          }))
-        }))
-      };
     case 'budget':
       return {
         currency: rawData.currency || '$',
@@ -540,32 +468,6 @@ function formatHydrationData(type: string, rawData: any) {
           label: it.label || '',
           amount: typeof it.amount === 'number' ? it.amount : 0
         }))
-      };
-    case 'weekly_planner': {
-      const days = Array.from({ length: 7 }, (_, i) => {
-        const rawTasks = (rawData.days || [])[i] || [];
-        return rawTasks.map((t: any) => ({
-          id: crypto.randomUUID(),
-          text: t.text || '',
-          done: !!t.done
-        }));
-      });
-      return { days };
-    }
-    case 'timeline':
-      return {
-        totalUnits: typeof rawData.totalUnits === 'number' ? rawData.totalUnits : 10,
-        phases: (rawData.phases || []).map((p: any) => ({
-          id: crypto.randomUUID(),
-          label: p.label || 'Phase',
-          start: typeof p.start === 'number' ? p.start : 0,
-          span: typeof p.span === 'number' ? p.span : 2
-        }))
-      };
-    case 'progress':
-      return {
-        label: rawData.label || 'Progress',
-        percent: typeof rawData.percent === 'number' ? Math.min(100, Math.max(0, rawData.percent)) : 0
       };
     case 'ai_generator':
       return {
@@ -578,11 +480,6 @@ function formatHydrationData(type: string, rawData: any) {
           .map((value: any) => String(value || '').trim())
           .filter(Boolean)
           .map((text: string) => ({ id: crypto.randomUUID(), text }))
-      };
-    case 'quote':
-      return {
-        text: rawData.text || '',
-        attribution: rawData.attribution || ''
       };
     case 'table':
       return {
@@ -604,15 +501,6 @@ function formatHydrationData(type: string, rawData: any) {
           back: c.back || ''
         })),
         current: 0
-      };
-    case 'vocab':
-      return {
-        terms: (rawData.terms || []).map((t: any) => ({
-          id: crypto.randomUUID(),
-          term: t.term || '',
-          definition: t.definition || '',
-          known: false
-        }))
       };
     case 'meeting_notes':
       return {
@@ -656,7 +544,7 @@ function formatHydrationData(type: string, rawData: any) {
         opportunities: (rawData.opportunities || []).map((s: any) => String(s || '')).filter(Boolean),
         threats: (rawData.threats || []).map((s: any) => String(s || '')).filter(Boolean)
       };
-    case 'notes':
+    case 'text':
     default:
       return {
         text: rawData.text || ''
@@ -728,7 +616,9 @@ export function ImportDocumentModal() {
     const selected = [...incoming]
     const accepted = selected.filter(isAcceptedDocument)
     if (accepted.length !== selected.length) {
-      useToastStore.getState().addToast('Choose a PDF, Markdown, TXT, or CSV document')
+      useToastStore
+        .getState()
+        .addToast('Choose a PDF, Markdown, TXT, CSV, or exported board JSON')
     }
     setFiles((current) => {
       const room = MAX_FILES - current.length
@@ -749,6 +639,52 @@ export function ImportDocumentModal() {
 
   const hasContent = files.length > 0 || extraText.trim() !== ''
 
+  /**
+   * Commit mapped board exports to the canvas. Several boards in one import
+   * are laid side by side rather than stacked, because each mapper places its
+   * own board from the same origin.
+   *
+   * Returns false when the write was swallowed: the collaboration guard turns
+   * `importMindmap` into a silent no-op, so the only honest signal is whether
+   * the cards actually arrived in the store.
+   */
+  const commitBoardExports = (boards: readonly StagedBoardExport[]): boolean => {
+    const widgets: Record<string, Widget> = {}
+    const relations: Relation[] = []
+    const glues: WidgetGlue[] = []
+    let offsetX = 0
+    for (const board of boards) {
+      const own = Object.values(board.result.widgets)
+      for (const widget of own) {
+        widgets[widget.id] = {
+          ...widget,
+          position: { x: widget.position.x + offsetX, y: widget.position.y },
+        }
+      }
+      relations.push(...board.result.relations)
+      // Every member of a cluster shifts by the same offset, so the seams the
+      // adapter measured survive the side-by-side placement untouched.
+      glues.push(...board.result.glues)
+      const bounds = boundsForWidgets(own)
+      if (bounds) offsetX += bounds.width + BOARD_GAP
+    }
+
+    useWidgetStore.getState().importMindmap(widgets, relations, glues)
+
+    const [probeId] = Object.keys(widgets)
+    if (probeId !== undefined && !(probeId in useWidgetStore.getState().widgets)) {
+      useToastStore.getState().addToast('Nothing was imported — no cards were added to this canvas')
+      return false
+    }
+
+    const bounds = boundsForWidgets(Object.values(widgets))
+    if (bounds) useCanvasStore.getState().fitRect(bounds, 140)
+    for (const board of boards) {
+      useToastStore.getState().addToast(describeTrelloImport(board.result.report))
+    }
+    return true
+  }
+
   const handleImport = async () => {
     // Refuse before spending anything. Every write this flow performs is
     // wrapped by the collaboration permission guard, and a blocked call is a
@@ -756,13 +692,7 @@ export function ImportDocumentModal() {
     // topology request plus one hydration request per card and gets nothing,
     // while the UI reports success. Read the role at call time, not per render.
     if (!documentImportAvailable(useCollaborationStore.getState().role)) {
-      useToastStore.getState().addToast('Your role on this shared canvas cannot import documents')
-      return
-    }
-
-    const apiKey = openaiApiKey || (import.meta.env.VITE_OPENAI_API_KEY as string) || ''
-    if (!apiKey) {
-      useToastStore.getState().addToast('Please provide an OpenAI API Key')
+      useToastStore.getState().addToast('Your role on this shared canvas cannot import documents', { tone: 'danger' })
       return
     }
 
@@ -772,10 +702,56 @@ export function ImportDocumentModal() {
     const { signal } = controller
     setLoading(true)
     try {
-      // 1. Extract text from uploaded files
+      // 1. Board exports from rival apps are mapped straight onto cards. They
+      // carry their own structure, so no model — and therefore no API key —
+      // is involved. Whatever is left takes the document route below.
+      setLoadingMessage('Reading files...')
+      const { boards, remaining, rejected } = await partitionBoardExports(
+        files,
+        activeCanvasId,
+        signal,
+      )
+      for (const file of rejected) {
+        useToastStore
+          .getState()
+          .addToast(
+            `${file.name} is not a board Grovepad can read — use a .grovepad package`,
+            { tone: 'danger' },
+          )
+      }
+      if (boards.length > 0 && !commitBoardExports(boards)) {
+        if (foregroundAbortRef.current === controller) foregroundAbortRef.current = null
+        setLoading(false)
+        setLoadingMessage('')
+        return
+      }
+      // Nothing is left for the model — either the boards were the whole
+      // import, or every JSON file was rejected above. Either way this must
+      // not fall through and ask for an API key it has no work for.
+      if (remaining.length === 0 && extraText.trim() === '') {
+        if (foregroundAbortRef.current === controller) foregroundAbortRef.current = null
+        if (boards.length > 0) useWidgetStore.getState().setImportOpen(false)
+        else if (rejected.length === 0) {
+          useToastStore.getState().addToast('Please upload files or paste some text to digest')
+        }
+        setLoading(false)
+        setLoadingMessage('')
+        return
+      }
+
+      const apiKey = openaiApiKey || (import.meta.env.VITE_OPENAI_API_KEY as string) || ''
+      if (!apiKey) {
+        useToastStore.getState().addToast('Please provide an OpenAI API Key')
+        if (foregroundAbortRef.current === controller) foregroundAbortRef.current = null
+        setLoading(false)
+        setLoadingMessage('')
+        return
+      }
+
+      // 2. Extract text from the documents that were not board exports
       setLoadingMessage('Extracting text from files...')
       const fileTexts: string[] = []
-      for (const staged of files) {
+      for (const staged of remaining) {
         const text = await extractFileContent(staged.fileObject)
         throwIfAborted(signal)
         fileTexts.push(`--- File: ${staged.name} ---\n${text}`)
@@ -783,13 +759,7 @@ export function ImportDocumentModal() {
       
       const combinedDocumentText = fileTexts.join('\n\n')
       
-      if (!combinedDocumentText && !extraText.trim()) {
-        useToastStore.getState().addToast('Please upload files or paste some text to digest')
-        setLoading(false)
-        return
-      }
-
-      // 2. Digest structure (Phase 1) — documents are chunked into [REF-X]
+      // 3. Digest structure (Phase 1) — documents are chunked into [REF-X]
       // anchors; the model returns only topology + ref pointers, never copied
       // text, and hydration later sends each widget only its cited chunks.
       // Pasted text is NOT chunked: it goes to the model verbatim as the
@@ -1057,7 +1027,7 @@ Return ONLY a JSON object that adheres strictly to the response schema for this 
     } catch (err) {
       if (err instanceof DOMException && err.name === 'AbortError') return
       console.error(`Failed to hydrate details for widget ${title}:`, err)
-      useToastStore.getState().addToast(`Failed to load details for "${title}"`)
+      useToastStore.getState().addToast(`Failed to load details for "${title}"`, { tone: 'danger' })
     } finally {
       useWidgetStore.getState().setWidgetHydration(widgetId, false)
     }
@@ -1166,7 +1136,9 @@ Return ONLY a JSON object that adheres strictly to the response schema for this 
               <span className="text-xs text-neutral-400">
                 <span className="text-emerald-300">Choose files</span> or drop them here
               </span>
-              <span className="text-[10px] text-neutral-600">PDF · Markdown · TXT · CSV</span>
+              <span className="text-[10px] text-neutral-600">
+                PDF · Markdown · TXT · CSV · Trello board JSON
+              </span>
             </button>
             <input
               ref={fileInputRef}

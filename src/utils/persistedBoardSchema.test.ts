@@ -5,10 +5,12 @@ import currentBoardFixture from './fixtures/boards/v2.json?raw'
 import unknownBoardFixture from './fixtures/boards/v2-unknown.json?raw'
 import futureBoardFixture from './fixtures/boards/v3.json?raw'
 import truncatedBoardFixture from './fixtures/boards/truncated.json.txt?raw'
+import { DELETED_WIDGET_TYPES } from '../widgets/deletedWidgetTypes'
 import {
   getFuturePersistedBoardVersion,
   getOpaqueWidgetType,
   isPersistedBoardFromNewerVersion,
+  remapLegacyRootCanvasId,
   migrateLegacyBoard,
   parsePersistedBoard,
   serializePersistedBoard,
@@ -83,7 +85,7 @@ describe('persisted board schema', () => {
     expect(parsed?.activeCanvasId).toBe('canvas')
   })
 
-  it('retires saved divider widgets and any edges that depended on them', () => {
+  it('drops saved divider widgets and any edges that depended on them', () => {
     const source = validBoard()
     ;(source.widgets as Record<string, unknown>).divider = {
       ...source.widgets.alpha,
@@ -98,6 +100,49 @@ describe('persisted board schema', () => {
 
     expect(parsed?.widgets).not.toHaveProperty('divider')
     expect(parsed?.relations).not.toHaveProperty('toDivider')
+  })
+
+  it('drops every deleted card from a board that still holds one', () => {
+    // These cards were removed from the product. A board saved while they
+    // existed must come back without them — not as a converted card, and not
+    // as a locked placeholder. This is the whole contract of the deletion.
+    const source = validBoard()
+    const widgets = source.widgets as Record<string, unknown>
+    for (const type of DELETED_WIDGET_TYPES) {
+      widgets[type] = {
+        ...source.widgets.alpha,
+        id: type,
+        type,
+        title: `Saved ${type}`,
+        data: { text: 'whatever was in it' },
+      }
+    }
+
+    const parsed = parsePersistedBoard(source)
+
+    expect(parsed).not.toBeNull()
+    for (const type of DELETED_WIDGET_TYPES) {
+      expect(parsed?.widgets, `${type} survived hydration`).not.toHaveProperty(type)
+    }
+    // The surviving board is exactly the one that was valid to begin with.
+    expect(Object.keys(parsed!.widgets).sort()).toEqual(Object.keys(validBoard().widgets).sort())
+  })
+
+  it('drops the edges and glue that named a deleted card', () => {
+    const source = validBoard()
+    ;(source.widgets as Record<string, unknown>).sticky = {
+      ...source.widgets.alpha,
+      id: 'sticky',
+      type: 'sticky_note',
+      title: 'Friday',
+      data: { text: 'Ask Dana about the invoice', color: 'pink' },
+    }
+    source.relations.toSticky = makeRelation({ id: 'toSticky', fromId: 'alpha', toId: 'sticky' })
+
+    const parsed = parsePersistedBoard(source)
+
+    expect(parsed?.widgets).not.toHaveProperty('sticky')
+    expect(parsed?.relations).not.toHaveProperty('toSticky')
   })
 
   it('grandfathers version-2 payloads written before embedded metadata existed', () => {
@@ -125,7 +170,7 @@ describe('persisted board schema', () => {
     expect(parsed).not.toBeNull()
 
     const opaqueWidget = parsed!.widgets.future
-    expect(opaqueWidget?.type).toBe('notes')
+    expect(opaqueWidget?.type).toBe('text')
     expect(opaqueWidget && getOpaqueWidgetType(opaqueWidget)).toBe('quantum_planner')
     expect(parsed!.relations.futureRelation).toBeDefined()
     expect(parsed!.relations.futureRelationKind).toBeUndefined()
@@ -155,6 +200,10 @@ describe('persisted board schema', () => {
     const expected = withoutEmbeddedDeviceState(fixture)
     Reflect.deleteProperty(expected, 'groups')
     expected.glues = { futureGlue: (expected.glues as Record<string, unknown>).futureGlue }
+    // The fixture is frozen at the "notes" era; a renamed widget type reads
+    // back under its live name, so "alpha" is the one deliberate difference.
+    const expectedWidgets = expected.widgets as Record<string, Record<string, unknown>>
+    expectedWidgets.alpha = { ...expectedWidgets.alpha, type: 'text' }
     expect(serialized).toEqual(expected)
     expect(serialized.futureBoardField).toEqual({ mode: 'tomorrow' })
 
@@ -196,7 +245,13 @@ describe('persisted board schema', () => {
     const fixture = JSON.parse(currentBoardFixture) as Record<string, unknown>
     const parsed = parsePersistedBoard(fixture)
     expect(parsed).not.toBeNull()
-    expect(serializePersistedBoard(parsed!)).toEqual(withoutEmbeddedDeviceState(fixture))
+    // The fixture is frozen at the "notes" era; a renamed widget type is the
+    // one deliberate way this round trip is not byte-for-byte — the record
+    // reads back under its live name, not the name it was saved under.
+    const expectedDocument = withoutEmbeddedDeviceState(fixture)
+    const expectedWidgets = expectedDocument.widgets as Record<string, Record<string, unknown>>
+    expectedWidgets.alpha = { ...expectedWidgets.alpha, type: 'text' }
+    expect(serializePersistedBoard(parsed!)).toEqual(expectedDocument)
     expect(serializePersistedBoard(parsed!)).not.toHaveProperty('activeWorkspaceId')
     expect(serializePersistedBoard(parsed!)).not.toHaveProperty('activeCanvasId')
     expect(serializePersistedBoard(parsed!)).not.toHaveProperty('canvasViews')
@@ -270,7 +325,46 @@ describe('persisted board schema', () => {
     const source = validBoard()
     const legacyWidget = { ...source.widgets.alpha!, canvasId: undefined }
     const migrated = migrateLegacyBoard({ widgets: { alpha: legacyWidget } })
-    expect(migrated?.widgets.alpha?.canvasId).toBe('canvas-origin')
-    expect(migrated?.workspaces['ws-default']?.rootCanvasId).toBe('canvas-origin')
+    const rootCanvasId = migrated?.workspaces['ws-default']?.rootCanvasId
+    // Minted, not the old shared literal: a constant here put every migrated
+    // board's root canvas into one namespace that keys cloud collaboration rows
+    // and the media folder.
+    expect(rootCanvasId).toMatch(/^[0-9a-f-]{36}$/i)
+    expect(migrated?.widgets.alpha?.canvasId).toBe(rootCanvasId)
+    expect(migrated?.canvases[rootCanvasId!]?.id).toBe(rootCanvasId)
+    expect(migrated?.activeCanvasId).toBe(rootCanvasId)
+  })
+
+  it('moves a saved board off the shared root canvas id', () => {
+    const board = validBoard()
+    const legacy = {
+      ...board,
+      workspaces: { 'ws-default': { ...board.workspaces['ws-default']!, rootCanvasId: 'canvas-origin' } },
+      canvases: {
+        'canvas-origin': {
+          id: 'canvas-origin',
+          name: 'Origin',
+          workspaceId: 'ws-default',
+          parentCanvasId: null,
+        },
+      },
+      widgets: { alpha: { ...board.widgets.alpha!, canvasId: 'canvas-origin' } },
+      activeCanvasId: 'canvas-origin',
+    }
+    const remapped = remapLegacyRootCanvasId(
+      legacy as unknown as Parameters<typeof remapLegacyRootCanvasId>[0],
+      () => 'fresh-id',
+    )
+    expect(remapped.canvases['canvas-origin']).toBeUndefined()
+    expect(remapped.canvases['fresh-id']?.id).toBe('fresh-id')
+    expect(remapped.workspaces['ws-default']?.rootCanvasId).toBe('fresh-id')
+    expect(remapped.widgets.alpha?.canvasId).toBe('fresh-id')
+    expect(remapped.activeCanvasId).toBe('fresh-id')
+  })
+
+  it('leaves a board that never used the shared id untouched', () => {
+    const board = validBoard()
+    expect(remapLegacyRootCanvasId(board as unknown as Parameters<typeof remapLegacyRootCanvasId>[0]))
+      .toBe(board)
   })
 })

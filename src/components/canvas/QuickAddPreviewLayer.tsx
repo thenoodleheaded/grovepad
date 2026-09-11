@@ -26,6 +26,14 @@ import {
  * so it pans and zooms with the board.
  */
 
+/**
+ * Stable empty fallback. A fresh `[]` literal on the no-scene path changes the
+ * hook's effect deps on the very re-render `setLeaving` causes, which cancels
+ * the 240ms fold-out timer before it can drain `leaving` — stale chips then
+ * survive into the next Quick Add preview.
+ */
+const NO_CHIPS: PreviewChip[] = []
+
 /** Chips leaving the plan fold away instead of vanishing between frames. */
 function useLeavingChips(chips: PreviewChip[]): PreviewChip[] {
   const previousRef = useRef<Map<string, PreviewChip>>(new Map())
@@ -64,7 +72,7 @@ export function QuickAddPreviewLayer() {
     () => (candidate && anchor ? buildPreviewScene(candidate.plan, anchor) : null),
     [candidate, anchor],
   )
-  const leavingChips = useLeavingChips(scene?.chips ?? [])
+  const leavingChips = useLeavingChips(scene?.chips ?? NO_CHIPS)
 
   if (!active || !candidate || !anchor || !scene) return null
 

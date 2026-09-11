@@ -43,9 +43,9 @@ function rootTitle(source: string): string {
 /** Urgency rank for branch ordering — deadline-carrying and actionable
  *  widgets surface first so the tree reads as a priority derivation. */
 function priorityRank(node: ProposedNode): number {
-  if (detectDate(node.sourceText) || node.widgetType === 'countdown' || node.widgetType === 'date_picker') return 0
-  if (['checklist', 'assignment', 'kanban', 'priority_matrix', 'daily_agenda', 'weekly_planner', 'process'].includes(node.widgetType)) return 1
-  if (['budget', 'goal_tracker', 'study_goal', 'timeline', 'habit', 'pomodoro'].includes(node.widgetType)) return 2
+  if (detectDate(node.sourceText) || node.widgetType === 'date_picker') return 0
+  if (['checklist', 'process'].includes(node.widgetType)) return 1
+  if (['budget', 'goal_tracker', 'habit', 'timekeeper'].includes(node.widgetType)) return 2
   return 3
 }
 
@@ -65,8 +65,8 @@ function checklistNode(id: string, title: string, source: string, labels: readon
 /** The archetype-free fallback: sort-it-out trio that fits any thought. */
 const GENERIC_BRANCHES: ReadonlyArray<{ type: ModuleType; title: string }> = [
   { type: 'checklist', title: 'First steps' },
-  { type: 'priority_matrix', title: 'What matters most' },
-  { type: 'notes', title: 'Everything on your mind' },
+  { type: 'checklist', title: 'What matters most' },
+  { type: 'text', title: 'Everything on your mind' },
 ]
 
 export interface ScaffoldOptions {
@@ -93,9 +93,11 @@ export function buildScaffold(sourceText: string, options: ScaffoldOptions = {})
 
   const root: ProposedNode = {
     temporaryId: 's-0',
-    widgetType: 'sticky_note',
+    widgetType: 'text',
     title: rootTitle(source),
-    data: { ...(widgetDefinition('sticky_note').defaultData() as unknown as Record<string, unknown>), text: source } as ProposedNode['data'],
+    // The scaffold's root reads as the thought someone jotted, so it wears the
+    // Note card's Sticky skin — the standalone Sticky Note card is gone.
+    data: { ...(widgetDefinition('text').defaultData() as unknown as Record<string, unknown>), mode: 'sticky', text: source } as ProposedNode['data'],
     sourceText: source,
     confidence: SCAFFOLD_CONFIDENCE,
     depth: 0,

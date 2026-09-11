@@ -39,7 +39,10 @@ export interface BranchGateData {
   falseNote?: string
 }
 
-export type FormulaOperator = 'add' | 'subtract' | 'multiply' | 'divide' | 'modulo'
+export type FormulaOperator = 'add' | 'subtract' | 'multiply' | 'divide' | 'modulo' | 'power'
+
+/** The six operand slots. Each one is its own circuit port. */
+export type FormulaInputKey = 'a' | 'b' | 'c' | 'd' | 'e' | 'f'
 
 export interface FormulaData {
   label: string
@@ -47,6 +50,22 @@ export interface FormulaData {
    *  writes exactly these. */
   a: number
   b: number
+  /** Four further operands, each with a port of its own. Absent on every board
+   *  written before the card could hold more than two numbers. */
+  c?: number
+  d?: number
+  e?: number
+  f?: number
+  /** How many of the six slots this card holds (2–6). Absent means two. */
+  inputCount?: number
+  /** Each slot's own name — what a written expression may call it, and what
+   *  every skin prints beside its value. Absent means the bare letter. */
+  names?: Partial<Record<FormulaInputKey, string>>
+  /** Printed after the answer: '%', 'kg', 'students'. */
+  unit?: string
+  /** Decimal places for the published answer (0–6). Absent means the number
+   *  exactly as the calculation produced it. */
+  precision?: number
   operator: FormulaOperator
   /** Which question this card asks of A and B. Absent means the original
    *  two-operand card, so boards made before skins read identically. */

@@ -15,18 +15,18 @@ import {
   PanelLeft,
   Pencil,
   Plus,
-  Redo2,
   Search,
   Settings,
   SquarePlus,
   Trash2,
-  Undo2,
+  Zap,
 } from 'lucide-react'
 import { useCanvasStore } from '../../store/useCanvasStore'
 import { useAdaptiveInputStore } from '../../store/useAdaptiveInputStore'
 import { useCircuitStore } from '../../store/useCircuitStore'
 import { useOverlayLifecycle } from '../../store/useOverlayStore'
 import { getCanvasPath, useWidgetStore } from '../../store/useWidgetStore'
+import { openCanvasFromClick, openCanvasInBackgroundTab } from '../../utils/canvasOpenIntent'
 import { screenToWorld } from '../../types/spatial'
 import { IconButton } from './IconButton'
 import { AccountChip } from './AccountChip'
@@ -95,9 +95,14 @@ function WorkspaceDropdown() {
         aria-expanded={open}
         onClick={() => (open ? setOpen(false) : openMenu())}
         onDoubleClick={() => { if (active) { setRenamingId(active.id); openMenu() } }}
+        aria-label={`Workspace: ${active?.name ?? 'Workspace'}`}
         className="gp-touch-target flex h-7 min-w-0 max-w-24 items-center gap-1.5 rounded-lg px-2 text-xs font-medium text-neutral-200 transition-colors hover:bg-neutral-700/50 sm:max-w-44"
       >
-        <span className="truncate">{active?.name ?? 'Workspace'}</span>
+        {/* The name is the first thing flexbox takes when the top row is under
+            width pressure, and a name clipped to one glyph reads as a rendering
+            fault rather than as a label. Below `sm` the chevron carries the
+            control on its own and the accessible name moves to aria-label. */}
+        <span className="hidden truncate sm:inline">{active?.name ?? 'Workspace'}</span>
         <ChevronsUpDown size={12} className="shrink-0 text-neutral-500" aria-hidden />
       </button>
 
@@ -309,7 +314,12 @@ function CanvasBreadcrumbs() {
             <button
               type="button"
               disabled={isLast}
-              onClick={() => useWidgetStore.getState().navigateToCanvas(canvas.id)}
+              onClick={(event) => openCanvasFromClick(canvas.id, event)}
+              onAuxClick={(event) => {
+                if (event.button !== 1) return
+                event.preventDefault()
+                openCanvasInBackgroundTab(canvas.id)
+              }}
               className={`max-w-32 truncate rounded-md px-1.5 py-0.5 text-xs transition-colors ${
                 isLast
                   ? 'font-medium text-neutral-200'
@@ -334,8 +344,8 @@ function ToolbarOverflow({ forceVisible = false }: { forceVisible?: boolean }) {
   const [open, setOpen] = useState(false)
   const anchorRef = useRef<HTMLButtonElement>(null)
   const [anchor, setAnchor] = useState({ x: 0, y: 0 })
-  const canUndo = useWidgetStore((state) => state.canUndo)
-  const canRedo = useWidgetStore((state) => state.canRedo)
+  const collaborationRole = useCollaborationStore((state) => state.role)
+  const canEdit = collaborationRole === null || canEditCollaborativeCanvas(collaborationRole)
 
   useOverlayLifecycle(open)
 
@@ -395,25 +405,21 @@ function ToolbarOverflow({ forceVisible = false }: { forceVisible?: boolean }) {
                 Search
               </button>
               <div className="my-1 border-t gp-hairline sm:hidden" />
+              {/* Undo and Redo live in the bottom tool dock wherever this menu
+                  shows. The tree shaper lands here instead: its toolbar button
+                  drops out below md, and on touch double-tap belongs to zoom. */}
               <button
                 type="button"
                 role="menuitem"
-                disabled={!canUndo}
-                onClick={() => action(() => useWidgetStore.getState().undo())}
+                disabled={!canEdit}
+                onClick={() => action(() => {
+                  const point = viewCenterWorld()
+                  useWidgetStore.getState().startGhostShaper(point.x, point.y)
+                })}
                 className="flex h-9 w-full items-center gap-2.5 rounded-xl px-2.5 text-xs text-neutral-300 transition-colors hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-35"
               >
-                <Undo2 size={13} aria-hidden />
-                Undo
-              </button>
-              <button
-                type="button"
-                role="menuitem"
-                disabled={!canRedo}
-                onClick={() => action(() => useWidgetStore.getState().redo())}
-                className="flex h-9 w-full items-center gap-2.5 rounded-xl px-2.5 text-xs text-neutral-300 transition-colors hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-35"
-              >
-                <Redo2 size={13} aria-hidden />
-                Redo
+                <Network size={13} aria-hidden />
+                Shape a tree
               </button>
               <div className="my-1 border-t gp-hairline" />
               <button
@@ -453,7 +459,15 @@ export function CanvasToolbar() {
       className="gp-canvas-ui-scale gp-safe-canvas-top pointer-events-none absolute z-30 flex items-start justify-between gap-2 sm:gap-3"
     >
       {/* Left: canvas tree + account + identity + workspace + breadcrumbs. */}
-      <div className="gp-toolbar gp-panel pointer-events-auto flex h-11 w-fit min-w-0 max-w-[calc(100vw-8.5rem)] flex-none select-none items-center gap-1 rounded-2xl px-1.5 shadow-xl sm:max-w-[calc(100vw-13rem)] sm:px-2 lg:max-w-[56vw]">
+      {/* Shrinkable, not `flex-none`. The right group is `shrink-0`, so when
+          neither side yields the row simply overflows the viewport: on a 375px
+          phone the two bars measured 204px + 236px and pushed Circuit mode and
+          the overflow menu — which is where Search and Settings live once they
+          drop out at that width — clean off the screen with no way to reach
+          them. The max-widths below are ceilings for the roomy case; this lets
+          flexbox take back exactly the space it needs in the cramped one, and
+          the workspace label inside already truncates. */}
+      <div className="gp-toolbar gp-panel pointer-events-auto flex h-11 w-fit min-w-0 max-w-[calc(100vw-8.5rem)] select-none items-center gap-1 rounded-2xl px-1.5 shadow-xl sm:max-w-[calc(100vw-13rem)] sm:px-2 lg:max-w-[56vw]">
         <AccountChip />
         <IconButton label="Open canvas tree" onClick={() => useCanvasTreeStore.getState().setOpen(true)}>
           <PanelLeft size={13} aria-hidden />
@@ -494,6 +508,16 @@ export function CanvasToolbar() {
         >
           <SquarePlus size={13} aria-hidden />
           <span className="hidden sm:inline">Widget</span>
+        </button>
+        <button
+          type="button"
+          disabled={!canEdit}
+          onClick={() => useWidgetStore.getState().setQuickAddOpen(true)}
+          title="Capture a thought in plain words (N)"
+          className="gp-toolbar-action flex h-9 items-center gap-1.5 rounded-xl px-2 text-xs font-medium text-neutral-400 transition-[background-color,color,transform,scale] hover:bg-neutral-700/60 hover:text-white active:scale-[0.96] disabled:cursor-not-allowed disabled:opacity-35"
+        >
+          <Zap size={13} aria-hidden />
+          <span className="hidden sm:inline">Capture</span>
         </button>
         <button
           type="button"

@@ -1,9 +1,11 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { ArrowLeft, Blocks, Check, ChevronDown, Search, Star, X } from 'lucide-react'
+import { Check, Star, X } from 'lucide-react'
 import { useOverlayDismiss } from '../../hooks/useOverlayDismiss'
+import { useCanvasStore } from '../../store/useCanvasStore'
 import { useWidgetStore } from '../../store/useWidgetStore'
 import { useWidgetPickerPrefsStore } from '../../store/useWidgetPickerPrefsStore'
+import { isStudyFocusType } from '../../widgets/studyFocus'
 import {
   CATEGORY_LABELS,
   CATEGORY_ORDER,
@@ -12,11 +14,12 @@ import {
   type WidgetCategory,
   type WidgetDefinition,
 } from '../../widgets/registry'
-import { DOMAIN_PACKS, DOMAIN_PACK_LABELS, snapToGrid } from '../../types/spatial'
-import type { DomainPack, ModuleType, Vector2D } from '../../types/spatial'
+import { snapToGrid } from '../../types/spatial'
+import type { ModuleType, Vector2D } from '../../types/spatial'
 import { ATLAS_CATALOG, ATLAS_TYPES, ATLAS_TYPE_SET, type AtlasType } from '../../widgets/atlasCatalog'
 import { AUTOMATION_CORE_CATALOG, AUTOMATION_CORE_SET, type AutomationCoreType } from '../../widgets/automationCoreCatalog'
 import { useAdaptiveInputStore } from '../../store/useAdaptiveInputStore'
+import { WidgetFace } from './widgetFaces'
 
 interface AddWidgetModalProps {
   worldPos: Vector2D
@@ -27,34 +30,66 @@ interface AddWidgetModalProps {
   }
 }
 
-/** Pack blurbs shown on the pack cards — what enabling each one unlocks. */
-const PACK_BLURBS: Partial<Record<DomainPack, string>> = {
-  life: 'Life Systems — trackers, planners, recipe scale and habit tools',
-  education: 'Education & Academics — study goals, GPA, assignments, Cornell notes, past papers',
-  project_management: 'Project Management — timelines, SWOT, risk register, process flows, meeting meters',
-  finance_analytics: 'Finance & Analytics — budgets, converter, timesheets, inventory, estimates',
-  data_science: 'Data & Analytics — trend charting, experiment loops, metric reporting',
-  software_eng: 'Software & Systems — 50+ automation gates, triggers, variables, webhooks, synthesizers',
-  creative_writing: 'Creative Writing — script writing templates, dialogue boards, commission pipeline',
-  ux_design: 'UX & UI Design — color palettes, asset generators, layout tools',
-  game_dev: 'Game Mechanics Tuner — sliders for tuning grip, drift, and feel',
-  music_production: 'Synthesizer & Audio Player — BPM, key, and signal chain',
+/** Palette geometry. One column of rows, narrow enough to sit beside your work
+ *  rather than over it — a library is read, not surveyed. */
+const PALETTE_WIDTH = 408
+/** Gap between the spawn point and the panel corner it grows from. */
+const ANCHOR_OFFSET = 14
+/** Keep the panel clear of the window edge and of the canvas toolbar. */
+const VIEWPORT_MARGIN = 16
+const TOOLBAR_CLEARANCE = 64
+
+interface PalettePlacement {
+  left: number
+  top: number
+  origin: string
 }
 
-/** Grid column count must mirror the responsive grid classes below so
- *  arrow-key navigation moves where the eye expects. */
-function columnsForViewport(): number {
-  if (window.innerWidth >= 1280) return 4
-  if (window.innerWidth >= 1024) return 3
-  if (window.innerWidth >= 640) return 2
-  return 1
+/**
+ * Places the palette next to the point the widget will land on, clamped inside
+ * the window, and reports the transform origin so the open animation grows out
+ * of that point rather than out of the middle of nowhere.
+ */
+function placePalette(anchor: Vector2D, panel: { width: number; height: number }): PalettePlacement {
+  const maxLeft = window.innerWidth - panel.width - VIEWPORT_MARGIN
+  const maxTop = window.innerHeight - panel.height - VIEWPORT_MARGIN
+  // Prefer growing down-right from the point; flip to the other side when the
+  // panel would run off the window rather than sliding it far from the anchor.
+  const wantsLeft = anchor.x + ANCHOR_OFFSET + panel.width > window.innerWidth - VIEWPORT_MARGIN
+  const wantsUp = anchor.y + ANCHOR_OFFSET + panel.height > window.innerHeight - VIEWPORT_MARGIN
+  const rawLeft = wantsLeft ? anchor.x - ANCHOR_OFFSET - panel.width : anchor.x + ANCHOR_OFFSET
+  const rawTop = wantsUp ? anchor.y - ANCHOR_OFFSET - panel.height : anchor.y + ANCHOR_OFFSET
+  const left = Math.min(Math.max(VIEWPORT_MARGIN, rawLeft), Math.max(VIEWPORT_MARGIN, maxLeft))
+  const top = Math.min(Math.max(TOOLBAR_CLEARANCE, rawTop), Math.max(TOOLBAR_CLEARANCE, maxTop))
+  const originX = Math.min(Math.max(0, anchor.x - left), panel.width)
+  const originY = Math.min(Math.max(0, anchor.y - top), panel.height)
+  return { left, top, origin: `${originX}px ${originY}px` }
+}
+
+/** Every word a search should be able to find a widget by. */
+function haystack(def: WidgetDefinition): string {
+  const aliases: string[] = []
+  if (def.type === 'tracker') {
+    for (const type of ATLAS_TYPES) {
+      aliases.push(ATLAS_CATALOG[type].label, ...ATLAS_CATALOG[type].aliases)
+    }
+  }
+  if (ATLAS_TYPE_SET.has(def.type)) aliases.push(...ATLAS_CATALOG[def.type as AtlasType].aliases)
+  if (AUTOMATION_CORE_SET.has(def.type)) aliases.push(...AUTOMATION_CORE_CATALOG[def.type as AutomationCoreType].aliases)
+  return [def.label, def.description, CATEGORY_LABELS[def.category], ...aliases].join(' ').toLowerCase()
+}
+
+interface PickerGroup {
+  key: string
+  label: string | null
+  defs: WidgetDefinition[]
 }
 
 // ---------------------------------------------------------------------------
-// Widget tile — dark accent glass with a bright icon island embedded at left
+// Widget row — a face, a name, and the family it belongs to
 // ---------------------------------------------------------------------------
 
-function WidgetTile({
+function WidgetRow({
   def,
   active,
   selected,
@@ -75,10 +110,9 @@ function WidgetTile({
   onUnhover: () => void
   onToggleFavorite: () => void
 }) {
-  const Icon = def.icon
   const ref = useRef<HTMLButtonElement>(null)
 
-  // Keep the keyboard-highlighted tile in view while arrowing through.
+  // Keep the keyboard-highlighted row in view while arrowing through.
   useEffect(() => {
     if (active) ref.current?.scrollIntoView({ block: 'nearest' })
   }, [active])
@@ -97,279 +131,187 @@ function WidgetTile({
         onClick={onChoose}
         onPointerEnter={onHover}
         onPointerLeave={onUnhover}
-        className="gp-picker-row relative grid min-h-[104px] w-full grid-cols-[80px_minmax(0,1fr)] items-start gap-4 rounded-[22px] p-3 pr-5 text-left"
+        className="gp-facet-row relative flex w-full items-center gap-3.5 rounded-[14px] pr-12 pl-4 text-left"
       >
+        <span className="gp-facet-glyph flex h-[22px] w-[29px] shrink-0 items-center justify-center">
+          <WidgetFace type={def.type} category={def.category} />
+        </span>
+        <span className="gp-facet-label min-w-0 flex-1 truncate text-[14px] leading-none font-medium tracking-[-0.012em]">
+          {def.label}
+        </span>
+        <span className="gp-facet-meta shrink-0 text-[9.5px] leading-none tracking-[0.09em] uppercase">
+          {CATEGORY_LABELS[def.category]}
+        </span>
+      </button>
+      {selecting ? (
         <span
-          className="gp-picker-icon relative flex h-20 w-20 shrink-0 items-center justify-center rounded-[18px]"
-          style={{ color: def.accent }}
+          aria-hidden
+          data-on={selected || undefined}
+          className="gp-facet-check pointer-events-none absolute inset-y-0 right-3.5 my-auto flex h-[19px] w-[19px] items-center justify-center rounded-full"
         >
-          <Icon size={42} strokeWidth={1.8} aria-hidden />
+          <Check size={12} strokeWidth={2.4} />
         </span>
-        <span className="relative z-[1] flex min-w-0 flex-col gap-1.5 self-stretch pr-12">
-          <span className="gp-picker-tile-title block truncate text-[19px] font-semibold tracking-[-0.02em] text-neutral-100">
-            {def.label}
-          </span>
-          <span className="gp-picker-tile-description line-clamp-2 block text-[11.5px] leading-[1.45] text-neutral-400/85">
-            {def.description}
-          </span>
-        </span>
-      </button>
-      <button
-        type="button"
-        aria-label={favorited ? `Remove ${def.label} from favorites` : `Favorite ${def.label}`}
-        aria-pressed={favorited}
-        onClick={(e) => {
-          e.stopPropagation()
-          onToggleFavorite()
-        }}
-        className={`gp-touch-target absolute top-3.5 right-3.5 z-[2] flex h-6 w-6 items-center justify-center rounded-full transition-opacity duration-150 ${
-          favorited
-            ? 'text-amber-300 opacity-100'
-            : 'text-neutral-500 opacity-0 hover:text-amber-200 focus-visible:opacity-100 group-hover/tile:opacity-100'
-        }`}
-      >
-        <Star size={14} strokeWidth={1.8} fill={favorited ? 'currentColor' : 'none'} aria-hidden />
-      </button>
+      ) : (
+        <button
+          type="button"
+          aria-label={favorited ? `Remove ${def.label} from favorites` : `Favorite ${def.label}`}
+          aria-pressed={favorited}
+          onClick={(e) => {
+            e.stopPropagation()
+            onToggleFavorite()
+          }}
+          className={`gp-facet-star gp-touch-target absolute inset-y-0 right-2.5 my-auto z-[2] flex h-7 w-7 items-center justify-center rounded-full transition-opacity duration-150 ${
+            favorited
+              ? 'text-amber-300 opacity-100'
+              : 'opacity-0 focus-visible:opacity-100 group-hover/tile:opacity-100'
+          }`}
+        >
+          <Star size={13} strokeWidth={1.9} fill={favorited ? 'currentColor' : 'none'} aria-hidden />
+        </button>
+      )}
     </div>
   )
 }
 
 // ---------------------------------------------------------------------------
-// Packs view — specialist libraries, toggled per workspace
-// ---------------------------------------------------------------------------
-
-function PacksView({ onBack }: { onBack: () => void }) {
-  const activePacks = useWidgetStore((state) => state.activePacks)
-  const togglePack = useWidgetStore((state) => state.togglePack)
-  const hiddenPackWidgetTypes = useWidgetPickerPrefsStore((state) => state.hiddenPackWidgetTypes)
-  const toggleHiddenPackWidgetType = useWidgetPickerPrefsStore((state) => state.toggleHiddenPackWidgetType)
-  const [expandedPack, setExpandedPack] = useState<DomainPack | null>(null)
-  const allDefs = orderedDefinitions().filter((def) => isWidgetTypePublic(def.type))
-  // Only show packs that actually ship widgets — toggling an empty pack
-  // would be a no-op, so don't advertise it as a choice yet.
-  const availablePacks = DOMAIN_PACKS.filter((pack) => allDefs.some((d) => d.pack === pack))
-
-  return (
-    <>
-      <div className="flex shrink-0 items-center gap-3 pb-1">
-        <button
-          data-packs-back
-          type="button"
-          onClick={onBack}
-          className="gp-touch-target flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-[12px] font-medium text-neutral-400 transition-colors hover:bg-neutral-800 hover:text-neutral-200"
-        >
-          <ArrowLeft size={13} aria-hidden />
-          Widgets
-        </button>
-        <div className="min-w-0">
-          <h2 className="text-lg font-semibold tracking-tight text-neutral-100">Domain Packs</h2>
-        </div>
-      </div>
-      <p className="shrink-0 pb-4 text-[12px] text-neutral-500">
-        Specialist toolkits for one kind of work. Enabling a pack adds its widgets to the
-        picker — disabling it tucks them away again.
-      </p>
-
-      <div className="min-h-0 flex-1 overflow-y-auto pb-8">
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-          {availablePacks.map((pack, index) => {
-            const isActive = activePacks.includes(pack)
-            const packWidgets = allDefs.filter((d) => d.pack === pack)
-            const isExpanded = expandedPack === pack
-            return (
-              <div
-                key={pack}
-                className={`gp-rise flex flex-col rounded-2xl border transition-colors duration-150 ${
-                  isActive
-                    ? 'border-emerald-400/40 bg-emerald-400/[0.07]'
-                    : 'border-neutral-800 bg-neutral-900/40 hover:border-neutral-700 hover:bg-neutral-800/40'
-                }`}
-                style={{ animationDelay: `${Math.min(index * 25, 250)}ms` }}
-              >
-                <div className="flex items-center gap-1.5 p-2 pl-4">
-                  <button
-                    type="button"
-                    role="switch"
-                    aria-checked={isActive}
-                    onClick={() => togglePack(pack)}
-                    className="gp-touch-target flex min-w-0 flex-1 items-center justify-between gap-3 rounded-xl py-1.5 text-left"
-                  >
-                    <span className="min-w-0">
-                      <span
-                        className={`block text-[13px] font-medium transition-colors ${
-                          isActive ? 'text-emerald-300' : 'text-neutral-200'
-                        }`}
-                      >
-                        {DOMAIN_PACK_LABELS[pack]}
-                      </span>
-                      <span className="mt-0.5 block text-[11px] leading-snug text-neutral-500">
-                        {PACK_BLURBS[pack] ?? packWidgets.map((d) => d.label).join(' · ')}
-                      </span>
-                    </span>
-                    <span
-                      aria-hidden
-                      className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border transition-all ${
-                        isActive
-                          ? 'border-emerald-400 bg-emerald-400 text-neutral-950'
-                          : 'border-neutral-700 text-transparent'
-                      }`}
-                    >
-                      <Check size={12} strokeWidth={3} />
-                    </span>
-                  </button>
-                  {isActive && (
-                    <button
-                      type="button"
-                      aria-label={
-                        isExpanded
-                          ? `Collapse ${DOMAIN_PACK_LABELS[pack]} widget list`
-                          : `Choose which ${DOMAIN_PACK_LABELS[pack]} widgets to show`
-                      }
-                      aria-expanded={isExpanded}
-                      onClick={() => setExpandedPack(isExpanded ? null : pack)}
-                      className="gp-touch-target flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-neutral-500 transition-colors hover:bg-neutral-800 hover:text-neutral-300"
-                    >
-                      <ChevronDown
-                        size={14}
-                        className={`transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
-                        aria-hidden
-                      />
-                    </button>
-                  )}
-                </div>
-                {isActive && isExpanded && (
-                  <div className="flex flex-col gap-0.5 border-t gp-hairline px-2 pt-1.5 pb-2">
-                    {packWidgets.map((def) => {
-                      const hidden = hiddenPackWidgetTypes.includes(def.type)
-                      return (
-                        <button
-                          key={def.type}
-                          type="button"
-                          role="switch"
-                          aria-checked={!hidden}
-                          onClick={() => toggleHiddenPackWidgetType(def.type)}
-                          className="gp-touch-target flex items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-left text-[11.5px] transition-colors hover:bg-neutral-800/60"
-                        >
-                          <span className={hidden ? 'text-neutral-600 line-through' : 'text-neutral-300'}>
-                            {def.label}
-                          </span>
-                          <span
-                            aria-hidden
-                            className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${
-                              hidden
-                                ? 'border-neutral-700 text-transparent'
-                                : 'border-emerald-400 bg-emerald-400 text-neutral-950'
-                            }`}
-                          >
-                            <Check size={9} strokeWidth={3} />
-                          </span>
-                        </button>
-                      )
-                    })}
-                  </div>
-                )}
-              </div>
-            )
-          })}
-        </div>
-      </div>
-    </>
-  )
-}
-
-// ---------------------------------------------------------------------------
-// Main picker — a full-screen library, no framing panel
+// Main picker — one column, one hue at a time
 // ---------------------------------------------------------------------------
 
 /**
- * The widget library. Fills the screen over a blurred scrim — no boxed panel.
- * Arrow keys walk the grid, Enter places the highlighted widget, Esc closes.
- * The Packs button swaps in the domain-pack library in place.
+ * The widget library as a single readable column. Each widget draws a small
+ * picture of its own layout instead of wearing a coloured app icon, so the
+ * shape tells you what it is and the ink can stay neutral. Exactly one colour
+ * is ever lit — the row you are on — and the panel's crown takes that same hue,
+ * so browsing feels like turning a facet to the light rather than reading a
+ * wall of badges.
+ *
+ * Type to filter, arrows to walk, Enter to place, Esc to close. Which libraries
+ * this column draws from is a setup decision, not a step in the add flow —
+ * domain packs live in Settings → Data.
  */
 export function AddWidgetModal({ worldPos, onClose, selection }: AddWidgetModalProps) {
   const activePacks = useWidgetStore((state) => state.activePacks)
   const favoriteWidgetTypes = useWidgetPickerPrefsStore((state) => state.favoriteWidgetTypes)
   const hiddenPackWidgetTypes = useWidgetPickerPrefsStore((state) => state.hiddenPackWidgetTypes)
   const toggleFavoriteWidgetType = useWidgetPickerPrefsStore((state) => state.toggleFavoriteWidgetType)
+  const recentWidgetTypes = useWidgetPickerPrefsStore((state) => state.recentWidgetTypes)
+  const studyFocus = useWidgetPickerPrefsStore((state) => state.studyFocus)
   const shouldFocusSearchNow = useAdaptiveInputStore((state) =>
     state.capabilities.viewportClass === 'desktop' &&
     state.activeInput !== 'touch' &&
     state.activeInput !== 'pen',
   )
   const shouldFocusSearch = useRef(shouldFocusSearchNow).current
-  const initialView = useWidgetStore((state) => state.addWidgetView)
-  const [view, setView] = useState<'widgets' | 'packs'>(initialView)
+  const isPhone = useAdaptiveInputStore((state) => state.capabilities.viewportClass === 'phone')
+  // Read the camera once, not as a subscription: the palette is anchored where
+  // it opened and must not chase the board if something pans underneath it.
+  const anchor = useRef<Vector2D>(
+    (() => {
+      const { pan, zoom } = useCanvasStore.getState()
+      return { x: worldPos.x * zoom + pan.x, y: worldPos.y * zoom + pan.y }
+    })(),
+  ).current
+  const [placement, setPlacement] = useState<PalettePlacement | null>(null)
   const [query, setQuery] = useState('')
   const [activeIndex, setActiveIndex] = useState(0)
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
-  const [keyboardActive, setKeyboardActive] = useState(false)
+  // The column always has a lit row, so Enter always has a target and the
+  // crown always has a hue. Hovering hands the highlight to the pointer and
+  // leaving hands it back where the pointer left it.
+  const [keyboardActive, setKeyboardActive] = useState(true)
   const [selectedTypes, setSelectedTypes] = useState<ModuleType[]>(
     () => [...(selection?.initialTypes ?? [])],
   )
   const dialogRef = useRef<HTMLDivElement>(null)
   const searchRef = useRef<HTMLInputElement>(null)
 
-  // The window keydown below owns Escape (staged: packs view → widgets view
-  // → close) alongside grid navigation, so the shared hook skips Escape.
+  // The window keydown below owns Escape alongside column navigation, so the
+  // shared hook skips Escape.
   useOverlayDismiss(true, onClose, {
     containerRef: dialogRef,
     initialFocusRef: shouldFocusSearch ? searchRef : dialogRef,
     escape: false,
   })
 
+  // Measure first, then place and reveal: the panel's height depends on how
+  // many widgets survived the filter, and a flip decision needs that height.
+  useLayoutEffect(() => {
+    if (isPhone) return
+    const panel = dialogRef.current
+    if (!panel) return
+    const measure = () => {
+      const box = panel.getBoundingClientRect()
+      setPlacement(placePalette(anchor, { width: box.width, height: box.height }))
+    }
+    measure()
+    window.addEventListener('resize', measure)
+    return () => window.removeEventListener('resize', measure)
+  }, [anchor, isPhone])
+
   useEffect(() => {
     const raf = requestAnimationFrame(() => {
-      if (view === 'widgets') {
-        if (shouldFocusSearch) searchRef.current?.focus()
-        else dialogRef.current?.focus({ preventScroll: true })
-      }
-      else dialogRef.current?.querySelector<HTMLButtonElement>('[data-packs-back]')?.focus()
+      if (shouldFocusSearch) searchRef.current?.focus()
+      else dialogRef.current?.focus({ preventScroll: true })
     })
     return () => cancelAnimationFrame(raf)
-  }, [view, shouldFocusSearch])
+  }, [shouldFocusSearch])
 
-  const groups = useMemo(() => {
+  /** The column, in bands: pinned first, then recently placed, then each family
+   *  in order. Searching collapses the bands into one ranked list — a name that
+   *  starts with what you typed outranks one that merely contains it. */
+  const groups = useMemo<PickerGroup[]>(() => {
     const q = query.toLowerCase().trim()
     const visible = orderedDefinitions().filter((def) => {
       if (!isWidgetTypePublic(def.type)) return false
-      if (def.pack && !activePacks.includes(def.pack)) return false
+      if (studyFocus && !isStudyFocusType(def.type)) return false
+      // Study focus is its own allow-list, so it overrides the pack gate: a
+      // study card stays reachable with its pack switched off, and the switch
+      // can never leave the picker emptier than the set it names.
+      if (!studyFocus && def.pack && !activePacks.includes(def.pack)) return false
       if (def.pack && hiddenPackWidgetTypes.includes(def.type)) return false
-      if (!q) return true
-      return (
-        def.label.toLowerCase().includes(q) ||
-        def.description.toLowerCase().includes(q) ||
-        CATEGORY_LABELS[def.category].toLowerCase().includes(q) ||
-        (def.type === 'tracker' && ATLAS_TYPES.some((type) => {
-          const spec=ATLAS_CATALOG[type]
-          return spec.label.toLowerCase().includes(q)||spec.aliases.some(alias=>alias.toLowerCase().includes(q))
-        })) ||
-        (ATLAS_TYPE_SET.has(def.type) && ATLAS_CATALOG[def.type as AtlasType].aliases.some((alias) => alias.toLowerCase().includes(q))) ||
-        (AUTOMATION_CORE_SET.has(def.type) && AUTOMATION_CORE_CATALOG[def.type as AutomationCoreType].aliases.some((alias) => alias.toLowerCase().includes(q)))
-      )
+      return true
     })
-    // Favorites are pulled out of their normal category and pinned first,
-    // always — a favorited widget never shows twice.
+
+    if (q) {
+      const ranked = visible
+        .map((def) => {
+          const label = def.label.toLowerCase()
+          const rank = label.startsWith(q) ? 0 : label.includes(q) ? 1 : haystack(def).includes(q) ? 2 : 3
+          return { def, rank }
+        })
+        .filter((entry) => entry.rank < 3)
+        .sort((a, b) => a.rank - b.rank || a.def.label.localeCompare(b.def.label))
+      return ranked.length ? [{ key: 'results', label: null, defs: ranked.map((entry) => entry.def) }] : []
+    }
+
     const favoriteSet = new Set(favoriteWidgetTypes)
     const favorites = visible.filter((def) => favoriteSet.has(def.type))
     const rest = visible.filter((def) => !favoriteSet.has(def.type))
+    const recentDefs = recentWidgetTypes
+      .map((type) => rest.find((def) => def.type === type))
+      .filter((def): def is WidgetDefinition => Boolean(def))
+    const recentSet = new Set(recentDefs.map((def) => def.type))
     const byCategory = new Map<WidgetCategory, WidgetDefinition[]>()
     for (const def of rest) {
+      if (recentSet.has(def.type)) continue
       const list = byCategory.get(def.category)
       if (list) list.push(def)
       else byCategory.set(def.category, [def])
     }
-    const categoryGroups = CATEGORY_ORDER.filter((c) => byCategory.has(c)).map((c) => ({
-      category: c as WidgetCategory | 'favorites',
-      defs: byCategory.get(c)!,
-    }))
-    return favorites.length > 0
-      ? [{ category: 'favorites' as const, defs: favorites }, ...categoryGroups]
-      : categoryGroups
-  }, [query, activePacks, hiddenPackWidgetTypes, favoriteWidgetTypes])
+    const bands: PickerGroup[] = []
+    if (favorites.length) bands.push({ key: 'pinned', label: 'Pinned', defs: favorites })
+    if (recentDefs.length) bands.push({ key: 'recent', label: 'Recent', defs: recentDefs })
+    for (const category of CATEGORY_ORDER) {
+      const defs = byCategory.get(category)
+      if (defs?.length) bands.push({ key: category, label: CATEGORY_LABELS[category], defs })
+    }
+    return bands
+  }, [query, activePacks, hiddenPackWidgetTypes, favoriteWidgetTypes, recentWidgetTypes, studyFocus])
 
-  /** All visible tiles in reading order — the keyboard walks this list. */
-  const flat = useMemo(() => groups.flatMap((g) => g.defs), [groups])
+  const flat = useMemo(() => groups.flatMap((group) => group.defs), [groups])
   const clampedActive = Math.min(activeIndex, Math.max(0, flat.length - 1))
+  const litIndex = hoveredIndex ?? (keyboardActive ? clampedActive : null)
+  const litAccent = litIndex === null ? null : flat[litIndex]?.accent ?? null
 
   const choose = useCallback((type: ModuleType) => {
     if (selection) {
@@ -381,53 +323,53 @@ export function AddWidgetModal({ worldPos, onClose, selection }: AddWidgetModalP
     const snapped = { x: snapToGrid(worldPos.x), y: snapToGrid(worldPos.y) }
     const def = orderedDefinitions().find((d) => d.type === type)
     const id = useWidgetStore.getState().createWidget(def?.label ?? 'Widget', snapped, type)
+    useWidgetPickerPrefsStore.getState().recordRecentWidgetType(type)
     useWidgetStore.getState().selectWidget(id, false)
     useWidgetStore.getState().startRenaming(id)
     onClose()
   }, [selection, worldPos.x, worldPos.y, onClose])
 
-  // One window-level key handler covers Esc everywhere plus grid navigation.
+  // One window-level key handler covers Esc everywhere plus column navigation.
+  // Left and right are deliberately absent: they belong to the search caret.
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         e.preventDefault()
-        if (view === 'packs') setView('widgets')
-        else onClose()
+        onClose()
         return
       }
-      if (view !== 'widgets') return
       // Buttons retain native keyboard activation. Without this guard, Enter
-      // on Close, Packs, or a focused tile also spawned the unrelated
-      // highlighted tile through this window-level shortcut handler.
+      // on Close or a focused row also spawned the unrelated highlighted row
+      // through this window-level shortcut handler.
       if (e.target instanceof HTMLButtonElement) return
-      const cols = columnsForViewport()
-      const move = (delta: number) => {
+      const last = Math.max(0, flat.length - 1)
+      const moveTo = (next: number) => {
         e.preventDefault()
         setHoveredIndex(null)
         setKeyboardActive(true)
-        setActiveIndex((i) => {
-          const next = Math.min(Math.max(0, i + delta), Math.max(0, flat.length - 1))
-          return next
-        })
+        setActiveIndex(Math.min(Math.max(0, next), last))
       }
-      // While the search field holds text, ←/→ belong to the caret.
-      const editingQuery =
-        document.activeElement === searchRef.current && query.length > 0
       switch (e.key) {
         case 'ArrowDown':
-          move(cols)
+          moveTo(clampedActive + 1)
           break
         case 'ArrowUp':
-          move(-cols)
+          moveTo(clampedActive - 1)
           break
-        case 'ArrowRight':
-          if (!editingQuery) move(1)
+        case 'PageDown':
+          moveTo(clampedActive + 8)
           break
-        case 'ArrowLeft':
-          if (!editingQuery) move(-1)
+        case 'PageUp':
+          moveTo(clampedActive - 8)
+          break
+        case 'Home':
+          moveTo(0)
+          break
+        case 'End':
+          moveTo(last)
           break
         case 'Enter': {
-          const def = flat[Math.min(activeIndex, flat.length - 1)]
+          const def = flat[clampedActive]
           if (def) {
             e.preventDefault()
             choose(def.type)
@@ -438,18 +380,9 @@ export function AddWidgetModal({ worldPos, onClose, selection }: AddWidgetModalP
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [view, flat, activeIndex, query, onClose, choose])
+  }, [flat, clampedActive, onClose, choose])
 
-  // Flat index offset of each group's first tile, for active-state mapping.
-  const groupOffsets = useMemo(() => {
-    const offsets: number[] = []
-    let acc = 0
-    for (const g of groups) {
-      offsets.push(acc)
-      acc += g.defs.length
-    }
-    return offsets
-  }, [groups])
+  let cursor = -1
 
   return createPortal(
     <div
@@ -458,205 +391,164 @@ export function AddWidgetModal({ worldPos, onClose, selection }: AddWidgetModalP
       aria-label={selection ? 'Choose widgets for this tree point' : 'Add widget'}
       className={`gp-widget-picker-dialog fixed inset-0 ${selection ? 'z-[240]' : 'z-[200]'}`}
     >
-      {/* Scrim — the canvas glows through a single cheap blur layer */}
+      {/* Scrim — a light hush, not a curtain. The board stays readable so the
+          palette reads as something on top of your work, not a new screen. */}
       <div
         role="presentation"
-        className="gp-fade absolute inset-0 gp-picker-scrim"
+        className="gp-fade absolute inset-0 gp-palette-scrim"
         onClick={onClose}
       />
 
       <div
         ref={dialogRef}
         tabIndex={-1}
-        className="gp-widget-picker-shell relative z-10 mx-auto flex h-full w-full max-w-7xl flex-col px-4 outline-none sm:px-6 lg:px-8 2xl:px-10"
+        data-placed={placement || isPhone ? '' : undefined}
+        data-lit={litAccent ? '' : undefined}
+        className={`gp-widget-palette gp-facet-panel gp-panel absolute flex max-h-[min(620px,78dvh)] flex-col overflow-hidden outline-none ${
+          isPhone ? 'gp-widget-palette-sheet inset-x-0 bottom-0' : ''
+        }`}
+        style={
+          {
+            '--gp-lit-accent': litAccent ?? 'transparent',
+            ...(isPhone
+              ? {}
+              : {
+                  width: PALETTE_WIDTH,
+                  left: placement?.left ?? anchor.x,
+                  top: placement?.top ?? anchor.y,
+                  transformOrigin: placement?.origin ?? 'center',
+                }),
+          } as React.CSSProperties
+        }
       >
-        {view === 'packs' ? (
-          <div className="flex min-h-0 flex-1 flex-col pt-10">
-            <PacksView onBack={() => setView('widgets')} />
-          </div>
-        ) : (
-          <>
-            {/* Header */}
-            <div className="gp-picker-header flex shrink-0 items-center justify-between gap-3 pt-10 pb-1">
-              <div className="gp-popup-title-pill gp-panel gp-pop flex h-10 min-w-0 items-center rounded-full px-4">
-                <h2 className="gp-picker-title bg-gradient-to-r from-neutral-100 via-emerald-300 to-neutral-100 bg-clip-text text-[15px] font-semibold tracking-tight text-transparent">
-                  {selection ? 'Choose widgets for this tree point' : 'Widget Library'}
-                </h2>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => setView('packs')}
-                  className="gp-picker-pack-button gp-popup-action gp-touch-target"
-                >
-                  <Blocks size={13} aria-hidden />
-                  Packs
-                </button>
-                <button
-                  type="button"
-                  aria-label="Close"
-                  onClick={onClose}
-                  className="gp-picker-close gp-popup-close-naked gp-touch-target h-8 w-8"
-                >
-                  <X size={15} aria-hidden />
-                </button>
-              </div>
-            </div>
+        {/* The crown — the one place colour lives, taking the hue of whatever
+            row is lit and cross-fading as you walk the column. */}
+        <div className="gp-facet-crown pointer-events-none absolute inset-x-0 top-0 h-24" aria-hidden />
 
-            {/* Search — a glowing glass pill under the title */}
-            <div className="gp-picker-search gp-popup-island mt-3 flex shrink-0 items-center gap-3 rounded-2xl px-4 py-2.5">
-              <Search size={17} className="shrink-0 text-neutral-600" aria-hidden />
-              <input
-                ref={searchRef}
-                type="text"
-                value={query}
-                placeholder="Search widgets…"
-                autoComplete="off"
-                enterKeyHint="search"
-                spellCheck={false}
-                onChange={(e) => {
-                  setQuery(e.target.value)
+        {/* Search — a bare line, already focused. No title, no toolbar, no
+            close button on a machine that has Esc. */}
+        <div className="gp-facet-search relative flex shrink-0 items-center gap-3 px-5 pt-5 pb-4">
+          <input
+            ref={searchRef}
+            type="text"
+            value={query}
+            placeholder={selection ? 'Search widgets to add…' : 'Search widgets…'}
+            autoComplete="off"
+            enterKeyHint="search"
+            spellCheck={false}
+            aria-label="Search widgets"
+            onChange={(e) => {
+              setQuery(e.target.value)
+              setActiveIndex(0)
+              setHoveredIndex(null)
+              setKeyboardActive(true)
+            }}
+            className="gp-facet-search-input min-w-0 flex-1 bg-transparent text-[15.5px] leading-none tracking-[-0.015em] outline-none"
+          />
+          <span className="gp-facet-count shrink-0 text-[10.5px] leading-none tabular-nums">
+            {flat.length}
+          </span>
+          {isPhone && (
+            <button
+              type="button"
+              aria-label="Close"
+              onClick={onClose}
+              className="gp-facet-close gp-touch-target -mr-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-full"
+            >
+              <X size={14} aria-hidden />
+            </button>
+          )}
+        </div>
+
+        {/* The column */}
+        <div className="gp-facet-list min-h-0 flex-1 overflow-y-auto px-2.5 pb-3">
+          {flat.length === 0 && (
+            <div className="flex flex-col items-center gap-3 py-14">
+              <p className="gp-facet-empty text-center text-[13px]">Nothing named “{query}”</p>
+              <button
+                type="button"
+                onClick={() => {
+                  setQuery('')
                   setActiveIndex(0)
-                  setHoveredIndex(null)
-                  setKeyboardActive(false)
+                  searchRef.current?.focus()
                 }}
-                className="gp-picker-search-input w-full bg-transparent text-[16px] text-neutral-100 outline-none placeholder:text-neutral-600"
-              />
-              {query && (
+                className="gp-facet-empty-action rounded-xl px-3 py-1.5 text-xs font-medium"
+              >
+                Browse the whole library
+              </button>
+            </div>
+          )}
+          {groups.map((group) => (
+            <div key={group.key} className="gp-facet-band">
+              {group.label && (
+                <div className="gp-facet-band-label relative px-4 pt-6 pb-2.5 text-[9px] leading-none tracking-[0.17em] uppercase">
+                  {group.label}
+                </div>
+              )}
+              {group.defs.map((def) => {
+                cursor += 1
+                const index = cursor
+                return (
+                  <WidgetRow
+                    key={def.type}
+                    def={def}
+                    active={index === litIndex}
+                    selected={selectedTypes.includes(def.type)}
+                    selecting={Boolean(selection)}
+                    favorited={favoriteWidgetTypes.includes(def.type)}
+                    onChoose={() => choose(def.type)}
+                    onHover={() => {
+                      setHoveredIndex(index)
+                      setKeyboardActive(false)
+                    }}
+                    onUnhover={() => {
+                      // Hand the highlight back to the keyboard where the
+                      // pointer left it, so the column is never unlit.
+                      setHoveredIndex(null)
+                      setActiveIndex(index)
+                      setKeyboardActive(true)
+                    }}
+                    onToggleFavorite={() => toggleFavoriteWidgetType(def.type)}
+                  />
+                )
+              })}
+            </div>
+          ))}
+        </div>
+
+        {selection && (
+          <div className="gp-facet-footer flex min-h-15 shrink-0 items-center justify-between gap-3 px-4 pb-[var(--gp-safe-bottom)] text-[11px]">
+            <span aria-live="polite" className="gp-facet-count-label">
+              <strong className="tabular-nums">{selectedTypes.length}</strong>{' '}
+              selected
+            </span>
+            <div className="flex items-center gap-1.5">
+              {selection.initialTypes.length > 0 && (
                 <button
                   type="button"
-                  aria-label="Clear search"
-                  onClick={() => {
-                    setQuery('')
-                    setActiveIndex(0)
-                    setHoveredIndex(null)
-                    setKeyboardActive(false)
-                    searchRef.current?.focus()
-                  }}
-                  className="gp-touch-target shrink-0 text-neutral-600 transition-colors hover:text-neutral-300"
+                  onClick={() => selection.onConfirm([])}
+                  className="gp-facet-ghost gp-touch-target rounded-xl px-3 text-xs"
                 >
-                  <X size={14} aria-hidden />
+                  Clear node
                 </button>
               )}
+              <button
+                type="button"
+                onClick={onClose}
+                className="gp-facet-ghost gp-touch-target rounded-xl px-3 text-xs"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={selectedTypes.length === 0}
+                onClick={() => selection.onConfirm(selectedTypes)}
+                className="gp-facet-confirm gp-touch-target rounded-xl px-4 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-35"
+              >
+                Add
+              </button>
             </div>
-
-            {/* Library */}
-            <div className="min-h-0 flex-1 overflow-y-auto py-5">
-              {groups.length === 0 && (
-                <p className="py-16 text-center text-[13px] text-neutral-600">
-                  No widgets match “{query}”
-                </p>
-              )}
-              <div className="flex flex-col gap-6">
-                {groups.map(({ category, defs }, groupIndex) => {
-                  const isFavorites = category === 'favorites'
-                  const dotAccent = isFavorites ? '#fbbf24' : defs[0]!.accent
-                  return (
-                    <section
-                      key={category}
-                      className="gp-rise"
-                      style={{ animationDelay: `${Math.min(groupIndex * 40, 200)}ms` }}
-                    >
-                      <div className="flex items-center gap-2.5 pb-2">
-                        <span
-                          aria-hidden
-                          className="h-1.5 w-1.5 shrink-0 rounded-full"
-                          style={{
-                            background: dotAccent,
-                            boxShadow: `0 0 8px ${dotAccent}90`,
-                          }}
-                        />
-                        <h3 className="gp-picker-category-label  text-[10px] uppercase tracking-[0.18em] text-neutral-500">
-                          {isFavorites ? 'Favorites' : CATEGORY_LABELS[category]}
-                        </h3>
-                        <span
-                          aria-hidden
-                          className="h-px flex-1"
-                          style={{
-                            background: `linear-gradient(90deg, ${dotAccent}46, transparent)`,
-                          }}
-                        />
-                      </div>
-                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                        {defs.map((def, defIndex) => {
-                          const flatIndex = groupOffsets[groupIndex]! + defIndex
-                          return (
-                            <WidgetTile
-                              key={def.type}
-                              def={def}
-                              active={
-                                flatIndex === hoveredIndex ||
-                                (hoveredIndex === null && keyboardActive && flatIndex === clampedActive)
-                              }
-                              selected={selectedTypes.includes(def.type)}
-                              selecting={Boolean(selection)}
-                              favorited={favoriteWidgetTypes.includes(def.type)}
-                              onChoose={() => choose(def.type)}
-                              onHover={() => {
-                                setHoveredIndex(flatIndex)
-                                setKeyboardActive(false)
-                              }}
-                              onUnhover={() => setHoveredIndex(null)}
-                              onToggleFavorite={() => toggleFavoriteWidgetType(def.type)}
-                            />
-                          )
-                        })}
-                      </div>
-                    </section>
-                  )
-                })}
-              </div>
-            </div>
-
-            {selection ? (
-              <div className="gp-picker-footer flex min-h-14 shrink-0 items-center justify-between gap-3 border-t gp-hairline pb-[var(--gp-safe-bottom)] text-[11px] text-neutral-500">
-                <span aria-live="polite">
-                  <strong className="text-neutral-100 tabular-nums">{selectedTypes.length}</strong>{' '}
-                  {selectedTypes.length === 1 ? 'widget selected' : 'widgets selected'}
-                </span>
-                <div className="flex items-center gap-2">
-                  {selection.initialTypes.length > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => selection.onConfirm([])}
-                      className="gp-touch-target rounded-xl px-3 text-xs text-neutral-400 transition-colors hover:bg-white/[0.06] hover:text-white"
-                    >
-                      Clear node
-                    </button>
-                  )}
-                  <button
-                    type="button"
-                    onClick={onClose}
-                    className="gp-touch-target rounded-xl px-3 text-xs text-neutral-300 transition-colors hover:bg-white/[0.06] hover:text-white"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="button"
-                    disabled={selectedTypes.length === 0}
-                    onClick={() => selection.onConfirm(selectedTypes)}
-                    className="gp-touch-target rounded-xl bg-emerald-500 px-4 text-xs font-semibold text-neutral-950 transition-colors hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-35"
-                  >
-                    OK
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="gp-picker-footer flex h-11 shrink-0 items-center justify-between border-t gp-hairline text-[11px] text-neutral-600">
-                <span className="gp-picker-key-hints">
-                  <kbd className="rounded bg-neutral-800/80 px-1.5 py-0.5  text-[10px] text-neutral-400">↑↓←→</kbd>{' '}
-                  navigate ·{' '}
-                  <kbd className="rounded bg-neutral-800/80 px-1.5 py-0.5  text-[10px] text-neutral-400">↵</kbd>{' '}
-                  place ·{' '}
-                  <kbd className="rounded bg-neutral-800/80 px-1.5 py-0.5  text-[10px] text-neutral-400">esc</kbd>{' '}
-                  close
-                </span>
-                <span className=" tabular-nums">
-                  {flat.length} {flat.length === 1 ? 'widget' : 'widgets'}
-                </span>
-              </div>
-            )}
-          </>
+          </div>
         )}
       </div>
     </div>,

@@ -60,7 +60,7 @@
 .gp-poll :where(button) {
   border: 0;
   background: transparent;
-  transition: color 140ms ease, background-color 140ms ease, transform 140ms ease;
+  transition: color var(--gp-duration-snap) var(--gp-ease-snap), background-color var(--gp-duration-snap) var(--gp-ease-snap), transform var(--gp-duration-snap) var(--gp-ease-snap);
 }
 
 .gp-poll button:disabled {
@@ -88,7 +88,7 @@
   flex: 0 0 auto;
   align-items: center;
   gap: 0.32rem;
-  color: var(--gp-widget-accent);
+  color: var(--gp-accent-ink, var(--gp-widget-accent));
   font-size: 0.55rem;
   font-weight: 700;
   letter-spacing: 0.13em;
@@ -134,7 +134,7 @@
 }
 
 .gp-poll-order:hover {
-  color: color-mix(in oklab, var(--gp-widget-accent), white 30%);
+  color: color-mix(in oklab, var(--gp-accent-ink, var(--gp-widget-accent)), var(--gp-accent-lift, #fff) 30%);
 }
 
 .gp-poll-question input {
@@ -164,13 +164,13 @@
   align-items: center;
   gap: 0.3rem;
   padding: 0 0.1rem;
-  color: color-mix(in oklab, var(--gp-widget-accent), white 22%);
+  color: color-mix(in oklab, var(--gp-accent-ink, var(--gp-widget-accent)), var(--gp-accent-lift, #fff) 22%);
   font-size: 0.58rem;
   font-weight: 700;
 }
 
 .gp-poll-add:hover {
-  color: color-mix(in oklab, var(--gp-widget-accent), white 45%);
+  color: color-mix(in oklab, var(--gp-accent-ink, var(--gp-widget-accent)), var(--gp-accent-lift, #fff) 45%);
 }
 
 .gp-poll-meta {
@@ -199,7 +199,7 @@
 }
 
 .gp-poll-empty > svg {
-  color: var(--gp-widget-accent);
+  color: var(--gp-accent-ink, var(--gp-widget-accent));
 }
 
 .gp-poll-empty strong {
@@ -250,7 +250,7 @@
 }
 
 .gp-poll-bar-row[data-leading] .gp-poll-stat > b {
-  color: color-mix(in oklab, var(--gp-widget-accent), white 24%);
+  color: color-mix(in oklab, var(--gp-accent-ink, var(--gp-widget-accent)), var(--gp-accent-lift, #fff) 24%);
 }
 
 .gp-poll-track {
@@ -300,13 +300,13 @@
   flex: 0 0 auto;
   align-items: center;
   justify-content: center;
-  color: color-mix(in oklab, var(--gp-widget-accent), white 24%);
+  color: color-mix(in oklab, var(--gp-accent-ink, var(--gp-widget-accent)), var(--gp-accent-lift, #fff) 24%);
   font-size: 0.58rem;
   font-weight: 700;
 }
 
 .gp-poll-vote:hover {
-  color: color-mix(in oklab, var(--gp-widget-accent), white 45%);
+  color: color-mix(in oklab, var(--gp-accent-ink, var(--gp-widget-accent)), var(--gp-accent-lift, #fff) 45%);
   transform: translateY(-1px);
 }
 
@@ -353,11 +353,11 @@
 }
 
 .gp-poll-primary {
-  color: color-mix(in oklab, var(--gp-widget-accent), white 26%);
+  color: color-mix(in oklab, var(--gp-accent-ink, var(--gp-widget-accent)), var(--gp-accent-lift, #fff) 26%);
 }
 
 .gp-poll-primary:hover:not(:disabled) {
-  color: color-mix(in oklab, var(--gp-widget-accent), white 48%);
+  color: color-mix(in oklab, var(--gp-accent-ink, var(--gp-widget-accent)), var(--gp-accent-lift, #fff) 48%);
 }
 
 .gp-poll-primary em {
@@ -417,7 +417,7 @@
   gap: 0.45rem;
   border-radius: 0.55rem;
   padding: 0.36rem 1.5rem 0.36rem 0.28rem;
-  transition: background-color 160ms ease;
+  transition: background-color var(--gp-duration-snap) var(--gp-ease-snap);
 }
 
 .gp-poll-bar-row:hover {
@@ -527,7 +527,7 @@
   overflow: hidden;
   max-width: 100%;
   margin-top: 0.12rem;
-  color: color-mix(in oklab, var(--gp-widget-accent), white 18%);
+  color: color-mix(in oklab, var(--gp-accent-ink, var(--gp-widget-accent)), var(--gp-accent-lift, #fff) 18%);
   font-size: 0.47rem;
   font-style: normal;
   font-weight: 700;
@@ -611,7 +611,7 @@
   border: 1px solid transparent;
   border-radius: 0.6rem;
   padding: 0.3rem 1.5rem 0.3rem 0.3rem;
-  transition: background-color 160ms ease, border-color 160ms ease;
+  transition: background-color var(--gp-duration-snap) var(--gp-ease-snap), border-color var(--gp-duration-snap) var(--gp-ease-snap);
 }
 
 .gp-poll-approval-row[data-approved] {
@@ -634,7 +634,7 @@
 }
 
 .gp-poll-approve[aria-checked='true'] {
-  color: color-mix(in oklab, var(--gp-widget-accent), white 30%);
+  color: color-mix(in oklab, var(--gp-accent-ink, var(--gp-widget-accent)), var(--gp-accent-lift, #fff) 30%);
 }
 
 /* Ranked choice ----------------------------------------------------------- */
@@ -754,7 +754,7 @@
 }
 
 .gp-poll-move button:hover:not(:disabled) {
-  color: color-mix(in oklab, var(--gp-widget-accent), white 30%);
+  color: color-mix(in oklab, var(--gp-accent-ink, var(--gp-widget-accent)), var(--gp-accent-lift, #fff) 30%);
 }
 
 .gp-poll-round {
@@ -1004,7 +1004,7 @@
 }
 
 .gp-poll-matrix td[data-total] {
-  color: color-mix(in oklab, var(--gp-widget-accent), white 18%);
+  color: color-mix(in oklab, var(--gp-accent-ink, var(--gp-widget-accent)), var(--gp-accent-lift, #fff) 18%);
   font-weight: 700;
 }
 
@@ -1169,7 +1169,7 @@
 
 .gp-poll-radio:hover:not(:disabled),
 .gp-poll-anon-mark:hover:not(:disabled) {
-  color: color-mix(in oklab, var(--gp-widget-accent), white 20%);
+  color: color-mix(in oklab, var(--gp-accent-ink, var(--gp-widget-accent)), var(--gp-accent-lift, #fff) 20%);
   background: color-mix(in oklab, var(--gp-widget-accent), transparent 74%);
   transform: scale(1.08);
 }
@@ -1207,14 +1207,14 @@
 
 .gp-poll-shield > svg {
   flex: 0 0 auto;
-  color: var(--gp-widget-accent);
+  color: var(--gp-accent-ink, var(--gp-widget-accent));
 }
 
 .gp-poll-shield button {
   margin-left: auto;
   border-radius: 0.4rem;
   padding: 0.12rem 0.4rem;
-  color: color-mix(in oklab, var(--gp-widget-accent), white 24%);
+  color: color-mix(in oklab, var(--gp-accent-ink, var(--gp-widget-accent)), var(--gp-accent-lift, #fff) 24%);
   background: color-mix(in oklab, var(--gp-widget-accent), transparent 82%);
   font-size: 0.47rem;
   font-weight: 700;
@@ -1250,4 +1250,46 @@
   .gp-poll-room[data-phase='open'] .gp-poll-phase svg {
     animation: none;
   }
+}
+
+/* ------------------------------------------------------------ light theme.
+   Status/danger/medal inks above are pastels tuned for dark glass; on the
+   light theme's silver cards they wash out below 2:1. Each keeps its hue
+   but drops to a deep ink (generated during the 2026-08 light-mode
+   contrast audit). */
+[data-theme='light'] .gp-poll-bar-row[data-leading] .gp-poll-rank {
+  color: #92400e;
+}
+
+[data-theme='light'] .gp-poll-medal[data-place='1'] {
+  color: #92400e;
+}
+
+[data-theme='light'] .gp-poll-medal[data-place='2'] {
+  color: #475569;
+}
+
+[data-theme='light'] .gp-poll-medal[data-place='3'] {
+  color: #9a3412;
+}
+
+[data-theme='light'] .gp-poll-round > header em[data-outcome='win'] {
+  color: #15803d;
+}
+
+[data-theme='light'] .gp-poll-round > header em[data-outcome='cut'] {
+  color: #be123c;
+}
+
+[data-theme='light'] .gp-poll-round li[data-state='win'] > span,
+[data-theme='light'] .gp-poll-round li[data-state='win'] > b {
+  color: #15803d;
+}
+
+[data-theme='light'] .gp-poll-phase[data-phase='open'] {
+  color: #15803d;
+}
+
+[data-theme='light'] .gp-poll-phase[data-phase='closed'] {
+  color: #be123c;
 }

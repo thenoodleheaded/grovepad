@@ -57,6 +57,13 @@ body,
   overscroll-behavior: none;
 }
 
+/* iOS enlarges text after a rotation unless told not to, which throws every
+   fixed-size control out of proportion with the text inside it. */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
 body {
   background-color: #000000;
   color: #e5e5e5;
@@ -215,8 +222,8 @@ body {
   translate: -50% -50%;
   pointer-events: none;
   background: rgb(5 9 18 / var(--gp-tune-halo-dim, 0.3));
-  backdrop-filter: blur(var(--gp-tune-halo-blur, 13px));
-  -webkit-backdrop-filter: blur(var(--gp-tune-halo-blur, 13px));
+  backdrop-filter: blur(calc(var(--gp-tune-halo-blur, 13px) * var(--gp-blur-scale, 1)));
+  -webkit-backdrop-filter: blur(calc(var(--gp-tune-halo-blur, 13px) * var(--gp-blur-scale, 1)));
   /* The mask holds the blur solid to `softness`, then feathers to nothing at the
      rim — higher reads crisper, lower reads as a soft cloud. */
   mask-image: radial-gradient(closest-side, #000 var(--gp-tune-halo-softness, 55%), transparent 100%);
@@ -227,6 +234,12 @@ body {
      property a compositor can animate without re-running the blur. Saying so
      keeps the whole fade off the main thread. */
   will-change: opacity;
+}
+
+/* Light mode keeps the separation and blur without casting a smoky veil over
+   the canvas. The same tuning control now drives a pale silver wash instead. */
+[data-theme="light"] .gp-rest-halo {
+  background: rgb(238 244 234 / var(--gp-tune-halo-dim, 0.3));
 }
 
 @keyframes gp-rest-halo-in {
@@ -457,14 +470,6 @@ body[data-widget-dragging] .gp-card-motion {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    scroll-behavior: auto !important;
-    transition-duration: 0.01ms !important;
-  }
   .gp-widget-layout-motion,
   .gp-route-motion,
   .gp-route-chip-motion,
@@ -511,20 +516,25 @@ body[data-widget-dragging] .gp-card-motion {
      …and so on. Every step carries a whisper of the brand green (hue 145) so
      surfaces read as bright sage rather than clashing bare whites, and the
      inverted "muted text" step (600) sits darker than a straight inversion
-     would put it, keeping secondary text legible on the bright chrome. */
-  --color-neutral-100: oklch(22% 0.01 145);
-  --color-neutral-200: oklch(28% 0.012 145);
-  --color-neutral-300: oklch(38% 0.012 145);
-  --color-neutral-400: oklch(45% 0.012 145);
-  --color-neutral-600: oklch(58% 0.012 145);
-  --color-neutral-700: oklch(86% 0.008 142);
-  --color-neutral-800: oklch(91.5% 0.008 142);
-  --color-neutral-900: oklch(96.5% 0.006 142);
-  --color-neutral-950: oklch(98% 0.005 142);
+     would put it, keeping secondary text legible on the bright chrome.
 
-  /* Grid lines — dark lime on the bright paper canvas. Matches
+     The green used to be a whisper at chroma 0.005–0.012, which is below what
+     an eye actually resolves — the scale claimed sage and rendered as plain
+     grey-white. Every step now carries enough chroma to be seen, so the light
+     surfaces read as a family with the tinted canvas instead of bare paper. */
+  --color-neutral-100: oklch(22% 0.024 145);
+  --color-neutral-200: oklch(28% 0.028 145);
+  --color-neutral-300: oklch(38% 0.03 145);
+  --color-neutral-400: oklch(45% 0.03 145);
+  --color-neutral-600: oklch(58% 0.032 145);
+  --color-neutral-700: oklch(84.5% 0.03 142);
+  --color-neutral-800: oklch(90% 0.028 142);
+  --color-neutral-900: oklch(95% 0.024 142);
+  --color-neutral-950: oklch(96.5% 0.02 142);
+
+  /* Grid lines — sage-grey on the tinted canvas. Matches
      DEFAULT_CANVAS_COLORS.light.gridFine in auraTuning.ts. */
-  --gp-grid-fine: rgb(106 148 34 / calc(0.14 * var(--gp-tune-grid, 1)));
+  --gp-grid-fine: rgb(104 122 106 / calc(0.18 * var(--gp-tune-grid, 1)));
 
   /* Hairlines invert: green-black instead of pure black, same subtlety. */
   --gp-hairline: rgba(24, 38, 27, 0.12);
@@ -619,28 +629,6 @@ body[data-widget-dragging] .gp-card-motion {
  * paint or hover/selection-triggered shadow transitions: nothing per-frame
  * while the canvas transform is moving.
  * ------------------------------------------------------------------------- */
-
-.gp-widget-card.gp-glass {
-  background:
-    radial-gradient(120% 85% at 12% -4%, color-mix(in oklab, var(--gp-widget-accent), transparent 91%) 0%, transparent 56%),
-    radial-gradient(130% 100% at 14% 0%, oklch(100% 0 0 / 0.11) 0%, transparent 52%),
-    linear-gradient(to bottom, oklch(100% 0 0 / 0.07) 0%, transparent 9%),
-    radial-gradient(95% 65% at 90% 104%, color-mix(in oklab, var(--gp-widget-accent), transparent 94%) 0%, transparent 62%),
-    linear-gradient(160deg, oklch(26% 0.004 250 / 0.97) 0%, oklch(10% 0.004 250 / 0.98) 100%);
-}
-
-/* Light theme deliberately keeps widget cards a warm dark charcoal — a
-   standardized "dark grey" that reads as a distinct object floating on the
-   soft light canvas, rather than a pane of pure white. The card's own accent
-   still tints the corners, and its internals use the light-on-dark treatment. */
-[data-theme="light"] .gp-widget-card.gp-glass {
-  background:
-    radial-gradient(120% 85% at 12% -4%, color-mix(in oklab, var(--gp-widget-accent), transparent 86%) 0%, transparent 56%),
-    radial-gradient(130% 100% at 14% 0%, oklch(100% 0 0 / 0.10) 0%, transparent 52%),
-    linear-gradient(to bottom, oklch(100% 0 0 / 0.06) 0%, transparent 9%),
-    radial-gradient(95% 65% at 90% 104%, color-mix(in oklab, var(--gp-widget-accent), transparent 90%) 0%, transparent 62%),
-    var(--gp-light-widget-bg);
-}
 
 /* Resting, hover, selected, and link-source card shadows — previously
    hardcoded lime in the component, now mixed from each card's own accent. */
@@ -833,20 +821,6 @@ body[data-keys-modifier="true"] .gp-widget-content * {
  * Section entrances are one-shot keyframes with a small stagger.
  * ------------------------------------------------------------------------- */
 
-.gp-picker-icon {
-  scale: 1;
-  transition: scale 280ms var(--gp-ease-out);
-}
-
-/* Accent hexes are tuned for dark glass; on the light scrim the palest ones
-   (slate, near-white) wash out. One static filter re-anchors them all. */
-
-
-.gp-picker-row:hover .gp-picker-icon,
-.gp-picker-row[data-active] .gp-picker-icon {
-  scale: 1.08;
-}
-
 /* ---------------------------------------------------------------------------
  * Shared canvas edge paint system
  *
@@ -882,19 +856,6 @@ body[data-keys-modifier="true"] .gp-widget-content * {
 
 .gp-link-dash {
   animation: gp-edge-dash-march 600ms linear infinite;
-}
-
-.gp-hierarchy-guide-line,
-.gp-hierarchy-guide-cap {
-  fill: none;
-  stroke: color-mix(in oklab, #a7f3d0, var(--gp-relation-outline) 28%);
-  stroke-width: 1.5;
-  vector-effect: non-scaling-stroke;
-  filter: drop-shadow(0 0 4px rgb(52 211 153 / 0.42));
-}
-
-.gp-hierarchy-guide-line {
-  stroke-dasharray: 5 4;
 }
 
 /* Relations and dependencies replace their solid stroke with directional
@@ -1166,36 +1127,6 @@ body[data-circuit-mode] .gp-widget-card {
   .gp-wire-fire {
     opacity: 0;
   }
-}
-
-/* One-shot rise-in for picker sections and pack cards. */
-@keyframes gp-rise {
-  from {
-    opacity: 0;
-    translate: 0 10px;
-  }
-  to {
-    opacity: 1;
-    translate: 0 0;
-  }
-}
-
-.gp-rise {
-  animation: gp-rise var(--gp-motion-reveal) var(--gp-ease-out) backwards;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .gp-rise {
-    animation: none;
-  }
-  .gp-picker-icon {
-    transition: none;
-  }
-}
-
-/* Canvas-node folder glyph — a soft signature glow. */
-.gp-canvas-node-glyph {
-  box-shadow: 0 0 18px oklch(88% 0.31 136 / 0.14), inset 0 1px 0 oklch(100% 0 0 / 0.1);
 }
 
 /* Login page ambient bloom — two static radial glows, painted once. */
@@ -1557,18 +1488,3 @@ body[data-circuit-mode] .gp-widget-card {
   .gp-atlas-breathe { animation:none; }
 }
 
-/* Accessibility fail-safe: component-specific rules preserve useful state
-   changes, while this final guard catches framework utilities and future
-   decorative motion. Direct manipulation remains immediate and scrolling
-   never animates against the operating-system preference. */
-@media (prefers-reduced-motion: reduce) {
-  html:focus-within { scroll-behavior: auto; }
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    scroll-behavior: auto !important;
-    transition-duration: 0.01ms !important;
-  }
-}

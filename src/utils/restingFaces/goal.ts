@@ -41,25 +41,6 @@ function milestones(raw: unknown): Milestone[] {
   return result
 }
 
-/**
- * A bare Progress card is the same instrument as a Goal wearing Simple, so it
- * folds the same way. Without this it fell through to the generic ladder,
- * which has no key named `percent` and rested a filled card as a bare icon.
- */
-export function progressRestingFace(data: Record<string, unknown>): RestingFaceModel | null {
-  const percent = finite(data.percent)
-  if (percent === null) return null
-  const rounded = Math.round(clampFraction(percent / 100) * 100)
-  const label = typeof data.label === 'string' && data.label.trim() ? data.label.trim() : 'Progress'
-  return {
-    kind: 'gauge',
-    progress: rounded / 100,
-    primary: `${rounded}%`,
-    secondary: compact(label, 22),
-    tone: rounded >= 100 ? 'good' : 'accent',
-  }
-}
-
 export function goalRestingFace(data: Record<string, unknown>): RestingFaceModel | null {
   const mode = typeof data.mode === 'string' ? data.mode : 'milestones'
   const goal = typeof data.goal === 'string' ? data.goal.trim() : ''

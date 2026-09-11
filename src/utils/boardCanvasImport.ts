@@ -5,7 +5,7 @@ import { useCanvasStore } from '../store/useCanvasStore'
 import { useToastStore } from '../store/useToastStore'
 import type { ExcalidrawData, SketchpadData } from '../types/spatial'
 import { useWidgetStore } from '../store/useWidgetStore'
-import { writeMediaBlob } from './boardDatabase'
+import { storeMediaBlob } from '../services/mediaSyncService'
 import { excalidrawBlobKey } from './excalidrawFiles'
 
 interface CanvasImportRequest {
@@ -90,7 +90,7 @@ export async function importBoardFileOntoCanvas(request: CanvasImportRequest): P
   const prepared = remapMediaKeys(request.board, availableKeys)
   for (const item of request.media) {
     const key = prepared.keyMap.get(item.key)
-    if (key) await writeMediaBlob(key, item.blob)
+    if (key) await storeMediaBlob(key, item.blob)
   }
   const title = canvasImportTitle(request.filename)
   const result = useWidgetStore.getState().importBoardAsCanvas(
@@ -114,7 +114,7 @@ export async function importBoardFileOntoCanvas(request: CanvasImportRequest): P
       if (!mintedId) continue
       for (const ref of scene.files) {
         const blob = mediaByKey.get(excalidrawBlobKey(widget.id, ref.id))
-        if (blob) await writeMediaBlob(excalidrawBlobKey(mintedId, ref.id), blob)
+        if (blob) await storeMediaBlob(excalidrawBlobKey(mintedId, ref.id), blob)
       }
     }
   } catch { /* imported without embedded drawings, matching the pre-fix outcome */ }

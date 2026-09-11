@@ -36,6 +36,7 @@ import {
 import { supabaseConfigured } from '../../lib/supabase'
 import { useWidgetPickerPrefsStore } from '../../store/useWidgetPickerPrefsStore'
 import { STUDY_FOCUS_TYPES } from '../../widgets/studyFocus'
+import { isAppleAccount } from '../../lib/appleRevoke'
 import { analyticsConfigured, analyticsState, browserRefusesTracking } from '../../services/analytics'
 import { setCollaborativeCanvasShared } from '../../collaboration/collaborationController'
 import { canToggleCanvasSharing } from '../../collaboration/canvasSharing'
@@ -71,6 +72,9 @@ import { DomainPackSettings } from './DomainPackSettings'
  * loader with it.
  */
 const SKIN_GALLERY_ENABLED = import.meta.env.DEV
+
+/** Room kept above a docked phone sheet for the status bar and Dynamic Island. */
+const PHONE_SHEET_TOP_ALLOWANCE = 72
 
 const CATEGORIES = [
   { id: 'general' as const, label: 'General', icon: Palette },
@@ -250,6 +254,7 @@ function DeleteAccountSettings() {
       <p className="mt-1 text-[11px] leading-relaxed text-neutral-500">
         Type <strong className="text-neutral-300">delete</strong> to confirm. Your account, cloud boards
         and uploaded images are removed immediately.
+        {isAppleAccount(session) ? ' Apple will ask you to confirm first, because this account uses Sign in with Apple.' : null}
       </p>
       <label className="gp-settings-field mt-3">
         <span className="sr-only">Type delete to confirm</span>
@@ -501,8 +506,16 @@ export function SettingsPanel() {
     const section = sectionRef.current
     let frame = 0
     const measure = () => {
+      // Under 768px the sheet docks to the bottom edge at full width (the
+      // max-width: 767px block in 03-glass-chrome.css). The desktop caps keep a
+      // floating panel from towering over a large window; applied to a docked
+      // phone sheet they left a ~250px scroll box under half a screen of empty
+      // scrim. Docked, the body may climb to just below the status bar.
+      const docked = window.matchMedia('(max-width: 767px)').matches
       const categoryLimit = settings.section === 'controls' ? 640 : 512
-      const availableHeight = Math.max(220, Math.min(categoryLimit, window.innerHeight - 162))
+      const availableHeight = docked
+        ? Math.max(220, window.innerHeight - 162 - PHONE_SHEET_TOP_ALLOWANCE)
+        : Math.max(220, Math.min(categoryLimit, window.innerHeight - 162))
       const naturalHeight = section.scrollHeight + 36
       setBodyHeight(Math.min(naturalHeight, availableHeight))
       setBodyScrollable(naturalHeight > availableHeight + 1)
@@ -682,7 +695,7 @@ export function SettingsPanel() {
               <span key={settings.section} className="gp-settings-category-lens" />
             </span>
             {CATEGORIES.map(({ id, label, icon: Icon }) => (
-              <button key={id} type="button" data-active={settings.section === id ? '' : undefined} aria-current={settings.section === id ? 'page' : undefined} onClick={() => settings.setSection(id)} className={`gp-settings-category relative z-10 flex min-h-9 flex-1 items-center justify-center gap-1.5 rounded-[9px] px-2 text-[10px] font-semibold ${settings.section === id ? 'text-emerald-100' : 'text-neutral-500 hover:text-neutral-200'}`}>
+              <button key={id} type="button" data-active={settings.section === id ? '' : undefined} aria-current={settings.section === id ? 'page' : undefined} onClick={() => settings.setSection(id)} className={`gp-settings-category relative z-10 flex min-h-9 flex-1 items-center justify-center gap-1.5 rounded-[9px] px-2 text-[10px] font-semibold max-md:gap-1 max-md:px-0.5 ${settings.section === id ? 'text-emerald-100' : 'text-neutral-500 hover:text-neutral-200'}`}>
                 <Icon size={12} strokeWidth={settings.section === id ? 2.2 : 1.8} />
                 {label}
               </button>
@@ -697,7 +710,7 @@ export function SettingsPanel() {
           </main>
         </div>
       </div>
-      <p className="pointer-events-none fixed bottom-6 left-1/2 z-[270] -translate-x-1/2 select-none whitespace-nowrap text-center text-xs font-medium tracking-wider text-neutral-400/80">
+      <p className="pointer-events-none fixed bottom-6 left-1/2 z-[270] -translate-x-1/2 select-none whitespace-nowrap text-center text-xs font-medium tracking-wider text-neutral-400/80 max-md:hidden">
         grovepad. planted by The FlyingMount.
       </p>
     </div>,

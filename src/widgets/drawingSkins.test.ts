@@ -1,19 +1,18 @@
 import { describe, expect, it } from 'vitest'
-import type { ExcalidrawData, SketchpadData } from '../types/spatial'
-import { consolidateWidgetData } from '../utils/consolidatedWidgetData'
+import type { SketchpadData } from '../types/spatial'
 import { resolveWidgetMention } from '../utils/thoughtInterpreter'
 import { commandsFor, fieldsFor } from './fields'
 import {
   isWidgetTypePublic,
-  publicWidgetTypeFor,
   widgetDefinition,
+  WIDGET_REGISTRY,
 } from './registry'
 
 describe('Drawing widget consolidation', () => {
-  it('publishes one Drawing card while preserving old Excalidraw boards', () => {
+  it('publishes one Drawing card and leaves no standalone Excalidraw behind', () => {
     expect(isWidgetTypePublic('sketchpad')).toBe(true)
-    expect(publicWidgetTypeFor('excalidraw')).toBe('sketchpad')
-    expect(isWidgetTypePublic('excalidraw')).toBe(false)
+    // The standalone Excalidraw card is deleted outright, not merely hidden.
+    expect(Object.keys(WIDGET_REGISTRY)).not.toContain('excalidraw')
     expect(resolveWidgetMention('excalidraw')).toBe('sketchpad')
   })
 
@@ -29,17 +28,9 @@ describe('Drawing widget consolidation', () => {
     ])
   })
 
-  it('converts standalone Excalidraw scenes without losing elements', () => {
-    const legacy: ExcalidrawData = {
-      elements: [{ id: 'shape-one' }] as unknown as ExcalidrawData['elements'],
-      appState: { viewBackgroundColor: '#fff' },
-      files: [],
-      updatedAt: '2026-07-25T00:00:00.000Z',
-    }
-    const converted = consolidateWidgetData('excalidraw', legacy)
-    expect(converted.type).toBe('sketchpad')
-    expect((converted.data as SketchpadData).mode).toBe('diagram')
-    expect((converted.data as SketchpadData).diagram).toEqual(legacy)
+  it('carries its own Excalidraw scene under the Diagram skin', () => {
+    const data = widgetDefinition('sketchpad').defaultData() as SketchpadData
+    expect(data.diagram).toBeDefined()
   })
 
   it('exposes useful drawing signals and a mode-aware clear command', () => {

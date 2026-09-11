@@ -8,13 +8,13 @@ import type { WidgetSizing } from './contracts/registry'
  * card may report a larger live minimum when its real content needs it.
  */
 export const SIZING_REVIEW_TYPES = [
-  'bullets', 'checklist', 'decision', 'priority_matrix', 'pros_cons',
+  'bullets', 'checklist', 'decision', 'pros_cons',
   'text_input', 'number_input', 'toggle', 'branch_gate', 'formula',
-  'status', 'date_picker', 'outline', 'form', 'daily_agenda',
+  'status', 'date_picker', 'outline', 'form',
   'process', 'risk_register', 'decision_matrix', 'swot', 'timesheet',
-  'inventory', 'logbook', 'line_chart', 'pie_chart', 'unit_converter',
+  'inventory', 'logbook', 'unit_converter',
   'clock_pulse', 'comparator', 'aggregator', 'range_mapper', 'latch',
-  'random_picker', 'sequencer', 'template', 'recorder', 'notifier',
+  'sequencer', 'template', 'recorder', 'notifier',
 ] as const satisfies readonly ModuleType[]
 type ReviewedType = (typeof SIZING_REVIEW_TYPES)[number]
 
@@ -34,7 +34,6 @@ export const REVIEWED_WIDGET_SIZING = {
   bullets: reviewedSizing({ minWidth: 240, minHeight: 120, maxWidth: CONTENT_W, autoHeight: true }),
   checklist: reviewedSizing({ minWidth: 240, minHeight: 120, maxWidth: CONTENT_W, autoHeight: true }),
   decision: reviewedSizing({ minWidth: 280, minHeight: 160, maxWidth: CONTENT_W, maxHeight: CONTENT_H }),
-  priority_matrix: reviewedSizing({ minWidth: 320, minHeight: 240, maxWidth: 800, maxHeight: CONTENT_H }),
   pros_cons: reviewedSizing({ minWidth: 280, minHeight: 160, maxWidth: 720, maxHeight: CONTENT_H }),
 
   text_input: reviewedSizing({ minWidth: 240, minHeight: 120, maxWidth: CONTENT_W, maxHeight: 520 }),
@@ -46,7 +45,6 @@ export const REVIEWED_WIDGET_SIZING = {
   date_picker: reviewedSizing({ minWidth: 240, minHeight: 160, maxWidth: CONTENT_W, autoHeight: true }),
   outline: reviewedSizing({ minWidth: 280, minHeight: 200, maxWidth: 720, maxHeight: CONTENT_H }),
   form: reviewedSizing({ minWidth: 300, minHeight: 240, maxWidth: 800, maxHeight: 720 }),
-  daily_agenda: reviewedSizing({ minWidth: 300, minHeight: 240, maxWidth: 760, maxHeight: 720 }),
   process: reviewedSizing({ minWidth: 300, minHeight: 200, maxWidth: 760, maxHeight: CONTENT_H }),
   risk_register: reviewedSizing({ minWidth: 360, minHeight: 240, maxWidth: 960, maxHeight: 720 }),
   decision_matrix: reviewedSizing({ minWidth: 360, minHeight: 240, maxWidth: 960, maxHeight: 720 }),
@@ -54,8 +52,6 @@ export const REVIEWED_WIDGET_SIZING = {
   timesheet: reviewedSizing({ minWidth: 320, minHeight: 240, maxWidth: 880, maxHeight: 720 }),
   inventory: reviewedSizing({ minWidth: 320, minHeight: 240, maxWidth: 880, maxHeight: 720 }),
   logbook: reviewedSizing({ minWidth: 300, minHeight: 200, maxWidth: 760, maxHeight: CONTENT_H }),
-  line_chart: reviewedSizing({ minWidth: 280, minHeight: 240, maxWidth: 800, maxHeight: CONTENT_H }),
-  pie_chart: reviewedSizing({ minWidth: 180, minHeight: 280, maxWidth: 760, maxHeight: 720 }),
   unit_converter: reviewedSizing({ minWidth: 280, minHeight: 160, maxWidth: CONTENT_W, autoHeight: true }),
 
   clock_pulse: reviewedSizing({ minWidth: 280, minHeight: 200, maxWidth: CONTENT_W, autoHeight: true }),
@@ -63,7 +59,6 @@ export const REVIEWED_WIDGET_SIZING = {
   aggregator: reviewedSizing({ minWidth: 240, minHeight: 200, maxWidth: 720, autoHeight: true }),
   range_mapper: reviewedSizing({ minWidth: 280, minHeight: 200, maxWidth: 760, maxHeight: 720 }),
   latch: reviewedSizing({ minWidth: 240, minHeight: 160, maxWidth: 560, autoHeight: true }),
-  random_picker: reviewedSizing({ minWidth: 280, minHeight: 200, maxWidth: 720, maxHeight: CONTENT_H }),
   sequencer: reviewedSizing({ minWidth: 280, minHeight: 200, maxWidth: 720, maxHeight: CONTENT_H }),
   template: reviewedSizing({ minWidth: 280, minHeight: 200, maxWidth: 720, maxHeight: CONTENT_H }),
   recorder: reviewedSizing({ minWidth: 280, minHeight: 200, maxWidth: 720, autoHeight: true }),

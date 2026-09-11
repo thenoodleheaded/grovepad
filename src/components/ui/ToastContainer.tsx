@@ -15,16 +15,27 @@ export function ToastContainer() {
       {toasts.map((toast) => (
         <div
           key={toast.id}
-          role="status"
+          role={toast.tone === 'danger' ? 'alert' : 'status'}
+          data-tone={toast.tone}
+          data-leaving={toast.leaving ? '' : undefined}
+          // The exit animation owns the timing; this finalizes removal when the
+          // motion actually ends, so no guessed timer can cut it short.
+          onTransitionEnd={(event) => {
+            if (event.target === event.currentTarget && event.propertyName === 'opacity' && toast.leaving) {
+              useToastStore.getState().removeToast(toast.id)
+            }
+          }}
           className="gp-toast gp-pop gp-panel pointer-events-auto flex min-h-10 items-center gap-2.5 rounded-2xl px-4 py-2 shadow-2xl"
         >
-          <span className="text-xs text-neutral-200">{toast.message}</span>
+          <span className={`text-xs ${toast.tone === 'danger' ? 'text-red-200' : 'text-neutral-200'}`}>
+            {toast.message}
+          </span>
           {toast.action && (
             <button
               type="button"
               onClick={() => {
                 toast.action?.run()
-                useToastStore.getState().removeToast(toast.id)
+                useToastStore.getState().dismissToast(toast.id)
               }}
               className="rounded-lg px-1.5 py-1 text-xs font-semibold text-emerald-300 transition-colors hover:bg-emerald-400/10 hover:text-emerald-200"
             >
@@ -34,7 +45,7 @@ export function ToastContainer() {
           <button
             type="button"
             aria-label="Dismiss"
-            onClick={() => useToastStore.getState().removeToast(toast.id)}
+            onClick={() => useToastStore.getState().dismissToast(toast.id)}
             className="text-neutral-600 transition-colors hover:text-neutral-300"
           >
             <X size={11} />

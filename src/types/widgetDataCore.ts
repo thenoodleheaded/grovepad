@@ -4,19 +4,10 @@
 
 import type { ExcalidrawElement } from '@excalidraw/excalidraw/element/types'
 
-export interface NotesData {
+export interface TextData {
   text: string
-  mode?:
-    | 'plain'
-    | 'sticky'
-    | 'quote'
-    | 'daily_log'
-    | 'markdown_page'
-    | 'typewriter'
-    | 'callout'
-    | 'versioned_note'
+  mode?: 'plain' | 'sticky' | 'typewriter'
   color?: StickyNoteColor
-  attribution?: string
   /** Optional specialist state is isolated by skin so switching never loses it. */
   skinStates?: Record<string, Record<string, unknown>>
 }
@@ -29,7 +20,7 @@ export interface BulletItem {
 export interface BulletsData {
   items: BulletItem[]
   /** Presentation worn by this list. Missing means the classic dotted list. */
-  skin?: 'dots' | 'numbered' | 'compact_chips' | 'two_column' | 'nested_outline' | 'rolling_log'
+  skin?: 'dots' | 'numbered' | 'nested_outline'
   /** Optional specialist state is isolated by skin so switching never loses it. */
   skinStates?: Record<string, Record<string, unknown>>
 }
@@ -223,7 +214,7 @@ export interface CanvasNodeData {
   /** Id of the canvas this node opens. */
   canvasId: string
   /** Presentation worn by this canvas card. Missing means the classic portal. */
-  skin?: 'portal' | 'cover' | 'live_thumbnail' | 'dashboard_door' | 'folder_index'
+  skin?: 'portal' | 'cover' | 'live_thumbnail'
   /** Optional settings owned by an individual presentation. */
   skinStates?: Record<string, Record<string, unknown>>
 }
@@ -282,11 +273,6 @@ export interface LinksData {
 export interface CodeData {
   language: string
   code: string
-}
-
-export interface QuoteData {
-  text: string
-  attribution: string
 }
 
 export interface PollOption {
@@ -391,12 +377,16 @@ export interface MetricsData {
   skinStates?: Record<string, Record<string, unknown>>
 }
 
-export type StickyNoteColor = 'yellow' | 'pink' | 'blue' | 'green' | 'purple'
-
-export interface StickyNoteData {
-  text: string
-  color: StickyNoteColor
-}
+export type StickyNoteColor =
+  | 'yellow'
+  | 'orange'
+  | 'red'
+  | 'pink'
+  | 'blue'
+  | 'teal'
+  | 'green'
+  | 'lime'
+  | 'purple'
 
 export interface CalendarData {
   /** Full year, e.g. 2026. */

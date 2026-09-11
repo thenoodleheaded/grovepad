@@ -2,6 +2,8 @@ import { create } from 'zustand'
 import type { Session } from '@supabase/supabase-js'
 import { getSupabaseClient, supabaseConfigured } from '../lib/supabase'
 import { rememberExternalCalendarToken } from '../services/externalCalendarService'
+import { isAppleAccount, revokeAppleOnNative, startAppleRevokeOnWeb } from '../lib/appleRevoke'
+import { isNativeAppleHost } from '../lib/appleSignIn'
 
 // ---------------------------------------------------------------------------
 // Auth session state. The login page gates the app until either a Supabase
@@ -74,7 +76,7 @@ export interface AuthState {
    * guideline 5.1.1(v) and Play's data-deletion policy for any app that can
    * create an account. Irreversible.
    */
-  deleteAccount: () => Promise<void>
+  deleteAccount: (options?: { appleRevoked?: boolean }) => Promise<void>
 }
 
 const FALLBACK_PROFILE_COLORS = ['#34d399', '#60a5fa', '#a78bfa', '#fb7185', '#fbbf24', '#22d3ee'] as const
@@ -188,9 +190,23 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
     globalThis.location?.reload()
   },
 
-  deleteAccount: async () => {
+  deleteAccount: async (options) => {
     const supabase = await getSupabaseClient()
     if (!supabase) throw new Error('Account deletion needs a connection to Grovepad')
+
+    // Apple requires revoking the person's Apple token before the account goes,
+    // and nothing is deleted unless that succeeds. In the app it happens here,
+    // behind Apple's sheet. On the website the page goes to Apple and back, and
+    // App.tsx resumes this call with appleRevoked once Apple has confirmed.
+    const session = useAuthStore.getState().session
+    if (session && isAppleAccount(session) && !options?.appleRevoked) {
+      if (isNativeAppleHost()) {
+        await revokeAppleOnNative(session)
+      } else {
+        await startAppleRevokeOnWeb(session)
+        return
+      }
+    }
 
     // The server does the deleting. delete_own_account() takes no argument and
     // reads auth.uid(), so a caller cannot name somebody else's account. It

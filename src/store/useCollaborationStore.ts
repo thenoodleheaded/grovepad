@@ -21,6 +21,20 @@ export interface CollaborationState {
   comments: CollaborationComment[]
   pendingUpdates: number
   error: string | null
+  /**
+   * A `?collaborate=` link the user has not accepted yet.
+   *
+   * Joining is not a read: it marks a local canvas shared and replaces its
+   * contents with the remote document. Doing that straight off a URL meant a
+   * link could blank somebody's board on page load, so the invite waits here
+   * until it is confirmed.
+   */
+  pendingInvite: PendingCanvasInvite | null
+}
+
+export interface PendingCanvasInvite {
+  canvasId: string
+  name: string
 }
 
 export const INITIAL_COLLABORATION_STATE: CollaborationState = {
@@ -34,6 +48,7 @@ export const INITIAL_COLLABORATION_STATE: CollaborationState = {
   comments: [],
   pendingUpdates: 0,
   error: null,
+  pendingInvite: null,
 }
 
 export const useCollaborationStore = create<CollaborationState>()(() => ({

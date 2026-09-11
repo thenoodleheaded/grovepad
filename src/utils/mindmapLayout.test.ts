@@ -5,7 +5,7 @@ describe('layoutMindmap', () => {
   it('lays imported widgets out through their parent graph without legacy groups', () => {
     const topology: MinifiedMindmap = {
       widgets: [
-        { id: 'root', type: 'notes', title: 'Launch plan', sourceRefs: [] },
+        { id: 'root', type: 'text', title: 'Launch plan', sourceRefs: [] },
         { id: 'first', type: 'checklist', title: 'Build', sourceRefs: [] },
         { id: 'second', type: 'decision', title: 'Review', sourceRefs: [] },
       ],

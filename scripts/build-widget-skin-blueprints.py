@@ -169,10 +169,10 @@ export const WIDGET_SKIN_BLUEPRINTS = {encoded} as const satisfies Record<
 def main() -> None:
     catalogue = load()
     count = sum(len(skins) for skins in catalogue.values())
-    if len(catalogue) != 94:
-        raise SystemExit(f"Expected 94 public widget sections, found {len(catalogue)}")
-    if count != 611:
-        raise SystemExit(f"Expected 611 implementable skins, found {count}")
+    if len(catalogue) != 93:
+        raise SystemExit(f"Expected 93 public widget sections, found {len(catalogue)}")
+    if count != 597:
+        raise SystemExit(f"Expected 597 implementable skins, found {count}")
     TARGET.write_text(render(catalogue))
     print(f"Wrote {count} skins for {len(catalogue)} widgets to {TARGET}")
 

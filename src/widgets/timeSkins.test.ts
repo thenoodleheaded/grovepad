@@ -1,26 +1,21 @@
 import { describe, expect, it } from 'vitest'
 import type {
-  CountdownData,
-  PomodoroData,
-  StopwatchData,
   TimekeeperData,
-  TimerData,
-  WorldClockData,
 } from '../types/spatial'
-import { consolidateWidgetData } from '../utils/consolidatedWidgetData'
 import { commandsFor, fieldsFor } from './fields'
 import {
   isWidgetTypePublic,
-  publicWidgetTypeFor,
   widgetDefinition,
+  WIDGET_REGISTRY,
 } from './registry'
 
 describe('Time widget consolidation', () => {
-  it('publishes one Time card and preserves legacy types for existing boards', () => {
+  it('publishes one Time card and leaves no trace of the legacy clocks', () => {
     expect(isWidgetTypePublic('timekeeper')).toBe(true)
-    for (const type of ['timer', 'pomodoro', 'stopwatch', 'countdown', 'world_clock'] as const) {
-      expect(publicWidgetTypeFor(type)).toBe('timekeeper')
-      expect(isWidgetTypePublic(type)).toBe(false)
+    // Each former clock is deleted, not hidden: Timekeeper's skins are the
+    // only way to get one now.
+    for (const type of ['timer', 'pomodoro', 'stopwatch', 'countdown', 'world_clock']) {
+      expect(Object.keys(WIDGET_REGISTRY)).not.toContain(type)
     }
   })
 
@@ -40,24 +35,11 @@ describe('Time widget consolidation', () => {
     ])
   })
 
-  it.each([
-    ['timer', { label: 'Tea', durationSeconds: 60, remainingSeconds: 30, endAt: null }],
-    ['pomodoro', { label: 'Focus', workMinutes: 25, breakMinutes: 5, phase: 'work', endAt: null, remainingSeconds: 1500, completed: 4 }],
-    ['stopwatch', { elapsedMs: 5000, startedAt: null, laps: [5000] }],
-    ['countdown', { label: 'Launch', targetDate: '2026-08-10' }],
-    ['world_clock', { zones: ['UTC', 'Asia/Tokyo'] }],
-  ] as const)('converts generated %s data without losing its useful state', (type, legacyData) => {
-    const converted = consolidateWidgetData(
-      type,
-      legacyData as TimerData | PomodoroData | StopwatchData | CountdownData | WorldClockData,
-    )
-    expect(converted.type).toBe('timekeeper')
-    const data = converted.data as TimekeeperData
-    if (type === 'timer') expect(data.countdown).toEqual(legacyData)
-    if (type === 'pomodoro') expect(data.pomodoro).toEqual(legacyData)
-    if (type === 'stopwatch') expect(data.stopwatch).toEqual(legacyData)
-    if (type === 'countdown') expect(data.deadline).toEqual(legacyData)
-    if (type === 'world_clock') expect(data.worldClock).toEqual(legacyData)
+  it('starts every clock skin with its own saved state', () => {
+    const data = widgetDefinition('timekeeper').defaultData() as TimekeeperData
+    expect(data.pomodoro.workMinutes).toBe(25)
+    expect(data.stopwatch.laps).toEqual([])
+    expect(data.worldClock?.zones).toHaveLength(3)
   })
 
   it('exposes the combined clock signals and commands through circuits', () => {

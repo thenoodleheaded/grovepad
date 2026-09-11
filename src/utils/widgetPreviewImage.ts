@@ -13,7 +13,12 @@ function compact(value: string, limit: number): string {
   return clean.length > limit ? `${clean.slice(0, limit - 1).trimEnd()}…` : clean
 }
 
-function modelSummary(model: RestingFaceModel): string {
+/**
+ * The far-zoom placard's one line of words. A Note face carries no preview of
+ * its own any more — the resting tile draws the whole page instead — so the
+ * placard reads the note's opening words straight off the widget.
+ */
+function modelSummary(model: RestingFaceModel, widget: Widget): string {
   switch (model.kind) {
     case 'metric':
       return `${model.primary} ${model.secondary}`
@@ -21,8 +26,10 @@ function modelSummary(model: RestingFaceModel): string {
       return `${model.label} ${model.active ? 'on' : 'off'}`
     case 'text':
       return model.text
-    case 'note':
-      return model.lines.slice(0, 2).map((line) => line.text).filter(Boolean).join(' · ')
+    case 'note': {
+      const text = (widget.data as { text?: unknown }).text
+      return typeof text === 'string' ? text : ''
+    }
     case 'rows':
       return model.rows.slice(0, 2).map((row) => row.label).join(' · ')
     case 'stars':
@@ -66,6 +73,10 @@ function modelSummary(model: RestingFaceModel): string {
       return `${model.left.primary} ${model.divider ?? '·'} ${model.right.primary}`
     case 'paper':
       return model.eyebrow?.label ?? 'Drawing'
+    case 'canvas':
+      // Far zoom cannot subscribe to the far canvas, and the door's face now
+      // carries nothing but the canvas's name — which lives on the far side.
+      return ''
     case 'icon':
       return ''
   }
@@ -100,7 +111,7 @@ export function lightweightWidgetPreviewImage(widget: Widget, size: Size): strin
   const accent = widgetAccent(widget, def)
   const face = restingFace(widget)
   const title = compact(widget.title || def.label, MAX_TITLE_CHARS)
-  const summary = compact(modelSummary(face.model), MAX_SUMMARY_CHARS)
+  const summary = compact(modelSummary(face.model, widget), MAX_SUMMARY_CHARS)
   const aspect = Math.max(0.45, Math.min(3.5, size.width / Math.max(1, size.height)))
   const width = Math.max(48, Math.min(96, Math.round(64 * Math.sqrt(aspect))))
   const height = Math.max(32, Math.min(72, Math.round(width / aspect)))

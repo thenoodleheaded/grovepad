@@ -17,8 +17,8 @@ function pair(gap = 200): [string, string] {
   const store = useWidgetStore.getState()
   const baseX = 60_000 + cursor * 6_000
   cursor += 1
-  const a = store.createWidget('Overlap A', { x: baseX, y: 60_000 }, 'notes')
-  const b = store.createWidget('Overlap B', { x: baseX + 1_000, y: 60_000 }, 'notes')
+  const a = store.createWidget('Overlap A', { x: baseX, y: 60_000 }, 'text')
+  const b = store.createWidget('Overlap B', { x: baseX + 1_000, y: 60_000 }, 'text')
   for (const id of [a, b]) {
     const s = useWidgetStore.getState()
     useWidgetStore.setState({
@@ -91,7 +91,7 @@ describe('every geometry-changing action runs the overlap check', () => {
     // grow the card without the DOM measurement a note would need.
     const store = useWidgetStore.getState()
     const a = store.createWidget('Grow', { x: 90_000, y: 90_000 }, 'table')
-    const b = store.createWidget('Below', { x: 90_000, y: 92_000 }, 'notes')
+    const b = store.createWidget('Below', { x: 90_000, y: 92_000 }, 'text')
     for (const id of [a, b]) {
       const s = useWidgetStore.getState()
       useWidgetStore.setState({

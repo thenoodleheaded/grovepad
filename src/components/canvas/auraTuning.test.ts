@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { readFileSync } from 'node:fs'
 import {
   auraBufferSize,
   auraScreenPool,
@@ -11,6 +12,9 @@ import {
 import { skinsFor, widgetAccent } from '../../utils/widgetSkins'
 import { widgetDefinition } from '../../widgets/registry'
 import { defaultAtlasData, switchAtlasMode } from '../../widgets/atlasCatalog'
+
+const canvasViewport = readFileSync(new URL('./CanvasViewport.tsx', import.meta.url), 'utf8')
+const canvasAuraLayer = readFileSync(new URL('./CanvasAuraLayer.tsx', import.meta.url), 'utf8')
 
 describe('sanitizeAuraDocument', () => {
   it('falls back to defaults for junk input', () => {
@@ -70,11 +74,35 @@ describe('sanitizeAuraDocument', () => {
   })
 })
 
+describe('light canvas color', () => {
+  it('wears the same neutral paper the stylesheet does', () => {
+    expect(DEFAULT_AURA_DOCUMENT.canvas.light.canvasTintBase).toBe('#f4f5f6')
+    expect(DEFAULT_AURA_DOCUMENT.canvas.light.gridFine).toBe('rgb(112 116 122 / 0.18)')
+  })
+
+  it('lets the tokens own the canvas colour in both themes', () => {
+    // The regression this pins: the light branch here returned a literal
+    // '#ffffff', which overrode every canvas token and tuning value beneath it,
+    // so nothing could change the light board. One expression now serves both
+    // themes and each theme states its own base and tint share in CSS.
+    expect(canvasViewport).toContain('var(--gp-canvas-tint-base) var(--gp-canvas-tint-strength, 97%)')
+    expect(canvasViewport).not.toContain("? '#ffffff'")
+  })
+
+  it('pools each widget accent in both themes', () => {
+    // Light mode flattened every pool to one grey and blended it additively
+    // onto white, which paints nothing at all.
+    expect(canvasAuraLayer).not.toContain("'210,214,212'")
+    expect(canvasAuraLayer).toContain('const channels = parseColorChannels(accent)')
+    expect(DEFAULT_AURA_TUNING.light.blend).toBe('source-over')
+  })
+})
+
 describe('resolveAccent', () => {
   it('prefers the per-theme override and falls back to the registry value', () => {
-    const doc = sanitizeAuraDocument({ accents: { notes: { dark: '#ff0000' } } })
-    expect(resolveAccent(doc, 'dark', 'notes', '#111111')).toBe('#ff0000')
-    expect(resolveAccent(doc, 'light', 'notes', '#111111')).toBe('#111111')
+    const doc = sanitizeAuraDocument({ accents: { text: { dark: '#ff0000' } } })
+    expect(resolveAccent(doc, 'dark', 'text', '#111111')).toBe('#ff0000')
+    expect(resolveAccent(doc, 'light', 'text', '#111111')).toBe('#111111')
     expect(resolveAccent(doc, 'dark', 'table', '#222222')).toBe('#222222')
   })
 })

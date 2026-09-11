@@ -79,12 +79,70 @@ const FUNCTIONS: Readonly<Record<string, UnaryFn>> = {
 const TRIG_IN = new Set(['sin', 'cos', 'tan'])
 const TRIG_OUT = new Set(['asin', 'acos', 'atan'])
 
-export const FUNCTION_NAMES: readonly string[] = Object.keys(FUNCTIONS)
+/**
+ * Functions that take more than one argument — the ones a real formula needs
+ * once it is more than a sum. `round` and `log` also appear in the unary table
+ * above and must answer identically on one argument, so an expression written
+ * before they took a second one keeps exactly the number it had.
+ */
+interface MultiFunction {
+  min: number
+  max: number
+  apply: (args: number[]) => number
+}
+
+const ARGUMENT_LIMIT = 8
+
+const MULTI_FUNCTIONS: Readonly<Record<string, MultiFunction>> = {
+  min: { min: 1, max: ARGUMENT_LIMIT, apply: (args) => Math.min(...args) },
+  max: { min: 1, max: ARGUMENT_LIMIT, apply: (args) => Math.max(...args) },
+  sum: { min: 1, max: ARGUMENT_LIMIT, apply: (args) => args.reduce((total, value) => total + value, 0) },
+  avg: {
+    min: 1,
+    max: ARGUMENT_LIMIT,
+    apply: (args) => args.reduce((total, value) => total + value, 0) / args.length,
+  },
+  pow: { min: 2, max: 2, apply: ([base, power]) => base! ** power! },
+  clamp: {
+    min: 3,
+    max: 3,
+    apply: ([value, first, second]) => Math.min(
+      Math.max(value!, Math.min(first!, second!)),
+      Math.max(first!, second!),
+    ),
+  },
+  round: {
+    min: 1,
+    max: 2,
+    apply: ([value, digits]) => {
+      const scale = 10 ** Math.max(0, Math.min(10, Math.trunc(digits ?? 0)))
+      return Math.round(value! * scale) / scale
+    },
+  },
+  log: {
+    min: 1,
+    max: 2,
+    apply: ([value, base]) => (base === undefined ? Math.log10(value!) : Math.log(value!) / Math.log(base)),
+  },
+}
+
+/** Every name a written expression may call, for the help a card prints. */
+export const EXPRESSION_FUNCTION_NAMES: readonly string[] = [
+  ...Object.keys(FUNCTIONS),
+  ...Object.keys(MULTI_FUNCTIONS).filter((name) => !(name in FUNCTIONS)),
+  'if',
+].sort()
 
 /**
- * Recursive-descent evaluator for `+ - * / ^ mod`, parentheses, unary signs,
- * named constants, named variables, and a fixed function table. `^` is
- * exponentiation here; the programmer skin has its own parser where it is XOR.
+ * Recursive-descent evaluator for `+ - * / ^ mod %`, comparisons, `&&`/`||`,
+ * parentheses, unary signs, named constants, named variables, and a fixed
+ * function table (the unary maths above, `min`/`max`/`sum`/`avg`/`pow`/`clamp`,
+ * and a three-part `if`). `^` is exponentiation here; the programmer skin has
+ * its own parser where it is XOR.
+ *
+ * A comparison answers 1 or 0 so it can be used as a number, which is what
+ * makes `if(stock < 5, price * 2, price)` readable on a card. `if` chooses its
+ * branch before evaluating it, so the untaken half may safely divide by a zero.
  */
 export function evaluateExpression(input: string, options: EvaluateOptions = {}): number {
   if (input.length > EXPRESSION_LIMIT) throw new Error('Expression too long')
@@ -108,20 +166,74 @@ export function evaluateExpression(input: string, options: EvaluateOptions = {})
     return value
   }
 
+  /** The text of one argument, skipped without evaluating it — how `if`
+   *  reaches its chosen branch without running the other one. */
+  const skipArgument = (): string => {
+    const start = i
+    let nesting = 0
+    while (i < src.length) {
+      const char = src[i]!
+      if (char === '(') nesting += 1
+      else if (char === ')') {
+        if (nesting === 0) break
+        nesting -= 1
+      } else if (char === ',' && nesting === 0) break
+      i += 1
+    }
+    if (nesting !== 0) throw new Error('Expected )')
+    return src.slice(start, i)
+  }
+
+  const parseArguments = (name: string): number[] => {
+    if (peek() !== '(') throw new Error(`${name} needs (`)
+    i += 1
+    const args: number[] = [parseTop()]
+    while (peek() === ',') {
+      i += 1
+      if (args.length >= ARGUMENT_LIMIT) throw new Error(`${name} takes fewer values`)
+      args.push(parseTop())
+    }
+    if (peek() !== ')') throw new Error('Expected )')
+    i += 1
+    return args
+  }
+
   const parseName = (): number => {
     const start = i
     while (i < src.length && /[a-z0-9_]/.test(src[i]!)) i += 1
     const name = src.slice(start, i)
     if (!name) throw new Error('Unexpected token')
 
-    const fn = FUNCTIONS[name]
-    if (fn) {
-      if (peek() !== '(') throw new Error(`${name} needs (`)
+    // `if` reads its branches as text and evaluates only the chosen one.
+    if (name === 'if') {
+      if (peek() !== '(') throw new Error('if needs (')
       i += 1
-      let argument = parseExpr()
+      const condition = parseTop()
+      if (peek() !== ',') throw new Error('if needs three parts')
+      i += 1
+      const whenTrue = skipArgument()
+      if (peek() !== ',') throw new Error('if needs three parts')
+      i += 1
+      const whenFalse = skipArgument()
       if (peek() !== ')') throw new Error('Expected )')
       i += 1
-      if (angle === 'deg' && TRIG_IN.has(name)) argument = (argument * Math.PI) / 180
+      return evaluateExpression(condition !== 0 ? whenTrue : whenFalse, options)
+    }
+
+    const many = MULTI_FUNCTIONS[name]
+    if (many) {
+      const args = parseArguments(name)
+      if (args.length < many.min || args.length > many.max) {
+        throw new Error(`${name} takes ${many.min === many.max ? many.min : `${many.min}-${many.max}`} values`)
+      }
+      return many.apply(args)
+    }
+
+    const fn = FUNCTIONS[name]
+    if (fn) {
+      const args = parseArguments(name)
+      if (args.length !== 1) throw new Error(`${name} takes one value`)
+      const argument = angle === 'deg' && TRIG_IN.has(name) ? (args[0]! * Math.PI) / 180 : args[0]!
       const value = fn(argument)
       return angle === 'deg' && TRIG_OUT.has(name) ? (value * 180) / Math.PI : value
     }
@@ -137,7 +249,7 @@ export function evaluateExpression(input: string, options: EvaluateOptions = {})
     try {
       if (peek() === '(') {
         i += 1
-        const value = parseExpr()
+        const value = parseTop()
         if (peek() !== ')') throw new Error('Expected )')
         i += 1
         return value
@@ -149,6 +261,12 @@ export function evaluateExpression(input: string, options: EvaluateOptions = {})
       if (peek() === '+') {
         i += 1
         return parseFactor()
+      }
+      // `!x` only ever starts a factor, so it can never be read as the `!=`
+      // that follows one.
+      if (peek() === '!') {
+        i += 1
+        return parseFactor() === 0 ? 1 : 0
       }
       if (peek() !== undefined && /[a-z]/.test(peek()!)) return parseName()
       return parseNumber()
@@ -181,8 +299,10 @@ export function evaluateExpression(input: string, options: EvaluateOptions = {})
         }
         continue
       }
-      if (src.startsWith('mod', i)) {
-        i += 3
+      // `%` is the remainder spelling most people reach for; `mod` is the one
+      // this parser has always had. They are the same operation.
+      if (src.startsWith('mod', i) || peek() === '%') {
+        i += peek() === '%' ? 1 : 3
         const rhs = parsePower()
         if (rhs === 0) throw new Error('Mod by 0')
         value %= rhs
@@ -203,8 +323,53 @@ export function evaluateExpression(input: string, options: EvaluateOptions = {})
     return value
   }
 
+  /** A comparison answers 1 or 0, so it reads as a number anywhere. */
+  const parseCompare = (): number => {
+    let value = parseExpr()
+    for (;;) {
+      const two = src.slice(i, i + 2)
+      const one = peek()
+      let op: string | null = null
+      let width = 2
+      if (two === '<=' || two === '>=' || two === '==' || two === '!=') op = two
+      else if (one === '<' || one === '>') { op = one; width = 1 }
+      else if (one === '=') { op = '=='; width = 1 }
+      if (!op) return value
+      i += width
+      const rhs = parseExpr()
+      value = Number(
+        op === '<' ? value < rhs
+        : op === '>' ? value > rhs
+        : op === '<=' ? value <= rhs
+        : op === '>=' ? value >= rhs
+        : op === '==' ? value === rhs
+        : value !== rhs,
+      )
+    }
+  }
+
+  const parseAnd = (): number => {
+    let value = parseCompare()
+    while (src.startsWith('&&', i)) {
+      i += 2
+      const rhs = parseCompare()
+      value = value !== 0 && rhs !== 0 ? 1 : 0
+    }
+    return value
+  }
+
+  const parseTop = (): number => {
+    let value = parseAnd()
+    while (src.startsWith('||', i)) {
+      i += 2
+      const rhs = parseAnd()
+      value = value !== 0 || rhs !== 0 ? 1 : 0
+    }
+    return value
+  }
+
   if (src === '') return 0
-  const value = parseExpr()
+  const value = parseTop()
   if (i !== src.length) throw new Error('Unexpected token')
   if (!Number.isFinite(value)) throw new Error('Not a number')
   return value
@@ -579,7 +744,9 @@ export function namedVariables(raw: unknown): NamedVariable[] {
 /** Only names the parser can actually resolve, and never a function's name. */
 export function isUsableVariableName(name: string): boolean {
   const clean = name.trim().toLowerCase()
-  return VALID_NAME.test(clean) && !(clean in FUNCTIONS) && !(clean in CONSTANTS)
+  return VALID_NAME.test(clean)
+    && !EXPRESSION_FUNCTION_NAMES.includes(clean)
+    && !(clean in CONSTANTS)
 }
 
 export function variableBindings(

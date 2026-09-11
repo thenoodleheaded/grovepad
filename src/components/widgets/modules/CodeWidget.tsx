@@ -17,7 +17,7 @@ export function CodeWidget({ data, onChange }: CodeWidgetProps) {
   }
 
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-xl border gp-hairline bg-neutral-950/70">
+    <div className="gp-display-well flex h-full flex-col overflow-hidden rounded-xl border gp-hairline bg-neutral-950/70">
       <div className="flex h-8 shrink-0 items-center justify-between border-b gp-hairline px-2.5">
         <div className="flex items-center gap-1.5">
           <span aria-hidden className="h-2 w-2 rounded-full bg-red-500/50" />

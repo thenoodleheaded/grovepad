@@ -3,7 +3,9 @@
  *
  * A Canvas card is a doorway, not a second board editor. Each skin exposes a
  * different view of the same child canvas while keeping one clear navigation
- * action and the widget's single E0 glass backplate.
+ * action and the widget's single E0 glass backplate. The card says the canvas's
+ * name itself — it wears no floating name row — so nothing inside it repeats
+ * that name or narrates the act of going in.
  */
 
 .gp-widget-card[data-auto-height] .gp-widget-ui[data-widget-type='canvas_node'] {
@@ -11,12 +13,30 @@
 }
 
 .gp-canvas-node {
+  /*
+   * Every accent in this file reads through this one variable rather than
+   * straight from --gp-widget-accent. The skin hues are tuned for the dark
+   * board, where a bright lime reads as a light source; on the bright canvas
+   * that same hue lands too close to the surface behind it, so it is deepened
+   * here until the door's outline, glyph and name carry real contrast.
+   */
+  --gp-canvas-accent: var(--gp-widget-accent);
   position: relative;
   display: flex;
   width: 100%;
+  /* Fills the card so double-click-to-open answers across the WHOLE face.
+     Sized short, the blank area below the content sat outside this element
+     and the gesture landed on nothing. */
+  height: 100%;
   min-width: 0;
   flex-direction: column;
   color: var(--gp-widget-ink, #f5f5f5);
+}
+
+[data-theme='light'] .gp-canvas-node {
+  /* Toward black rather than toward a green, so a skin keeps its own hue and
+     only loses the lightness that made it disappear into the bright canvas. */
+  --gp-canvas-accent: color-mix(in oklab, var(--gp-widget-accent), black 42%);
 }
 
 .gp-canvas-node button,
@@ -28,7 +48,7 @@
 .gp-canvas-node button:focus-visible,
 .gp-canvas-node input:focus-visible,
 .gp-canvas-node textarea:focus-visible {
-  outline: 1px solid color-mix(in oklab, var(--gp-widget-accent), transparent 24%);
+  outline: 1px solid color-mix(in oklab, var(--gp-canvas-accent), transparent 24%);
   outline-offset: 2px;
 }
 
@@ -40,195 +60,164 @@
   gap: 0.55rem;
 }
 
-.gp-canvas-node-heading > span:nth-child(2) {
-  display: flex;
+/*
+ * The canvas's name, in every skin that shows it as a line rather than a
+ * headline. Click once to rename in place, twice to go in — so the resting
+ * text and the input it swaps for must occupy the same box, or the card would
+ * jump the moment you touched it.
+ */
+.gp-canvas-node-title,
+.gp-canvas-portal-name {
+  display: block;
   min-width: 0;
-  flex-direction: column;
-  gap: 0.08rem;
-}
-
-.gp-canvas-node-heading small,
-.gp-canvas-cover-eyebrow {
-  color: color-mix(in oklab, var(--gp-widget-accent), white 8%);
-  font-size: 8.5px;
-  font-weight: 700;
-  letter-spacing: 0.115em;
-  line-height: 1.25;
-  text-transform: uppercase;
-}
-
-.gp-canvas-node-heading strong {
   overflow: hidden;
-  font-size: 12.5px;
-  font-weight: 650;
+  font-size: 16px;
+  font-weight: 660;
   line-height: 1.35;
   text-overflow: ellipsis;
   white-space: nowrap;
+  cursor: text;
 }
 
+.gp-canvas-name-input {
+  min-width: 0;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+}
+
+/* The widget's identity mark: the bare glyph, no plate under it. It is a
+   button wherever the card hands it the skin roller (WidgetSkinTrigger) and
+   inert paint otherwise; both wear this. */
 .gp-canvas-node-icon {
   display: grid;
-  width: 29px;
-  height: 29px;
+  width: 26px;
+  height: 26px;
+  padding: 0;
   place-items: center;
-  border-radius: var(--gp-r2, 8px);
-  color: color-mix(in oklab, var(--gp-widget-accent), white 10%);
-  background: color-mix(in oklab, var(--gp-widget-accent), transparent 88%);
-  box-shadow: inset 0 1px 0 color-mix(in oklab, white, transparent 91%);
-}
-
-.gp-canvas-node-open {
-  display: inline-flex;
-  min-height: 30px;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  padding: 0.38rem 0.15rem 0.2rem;
   border: 0;
-  border-top: 1px solid color-mix(in oklab, var(--gp-widget-accent), transparent 84%);
-  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 30%);
+  color: var(--gp-canvas-accent);
   background: transparent;
-  font-size: 10.5px;
-  font-weight: 650;
-  transition:
-    color var(--gp-duration-snap) var(--gp-ease-snap),
-    border-color var(--gp-duration-snap) var(--gp-ease-snap);
-}
-
-.gp-canvas-node-open svg {
-  color: var(--gp-widget-accent);
   transition: transform var(--gp-duration-snap) var(--gp-ease-snap);
 }
 
-.gp-canvas-node-open:hover,
-.gp-canvas-node-open:focus-visible {
-  border-color: color-mix(in oklab, var(--gp-widget-accent), transparent 58%);
-  color: var(--gp-widget-ink, #fff);
+button.gp-canvas-node-icon:active {
+  transform: scale(0.9);
 }
 
-.gp-canvas-node-open:hover svg,
-.gp-canvas-node-open:focus-visible svg {
-  transform: translateX(2px);
-}
 
-/* Portal — one immediate, generous doorway. */
+/* Portal — one immediate doorway: a mark, the name, a way through. */
 
 .gp-canvas-node-portal {
   min-height: 56px;
-  justify-content: center;
-}
-
-.gp-canvas-portal-link {
-  display: grid;
-  width: 100%;
-  min-width: 0;
-  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
+  flex-direction: row;
+  justify-content: flex-start;
   gap: 0.7rem;
-  padding: 0;
-  border: 0;
-  text-align: left;
-  background: transparent;
 }
 
+/* The bare glyph — no tinted squircle behind it. */
 .gp-canvas-portal-glyph {
   position: relative;
   display: grid;
-  width: 38px;
-  height: 38px;
+  width: 32px;
+  height: 32px;
   flex: 0 0 auto;
+  padding: 0;
   place-items: center;
-  border-radius: var(--gp-r1, 10px);
-  color: color-mix(in oklab, var(--gp-widget-accent), white 12%);
-  background:
-    radial-gradient(circle at 28% 16%, color-mix(in oklab, white, transparent 84%), transparent 48%),
-    color-mix(in oklab, var(--gp-widget-accent), transparent 85%);
-  box-shadow:
-    inset 0 1px 0 color-mix(in oklab, white, transparent 88%),
-    0 8px 18px color-mix(in oklab, var(--gp-widget-accent), transparent 89%);
+  border: 0;
+  color: var(--gp-canvas-accent);
+  background: transparent;
+  transition: transform var(--gp-duration-snap) var(--gp-ease-snap);
+}
+
+button.gp-canvas-portal-glyph:active {
+  transform: scale(0.92);
 }
 
 .gp-canvas-portal-glyph > span {
   position: absolute;
-  right: 7px;
-  bottom: 6px;
+  right: 2px;
+  bottom: 2px;
   width: 5px;
   height: 5px;
   border-radius: 50%;
-  background: var(--gp-widget-accent);
-  box-shadow: 0 0 9px color-mix(in oklab, var(--gp-widget-accent), transparent 24%);
+  background: var(--gp-canvas-accent);
+  box-shadow: 0 0 9px color-mix(in oklab, var(--gp-canvas-accent), transparent 24%);
 }
 
-.gp-canvas-portal-copy {
+.gp-canvas-portal-link {
   display: flex;
   min-width: 0;
-  flex-direction: column;
-  gap: 0.06rem;
-}
-
-.gp-canvas-portal-copy small {
-  color: color-mix(in oklab, var(--gp-widget-accent), white 8%);
-  font-size: 8px;
-  font-weight: 700;
-  letter-spacing: 0.11em;
-  text-transform: uppercase;
-}
-
-.gp-canvas-portal-copy strong {
-  overflow: hidden;
-  font-size: 13px;
-  font-weight: 675;
-  line-height: 1.35;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.gp-canvas-portal-copy > span {
-  overflow: hidden;
-  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 62%);
-  font-size: 9.5px;
-  line-height: 1.3;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.gp-canvas-portal-arrow {
-  display: grid;
-  width: 27px;
-  height: 27px;
-  place-items: center;
-  border-radius: 50%;
-  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 52%);
-  background: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 95%);
-  transition:
-    color var(--gp-duration-snap) var(--gp-ease-snap),
-    transform var(--gp-duration-snap) var(--gp-ease-snap);
-}
-
-.gp-canvas-portal-link:hover .gp-canvas-portal-arrow,
-.gp-canvas-portal-link:focus-visible .gp-canvas-portal-arrow {
-  color: var(--gp-widget-accent);
-  transform: translate(1px, -1px);
-}
-
-.gp-canvas-portal-complete {
-  display: inline-flex;
+  flex: 1 1 auto;
   align-items: center;
-  gap: 0.25rem;
-  align-self: flex-start;
-  margin: 0.28rem 0 0 3rem;
-  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 62%);
-  font-size: 8.5px;
 }
 
-/* Cover — editorial title card with editable context. */
+/*
+ * The name is the whole content of this skin, and the card fits its width to it
+ * (sizing.autoWidth). The inner span is what the renderer measures: an inline
+ * box shrink-wraps its text, so its width is the name's true width even while
+ * the visible name is being clipped here.
+ *
+ * `flex: 1 1 auto` is load-bearing, not cosmetic. THIS box is the room the card
+ * offers the name; the span inside it is the room the name needs, and the
+ * renderer reports the difference. Left at a flex item's default `0 1 auto`
+ * this box shrink-wrapped its own text, so both measurements returned the same
+ * number whenever the name fit: the card could see overflow and grow, but never
+ * slack, so it could never come back in. That is what left every short name in
+ * a card sized for nothing in particular.
+ */
+.gp-canvas-portal-name {
+  flex: 1 1 auto;
+  font-weight: 675;
+}
+
+
+/* Cover — editorial title card with the one line the user writes. */
 
 .gp-canvas-node-cover {
   min-height: 164px;
-  justify-content: flex-end;
-  gap: 0.42rem;
+  justify-content: flex-start;
+  /* One even inset on all four sides. The old rule padded the top and sides
+     by different amounts and the bottom not at all, which is what left the
+     subtitle floating against the card's lower edge. */
+  gap: 0.55rem;
   overflow: hidden;
-  padding: 0.25rem 0.18rem 0;
+  padding: 0.2rem;
+}
+
+/* The title leads the card, with the mark immediately to its left. */
+.gp-canvas-cover-heading {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  min-width: 0;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.gp-canvas-cover-title {
+  display: block;
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  font-size: clamp(18px, 8cqw, 26px);
+  font-weight: 680;
+  letter-spacing: -0.03em;
+  line-height: 1.08;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: text;
+}
+
+/* The subtitle takes every remaining row, so the writing area reaches the
+   bottom inset instead of leaving a dead band under it. */
+.gp-canvas-node-cover .gp-canvas-cover-subtitle {
+  flex: 1 1 auto;
+  font-size: 12px;
 }
 
 .gp-canvas-cover-orbit {
@@ -238,14 +227,14 @@
   width: 168px;
   height: 168px;
   pointer-events: none;
-  border: 1px solid color-mix(in oklab, var(--gp-widget-accent), transparent 86%);
+  border: 1px solid color-mix(in oklab, var(--gp-canvas-accent), transparent 86%);
   border-radius: 50%;
 }
 
 .gp-canvas-cover-orbit::before,
 .gp-canvas-cover-orbit::after {
   position: absolute;
-  border: 1px solid color-mix(in oklab, var(--gp-widget-accent), transparent 90%);
+  border: 1px solid color-mix(in oklab, var(--gp-canvas-accent), transparent 90%);
   border-radius: inherit;
   content: '';
   inset: 19px;
@@ -260,106 +249,60 @@
   width: 5px;
   height: 5px;
   border-radius: 50%;
-  background: var(--gp-widget-accent);
-  box-shadow: 0 0 11px color-mix(in oklab, var(--gp-widget-accent), transparent 20%);
+  background: var(--gp-canvas-accent);
+  box-shadow: 0 0 11px color-mix(in oklab, var(--gp-canvas-accent), transparent 20%);
 }
 
 .gp-canvas-cover-orbit span:nth-child(1) { top: 33px; left: 12px; }
 .gp-canvas-cover-orbit span:nth-child(2) { right: 31px; bottom: 15px; opacity: 0.64; }
 .gp-canvas-cover-orbit span:nth-child(3) { right: 55px; bottom: 50px; opacity: 0.36; }
 
-.gp-canvas-cover-eyebrow,
 .gp-canvas-cover-subtitle {
   position: relative;
   z-index: 1;
-  width: min(80%, 300px);
+  /* Full width of its own inset, not a fraction of the card: the old 80% cap
+     read as a stray right-hand margin that matched nothing else on the card. */
+  width: 100%;
+  min-height: 36px;
   padding: 0;
   border: 0;
   outline: 0;
-  background: transparent;
-}
-
-.gp-canvas-cover-eyebrow::placeholder,
-.gp-canvas-cover-subtitle::placeholder {
-  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 72%);
-}
-
-.gp-canvas-node-cover h2 {
-  position: relative;
-  z-index: 1;
-  max-width: 82%;
-  margin: 0;
   overflow: hidden;
-  font-size: clamp(20px, 10cqw, 32px);
-  font-weight: 680;
-  letter-spacing: -0.035em;
-  line-height: 1.02;
-  text-overflow: ellipsis;
-  text-wrap: balance;
-}
-
-.gp-canvas-cover-subtitle {
-  min-height: 36px;
   resize: none;
-  overflow: hidden;
   color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 42%);
+  background: transparent;
   font-size: 10.5px;
   line-height: 1.45;
 }
 
-.gp-canvas-cover-footer {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  min-height: 30px;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  margin-top: 0.1rem;
-  padding-top: 0.38rem;
-  border-top: 1px solid color-mix(in oklab, var(--gp-widget-accent), transparent 84%);
-  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 60%);
-  font-size: 8.5px;
-}
-
-.gp-canvas-cover-footer button {
-  display: grid;
-  width: 26px;
-  height: 26px;
-  place-items: center;
-  border: 0;
-  border-radius: 50%;
-  color: var(--gp-widget-accent);
-  background: color-mix(in oklab, var(--gp-widget-accent), transparent 87%);
-  transition:
-    color var(--gp-duration-snap) var(--gp-ease-snap),
-    transform var(--gp-duration-snap) var(--gp-ease-snap);
-}
-
-.gp-canvas-cover-footer button:hover,
-.gp-canvas-cover-footer button:focus-visible {
-  color: color-mix(in oklab, var(--gp-widget-accent), white 22%);
-  transform: translate(1px, -1px);
+.gp-canvas-cover-subtitle::placeholder {
+  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 72%);
 }
 
 /* Live Thumbnail — a deliberately non-interactive miniature. */
 
 .gp-canvas-node-thumbnail {
   min-height: 190px;
-  gap: 0.58rem;
+  gap: 0.5rem;
+  /* Even on all four sides so the preview panel below sits in a true frame. */
+  padding: 0.2rem;
 }
 
 .gp-canvas-live-dot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--gp-widget-accent);
-  box-shadow: 0 0 10px color-mix(in oklab, var(--gp-widget-accent), transparent 22%);
+  background: var(--gp-canvas-accent);
+  box-shadow: 0 0 10px color-mix(in oklab, var(--gp-canvas-accent), transparent 22%);
 }
 
+/* The preview runs all the way to the card's bottom inset — it is the whole
+   point of this skin, and the strip of empty glass that used to sit under it
+   was only ever there to hold the arrow button. */
 .gp-canvas-preview {
   position: relative;
-  height: 116px;
+  flex: 1 1 auto;
+  min-height: 0;
   overflow: hidden;
   border-radius: var(--gp-r1, 10px);
   background:
@@ -376,7 +319,7 @@
   position: absolute;
   pointer-events: none;
   content: '';
-  background: radial-gradient(circle, color-mix(in oklab, var(--gp-widget-accent), transparent 84%), transparent 68%);
+  background: radial-gradient(circle, color-mix(in oklab, var(--gp-canvas-accent), transparent 84%), transparent 68%);
   inset: -25%;
 }
 
@@ -394,12 +337,12 @@
   box-shadow:
     inset 0 1px 0 color-mix(in oklab, white, transparent 84%),
     0 2px 5px rgb(0 0 0 / 0.22);
-  animation: gp-canvas-preview-arrive 360ms var(--gp-ease-enter) both;
+  animation: gp-canvas-preview-arrive 360ms var(--gp-ease-spring) both;
   animation-delay: var(--gp-preview-delay);
 }
 
 .gp-canvas-preview-card[data-completed] {
-  background: color-mix(in oklab, var(--gp-widget-accent), transparent 44%);
+  background: color-mix(in oklab, var(--gp-canvas-accent), transparent 44%);
 }
 
 .gp-canvas-preview-grid {
@@ -415,261 +358,15 @@
 .gp-canvas-preview-empty {
   position: absolute;
   z-index: 2;
-  display: flex;
-  align-items: center;
-  flex-direction: column;
-  justify-content: center;
-  gap: 0.38rem;
-  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 64%);
-  font-size: 9px;
+  display: grid;
+  place-items: center;
   inset: 0;
 }
 
 .gp-canvas-preview-empty svg {
-  color: var(--gp-widget-accent);
+  color: var(--gp-canvas-accent);
 }
 
-.gp-canvas-node-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.8rem;
-  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 64%);
-  font-size: 8.5px;
-}
-
-.gp-canvas-node-footer .gp-canvas-node-open {
-  min-width: 92px;
-}
-
-/* Dashboard Door — progress is the one hero; everything else stays quiet. */
-
-.gp-canvas-node-dashboard {
-  min-height: 214px;
-  gap: 0.58rem;
-}
-
-.gp-canvas-dashboard-hero {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 0.75rem;
-  padding-top: 0.15rem;
-}
-
-.gp-canvas-dashboard-hero strong {
-  color: var(--gp-widget-accent);
-  font-size: 27px;
-  font-weight: 650;
-  letter-spacing: -0.04em;
-  line-height: 1;
-}
-
-.gp-canvas-dashboard-hero span {
-  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 58%);
-  font-size: 8.5px;
-  text-align: right;
-}
-
-.gp-canvas-dashboard-progress {
-  height: 3px;
-  overflow: hidden;
-  border-radius: 999px;
-  background: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 92%);
-}
-
-.gp-canvas-dashboard-progress span {
-  display: block;
-  height: 100%;
-  border-radius: inherit;
-  background: var(--gp-widget-accent);
-  box-shadow: 0 0 10px color-mix(in oklab, var(--gp-widget-accent), transparent 38%);
-  transition: width var(--gp-duration-settle) var(--gp-ease-enter);
-}
-
-.gp-canvas-dashboard-metrics {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  margin: 0;
-  padding: 0.48rem 0;
-  border-top: 1px solid color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 91%);
-  border-bottom: 1px solid color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 91%);
-}
-
-.gp-canvas-dashboard-metrics > div {
-  min-width: 0;
-  padding: 0 0.55rem;
-  border-right: 1px solid color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 91%);
-}
-
-.gp-canvas-dashboard-metrics > div:first-child { padding-left: 0; }
-.gp-canvas-dashboard-metrics > div:last-child {
-  padding-right: 0;
-  border-right: 0;
-}
-
-.gp-canvas-dashboard-metrics dt {
-  overflow: hidden;
-  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 68%);
-  font-size: 7.5px;
-  font-weight: 650;
-  letter-spacing: 0.07em;
-  text-overflow: ellipsis;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-
-.gp-canvas-dashboard-metrics dd {
-  margin: 0.12rem 0 0;
-  font-size: 15px;
-  font-variant-numeric: tabular-nums;
-  font-weight: 650;
-}
-
-.gp-canvas-dashboard-metrics [data-attention] dd {
-  color: #fb7185;
-}
-
-.gp-canvas-dashboard-types {
-  display: flex;
-  min-width: 0;
-  gap: 0.35rem;
-  overflow: hidden;
-}
-
-.gp-canvas-dashboard-types span {
-  overflow: hidden;
-  padding: 0.2rem 0.36rem;
-  border-radius: var(--gp-r2, 8px);
-  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 56%);
-  background: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 95%);
-  font-size: 7.5px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.gp-canvas-dashboard-types b {
-  color: color-mix(in oklab, var(--gp-widget-accent), white 8%);
-  font-variant-numeric: tabular-nums;
-}
-
-/* Folder Index — one ledger surface, with divider-separated rows. */
-
-.gp-canvas-node-index {
-  min-height: 176px;
-  gap: 0.58rem;
-}
-
-.gp-canvas-index-count {
-  display: grid;
-  min-width: 25px;
-  height: 25px;
-  place-items: center;
-  border-radius: 50%;
-  color: color-mix(in oklab, var(--gp-widget-accent), white 12%);
-  background: color-mix(in oklab, var(--gp-widget-accent), transparent 88%);
-  font-size: 9px;
-  font-variant-numeric: tabular-nums;
-  font-weight: 700;
-}
-
-.gp-canvas-index-list {
-  overflow: hidden;
-  margin: 0;
-  padding: 0;
-  border-radius: var(--gp-r1, 10px);
-  background: linear-gradient(
-    180deg,
-    color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 95%),
-    color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 97%)
-  );
-  box-shadow:
-    inset 0 1px 0 color-mix(in oklab, white, transparent 92%),
-    0 8px 18px rgb(0 0 0 / 0.1);
-  list-style: none;
-}
-
-.gp-canvas-index-list li + li {
-  border-top: 1px solid color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 92%);
-}
-
-.gp-canvas-index-list button {
-  display: grid;
-  width: 100%;
-  min-width: 0;
-  grid-template-columns: 24px minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.42rem 0.55rem;
-  border: 0;
-  text-align: left;
-  background: transparent;
-  transition: background var(--gp-duration-snap) var(--gp-ease-snap);
-}
-
-.gp-canvas-index-list button:hover,
-.gp-canvas-index-list button:focus-visible {
-  background: color-mix(in oklab, var(--gp-widget-accent), transparent 92%);
-}
-
-.gp-canvas-index-order {
-  color: color-mix(in oklab, var(--gp-widget-accent), white 6%);
-  font-size: 8px;
-  font-variant-numeric: tabular-nums;
-  font-weight: 700;
-}
-
-.gp-canvas-index-name {
-  display: flex;
-  min-width: 0;
-  flex-direction: column;
-}
-
-.gp-canvas-index-name strong {
-  overflow: hidden;
-  font-size: 10px;
-  font-weight: 625;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.gp-canvas-index-name small {
-  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 68%);
-  font-size: 7.5px;
-}
-
-.gp-canvas-index-list svg {
-  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 68%);
-}
-
-.gp-canvas-index-empty {
-  display: flex;
-  min-height: 80px;
-  align-items: center;
-  flex-direction: column;
-  justify-content: center;
-  gap: 0.2rem;
-  border-radius: var(--gp-r1, 10px);
-  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 64%);
-  background: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 96%);
-  text-align: center;
-}
-
-.gp-canvas-index-empty svg {
-  margin-bottom: 0.2rem;
-  color: var(--gp-widget-accent);
-}
-
-.gp-canvas-index-empty strong {
-  color: color-mix(in oklab, var(--gp-widget-ink, #fff), transparent 34%);
-  font-size: 9.5px;
-}
-
-.gp-canvas-index-empty span {
-  max-width: 180px;
-  font-size: 8px;
-  line-height: 1.35;
-}
 
 @keyframes gp-canvas-preview-arrive {
   from {
@@ -679,23 +376,18 @@
 }
 
 @container (max-width: 235px) {
-  .gp-canvas-node-heading strong { font-size: 11px; }
+  .gp-canvas-node-title { font-size: 14px; }
   .gp-canvas-cover-orbit { right: -72px; }
-  .gp-canvas-node-cover h2 { max-width: 94%; }
-  .gp-canvas-dashboard-types span:nth-child(3) { display: none; }
-  .gp-canvas-dashboard-metrics > div { padding-inline: 0.32rem; }
-  .gp-canvas-portal-complete { margin-left: 0; }
 }
 
+/*
+ * A narrow card drops the arrow and lets the name take the room, but NEVER the
+ * identity mark: the mark is the only thing saying which skin the card wears,
+ * and on a card with no name row above it, it is also the only way to change
+ * that skin. Hiding it left a shrunken thumbnail with no icon at all.
+ */
 @container (max-width: 175px) {
-  .gp-canvas-node-icon { display: none; }
-  .gp-canvas-portal-arrow { display: none; }
-  .gp-canvas-portal-link { grid-template-columns: auto minmax(0, 1fr); }
-  .gp-canvas-dashboard-hero { align-items: flex-start; flex-direction: column; gap: 0.2rem; }
-  .gp-canvas-dashboard-hero span { text-align: left; }
-  .gp-canvas-dashboard-types { display: none; }
-  .gp-canvas-dashboard-metrics dt { letter-spacing: 0; text-transform: none; }
-  .gp-canvas-node-footer { align-items: stretch; flex-direction: column; }
+  .gp-canvas-node-title { font-size: 13px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

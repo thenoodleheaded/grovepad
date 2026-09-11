@@ -97,6 +97,25 @@ export function createGlueSlice({ set, get, pushHistory }: WidgetStoreSliceConte
     useToastStore.getState().addToast('Glued')
   },
 
+  glueSelection: (widgetIds) => {
+    const state = get()
+    const [anchorId, ...rest] = widgetIds
+    if (!anchorId || !state.widgets[anchorId]) return false
+    const anchorGlueId = state.widgetGlueIndex[anchorId]
+    const joining = rest.filter(
+      (id, index) =>
+        rest.indexOf(id) === index &&
+        id !== anchorId &&
+        sameCanvas(id, anchorId, state.widgets) &&
+        !(anchorGlueId && state.widgetGlueIndex[id] === anchorGlueId),
+    )
+    if (joining.length === 0) return false
+    // glueWidgets rides an in-flight drag's step; a selection has none.
+    pushHistory()
+    for (const id of joining) get().glueWidgets(id, anchorId)
+    return true
+  },
+
   unglueWidget: (widgetId, options) => {
     const glueId = get().widgetGlueIndex[widgetId]
     if (!glueId) return false

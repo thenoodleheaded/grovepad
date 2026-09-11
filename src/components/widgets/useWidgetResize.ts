@@ -56,6 +56,25 @@ const ENGAGE_SLOP_PX = 3
 const REST_IMAGE_MIN_EDGE = 80
 const REST_IMAGE_MAX_EDGE = 560
 
+/** Ratio-locked scale for a resting image. The factor is read off the axis the
+ * drag actually came from — a top or bottom pull measures against the card's
+ * height, not its width — so a non-square photo tracks the pointer. */
+export const restingImageScale = (
+  startWidth: number,
+  startHeight: number,
+  edge: ResizeEdge,
+  growth: { x: number; y: number },
+): number => {
+  const width = Math.max(1, startWidth)
+  const height = Math.max(1, startHeight)
+  const horizontal = edge.x !== 0
+  const lead = horizontal ? growth.x : growth.y
+  const leadBase = horizontal ? width : height
+  const scaleMin = REST_IMAGE_MIN_EDGE / Math.min(width, height)
+  const scaleMax = REST_IMAGE_MAX_EDGE / Math.max(width, height)
+  return Math.min(scaleMax, Math.max(scaleMin, (leadBase + lead) / leadBase))
+}
+
 /** How far a resting tile's rubber band can travel, in world px. Small tiles
  * make a generous px budget read as an enormous proportional stretch, so the
  * painted scale is clamped as well. */
@@ -482,10 +501,7 @@ export function useWidgetResize(
       // change: a resting image resizes like a photograph, nothing else.
       const startWidth = Math.max(1, resize.startWidth)
       const startHeight = Math.max(1, resize.startHeight)
-      const lead = resize.edge.x !== 0 ? growth.x : growth.y
-      const scaleMin = REST_IMAGE_MIN_EDGE / Math.min(startWidth, startHeight)
-      const scaleMax = REST_IMAGE_MAX_EDGE / Math.max(startWidth, startHeight)
-      const scale = Math.min(scaleMax, Math.max(scaleMin, (startWidth + lead) / startWidth))
+      const scale = restingImageScale(startWidth, startHeight, resize.edge, growth)
       resize.pending = {
         width: Math.round(startWidth * scale),
         height: Math.round(startHeight * scale),

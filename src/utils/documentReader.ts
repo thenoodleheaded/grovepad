@@ -5,10 +5,27 @@ async function extractTextFromPdf(file: File): Promise<string> {
     // only after a user actually chooses a PDF instead of charging every
     // canvas session for the parser on initial startup.
     const pdfjs = await import('pdfjs-dist')
-    pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.mjs`
+    // Bundled, not fetched from a CDN. This worker runs as same-origin script in
+    // the app's own context, so serving it from cdnjs handed a third party the
+    // ability to execute code next to the user's session — with no integrity
+    // check and no CSP to fall back on. Vite emits it as a local asset, which
+    // also keeps the worker and the library on exactly the same version.
+    pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+      'pdfjs-dist/build/pdf.worker.min.mjs',
+      import.meta.url,
+    ).toString()
 
     const arrayBuffer = await file.arrayBuffer()
-    const loadingTask = pdfjs.getDocument({ data: new Uint8Array(arrayBuffer) })
+    const loadingTask = pdfjs.getDocument({
+      data: new Uint8Array(arrayBuffer),
+      // A PDF here is untrusted input — it arrives by email or download and is
+      // opened by the importer. Only text is wanted, so the font pipeline is
+      // switched off: it is the part that turns document-supplied data into
+      // installed faces and system lookups, and it buys nothing for extraction.
+      // (pdf.js 6 removed `isEvalSupported`; the eval path it guarded is gone.)
+      disableFontFace: true,
+      useSystemFonts: false,
+    })
     releaseDocument = () => loadingTask.destroy()
     const pdf = await loadingTask.promise
     releaseDocument = async () => {

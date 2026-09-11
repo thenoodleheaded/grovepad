@@ -10,9 +10,15 @@ interface WidgetRendererProps {
   widget: Widget
   onUpdate: (data: ModuleData) => void
   onHeightChange: (height: number) => void
+  onWidthChange?: (slack: number) => void
 }
 
-export function WidgetRenderer({ widget, onUpdate, onHeightChange }: WidgetRendererProps) {
+export function WidgetRenderer({
+  widget,
+  onUpdate,
+  onHeightChange,
+  onWidthChange,
+}: WidgetRendererProps) {
   const opaqueType = getOpaqueWidgetType(widget)
   if (opaqueType) {
     return (
@@ -62,7 +68,12 @@ export function WidgetRenderer({ widget, onUpdate, onHeightChange }: WidgetRende
             : undefined
         }
       >
-        {renderFromFamilies(WIDGET_RENDERER_FAMILIES, { widget, onUpdate, onHeightChange })}
+        {renderFromFamilies(WIDGET_RENDERER_FAMILIES, {
+          widget,
+          onUpdate,
+          onHeightChange,
+          onWidthChange,
+        })}
         {skin?.implementation === 'schema-extension' && !rendererOwnsSkinDetails && (
           <WidgetSkinDetails data={widget.data} skin={skin} onUpdate={onUpdate} />
         )}

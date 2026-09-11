@@ -82,14 +82,14 @@
   flex: 0 0 auto;
   place-items: center;
   border-radius: var(--gp-r2, 8px);
-  color: color-mix(in oklab, var(--gp-widget-accent), white 14%);
+  color: color-mix(in oklab, var(--gp-accent-ink, var(--gp-widget-accent)), var(--gp-accent-lift, #fff) 14%);
   background: color-mix(in oklab, var(--gp-widget-accent), transparent 89%);
   box-shadow: inset 0 1px 0 color-mix(in oklab, white, transparent 90%);
 }
 
 .gp-outline-heading strong {
   overflow: hidden;
-  color: color-mix(in oklab, var(--gp-widget-accent), white 8%);
+  color: color-mix(in oklab, var(--gp-accent-ink, var(--gp-widget-accent)), var(--gp-accent-lift, #fff) 8%);
   font-size: 0.57rem;
   font-weight: 760;
   letter-spacing: 0.105em;
@@ -197,7 +197,7 @@
   font-size: 0.7rem;
   font-weight: 540;
   line-height: 1.3;
-  caret-color: var(--gp-widget-accent);
+  caret-color: var(--gp-accent-ink, var(--gp-widget-accent));
 }
 
 .gp-outline-row:focus-within .gp-outline-input {
@@ -214,7 +214,7 @@
   place-items: center;
   border: 0;
   border-radius: 0.36rem;
-  color: color-mix(in oklab, var(--gp-widget-accent), white 11%);
+  color: color-mix(in oklab, var(--gp-accent-ink, var(--gp-widget-accent)), var(--gp-accent-lift, #fff) 11%);
   background: color-mix(in oklab, var(--gp-widget-accent), transparent 91%);
   transition:
     color var(--gp-duration-snap) var(--gp-ease-snap),
@@ -225,7 +225,7 @@
 .gp-outline-disclosure:hover,
 .gp-outline-brief-toggle:hover,
 .gp-outline-check:hover {
-  color: color-mix(in oklab, var(--gp-widget-accent), white 28%);
+  color: color-mix(in oklab, var(--gp-accent-ink, var(--gp-widget-accent)), var(--gp-accent-lift, #fff) 28%);
   background: color-mix(in oklab, var(--gp-widget-accent), transparent 84%);
   transform: scale(1.04);
 }
@@ -270,7 +270,7 @@
 
 .gp-outline-row-actions button:hover,
 .gp-outline-row-actions button:focus-visible {
-  color: var(--gp-widget-accent);
+  color: var(--gp-accent-ink, var(--gp-widget-accent));
   background: color-mix(in oklab, var(--gp-widget-accent), transparent 90%);
 }
 
@@ -325,7 +325,7 @@
 .gp-outline-add:focus-visible,
 .gp-outline-empty:hover,
 .gp-outline-empty:focus-visible {
-  color: color-mix(in oklab, var(--gp-widget-accent), white 12%);
+  color: color-mix(in oklab, var(--gp-accent-ink, var(--gp-widget-accent)), var(--gp-accent-lift, #fff) 12%);
   transform: translateX(1px);
 }
 
@@ -374,7 +374,7 @@
 
 .gp-outline-roman-marker {
   width: 100%;
-  color: color-mix(in oklab, var(--gp-widget-accent), white 14%);
+  color: color-mix(in oklab, var(--gp-accent-ink, var(--gp-widget-accent)), var(--gp-accent-lift, #fff) 14%);
   font-family: var(--font-sans);
   font-size: 0.63rem;
   font-weight: 700;
@@ -418,7 +418,7 @@
   height: 1.38rem;
   place-items: center;
   border-radius: 50%;
-  color: color-mix(in oklab, var(--gp-widget-accent), white 15%);
+  color: color-mix(in oklab, var(--gp-accent-ink, var(--gp-widget-accent)), var(--gp-accent-lift, #fff) 15%);
   background: color-mix(in oklab, var(--gp-widget-accent), transparent 88%);
   font-size: 0.48rem;
   font-weight: 800;
@@ -447,7 +447,7 @@
   height: 1.42rem;
   place-items: center;
   border-radius: 0.42rem;
-  color: color-mix(in oklab, var(--gp-widget-accent), white 14%);
+  color: color-mix(in oklab, var(--gp-accent-ink, var(--gp-widget-accent)), var(--gp-accent-lift, #fff) 14%);
   background: color-mix(in oklab, var(--gp-widget-accent), transparent 87%);
   box-shadow: inset 0 1px 0 color-mix(in oklab, white, transparent 91%);
 }
@@ -477,12 +477,12 @@
   place-items: center;
   border: 1px solid color-mix(in oklab, var(--gp-widget-accent), transparent 70%);
   border-radius: 50%;
-  color: color-mix(in oklab, var(--gp-widget-accent), white 14%);
+  color: color-mix(in oklab, var(--gp-accent-ink, var(--gp-widget-accent)), var(--gp-accent-lift, #fff) 14%);
   background: color-mix(in oklab, var(--gp-widget-accent), transparent 94%);
 }
 
 .gp-outline-course .gp-outline-row[data-depth='0'] .gp-outline-course-marker {
-  color: color-mix(in oklab, var(--gp-widget-accent), white 25%);
+  color: color-mix(in oklab, var(--gp-accent-ink, var(--gp-widget-accent)), var(--gp-accent-lift, #fff) 25%);
   background: color-mix(in oklab, var(--gp-widget-accent), transparent 84%);
 }
 
@@ -499,7 +499,7 @@
 }
 
 .gp-outline-progress strong {
-  color: color-mix(in oklab, var(--gp-widget-accent), white 13%);
+  color: color-mix(in oklab, var(--gp-accent-ink, var(--gp-widget-accent)), var(--gp-accent-lift, #fff) 13%);
   font-size: 0.68rem;
   font-variant-numeric: tabular-nums;
 }
@@ -552,7 +552,7 @@
 }
 
 .gp-outline-check[aria-pressed='true'] {
-  color: color-mix(in oklab, var(--gp-widget-accent), white 24%);
+  color: color-mix(in oklab, var(--gp-accent-ink, var(--gp-widget-accent)), var(--gp-accent-lift, #fff) 24%);
   background: color-mix(in oklab, var(--gp-widget-accent), transparent 82%);
 }
 
@@ -668,4 +668,14 @@
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* ------------------------------------------------------------ light theme.
+   Status/danger/medal inks above are pastels tuned for dark glass; on the
+   light theme's silver cards they wash out below 2:1. Each keeps its hue
+   but drops to a deep ink (generated during the 2026-08 light-mode
+   contrast audit). */
+[data-theme='light'] .gp-outline-row-actions .gp-outline-remove:hover,
+[data-theme='light'] .gp-outline-row-actions .gp-outline-remove:focus-visible {
+  color: #be123c;
 }

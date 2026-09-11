@@ -80,7 +80,7 @@
   min-width: 0;
   align-items: center;
   gap: 0.35rem;
-  color: var(--gp-widget-accent);
+  color: var(--gp-accent-ink, var(--gp-widget-accent));
   font-size: 0.56rem;
   font-weight: 700;
   letter-spacing: 0.13em;
@@ -250,7 +250,7 @@
   border-radius: 50%;
   color: transparent;
   background: transparent;
-  transition: color 140ms ease, background-color 140ms ease;
+  transition: color var(--gp-duration-snap) var(--gp-ease-snap), background-color var(--gp-duration-snap) var(--gp-ease-snap);
 }
 
 .gp-pc-row:hover .gp-pc-remove,
@@ -280,7 +280,7 @@
   font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  transition: color 140ms ease, background-color 140ms ease;
+  transition: color var(--gp-duration-snap) var(--gp-ease-snap), background-color var(--gp-duration-snap) var(--gp-ease-snap);
 }
 
 .gp-pc-add[data-side='pro']:hover {
@@ -361,7 +361,7 @@
   gap: 0.4rem;
   border-radius: 0.4rem;
   padding-inline: 0.1rem;
-  transition: background-color 140ms ease;
+  transition: background-color var(--gp-duration-snap) var(--gp-ease-snap);
 }
 
 .gp-pc-row:hover {
@@ -400,7 +400,7 @@
   height: 0.95rem;
   place-items: center;
   border-radius: 50%;
-  color: var(--gp-widget-accent);
+  color: var(--gp-accent-ink, var(--gp-widget-accent));
   background: color-mix(in oklab, var(--gp-widget-accent), transparent 86%);
   font-size: 0.46rem;
   font-variant-numeric: tabular-nums;
@@ -459,7 +459,7 @@
 .gp-pc-rebuttal > svg {
   flex: 0 0 auto;
   margin-top: 0.15rem;
-  color: var(--gp-widget-accent);
+  color: var(--gp-accent-ink, var(--gp-widget-accent));
 }
 
 .gp-pc-rebuttal .gp-pc-point-field > textarea,
@@ -513,7 +513,7 @@
   padding: 0 0.15rem 0.28rem;
   border-bottom: 1px solid var(--gp-pc-line);
   background: color-mix(in oklab, var(--gp-widget-surface, #111), transparent 6%);
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(calc(10px * var(--gp-blur-scale, 1)));
   font-size: 0.5rem;
   font-weight: 700;
   letter-spacing: 0.14em;
@@ -607,7 +607,7 @@
   border-radius: 50%;
   padding: 0;
   background: transparent;
-  transition: background-color 140ms ease, border-color 140ms ease;
+  transition: background-color var(--gp-duration-snap) var(--gp-ease-snap), border-color var(--gp-duration-snap) var(--gp-ease-snap);
 }
 
 .gp-pc-severity button[data-severity='low'][aria-pressed='true'] {
@@ -679,7 +679,7 @@
   border-radius: 50%;
   color: var(--gp-pc-muted);
   background: color-mix(in oklab, var(--gp-pc-ink), transparent 94%);
-  transition: color 140ms ease, background-color 140ms ease;
+  transition: color var(--gp-duration-snap) var(--gp-ease-snap), background-color var(--gp-duration-snap) var(--gp-ease-snap);
 }
 
 .gp-pc-dial button:hover:not(:disabled) {
@@ -702,7 +702,7 @@
   height: 0.5rem;
   border-radius: 999px;
   background: color-mix(in oklab, var(--gp-pc-ink), transparent 86%);
-  transition: background-color 160ms ease;
+  transition: background-color var(--gp-duration-snap) var(--gp-ease-snap);
 }
 
 .gp-pc-weighted[data-side='pro'] .gp-pc-pips i[data-on] {
@@ -801,12 +801,12 @@
   border-radius: 50%;
   color: transparent;
   background: transparent;
-  transition: color 140ms ease, background-color 140ms ease;
+  transition: color var(--gp-duration-snap) var(--gp-ease-snap), background-color var(--gp-duration-snap) var(--gp-ease-snap);
 }
 
 .gp-pc-consequence:hover .gp-pc-flip,
 .gp-pc-flip:focus-visible {
-  color: var(--gp-widget-accent);
+  color: var(--gp-accent-ink, var(--gp-widget-accent));
   background: color-mix(in oklab, var(--gp-widget-accent), transparent 86%);
 }
 
@@ -897,4 +897,33 @@
 .gp-pc-severity button {
   min-width: 0;
   min-height: 0;
+}
+
+/* ------------------------------------------------------------ light theme.
+   Status/danger/medal inks above are pastels tuned for dark glass; on the
+   light theme's silver cards they wash out below 2:1. Each keeps its hue
+   but drops to a deep ink (generated during the 2026-08 light-mode
+   contrast audit). */
+[data-theme='light'] .gp-pc-flag {
+  color: #be123c;
+}
+
+[data-theme='light'] .gp-pc-attacks > header b[data-alert] {
+  color: #92400e;
+}
+
+[data-theme='light'] .gp-pc-severity button[data-severity='low'][aria-pressed='true'] {
+  border-color: #475569;
+}
+
+[data-theme='light'] .gp-pc-severity button[data-severity='medium'][aria-pressed='true'] {
+  border-color: #92400e;
+}
+
+[data-theme='light'] .gp-pc-lane-reversible > header {
+  color: #0369a1;
+}
+
+[data-theme='light'] .gp-pc-lane-irreversible > header {
+  color: #be123c;
 }

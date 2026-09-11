@@ -8,7 +8,8 @@ export interface WidgetStoreSliceContext {
   set: StoreApi<WidgetStoreState>['setState']
   get: StoreApi<WidgetStoreState>['getState']
   pushHistory: (tag?: string) => void
-  navigateToCanvas: (canvasId: string) => void
+  /** `tabId` puts a specific tab in front; omitted, the active tab follows along. */
+  navigateToCanvas: (canvasId: string, tabId?: string) => void
   markSpawned: (id: string) => void
   initialPacks: DomainPack[]
 }

@@ -9,10 +9,12 @@ import {
   geofenceRadius,
   locationPoint,
   locationSkinMode,
+  mapZoom,
   placeName,
   routeReading,
   routeStops,
   zonedReading,
+  zoomFraming,
 } from '../../components/widgets/modules/locationSkinModel'
 import {
   toggleSegmentLabels,
@@ -157,6 +159,23 @@ export function locationRestingFace(data: Record<string, unknown>): RestingFaceM
         }),
       ],
       overflow: Math.max(0, reading.legs.length - visible.length),
+    }
+  }
+
+  // A map card is remembered by its name and its framing, never by its
+  // numbers — printing coordinates on the folded tile would undo the whole
+  // point of the skin.
+  if (skin === 'map') {
+    const address = typeof data.address === 'string' ? data.address.trim() : ''
+    return {
+      kind: 'rows',
+      eyebrow: { label: 'Map', note: zoomFraming(mapZoom(record(states.map) ?? {})) },
+      rows: [{
+        key: 'place',
+        label: compact(name, 24),
+        value: address ? compact(address, 22) : '',
+      }],
+      overflow: 0,
     }
   }
 

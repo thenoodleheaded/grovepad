@@ -49,8 +49,11 @@ function packageFixture(): { board: HydratedPersistedBoard; media: Array<{ key: 
         },
       }),
       legacy: makeWidget({
-        id: 'legacy', canvasId: 'canvas', type: 'excalidraw', title: 'Old drawing', position: { x: 400, y: 0 },
-        data: { elements: [], appState: {}, files: [{ id: 'file2', mimeType: 'image/png', createdAt: 1 }], updatedAt: '2026-01-01T00:00:00.000Z' },
+        id: 'legacy', canvasId: 'canvas', type: 'sketchpad', title: 'Old drawing', position: { x: 400, y: 0 },
+        // The standalone Excalidraw card is retired; a board saved with one
+        // arrives here already migrated onto Sketchpad's Diagram skin, with the
+        // scene — and its embedded files — under `diagram`.
+        data: { height: 240, strokes: [], mode: 'diagram', diagram: { elements: [], appState: {}, files: [{ id: 'file2', mimeType: 'image/png', createdAt: 1 }], updatedAt: '2026-01-01T00:00:00.000Z' } },
       }),
       reference: makeWidget({
         id: 'reference', canvasId: 'canvas', type: 'sketchpad', title: 'Reference', position: { x: 800, y: 0 },

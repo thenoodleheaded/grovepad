@@ -22,7 +22,7 @@ describe('MCP tree contract', () => {
     expect(draft.nodes.map((node) => node.depth)).toEqual([0, 1, 2])
     expect(draft.nodes[0]?.title).toBe('Launch plan')
     const plan = thoughtPlanFromMcpTree(draft)
-    expect(plan.nodes.map((node) => node.widgetType)).toEqual(['notes', 'notes', 'notes'])
+    expect(plan.nodes.map((node) => node.widgetType)).toEqual(['text', 'text', 'text'])
     expect(plan.relations).toEqual([
       { fromTemporaryId: 'root', toTemporaryId: 'research', type: 'parent' },
       { fromTemporaryId: 'research', toTemporaryId: 'interviews', type: 'parent' },
@@ -64,8 +64,8 @@ describe('MCP tree contract', () => {
 
     expect(canvasOutline(widgets, { [relation.id]: relation }, 'canvas-1')).toEqual({
       nodes: [
-        { id: 'root', title: 'root', type: 'notes', parentIds: [], note: 'root text' },
-        { id: 'child', title: 'child', type: 'notes', parentIds: ['root'], note: 'child text' },
+        { id: 'root', title: 'root', type: 'text', parentIds: [], note: 'root text' },
+        { id: 'child', title: 'child', type: 'text', parentIds: ['root'], note: 'child text' },
       ],
       truncated: false,
     })

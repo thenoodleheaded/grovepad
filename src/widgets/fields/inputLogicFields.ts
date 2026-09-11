@@ -7,9 +7,14 @@ import type { ModuleType,
   TextInputData,
   ToggleData,
 } from '../../types/spatial'
-import type { FieldDescriptor } from '../contracts/fields'
+import type { ModuleData } from '../../types/spatial'
+import type { FieldDescriptor, FieldValue } from '../contracts/fields'
 import { num, text, bool } from './valueHelpers'
-import { formulaValue } from '../../components/widgets/modules/formulaSkinModel'
+import {
+  dataWithInputValue,
+  formulaValid,
+  formulaValue,
+} from '../../components/widgets/modules/formulaSkinModel'
 import {
   dateDurationDays,
   dateReading,
@@ -85,15 +90,33 @@ export const INPUT_LOGIC_FIELDS = {
       get: (d) => (d as FormulaData).b,
       set: (d, v) => ({ ...(d as FormulaData), b: num(v) }),
     },
-    // The published answer is whatever the worn skin asks of A and B — a sum,
-    // a percent, a weighted score. One owner computes it for the card, the
-    // resting tile, and this port, so what a reader sees and what a wire
-    // carries can never be two different numbers.
+    // The published answer is whatever the worn skin asks of the card's
+    // inputs — a running total, a percent, a weighted score. One owner
+    // computes it for the card, the resting tile, and this port, so what a
+    // reader sees and what a wire carries can never be two different numbers.
     {
       key: 'result',
       label: 'Result',
       valueType: 'number',
       get: (d) => formulaValue(d as FormulaData),
+    },
+    // Four further inputs, each with a port of its own. They sit AFTER
+    // `result` because a field's index IS its port slot: appending keeps A, B,
+    // and Result on the exact rail positions every existing board drew them
+    // at. Writing one opens its slot on the card, so a wired number is never
+    // carried invisibly.
+    ...(['c', 'd', 'e', 'f'] as const).map((key) => ({
+      key,
+      label: `Input ${key.toUpperCase()}`,
+      valueType: 'number' as const,
+      get: (d: ModuleData) => (d as FormulaData)[key] ?? 0,
+      set: (d: ModuleData, v: FieldValue) => dataWithInputValue(d as FormulaData, key, num(v)),
+    })),
+    {
+      key: 'valid',
+      label: 'Answerable',
+      valueType: 'boolean',
+      get: (d) => formulaValid(d as FormulaData),
     },
   ],
   status: [

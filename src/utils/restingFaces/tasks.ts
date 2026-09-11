@@ -164,10 +164,9 @@ export function tasksRestingFace(data: Record<string, unknown>): RestingFaceMode
         WEEKDAY_LABELS[day]!,
         WEEKDAY_LABELS[day]!,
         dayItems,
-        {
-          note: dayItems.length > 0 ? String(dayItems.length) : undefined,
-          tone: dayItems.length === 0 ? 'muted' : 'accent',
-        },
+        // The day name alone, as the open card now reads. A tally beside each
+        // of seven headings counted what the rows under it already show.
+        { tone: dayItems.length === 0 ? 'muted' : 'accent' },
       )),
     }
   }

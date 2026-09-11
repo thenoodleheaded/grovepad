@@ -1,14 +1,7 @@
 import { create } from 'zustand'
-import type { PersistedBoard } from '../types/persistence'
 
 export type SaveState = 'idle' | 'saving' | 'saved' | 'error'
 export type SyncState = 'off' | 'guest' | 'saving' | 'synced' | 'error'
-
-interface CloudConflict {
-  local: PersistedBoard
-  cloud: PersistedBoard
-  cloudUpdatedAt: string | null
-}
 
 export interface PersistenceCompatibilityBlock {
   foundVersion: number
@@ -35,7 +28,6 @@ interface PersistenceStatusState {
   networkOnline: boolean
   /** True after the installable web shell has an active service worker. */
   serviceWorkerReady: boolean
-  conflict: CloudConflict | null
   compatibilityBlock: PersistenceCompatibilityBlock | null
   deployUpdateAvailable: boolean
   setLocalSave: (state: SaveState) => void
@@ -44,7 +36,6 @@ interface PersistenceStatusState {
   setLastSyncedAt: (at: number | null) => void
   setNetworkOnline: (online: boolean) => void
   setServiceWorkerReady: (ready: boolean) => void
-  setConflict: (conflict: CloudConflict | null) => void
   setCompatibilityBlock: (block: PersistenceCompatibilityBlock | null) => void
   setDeployUpdateAvailable: (available: boolean) => void
 }
@@ -56,7 +47,6 @@ export const usePersistenceStatusStore = create<PersistenceStatusState>()((set) 
   lastSyncedAt: null,
   networkOnline: typeof navigator === 'undefined' ? true : navigator.onLine,
   serviceWorkerReady: false,
-  conflict: null,
   compatibilityBlock: null,
   deployUpdateAvailable: false,
   setLocalSave: (localSave) => set({ localSave }),
@@ -72,7 +62,6 @@ export const usePersistenceStatusStore = create<PersistenceStatusState>()((set) 
   setLastSyncedAt: (lastSyncedAt) => set({ lastSyncedAt }),
   setNetworkOnline: (networkOnline) => set({ networkOnline }),
   setServiceWorkerReady: (serviceWorkerReady) => set({ serviceWorkerReady }),
-  setConflict: (conflict) => set({ conflict }),
   setCompatibilityBlock: (compatibilityBlock) => set({ compatibilityBlock }),
   setDeployUpdateAvailable: (deployUpdateAvailable) => set({ deployUpdateAvailable }),
 }))

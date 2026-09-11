@@ -77,30 +77,6 @@ export const DATA_TRACKING_WIDGET_DEFINITIONS = {
     },
     rendererOwnedSkinDetails: ['shift_rota', 'birthday_and_anniversary'],
   },
-  countdown: {
-    type: 'countdown',
-    label: 'Countdown',
-    description: 'Days remaining until a target date',
-    icon: CalendarClock,
-    category: 'planning',
-    accent: '#fdba74',
-    defaultSize: { width: 280, height: C * 3 },
-    defaultData: () => {
-      const target = new Date()
-      target.setDate(target.getDate() + 14)
-      return { label: 'Deadline', targetDate: localDayKey(target.getTime()) }
-    },
-  },
-  progress: {
-    type: 'progress',
-    label: 'Progress',
-    description: 'A labeled 0–100% progress bar',
-    icon: Gauge,
-    category: 'planning',
-    accent: '#a3e635',
-    defaultSize: { width: 280, height: C * 3 },
-    defaultData: () => ({ label: 'Progress', percent: 40 }),
-  },
   poll: {
     type: 'poll',
     label: 'Poll',
@@ -447,16 +423,6 @@ export const DATA_TRACKING_WIDGET_DEFINITIONS = {
       ],
     }),
     rendererOwnedSkinDetails: ['delta', 'target', 'executive_strip'],
-  },
-  timer: {
-    type: 'timer',
-    label: 'Timer',
-    description: 'A countdown timer with start, pause, and reset',
-    icon: Timer,
-    category: 'tracking',
-    accent: '#86efac',
-    defaultSize: { width: 240, height: C * 4 },
-    defaultData: () => ({ label: 'Timer', durationSeconds: 300, remainingSeconds: 300, endAt: null }),
   },
   timekeeper: {
     type: 'timekeeper',

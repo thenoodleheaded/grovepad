@@ -99,4 +99,59 @@ describe('deleting the account', () => {
     expect(signOut).not.toHaveBeenCalled()
     expect(useAuthStore.getState().session).toBe(session)
   })
+
+  it('revokes Sign in with Apple first: on the website it goes to Apple and deletes nothing yet', async () => {
+    const rpc = vi.fn(async () => ({ error: null }))
+    const clearLocalAccountData = vi.fn(async () => undefined)
+    const startAppleRevokeOnWeb = vi.fn(async () => undefined)
+    vi.doMock('../lib/supabase', () => ({
+      supabaseConfigured: true,
+      getSupabaseClient: async () => ({ rpc, auth: { signOut: vi.fn(async () => ({ error: null })) } }),
+    }))
+    vi.doMock('../utils/signOutTeardown', () => ({ clearLocalAccountData }))
+    vi.doMock('../lib/appleRevoke', async (importOriginal) => ({
+      ...(await importOriginal<typeof import('../lib/appleRevoke')>()),
+      startAppleRevokeOnWeb,
+    }))
+    const { useAuthStore } = await import('./useAuthStore')
+    const session = { access_token: 't', user: { id: 'person-1', identities: [{ provider: 'apple' }], user_metadata: {} } } as never
+    useAuthStore.setState({ session })
+
+    await useAuthStore.getState().deleteAccount()
+    expect(startAppleRevokeOnWeb).toHaveBeenCalledWith(session)
+    expect(rpc).not.toHaveBeenCalled()
+    expect(clearLocalAccountData).not.toHaveBeenCalled()
+
+    // Back from Apple with the revocation confirmed, the deletion completes.
+    await useAuthStore.getState().deleteAccount({ appleRevoked: true })
+    expect(rpc).toHaveBeenCalledWith('delete_own_account')
+    expect(startAppleRevokeOnWeb).toHaveBeenCalledTimes(1)
+    vi.doUnmock('../utils/signOutTeardown')
+    vi.doUnmock('../lib/appleRevoke')
+  })
+
+  it('keeps the account when the app cannot revoke Sign in with Apple', async () => {
+    const rpc = vi.fn(async () => ({ error: null }))
+    vi.doMock('../lib/supabase', () => ({
+      supabaseConfigured: true,
+      getSupabaseClient: async () => ({ rpc, auth: { signOut: vi.fn(async () => ({ error: null })) } }),
+    }))
+    vi.doMock('../lib/appleSignIn', async (importOriginal) => ({
+      ...(await importOriginal<typeof import('../lib/appleSignIn')>()),
+      isNativeAppleHost: () => true,
+    }))
+    vi.doMock('../lib/appleRevoke', async (importOriginal) => ({
+      ...(await importOriginal<typeof import('../lib/appleRevoke')>()),
+      revokeAppleOnNative: vi.fn(async () => { throw new Error('Account not deleted. Apple needs you to confirm before it can be disconnected.') }),
+    }))
+    const { useAuthStore } = await import('./useAuthStore')
+    const session = { access_token: 't', user: { id: 'person-1', identities: [{ provider: 'apple' }], user_metadata: {} } } as never
+    useAuthStore.setState({ session })
+
+    await expect(useAuthStore.getState().deleteAccount()).rejects.toThrow('Apple needs you to confirm')
+    expect(rpc).not.toHaveBeenCalled()
+    expect(useAuthStore.getState().session).toBe(session)
+    vi.doUnmock('../lib/appleSignIn')
+    vi.doUnmock('../lib/appleRevoke')
+  })
 })

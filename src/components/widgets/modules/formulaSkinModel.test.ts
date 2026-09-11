@@ -1,14 +1,26 @@
 import { describe, expect, it } from 'vitest'
 import type { FormulaData } from '../../../types/widgetDataWorkflow'
 import {
+  branchText,
   comparatorOf,
   comparisonHolds,
   conditionalBranches,
+  dataWithInputCount,
+  dataWithInputName,
+  dataWithInputValue,
   expressionText,
+  FORMULA_INPUT_MAX,
+  formulaAnswerText,
+  formulaBindings,
+  formulaInputCount,
+  formulaInputs,
+  formulaPrecision,
   formulaReading,
   formulaResultWord,
   formulaSkinMode,
+  formulaValid,
   formulaValue,
+  growthPeriods,
   growthProjection,
   simplifiedRatio,
   twoInputValue,
@@ -68,7 +80,8 @@ describe('Formula skin model', () => {
       value: 75,
       suffix: '%',
     })
-    expect(formulaReading(card({ skin: 'ratio', a: 0, b: 0 })).note).toBe('Two zeroes make no ratio')
+    expect(formulaReading(card({ skin: 'ratio', a: 0, b: 0 })).note)
+      .toBe('Parts that add to zero make no ratio')
 
     expect(simplifiedRatio(3, 4)).toEqual({ left: 3, right: 4 })
     expect(simplifiedRatio(50, 100)).toEqual({ left: 1, right: 2 })
@@ -106,14 +119,14 @@ describe('Formula skin model', () => {
 
     const empty = withExpression('  ')
     expect(empty.value).toBe(0)
-    expect(empty.note).toBe('Write an expression using A and B')
+    expect(empty.note).toBe('Write an expression using your inputs')
 
     const broken = withExpression('a * * b')
     expect(broken.value).toBe(0)
     expect(broken.note).not.toBeNull()
 
     // An unknown name is a message, never a thrown error mid-render.
-    expect(withExpression('c + 1').note).toContain('Unknown name')
+    expect(withExpression('zebra + 1').note).toContain('Unknown name')
   })
 
   it('bounds the stored expression and ignores data that is not text', () => {
@@ -123,7 +136,7 @@ describe('Formula skin model', () => {
     expect(expressionText({ expression: 'a'.repeat(500) }).length).toBe(240)
   })
 
-  it('weights A and B alongside the skin’s own rows', () => {
+  it('weights every wired input alongside the skin’s own rows', () => {
     const state = {
       labelA: 'Cost',
       weightA: 2,
@@ -131,7 +144,8 @@ describe('Formula skin model', () => {
       weightB: 1,
       rows: [{ id: 'r1', label: 'Support', value: 10, weight: 1 }],
     }
-    const rows = weightedRows(state, 8, 4)
+    const scored = card({ skin: 'weighted_score', a: 8, b: 4, skinStates: { weighted_score: state } })
+    const rows = weightedRows(scored)
 
     expect(rows.map((row) => [row.label, row.value, row.weight, row.canonical])).toEqual([
       ['Cost', 8, 2, true],
@@ -139,17 +153,23 @@ describe('Formula skin model', () => {
       ['Support', 10, 1, false],
     ])
     // (8×2 + 4×1 + 10×1) ÷ 4
-    expect(formulaValue(card({ skin: 'weighted_score', a: 8, b: 4, skinStates: { weighted_score: state } })))
-      .toBeCloseTo(7.5, 8)
+    expect(formulaValue(scored)).toBeCloseTo(7.5, 8)
 
     expect(weightShares(rows)).toEqual([0.5, 0.25, 0.25])
   })
 
   it('keeps weighted rows safe against stored rubbish, and caps the extras', () => {
-    const rows = weightedRows({
-      weightA: 'heavy',
-      rows: ['nonsense', null, {}, { weight: -5 }, { id: 'x' }, { id: 'y' }],
-    }, 1, 2)
+    const rows = weightedRows(card({
+      skin: 'weighted_score',
+      a: 1,
+      b: 2,
+      skinStates: {
+        weighted_score: {
+          weightA: 'heavy',
+          rows: ['nonsense', null, {}, { weight: -5 }, { id: 'x' }, { id: 'y' }],
+        },
+      },
+    }))
 
     expect(rows[0]!.weight).toBe(1)
     // Two canonical rows plus the four extras the skin allows; the two beyond
@@ -184,14 +204,182 @@ describe('Formula skin model', () => {
     expect(comparatorOf({ comparator: 'sideways' })).toBe('gt')
     expect(comparisonHolds(3, 3, 'eq')).toBe(true)
     expect(comparisonHolds(3, 4, 'neq')).toBe(true)
-    expect(conditionalBranches({ whenTrue: 'yes' })).toEqual({ whenTrue: 1, whenFalse: 0 })
+    // A branch written as words nobody can evaluate keeps the plain default
+    // and reports why, rather than publishing a number out of nowhere.
+    expect(conditionalBranches({ whenTrue: 'yes' })).toMatchObject({
+      whenTrue: 1,
+      whenFalse: 0,
+      trueNote: 'Unknown name yes',
+    })
   })
 
   it('gives every skin its own word for the number it publishes', () => {
     expect(formulaResultWord('two_input')).toBe('Result')
     expect(formulaResultWord('percent_change')).toBe('Change')
-    expect(formulaResultWord('growth')).toBe('Next period')
+    expect(formulaResultWord('growth')).toBe('Projected')
     expect(formulaResultWord('conditional')).toBe('Output')
+  })
+
+  /* ------------------------------------------------------- six named inputs */
+
+  /**
+   * The card grew from two numbers to six, and each one is a port. A board
+   * written before it grew stores neither `inputCount` nor the extra slots, so
+   * it must still hold exactly two.
+   */
+  it('holds two inputs until a card asks for more, and never more than six', () => {
+    expect(formulaInputs(card({})).map((input) => input.key)).toEqual(['a', 'b'])
+    expect(formulaInputCount(card({}))).toBe(2)
+    expect(formulaInputCount(card({ inputCount: 99 }))).toBe(FORMULA_INPUT_MAX)
+    expect(formulaInputCount(card({ inputCount: 0 }))).toBe(2)
+
+    const four = dataWithInputCount(card({}), 4)
+    expect(formulaInputs(four).map((input) => input.key)).toEqual(['a', 'b', 'c', 'd'])
+    // Every slot prints its own letter until the card names it.
+    expect(formulaInputs(four).map((input) => input.title)).toEqual(['A', 'B', 'C', 'D'])
+  })
+
+  it('forgets the slots it drops, so a narrowed card is the card it was', () => {
+    const grown = dataWithInputName(
+      { ...dataWithInputCount(card({}), 4), c: 12, d: 7 },
+      'c',
+      'stock',
+    )
+    expect(grown.c).toBe(12)
+
+    const narrowed = dataWithInputCount(grown, 2)
+    expect(narrowed).not.toHaveProperty('c')
+    expect(narrowed).not.toHaveProperty('d')
+    expect(narrowed).not.toHaveProperty('inputCount')
+    expect(narrowed.names).toBeUndefined()
+  })
+
+  /** A number a reader cannot see is a number the card is hiding. */
+  it('opens a slot when a wire writes one the card had not shown yet', () => {
+    const written = dataWithInputValue(card({}), 'd', 9)
+    expect(written.d).toBe(9)
+    expect(formulaInputs(written).map((input) => input.key)).toEqual(['a', 'b', 'c', 'd'])
+    // Writing a slot the card already shows leaves the rack alone.
+    expect(dataWithInputValue(card({}), 'b', 3).inputCount).toBeUndefined()
+  })
+
+  it('lets an expression call an input by its name as well as its letter', () => {
+    const named = dataWithInputName(
+      dataWithInputName({ ...dataWithInputCount(card({}), 3), a: 4, b: 5, c: 6 }, 'a', 'price'),
+      'c',
+      'Tax Rate',
+    )
+    const bindings = formulaBindings(formulaInputs(named))
+    expect(bindings).toMatchObject({ a: 4, b: 5, c: 6, price: 4 })
+    // A name the parser could never read is simply not offered.
+    expect(bindings).not.toHaveProperty('Tax Rate')
+
+    expect(formulaValue({
+      ...named,
+      skin: 'expression',
+      skinStates: { expression: { expression: 'price * b + c' } },
+    })).toBe(26)
+  })
+
+  /** One letter, one port: a slot must not answer to another slot's name. */
+  it('refuses a name that would shadow another input', () => {
+    const shadowed = dataWithInputName({ ...dataWithInputCount(card({}), 3), a: 1, c: 3 }, 'c', 'a')
+    expect(formulaBindings(formulaInputs(shadowed)).a).toBe(1)
+  })
+
+  it('carries the chain down every input the card holds', () => {
+    const chain = { ...dataWithInputCount(card({}), 4), a: 2, b: 3, c: 4, d: 5 }
+    expect(formulaValue({ ...chain, operator: 'add' })).toBe(14)
+    expect(formulaValue({ ...chain, operator: 'multiply' })).toBe(120)
+    expect(formulaValue({ ...chain, operator: 'power', b: 2, c: 2, d: 2 })).toBe(256)
+    // A zero anywhere in a division chain is said plainly, not published.
+    const divided = formulaReading({ ...chain, c: 0, operator: 'divide' })
+    expect(divided.value).toBe(0)
+    expect(divided.note).toBe('One of the inputs is zero, so this cannot be divided')
+  })
+
+  it('lets a skin ask its question of any pair of inputs', () => {
+    const four = { ...dataWithInputCount(card({}), 4), a: 1, b: 2, c: 200, d: 250 }
+    expect(formulaValue({
+      ...four,
+      skin: 'percent_change',
+      skinStates: { percent_change: { fromKey: 'c', toKey: 'd' } },
+    })).toBe(25)
+
+    // A role pointing at a slot the card no longer holds falls back rather
+    // than reading a number that is gone.
+    expect(formulaValue({
+      ...card({ a: 200, b: 250 }),
+      skin: 'percent_change',
+      skinStates: { percent_change: { fromKey: 'e' } },
+    })).toBe(25)
+  })
+
+  it('reads one input’s share of every part, not just of two', () => {
+    const parts = { ...dataWithInputCount(card({}), 4), a: 1, b: 1, c: 1, d: 1 }
+    expect(formulaValue({ ...parts, skin: 'ratio' })).toBe(25)
+    expect(formulaValue({
+      ...parts,
+      d: 7,
+      skin: 'ratio',
+      skinStates: { ratio: { partKey: 'd' } },
+    })).toBe(70)
+  })
+
+  it('projects as many periods as the card asks for', () => {
+    const compound = card({ skin: 'growth', a: 1000, b: 10 })
+    expect(formulaReading(compound).value).toBeCloseTo(1100, 8)
+    expect(formulaReading({
+      ...compound,
+      skinStates: { growth: { periods: 3 } },
+    }).value).toBeCloseTo(1331, 8)
+    expect(growthPeriods({ periods: 999 })).toBe(24)
+    expect(growthPeriods({})).toBe(1)
+  })
+
+  it('answers either branch with an expression over the card’s inputs', () => {
+    const priced = { ...dataWithInputCount(card({}), 3), a: 10, b: 4, c: 100 }
+    expect(formulaValue({
+      ...priced,
+      skin: 'conditional',
+      skinStates: { conditional: { comparator: 'gt', whenTrue: 'c * 0.9', whenFalse: 'c' } },
+    })).toBe(90)
+    expect(formulaValue({
+      ...priced,
+      a: 1,
+      skin: 'conditional',
+      skinStates: { conditional: { comparator: 'gt', whenTrue: 'c * 0.9', whenFalse: 'c' } },
+    })).toBe(100)
+
+    // A branch that cannot be read says so instead of throwing mid-render.
+    const broken = formulaReading({
+      ...priced,
+      skin: 'conditional',
+      skinStates: { conditional: { whenTrue: 'c *' } },
+    })
+    expect(broken.note).not.toBeNull()
+    expect(branchText({ whenTrue: 'c * 0.9' }, 'whenTrue')).toBe('c * 0.9')
+    expect(branchText({}, 'whenFalse')).toBe('0')
+  })
+
+  /**
+   * Rounding is part of the answer, not a coat of paint: the wire has to carry
+   * the number the reader can see.
+   */
+  it('publishes the answer at the precision the card prints it', () => {
+    const rounded = card({ a: 1, b: 3, operator: 'divide', precision: 2 })
+    expect(formulaValue(rounded)).toBe(0.33)
+    expect(formulaAnswerText(rounded)).toBe('0.33')
+    expect(formulaAnswerText(card({ a: 2, b: 3, unit: 'kg' }))).toBe('5 kg')
+    // A unit takes the place of the skin's own suffix.
+    expect(formulaReading(card({ skin: 'percent_change', unit: 'pts' })).suffix).toBe('pts')
+    expect(formulaPrecision(card({ precision: 99 }))).toBe(6)
+    expect(formulaPrecision(card({}))).toBeNull()
+  })
+
+  it('says whether the question can be answered at all', () => {
+    expect(formulaValid(card({ a: 7, b: 2, operator: 'divide' }))).toBe(true)
+    expect(formulaValid(card({ a: 7, b: 0, operator: 'divide' }))).toBe(false)
   })
 
   it('never throws on half-typed or hostile data', () => {

@@ -10,11 +10,13 @@ export function buildGlueIndex(glues: Record<string, WidgetGlue>): Record<string
 
 // ---------------------------------------------------------------------------
 // Strict hold — family derivation over parent-type relations.
-// Soft parenting is the default: a relation alone never moves anyone. A node
-// whose metadata carries `strictHold` moves its whole parent-linked subtree
-// with it, and strictness is inherited downward — every node inside a held
-// subtree carries its own branch, so a strict tree has no soft pockets.
-// Free-form boards may hold parent cycles, so every traversal is
+// Hard parenting is the DEFAULT: drawing a parent line makes that node carry
+// its child, and the hold is inherited downward, so a whole tree moves as one
+// structure without anyone switching anything on. `metadata.strictHold` is
+// therefore an OPT-OUT: the nearest explicit flag at-or-above a node decides
+// for it (its own beats an ancestor's), and with no flag anywhere the answer is
+// hard. Releasing a node relaxes its whole branch; a descendant can re-hold its
+// own. Free-form boards may hold parent cycles, so every traversal is
 // visited-set guarded.
 // ---------------------------------------------------------------------------
 
@@ -33,46 +35,62 @@ function parentEdges(relations: Record<string, Relation>) {
   return { children, parents }
 }
 
-/** The nearest ancestor (through parent-type relations) holding this widget
- * strictly, or null when the widget is free. The widget's own flag does not
- * count — this answers "is the strict decision owned above me?", which is what
- * decides whether the widget may offer its own toggle. */
-export function strictHolderOf(
+export interface StrictHoldState {
+  /** Does this node carry its parent-linked children when it moves? */
+  strict: boolean
+  /** The ancestor whose explicit flag decided it, when the node has none of
+   * its own — what the menu names so a person can see where the decision was
+   * made. Null when the node decided for itself or nobody has decided at all. */
+  inheritedFrom: string | null
+}
+
+/** How hard this node holds its family, resolved the way the law reads it:
+ * hard unless somebody said otherwise. The node's own flag wins; failing that
+ * the nearest ancestor with an explicit flag decides (so releasing a node
+ * relaxes its whole branch, and a descendant can re-hold its own); failing
+ * that, hard. */
+export function resolveStrictHold(
   widgetId: string,
   widgets: Record<string, Widget>,
   relations: Record<string, Relation>,
-): string | null {
-  const { parents } = parentEdges(relations)
+): StrictHoldState {
+  return resolveStrictHoldWith(widgetId, widgets, parentEdges(relations).parents)
+}
+
+/** The resolution above, over parent edges the caller already built — the
+ * whole-board sweep runs once per drag frame, so it must not rebuild the
+ * edge index once per widget. */
+function resolveStrictHoldWith(
+  widgetId: string,
+  widgets: Record<string, Widget>,
+  parents: Map<string, string[]>,
+): StrictHoldState {
+  const own = widgets[widgetId]?.metadata.strictHold
+  if (typeof own === 'boolean') return { strict: own, inheritedFrom: null }
   const seen = new Set<string>([widgetId])
   const queue = [...(parents.get(widgetId) ?? [])]
   while (queue.length > 0) {
     const id = queue.shift()!
     if (seen.has(id) || !widgets[id]) continue
     seen.add(id)
-    if (widgets[id]!.metadata.strictHold === true) return id
+    const flag = widgets[id]!.metadata.strictHold
+    if (typeof flag === 'boolean') return { strict: flag, inheritedFrom: id }
     queue.push(...(parents.get(id) ?? []))
   }
-  return null
+  return { strict: true, inheritedFrom: null }
 }
 
-/** Every widget that carries its family when moved: each strict holder plus
- * all of its parent-linked descendants (inheritance — no soft pockets inside
- * a strict tree). Also the set of nodes whose parent edges paint strict. */
+/** Every widget that carries its family when moved — under hard-by-default,
+ * that is every widget nobody released. Also the set of nodes whose parent
+ * edges paint strict. */
 export function strictCarrierIds(
   widgets: Record<string, Widget>,
   relations: Record<string, Relation>,
 ): Set<string> {
-  const { children } = parentEdges(relations)
+  const { parents } = parentEdges(relations)
   const carriers = new Set<string>()
-  const queue: string[] = []
-  for (const widget of Object.values(widgets)) {
-    if (widget.metadata.strictHold === true) queue.push(widget.id)
-  }
-  while (queue.length > 0) {
-    const id = queue.shift()!
-    if (carriers.has(id) || !widgets[id]) continue
-    carriers.add(id)
-    queue.push(...(children.get(id) ?? []))
+  for (const id of Object.keys(widgets)) {
+    if (resolveStrictHoldWith(id, widgets, parents).strict) carriers.add(id)
   }
   return carriers
 }
@@ -93,8 +111,10 @@ export function expandMovedWidgetIds(
   },
 ): string[] {
   const { widgets, relations, glues, widgetGlueIndex } = state
-  const carriers = strictCarrierIds(widgets, relations)
-  const { children } = parentEdges(relations)
+  // Resolved per visited node rather than swept whole-board: this runs twice
+  // per drag frame and once per id inside align/distribute, while only the
+  // handful of ids the traversal reaches is ever asked.
+  const { children, parents } = parentEdges(relations)
   const moved: string[] = []
   const seen = new Set<string>()
   const queue = [...baseIds]
@@ -106,7 +126,7 @@ export function expandMovedWidgetIds(
     moved.push(id)
     const glueId = widgetGlueIndex[id]
     if (glueId) queue.push(...(glues[glueId]?.widgetIds ?? []))
-    if (carriers.has(id)) {
+    if (resolveStrictHoldWith(id, widgets, parents).strict) {
       for (const childId of children.get(id) ?? []) {
         if (widgets[childId]?.canvasId === widget.canvasId) queue.push(childId)
       }

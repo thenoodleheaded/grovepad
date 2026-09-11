@@ -6,7 +6,7 @@ const base = {
   interactionMode: 'navigate' as const,
   isInteractiveTarget: false,
   isLocked: false,
-  hasModifier: false,
+  hasCardGestureModifier: false,
   wantsLink: false,
   isTargetingLink: false,
 }
@@ -14,7 +14,19 @@ const base = {
 describe('widget pointer policy', () => {
   it('preserves mouse body dragging and mouse relation gestures', () => {
     expect(resolveWidgetPointerIntent(base)).toBe('drag')
-    expect(resolveWidgetPointerIntent({ ...base, wantsLink: true, hasModifier: true })).toBe('link')
+    expect(resolveWidgetPointerIntent({ ...base, wantsLink: true })).toBe('link')
+  })
+
+  it('lets Cmd reach a control instead of starting a relation from it', () => {
+    // Cmd-clicking a canvas card's Enter button opens that canvas in a new
+    // tab. The card must not swallow the press to draw a relation line — a
+    // relation drag still starts anywhere on the card's own body.
+    expect(
+      resolveWidgetPointerIntent({ ...base, isInteractiveTarget: true, wantsLink: true }),
+    ).toBe('ignore')
+    expect(
+      resolveWidgetPointerIntent({ ...base, isInteractiveTarget: true, hasCardGestureModifier: true }),
+    ).toBe('drag')
   })
 
   it('selects from touch content instead of accidentally moving the widget', () => {

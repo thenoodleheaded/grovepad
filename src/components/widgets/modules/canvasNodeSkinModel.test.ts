@@ -38,13 +38,16 @@ function widget(
 
 describe('Canvas-node skin model', () => {
   it('sanitizes persisted skin and Cover settings', () => {
-    expect(canvasNodeSkin('dashboard_door')).toBe('dashboard_door')
+    expect(canvasNodeSkin('live_thumbnail')).toBe('live_thumbnail')
     expect(canvasNodeSkin('unknown')).toBe('portal')
+    // A retired skin on an older board comes back through the same door as any
+    // other unrecognized value, rather than leaving the card blank.
+    expect(canvasNodeSkin('dashboard_door')).toBe('portal')
+    expect(canvasNodeSkin('folder_index')).toBe('portal')
     expect(canvasCoverState({ eyebrow: 'Project', subtitle: 'A calm place' })).toEqual({
-      eyebrow: 'Project',
       subtitle: 'A calm place',
     })
-    expect(canvasCoverState(null)).toEqual({ eyebrow: 'Open canvas', subtitle: '' })
+    expect(canvasCoverState(null)).toEqual({ subtitle: '' })
   })
 
   it('summarizes completion, attention, favorites, types, and nested canvases', () => {
@@ -54,8 +57,8 @@ describe('Canvas-node skin model', () => {
       alpha: { id: 'alpha', name: 'Alpha', workspaceId: 'ws', parentCanvasId: 'target' },
     }
     const widgets = {
-      one: widget('one', 'notes', { completed: true, favorite: true }),
-      two: widget('two', 'notes', { critical: true }),
+      one: widget('one', 'text', { completed: true, favorite: true }),
+      two: widget('two', 'text', { critical: true }),
       three: widget('three', 'checklist'),
     }
 
@@ -67,7 +70,7 @@ describe('Canvas-node skin model', () => {
       favoriteCount: 1,
       childCanvases: [canvases.alpha, canvases.beta],
       typeCounts: [
-        { type: 'notes', count: 2 },
+        { type: 'text', count: 2 },
         { type: 'checklist', count: 1 },
       ],
     })
@@ -75,7 +78,7 @@ describe('Canvas-node skin model', () => {
 
   it('normalizes a child canvas arrangement into bounded preview geometry', () => {
     const items = canvasPreviewItems('target', {
-      one: widget('one', 'notes', { x: -400, y: 120 }),
+      one: widget('one', 'text', { x: -400, y: 120 }),
       two: widget('two', 'checklist', { x: 520, y: 840, completed: true }),
     })
 

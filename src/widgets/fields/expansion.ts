@@ -1,13 +1,16 @@
-import type { ModuleData, ModuleDataMap, ModuleType } from '../../types/spatial'
+import type { ModuleData, ModuleDataMap, ModuleType, OkrData, RandomPickerData } from '../../types/spatial'
 import type { SemanticUnit } from '../../types/fieldConnections'
-import type { CommandDescriptor, FieldDescriptor, FieldValue } from '../contracts/fields'
+import type { CommandDescriptor, FieldDescriptor, FieldOwner, FieldValue } from '../contracts/fields'
 import {
   DAY_MS, appendSample, daysUntilDate, localDayKey, monthsSince, projectDebtPayoff,
   seriesAverage, seriesDelta7d, settleExpenses,
 } from '../expansionMath'
 
-type D<K extends ModuleType> = ModuleDataMap[K]
-const d = <K extends ModuleType>(data: ModuleData) => data as D<K>
+/** The two retired skin renderers keep their saved data shapes, which are no
+ * longer reachable through ModuleDataMap because they are not widget types. */
+type SkinRendererDataMap = { random_picker: RandomPickerData; okr: OkrData }
+type D<K extends FieldOwner> = K extends ModuleType ? ModuleDataMap[K] : SkinRendererDataMap[K & keyof SkinRendererDataMap]
+const d = <K extends FieldOwner>(data: ModuleData) => data as D<K>
 const n = (value: FieldValue) => Array.isArray(value) ? value.at(-1)?.v ?? 0 : typeof value === 'number' ? value : typeof value === 'boolean' ? Number(value) : Number.parseFloat(value) || 0
 const s = (value: FieldValue) => Array.isArray(value) ? value.map((point) => point.v).join(', ') : String(value)
 const b = (value: FieldValue) => Array.isArray(value) ? value.length > 0 : typeof value === 'boolean' ? value : typeof value === 'number' ? value >= 1 : ['true','1','yes','on'].includes(value.toLowerCase())
@@ -23,20 +26,24 @@ function comparatorResult(data: D<'comparator'>): boolean {
   return data.a>=data.low&&data.a<=data.high
 }
 function aggregate(data:D<'aggregator'>):number { const values=data.slots.map(Number); if(data.mode==='min')return Math.min(...values);if(data.mode==='max')return Math.max(...values);if(data.mode==='count_nonzero')return values.filter(Boolean).length;if(data.mode==='count_true')return values.filter(v=>v>=1).length;return values.reduce((a,v)=>a+v,0)/values.length }
-function mapped(data:D<'range_mapper'>){ const upper=(value:number)=>Number.isFinite(value)?value:Number.MAX_SAFE_INTEGER;const sorted=[...data.bands].sort((a,b)=>upper(a.upTo)-upper(b.upTo));const index=Math.max(0,sorted.findIndex(band=>data.input<=upper(band.upTo)));return{band:sorted[index]??sorted.at(-1),index} }
+function mapped(data:D<'range_mapper'>){ const upper=(value:number)=>Number.isFinite(value)?value:Number.MAX_SAFE_INTEGER;const sorted=[...data.bands].sort((a,b)=>upper(a.upTo)-upper(b.upTo));const found=sorted.findIndex(band=>data.input<=upper(band.upTo));const index=found===-1?Math.max(0,sorted.length-1):found;return{band:sorted[index]??sorted.at(-1),index} }
 function composed(data:D<'template'>):string { return data.template.replace(/\{([abcd])\}/gi,(_,key:string)=>data[`slot${key.toUpperCase()}` as 'slotA'|'slotB'|'slotC'|'slotD']) }
 function pulseState(data:D<'clock_pulse'>,now=new Date()){ const hhmm=`${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`; if(data.mode==='daily')return hhmm===data.time;if(data.mode==='weekly')return data.days.includes(now.getDay())&&hhmm===data.time;if(data.mode==='interval')return Math.floor(now.getTime()/60_000)%Math.max(1,data.intervalMinutes)===0;return hhmm>=data.windowStart&&hhmm<=data.windowEnd }
 function subscriptionMonthly(row:D<'subscriptions'>['rows'][number]){return row.cycle==='yearly'?row.cost/12:row.cycle==='weekly'?row.cost*52/12:row.cost}
 function assignments(data:D<'chore_rotation'>){return data.chores.map((chore,index)=>`${data.people[(index+data.offset)%Math.max(1,data.people.length)]??'—'}: ${chore}`).join('; ')}
 function okrProgress(data:D<'okr'>){const total=data.keyResults.reduce((sum,kr)=>sum+Math.max(0,kr.weight),0)||1;return data.keyResults.reduce((sum,kr)=>sum+Math.min(1,Math.max(0,kr.current/Math.max(kr.target,1)))*Math.max(0,kr.weight),0)/total*100}
 
-export const EXPANSION_FIELDS: Partial<Record<ModuleType, FieldDescriptor[]>> = {
+export const EXPANSION_FIELDS: Partial<Record<FieldOwner, FieldDescriptor[]>> = {
   clock_pulse:[bool('active','Active',x=>pulseState(d<'clock_pulse'>(x)),undefined,true),bool('pulse','Pulse',x=>pulseState(d<'clock_pulse'>(x)),undefined,true),txt('today','Today',()=>new Date().toLocaleDateString(undefined,{weekday:'long'}))],
   comparator:[num('a','A',x=>d<'comparator'>(x).a,(x,v)=>({...d<'comparator'>(x),a:v})),num('b','B',x=>d<'comparator'>(x).b,(x,v)=>({...d<'comparator'>(x),b:v})),num('low','Low',x=>d<'comparator'>(x).low,(x,v)=>({...d<'comparator'>(x),low:v})),num('high','High',x=>d<'comparator'>(x).high,(x,v)=>({...d<'comparator'>(x),high:v})),bool('result','Result',x=>comparatorResult(d<'comparator'>(x))),num('gap','Gap',x=>d<'comparator'>(x).a-d<'comparator'>(x).b)],
   aggregator:[...Array.from({length:6},(_,i)=>num(`in${i+1}`,`Input ${i+1}`,x=>d<'aggregator'>(x).slots[i]??0,(x,v)=>{const data=d<'aggregator'>(x);const slots=[...data.slots];slots[i]=v;return{...data,slots}})),num('value','Value',x=>aggregate(d<'aggregator'>(x)))],
   range_mapper:[num('input','Input',x=>d<'range_mapper'>(x).input,(x,v)=>({...d<'range_mapper'>(x),input:v})),txt('label','Band label',x=>{const m=mapped(d<'range_mapper'>(x));return`${m.band?.emoji??''} ${m.band?.label??''}`.trim()}),num('bandIndex','Band index',x=>mapped(d<'range_mapper'>(x)).index),bool('topBand','Top band',x=>mapped(d<'range_mapper'>(x)).index===d<'range_mapper'>(x).bands.length-1)],
   latch:[num('current','Current',x=>d<'latch'>(x).current,(x,v)=>({...d<'latch'>(x),current:v})),num('held','Held',x=>d<'latch'>(x).held),num('delta','Delta',x=>d<'latch'>(x).current-d<'latch'>(x).held),txt('heldAt','Held at',x=>d<'latch'>(x).heldAt?new Date(d<'latch'>(x).heldAt!).toLocaleString():'Never')],
+  // Not widgets: 'random_picker' and 'okr' are the renderer identities behind
+  // Decision's Weighted skin and Goal's OKR skin. Their cards were retired, but
+  // the expansion renderer still reads these tables to draw those two skins.
   random_picker:[txt('pick','Pick',x=>d<'random_picker'>(x).pick),bool('rolledToday','Rolled today',x=>d<'random_picker'>(x).lastRolledAt?localDayKey(d<'random_picker'>(x).lastRolledAt!)===localDayKey():false,undefined,true)],
+  okr:[...Array.from({length:4},(_,i)=>num(`kr${i+1}Current`,`KR ${i+1}`,x=>d<'okr'>(x).keyResults[i]?.current??0,(x,v)=>{const q=d<'okr'>(x);const keyResults=[...q.keyResults];if(keyResults[i])keyResults[i]={...keyResults[i]!,current:v};return{...q,keyResults} as unknown as ModuleData})),num('progress','Progress',x=>okrProgress(d<'okr'>(x))),num('percent','Progress %',x=>okrProgress(d<'okr'>(x)),undefined,false,'percent')],
   sequencer:[txt('current','Current step',x=>d<'sequencer'>(x).steps[d<'sequencer'>(x).activeIndex]?.text??''),num('index','Index',x=>d<'sequencer'>(x).activeIndex),num('progress','Progress',x=>{const q=d<'sequencer'>(x);return q.steps.length?(q.activeIndex/Math.max(1,q.steps.length-1))*100:0}),bool('done','Done',x=>{const q=d<'sequencer'>(x);return !q.loop&&q.activeIndex>=q.steps.length-1})],
   template:[txt('a','Slot A',x=>d<'template'>(x).slotA,(x,v)=>({...d<'template'>(x),slotA:v})),txt('b','Slot B',x=>d<'template'>(x).slotB,(x,v)=>({...d<'template'>(x),slotB:v})),txt('c','Slot C',x=>d<'template'>(x).slotC,(x,v)=>({...d<'template'>(x),slotC:v})),txt('d','Slot D',x=>d<'template'>(x).slotD,(x,v)=>({...d<'template'>(x),slotD:v})),txt('text','Composed text',x=>composed(d<'template'>(x)))],
   recorder:[num('input','Input',x=>d<'recorder'>(x).input,(x,v)=>{const data=d<'recorder'>(x);return{...data,input:v,...(data.mode==='on_change'?{samples:appendSample(data.samples,v),lastRecordedAt:Date.now()}:{})}}),num('last','Last',x=>d<'recorder'>(x).samples.at(-1)?.v??0),num('count','Sample count',x=>d<'recorder'>(x).samples.length),num('average','Average',x=>seriesAverage(d<'recorder'>(x).samples)),num('delta7d','7-day change',x=>seriesDelta7d(d<'recorder'>(x).samples),undefined,true),{key:'series',label:'Series',valueType:'series',get:x=>d<'recorder'>(x).samples}],
@@ -66,7 +73,6 @@ export const EXPANSION_FIELDS: Partial<Record<ModuleType, FieldDescriptor[]>> = 
   medications:[num('takenToday','Taken today',x=>d<'medications'>(x).rows.reduce((sum,r)=>sum+r.takenToday.filter(Boolean).length,0)),num('remainingToday','Remaining today',x=>d<'medications'>(x).rows.reduce((sum,r)=>sum+Math.max(0,r.timesPerDay-r.takenToday.filter(Boolean).length),0)),bool('allTaken','All taken',x=>d<'medications'>(x).rows.every(r=>r.takenToday.length>=r.timesPerDay&&r.takenToday.slice(0,r.timesPerDay).every(Boolean))),num('refillDays','Refill days',x=>minOrZero(d<'medications'>(x).rows.map(r=>Math.floor(r.pillsLeft/Math.max(1,r.dailyUse)))))],
   workout_plan:[num('sessionVolume','Session volume',x=>{const q=d<'workout_plan'>(x);return(q.days[q.activeDay]?.exercises??[]).filter(e=>e.done).reduce((sum,e)=>sum+e.sets*e.reps*e.weight,0)}),bool('completedToday','Completed today',x=>{const q=d<'workout_plan'>(x);const rows=q.days[q.activeDay]?.exercises??[];return rows.length>0&&rows.every(e=>e.done)}),txt('lastSession','Last session',x=>d<'workout_plan'>(x).lastSession)],
   job_applications:[num('activeCount','Active',x=>d<'job_applications'>(x).rows.filter(r=>!['wishlist','closed'].includes(r.stage)).length),num('needsFollowUpCount','Needs followup',x=>d<'job_applications'>(x).rows.filter(r=>r.stage!=='closed'&&daysUntilDate(r.followUpBy)<=0).length,undefined,true),num('interviewCount','Interviews',x=>d<'job_applications'>(x).rows.filter(r=>r.stage==='interview').length),num('offerCount','Offers',x=>d<'job_applications'>(x).rows.filter(r=>r.stage==='offer').length)],
-  okr:[...Array.from({length:4},(_,i)=>num(`kr${i+1}Current`,`KR ${i+1}`,x=>d<'okr'>(x).keyResults[i]?.current??0,(x,v)=>{const q=d<'okr'>(x);const keyResults=[...q.keyResults];if(keyResults[i])keyResults[i]={...keyResults[i]!,current:v};return{...q,keyResults}})),num('progress','Progress',x=>okrProgress(d<'okr'>(x))),num('percent','Progress %',x=>okrProgress(d<'okr'>(x)),undefined,false,'percent')],
   decision_journal:[num('dueForReview','Due for review',x=>d<'decision_journal'>(x).entries.filter(e=>!e.verdict&&daysUntilDate(e.reviewOn)<=0).length,undefined,true),num('entryCount','Entries',x=>d<'decision_journal'>(x).entries.length),num('hitRate','Hit rate',x=>{const scored=d<'decision_journal'>(x).entries.filter(e=>e.verdict);return scored.length?scored.filter(e=>e.verdict==='hit').length/scored.length*100:0})],
   weekly_review:[bool('completedThisWeek','Completed',x=>d<'weekly_review'>(x).completedThisWeek,(x,v)=>({...d<'weekly_review'>(x),completedThisWeek:v})),num('streak','Streak',x=>d<'weekly_review'>(x).streak)],
   snippet_library:[num('count','Count',x=>d<'snippet_library'>(x).entries.length),txt('mostUsed','Most used',x=>[...d<'snippet_library'>(x).entries].sort((a,b)=>b.useCount-a.useCount)[0]?.body??'')],
@@ -78,9 +84,9 @@ export const EXPANSION_FIELDS: Partial<Record<ModuleType, FieldDescriptor[]>> = 
 
 function roll(data:D<'random_picker'>):D<'random_picker'>{const blocked=new Set(data.history.slice(-Math.max(0,data.noRepeatWindow)));const choices=data.options.filter(o=>!blocked.has(o.text));const pool=choices.length?choices:data.options;const total=pool.reduce((sum,o)=>sum+Math.max(0,o.weight),0)||pool.length;let cursor=Math.random()*total;const selected=pool.find(o=>(cursor-=Math.max(0,o.weight)||1)<=0)??pool[0];if(!selected)return data;return{...data,pick:selected.text,lastRolledAt:Date.now(),history:[...data.history,selected.text].slice(-20)}}
 
-export const EXPANSION_COMMANDS: Partial<Record<ModuleType, CommandDescriptor[]>> = {
+export const EXPANSION_COMMANDS: Partial<Record<FieldOwner, CommandDescriptor[]>> = {
   latch:[{key:'capture',label:'Capture snapshot',run:x=>{const q=d<'latch'>(x);return{...q,held:q.current,heldAt:Date.now()}}}],
-  random_picker:[{key:'roll',label:'Roll a choice',run:x=>roll(d<'random_picker'>(x))}],
+  random_picker:[{key:'roll',label:'Roll a choice',run:x=>roll(d<'random_picker'>(x)) as unknown as ModuleData}],
   sequencer:[{key:'advance',label:'Advance step',run:x=>{const q=d<'sequencer'>(x);const next=q.activeIndex+1;return{...q,activeIndex:next>=q.steps.length?(q.loop?0:Math.max(0,q.steps.length-1)):next}}},{key:'reset',label:'Restart sequence',run:x=>({...d<'sequencer'>(x),activeIndex:0})}],
   recorder:[{key:'record',label:'Record sample',run:x=>{const q=d<'recorder'>(x);return{...q,samples:appendSample(q.samples,q.input),lastRecordedAt:Date.now()}}},{key:'reset',label:'Clear history',run:x=>({...d<'recorder'>(x),samples:[],lastRecordedAt:null})}],
   notifier:[{key:'notify',label:'Send notification',run:x=>({...d<'notifier'>(x),pendingFireAt:Date.now()})}],

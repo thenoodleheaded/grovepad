@@ -8,7 +8,7 @@ import {
 function widget(title: string): Widget {
   return {
     id: title,
-    type: 'notes',
+    type: 'text',
     title,
     canvasId: 'canvas',
     position: { x: 0, y: 0 },

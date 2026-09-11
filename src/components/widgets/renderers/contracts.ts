@@ -5,6 +5,11 @@ export interface WidgetRenderContext {
   widget: Widget
   onUpdate: (data: ModuleData) => void
   onHeightChange: (height: number) => void
+  /**
+   * Only wired for `sizing.autoWidth` cards: how much wider (positive) or
+   * narrower (negative) the content needs the card to be, in pixels.
+   */
+  onWidthChange?: (slack: number) => void
 }
 
 export type WidgetContentRenderer = (context: WidgetRenderContext) => ReactNode

@@ -199,8 +199,16 @@ export function glueChromeRect(widget: Widget, glued = true): WorldRect {
   }
 }
 
-/** Union of every member's chrome box — the cluster's real occupied space. */
-function chromeEnvelope(
+/**
+ * Union of every member's chrome box — the cluster's real occupied space, and
+ * the ONE envelope everything cluster-shaped is drawn or anchored from.
+ *
+ * There used to be a second, bare-box envelope beside it, and the group's own
+ * boundary lines were drawn off that one. The two disagreed by exactly the
+ * height of a member's name row, so the top line cut across the first card's
+ * title instead of standing clear above it.
+ */
+export function clusterChromeEnvelope(
   memberIds: readonly string[],
   widgets: Record<string, Widget>,
 ): WorldRect | null {
@@ -211,25 +219,6 @@ function chromeEnvelope(
     if (!w) continue
     found = true
     const b = glueChromeRect(w)
-    minX = Math.min(minX, b.x)
-    minY = Math.min(minY, b.y)
-    maxX = Math.max(maxX, b.x + b.width)
-    maxY = Math.max(maxY, b.y + b.height)
-  }
-  return found ? { x: minX, y: minY, width: maxX - minX, height: maxY - minY } : null
-}
-
-export function clusterEnvelope(
-  memberIds: readonly string[],
-  widgets: Record<string, Widget>,
-): WorldRect | null {
-  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
-  let found = false
-  for (const id of memberIds) {
-    const w = widgets[id]
-    if (!w) continue
-    found = true
-    const b = glueBoxRect(w)
     minX = Math.min(minX, b.x)
     minY = Math.min(minY, b.y)
     maxX = Math.max(maxX, b.x + b.width)
@@ -249,7 +238,7 @@ export function clusterFrameEnvelope(
   memberIds: readonly string[],
   widgets: Record<string, Widget>,
 ): WorldRect | null {
-  const env = chromeEnvelope(memberIds, widgets)
+  const env = clusterChromeEnvelope(memberIds, widgets)
   if (!env) return null
   return {
     x: env.x - GLUE_FRAME_BAND,
@@ -272,9 +261,10 @@ const GLUE_TITLE_BUTTONS_MAX = 5
 
 /**
  * The group's title/button row as it is actually painted: anchored on the
- * cluster's drawn envelope (member boxes, the same origin `GlueClusterChrome`
- * lays the bar out from), sitting above the top boundary line, and only as
- * wide as the icon, the name, and the buttons really are.
+ * cluster's drawn envelope (member boxes AND the name rows floating above them
+ * — the same origin `GlueClusterChrome` lays the bar out from), sitting above
+ * the top boundary line, and only as wide as the icon, the name, and the
+ * buttons really are.
  *
  * Bounding this is the whole point: a relation dropped on the row lands on the
  * group and a line dodges the row, while the empty canvas to its right stays
@@ -285,7 +275,7 @@ export function clusterTitleRowRect(
   widgets: Record<string, Widget>,
   name: string | undefined,
 ): WorldRect | null {
-  const env = clusterEnvelope(memberIds, widgets)
+  const env = clusterChromeEnvelope(memberIds, widgets)
   if (!env) return null
   const label = name?.trim() || 'Group'
   const width =
@@ -834,6 +824,17 @@ export interface GlueSnap {
  * (gap 0), and grid-snaps its perpendicular coordinate — so the cluster's
  * outer corners land on the grid and the visible seam is carved from both
  * cards' render insets, not added between their stored boxes.
+ *
+ * The VERTICAL bond measures and lands on CHROME edges, not bare card edges. A
+ * card's name row floats above its box, so a weld measured card-to-card put a
+ * downward-welded card's own title straight over the card it welded to, and
+ * buried the target's title under an upward weld. Landing chrome-to-chrome is
+ * what makes a widget glue on top of the title rather than over the name.
+ *
+ * The horizontal bond stays on bare card edges. Two cards welded side by side
+ * carry their name rows side by side as well, so nothing can collide there —
+ * and measuring the facing overlap on chrome would let two cards that only
+ * overlap through their name strips read as facing each other.
  */
 export function findGlueSnap(
   dragged: Widget,
@@ -841,7 +842,13 @@ export function findGlueSnap(
   options: { excludeIds?: ReadonlySet<string> } = {},
 ): GlueSnap | null {
   const draggedBox = glueBoxRect(dragged)
+  const draggedChrome = glueChromeRect(dragged)
+  // How far the dragged card's stored top sits below its chrome top — the
+  // amount to hand back when turning a landed chrome corner into a position.
+  const draggedHead = dragged.position.y - draggedChrome.y
   let best: { snap: GlueSnap; gap: number } | null = null
+  // The last-resort bond for a card released squarely ON another — see below.
+  let overlapping: { snap: GlueSnap; depth: number } | null = null
 
   for (const candidate of Object.values(widgets)) {
     if (candidate.id === dragged.id) continue
@@ -851,7 +858,9 @@ export function findGlueSnap(
     // never move as one — it is not a weld target.
     if (candidate.metadata.locked) continue
     const box = glueBoxRect(candidate)
-    const { gapX, gapY, overlapX, overlapY } = edgeGaps(draggedBox, box)
+    const chrome = glueChromeRect(candidate)
+    const { gapX, overlapY } = edgeGaps(draggedBox, box)
+    const { gapY, overlapX, overlapY: deepY } = edgeGaps(draggedChrome, chrome)
 
     // A facing edge counts from a little overlap (overshoot) out to one cell.
     // Rank candidates by how far the seam still is from its resting `GLUE_GAP`
@@ -875,10 +884,14 @@ export function findGlueSnap(
           },
         }
       }
-    } else if (gapY >= -GLUE_OVERSHOOT && gapY <= GLUE_RANGE && overlapX >= GLUE_MIN_OVERLAP) {
+    }
+    // Not `else` — a card approaching a corner faces BOTH edges, and skipping
+    // the vertical read whenever the horizontal one merely fired (even when it
+    // scored worse) hid half the bonds a corner approach can make.
+    if (gapY >= -GLUE_OVERSHOOT && gapY <= GLUE_RANGE && overlapX >= GLUE_MIN_OVERLAP) {
       const score = Math.abs(gapY)
       if (!best || score < best.gap) {
-        const draggedOnTop = draggedBox.y <= box.y
+        const draggedOnTop = draggedChrome.y <= chrome.y
         best = {
           gap: score,
           snap: {
@@ -886,17 +899,63 @@ export function findGlueSnap(
             axis: 'y',
             position: {
               x: snapToGrid(dragged.position.x),
-              y: draggedOnTop
-                ? box.y - draggedBox.height
-                : box.y + box.height,
+              // Chrome corner → stored position: the card sits `draggedHead`
+              // below its own chrome top.
+              y:
+                (draggedOnTop ? chrome.y - draggedChrome.height : chrome.y + chrome.height) +
+                draggedHead,
             },
+          },
+        }
+      }
+    }
+
+    // A card released squarely ON another one — chrome boxes really
+    // overlapping, deeper than `GLUE_OVERSHOOT` forgives — is still a weld.
+    // Dropping one card onto another is the commonest way a hand says "join
+    // these two"; answering it with no bond at all meant the release read as
+    // "welds nothing", and a release that welds nothing PULLS THE MEMBER OUT
+    // OF ITS GROUP. So a card dragged onto its own clustermate silently
+    // ungrouped itself. Aiming at a card's visible top edge does exactly this:
+    // the weld rests on the CHROME edge, a title row higher, so the natural
+    // aim buries the drop a full row inside — twice what the overshoot allows.
+    //
+    // The bond it resolves to is the one the cluster reflow would push it to:
+    // out along the shallower penetration, to the near side. Kept strictly
+    // below every clean facing edge (it is consulted only when nothing else
+    // welds at all), so it can never steal a real seam.
+    if (overlapX > TOUCH_EPS && deepY > TOUCH_EPS) {
+      const escapeX = overlapX <= deepY
+      const depth = Math.min(overlapX, deepY)
+      if (!overlapping || depth < overlapping.depth) {
+        const draggedOnLeft =
+          draggedChrome.x + draggedChrome.width / 2 <= chrome.x + chrome.width / 2
+        const draggedOnTop =
+          draggedChrome.y + draggedChrome.height / 2 <= chrome.y + chrome.height / 2
+        overlapping = {
+          depth,
+          snap: {
+            targetId: candidate.id,
+            axis: escapeX ? 'x' : 'y',
+            position: escapeX
+              ? {
+                  // Side-by-side seams live on bare card edges, as above.
+                  x: draggedOnLeft ? box.x - draggedBox.width : box.x + box.width,
+                  y: snapToGrid(dragged.position.y),
+                }
+              : {
+                  x: snapToGrid(dragged.position.x),
+                  y:
+                    (draggedOnTop ? chrome.y - draggedChrome.height : chrome.y + chrome.height) +
+                    draggedHead,
+                },
           },
         }
       }
     }
   }
 
-  return best?.snap ?? null
+  return best?.snap ?? overlapping?.snap ?? null
 }
 
 /**
@@ -909,12 +968,16 @@ export function pulledFreeOfCluster(
   memberIds: readonly string[],
   widgets: Record<string, Widget>,
 ): boolean {
-  const draggedBox = glueBoxRect(dragged)
+  // Chrome boxes, matching what `findGlueSnap` welds: a vertically welded pair
+  // is a name row apart card-to-card, which is the whole of GLUE_RANGE — so
+  // measuring bare boxes here put every such bond exactly on the "still
+  // attached" boundary, one rounding error from reading as pulled free.
+  const draggedBox = glueChromeRect(dragged)
   for (const id of memberIds) {
     if (id === dragged.id) continue
     const member = widgets[id]
     if (!member) continue
-    if (glueSeparation(draggedBox, glueBoxRect(member)) <= GLUE_RANGE) return false
+    if (glueSeparation(draggedBox, glueChromeRect(member)) <= GLUE_RANGE) return false
   }
   return true
 }
@@ -933,7 +996,10 @@ export function connectedGlueComponents(
   reach: number = GLUE_RANGE,
 ): string[][] {
   const ids = memberIds.filter((id) => widgets[id])
-  const boxes = new Map(ids.map((id) => [id, glueBoxRect(widgets[id]!)]))
+  // Chrome boxes, for the same reason `pulledFreeOfCluster` uses them: a
+  // vertical weld is stored a name row apart, and bare boxes put that bond on
+  // the exact edge of `reach` — a cluster would split on a rounding error.
+  const boxes = new Map(ids.map((id) => [id, glueChromeRect(widgets[id]!)]))
   const seen = new Set<string>()
   const components: string[][] = []
   for (const start of ids) {
@@ -955,6 +1021,27 @@ export function connectedGlueComponents(
     components.push(component)
   }
   return components
+}
+
+/**
+ * How far a drifted piece must slide ALONG a weld before it actually faces the
+ * block it is closing onto: zero while the two spans already share a real edge,
+ * otherwise the shortest move that brings the piece back over the block's face.
+ *
+ * Once a piece has lost its facing edge entirely, "just enough overlap to
+ * count" would leave a hairline lap that reads as two cards touching at a
+ * corner — so it comes all the way back onto the face, which costs nothing
+ * extra: the piece was going to have to travel anyway.
+ */
+function faceAlign(start: number, size: number, blockStart: number, blockSize: number): number {
+  const need = Math.min(GLUE_MIN_OVERLAP, size, blockSize)
+  const overlap = Math.min(start + size, blockStart + blockSize) - Math.max(start, blockStart)
+  if (overlap >= need) return 0
+  // The two ends of the span that keeps the piece over the block's face —
+  // ordered, because a piece WIDER than the block brackets it instead.
+  const a = blockStart
+  const b = blockStart + blockSize - size
+  return Math.min(Math.max(a, b), Math.max(Math.min(a, b), start)) - start
 }
 
 /**
@@ -987,19 +1074,56 @@ export function closeClusterGaps(
   const components = connectedGlueComponents(present, widgets, GLUE_GAP)
   if (components.length > 1) {
     next = { ...widgets }
-    const merged: string[] = [...components[0]!]
-    for (const component of components.slice(1)) {
+    // The standing block is whichever piece holds the card that was just acted
+    // on: everything else comes back to IT. Leading with whatever component
+    // happened to be listed first could carry the anchored card across the
+    // board to meet the survivors, which is the one thing every close-ranks
+    // pass promises not to do.
+    const anchored = new Set(anchorIds)
+    const ordered = [...components].sort(
+      (a, b) =>
+        Number(b.some((id) => anchored.has(id))) - Number(a.some((id) => anchored.has(id))),
+    )
+    const merged: string[] = [...ordered[0]!]
+    for (const component of ordered.slice(1)) {
       // Chrome boxes, so a group closing ranks stops where the arriving card's
       // own title row begins rather than sliding it under the card above.
-      const block = chromeEnvelope(merged, next)!
-      const env = chromeEnvelope(component, next)!
+      const block = clusterChromeEnvelope(merged, next)!
+      const env = clusterChromeEnvelope(component, next)!
       const { gapX, gapY } = edgeGaps(block, env)
-      // Close whichever axes actually hold clear air, toward the block. This
-      // step exists for a piece that drifted DIAGONALLY clear of the rest,
+      // This step exists for a piece that drifted DIAGONALLY clear of the rest,
       // sharing no lane with it — gravity below has nothing to pull such a
       // piece against, and only a whole-envelope move brings it back in reach.
-      const dx = gapX > 0 ? (env.x + env.width / 2 >= block.x + block.width / 2 ? -gapX : gapX) : 0
-      const dy = gapY > 0 ? (env.y + env.height / 2 >= block.y + block.height / 2 ? -gapY : gapY) : 0
+      //
+      // A weld is FACE contact, never a corner kiss. Closing both axes at once
+      // slid such a piece diagonally until its CORNER met the block's: no
+      // shared edge, so `edgeInsets` carved no seam, and a wedge of empty
+      // canvas sat between two cards the group still framed as welded. That is
+      // exactly what an unpin leaves behind — the card shrinks on both axes at
+      // once. So the piece closes along the axis it is ARRANGED on (the same
+      // reading `reflowWeldedCluster` makes: separation measured against the
+      // pair's own size, so a wide envelope beside a tall one still reads its
+      // arrangement) and slides along the other only far enough to face the
+      // block.
+      const spanX = (block.width + env.width) / 2
+      const spanY = (block.height + env.height) / 2
+      const alongX = Math.abs(env.x + env.width / 2 - (block.x + block.width / 2)) / (spanX || 1)
+      const alongY = Math.abs(env.y + env.height / 2 - (block.y + block.height / 2)) / (spanY || 1)
+      const closeX = alongX >= alongY
+      const dx = closeX
+        ? gapX > 0
+          ? env.x + env.width / 2 >= block.x + block.width / 2
+            ? -gapX
+            : gapX
+          : 0
+        : faceAlign(env.x, env.width, block.x, block.width)
+      const dy = closeX
+        ? faceAlign(env.y, env.height, block.y, block.height)
+        : gapY > 0
+          ? env.y + env.height / 2 >= block.y + block.height / 2
+            ? -gapY
+            : gapY
+          : 0
       for (const id of component) {
         const w = next[id]!
         next[id] = { ...w, position: { x: w.position.x + dx, y: w.position.y + dy } }

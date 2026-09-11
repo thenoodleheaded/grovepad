@@ -16,6 +16,7 @@ import {
   GLUE_RANGE,
   GLUE_TITLE_HEADROOM,
   GLUE_TITLE_ROW_H,
+  glueBoxRect,
   glueChromeRect,
   glueSeparation,
   insetGlueRects,
@@ -84,9 +85,12 @@ describe('option-drag glue snapping', () => {
     const fromLeft = widget('left', 300 - 240 - 30, 320)
     expect(findGlueSnap(fromLeft, { left: fromLeft, target })!.position.x)
       .toBe(300 - 240)
+    // Vertically, the weld is chrome-to-chrome: the arriving card lands clear
+    // ABOVE the target's own name row, not flush against the target's card
+    // edge, which is where it used to be painted straight over that name.
     const fromAbove = widget('above', 320, 300 - 160 - 30)
     expect(findGlueSnap(fromAbove, { above: fromAbove, target })!.position.y)
-      .toBe(300 - 160)
+      .toBe(300 - WIDGET_TITLE_ROW - 160)
   })
 
   it('finds nothing beyond glue range or without facing overlap', () => {
@@ -107,10 +111,33 @@ describe('option-drag glue snapping', () => {
     expect(snap.position).toEqual({ x: 240, y: 0 })
   })
 
-  it('refuses to glue a card dropped squarely on top of another', () => {
+  it('welds a card dropped squarely on top of another out to the nearest side', () => {
+    // Dropping one card onto another is how a hand says "join these two".
+    // Answering it with no bond meant the release welded nothing — and a
+    // release that welds nothing pulls the member OUT of its group, so a card
+    // dragged onto its own clustermate silently ungrouped itself.
     const target = widget('target', 0, 0)
     const onTop = widget('onTop', 5, 5)
-    expect(findGlueSnap(onTop, { onTop, target })).toBeNull()
+    const snap = findGlueSnap(onTop, { onTop, target })!
+    expect(snap.targetId).toBe('target')
+    // Shallower penetration wins, and the card leaves by the near side: it sits
+    // 5px below the target's centre, so it lands under it, chrome-to-chrome.
+    expect(snap.axis).toBe('y')
+    expect(snap.position.y).toBe(160 + WIDGET_TITLE_ROW)
+  })
+
+  it('still prefers a real facing edge over an overlapping drop', () => {
+    // The on-top bond is last resort only: it must never steal a seam from a
+    // card that is genuinely coming to rest against an edge.
+    const target = widget('target', 0, 0)
+    const beside = widget('beside', 250, 0)
+    // Sitting almost exactly under the dragged card, so it offers only the
+    // on-top bond while the target offers a clean 10px facing gap.
+    const swallowing = widget('swallowing', 255, 5)
+    const snap = findGlueSnap(beside, { beside, target, swallowing })!
+    expect(snap.targetId).toBe('target')
+    expect(snap.axis).toBe('x')
+    expect(snap.position).toEqual({ x: 240, y: 0 })
   })
 
   it('never targets widgets on another canvas or excluded ids', () => {
@@ -404,6 +431,28 @@ describe('cluster compaction when a member shrinks or leaves', () => {
     expect(closed.f!.position).toEqual({ x: 80, y: row })
     expect(closed.a!.position).toEqual({ x: 0, y: 0 })
   })
+
+  it('closes a drifted piece onto a FACE, never corner to corner', () => {
+    // What an unpin leaves behind: the card that was held open shrinks on both
+    // axes at once, so its low-slung neighbour ends up clear of it diagonally.
+    // Closing both axes independently walked that neighbour in until the two
+    // corners kissed — no shared edge, so no seam was carved and a wedge of
+    // empty canvas sat between two cards the group still framed as welded.
+    const held = widget('held', 0, 0, 120, 80)
+    const beside = widget('beside', 320, 240, 120, 40)
+    const members = { held, beside }
+    const closed = closeClusterGaps(members, ['held', 'beside'], ['held'])
+
+    // The card that was acted on never moves...
+    expect(closed.held!.position).toEqual({ x: 0, y: 0 })
+    // ...and its neighbour comes back to the side it was welded to, over real
+    // shared edge rather than a single point.
+    const a = glueChromeRect(closed.held!)
+    const b = glueChromeRect(closed.beside!)
+    expect(glueSeparation(a, b)).toBe(0)
+    const sharedEdge = Math.min(a.y + a.height, b.y + b.height) - Math.max(a.y, b.y)
+    expect(sharedEdge).toBeGreaterThanOrEqual(b.height)
+  })
 })
 
 describe('folded cluster packing', () => {
@@ -525,8 +574,8 @@ describe('the group boundary is a frame plus its own title row', () => {
     const env = clusterFrameEnvelope(ids, wide)!
     expect(env.x).toBe(-GLUE_FRAME_BAND)
     expect(env.width).toBe(600 + GLUE_FRAME_BAND * 2)
-    // These members are pinned, so each floats its own title row — real
-    // occupied space the frame has to stand clear of, above the top card.
+    // Every member floats its own title row — real occupied space the frame
+    // has to stand clear of, above the top card.
     expect(env.y).toBe(-GLUE_FRAME_BAND - WIDGET_TITLE_ROW)
     expect(env.height).toBe(320 + WIDGET_TITLE_ROW + GLUE_FRAME_BAND * 2)
     // The frame itself claims no title-row headroom of its OWN: the group's
@@ -537,7 +586,10 @@ describe('the group boundary is a frame plus its own title row', () => {
   it('bounds the title row to the icon, name, and buttons — never the full width', () => {
     const row = clusterTitleRowRect(ids, wide, undefined)!
     expect(row.x).toBe(0)
-    expect(row.y).toBe(-GLUE_TITLE_HEADROOM)
+    // The group's own bar clears the top member's name row as well as the
+    // member's card — it is anchored on the chrome envelope, the same box the
+    // boundary lines are drawn from, so the two names never sit on each other.
+    expect(row.y).toBe(-GLUE_TITLE_HEADROOM - WIDGET_TITLE_ROW)
     expect(row.height).toBe(GLUE_TITLE_ROW_H)
     // The empty canvas beside a short name is not the group.
     expect(row.width).toBeLessThan(300)
@@ -547,14 +599,23 @@ describe('the group boundary is a frame plus its own title row', () => {
   })
 
   it('reserves a member’s own title row only when that member shows one', () => {
-    // A pinned member floats its own row (its only Pin control), so the card
-    // above it must not be packed into that strip.
+    // Every welded card keeps its own name row, so the card above it must not
+    // be packed into that strip — pinned or not.
     const pinned = widget('p', 0, 0, 240, 160)
     expect(glueChromeRect(pinned).y).toBe(-WIDGET_TITLE_ROW)
     expect(glueChromeRect(pinned).height).toBe(160 + WIDGET_TITLE_ROW)
-    // An unpinned member hands its name to the group frame: no strip at all.
-    const plain = { ...pinned, metadata: { badges: [] } }
-    expect(glueChromeRect(plain).y).toBe(0)
+    // Membership alone no longer takes the row away: an unpinned member that
+    // has something to show still floats its name, so the clustermate above it
+    // is packed clear of that strip instead of straight over the name.
+    // (Unpinned means it rests, so its box is the resting tile's, not the
+    // stored 240×160 — only the reserved strip above it is under test here.)
+    const plain = { ...pinned, data: { text: 'kept' }, metadata: { badges: [] } }
+    expect(glueChromeRect(plain).y).toBe(-WIDGET_TITLE_ROW)
+    expect(glueChromeRect(plain).height).toBe(glueBoxRect(plain).height + WIDGET_TITLE_ROW)
+    // An empty card rests as a bare icon, and an icon IS its own identity
+    // mark — that, not membership, is what removes the row.
+    const empty = { ...pinned, metadata: { badges: [] } }
+    expect(glueChromeRect(empty).y).toBe(0)
     // An icon IS its own identity mark and floats nothing.
     const icon = { ...pinned, iconified: true, size: { width: 80, height: 80 } }
     expect(glueChromeRect(icon).y).toBe(0)

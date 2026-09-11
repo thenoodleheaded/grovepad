@@ -1,4 +1,5 @@
 import type { Theme } from '../../store/useThemeStore'
+import type { VisualQuality } from '../../store/useSettingsStore'
 
 /**
  * Every knob the ambient aura reads, per theme. This module is the single source
@@ -65,7 +66,11 @@ export const DEFAULT_AURA_TUNING: AuraTuning = {
     minRadius: 0.1,
     maxRadius: 0.5,
     maxEmitters: 8,
-    blend: 'lighter',
+    // Additive blending cannot darken, so on a near-white canvas `lighter` had
+    // nothing left to add and every pool disappeared into the paper. The layer
+    // element multiplies onto the board (CanvasAuraLayer), so the pools are
+    // composited normally here and tint the canvas on the way down.
+    blend: 'source-over',
   },
 }
 
@@ -75,8 +80,11 @@ const DEFAULT_CANVAS_COLORS: { dark: CanvasColorTuning; light: CanvasColorTuning
     gridFine: 'rgb(163 230 53 / 0.13)',
   },
   light: {
-    canvasTintBase: '#eef1ec',
-    gridFine: 'rgb(120 160 40 / 0.14)',
+    // Neutral greyish-white paper with no hue of its own — the cards carry the
+    // colour. Mirrors the [data-theme='light'] block in
+    // styles/product/01-tokens-base.css; keep the two in sync.
+    canvasTintBase: '#f4f5f6',
+    gridFine: 'rgb(112 116 122 / 0.18)',
   },
 }
 
@@ -263,15 +271,50 @@ export function auraScreenPool(
 }
 
 /** Aspect-correct low-resolution buffer: enough pixels for a smooth gradient
- * without painting a full viewport-sized canvas on every camera frame. */
+ * without painting a full viewport-sized canvas on every camera frame.
+ * `qualityScale` shrinks the buffer further on the reduced visual tiers. */
 export function auraBufferSize(
   viewportWidth: number,
   viewportHeight: number,
+  qualityScale = 1,
 ): { width: number; height: number } {
   if (!(viewportWidth > 0) || !(viewportHeight > 0)) return { width: 0, height: 0 }
-  const scale = Math.min(0.65, 560 / Math.max(viewportWidth, viewportHeight))
+  const budget = Math.min(1, Math.max(0.1, qualityScale))
+  const scale = Math.min(0.65, 560 / Math.max(viewportWidth, viewportHeight)) * budget
   return {
     width: Math.max(1, Math.round(viewportWidth * scale)),
     height: Math.max(1, Math.round(viewportHeight * scale)),
+  }
+}
+
+/**
+ * How much aura each visual quality tier may paint.
+ *
+ * `high` is exactly the tuned document (every factor 1), so the richest tier is
+ * bit-for-bit the look the tuning panel exports. `low` never renders at all —
+ * the layer unmounts rather than painting a dimmed version of itself — so its
+ * factors exist only to keep the record total.
+ */
+export const AURA_QUALITY_BUDGET: Record<
+  VisualQuality,
+  { render: boolean; emitters: number; blur: number; alpha: number; buffer: number }
+> = {
+  high: { render: true, emitters: 1, blur: 1, alpha: 1, buffer: 1 },
+  balanced: { render: true, emitters: 0.5, blur: 0.5, alpha: 0.85, buffer: 0.7 },
+  low: { render: false, emitters: 0, blur: 0, alpha: 0, buffer: 0.1 },
+}
+
+/** The tuning one theme actually paints with under a quality tier. */
+export function auraTuningForQuality(
+  tuning: AuraThemeTuning,
+  quality: VisualQuality,
+): AuraThemeTuning {
+  const budget = AURA_QUALITY_BUDGET[quality]
+  if (budget.emitters === 1 && budget.blur === 1 && budget.alpha === 1) return tuning
+  return {
+    ...tuning,
+    maxEmitters: Math.max(1, Math.round(tuning.maxEmitters * budget.emitters)),
+    blur: tuning.blur * budget.blur,
+    alpha: tuning.alpha * budget.alpha,
   }
 }

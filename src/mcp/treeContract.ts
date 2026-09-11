@@ -153,9 +153,9 @@ export function thoughtPlanFromMcpTree(draft: McpTreeDraft): ThoughtPlan {
     confidence: 1,
     nodes: draft.nodes.map((node) => ({
       temporaryId: node.id,
-      widgetType: 'notes',
+      widgetType: 'text',
       title: node.title,
-      data: { text: node.note, mode: 'plain', color: 'yellow', attribution: '' },
+      data: { text: node.note, mode: 'plain', color: 'yellow' },
       sourceText: node.note || node.title,
       confidence: 1,
       depth: node.depth,
@@ -196,7 +196,7 @@ export function canvasOutline(
   }
   return {
     nodes: visible.map((widget) => {
-      const text = widget.type === 'notes' && includeNoteText
+      const text = widget.type === 'text' && includeNoteText
         && 'text' in widget.data && typeof widget.data.text === 'string'
         ? widget.data.text.slice(0, 1_000)
         : undefined

@@ -1,39 +1,31 @@
 import type { ModuleType } from './moduleTypes'
-import type { AiGeneratorData, AudioPlayerData, BarChartData, BudgetData, BulletsData, CalculatorData, CalendarData, CanvasNodeData, ChecklistData, CodeData, ColorPaletteData, ContactData, CountdownData, CounterData, DecisionData, DialogData, ExcalidrawData, FlashcardsData, GameTunerData, GoalTrackerData, HabitData, KanbanData, LinksData, MediaData, MeetingNotesData, MetricsData, MoodTrackerData, NotesData, PollData, PriorityMatrixData, ProgressData, ProsConsData, QuoteData, RatingData, ReadingListData, SketchpadData, StickyNoteData, StopwatchData, TableData, TimelineData, TimerData, WeeklyPlannerData, WorldClockData } from './widgetDataCore'
-import type { AssignmentData, CanvasLmsData, CitationData, CornellData, FormulaSheetData, GpaData, GradeCalcData, PomodoroData, QuizData, StudyGoalData, VocabData } from './widgetDataEducation'
-import type { BranchGateData, DailyAgendaData, DatePickerData, DecisionMatrixData, FormWidgetData, FormulaData, InventoryData, LineChartData, LogbookData, NumberInputData, OutlineData, PieChartData, ProcessData, RiskRegisterData, StatusData, SwotData, TextInputData, TimesheetData, ToggleData } from './widgetDataWorkflow'
-import type { AggregatorData, AtlasWidgetData, AutomationCoreData, ChoreRotationData, ClockPulseData, ComparatorData, DebtPayoffData, DecisionJournalData, ExpenseSplitData, GiftsOccasionsData, GuestListData, HomeMaintenanceData, InvoicesData, JobApplicationsData, KeepInTouchData, LatchData, LocationData, MealPlannerData, MedicationsData, NotifierData, OkrData, RandomPickerData, RangeMapperData, RecipeData, RecorderData, RenewalsVaultData, SequencerData, SnippetLibraryData, SubscriptionsData, TemplateData, TimekeeperData, TripItineraryData, UnitConverterData, WeeklyReviewData, WorkoutPlanData } from './widgetDataExpansion'
+import type { AiGeneratorData, AudioPlayerData, BarChartData, BudgetData, BulletsData, CalculatorData, CalendarData, CanvasNodeData, ChecklistData, CodeData, ColorPaletteData, ContactData, CounterData, DecisionData, DialogData, FlashcardsData, GameTunerData, GoalTrackerData, HabitData, LinksData, MediaData, MeetingNotesData, MetricsData, MoodTrackerData, TextData, PollData, ProsConsData, RatingData, ReadingListData, SketchpadData, TableData } from './widgetDataCore'
+import type { CanvasLmsData, CitationData, FormulaSheetData, GradeCalcData } from './widgetDataEducation'
+import type { BranchGateData, DatePickerData, DecisionMatrixData, FormWidgetData, FormulaData, InventoryData, LogbookData, NumberInputData, OutlineData, ProcessData, RiskRegisterData, StatusData, SwotData, TextInputData, TimesheetData, ToggleData } from './widgetDataWorkflow'
+import type { AggregatorData, AtlasWidgetData, AutomationCoreData, ChoreRotationData, ClockPulseData, ComparatorData, DebtPayoffData, DecisionJournalData, ExpenseSplitData, GiftsOccasionsData, GuestListData, HomeMaintenanceData, InvoicesData, JobApplicationsData, KeepInTouchData, LatchData, LocationData, MealPlannerData, MedicationsData, NotifierData, RangeMapperData, RecipeData, RecorderData, RenewalsVaultData, SequencerData, SnippetLibraryData, SubscriptionsData, TemplateData, TimekeeperData, TripItineraryData, UnitConverterData, WeeklyReviewData, WorkoutPlanData } from './widgetDataExpansion'
 
 /** Maps every module type to its data schema. */
 export interface ModuleDataMap {
-  notes: NotesData
+  text: TextData
   bullets: BulletsData
   checklist: ChecklistData
   table: TableData
   sketchpad: SketchpadData
-  excalidraw: ExcalidrawData
-  budget: BudgetData
-  progress: ProgressData
-  ai_generator: AiGeneratorData
-  timeline: TimelineData
-  dialog: DialogData
+    budget: BudgetData
+    ai_generator: AiGeneratorData
+    dialog: DialogData
   game_tuner: GameTunerData
   audio_player: AudioPlayerData
   canvas_node: CanvasNodeData
-  kanban: KanbanData
-  countdown: CountdownData
-  habit: HabitData
+      habit: HabitData
   links: LinksData
   code: CodeData
-  quote: QuoteData
   poll: PollData
   contact: ContactData
   media: MediaData
   metrics: MetricsData
-  sticky_note: StickyNoteData
-  calendar: CalendarData
-  timer: TimerData
-  timekeeper: TimekeeperData
+    calendar: CalendarData
+    timekeeper: TimekeeperData
   tracker: AtlasWidgetData
   rating: RatingData
   color_palette: ColorPaletteData
@@ -42,28 +34,17 @@ export interface ModuleDataMap {
   bar_chart: BarChartData
   counter: CounterData
   pros_cons: ProsConsData
-  weekly_planner: WeeklyPlannerData
-  goal_tracker: GoalTrackerData
-  stopwatch: StopwatchData
-  reading_list: ReadingListData
+    goal_tracker: GoalTrackerData
+    reading_list: ReadingListData
   flashcards: FlashcardsData
   canvas_lms: CanvasLmsData
   meeting_notes: MeetingNotesData
-  priority_matrix: PriorityMatrixData
-  decision: DecisionData
-  world_clock: WorldClockData
-  location: LocationData
-  pomodoro: PomodoroData
-  vocab: VocabData
-  grade_calc: GradeCalcData
-  gpa: GpaData
-  assignment: AssignmentData
-  cornell: CornellData
-  formula_sheet: FormulaSheetData
+    decision: DecisionData
+    location: LocationData
+      grade_calc: GradeCalcData
+        formula_sheet: FormulaSheetData
   citation: CitationData
-  study_goal: StudyGoalData
-  quiz: QuizData
-  text_input: TextInputData
+      text_input: TextInputData
   number_input: NumberInputData
   toggle: ToggleData
   branch_gate: BranchGateData
@@ -72,24 +53,20 @@ export interface ModuleDataMap {
   date_picker: DatePickerData
   outline: OutlineData
   form: FormWidgetData
-  daily_agenda: DailyAgendaData
-  process: ProcessData
+    process: ProcessData
   risk_register: RiskRegisterData
   decision_matrix: DecisionMatrixData
   swot: SwotData
   timesheet: TimesheetData
   inventory: InventoryData
   logbook: LogbookData
-  line_chart: LineChartData
-  pie_chart: PieChartData
-  unit_converter: UnitConverterData
+      unit_converter: UnitConverterData
   clock_pulse: ClockPulseData
   comparator: ComparatorData
   aggregator: AggregatorData
   range_mapper: RangeMapperData
   latch: LatchData
-  random_picker: RandomPickerData
-  sequencer: SequencerData
+    sequencer: SequencerData
   template: TemplateData
   recorder: RecorderData
   notifier: NotifierData
@@ -105,8 +82,7 @@ export interface ModuleDataMap {
   medications: MedicationsData
   workout_plan: WorkoutPlanData
   job_applications: JobApplicationsData
-  okr: OkrData
-  decision_journal: DecisionJournalData
+    decision_journal: DecisionJournalData
   weekly_review: WeeklyReviewData
   snippet_library: SnippetLibraryData
   keep_in_touch: KeepInTouchData

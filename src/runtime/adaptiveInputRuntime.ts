@@ -33,7 +33,33 @@ export function initAdaptiveInputRuntime(): () => void {
     })
     const root = document.documentElement
     root.style.setProperty('--gp-keyboard-inset', `${keyboardInset}px`)
-    root.dataset.virtualKeyboard = virtualKeyboardIsOpen(keyboardInset) ? 'open' : 'closed'
+    const keyboardOpen = virtualKeyboardIsOpen(keyboardInset)
+    root.dataset.virtualKeyboard = keyboardOpen ? 'open' : 'closed'
+    if (!keyboardOpen) restoreDocumentScroll()
+  }
+
+  // iOS WebKit ignores `interactive-widget=resizes-content`, so focusing a
+  // field scrolls the whole document to lift it above the keyboard. Grovepad
+  // never scrolls the document itself (html and body are overflow: hidden), and
+  // iOS does not reliably scroll it back once the keyboard closes, which left
+  // the top toolbar stranded under the status bar for the rest of the session.
+  // Put the document back, but only when nothing is being edited: resetting
+  // while a field has focus would drop that field behind the keyboard.
+  let restoreFrame = 0
+  const isEditingText = () => {
+    const active = document.activeElement as HTMLElement | null | undefined
+    if (!active) return false
+    return active.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(active.tagName)
+  }
+  const restoreDocumentScroll = () => {
+    if ((window.scrollX || 0) === 0 && (window.scrollY || 0) === 0) return
+    window.cancelAnimationFrame(restoreFrame)
+    // Deferred a frame: during a focus move, focusout fires before the next
+    // field is focused, and resetting in between would fight iOS mid-transition.
+    restoreFrame = window.requestAnimationFrame(() => {
+      restoreFrame = 0
+      if (!isEditingText()) window.scrollTo(0, 0)
+    })
   }
 
   const syncDocumentState = () => {
@@ -63,6 +89,7 @@ export function initAdaptiveInputRuntime(): () => void {
   window.addEventListener('pointerover', onPointer, { capture: true, passive: true })
   window.addEventListener('keydown', onKey, { capture: true })
   window.addEventListener('resize', updateCapabilities, { passive: true })
+  window.addEventListener('focusout', restoreDocumentScroll, { capture: true })
   window.visualViewport?.addEventListener('resize', updateCapabilities, { passive: true })
   for (const query of Object.values(media)) query.addEventListener('change', updateCapabilities)
 
@@ -75,6 +102,8 @@ export function initAdaptiveInputRuntime(): () => void {
     window.removeEventListener('pointerover', onPointer, { capture: true })
     window.removeEventListener('keydown', onKey, { capture: true })
     window.removeEventListener('resize', updateCapabilities)
+    window.removeEventListener('focusout', restoreDocumentScroll, { capture: true })
+    if (restoreFrame) window.cancelAnimationFrame(restoreFrame)
     window.visualViewport?.removeEventListener('resize', updateCapabilities)
     for (const query of Object.values(media)) query.removeEventListener('change', updateCapabilities)
   }

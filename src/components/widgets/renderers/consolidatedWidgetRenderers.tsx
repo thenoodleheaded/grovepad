@@ -4,12 +4,14 @@ import type {
   DecisionData,
   FlashcardsData,
   GoalTrackerData,
-  NotesData,
+  TextData,
   SketchpadData,
 } from '../../../types/widgetDataCore'
 import type { GradeCalcData } from '../../../types/widgetDataEducation'
 import type { DatePickerData } from '../../../types/widgetDataWorkflow'
 import type { ModuleData } from '../../../types/spatial'
+import { dataWithSkinState, skinStateFor } from '../../../utils/widgetSkins'
+import { stickyStrokes } from '../modules/textSkinModel'
 import type { WidgetRendererFamily } from './contracts'
 import {
   BarChartWidget,
@@ -17,9 +19,8 @@ import {
   DrawingWidget,
   FlashcardsWidget,
   GoalTrackerWidget,
-  NotesWidget,
+  TextWidget,
   ProgressWidget,
-  QuoteWidget,
   StickyNoteWidget,
   TasksWidget,
 } from './lazyCoreWidgets'
@@ -40,16 +41,42 @@ const uid = () => crypto.randomUUID()
 export const consolidatedWidgetRendererFamily: WidgetRendererFamily = {
   id: 'consolidated-modes',
   renderers: {
-    notes: ({ widget, onUpdate, onHeightChange }) => {
-      const data = widget.data as NotesData
+    text: ({ widget, onUpdate, onHeightChange }) => {
+      const data = widget.data as TextData
       const mode = data.mode ?? 'plain'
       if (mode === 'sticky') {
-        return <StickyNoteWidget widgetId={widget.id} data={{ text: data.text, color: data.color ?? 'yellow' }} onChange={(next) => onUpdate({ ...data, text: next.text, color: next.color } as ModuleData)} onHeightChange={onHeightChange} />
+        // Pen ink is Sticky's own business, so it lives in the skin's isolated
+        // pocket rather than on TextData — rolling to Plain and back keeps
+        // both the writing and the scribble over it.
+        const inked = skinStateFor(data, 'sticky')
+        return (
+          <StickyNoteWidget
+            widgetId={widget.id}
+            data={{
+              text: data.text,
+              color: data.color ?? 'yellow',
+              strokes: stickyStrokes(inked.strokes) as { points: number[] }[],
+            }}
+            onChange={(next) => onUpdate(dataWithSkinState(
+              { ...data, text: next.text, color: next.color } as ModuleData,
+              'sticky',
+              { ...inked, strokes: next.strokes ?? [] },
+            ))}
+            onHeightChange={onHeightChange}
+          />
+        )
       }
-      if (mode === 'quote') {
-        return <QuoteWidget widgetId={widget.id} data={{ text: data.text, attribution: data.attribution ?? '' }} onChange={(next) => onUpdate({ ...data, text: next.text, attribution: next.attribution } as ModuleData)} onHeightChange={onHeightChange} />
-      }
-      return <NotesWidget widgetId={widget.id} skin={mode} data={data} onChange={onUpdate} onHeightChange={onHeightChange} />
+      // Every other skin is drawn by TextWidget itself — only Sticky needs
+      // adapting, because its ink lives outside TextData.
+      return (
+        <TextWidget
+          widgetId={widget.id}
+          skin={mode}
+          data={data}
+          onChange={onUpdate}
+          onHeightChange={onHeightChange}
+        />
+      )
     },
 
     bar_chart: ({ widget, onUpdate }) => {
@@ -68,7 +95,7 @@ export const consolidatedWidgetRendererFamily: WidgetRendererFamily = {
           lastRolledAt: data.lastRolledAt ?? null,
           noRepeatWindow: data.noRepeatWindow ?? 1,
         }
-        return <ExpansionWidget type="random_picker" data={weighted} onChange={(nextData) => {
+        return <ExpansionWidget type="random_picker" data={weighted as unknown as ModuleData} onChange={(nextData) => {
           const next = nextData as typeof weighted
           const pickedIndex = next.pick ? next.options.findIndex((option) => option.text === next.pick) : null
           onUpdate({ ...data, question: next.label, options: next.options.map((option) => option.text), weights: next.options.map((option) => option.weight), pickedIndex: pickedIndex === -1 ? null : pickedIndex, history: next.history, lastRolledAt: next.lastRolledAt, noRepeatWindow: next.noRepeatWindow } as ModuleData)
@@ -120,7 +147,7 @@ export const consolidatedWidgetRendererFamily: WidgetRendererFamily = {
       }
       if (mode === 'okr') {
         const okr = data.okr ?? { objective: data.goal, keyResults: [{ id: uid(), label: '', current: 0, target: 100, weight: 1 }] }
-        return <ExpansionWidget type="okr" data={okr} onChange={(next) => onUpdate({ ...data, okr: next as typeof okr } as ModuleData)} />
+        return <ExpansionWidget type="okr" data={okr as unknown as ModuleData} onChange={(next) => onUpdate({ ...data, okr: next as typeof okr } as ModuleData)} />
       }
       return <GoalTrackerWidget data={data} onChange={(next) => onUpdate({ ...data, goal: next.goal, milestones: next.milestones } as ModuleData)} />
     },

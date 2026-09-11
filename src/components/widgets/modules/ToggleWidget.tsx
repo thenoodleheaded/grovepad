@@ -62,7 +62,7 @@ function ToggleState({
 }) {
   return (
     <p className="gp-toggle-state" data-on={value || undefined} aria-live="polite">
-      <span style={tone ? { color: tone } : undefined}>{word}</span>
+      <span style={tone ? { color: `color-mix(in oklab, ${tone}, black var(--gp-signal-ink-mix, 0%))` } : undefined}>{word}</span>
       <code>{String(value)}</code>
     </p>
   )

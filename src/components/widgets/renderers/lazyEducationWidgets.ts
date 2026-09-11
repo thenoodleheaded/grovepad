@@ -3,7 +3,6 @@ import { lazy } from 'react'
 export const AssignmentWidget = lazy(async () => ({ default: (await import('../modules/AssignmentWidget')).AssignmentWidget }))
 export const CanvasLmsWidget = lazy(async () => ({ default: (await import('../modules/CanvasLmsWidget')).CanvasLmsWidget }))
 export const CitationWidget = lazy(async () => ({ default: (await import('../modules/CitationWidget')).CitationWidget }))
-export const CornellWidget = lazy(async () => ({ default: (await import('../modules/CornellWidget')).CornellWidget }))
 export const FormulaSheetWidget = lazy(async () => ({ default: (await import('../modules/FormulaSheetWidget')).FormulaSheetWidget }))
 export const GpaWidget = lazy(async () => ({ default: (await import('../modules/GpaWidget')).GpaWidget }))
 export const GradeCalcWidget = lazy(async () => ({ default: (await import('../modules/GradeCalcWidget')).GradeCalcWidget }))

@@ -1,5 +1,6 @@
 use base64::Engine;
 use tauri::{Emitter, Manager};
+use tauri_plugin_native_auth::{AppleSignInResult, NativeAuthExt};
 use tauri_plugin_native_widget::{NativeWidgetExt, SyncResult};
 
 /// Payload sent to the frontend: raw file bytes, base64-encoded for IPC. Only
@@ -142,6 +143,20 @@ async fn sync_note_widget(app: tauri::AppHandle, payload: String) -> Result<Sync
         .map_err(|error| error.to_string())
 }
 
+/// Show Apple's native Sign in with Apple sheet (iOS app only). `nonce` is the
+/// SHA-256 hex of the raw nonce the frontend keeps for Supabase, so the returned
+/// ID token can only be redeemed by the request that asked for it.
+#[tauri::command]
+async fn sign_in_with_apple(app: tauri::AppHandle, nonce: String) -> Result<AppleSignInResult, String> {
+    if nonce.len() != 64 || !nonce.bytes().all(|byte| byte.is_ascii_hexdigit()) {
+        return Err("Apple sign-in needs a SHA-256 hex nonce".into());
+    }
+    app.native_auth()
+        .sign_in_with_apple(nonce)
+        .await
+        .map_err(|error| error.to_string())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     // Windows/Linux: a second launch (double-clicking another .grovepad file
@@ -164,6 +179,7 @@ pub fn run() {
 
     builder
         .plugin(tauri_plugin_native_widget::init())
+        .plugin(tauri_plugin_native_auth::init())
         .setup(|app| {
             if cfg!(debug_assertions) {
                 app.handle().plugin(
@@ -177,11 +193,16 @@ pub fn run() {
                 pending_open: std::sync::Mutex::new(initial_open),
                 frontend_ready: std::sync::atomic::AtomicBool::new(false),
             });
+            #[cfg(target_os = "ios")]
+            if let Some(window) = app.get_webview_window("main") {
+                let _ = window.with_webview(|webview| ios_disable_safe_area_insets(webview.inner()));
+            }
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
             take_pending_open_file,
-            sync_note_widget
+            sync_note_widget,
+            sign_in_with_apple
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")
@@ -200,6 +221,32 @@ pub fn run() {
                 }
             }
         });
+}
+
+/// Let the page own the whole screen on iOS.
+///
+/// UIKit's default `contentInsetAdjustmentBehavior` (automatic) insets the
+/// WKWebView's scroll view by both safe areas, while wry still lays the page out
+/// from the top edge. On an iPhone with a Dynamic Island that left the web
+/// content 96pt short (62pt top + 34pt bottom) with a dead band beneath it.
+/// `viewport-fit=cover` and the CSS `env(safe-area-inset-*)` padding already keep
+/// the interface clear of the notch and home indicator, so the scroll view must
+/// not inset a second time. wry exposes no setting for this.
+#[cfg(target_os = "ios")]
+fn ios_disable_safe_area_insets(webview: *mut std::ffi::c_void) {
+    use objc2::runtime::AnyObject;
+    // UIScrollViewContentInsetAdjustmentBehaviorNever
+    const NEVER: isize = 2;
+    if webview.is_null() {
+        return;
+    }
+    unsafe {
+        let webview = &*(webview as *const AnyObject);
+        let scroll_view: *mut AnyObject = objc2::msg_send![webview, scrollView];
+        if let Some(scroll_view) = scroll_view.as_ref() {
+            let _: () = objc2::msg_send![scroll_view, setContentInsetAdjustmentBehavior: NEVER];
+        }
+    }
 }
 
 #[cfg(test)]

@@ -26,7 +26,7 @@ describe('ghost tree widget bundles', () => {
 
     useWidgetStore.getState().startGhostShaper(24_000, 24_000)
     const rootId = useWidgetStore.getState().ghostConfig!.nodes[0]!.id
-    useWidgetStore.getState().setGhostNodeWidgetTypes(rootId, ['notes', 'checklist'])
+    useWidgetStore.getState().setGhostNodeWidgetTypes(rootId, ['text', 'checklist'])
     useWidgetStore.getState().beginGhostGesture()
     useWidgetStore.getState().shapeGhostTree(rootId, 'down', 1)
     useWidgetStore.getState().endGhostGesture()
@@ -38,7 +38,7 @@ describe('ghost tree widget bundles', () => {
     const created = Object.values(state.widgets).filter((widget) => !beforeWidgetIds.has(widget.id))
     const createdRelations = Object.values(state.relations).filter((relation) => !beforeRelationIds.has(relation.id))
 
-    expect(created.map((widget) => widget.type).sort()).toEqual(['checklist', 'flashcards', 'notes'])
+    expect(created.map((widget) => widget.type).sort()).toEqual(['checklist', 'flashcards', 'text'])
     expect(createdRelations).toHaveLength(1)
     expect(createdRelations[0]?.type).toBe('parent')
     expect(state.selectedIds).toEqual(new Set(created.map((widget) => widget.id)))
@@ -53,7 +53,7 @@ describe('ghost tree widget bundles', () => {
     const beforeIds = new Set(Object.keys(useWidgetStore.getState().widgets))
     useWidgetStore.getState().startGhostShaper(44_000, 44_000)
     const rootId = useWidgetStore.getState().ghostConfig!.nodes[0]!.id
-    useWidgetStore.getState().setGhostNodeWidgetTypes(rootId, ['notes', 'checklist'])
+    useWidgetStore.getState().setGhostNodeWidgetTypes(rootId, ['text', 'checklist'])
     useWidgetStore.getState().beginGhostGesture()
     useWidgetStore.getState().shapeGhostTree(rootId, 'down', 1)
     useWidgetStore.getState().endGhostGesture()
@@ -63,7 +63,7 @@ describe('ghost tree widget bundles', () => {
 
     const state = useWidgetStore.getState()
     const created = Object.values(state.widgets).filter((widget) => !beforeIds.has(widget.id))
-    const bundle = created.filter((widget) => widget.type === 'notes' || widget.type === 'checklist')
+    const bundle = created.filter((widget) => widget.type === 'text' || widget.type === 'checklist')
     const singleton = created.find((widget) => widget.type === 'flashcards')!
 
     // The root's two widgets share one cluster; the lone child never welds.
@@ -119,7 +119,7 @@ describe('ghost tree widget bundles', () => {
   it('adds widget types to several ghost nodes at once without disturbing their other selections', () => {
     useWidgetStore.getState().startGhostShaper(32_000, 32_000)
     const rootId = useWidgetStore.getState().ghostConfig!.nodes[0]!.id
-    useWidgetStore.getState().setGhostNodeWidgetTypes(rootId, ['notes'])
+    useWidgetStore.getState().setGhostNodeWidgetTypes(rootId, ['text'])
     useWidgetStore.getState().beginGhostGesture()
     useWidgetStore.getState().shapeGhostTree(rootId, 'down', 1)
     useWidgetStore.getState().endGhostGesture()
@@ -128,7 +128,7 @@ describe('ghost tree widget bundles', () => {
     useWidgetStore.getState().addWidgetTypesToGhostNodes([rootId, childId], ['flashcards'])
 
     const nodes = useWidgetStore.getState().ghostConfig!.nodes
-    expect(nodes.find((node) => node.id === rootId)!.widgetTypes).toEqual(['notes', 'flashcards'])
+    expect(nodes.find((node) => node.id === rootId)!.widgetTypes).toEqual(['text', 'flashcards'])
     expect(nodes.find((node) => node.id === childId)!.widgetTypes).toEqual(['flashcards'])
   })
 

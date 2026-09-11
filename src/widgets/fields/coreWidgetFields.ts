@@ -1,18 +1,12 @@
 import type { ModuleType,
   BudgetData,
   ChecklistData,
-  CountdownData,
   CounterData,
   GoalTrackerData,
   HabitData,
-  NotesData,
+  TextData,
   PollData,
-  ProgressData,
-  QuoteData,
   RatingData,
-  StickyNoteData,
-  StopwatchData,
-  TimerData,
   TimekeeperData,
   AtlasWidgetData,
 } from '../../types/spatial'
@@ -28,31 +22,13 @@ import {
 
 /** Everyday widget fields (notes … tracker). Extracted verbatim from fields.ts; field order IS port-slot order — never reorder within an entry. */
 export const CORE_WIDGET_FIELDS = {
-  notes: [
+  text: [
     {
       key: 'text',
       label: 'Text',
       valueType: 'text',
-      get: (d) => (d as NotesData).text,
-      set: (d, v) => ({ ...(d as NotesData), text: text(v) }),
-    },
-  ],
-  sticky_note: [
-    {
-      key: 'text',
-      label: 'Text',
-      valueType: 'text',
-      get: (d) => (d as StickyNoteData).text,
-      set: (d, v) => ({ ...(d as StickyNoteData), text: text(v) }),
-    },
-  ],
-  quote: [
-    {
-      key: 'text',
-      label: 'Quote',
-      valueType: 'text',
-      get: (d) => (d as QuoteData).text,
-      set: (d, v) => ({ ...(d as QuoteData), text: text(v) }),
+      get: (d) => (d as TextData).text,
+      set: (d, v) => ({ ...(d as TextData), text: text(v) }),
     },
   ],
   counter: [
@@ -63,19 +39,6 @@ export const CORE_WIDGET_FIELDS = {
       unit: 'count',
       get: (d) => (d as CounterData).count,
       set: (d, v) => ({ ...(d as CounterData), count: num(v) }),
-    },
-  ],
-  progress: [
-    {
-      key: 'percent',
-      label: 'Percent',
-      valueType: 'number',
-      unit: 'percent',
-      get: (d) => (d as ProgressData).percent,
-      set: (d, v) => ({
-        ...(d as ProgressData),
-        percent: Math.min(100, Math.max(0, Math.round(num(v)))),
-      }),
     },
   ],
   rating: [
@@ -195,47 +158,6 @@ export const CORE_WIDGET_FIELDS = {
       unit: 'count',
       get: (d) => (d as HabitData).days.filter(Boolean).length,
     },
-  ],
-  countdown: [
-    {
-      key: 'days_left',
-      label: 'Days left',
-      valueType: 'number',
-      unit: 'count',
-      get: (d) =>
-        Math.ceil(
-          (new Date((d as CountdownData).targetDate).getTime() - Date.now()) / 86_400_000,
-        ) || 0,
-      timeSensitive: true,
-    },
-    {
-      key: 'days_until',
-      label: 'Days until',
-      valueType: 'number',
-      unit: 'count',
-      get: (d) =>
-        Math.ceil(
-          (new Date((d as CountdownData).targetDate).getTime() - Date.now()) / 86_400_000,
-        ) || 0,
-      timeSensitive: true,
-    },
-  ],
-  stopwatch: [
-    {
-      key: 'running',
-      label: 'Running',
-      valueType: 'boolean',
-      get: (d) => (d as StopwatchData).startedAt !== null,
-    },
-  ],
-  timer: [
-    {
-      key: 'running',
-      label: 'Running',
-      valueType: 'boolean',
-      get: (d) => (d as TimerData).endAt !== null,
-    },
-    { key:'mode',label:'Mode',valueType:'text',get:()=> 'countdown' },
   ],
   timekeeper: [
     {

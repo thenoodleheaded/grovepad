@@ -3,6 +3,7 @@ import type { Provider } from '@supabase/supabase-js'
 import { ArrowRight, Loader2, WandSparkles } from 'lucide-react'
 import { getSupabaseClient, supabaseConfigured } from '../../lib/supabase'
 import { ensureAuthInitialized, useAuthStore } from '../../store/useAuthStore'
+import { isNativeAppleHost, signInWithAppleNative, visibleOAuthProviderIds } from '../../lib/appleSignIn'
 
 type Mode = 'signin' | 'signup'
 
@@ -42,48 +43,66 @@ function AppleMark() {
   )
 }
 
-function MicrosoftMark() {
-  return (
-    <svg width="15" height="15" viewBox="0 0 23 23" aria-hidden>
-      <path fill="#f35325" d="M1 1h10v10H1z" />
-      <path fill="#81bc06" d="M12 1h10v10H12z" />
-      <path fill="#05a6f0" d="M1 12h10v10H1z" />
-      <path fill="#ffba08" d="M12 12h10v10H12z" />
-    </svg>
-  )
-}
-
-function FacebookMark() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="#1877F2" aria-hidden>
-      <path d="M24 12.07C24 5.4 18.63 0 12 0S0 5.4 0 12.07C0 18.1 4.39 23.09 10.13 24v-8.44H7.08v-3.49h3.05V9.41c0-3.02 1.79-4.69 4.53-4.69 1.31 0 2.68.24 2.68.24v2.97h-1.51c-1.49 0-1.95.93-1.95 1.89v2.25h3.32l-.53 3.49h-2.79V24C19.61 23.09 24 18.1 24 12.07z" />
-    </svg>
-  )
-}
-
 /** Quick sign-in providers, in display order — add another Supabase OAuth
  *  provider here and it appears in the grid with no further wiring.
  *
  *  `tint` follows each brand's own sign-in button convention rather than one
- *  uniform recipe: Google and Microsoft's marks already carry their official
- *  multicolor palette, so their island stays neutral glass; Apple ships a
- *  monochrome mark and is conventionally rendered on a near-black button;
- *  Facebook's brand is a single solid blue, so its island is tinted with it.
- *
- *  `comingSoon` disables the button without removing it — the provider isn't
- *  wired up on the Supabase project yet. */
+ *  uniform recipe: Google's mark already carries its official multicolor
+ *  palette, so its island stays neutral glass; Apple ships a
+ *  monochrome mark and is conventionally rendered on a near-black button. */
 const OAUTH_PROVIDERS: Array<{
   id: Provider
   label: string
   Mark: () => ReactElement
   tint: string
-  comingSoon?: boolean
 }> = [
   { id: 'google', label: 'Google', Mark: GoogleMark, tint: 'text-neutral-100 hover:bg-white/5' },
-  { id: 'apple', label: 'Apple', Mark: AppleMark, tint: 'bg-black/40 text-white', comingSoon: true },
-  { id: 'azure', label: 'Microsoft', Mark: MicrosoftMark, tint: 'text-neutral-100 hover:bg-white/5' },
-  { id: 'facebook', label: 'Facebook', Mark: FacebookMark, tint: 'bg-[#1877F2]/20 text-white', comingSoon: true },
+  { id: 'apple', label: 'Apple', Mark: AppleMark, tint: 'bg-black/40 text-white' },
 ]
+
+/** Grovepad's front door is this sign-in screen, so it carries the product
+ *  pitch too — a first-time visitor arrives here, not on a separate marketing
+ *  page. Shots scroll one-up on a phone and sit three-up from `lg`. */
+const SHOTS: Array<{ src: string; alt: string; caption: string }> = [
+  {
+    src: '/screens/notes.webp',
+    alt: 'A Grovepad board of lecture notes: a formula sheet, a source list, definitions and a study log laid out side by side on one canvas.',
+    caption: 'Notes, sources and formulas on one canvas.',
+  },
+  {
+    src: '/screens/math.webp',
+    alt: 'A Grovepad money board: a monthly budget, a ledger with a running total, a savings rate and a debt payoff plan, with values flowing between the cards.',
+    caption: 'Budgets and ledgers that add themselves up.',
+  },
+  {
+    src: '/screens/wires.webp',
+    alt: 'A Grovepad automation board: cards wired to each other, where a weekly target and hours done feed a pace calculation that arms an alert.',
+    caption: 'Wire one card into another; the value flows.',
+  },
+]
+
+function ProductShots({ className = '' }: { className?: string }) {
+  return (
+    <div className={`-mx-4 flex w-[calc(100%+2rem)] snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-1 lg:mx-0 lg:w-full lg:snap-none lg:overflow-visible lg:px-0 ${className}`}>
+      {SHOTS.map((shot) => (
+        <figure key={shot.src} className="m-0 w-[78%] shrink-0 snap-center lg:w-auto lg:flex-1">
+          <img
+            src={shot.src}
+            alt={shot.alt}
+            width={1440}
+            height={900}
+            loading="lazy"
+            decoding="async"
+            className="block w-full rounded-xl border border-neutral-800 shadow-lg"
+          />
+          <figcaption className="mt-1.5 text-[10px] leading-snug text-neutral-500">
+            {shot.caption}
+          </figcaption>
+        </figure>
+      ))}
+    </div>
+  )
+}
 
 function authRedirectUrl(): string {
   const url = new URL(window.location.href)
@@ -99,6 +118,9 @@ export function LoginPage({ sharedCanvasLink = false }: { sharedCanvasLink?: boo
   const [notice, setNotice] = useState<Notice | null>(null)
 
   const continueAsGuest = useAuthStore((state) => state.continueAsGuest)
+  const nativeApple = isNativeAppleHost()
+  const visibleProviderIds = visibleOAuthProviderIds(OAUTH_PROVIDERS.map((provider) => provider.id), nativeApple)
+  const providers = OAUTH_PROVIDERS.filter((provider) => visibleProviderIds.includes(provider.id))
 
   const fail = (text: string) => setNotice({ kind: 'error', text })
   const succeed = (text: string) => setNotice({ kind: 'success', text })
@@ -163,6 +185,14 @@ export function LoginPage({ sharedCanvasLink = false }: { sharedCanvasLink?: boo
         setBusy(null)
         return
       }
+      // In the iOS app a web redirect cannot come back to tauri://localhost,
+      // so Apple's native sheet hands over an ID token directly instead.
+      if (provider === 'apple' && nativeApple) {
+        const result = await signInWithAppleNative(supabase)
+        if (result.error) fail(result.error)
+        setBusy(null)
+        return
+      }
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: { redirectTo: authRedirectUrl() },
@@ -179,16 +209,36 @@ export function LoginPage({ sharedCanvasLink = false }: { sharedCanvasLink?: boo
   }
 
   return (
-    <div className="gp-login relative flex h-dvh w-screen items-center justify-center overflow-hidden bg-neutral-950">
+    // The pitch column makes this taller than one screen on a phone, so the
+    // page scrolls rather than clipping the sign-in panel out of reach. That
+    // needs a FIXED height: #root is overflow: hidden, and a min-height box
+    // just grows past the screen and gets clipped without ever scrolling. The
+    // shell centres with auto margins rather than items-center, because flex
+    // centring pushes overflow above the top edge where it cannot be scrolled
+    // to, while auto margins collapse to zero once the content is taller.
+    <div className="gp-login relative flex h-dvh w-screen overflow-y-auto bg-neutral-950 px-4 pt-[calc(var(--gp-safe-top)+2.5rem)] pb-[calc(var(--gp-safe-bottom)+2.5rem)]">
       {/* Ambient background bloom — two static radial glows, zero per-frame cost */}
-      <div aria-hidden className="gp-login-glow pointer-events-none absolute inset-0" />
+      <div aria-hidden className="gp-login-glow pointer-events-none fixed inset-0" />
 
-      <div className="gp-login-shell gp-pop relative z-10 flex w-full max-w-md flex-col items-center gap-7">
-        <div className="gp-login-brand flex flex-col items-center gap-2 text-center">
-          <img src="/brand/logo-light.png" alt="" aria-hidden className="h-11 w-11" />
-          <h1 className="text-2xl font-bold tracking-tight text-neutral-100">
-            grove<span className="text-emerald-400">pad</span>
+      <div className="gp-login-shell gp-pop relative z-10 m-auto grid w-full max-w-md gap-9 lg:max-w-5xl lg:grid-cols-[minmax(0,1fr)_23.5rem] lg:items-center lg:gap-12">
+        <div className="flex flex-col items-center gap-5 text-center lg:items-start lg:text-left">
+          <div className="gp-login-brand flex items-center gap-2.5">
+            <img src="/brand/logo_light_borderless.png" alt="" aria-hidden className="h-10 w-10" />
+            <span className="text-2xl font-bold tracking-tight text-neutral-100">
+              grove<span className="text-emerald-400">pad</span>
+            </span>
+          </div>
+
+          <h1 className="max-w-[20ch] text-2xl font-bold leading-tight tracking-tight text-neutral-50 lg:text-4xl">
+            The board where your notes do the math
           </h1>
+          <p className="max-w-[48ch] text-sm leading-relaxed text-neutral-400">
+            Drag calculators, trackers, tables and charts onto one infinite board, then wire a
+            card into another so a value flows between them. Any card can open into a whole
+            board of its own.
+          </p>
+
+          <p className="text-xs font-medium text-neutral-500">Free, offline, no account.</p>
         </div>
 
         <div className="gp-login-form-panel gp-panel w-full rounded-3xl p-9 shadow-2xl">
@@ -313,14 +363,14 @@ export function LoginPage({ sharedCanvasLink = false }: { sharedCanvasLink?: boo
             <span className="h-px flex-1 bg-neutral-800" aria-hidden />
           </div>
 
-          <div className="grid grid-cols-2 gap-2">
-            {OAUTH_PROVIDERS.map(({ id, label, Mark, tint, comingSoon }) => (
+          <div className={`grid gap-2 ${providers.length > 1 ? 'grid-cols-2' : 'grid-cols-1'}`}>
+            {providers.map(({ id, label, Mark, tint }) => (
               <button
                 key={id}
                 type="button"
-                title={comingSoon ? `${label} sign-in is coming soon` : `Continue with ${label}`}
-                aria-label={comingSoon ? `${label} sign-in is coming soon` : `Continue with ${label}`}
-                disabled={comingSoon || !supabaseConfigured || busy !== null}
+                title={`Continue with ${label}`}
+                aria-label={`Continue with ${label}`}
+                disabled={!supabaseConfigured || busy !== null}
                 onClick={() => oauth(id)}
                 className={`gp-island gp-login-provider flex h-11 items-center justify-center gap-2 px-3 text-xs font-medium transition-all active:scale-[0.97] disabled:opacity-40 ${tint}`}
               >
@@ -330,6 +380,9 @@ export function LoginPage({ sharedCanvasLink = false }: { sharedCanvasLink?: boo
             ))}
           </div>
         </div>
+
+        {/* Full shell width so the boards stay legible rather than thumbnail-sized. */}
+        <ProductShots className="lg:col-span-2" />
       </div>
     </div>
   )

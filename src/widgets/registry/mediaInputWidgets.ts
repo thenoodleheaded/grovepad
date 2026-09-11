@@ -227,17 +227,6 @@ export const MEDIA_INPUT_WIDGET_DEFINITIONS = {
       },
     ],
   },
-  excalidraw: {
-    type: 'excalidraw',
-    label: 'Excalidraw',
-    description: 'Freehand sketches, diagrams, flowcharts, and whiteboards',
-    icon: Shapes,
-    category: 'media',
-    accent: '#93c5fd',
-    defaultSize: { width: C * 12, height: C * 9 },
-    sizing: { minWidth: C * 7, minHeight: C * 6 },
-    defaultData: () => ({ elements: [], appState: {}, files: [], updatedAt: new Date().toISOString() }),
-  },
   dialog: {
     type: 'dialog',
     label: 'Dialog',
@@ -537,12 +526,12 @@ export const MEDIA_INPUT_WIDGET_DEFINITIONS = {
   formula: {
     type: 'formula',
     label: 'Formula',
-    description: 'Ask one question of two connected numbers and publish the answer',
+    description: 'Ask one question of up to six connected numbers and publish the answer',
     icon: FunctionSquare,
     category: 'data',
     accent: '#818cf8',
     restingFace: true,
-    defaultSize: { width: 320, height: C * 5 },
+    defaultSize: { width: 320, height: C * 6 },
     defaultData: () => ({ label: 'Calculation', a: 0, b: 0, operator: 'add' }),
     rendererOwnedSkinDetails: ['expression', 'weighted_score', 'conditional'],
     // Declared by hand so each question wears its own icon; the catalogue merge

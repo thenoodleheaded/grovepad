@@ -7,7 +7,7 @@ import { widgetWithEffectiveSize } from '../../utils/widgetRest'
 import { useOverlayLifecycle } from '../../store/useOverlayStore'
 import type { RelationType, Vector2D } from '../../types/spatial'
 import { RELATION_LABELS } from '../../types/spatial'
-import { anchoredCurveMidpoint, anchoredCurvePath } from '../../utils/curve'
+import { edgeMidpoint, edgePath } from '../../utils/edgeRoute'
 import { dependencyAnchors } from '../../utils/dependencyGeometry'
 import { widgetCenter } from '../../utils/widgetBounds'
 import { truncate } from '../../utils/text'
@@ -244,8 +244,10 @@ export function DependencyLines() {
       const { start, end } = dependencyAnchors(fromGeometry, toGeometry)
       result.push({
         id: relationId,
-        d: anchoredCurvePath(start, fromGeometry.center, end, toGeometry.center),
-        mid: anchoredCurveMidpoint(start, fromGeometry.center, end, toGeometry.center),
+        // Dependencies keep their fixed rails: out of the prerequisite's right
+        // edge, into the dependent's left one.
+        d: edgePath(start, 'right', end, 'left'),
+        mid: edgeMidpoint(start, 'right', end, 'left'),
         start,
         end,
         isResolved: relation.isResolved,

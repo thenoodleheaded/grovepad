@@ -10,7 +10,7 @@ describe('LoginPage field surfaces', () => {
     expect(markup.match(/gp-input/g)).toHaveLength(2)
     expect(markup.match(/gp-login-input/g)).toHaveLength(2)
     expect(markup.match(/gp-login-action /g)).toHaveLength(2)
-    expect(markup.match(/gp-login-provider/g)).toHaveLength(4)
+    expect(markup.match(/gp-login-provider/g)).toHaveLength(2)
     expect(markup).not.toContain('gp-hairline')
   })
 
@@ -39,10 +39,17 @@ describe('LoginPage field surfaces', () => {
     expect(markup).not.toContain('Guest work saves')
   })
 
-  it('shows Facebook sign-in as disabled until the provider is available', () => {
+  it('offers Google and Apple sign-in on the website', () => {
     const markup = renderToStaticMarkup(<LoginPage />)
 
-    expect(markup).toContain('aria-label="Facebook sign-in is coming soon"')
-    expect(markup).toMatch(/aria-label="Facebook sign-in is coming soon"[^>]*disabled=""/)
+    expect(markup).not.toContain('coming soon')
+    expect(markup).toContain('aria-label="Continue with Google"')
+    expect(markup).toContain('aria-label="Continue with Apple"')
+  })
+  it('offers no Facebook or Microsoft sign-in', () => {
+    const markup = renderToStaticMarkup(<LoginPage />)
+
+    expect(markup).not.toContain('Facebook')
+    expect(markup).not.toContain('Microsoft')
   })
 })

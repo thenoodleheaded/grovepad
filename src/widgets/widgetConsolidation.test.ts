@@ -1,11 +1,20 @@
 import { describe, expect, it } from 'vitest'
 import type { AtlasWidgetData, BarChartData, ChecklistData, GoalTrackerData, TimekeeperData } from '../types/spatial'
+import { MODULE_TYPES } from '../types/spatial'
 import { resolveWidgetMention } from '../utils/thoughtInterpreter'
-import { consolidateWidgetData } from '../utils/consolidatedWidgetData'
 import { ATLAS_TYPES, atlasTypeForPhrase, switchAtlasMode } from './atlasCatalog'
-import { CONSOLIDATED_WIDGET_MODES, CONSOLIDATED_WIDGET_REPLACEMENTS, isWidgetTypePublic, WIDGET_REGISTRY } from './registry'
+import { isWidgetTypePublic, WIDGET_REGISTRY } from './registry'
 
-describe('consolidated widget modes',()=>{
+/** Every card that was folded into another widget as one of its skins. */
+const RETIRED_TYPES = [
+  'quote', 'sticky_note', 'cornell', 'line_chart', 'pie_chart', 'progress',
+  'study_goal', 'okr', 'timer', 'pomodoro', 'stopwatch', 'countdown',
+  'world_clock', 'excalidraw', 'random_picker', 'gpa', 'vocab', 'quiz',
+  'kanban', 'assignment', 'daily_agenda', 'weekly_planner', 'timeline',
+  'priority_matrix',
+] as const
+
+describe('consolidated widget skins',()=>{
   it('offers each Atlas system as a widget while preserving Tracker for old boards',()=>{
     expect(isWidgetTypePublic('tracker')).toBe(false)
     expect(ATLAS_TYPES.every(isWidgetTypePublic)).toBe(true)
@@ -24,10 +33,21 @@ describe('consolidated widget modes',()=>{
     expect(restored.modeStates?.hydration?.primary).toBe(1200)
   })
 
-  it('offers one Time widget while preserving former standalone clocks for old boards',()=>{
+  it('deletes every retired card rather than hiding it',()=>{
+    // The old contract kept these registered but unavailable. They are gone
+    // outright now: absent from the type union and from the registry, so no
+    // surface can offer one and no code can look one up.
+    const registered = new Set<string>(Object.keys(WIDGET_REGISTRY))
+    const declared = new Set<string>(MODULE_TYPES)
+    for (const type of RETIRED_TYPES) {
+      expect(registered.has(type), `${type} is still registered`).toBe(false)
+      expect(declared.has(type), `${type} is still a module type`).toBe(false)
+    }
+  })
+
+  it('keeps one Time widget carrying every former standalone clock as a skin',()=>{
     const data=WIDGET_REGISTRY.timekeeper.defaultData() as TimekeeperData
     expect(isWidgetTypePublic('timekeeper')).toBe(true)
-    expect(['timer','pomodoro','stopwatch','countdown','world_clock'].every(type=>!isWidgetTypePublic(type as 'timer'|'pomodoro'|'stopwatch'|'countdown'|'world_clock'))).toBe(true)
     expect(data.mode).toBe('countdown')
     expect(data.pomodoro.workMinutes).toBe(25)
     expect(data.stopwatch.laps).toEqual([])
@@ -36,11 +56,10 @@ describe('consolidated widget modes',()=>{
     expect(resolveWidgetMention('pomodoro timer')).toBe('timekeeper')
   })
 
-  it('publishes every consolidated family and hides all former standalone cards',()=>{
-    const canonical=['notes','bar_chart','decision','grade_calc','date_picker','sketchpad','goal_tracker','flashcards','checklist'] as const
+  it('publishes every consolidated family with the absorbed skins on it',()=>{
+    const canonical=['text','bar_chart','decision','grade_calc','date_picker','sketchpad','goal_tracker','flashcards','checklist'] as const
     expect(canonical.every(isWidgetTypePublic)).toBe(true)
-    expect(Object.keys(CONSOLIDATED_WIDGET_REPLACEMENTS).every(type=>!isWidgetTypePublic(type as keyof typeof WIDGET_REGISTRY))).toBe(true)
-    expect(WIDGET_REGISTRY.notes.skins?.map(skin=>skin.value)).toEqual(expect.arrayContaining(['plain','sticky','quote']))
+    expect(WIDGET_REGISTRY.text.skins?.map(skin=>skin.value)).toEqual(expect.arrayContaining(['plain','sticky','typewriter']))
     expect(WIDGET_REGISTRY.bar_chart.skins?.map(skin=>skin.value)).toEqual(expect.arrayContaining(['bar','line','donut','pie']))
     expect(WIDGET_REGISTRY.checklist.skins?.map(skin=>skin.value)).toEqual(expect.arrayContaining(['list','board','assignments','day','week','timeline','matrix']))
     expect(WIDGET_REGISTRY.flashcards.skins?.map(skin=>skin.value)).toEqual(expect.arrayContaining(['flashcards','vocabulary','quiz']))
@@ -60,22 +79,16 @@ describe('consolidated widget modes',()=>{
     expect(goal).toMatchObject({mode:'milestones',simple:{percent:40},hours:{targetHours:10}})
   })
 
-  it('converts generated legacy data into the matching canonical mode',()=>{
-    for(const [legacyType,replacementType] of Object.entries(CONSOLIDATED_WIDGET_REPLACEMENTS) as Array<[keyof typeof WIDGET_REGISTRY,keyof typeof WIDGET_REGISTRY]>) {
-      const converted=consolidateWidgetData(legacyType,WIDGET_REGISTRY[legacyType].defaultData())
-      expect(converted.type).toBe(replacementType)
-      expect((converted.data as {mode?:string}).mode).toBe(CONSOLIDATED_WIDGET_MODES[legacyType])
-    }
-  })
-
   it.each([
-    ['sticky note','notes'],['quote','notes'],['line chart','bar_chart'],['pie chart','bar_chart'],
+    ['sticky note','text'],['line chart','bar_chart'],['pie chart','bar_chart'],
     ['progress','goal_tracker'],['excalidraw','sketchpad'],
     ['random picker','decision'],['gpa','grade_calc'],
     ['study goal','goal_tracker'],['okrs','goal_tracker'],['vocabulary','flashcards'],['quiz','flashcards'],
     ['kanban','checklist'],['assignments','checklist'],['daily agenda','checklist'],
     ['week planner','checklist'],['timeline','checklist'],['priority matrix','checklist'],
-  ] as const)('routes %s to its consolidated widget', (mention,expected)=>{
+  ] as const)('still understands %s and routes it to the widget that absorbed it', (mention,expected)=>{
+    // A retired card's name is still a thing people say. Deleting the card must
+    // not make the phrase unrecognisable — it has to land on its replacement.
     expect(resolveWidgetMention(mention)).toBe(expected)
   })
 })

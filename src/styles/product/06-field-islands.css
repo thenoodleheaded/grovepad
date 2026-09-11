@@ -40,12 +40,11 @@
   border: 0 !important;
   border-radius: var(--gp-r1) !important;
   background-color: transparent;
-  background-image: linear-gradient(180deg, rgb(255 255 255 / calc(var(--gp-tune-island-light, 10) / 100)), rgb(255 255 255 / .05)) !important;
+  background-image: var(--gp-island-fill) !important;
   box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / .14),
-    inset 0 0 0 1px rgb(255 255 255 / .07),
-    0 2px 4px rgb(0 0 0 / .34),
-    0 10px 22px rgb(0 0 0 / .22) !important;
+    var(--gp-island-catchlight),
+    var(--gp-island-ring),
+    var(--gp-island-contact) !important;
 }
 
 .gp-well,
@@ -59,6 +58,18 @@
     0 1px 0 rgb(255 255 255 / .045) !important;
 }
 
+/* On paper a well is a hole cut into the plate, not a black screen: it is the
+   same grey a few steps down, with the light inverted so it still reads as
+   sunken. Dark cards keep the near-black fill above, where a hole genuinely is
+   darker than everything around it. */
+[data-theme='light'] :is(.gp-well, .gp-widget-ui :where(.gp-display-well)) {
+  background: oklch(80% 0.004 245) !important;
+  box-shadow:
+    inset 0 1.5px 3px rgb(30 40 34 / .2),
+    inset 0 -1px 0 rgb(255 255 255 / .5),
+    0 1px 0 rgb(255 255 255 / .55) !important;
+}
+
 /* The nesting law: an island inside an island is a well, never another slab. */
 .gp-widget-ui :where(.gp-subpanel, .gp-subdivision)
   :where(.gp-subpanel, .gp-subdivision) {
@@ -68,6 +79,14 @@
   box-shadow:
     inset 0 1px 2px rgb(0 0 0 / .46),
     inset 0 -1px 0 rgb(255 255 255 / .06) !important;
+}
+
+[data-theme='light'] .gp-widget-ui :where(.gp-subpanel, .gp-subdivision)
+  :where(.gp-subpanel, .gp-subdivision) {
+  background: rgb(30 40 34 / .1) !important;
+  box-shadow:
+    inset 0 1px 2px rgb(30 40 34 / .18),
+    inset 0 -1px 0 rgb(255 255 255 / .55) !important;
 }
 
 /* Text controls are only the editable contents of a field island. They never
@@ -103,20 +122,24 @@
    selectors give existing widget rows the same behavior without per-widget
    paint rules. Direct-child matching prevents nested ancestors from lighting
    up around one deeply nested editor. */
+/* Same E1 material as every other island — the outline is the only thing a
+   field island adds, because it is the part that answers focus. It carries no
+   `--gp-island-ring`: the outline already draws that edge, and painting both
+   made the field's rim twice as bright as the island beside it. */
 .gp-field-island {
   border-radius: var(--gp-r1);
   outline: 1px solid rgb(255 255 255 / .10);
   outline-offset: -1px;
-  background-image: linear-gradient(180deg, rgb(255 255 255 / .08), rgb(255 255 255 / .035));
-  box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / .10),
-    0 2px 4px rgb(0 0 0 / .22);
+  background-image: var(--gp-island-fill);
+  box-shadow: var(--gp-island-catchlight), var(--gp-island-contact);
   transition: outline-color var(--gp-duration-snap) var(--gp-ease-snap);
 }
 
 /* Legacy renderers often put a text control directly inside an ordinary
    layout wrapper. That closest wrapper becomes the one field surface, so the
-   catalog cannot fall back to a floating borderless input. */
+   catalog cannot fall back to a floating borderless input. It is a field
+   island in everything but the class name, so it wears exactly the material
+   `.gp-field-island` above wears. */
 .gp-widget-ui :where(div, section, article, li, fieldset, label, td):has(> :where(
   input:not([type='checkbox'], [type='radio'], [type='range'], [type='color']),
   textarea,
@@ -125,10 +148,8 @@
   border-radius: var(--gp-r1);
   outline: 1px solid rgb(255 255 255 / .10);
   outline-offset: -1px;
-  background-image: linear-gradient(180deg, rgb(255 255 255 / .08), rgb(255 255 255 / .035));
-  box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / .10),
-    0 2px 4px rgb(0 0 0 / .22);
+  background-image: var(--gp-island-fill);
+  box-shadow: var(--gp-island-catchlight), var(--gp-island-contact);
   transition: outline-color var(--gp-duration-snap) var(--gp-ease-snap);
 }
 
@@ -473,13 +494,15 @@
   white-space: normal;
 }
 
+/* A value follows whatever surface it landed on: dark ink on the plate and, now
+   that wells are grey holes rather than screens, dark ink inside them too. */
 [data-theme='light'] .gp-value {
-  color: rgb(234 238 234 / .95);
+  color: var(--gp-widget-ink, #222a25);
 }
 
 /* One per widget. The number or status that is the widget's reason to exist. */
 .gp-hero {
-  color: var(--gp-widget-accent);
+  color: var(--gp-accent-ink, var(--gp-widget-accent));
   font-size: 27px;
   font-weight: 650;
   line-height: 1;
@@ -531,50 +554,135 @@ body[data-pencil-drawing] * {
   overscroll-behavior: contain;
 }
 
-/* Widget cards are dark charcoal in the light theme, so their contents keep
-   the light-on-dark ink and hairlines — the theme's black hairline/dark ink
-   vars would vanish against the charcoal card, so they are reset here. The
-   same goes for the whole inverted neutral scale and the deep chrome greens:
-   inside a card, utilities must resolve to the dark-mode values they were
-   authored against, or legacy content paints dark-on-dark. Scoped to the
-   card's content and resting faces (which render inside the card but outside
-   the module wrapper) plus .gp-widget-ui, which fullscreen sheets portal out
-   of the card entirely — never the whole card, whose title chrome sits over
-   the bright canvas and needs the theme's dark ink. */
+/* On dark glass the accent ink IS the accent — bright pastel text belongs
+   there. The light theme re-derives it darker in the block below. */
+.gp-widget-content,
+.gp-rest-face,
+.gp-widget-ui {
+  --gp-accent-ink: var(--gp-widget-accent, #9ae6c3);
+  /* Renderers with literal signal colors (status dots, SWOT headers, trend
+     labels) write them as `color-mix(in oklab, <hex>, black var(--gp-signal-ink-mix))`.
+     Dark glass keeps the pastel untouched; the light theme raises the mix so
+     the same hue arrives as a deep ink. */
+  --gp-signal-ink-mix: 0%;
+  /* What a skin lifts its accent ink TOWARD when it wants one step brighter
+     than the plain ink: `color-mix(in oklab, var(--gp-accent-ink), var(--gp-accent-lift) 12%)`.
+     On dark glass the target is white, exactly as those rules were tuned. The
+     light theme re-points it at the ink itself, which makes the mix a no-op at
+     whatever percentage a skin already picked — so a hundred hand-tuned values
+     stay honest on paper without being restated per theme. See the light block. */
+  --gp-accent-lift: #ffffff;
+}
+
+/* Silver cards use dark ink in the light theme. Fullscreen widget sheets share
+   the same variables through `.gp-widget-ui`; explicit display wells restore
+   their own light-on-dark palette below. */
 [data-theme='light'] .gp-widget-content,
 [data-theme='light'] .gp-rest-face,
 [data-theme='light'] .gp-widget-ui {
-  --gp-label-ink: rgb(226 231 226 / .5);
-  --gp-hairline: rgba(255, 255, 255, 0.1);
-  --gp-hairline-strong: rgba(255, 255, 255, 0.18);
-  --color-neutral-100: oklch(97% 0 0);
-  --color-neutral-200: oklch(92.2% 0 0);
-  --color-neutral-300: oklch(87% 0 0);
-  --color-neutral-400: oklch(70.8% 0 0);
-  --color-neutral-600: oklch(43.9% 0 0);
-  --color-neutral-700: oklch(37.1% 0 0);
-  --color-neutral-800: oklch(26.9% 0 0);
-  --color-neutral-900: oklch(20.5% 0 0);
-  --color-neutral-950: oklch(14.5% 0 0);
-  --color-emerald-50: oklch(97.9% 0.021 166);
-  --color-emerald-100: oklch(95% 0.052 163);
-  --color-emerald-200: oklch(94% 0.14 136);
-  --color-emerald-300: oklch(90% 0.22 136);
-  --color-emerald-400: oklch(88% 0.31 136);
-  --color-emerald-500: oklch(76% 0.26 133);
-  --color-emerald-600: oklch(62% 0.20 130);
-  color: rgb(232 236 232 / .92);
+  --gp-widget-ink: #222a25;
+  --gp-widget-muted-text: #59645d;
+  --gp-label-ink: rgb(34 43 37 / .58);
+  --gp-hairline: rgb(36 48 40 / .14);
+  --gp-hairline-strong: rgb(36 48 40 / .24);
+  /* Skin accents are pastels tuned for dark glass; used as TEXT on silver
+     they vanish (an eyebrow in #72e4b6 reads at ~1.1:1). `--gp-accent-ink`
+     is the accent a label/eyebrow/readout is allowed to be written in: the
+     same hue mixed toward black (not toward a green, so each skin keeps its
+     own hue). Fills keep the raw `--gp-widget-accent` — filled controls pair
+     it with their own calibrated glyph inks. The dark theme aliases the ink
+     to the raw accent below. */
+  --gp-accent-ink: color-mix(in oklab, var(--gp-widget-accent-source, #7a9c88), black 52%);
+  /* Paper cancels the lift. A skin that writes `..., var(--gp-accent-lift) 14%`
+     is asking for a brighter step than the ink, which is right on black glass
+     and backwards on silver: mixing white back in undoes the very darkening
+     that made the ink readable (measured: at +white 16%, 88 of the 129 skin
+     accents fall under 4.5:1 on a card, and at +24% all 129 do). Pointing the
+     target at the ink makes `color-mix(ink, ink N%)` resolve to the ink for
+     every N, so each rule keeps its dark-theme value and lands at full
+     contrast here. */
+  --gp-accent-lift: var(--gp-accent-ink);
+  /* The global light remap in index.css skips neutral-50 and neutral-500.
+     Inside cards both must invert: `text-neutral-50` hero readouts would
+     otherwise print near-white on silver, and neutral-500 greys stay legible
+     only when they deepen with the rest of the scale. */
+  --color-neutral-50: oklch(19% 0.022 145);
+  --color-neutral-500: oklch(45% 0.028 145);
+  --gp-signal-ink-mix: 46%;
+  /* The global remap only flips the neutral+emerald scales; renderers also
+     spend zinc/slate greys and bright 300–500 accent steps as text (a prayer
+     time in amber-400, a fasting mark in violet-400). Inside cards those
+     steps deepen to their own hue's ink weight, so "grey becomes dark grey"
+     and every pastel keeps its identity at paper contrast. */
+  --color-zinc-200: oklch(32% 0.008 260);
+  --color-zinc-300: oklch(38% 0.01 260);
+  --color-zinc-400: oklch(44% 0.012 260);
+  --color-zinc-500: oklch(48% 0.014 260);
+  --color-gray-200: oklch(32% 0.008 260);
+  --color-gray-300: oklch(38% 0.01 260);
+  --color-gray-400: oklch(44% 0.012 260);
+  --color-gray-500: oklch(48% 0.014 260);
+  --color-slate-200: oklch(32% 0.01 255);
+  --color-slate-300: oklch(38% 0.012 255);
+  --color-slate-400: oklch(44% 0.014 255);
+  --color-slate-500: oklch(48% 0.016 255);
+  --color-stone-300: oklch(38% 0.008 60);
+  --color-stone-400: oklch(44% 0.01 60);
+  --color-amber-200: #92400e;
+  --color-amber-300: #92400e;
+  --color-amber-400: #b45309;
+  --color-amber-500: #b45309;
+  --color-yellow-300: #a16207;
+  --color-yellow-400: #a16207;
+  --color-yellow-500: #854d0e;
+  --color-orange-300: #9a3412;
+  --color-orange-400: #c2410c;
+  --color-red-300: #b91c1c;
+  --color-red-400: #dc2626;
+  --color-rose-300: #be123c;
+  --color-rose-400: #be123c;
+  --color-pink-300: #be185d;
+  --color-pink-400: #be185d;
+  --color-fuchsia-300: #a21caf;
+  --color-fuchsia-400: #a21caf;
+  --color-purple-300: #7e22ce;
+  --color-purple-400: #7e22ce;
+  --color-violet-300: #6d28d9;
+  --color-violet-400: #6d28d9;
+  --color-indigo-300: #4338ca;
+  --color-indigo-400: #4338ca;
+  --color-blue-300: #1d4ed8;
+  --color-blue-400: #1d4ed8;
+  --color-sky-300: #0369a1;
+  --color-sky-400: #0369a1;
+  --color-cyan-300: #0e7490;
+  --color-cyan-400: #0e7490;
+  --color-teal-300: #0f766e;
+  --color-teal-400: #0f766e;
+  --color-green-300: #15803d;
+  --color-green-400: #15803d;
+  --color-lime-300: #4d7c0f;
+  --color-lime-400: #4d7c0f;
+  color: rgb(30 38 33 / .92);
 }
 
-[data-theme='light'] .gp-island,
-[data-theme='light'] .gp-widget-ui :where(.gp-subpanel, .gp-subdivision) {
-  background-image: linear-gradient(180deg, rgb(255 255 255 / .11), rgb(255 255 255 / .06)) !important;
-  box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / .15),
-    inset 0 0 0 1px rgb(255 255 255 / .08),
-    0 2px 4px rgb(0 0 0 / .32),
-    0 10px 22px rgb(0 0 0 / .20) !important;
+/* Readouts and instrument screens no longer flip to a dark screen on paper —
+   their fill is a grey hole in the plate now, so they keep the card's dark ink.
+   The scope stays because it is where a well states its own palette; it simply
+   restates the card's rather than inverting it. */
+[data-theme='light'] .gp-widget-ui :where(.gp-well, .gp-display-well) {
+  --gp-widget-ink: #222a25;
+  --gp-widget-muted-text: #59645d;
+  --gp-label-ink: rgb(34 43 37 / .58);
+  --gp-hairline: rgb(36 48 40 / .16);
+  --gp-hairline-strong: rgb(36 48 40 / .26);
+  color: rgb(30 38 33 / .92);
 }
+
+/* The light theme's island material is no longer a second set of rules here:
+   it is the same `--gp-island-*` tokens, re-pointed for paper in
+   01-tokens-base.css. Re-declaring only `.gp-island` was how the promoted
+   field islands got left behind on the dark recipe. */
 
 [data-theme='light'] .gp-widget-ui :where(
   input:not([type='checkbox'], [type='radio'], [type='range'], [type='color']),
@@ -582,6 +690,14 @@ body[data-pencil-drawing] * {
   select
 ) {
   background: transparent !important;
-  color: rgb(234 238 234 / .92);
+  color: rgb(31 40 34 / .92);
   box-shadow: none !important;
+}
+
+[data-theme='light'] .gp-widget-ui :where(.gp-well, .gp-display-well) :where(
+  input:not([type='checkbox'], [type='radio'], [type='range'], [type='color']),
+  textarea,
+  select
+) {
+  color: rgb(31 40 34 / .92);
 }

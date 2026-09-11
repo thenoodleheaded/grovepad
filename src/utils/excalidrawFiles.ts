@@ -27,13 +27,13 @@ export async function persistNewExcalidrawFiles(
 ): Promise<readonly ExcalidrawFileRef[]> {
   const newIds = newExcalidrawFileIds(files, knownRefs)
   if (newIds.length === 0) return knownRefs
-  const { writeMediaBlob } = await import('./boardDatabase')
+  const { storeMediaBlob } = await import('../services/mediaSyncService')
   const added: ExcalidrawFileRef[] = []
   for (const id of newIds) {
     const file = files[id]
     if (!file) continue
     const blob = await (await fetch(file.dataURL)).blob()
-    await writeMediaBlob(excalidrawBlobKey(widgetId, id), blob)
+    await storeMediaBlob(excalidrawBlobKey(widgetId, id), blob)
     added.push({ id, mimeType: file.mimeType, createdAt: file.created })
   }
   return [...knownRefs, ...added]
@@ -48,11 +48,11 @@ export async function loadExcalidrawFiles(
   refs: readonly ExcalidrawFileRef[],
 ): Promise<{ files: BinaryFiles; objectUrls: string[] }> {
   if (refs.length === 0) return { files: {}, objectUrls: [] }
-  const { readMediaBlob } = await import('./boardDatabase')
+  const { loadMediaBlob } = await import('../services/mediaSyncService')
   const files: BinaryFiles = {}
   const objectUrls: string[] = []
   for (const ref of refs) {
-    const blob = await readMediaBlob(excalidrawBlobKey(widgetId, ref.id))
+    const blob = await loadMediaBlob(excalidrawBlobKey(widgetId, ref.id))
     if (!blob) continue
     const url = URL.createObjectURL(blob)
     objectUrls.push(url)

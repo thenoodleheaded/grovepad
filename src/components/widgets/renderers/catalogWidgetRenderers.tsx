@@ -1,24 +1,24 @@
 import type { ReactNode } from 'react'
 import { locationSkinMode } from '../modules/locationSkinModel'
 import type { ModuleType } from '../../../types/moduleTypes'
-import type { AtlasWidgetData, AutomationCoreData, LocationData } from '../../../types/widgetDataExpansion'
+import type { AtlasWidgetData, AutomationCoreData, LocationData, TripItineraryData } from '../../../types/widgetDataExpansion'
 import { ATLAS_TYPES, atlasModeFor, type AtlasType } from '../../../widgets/atlasCatalog'
 import { AUTOMATION_CORE_TYPES, type AutomationCoreType } from '../../../widgets/automationCoreCatalog'
 import type { WidgetContentRenderer, WidgetRendererFamily } from './contracts'
-import { AtlasWidget, AutomationCoreWidget, ExpansionWidget, LocationWidget } from './lazyCatalogWidgets'
+import { AtlasWidget, AutomationCoreWidget, ExpansionWidget, LocationWidget, TripItineraryWidget } from './lazyCatalogWidgets'
 
 type ExpansionType = Extract<ModuleType,
-  'clock_pulse'|'comparator'|'aggregator'|'range_mapper'|'latch'|'random_picker'|'sequencer'|'template'|'recorder'|'notifier'|
-  'subscriptions'|'debt_payoff'|'expense_split'|'invoices'|'meal_planner'|'recipe'|'home_maintenance'|'chore_rotation'|'renewals_vault'|'medications'|'workout_plan'|'job_applications'|'okr'|'decision_journal'|'weekly_review'|'snippet_library'|'keep_in_touch'|'gifts_occasions'|'trip_itinerary'|'guest_list'
+  'clock_pulse'|'comparator'|'aggregator'|'range_mapper'|'latch'|'sequencer'|'template'|'recorder'|'notifier'|
+  'subscriptions'|'debt_payoff'|'expense_split'|'invoices'|'meal_planner'|'recipe'|'home_maintenance'|'chore_rotation'|'renewals_vault'|'medications'|'workout_plan'|'job_applications'|'decision_journal'|'weekly_review'|'snippet_library'|'keep_in_touch'|'gifts_occasions'|'guest_list'
 >
 
 const EXPANSION_TYPES = [
   'clock_pulse', 'comparator', 'aggregator', 'range_mapper', 'latch',
-  'random_picker', 'sequencer', 'template', 'recorder', 'notifier',
+  'sequencer', 'template', 'recorder', 'notifier',
   'subscriptions', 'debt_payoff', 'expense_split', 'invoices', 'meal_planner',
   'recipe', 'home_maintenance', 'chore_rotation', 'renewals_vault', 'medications',
-  'workout_plan', 'job_applications', 'okr', 'decision_journal', 'weekly_review',
-  'snippet_library', 'keep_in_touch', 'gifts_occasions', 'trip_itinerary', 'guest_list',
+  'workout_plan', 'job_applications', 'decision_journal', 'weekly_review',
+  'snippet_library', 'keep_in_touch', 'gifts_occasions', 'guest_list',
 ] as const satisfies readonly ExpansionType[]
 
 function renderersForTypes<T extends ModuleType>(
@@ -65,5 +65,9 @@ export const expansionWidgetRendererFamily: WidgetRendererFamily = {
       const data = widget.data as LocationData
       return <LocationWidget data={data} skin={locationSkinMode(data.skin)} onChange={onUpdate} />
     },
+    // Trip Itinerary likewise: seven travel instruments over one days/legs record.
+    trip_itinerary: ({ widget, onUpdate }) => (
+      <TripItineraryWidget data={widget.data as TripItineraryData} onChange={onUpdate} />
+    ),
   },
 }

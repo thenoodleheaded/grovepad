@@ -43,6 +43,12 @@ describe('expand/collapse hold windows', () => {
     expect(card).toContain('if (!restExpanded) holdHalo(true, glide)')
     expect(card).toContain('holdGlide(true, glide)')
     expect(card).toContain('restExpanded || haloLingering ? Math.max(320, restLiftZ)')
+    // And the lift itself has to be computed for that same window. Keyed on
+    // the expansion alone it collapses to the 320 floor on the first frame of
+    // the collapse — `expandedWidgetId` clears before the halo timer does — so
+    // on a board whose top zIndex has climbed past 320 the half-collapsed card
+    // drops behind the neighbours it is still covering.
+    expect(card).toContain('expandedWidgetId === widgetId || haloLingering')
   })
 })
 
@@ -65,6 +71,14 @@ describe('expand/collapse frame cost', () => {
     // resize the filtered region mid-fade.
     expect(card).toContain("'--gp-halo-w': `${expandedIconSize(widget).width}px`")
     expect(card).toContain("'--gp-halo-h': `${expandedIconSize(widget).height}px`")
+  })
+
+  it('uses a pale halo instead of a dark veil in light mode', () => {
+    const lightHalo = ruleBody('[data-theme="light"] .gp-rest-halo')
+    // Sage-tinted, matching the light canvas it dims — a neutral silver wash
+    // read as a grey film once the board stopped being white.
+    expect(lightHalo).toContain('background: rgb(238 244 234 / var(--gp-tune-halo-dim, 0.3))')
+    expect(lightHalo).not.toContain('rgb(5 9 18')
   })
 
   it('promotes the gliding card for the length of the glide only', () => {

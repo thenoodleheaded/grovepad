@@ -7,7 +7,13 @@ import { useCanvasWidgetIds } from '../../hooks/useCanvasWidgets'
 import { widgetDefinition } from '../../widgets/registry'
 import { useSettingsStore } from '../../store/useSettingsStore'
 import { useAuraTuningStore } from '../../store/useAuraTuningStore'
-import { auraBufferSize, auraScreenPool, resolveAccent } from './auraTuning'
+import {
+  AURA_QUALITY_BUDGET,
+  auraBufferSize,
+  auraScreenPool,
+  auraTuningForQuality,
+  resolveAccent,
+} from './auraTuning'
 import { widgetAccent } from '../../utils/widgetSkins'
 import { widgetWithEffectiveSize } from '../../utils/widgetRest'
 import type { Widget } from '../../types/spatial'
@@ -60,7 +66,11 @@ export function CanvasAuraLayer() {
   const canvasWidgetIds = useCanvasWidgetIds(activeCanvasId)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const theme = useThemeStore((state) => state.theme)
-  const auraEnabled = useSettingsStore((state) => state.canvasAura)
+  const quality = useSettingsStore((state) => state.visualQuality)
+  // The lightweight tier paints no ambient layer at all: no canvas element, no
+  // store subscriptions, no rAF. A dimmed aura would still cost a full-viewport
+  // composite on every camera frame, which is exactly what this tier removes.
+  const auraEnabled = useSettingsStore((state) => state.canvasAura) && AURA_QUALITY_BUDGET[quality].render
   const tuningDoc = useAuraTuningStore((state) => state.doc)
 
   useEffect(() => {
@@ -79,7 +89,8 @@ export function CanvasAuraLayer() {
       const { pan, zoom, viewportSize } = useCanvasStore.getState()
       if (viewportSize.width <= 0 || viewportSize.height <= 0 || zoom <= 0) return
 
-      const buffer = auraBufferSize(viewportSize.width, viewportSize.height)
+      const budget = AURA_QUALITY_BUDGET[quality]
+      const buffer = auraBufferSize(viewportSize.width, viewportSize.height, budget.buffer)
       if (buffer.width <= 0 || buffer.height <= 0) return
 
       if (canvas.width !== buffer.width || canvas.height !== buffer.height) {
@@ -87,7 +98,7 @@ export function CanvasAuraLayer() {
         canvas.height = buffer.height
       }
 
-      const tuning = tuningDoc.aura[theme]
+      const tuning = auraTuningForQuality(tuningDoc.aura[theme], quality)
       const widgetState = useWidgetStore.getState()
       const restState = useWidgetRestStore.getState()
       const restContext = {
@@ -174,6 +185,9 @@ export function CanvasAuraLayer() {
         const wornAccent = widgetAccent(widget, definition)
         const accent =
           widget.metadata.accent ?? resolveAccent(tuningDoc, theme, widget.type, wornAccent)
+        // Both themes pool a widget's own accent. Light mode used to flatten
+        // every pool to one grey, which — additively blended onto white — was
+        // the same as painting nothing: the board had no ambient colour at all.
         const channels = parseColorChannels(accent)
 
         ctx.save()
@@ -226,6 +240,7 @@ export function CanvasAuraLayer() {
     activeCanvasId,
     auraEnabled,
     canvasWidgetIds,
+    quality,
     theme,
     tuningDoc,
     widgetGlueIndex,
@@ -241,8 +256,12 @@ export function CanvasAuraLayer() {
       style={{
         width: '100%',
         height: '100%',
+        // Multiply is what lets a pale board be tinted at all: it deepens the
+        // paper toward each card's hue instead of trying to out-brighten it.
+        // The pools now carry real accents rather than one grey, so the layer
+        // sits lower than it did when it was only pushing neutral shade.
         mixBlendMode: theme === 'light' ? 'multiply' : 'normal',
-        opacity: theme === 'light' ? 0.6 : 0.85,
+        opacity: theme === 'light' ? 0.42 : 0.85,
       }}
       aria-hidden
     />

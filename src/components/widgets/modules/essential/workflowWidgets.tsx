@@ -34,7 +34,7 @@ export function StatusWidget({
           onChange={(event) => onChange({ ...data, label: event.target.value })}
           className={`${inputClass} flex-1 font-medium`}
         />
-        <span className="flex items-center gap-1  text-[9px] uppercase" style={{ color: current.color }}>
+        <span className="flex items-center gap-1  text-[9px] uppercase" style={{ color: `color-mix(in oklab, ${current.color}, black var(--gp-signal-ink-mix, 0%))` }}>
           <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: current.color }} />
           {current.label}
         </span>
@@ -48,7 +48,7 @@ export function StatusWidget({
             aria-label={item.label}
             onClick={() => onChange({ ...data, value: item.value })}
             className={`h-9 rounded-lg border transition-all ${data.value === item.value ? 'border-current bg-white/[0.04]' : 'gp-hairline opacity-45 hover:opacity-80'}`}
-            style={{ color: item.color }}
+            style={{ color: `color-mix(in oklab, ${item.color}, black var(--gp-signal-ink-mix, 0%))` }}
           >
             <span className="mx-auto block h-2 w-2 rounded-full bg-current" />
           </button>
@@ -150,10 +150,10 @@ export function ProcessWidget({
           return (
             <div key={step.id} className="group/process relative flex h-8 items-center gap-2">
               {index < data.steps.length - 1 && <span className="absolute left-[7px] top-6 h-4 w-px bg-neutral-800" />}
-              <button type="button" title="Make active" onClick={() => setActive(step.id)} className="relative z-10 h-3.5 w-3.5 rounded-full border-2 bg-neutral-950 transition-transform hover:scale-125" style={{ borderColor: meta.color }} />
+              <button type="button" title="Make active" onClick={() => setActive(step.id)} className="relative z-10 h-3.5 w-3.5 rounded-full border-2 bg-neutral-950 transition-transform hover:scale-125" style={{ borderColor: `color-mix(in oklab, ${meta.color}, black var(--gp-signal-ink-mix, 0%))` }} />
               <span className="w-4  text-[8px] text-neutral-700">{String(index + 1).padStart(2, '0')}</span>
               <input value={step.label} placeholder="Process step…" onChange={(event) => setStep(step.id, { label: event.target.value })} className={`${inputClass} flex-1 ${step.status === 'done' ? 'text-neutral-600 line-through' : ''}`} />
-              <span className=" text-[8px] uppercase" style={{ color: meta.color }}>{meta.label}</span>
+              <span className=" text-[8px] uppercase" style={{ color: `color-mix(in oklab, ${meta.color}, black var(--gp-signal-ink-mix, 0%))` }}>{meta.label}</span>
               <SmallAction label="Remove step" danger onClick={() => onChange({ steps: data.steps.filter((item) => item.id !== step.id) })}><X size={9} /></SmallAction>
             </div>
           )

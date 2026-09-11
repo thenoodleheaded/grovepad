@@ -10,7 +10,7 @@ export function makeWidget(overrides: Partial<Widget> = {}): Widget {
   const id = overrides.id ?? 'w1'
   return {
     id,
-    type: 'notes',
+    type: 'text',
     title: id,
     canvasId: 'canvas',
     position: { x: 0, y: 0 },

@@ -774,7 +774,7 @@ Create `shot-12-brand-resolve.html`, duration exactly 6,000 ms.
 
 ASSET
 Use the real transparent Grovepad mark from:
-`/Users/amir-hamza/grovepad/public/brand/logo-light.png`
+`/Users/amir-hamza/grovepad/public/brand/logo_light_borderless.png`
 
 For portability, either embed that image as a data URL in the final HTML or load it relative to the project. Do not redraw it approximately. Set window.shotReady only after the mark has loaded successfully.
 

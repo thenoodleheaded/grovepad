@@ -40,7 +40,7 @@ describe('buildScaffold', () => {
     const scaffold = buildScaffold('zzz qqq xxyy')!
     expect(scaffold.archetypeId).toBe('generic')
     expect(scaffold.plan.nodes.some((node) => node.widgetType === 'checklist')).toBe(true)
-    expect(scaffold.plan.nodes.some((node) => node.widgetType === 'priority_matrix')).toBe(true)
+    expect(scaffold.plan.nodes.some((node) => node.widgetType === 'checklist')).toBe(true)
   })
 
   it('keeps typed clauses as checklist items so nothing is lost', () => {

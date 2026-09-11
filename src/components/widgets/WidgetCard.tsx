@@ -1,11 +1,11 @@
 import { memo, useEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react'
 import { useShallow } from 'zustand/react/shallow'
-import { Check, Sparkles, Star, Trash2, TriangleAlert, Pin } from 'lucide-react'
+import { Check, Maximize2, Sparkles, Star, Trash2, TriangleAlert, Pin } from 'lucide-react'
 import { ErrorBoundary } from '../ErrorBoundary'
 import { useCanvasStore } from '../../store/useCanvasStore'
 import { isRecentlySpawned, useWidgetStore } from '../../store/useWidgetStore'
 import { requestWidgetDeletion } from '../../store/useWidgetDeletionDialogStore'
-import type { ModuleData } from '../../types/spatial'
+import type { CanvasNodeData, ModuleData } from '../../types/spatial'
 import { GRID_SIZE, WIDGET_MAX_EDGE } from '../../types/spatial'
 import { WIDGET_HOVER_RIGHT, WIDGET_HOVER_TOP } from '../../utils/widgetBounds'
 import { findGlueSnap, foldedMemberInsets, glueMemberInsets } from '../../utils/glueGeometry'
@@ -38,6 +38,7 @@ import { useWidgetClock } from '../../hooks/useWidgetClock'
 import { WidgetClockRing } from './WidgetClockRing'
 import { useWidgetRestStore } from '../../store/useWidgetRestStore'
 import { useWidgetSheetStore } from '../../store/useWidgetSheetStore'
+import { useTextSheetStore } from '../../store/useTextSheetStore'
 import { widgetOpensAsSheet, widgetSheetOrigin } from '../../utils/widgetSheet'
 import { isWidgetSizingGestureActive } from '../../store/widgetSizingGesture'
 import { widgetHasButtonOverflow } from '../../utils/widgetButtonLayout'
@@ -50,6 +51,7 @@ import { setCollaborativeEditingWidget } from '../../collaboration/collaboration
 import { useWidgetSkinSwitch } from './useWidgetSkinSwitch'
 import { dependencyStatusLabel } from '../../utils/dependencyGeometry'
 import { WidgetRenderer } from './WidgetRenderer'
+import { WidgetSkinTriggerProvider } from './WidgetSkinTrigger'
 import { WidgetRestingFace } from './WidgetRestingFace'
 import { useContentFloor } from './useContentFloor'
 import { useWidgetResize } from './useWidgetResize'
@@ -61,15 +63,14 @@ import {
   resolveWidgetPointerIntent,
   usesAdditiveWidgetSelection,
 } from '../../utils/widgetPointerPolicy'
+import { canvasPressMoved } from '../../utils/canvasGesturePolicy'
+import { openCanvasFromClick } from '../../utils/canvasOpenIntent'
 
 const PANELIZED_TYPES = new Set([
   'checklist',
   'bullets',
-  'sticky_note',
   'branch_gate',
   'decision',
-  'random_picker',
-  'priority_matrix',
   'pros_cons',
   'swot',
 ])
@@ -83,6 +84,9 @@ interface LinkDragState {
   rafId: number
   clientX: number
   clientY: number
+  /** Where the press landed, so a Cmd press that never moved reads as a click. */
+  originX: number
+  originY: number
 }
 
 const isInteractiveTarget = isInteractiveWidgetTarget
@@ -93,11 +97,17 @@ const GLUE_NO_INSET = { left: 0, right: 0, top: 0, bottom: 0 } as const
 export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps) {
   const widget = useWidgetStore((state) => state.widgets[widgetId])
   const isBlocked = useWidgetStore((state) => state.blockedWidgetIds.has(widgetId))
-  const blockerNames = useWidgetStore((state) => Object.values(state.relations)
-    .filter((relation) => relation.type === 'blocker' && !relation.isResolved && relation.toId === widgetId)
-    .map((relation) => state.widgets[relation.fromId]?.title)
-    .filter((title): title is string => Boolean(title))
-    .join(', '))
+  // Only a blocked card ever shows these, and `blockedWidgetIds` is the O(1)
+  // index of exactly the same predicate — so an unblocked card must not sweep
+  // every relation on the board on every store notification to build a string
+  // it throws away.
+  const blockerNames = useWidgetStore((state) => (
+    !state.blockedWidgetIds.has(widgetId) ? '' : Object.values(state.relations)
+      .filter((relation) => relation.type === 'blocker' && !relation.isResolved && relation.toId === widgetId)
+      .map((relation) => state.widgets[relation.fromId]?.title)
+      .filter((title): title is string => Boolean(title))
+      .join(', ')
+  ))
   const isLinkDragSource = useWidgetStore((state) => state.linkDrag?.sourceId === widgetId)
   const isSelected = useWidgetStore((state) => state.selectedIds.has(widgetId))
   const isFlashing = useWidgetStore((state) => state.flashWidgetId === widgetId)
@@ -107,10 +117,6 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
   // This card is the target an option-drag would weld to right now — glows so
   // the near-invisible seam preview is not the only "about to glue" cue.
   const isGlueTarget = useWidgetStore((state) => state.glueIntent?.targetId === widgetId)
-  // A glued member hides its own floating title capsule: the cluster's group
-  // frame (GlueClusterChrome) carries the shared group name above the whole
-  // cluster, so a per-card label would only clutter and collide with it.
-  const isGluedMember = useWidgetStore((state) => Boolean(state.widgetGlueIndex[widgetId]))
   // This card's cluster is folded. A folded cluster is ONE object: it wears
   // one hover state, answers one click (unfold), and its members are inert
   // single-cell icons — no per-icon lift, resize, ports, or expand.
@@ -174,13 +180,22 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
   /** No hover response at all: bloom, lift, magnetic tilt, outline-resize
    * proximity, and the hovered-widget signal the relation layers read. */
   const hoverInert = backgrounded || inFoldedCluster
+  // The expanded card's blur halo outlives the expansion by one layout beat so
+  // it can fade out alongside the card's collapse glide instead of vanishing
+  // the frame the slot clears. The stacking lift is held for the same beat, or
+  // the fading halo would drop beneath the neighbours it is still covering.
+  const [haloLingering, holdHalo] = useTransientValue(false)
   // An expanded card floats above *everything else* — and "everything" is a
   // moving target, because bring-to-front grows zIndex metadata without bound.
   // So the lift is one past the live top of the board, never a constant a
-  // well-travelled board could out-climb. Computed only for the expanded card;
-  // every other card selects a cheap 0.
+  // well-travelled board could out-climb. Computed for the card that is open
+  // AND for the collapse glide that follows it — the expansion drops a frame
+  // before the halo does, so a lift keyed on the expansion alone would fall
+  // back to the 320 floor under a board whose top has climbed past it, exactly
+  // the drop the hold above exists to prevent. Every other card selects a
+  // cheap 0.
   const restLiftZ = useWidgetStore((state) =>
-    expandedWidgetId === widgetId
+    expandedWidgetId === widgetId || haloLingering
       ? Object.values(state.widgets).reduce((top, w) => Math.max(top, w.metadata.zIndex ?? 0), 0) + 1
       : 0,
   )
@@ -211,11 +226,6 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
     if (resting && !wasRestingRef.current) holdContent(true, restGlideMs(layoutRef.current))
     wasRestingRef.current = resting
   }, [resting, holdContent])
-  // The expanded card's blur halo outlives the expansion by one layout beat so
-  // it can fade out alongside the card's collapse glide instead of vanishing
-  // the frame the slot clears. The stacking lift is held for the same beat, or
-  // the fading halo would drop beneath the neighbours it is still covering.
-  const [haloLingering, holdHalo] = useTransientValue(false)
   // True for the whole of an expand or a collapse, in both directions. The
   // only thing it drives is compositor promotion: the card's box is animating,
   // so it earns its own layer for exactly as long as that lasts and gives it
@@ -392,6 +402,8 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
         rafId: 0,
         clientX: e.clientX,
         clientY: e.clientY,
+        originX: e.clientX,
+        originY: e.clientY,
       }
       useWidgetStore.getState().startLinkDrag(
         widgetId,
@@ -499,7 +511,7 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
       interactionMode,
       isInteractiveTarget: isInteractiveTarget(e.target),
       isLocked: widget.metadata.locked === true,
-      hasModifier: isModifier,
+      hasCardGestureModifier: e.shiftKey || e.altKey,
       wantsLink: e.metaKey,
       isTargetingLink: Boolean(
         linkingState.childLinkSource || linkingState.dependencyLinkSource,
@@ -589,6 +601,21 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
       if (link.rafId !== 0) cancelAnimationFrame(link.rafId)
       linkDragRef.current = null
       const targetId = resolveLinkTargetAt(e.clientX, e.clientY)
+      // Cmd is overloaded on a canvas card: held through a drag it draws a
+      // relation, but a Cmd press that never moved is a click, and a click on
+      // a canvas card means "open this canvas in a tab". Resolving it here —
+      // rather than at pointer-down, where a press cannot yet be told from a
+      // drag — keeps both gestures without either stealing the other.
+      const linkFellOnNothing = targetId === null || targetId === widgetId
+      if (
+        linkFellOnNothing &&
+        widget.type === 'canvas_node' &&
+        !canvasPressMoved({ x: link.originX, y: link.originY }, { x: e.clientX, y: e.clientY })
+      ) {
+        useWidgetStore.getState().endLinkDrag(null)
+        openCanvasFromClick((widget.data as CanvasNodeData).canvasId, e)
+        return
+      }
       useWidgetStore.getState().endLinkDrag(targetId !== widgetId ? targetId : null)
       return
     }
@@ -810,17 +837,47 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
     }
   }
 
+  // The width twin of handleHeightChange, for `sizing.autoWidth` cards. The
+  // content reports only how much room its one line of text is short of (or
+  // over-served by); the card decides the box. Snapping the result UP to the
+  // grid is what makes this settle: after a grow the leftover slack is always
+  // less than one cell, and rounding a cell-aligned width minus that slack back
+  // up lands on the same width — so the card stops instead of trading sizes
+  // with its own text every frame.
+  const handleWidthChange = (slack: number) => {
+    if (widget.iconified) return
+    if (isWidgetSizingGestureActive(widgetId)) return
+    const sizing = widgetDefinition(widget.type).sizing
+    if (!sizing?.autoWidth) return
+    // The freshest box, not this render's copy: the measurement that produced
+    // `slack` may itself be the answer to a resize React has not re-rendered
+    // yet, and composing it onto a stale width would undo that resize.
+    const current = useWidgetStore.getState().widgets[widgetId]
+    if (!current) return
+    const minWidth = sizing.minWidth ?? DEFAULT_SIZING.minWidth
+    const maxWidth = Math.min(WIDGET_MAX_EDGE, sizing.maxWidth ?? DEFAULT_SIZING.maxWidth)
+    const fittedWidth = Math.min(
+      maxWidth,
+      Math.max(minWidth, Math.ceil((current.size.width + slack) / GRID_SIZE) * GRID_SIZE),
+    )
+    if (fittedWidth !== current.size.width) {
+      useWidgetStore.getState().resizeWidget(widgetId, { ...current.size, width: fittedWidth })
+    }
+  }
+
   const commitTitle = (title: string) => {
     useWidgetStore.getState().updateWidgetTitle(widgetId, title.trim() || 'Widget')
     setTitleEditing(false)
   }
 
-  // The title row's button set is STATIC — no customize menu, no per-widget
-  // visibility flags. Pin, Favorite, and Delete on every card; the Completed
-  // checkbox only where completion means something (checklists).
+  // The title row's button set is STATIC — no customize menu or saved
+  // visibility flags. Pin appears everywhere except Canvas cards; Favorite and
+  // Delete appear on every card; Completed only appears on checklists.
   const isButtonActive = (btnId: string) => {
     switch (btnId) {
       case 'pin':
+        return widget.type !== 'canvas_node'
+      case 'expand':
       case 'favorite':
       case 'delete':
         return true
@@ -833,9 +890,8 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
 
   // Pinning hands the card a permanent open state, so it no longer needs the
   // single ephemeral expansion slot — release it first, or the accordion keeps
-  // a member that can never collapse. The control is the title row's Pin
-  // button, a default like Favorite and Delete.
-  // (Position locking is a separate thing, in the right-click menu.)
+  // a member that can never collapse. (Position locking is a separate thing,
+  // in the right-click menu.)
   const togglePin = () => {
     if (!widget.metadata.pinned && expandedWidgetId === widgetId) {
       // What the pin is interrupting: a card opened out of an icon must come
@@ -865,7 +921,21 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
   }
 
   const handleButtonClick = (btnId: string) => {
-    if (btnId === 'pin') {
+    if (btnId === 'expand') {
+      // A Text card opens into the writing view rather than the generic
+      // fullscreen sheet. Handing it the screen is the same gesture, but what
+      // a long piece of writing needs from the screen is a measure, an
+      // outline, and a word count — not the card drawn larger.
+      if (widget.type === 'text') {
+        useTextSheetStore.getState().openTextSheet(widgetId, widgetSheetOrigin(widgetId))
+        return
+      }
+      // The same fullscreen presentation phones open on tap — the sheet is
+      // viewport-agnostic (grows out of the card's on-screen rectangle, folds
+      // back onto it); only the tap path gates itself to phones. This button
+      // is the explicit door on every other screen size.
+      useWidgetSheetStore.getState().openWidgetSheet(widgetId, widgetSheetOrigin(widgetId))
+    } else if (btnId === 'pin') {
       togglePin()
     } else if (btnId === 'completed') {
       const nextVal = !widget.metadata.completed
@@ -873,7 +943,7 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
     } else if (btnId === 'favorite') {
       useWidgetStore.getState().toggleWidgetFavorite(widgetId)
     } else if (btnId === 'delete') {
-      requestWidgetDeletion(widgetId)
+      requestWidgetDeletion([widgetId])
     }
   }
 
@@ -899,15 +969,19 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
   // Icon-face resting tiles hide it too: the tile IS the icon, and a floating
   // name capsule wider than the icon cell would defeat the shrink entirely.
   const capsuleHidden = (iconified || restIcon) && !titleEditing
-  // A card welded below a clustermate hides its floating title too — it would
-  // otherwise land on the neighbour above. Renaming (F2) still forces it back,
-  // and so do the two states whose only control lives in that row: the
-  // ephemerally expanded member (floating above the cluster, so nothing is
-  // under the row) and a pinned member (the row is the only unpin).
-  const titleChromeHidden =
-    capsuleHidden ||
-    (isGluedMember && !titleEditing && !restExpanded && widget.metadata.pinned !== true)
+  // A welded member keeps its own name row. It used to hand the name to the
+  // group frame and hide, which only worked because the row was treated as free
+  // space — the clustermate above was packed straight into that strip and the
+  // group's boundary line was drawn through where the name would have been.
+  // Now the row is part of the member's footprint everywhere (`glueChromeRect`
+  // reserves it, `clusterChromeEnvelope` encloses it), so it can simply stay.
+  const titleChromeHidden = capsuleHidden
   const def = widgetDefinition(widget.type)
+  // A card that already states its own name inside itself drops the floating
+  // row outright rather than merely fading it: the row's only job here would be
+  // to say the name twice. Its skin trigger moves inside the card instead, so
+  // the roller stays reachable — see WidgetSkinTrigger.
+  const chromeless = def.titleChrome === false
   const treeRevealMs = treeRevealDelay('widget', widgetId)
   const Icon = def.icon
   // One skin is not a choice: the icon stays a plain identity mark rather than
@@ -1085,7 +1159,7 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
         }}
         onPointerDown={onPointerDown}
         onPointerMove={(event) => {
-          if (!hoverInert) edgeResize.onEdgeHoverMove(event)
+          if (!hoverInert && !dragRef.current) edgeResize.onEdgeHoverMove(event)
           onPointerMove(event)
         }}
         onPointerUp={onPointerUp}
@@ -1105,6 +1179,10 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
             ? 'pointer'
             : edgeResize.resizeCursor ?? (dragRef.current?.moved ? 'grabbing' : 'grab'),
           '--gp-widget-accent': cardAccent,
+          // Raw accent for scopes that re-derive a theme-adjusted accent (the
+          // light theme darkens `--gp-widget-accent` inside card content; a
+          // variable cannot color-mix itself, so the source rides alongside).
+          '--gp-widget-accent-source': cardAccent,
           '--gp-widget-radius': `${widgetRadius}px`,
           '--gp-tree-reveal-delay': `${treeRevealMs ?? 0}ms`,
           // No paint containment here: the title capsule, badges, and detach
@@ -1149,7 +1227,7 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
           capsule (its identity floats above the face) but mounts none of the
           action buttons. Buttons sit in one row after the title — no
           customize menu, no wrapping into columns, no entrance animation. */}
-      {(() => {
+      {!chromeless && (() => {
         // Estimate title width dynamically based on typical character widths (7px for text-xs font-bold)
         // Icon takes 40px cell. Input takes w-24 (96px). Truncation limits it to 200px.
         const estimatedTitleWidth = titleEditing ? 96 : Math.min(200, widget.title.length * 7)
@@ -1158,6 +1236,11 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
         const titleAreaWidth = titleAreaCells * 40
 
         const visibleButtons = [
+          {
+            id: 'expand',
+            icon: Maximize2,
+            label: widget.type === 'text' ? 'Open writing view' : 'Full screen',
+          },
           { id: 'pin', icon: Pin, label: 'Pin' },
           { id: 'completed', icon: Check, label: 'Completed' },
           { id: 'favorite', icon: Star, label: 'Favorite' },
@@ -1169,6 +1252,11 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
             <div
               inert={iconified ? true : undefined}
               aria-hidden={iconified || undefined}
+              // The name row NEVER sits on the glass. It floats in the one-cell
+              // strip directly ABOVE the backplate — resting tile, full card,
+              // and ephemerally expanded card alike. One placement means
+              // `WIDGET_TITLE_ROW` describes every state, so the space reserved
+              // above a card and the chrome painted there can never disagree.
               className={`gp-card-chrome pointer-events-none absolute bottom-full left-0 right-0 z-20 h-10 transition-opacity duration-300 ${
                 titleChromeHidden ? 'opacity-0' : 'opacity-100'
               }`}
@@ -1338,7 +1426,9 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
         <WidgetSkinRoller
           currentValue={activeSkin.value}
           skins={skins}
-          anchorRef={skinSwitch.titleRowRef}
+          // A chromeless card has no name row to hang the drum from, so it
+          // hangs from the card's own content box instead.
+          anchorRef={chromeless ? contentRef : skinSwitch.titleRowRef}
           iconHomeRef={skinSwitch.triggerRef}
           onClose={() => {
             skinSwitch.setOpen(false)
@@ -1422,6 +1512,9 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
         ref={contentRef}
         inert={iconLike || resting ? true : undefined}
         aria-hidden={iconLike || resting || undefined}
+        // No reserved band here any more: the expanded card's name row floats
+        // in the strip ABOVE the backplate like every other state, so the
+        // content owns the full plate and starts at the constitutional inset.
         className={`gp-widget-content ${restExpanded ? 'gp-rest-content-in' : ''} flex-1 overflow-hidden rounded-[20px] p-2.5 transition-opacity duration-300 ${
           iconLike || resting ? 'pointer-events-none opacity-0' : 'opacity-100'
         }`}
@@ -1458,11 +1551,27 @@ export const WidgetCard = memo(function WidgetCard({ widgetId }: WidgetCardProps
             </div>
           )}
         >
-          <WidgetRenderer
-            widget={widget}
-            onUpdate={handleDataUpdate}
-            onHeightChange={handleHeightChange}
-          />
+          <WidgetSkinTriggerProvider
+            handle={
+              chromeless && activeSkin
+                ? {
+                    skin: activeSkin,
+                    open: skinSwitch.open,
+                    setOpen: skinSwitch.setOpen,
+                    handingBack: skinSwitch.handingBack,
+                    triggerRef: skinSwitch.triggerRef,
+                    widgetTitle: widget.title,
+                  }
+                : null
+            }
+          >
+            <WidgetRenderer
+              widget={widget}
+              onUpdate={handleDataUpdate}
+              onHeightChange={handleHeightChange}
+              onWidthChange={handleWidthChange}
+            />
+          </WidgetSkinTriggerProvider>
         </ErrorBoundary>
       </div>
       )}

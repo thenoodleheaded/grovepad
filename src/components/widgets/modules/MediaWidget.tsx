@@ -72,8 +72,8 @@ function useResolvedSource(localBlobKey: string | undefined): string {
     }
     let objectUrl = ''
     let cancelled = false
-    void import('../../../utils/boardDatabase')
-      .then(({ readMediaBlob }) => readMediaBlob(localBlobKey))
+    void import('../../../services/mediaSyncService')
+      .then(({ loadMediaBlob }) => loadMediaBlob(localBlobKey))
       .then((blob) => {
         if (!blob || cancelled) return
         objectUrl = URL.createObjectURL(blob)
@@ -882,6 +882,16 @@ function MoodboardSkin({
 }) {
   const boardRef = useRef<HTMLDivElement>(null)
   const dragRef = useRef<{ session: PointerDragSession; id: string; x: number; y: number } | null>(null)
+  // A tile drag ends on the figure's own pointerup, which a detached element
+  // can never fire. If the card unmounts mid-drag (canvas switch, undo, sync
+  // delete) the session's `data-widget-dragging` would stay on <body> for the
+  // rest of the page's life, forcing `cursor: grabbing` everywhere and
+  // collapsing every widget transition. `end()` is a no-op unless the gesture
+  // actually moved, so this costs nothing on a normal unmount.
+  useEffect(() => () => {
+    dragRef.current?.session.end()
+    dragRef.current = null
+  }, [])
   const [draft, setDraft, clearDraft] = useItemDraft()
   const items = moodboardItems(state.items)
 

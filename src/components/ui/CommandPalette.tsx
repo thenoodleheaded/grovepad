@@ -7,7 +7,7 @@ import {
   type CSSProperties,
 } from 'react'
 import { createPortal } from 'react-dom'
-import { ChevronRight, Layers, Search, SquarePlus, X, Zap } from 'lucide-react'
+import { ChevronRight, FolderOpen, Layers, Search, SquarePlus, X, Zap } from 'lucide-react'
 import { useOverlayDismiss } from '../../hooks/useOverlayDismiss'
 import { useCanvasStore } from '../../store/useCanvasStore'
 import { isOverlayOpen } from '../../store/useOverlayStore'
@@ -23,8 +23,12 @@ import type { ModuleType, SearchResult } from '../../types/spatial'
 import { boundsForWidgets } from '../../utils/widgetBounds'
 import { getCanvasPath } from '../../store/useWidgetStore'
 import { isWidgetTypePublic } from '../../widgets/registry'
+import { isStudyFocusType } from '../../widgets/studyFocus'
+import { useWidgetPickerPrefsStore } from '../../store/useWidgetPickerPrefsStore'
 import { documentImportAvailable, historyPaletteActionIds } from '../../utils/commandPaletteAvailability'
 import { useCollaborationStore } from '../../store/useCollaborationStore'
+import { readCanvasVisits } from '../../store/canvasRecents'
+import { leapToSearchResult } from '../../utils/searchLeap'
 
 // ---------------------------------------------------------------------------
 // Static action registry
@@ -82,7 +86,7 @@ const PALETTE_ACTIONS: ActionItem[] = [
     subtitle: 'Show every shortcut and gesture (?)',
     run: () => {
       useWidgetStore.getState().setPaletteOpen(false)
-      useSettingsStore.getState().setOpen(true, 'controls')
+      useWidgetStore.getState().setShortcutsOpen(true)
     },
   },
   {
@@ -140,12 +144,7 @@ const PALETTE_ACTIONS: ActionItem[] = [
     title: 'Open Domain Packs',
     subtitle: 'Enable specialist widget libraries',
     run: () => {
-      const canvas = useCanvasStore.getState()
-      const center = {
-        x: (canvas.viewportSize.width / 2 - canvas.pan.x) / canvas.zoom,
-        y: (canvas.viewportSize.height / 2 - canvas.pan.y) / canvas.zoom,
-      }
-      useWidgetStore.getState().openAddWidget(center, 'packs')
+      useSettingsStore.getState().setOpen(true, 'data')
       useWidgetStore.getState().setPaletteOpen(false)
     },
   },
@@ -235,11 +234,19 @@ function ResultPreview({ result }: { result: SearchResult | null }) {
   }
 
   const isAction = result.type === 'action'
+  const isCanvas = result.type === 'canvas'
   const isCreate = isAction && result.id.startsWith(CREATE_ACTION_PREFIX)
-  const widget = !isAction ? useWidgetStore.getState().widgets[result.id] : undefined
+  const widget = result.type === 'widget' ? useWidgetStore.getState().widgets[result.id] : undefined
   const widgetState = useWidgetStore.getState()
-  const canvasPath = widget ? getCanvasPath(widgetState.canvases, widget.canvasId).map((canvas) => canvas.name).join(' › ') : ''
+  const canvasPath = widget
+    ? getCanvasPath(widgetState.canvases, widget.canvasId).map((canvas) => canvas.name).join(' › ')
+    : isCanvas
+      ? getCanvasPath(widgetState.canvases, result.id).map((canvas) => canvas.name).join(' › ')
+      : ''
   const excerpt = widget ? JSON.stringify(widget.data).replace(/[{}"]|\[|\]/g, ' ').replace(/\s+/g, ' ').slice(0, 120) : ''
+  const cardCount = isCanvas
+    ? Object.values(widgetState.widgets).filter((entry) => entry.canvasId === result.id).length
+    : 0
 
   return (
     <div className="flex h-full flex-col gap-3 p-4">
@@ -250,10 +257,12 @@ function ResultPreview({ result }: { result: SearchResult | null }) {
               ? 'bg-sky-500/15 text-sky-400'
               : isAction
                 ? 'bg-violet-500/15 text-violet-400'
-                : 'bg-emerald-500/15 text-emerald-400'
+                : isCanvas
+                  ? 'bg-amber-500/15 text-amber-400'
+                  : 'bg-emerald-500/15 text-emerald-400'
           }`}
         >
-          {isCreate ? <SquarePlus size={11} /> : isAction ? <Zap size={11} /> : <Layers size={11} />}
+          {isCreate ? <SquarePlus size={11} /> : isAction ? <Zap size={11} /> : isCanvas ? <FolderOpen size={11} /> : <Layers size={11} />}
         </span>
         <div>
           <p className="text-xs font-semibold text-neutral-200">{result.title}</p>
@@ -264,9 +273,15 @@ function ResultPreview({ result }: { result: SearchResult | null }) {
       <div className="space-y-1.5 rounded-lg border border-neutral-800 bg-neutral-900/50 p-3">
         <Row
           label="Type"
-          value={isCreate ? 'Create Widget' : isAction ? 'Canvas Action' : 'Widget'}
+          value={isCreate ? 'Create Widget' : isAction ? 'Canvas Action' : isCanvas ? 'Canvas' : 'Widget'}
         />
-        {!isAction && (
+        {isCanvas && (
+          <>
+            <Row label="Path" value={canvasPath || result.title} />
+            <Row label="Cards" value={cardCount === 1 ? '1 card' : `${cardCount} cards`} />
+          </>
+        )}
+        {!isAction && !isCanvas && (
           <>
             <Row label="Canvas" value={canvasPath || 'Origin'} />
             <Row label="Content" value={excerpt || 'Empty'} />
@@ -277,7 +292,9 @@ function ResultPreview({ result }: { result: SearchResult | null }) {
       {!isAction && (
         <div className="mt-auto flex items-center gap-1.5 rounded border border-emerald-500/20 bg-emerald-500/5 px-3 py-2">
           <ChevronRight size={11} className="text-emerald-500" />
-          <span className="text-[11px] text-emerald-400">Press Enter to leap to this widget</span>
+          <span className="text-[11px] text-emerald-400">
+            {isCanvas ? 'Press Enter to open this canvas' : 'Press Enter to leap to this widget'}
+          </span>
         </div>
       )}
     </div>
@@ -307,6 +324,7 @@ export function CommandPalette() {
   const activePacks = useWidgetStore((state) => state.activePacks)
   const canUndo = useWidgetStore((state) => state.canUndo)
   const canRedo = useWidgetStore((state) => state.canRedo)
+  const studyFocus = useWidgetPickerPrefsStore((state) => state.studyFocus)
 
   const [query, setQuery] = useState('')
   const [category, setCategory] = useState<CategoryTab>('all')
@@ -337,10 +355,11 @@ export function CommandPalette() {
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [])
 
-  // Reset + focus on open
+  // Reset + focus on open. A pending initial query (the `find <text>` verb)
+  // pre-fills the search box instead of wiping it; the close clears it.
   useEffect(() => {
     if (!open) return
-    setQuery('')
+    setQuery(useWidgetStore.getState().paletteInitialQuery ?? '')
     setCategory('all')
     setFocusedIndex(0)
     const raf = requestAnimationFrame(() => { inputRef.current?.focus() })
@@ -353,6 +372,9 @@ export function CommandPalette() {
 
     const createResults: SearchResult[] = MODULE_TYPES.filter((type) => {
       if (!isWidgetTypePublic(type)) return false
+      // Same allow-list the picker uses, and it overrides the pack gate for
+      // the same reason: study focus names the set it shows.
+      if (studyFocus) return isStudyFocusType(type)
       const req = MODULE_PACK_REQUIREMENTS[type]
       return !req || activePacks.includes(req)
     })
@@ -378,11 +400,22 @@ export function CommandPalette() {
 
     if (!trimmed) {
       const state = useWidgetStore.getState()
-      widgetResults = Object.values(state.widgets)
+      // Real recency: the device-local visit trail names the canvases this
+      // person actually works on, so the empty palette is a jump list.
+      const canvasResults: SearchResult[] = readCanvasVisits()
+        .map((visit) => state.canvases[visit.id])
+        .filter((canvas): canvas is NonNullable<typeof canvas> =>
+          canvas !== undefined &&
+          canvas.workspaceId === state.activeWorkspaceId &&
+          canvas.id !== state.activeCanvasId)
+        .slice(0, 4)
+        .map((canvas) => ({ id: canvas.id, type: 'canvas' as const, title: canvas.name, subtitle: 'Recent canvas', canvasId: canvas.id, position: { x: 0, y: 0 } }))
+      const widgetRows = Object.values(state.widgets)
         .filter((widget) => state.canvases[widget.canvasId]?.workspaceId === state.activeWorkspaceId)
         .sort((a, b) => (b.metadata.zIndex ?? 0) - (a.metadata.zIndex ?? 0))
         .slice(0, 6)
-        .map((widget) => ({ id: widget.id, type: 'widget' as const, title: widget.title, subtitle: `Recent · ${MODULE_LABELS[widget.type]}`, canvasId: widget.canvasId, position: { x: widget.position.x + widget.size.width / 2, y: widget.position.y + widget.size.height / 2 } }))
+        .map((widget) => ({ id: widget.id, type: 'widget' as const, title: widget.title, subtitle: MODULE_LABELS[widget.type], canvasId: widget.canvasId, position: { x: widget.position.x + widget.size.width / 2, y: widget.position.y + widget.size.height / 2 } }))
+      widgetResults = [...canvasResults, ...widgetRows]
     }
 
     if (/^[\d\s+\-*/().%]+$/.test(trimmed) && /\d/.test(trimmed)) {
@@ -399,7 +432,7 @@ export function CommandPalette() {
     if (category === 'actions') return trimmed ? actionResults : actionResults.slice(0, 4)
     if (category === 'widgets') return widgetResults
     return [...(trimmed ? actionResults : actionResults.slice(0, 4)), ...widgetResults]
-  }, [query, category, activePacks, canUndo, canRedo])
+  }, [query, category, activePacks, canUndo, canRedo, studyFocus])
 
   // Reset focus when results change
   useEffect(() => { setFocusedIndex(0) }, [results])
@@ -412,28 +445,6 @@ export function CommandPalette() {
 
   const focusedResult = results[focusedIndex] ?? null
 
-  const leapToWidget = useCallback((result: SearchResult) => {
-    // Cross-canvas result: enter its canvas first, then glide to it there.
-    if (result.canvasId && result.canvasId !== useWidgetStore.getState().activeCanvasId) {
-      useWidgetStore.getState().navigateToCanvas(result.canvasId)
-    }
-    const canvas = useCanvasStore.getState()
-    // Glide to the widget at a zoom where detail is legible, then pulse it.
-    const targetZoom = Math.max(canvas.zoom, 0.85)
-    canvas.animateView(
-      {
-        x: canvas.viewportSize.width / 2 - result.position.x * targetZoom,
-        y: canvas.viewportSize.height / 2 - result.position.y * targetZoom,
-      },
-      targetZoom,
-      380,
-    )
-    const widgetState = useWidgetStore.getState()
-    widgetState.selectWidget(result.id, false)
-    widgetState.flashWidget(result.id)
-    widgetState.setPaletteOpen(false)
-  }, [])
-
   const execute = useCallback(
     (result: SearchResult) => {
       if (result.type === 'action') {
@@ -445,17 +456,18 @@ export function CommandPalette() {
         } else if (result.id.startsWith('note:')) {
           const canvas = useCanvasStore.getState()
           const position = screenToWorld({ x: canvas.viewportSize.width / 2, y: canvas.viewportSize.height / 2 }, { x: canvas.pan.x, y: canvas.pan.y, zoom: canvas.zoom })
-          const id = useWidgetStore.getState().createWidget(result.id.slice(5), position, 'notes')
+          const id = useWidgetStore.getState().createWidget(result.id.slice(5), position, 'text')
           useWidgetStore.getState().selectWidget(id, false)
           useWidgetStore.getState().setPaletteOpen(false)
         } else {
           ACTION_RUN_MAP.get(result.id)?.()
         }
       } else {
-        leapToWidget(result)
+        leapToSearchResult(result)
+        useWidgetStore.getState().setPaletteOpen(false)
       }
     },
-    [leapToWidget],
+    [],
   )
 
   const onModalKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
@@ -575,14 +587,18 @@ export function CommandPalette() {
                   >
                     <span
                       className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded ${
-                        result.type !== 'action'
-                          ? 'bg-emerald-500/15 text-emerald-400'
-                          : result.id.startsWith(CREATE_ACTION_PREFIX)
-                            ? 'bg-sky-500/15 text-sky-400'
-                            : 'bg-violet-500/15 text-violet-400'
+                        result.type === 'canvas'
+                          ? 'bg-amber-500/15 text-amber-400'
+                          : result.type === 'widget'
+                            ? 'bg-emerald-500/15 text-emerald-400'
+                            : result.id.startsWith(CREATE_ACTION_PREFIX)
+                              ? 'bg-sky-500/15 text-sky-400'
+                              : 'bg-violet-500/15 text-violet-400'
                       }`}
                     >
-                      {result.type !== 'action' ? (
+                      {result.type === 'canvas' ? (
+                        <FolderOpen size={9} />
+                      ) : result.type === 'widget' ? (
                         <Layers size={9} />
                       ) : result.id.startsWith(CREATE_ACTION_PREFIX) ? (
                         <SquarePlus size={9} />

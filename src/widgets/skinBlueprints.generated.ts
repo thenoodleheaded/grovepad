@@ -105,22 +105,6 @@ export const WIDGET_SKIN_BLUEPRINTS = {
       "implementation": "schema-extension",
       "presentation": "standard",
       "accent": "#7fe472"
-    },
-    {
-      "value": "dashboard_door",
-      "label": "Dashboard Door",
-      "description": "Shows child-widget counts, completion, alerts, and recent activity before entering.",
-      "implementation": "schema-extension",
-      "presentation": "board",
-      "accent": "#a3e472"
-    },
-    {
-      "value": "folder_index",
-      "label": "Folder Index",
-      "description": "Lists the immediate child canvases and opens one directly.",
-      "implementation": "schema-extension",
-      "presentation": "ledger",
-      "accent": "#a372e4"
     }
   ],
   "bullets": [
@@ -141,36 +125,12 @@ export const WIDGET_SKIN_BLUEPRINTS = {
       "accent": "#e472d7"
     },
     {
-      "value": "compact_chips",
-      "label": "Compact Chips",
-      "description": "Wraps very short items into a dense tag-like cloud.",
-      "implementation": "renderer-ready",
-      "presentation": "compact",
-      "accent": "#72e49f"
-    },
-    {
-      "value": "two_column",
-      "label": "Two Column",
-      "description": "Balances a long list across two readable columns.",
-      "implementation": "renderer-ready",
-      "presentation": "ledger",
-      "accent": "#e472d7"
-    },
-    {
       "value": "nested_outline",
       "label": "Nested Outline",
       "description": "Adds indentation, collapse, and parent-child structure.",
       "implementation": "schema-extension",
       "presentation": "standard",
       "accent": "#9c72e4"
-    },
-    {
-      "value": "rolling_log",
-      "label": "Rolling Log",
-      "description": "Appends timestamped bullets with newest-first or oldest-first order.",
-      "implementation": "schema-extension",
-      "presentation": "ledger",
-      "accent": "#e4a772"
     }
   ],
   "code": [
@@ -339,46 +299,14 @@ export const WIDGET_SKIN_BLUEPRINTS = {
       "accent": "#e47572"
     }
   ],
-  "notes": [
-    {
-      "value": "daily_log",
-      "label": "Daily Log",
-      "description": "Timestamped journal styling optimized for short dated entries.",
-      "implementation": "renderer-ready",
-      "presentation": "time",
-      "accent": "#e4a772"
-    },
-    {
-      "value": "markdown_page",
-      "label": "Markdown Page",
-      "description": "Reading-first typography with headings, code, lists, and links.",
-      "implementation": "renderer-ready",
-      "presentation": "chart",
-      "accent": "#729ce4"
-    },
+  "text": [
     {
       "value": "typewriter",
       "label": "Typewriter",
       "description": "Distraction-free long-form writing with a narrow measure and current-line focus.",
       "implementation": "renderer-ready",
       "presentation": "form",
-      "accent": "#72cfe4"
-    },
-    {
-      "value": "callout",
-      "label": "Callout",
-      "description": "A concise warning, tip, decision, or important-fact treatment.",
-      "implementation": "renderer-ready",
-      "presentation": "standard",
-      "accent": "#e47572"
-    },
-    {
-      "value": "versioned_note",
-      "label": "Versioned Note",
-      "description": "Keeps named snapshots and compares the current text with an earlier version.",
-      "implementation": "schema-extension",
-      "presentation": "matrix",
-      "accent": "#729ce4"
+      "accent": "#e4a572"
     }
   ],
   "outline": [
@@ -541,7 +469,7 @@ export const WIDGET_SKIN_BLUEPRINTS = {
     {
       "value": "connected_calendars",
       "label": "Connected Calendars",
-      "description": "Privately combines read-only Google and Outlook events without saving provider tokens or event details to the board.",
+      "description": "Privately shows read-only Google Calendar events without saving provider tokens or event details to the board.",
       "implementation": "renderer-ready",
       "presentation": "timeline",
       "accent": "#72e4a1"
@@ -1052,48 +980,6 @@ export const WIDGET_SKIN_BLUEPRINTS = {
       "description": "Groups sources under the claims they support or challenge.",
       "implementation": "schema-extension",
       "presentation": "map",
-      "accent": "#a372e4"
-    }
-  ],
-  "cornell": [
-    {
-      "value": "lecture",
-      "label": "Lecture",
-      "description": "Classic cues, notes, and summary with lecture metadata.",
-      "implementation": "renderer-ready",
-      "presentation": "standard",
-      "accent": "#72d1e4"
-    },
-    {
-      "value": "reading",
-      "label": "Reading",
-      "description": "Question prompts, evidence notes, and chapter summary.",
-      "implementation": "renderer-ready",
-      "presentation": "standard",
-      "accent": "#729ce4"
-    },
-    {
-      "value": "problem_solving",
-      "label": "Problem Solving",
-      "description": "Known facts, method, working, and final check.",
-      "implementation": "renderer-ready",
-      "presentation": "standard",
-      "accent": "#e47275"
-    },
-    {
-      "value": "interview",
-      "label": "Interview",
-      "description": "Questions on the left, responses on the right, synthesis below.",
-      "implementation": "renderer-ready",
-      "presentation": "media",
-      "accent": "#a372e4"
-    },
-    {
-      "value": "research",
-      "label": "Research",
-      "description": "Claims, evidence, counterevidence, and synthesis.",
-      "implementation": "renderer-ready",
-      "presentation": "media",
       "accent": "#a372e4"
     }
   ],

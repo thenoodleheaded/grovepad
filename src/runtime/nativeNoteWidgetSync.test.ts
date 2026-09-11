@@ -12,7 +12,7 @@ describe('native Note widget sync runtime', () => {
   afterEach(() => vi.useRealTimers())
 
   it('debounces edits, skips unrelated mutations, and clears a deleted selection', async () => {
-    const id = useWidgetStore.getState().createWidget('Native note', { x: 8_000, y: 8_000 }, 'notes')
+    const id = useWidgetStore.getState().createWidget('Native note', { x: 8_000, y: 8_000 }, 'text')
     useNativeWidgetStore.getState().setSelectedWidgetId(id)
     const invoke = vi.fn(async (
       _command: 'sync_note_widget',
@@ -58,7 +58,7 @@ describe('native Note widget sync runtime', () => {
   })
 
   it('coalesces edits made while native persistence is in flight', async () => {
-    const id = useWidgetStore.getState().createWidget('Native note', { x: 8_400, y: 8_000 }, 'notes')
+    const id = useWidgetStore.getState().createWidget('Native note', { x: 8_400, y: 8_000 }, 'text')
     useNativeWidgetStore.getState().setSelectedWidgetId(id)
     let finishFirst: ((value: { supported: boolean; changed: boolean }) => void) | undefined
     const invoke = vi.fn((_command: 'sync_note_widget', _args: { payload: string }) => {
@@ -97,7 +97,7 @@ describe('native Note widget sync runtime', () => {
   })
 
   it('probes an unsupported desktop only once', async () => {
-    const id = useWidgetStore.getState().createWidget('Native note', { x: 8_800, y: 8_000 }, 'notes')
+    const id = useWidgetStore.getState().createWidget('Native note', { x: 8_800, y: 8_000 }, 'text')
     useNativeWidgetStore.getState().setSelectedWidgetId(id)
     const invoke = vi.fn(async (
       _command: 'sync_note_widget',

@@ -39,13 +39,55 @@ describe('purpose-built Formula skins', () => {
 
   /**
    * A Formula is a logic card before it is a display. Whatever question a skin
-   * asks, both operands stay on screen and editable — a wire writes A and B,
-   * and a card that hid them could not be corrected by hand.
+   * asks, every input stays on screen and editable — a wire writes them, and a
+   * card that hid one could not be corrected by hand.
    */
   it.each(SKINS)('keeps both operands editable in the %s skin', (skin) => {
     const markup = render(skin)
     expect(markup).toContain('value="200"')
     expect(markup).toContain('value="250"')
+  })
+
+  /**
+   * Six slots, six ports. Every skin shows the whole rack, names each slot,
+   * and prints the letter of the port a wire lands on, so a card fed by four
+   * widgets can be read without opening the wire inspector.
+   */
+  it.each(SKINS)('shows every wired input and its port letter in the %s skin', (skin) => {
+    const markup = render(skin, { inputCount: 4, c: 12, d: 7, names: { c: 'stock' } })
+    expect(markup).toContain('value="12"')
+    expect(markup).toContain('value="7"')
+    expect(markup).toContain('value="stock"')
+    expect(markup).toContain('Circuit port D')
+  })
+
+  it('grows and shrinks the rack, and never past its bounds', () => {
+    const two = render('two_input')
+    expect(two).toContain('2 inputs')
+    // Nothing to remove at two; still room to add.
+    expect((two.match(/disabled=""/g) ?? []).length).toBe(1)
+
+    const six = render('two_input', { inputCount: 6 })
+    expect(six).toContain('6 inputs')
+    expect((six.match(/disabled=""/g) ?? []).length).toBe(1)
+  })
+
+  it('lets a card choose which inputs answer a two-number question', () => {
+    const markup = render('percent_change', {
+      inputCount: 4,
+      c: 400,
+      d: 300,
+      skinStates: { percent_change: { fromKey: 'c', toKey: 'd' } },
+    })
+    expect(markup).toContain('gp-fx-roles')
+    expect(markup).toContain('-25')
+    expect(markup).toContain('data-tone="down"')
+  })
+
+  it('publishes the answer at the precision and in the unit the card prints', () => {
+    const markup = render('two_input', { a: 1, b: 3, operator: 'divide', precision: 2, unit: 'kg' })
+    expect(markup).toContain('0.33')
+    expect(markup).toContain('kg')
   })
 
   it.each(SKINS)('shows the published answer in the %s skin', (skin) => {
@@ -81,9 +123,11 @@ describe('purpose-built Formula skins', () => {
 
   it('carries the written expression and reports one that cannot be read', () => {
     const good = render('expression', { skinStates: { expression: { expression: 'a * b' } } })
-    expect(good).toContain('ƒ(a,b)')
+    expect(good).toContain('gp-fx-expression-prefix')
     expect(good).toContain('value="a * b"')
     expect(good).toContain('50000')
+    // The card says plainly what an expression is allowed to name.
+    expect(good).toContain('What this expression can use')
 
     const bad = render('expression', { skinStates: { expression: { expression: 'a * * b' } } })
     expect(bad).toContain('data-invalid="true"')

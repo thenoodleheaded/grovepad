@@ -42,12 +42,12 @@ export function GoalTrackerWidget({ data, onChange }: GoalTrackerWidgetProps) {
               strokeDasharray={CIRC}
               strokeDashoffset={CIRC * (1 - percent / 100)}
               className="transition-[stroke-dashoffset] duration-300"
-              style={{ stroke: 'var(--gp-widget-accent)' }}
+              style={{ stroke: 'var(--gp-accent-ink, var(--gp-widget-accent))' }}
             />
           </svg>
           <span
             className="absolute inset-0 flex items-center justify-center  text-[9px] font-semibold tabular-nums"
-            style={{ color: 'var(--gp-widget-accent)' }}
+            style={{ color: 'var(--gp-accent-ink, var(--gp-widget-accent))' }}
           >
             {percent}%
           </span>

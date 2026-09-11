@@ -106,9 +106,18 @@ function scheduleRows(data: AtlasWidgetData): RestRow[] {
   }))
 }
 
-export function trackerRestingFace(data: Record<string, unknown>): RestingFaceModel | null {
+/**
+ * @param own The Atlas system this card IS, for the fifty standalone types. A
+ * Tracker names its system in `trackerMode` and passes nothing; a Fuel Log
+ * card is a Fuel Log by type, so it names itself rather than trusting a field
+ * an old board may never have written.
+ */
+export function trackerRestingFace(
+  data: Record<string, unknown>,
+  own?: AtlasType,
+): RestingFaceModel | null {
   const atlas = data as unknown as AtlasWidgetData
-  const type = atlasModeFor(atlas)
+  const type = own ?? atlasModeFor(atlas)
   if (!ATLAS_TYPE_SET.has(type)) return null
   const spec = ATLAS_CATALOG[type]
   // A card in private mode hides its reading behind an abstract disc when it

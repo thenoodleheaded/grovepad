@@ -209,8 +209,8 @@
     inset 0 0 0 1px rgb(125 211 252 / 0.17),
     inset 0 1px 0 rgb(255 255 255 / 0.08),
     0 5px 14px rgb(0 0 0 / 0.2);
-  backdrop-filter: blur(12px) saturate(1.18);
-  -webkit-backdrop-filter: blur(12px) saturate(1.18);
+  backdrop-filter: blur(calc(12px * var(--gp-blur-scale, 1))) saturate(1.18);
+  -webkit-backdrop-filter: blur(calc(12px * var(--gp-blur-scale, 1))) saturate(1.18);
 }
 
 .gp-collaboration-tab {
@@ -382,8 +382,8 @@
 @media (max-width: 639px) {
   .gp-collaboration-backdrop {
     background: rgb(0 0 0 / 0.34);
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(calc(4px * var(--gp-blur-scale, 1)));
+    -webkit-backdrop-filter: blur(calc(4px * var(--gp-blur-scale, 1)));
   }
 
   .gp-collaboration-panel {

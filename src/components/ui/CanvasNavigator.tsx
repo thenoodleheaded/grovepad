@@ -94,9 +94,13 @@ export function CanvasNavigator() {
   }, [extent.x, extent.y, scale])
 
   const glideFromMap = (event: ReactPointerEvent<SVGSVGElement>) => {
-    event.currentTarget.setPointerCapture(event.pointerId)
+    // React nulls `currentTarget` the moment dispatch returns, and the window
+    // listeners below run long after that — so the map element is captured
+    // here and closed over, never re-read off the synthetic event.
+    const map = event.currentTarget
+    map.setPointerCapture(event.pointerId)
     const move = (clientX: number, clientY: number) => {
-      const rect = event.currentTarget.getBoundingClientRect()
+      const rect = map.getBoundingClientRect()
       const worldX = extent.x + ((clientX - rect.left - MAP_PAD) / scale)
       const worldY = extent.y + ((clientY - rect.top - MAP_PAD) / scale)
       const { viewportSize, zoom } = useCanvasStore.getState()
@@ -111,9 +115,13 @@ export function CanvasNavigator() {
     const onUp = () => {
       window.removeEventListener('pointermove', onMove)
       window.removeEventListener('pointerup', onUp)
+      window.removeEventListener('pointercancel', onUp)
     }
     window.addEventListener('pointermove', onMove)
-    window.addEventListener('pointerup', onUp, { once: true })
+    window.addEventListener('pointerup', onUp)
+    // A gesture the browser takes over for scrolling ends in `pointercancel`,
+    // never `pointerup`; without this the move listener would outlive the drag.
+    window.addEventListener('pointercancel', onUp)
   }
 
   return (

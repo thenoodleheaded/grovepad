@@ -84,7 +84,7 @@ function StopwatchKey({ label, onClick, children, disabled = false, accent = fal
       title={label}
       disabled={disabled}
       onClick={onClick}
-      style={accent ? { color: 'var(--gp-widget-accent)' } : undefined}
+      style={accent ? { color: 'var(--gp-accent-ink, var(--gp-widget-accent))' } : undefined}
       className={`flex h-8 w-8 items-center justify-center rounded-full transition-all duration-150 active:scale-90 disabled:pointer-events-none disabled:opacity-25 ${
         accent ? 'bg-white/[0.09] hover:bg-white/[0.14]' : 'text-neutral-400 hover:bg-white/[0.07] hover:text-neutral-100'
       }`}

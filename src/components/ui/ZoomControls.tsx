@@ -66,7 +66,7 @@ export function ZoomControls() {
   return (
     <div
       data-canvas-ui
-      className="gp-canvas-ui-scale gp-safe-canvas-bottom-right gp-toolbar gp-panel absolute z-10 flex select-none items-center gap-0.5 rounded-2xl p-1 shadow-xl sm:gap-1"
+      className="gp-canvas-ui-scale gp-safe-canvas-bottom-right gp-toolbar gp-panel absolute z-30 flex select-none items-center gap-0.5 rounded-2xl p-1 shadow-xl sm:gap-1"
     >
       <span className="gp-tablet-zoom-secondary hidden sm:contents">
         <IconButton label="Undo (⌘Z)" disabled={!canUndo} onClick={() => useWidgetStore.getState().undo()}>

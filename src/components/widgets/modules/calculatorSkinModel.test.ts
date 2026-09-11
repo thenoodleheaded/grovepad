@@ -45,6 +45,49 @@ describe('the shared expression evaluator', () => {
     expect(evaluateExpression('sin(90)', { angle: 'deg' })).toBeCloseTo(1)
     expect(evaluateExpression('asin(1)', { angle: 'deg' })).toBeCloseTo(90)
     expect(evaluateExpression('17mod5')).toBe(2)
+    // `%` is the remainder spelling most people reach for.
+    expect(evaluateExpression('17 % 5')).toBe(2)
+  })
+
+  it('takes the functions a real formula needs, on one argument or several', () => {
+    expect(evaluateExpression('min(4, 9, 2)')).toBe(2)
+    expect(evaluateExpression('max(4, 9, 2)')).toBe(9)
+    expect(evaluateExpression('sum(1, 2, 3)')).toBe(6)
+    expect(evaluateExpression('avg(2, 4)')).toBe(3)
+    expect(evaluateExpression('pow(2, 10)')).toBe(1024)
+    expect(evaluateExpression('clamp(12, 0, 10)')).toBe(10)
+    expect(evaluateExpression('round(2.345, 2)')).toBe(2.35)
+    expect(evaluateExpression('log(8, 2)')).toBeCloseTo(3)
+    // The one-argument spellings answer exactly what they always did.
+    expect(evaluateExpression('round(2.6)')).toBe(3)
+    expect(evaluateExpression('log(1000)')).toBeCloseTo(3)
+    expect(() => evaluateExpression('pow(2)')).toThrow()
+    expect(() => evaluateExpression('sqrt(4, 9)')).toThrow()
+  })
+
+  it('answers a comparison with one or zero, so it reads as a number', () => {
+    expect(evaluateExpression('3 > 2')).toBe(1)
+    expect(evaluateExpression('3 < 2')).toBe(0)
+    expect(evaluateExpression('2 >= 2')).toBe(1)
+    expect(evaluateExpression('2 = 2')).toBe(1)
+    expect(evaluateExpression('2 != 2')).toBe(0)
+    expect(evaluateExpression('(3 > 2) && (1 > 2)')).toBe(0)
+    expect(evaluateExpression('(3 > 2) || (1 > 2)')).toBe(1)
+    expect(evaluateExpression('!0')).toBe(1)
+    expect(evaluateExpression('10 * (2 > 1)')).toBe(10)
+  })
+
+  /**
+   * `if` picks its branch BEFORE evaluating it, which is what makes the
+   * ordinary guard — divide only when the divisor is not zero — actually work.
+   */
+  it('chooses an if branch without evaluating the one it did not take', () => {
+    expect(evaluateExpression('if(1, 10, 20)')).toBe(10)
+    expect(evaluateExpression('if(0, 10, 20)')).toBe(20)
+    expect(evaluateExpression('if(b = 0, 0, a / b)', { variables: { a: 9, b: 0 } })).toBe(0)
+    expect(evaluateExpression('if(b = 0, 0, a / b)', { variables: { a: 9, b: 3 } })).toBe(3)
+    expect(evaluateExpression('if(a > b, if(a > 100, 2, 1), 0)', { variables: { a: 150, b: 1 } })).toBe(2)
+    expect(() => evaluateExpression('if(1, 2)')).toThrow()
   })
 
   it('resolves named variables and refuses names it has no value for', () => {
@@ -179,6 +222,11 @@ describe('named variables', () => {
     // A variable may not shadow a function or a constant.
     expect(isUsableVariableName('sin')).toBe(false)
     expect(isUsableVariableName('pi')).toBe(false)
+    // Multi-argument functions and `if` are the evaluator's words too — a
+    // variable named after one binds fine but can never be read back.
+    for (const reserved of ['sum', 'min', 'max', 'avg', 'pow', 'clamp', 'if']) {
+      expect(isUsableVariableName(reserved)).toBe(false)
+    }
   })
 
   it('bounds the slots and drops broken records', () => {

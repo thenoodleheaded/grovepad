@@ -174,11 +174,16 @@ async function boot({ preShared = false } = {}) {
   }
 
   // The remote doc every peer shares: one widget the collaborators created.
+  const fixtureWidgetId = useWidgetStore.getState().createWidget(
+    'Remote fixture',
+    { x: 0, y: 0 },
+    'text',
+  )
   const remoteDoc = new Y.Doc()
   yjsCanvas.writeCanvasSnapshot(remoteDoc, yjsCanvas.snapshotCanvas({
     widgets: {
       [REMOTE_WIDGET_ID]: {
-        ...Object.values(useWidgetStore.getState().widgets)[0]!,
+        ...useWidgetStore.getState().widgets[fixtureWidgetId]!,
         id: REMOTE_WIDGET_ID,
         canvasId,
         title: 'Made by a collaborator',

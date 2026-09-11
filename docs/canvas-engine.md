@@ -23,8 +23,8 @@ disagree, report the mismatch — do not quietly reinterpret either.
   idle-time batches. Leaving cards release in bounded batches too.
 - Camera motion never drives a React render every frame. The retained window
   carries a screen-space gutter and only replans after the viewport consumes
-  its inner safety margin or crosses the 60% detail boundary.
-- Below 60% zoom, inactive widgets remain lightweight SVG-data images.
+  its inner safety margin or crosses the 20% detail boundary.
+- Below 20% zoom, inactive widgets remain lightweight SVG-data images.
   Resting faces are pointer-transparent there; selected, expanded, renaming,
   linking, and hydrating widgets are urgent and stay live.
 - Relation, dependency, and wire layers build descriptors for every edge on

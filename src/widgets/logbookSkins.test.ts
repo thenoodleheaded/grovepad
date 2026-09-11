@@ -115,6 +115,93 @@ describe('Logbook circuit and resting-face contract', () => {
     }).model
     expect(face.kind).toBe('rows')
     if (face.kind !== 'rows') return
-    expect(face.rows[0]).toMatchObject({ label: 'A warning', value: 'Khiva' })
+    expect(face.eyebrow).toMatchObject({ label: 'Travel Log', note: 'Khiva' })
+    expect(face.rows[0]).toMatchObject({ label: 'A warning', value: 'Khiva', tone: 'accent' })
+  })
+
+  it('folds every skin to its own reading of the same entries', () => {
+    const fold = (data: LogbookData) => {
+      const model = restingFace({
+        type: 'logbook',
+        title: 'Log',
+        size: { width: 400, height: 280 },
+        data,
+      }).model
+      if (model.kind !== 'rows') throw new Error(`expected rows, got ${model.kind}`)
+      return model
+    }
+
+    const daily = fold(base())
+    expect(daily.eyebrow).toMatchObject({ label: 'Daily Log', note: '1 warning', tone: 'warn' })
+    expect(daily.rows[0]).toMatchObject({ label: 'A warning', tone: 'warn' })
+    expect(daily.rows[0]?.lead).toMatch(/\d/)
+
+    const incident = fold({
+      ...base(),
+      skin: 'incident_log',
+      skinStates: { incident_log: { entries: { two: { status: 'resolved' } } } },
+    })
+    // The undetailed entry counts as open — the card's own default.
+    expect(incident.eyebrow).toMatchObject({ note: '1 open', tone: 'bad' })
+    expect(incident.rows[0]).toMatchObject({ value: 'Resolved', tone: 'good' })
+    expect(incident.rows[1]).toMatchObject({ value: 'Open', tone: 'bad' })
+
+    const lab = fold({
+      ...base(),
+      skin: 'lab_notebook',
+      skinStates: { lab_notebook: { entries: { two: { conclusion: 'It works' } } } },
+    })
+    expect(lab.eyebrow).toMatchObject({ note: '1 concluded' })
+    expect(lab.rows[0]).toMatchObject({ value: 'Conclusion', tone: 'good' })
+    expect(lab.rows[1]).toMatchObject({ value: 'Experiment' })
+
+    const change = fold({
+      ...base(),
+      skin: 'change_log',
+      skinStates: {
+        change_log: { entries: { two: { version: 'v2', changeKind: 'fixed' } } },
+      },
+    })
+    expect(change.eyebrow).toMatchObject({ label: 'Change Log', note: 'v2' })
+    expect(change.rows[0]).toMatchObject({ lead: 'v2', value: 'Fixed', tone: 'accent' })
+
+    const now = new Date()
+    const yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 12)
+    const overdueDay = [
+      yesterday.getFullYear(),
+      String(yesterday.getMonth() + 1).padStart(2, '0'),
+      String(yesterday.getDate()).padStart(2, '0'),
+    ].join('-')
+    const maintenance = fold({
+      ...base(),
+      skin: 'maintenance_log',
+      skinStates: {
+        maintenance_log: { entries: { two: { asset: 'Pump', nextService: overdueDay } } },
+      },
+    })
+    expect(maintenance.eyebrow).toMatchObject({ note: '1 overdue', tone: 'bad' })
+    expect(maintenance.rows[0]).toMatchObject({ value: '1 day overdue', tone: 'bad' })
+
+    const audit = fold({
+      ...base(),
+      skin: 'audit_trail',
+      skinStates: { audit_trail: { entries: { two: { actor: 'Amir' } } } },
+    })
+    expect(audit.eyebrow).toMatchObject({ label: 'Audit Trail', note: '2 events' })
+    expect(audit.rows[0]).toMatchObject({ value: 'Amir' })
+    expect(audit.rows[0]?.lead).toMatch(/\d/)
+  })
+
+  it('honours the skin\'s own entry order while folded', () => {
+    const flipped = dataWithSkinState(base(), 'daily_log', { order: 'oldest' }) as LogbookData
+    const face = restingFace({
+      type: 'logbook',
+      title: 'Log',
+      size: { width: 400, height: 280 },
+      data: flipped,
+    }).model
+    expect(face.kind).toBe('rows')
+    if (face.kind !== 'rows') return
+    expect(face.rows[0]).toMatchObject({ label: 'Opened the day' })
   })
 })

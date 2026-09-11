@@ -36,8 +36,8 @@ describe('untangleCanvas', () => {
     // content would join the relaxation and confound the exact math below.
     const OX = 100_000
     const OY = 100_000
-    const aId = store.createWidget('A', { x: OX, y: OY }, 'notes')
-    const bId = store.createWidget('B', { x: OX, y: OY }, 'notes')
+    const aId = store.createWidget('A', { x: OX, y: OY }, 'text')
+    const bId = store.createWidget('B', { x: OX, y: OY }, 'text')
 
     // An overlap of 120px (an ODD multiple of GRID_SIZE=40) is exactly the
     // case that used to drift: splitting 120 in half (60) is not itself a
@@ -64,9 +64,9 @@ describe('untangleCanvas', () => {
     const store = useWidgetStore.getState()
     const OX = 150_000
     const OY = 150_000
-    const aId = store.createWidget('Selected A', { x: OX, y: OY }, 'notes')
-    const bId = store.createWidget('Selected B', { x: OX, y: OY }, 'notes')
-    const untouchedId = store.createWidget('Untouched', { x: OX, y: OY }, 'notes')
+    const aId = store.createWidget('Selected A', { x: OX, y: OY }, 'text')
+    const bId = store.createWidget('Selected B', { x: OX, y: OY }, 'text')
+    const untouchedId = store.createWidget('Untouched', { x: OX, y: OY }, 'text')
 
     place(aId, OX, OY, 200, 120)
     place(bId, OX + 160, OY + 40, 200, 120)
@@ -91,10 +91,10 @@ describe('untangleCanvas', () => {
     // see the note in the first test for why isolation matters here.
     const OX = 200_000
     const OY = 200_000
-    const a1 = store.createWidget('A1', { x: OX, y: OY }, 'notes')
-    const a2 = store.createWidget('A2', { x: OX, y: OY }, 'notes')
-    const b1 = store.createWidget('B1', { x: OX, y: OY }, 'notes')
-    const b2 = store.createWidget('B2', { x: OX, y: OY }, 'notes')
+    const a1 = store.createWidget('A1', { x: OX, y: OY }, 'text')
+    const a2 = store.createWidget('A2', { x: OX, y: OY }, 'text')
+    const b1 = store.createWidget('B1', { x: OX, y: OY }, 'text')
+    const b2 = store.createWidget('B2', { x: OX, y: OY }, 'text')
 
     place(a1, OX, OY, 160, 120)
     place(a2, OX, OY + 120, 160, 120)
@@ -147,7 +147,7 @@ describe('untangleWidgets compacts selected trees', () => {
   function tree(origin: number, shape: readonly { x: number; y: number }[]) {
     const store = useWidgetStore.getState()
     const ids = shape.map((_, index) =>
-      store.createWidget(`T${origin}-${index}`, { x: origin, y: origin }, 'notes'),
+      store.createWidget(`T${origin}-${index}`, { x: origin, y: origin }, 'text'),
     )
     ids.forEach((id, index) => {
       place(id, origin + shape[index]!.x, origin + shape[index]!.y, 160, 120)

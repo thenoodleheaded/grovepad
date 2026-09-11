@@ -1,5 +1,18 @@
-import type { ModuleData, SeriesPoint } from '../../types/spatial'
+import type { ModuleData, ModuleType, SeriesPoint } from '../../types/spatial'
 import type { FieldCommand, FieldValueType, SemanticUnit } from '../../types/fieldConnections'
+
+/**
+ * Two retired cards' editors are still the UI for a canonical widget's skin:
+ * Decision's Weighted skin and Goal's OKR skin are drawn by the generic
+ * expansion renderer under these names. They are NOT widget types — nothing can
+ * create one, and they are absent from the registry and from `ModuleType`. They
+ * survive only as renderer identities, which is why the field and command tables
+ * are keyed slightly wider than the type union.
+ */
+export type SkinRendererType = 'random_picker' | 'okr'
+
+/** Anything that can own a field or command table: a widget type or a skin renderer. */
+export type FieldOwner = ModuleType | SkinRendererType
 
 export type FieldValue = number | boolean | string | SeriesPoint[]
 

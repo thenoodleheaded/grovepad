@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 // ---------------------------------------------------------------------------
 // The cloud half of the same rule. Blocking local writes is not enough on its
 // own: reconcile() only awaits localReady, which RESOLVES through the read's
-// catch, so a failed startup read would otherwise let the seeded starter board
+// catch, so a failed startup read would otherwise let the blank local shell
 // be pushed to the cloud — and pushCloudBoard DELETES remote canvas rows that
 // are absent from what it is handed, so that destroys more than the local
 // overwrite would.
@@ -28,6 +28,9 @@ vi.mock('../lib/supabase', () => ({
 }))
 
 vi.mock('./cloudSync', () => ({
+  // null head = this account has no cloud board yet, which is the state this
+  // suite reconciles from.
+  fetchCloudHead: vi.fn(() => Promise.resolve(null)),
   fetchCloudBoard: vi.fn(() => Promise.resolve(null)),
   pushCloudBoard: vi.fn(() => Promise.resolve()),
 }))
@@ -93,9 +96,10 @@ describe('a startup read failure also keeps the seeded board out of the cloud', 
     )
 
     dispose = mod.initPersistence(mod.useWidgetStore, mod.useCanvasStore)
-    await vi.advanceTimersByTimeAsync(50)
+    await vi.advanceTimersByTimeAsync(500)
 
     expect(mod.cloudSync.pushCloudBoard).not.toHaveBeenCalled()
+    expect(mod.cloudSync.fetchCloudHead).not.toHaveBeenCalled()
     expect(mod.usePersistenceStatusStore.getState().cloudSync).toBe('error')
   })
 
@@ -105,9 +109,12 @@ describe('a startup read failure also keeps the seeded board out of the cloud', 
     vi.mocked(mod.boardDatabase.readBoardDatabase).mockResolvedValue(null)
 
     dispose = mod.initPersistence(mod.useWidgetStore, mod.useCanvasStore)
-    await vi.advanceTimersByTimeAsync(50)
 
-    // No cloud row yet, so the seeded board is pushed up as the account's first.
-    expect(mod.cloudSync.pushCloudBoard).toHaveBeenCalled()
+    // Waited for rather than clocked: the reconcile hashes the board with
+    // crypto.subtle, whose real async work does not move with fake timers.
+    await vi.waitFor(() => {
+      // No cloud row yet, so the seeded board is pushed up as the account's first.
+      expect(mod.cloudSync.pushCloudBoard).toHaveBeenCalled()
+    })
   })
 })

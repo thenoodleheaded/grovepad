@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
+import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import { useCanvasStore } from '../../store/useCanvasStore'
 import { useWidgetStore } from '../../store/useWidgetStore'
 import type { GhostShapeDirection, GhostTreeConfig, GhostTreeNode } from '../../types/spatial'
@@ -10,7 +10,13 @@ import {
   ghostNodeContourPath,
   ghostNodeGrid,
 } from '../../utils/ghostTreePresentation'
-import { AddWidgetModal } from '../ui/AddWidgetModal'
+
+// Deferred for the same reason CanvasViewport defers it: a static import here
+// puts the whole widget library on the board-open path even for a session that
+// never opens the picker. It only renders behind `pickerTarget && pickerAnchor`.
+const AddWidgetModal = lazy(() =>
+  import('../ui/AddWidgetModal').then((module) => ({ default: module.AddWidgetModal })),
+)
 
 const DIRECTION_LOCK_PX = 4
 const NODE_STEP_WORLD = GRID_SIZE * 2
@@ -264,28 +270,30 @@ function ActiveGhostTree({ config }: { config: GhostTreeConfig }) {
       })}
 
       {pickerTarget && pickerAnchor && (
-        <AddWidgetModal
-          key={pickerTarget.join(',')}
-          worldPos={{ x: pickerAnchor.x, y: pickerAnchor.y }}
-          onClose={() => {
-            setPickerTarget(null)
-            useWidgetStore.getState().clearGhostNodeSelection()
-          }}
-          selection={{
-            // A bulk edit spans nodes that may already differ, so it starts
-            // blank and adds the chosen widgets rather than replacing.
-            initialTypes: pickerTarget.length === 1 ? pickerAnchor.widgetTypes : [],
-            onConfirm: (widgetTypes) => {
-              if (pickerTarget.length === 1) {
-                useWidgetStore.getState().setGhostNodeWidgetTypes(pickerTarget[0]!, widgetTypes)
-              } else {
-                useWidgetStore.getState().addWidgetTypesToGhostNodes(pickerTarget, widgetTypes)
-              }
+        <Suspense fallback={null}>
+          <AddWidgetModal
+            key={pickerTarget.join(',')}
+            worldPos={{ x: pickerAnchor.x, y: pickerAnchor.y }}
+            onClose={() => {
               setPickerTarget(null)
               useWidgetStore.getState().clearGhostNodeSelection()
-            },
-          }}
-        />
+            }}
+            selection={{
+              // A bulk edit spans nodes that may already differ, so it starts
+              // blank and adds the chosen widgets rather than replacing.
+              initialTypes: pickerTarget.length === 1 ? pickerAnchor.widgetTypes : [],
+              onConfirm: (widgetTypes) => {
+                if (pickerTarget.length === 1) {
+                  useWidgetStore.getState().setGhostNodeWidgetTypes(pickerTarget[0]!, widgetTypes)
+                } else {
+                  useWidgetStore.getState().addWidgetTypesToGhostNodes(pickerTarget, widgetTypes)
+                }
+                setPickerTarget(null)
+                useWidgetStore.getState().clearGhostNodeSelection()
+              },
+            }}
+          />
+        </Suspense>
       )}
     </div>
   )

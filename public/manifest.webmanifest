@@ -1,7 +1,7 @@
 {
   "name": "Grovepad",
   "short_name": "Grovepad",
-  "description": "A fast spatial canvas for connected notes, plans, data, and decisions.",
+  "description": "The board where your notes do the math. Trackers, tables and calculators that actually compute, wired into each other. Free, offline, no account.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

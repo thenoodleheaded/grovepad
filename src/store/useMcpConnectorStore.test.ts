@@ -41,7 +41,7 @@ describe('MCP preview lifecycle', () => {
     expect(outcome.createdIds).toHaveLength(2)
     expect(useMcpConnectorStore.getState().previews).toHaveLength(0)
     for (const id of outcome.createdIds) {
-      expect(useWidgetStore.getState().widgets[id]?.type).toBe('notes')
+      expect(useWidgetStore.getState().widgets[id]?.type).toBe('text')
     }
 
     useWidgetStore.getState().undo()

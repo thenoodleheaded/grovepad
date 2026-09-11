@@ -155,7 +155,7 @@
 
 .gp-calc-pad--functions button {
   min-height: 24px;
-  color: color-mix(in oklab, var(--gp-widget-accent), white 16%);
+  color: color-mix(in oklab, var(--gp-accent-ink, var(--gp-widget-accent)), var(--gp-accent-lift, #fff) 16%);
   background-color: color-mix(in oklab, var(--gp-widget-accent), transparent 90%) !important;
   font-size: clamp(9.5px, 3.4cqi, 11.5px);
 }
@@ -206,7 +206,7 @@
 
 .gp-calc-memory i {
   padding-left: 0.2rem;
-  color: color-mix(in oklab, var(--gp-widget-accent), white 12%);
+  color: color-mix(in oklab, var(--gp-accent-ink, var(--gp-widget-accent)), var(--gp-accent-lift, #fff) 12%);
   font-size: 9.5px;
   font-style: normal;
   font-variant-numeric: tabular-nums;
@@ -448,7 +448,7 @@
 }
 
 .gp-calc-total output {
-  color: color-mix(in oklab, var(--gp-widget-accent), white 14%);
+  color: color-mix(in oklab, var(--gp-accent-ink, var(--gp-widget-accent)), var(--gp-accent-lift, #fff) 14%);
   font-size: 17px;
   font-weight: 640;
   letter-spacing: -0.02em;
@@ -488,7 +488,7 @@
 
 .gp-calc-entry i {
   flex: 0 0 auto;
-  color: color-mix(in oklab, var(--gp-widget-accent), white 12%);
+  color: color-mix(in oklab, var(--gp-accent-ink, var(--gp-widget-accent)), var(--gp-accent-lift, #fff) 12%);
   font-size: 11px;
   font-style: normal;
   font-variant-numeric: tabular-nums;
@@ -509,7 +509,7 @@
   justify-content: center;
   border: 0;
   border-radius: var(--gp-r2) !important;
-  color: color-mix(in oklab, var(--gp-widget-accent), white 12%);
+  color: color-mix(in oklab, var(--gp-accent-ink, var(--gp-widget-accent)), var(--gp-accent-lift, #fff) 12%);
 }
 
 .gp-calc-entry > button:disabled {
@@ -563,7 +563,7 @@
 
 /* The base you are typing in is the one that reads as the value. */
 .gp-calc-bases > div[data-active] dt {
-  color: color-mix(in oklab, var(--gp-widget-accent), white 12%);
+  color: color-mix(in oklab, var(--gp-accent-ink, var(--gp-widget-accent)), var(--gp-accent-lift, #fff) 12%);
 }
 
 /* The base being typed in carries the answer, so it is the card's hero. */
@@ -616,7 +616,7 @@
 }
 
 .gp-calc-variable input:first-of-type {
-  color: color-mix(in oklab, var(--gp-widget-accent), white 12%);
+  color: color-mix(in oklab, var(--gp-accent-ink, var(--gp-widget-accent)), var(--gp-accent-lift, #fff) 12%);
   font-weight: 600;
 }
 
@@ -669,7 +669,7 @@
   border: 0;
   border-radius: var(--gp-r2) !important;
   padding: 0 0.4rem;
-  color: color-mix(in oklab, var(--gp-widget-accent), white 12%);
+  color: color-mix(in oklab, var(--gp-accent-ink, var(--gp-widget-accent)), var(--gp-accent-lift, #fff) 12%);
   font-size: 10px;
   font-weight: 620;
 }
@@ -708,4 +708,34 @@
   .gp-calc * {
     transition-duration: 0.01ms !important;
   }
+}
+
+/* ------------------------------------------------------------ light theme.
+   Status/danger/medal inks above are pastels tuned for dark glass; on the
+   light theme's silver cards they wash out below 2:1. Each keeps its hue
+   but drops to a deep ink (generated during the 2026-08 light-mode
+   contrast audit). */
+[data-theme='light'] .gp-calc-result[data-error],
+[data-theme='light'] .gp-calc-answer[data-error] output {
+  color: #be123c;
+}
+
+[data-theme='light'] .gp-calc-pad button[data-tone='warn'] {
+  color: #be123c;
+}
+
+[data-theme='light'] .gp-calc-roll-row button:hover {
+  color: #be123c;
+}
+
+[data-theme='light'] .gp-calc-entry i[data-error] {
+  color: #be123c;
+}
+
+[data-theme='light'] .gp-calc-variable[data-invalid] input:first-of-type {
+  color: #be123c;
+}
+
+[data-theme='light'] .gp-calc-variable button:hover {
+  color: #be123c;
 }

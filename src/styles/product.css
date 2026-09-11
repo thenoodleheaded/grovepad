@@ -9,6 +9,7 @@
 @import './product/07-collaboration.css';
 @import './product/08-skin-presentations.css';
 @import './product/09-note-skins.css';
+@import './product/09-note-editor.css';
 @import './product/10-canvas-node-skins.css';
 @import './product/11-bullet-skins.css';
 @import './product/12-calendar-skins.css';
@@ -35,6 +36,8 @@
 @import './product/27-outline-skins.css';
 @import './product/27-grade-skins.css';
 @import './product/27-meeting-notes-skins.css';
+@import './product/27-trip-skins.css';
+@import './product/27-formula-sheet-skins.css';
 @import './product/28-unit-converter-skins.css';
 @import './product/29-date-skins.css';
 @import './product/30-world-clock-skins.css';
@@ -42,3 +45,6 @@
 @import './product/32-contact-skins.css';
 @import './product/33-widget-sheet.css';
 @import './product/34-canvas-lms-skins.css';
+/* Visual quality tiers must be able to overrule any surface above them, so this
+   partial stays last in the manifest. */
+@import './product/35-visual-quality.css';

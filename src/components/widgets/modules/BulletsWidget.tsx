@@ -1,9 +1,6 @@
 import {
-  ArrowDownUp,
   ChevronDown,
   ChevronRight,
-  Clock3,
-  Hash,
   IndentDecrease,
   IndentIncrease,
   List,
@@ -17,12 +14,9 @@ import { dataWithSkinState, skinStateFor } from '../../../utils/widgetSkins'
 import { WidgetPanel } from '../WidgetPanel'
 import { withoutPanelItem } from '../panelRemoval'
 import {
-  bulletLogState,
   bulletOutlineState,
   bulletSkin,
-  orderedLogItems,
   visibleOutlineItems,
-  type BulletLogState,
   type BulletOutlineState,
   type BulletSkin,
 } from './bulletSkinModel'
@@ -34,14 +28,11 @@ interface BulletsWidgetProps {
   skin?: BulletSkin
 }
 
-function logTime(value: string | undefined): string {
-  if (!value) return 'Earlier'
-  const parsed = new Date(value)
-  if (!Number.isFinite(parsed.getTime())) return 'Earlier'
-  return new Intl.DateTimeFormat(undefined, {
-    hour: 'numeric',
-    minute: '2-digit',
-  }).format(parsed)
+/** A point is a paragraph, not a line: the field grows to whatever was typed
+ * rather than scrolling its own tail out of sight. */
+function fitToText(field: HTMLTextAreaElement) {
+  field.style.height = 'auto'
+  field.style.height = `${field.scrollHeight}px`
 }
 
 export function BulletsWidget({
@@ -50,13 +41,12 @@ export function BulletsWidget({
   onHeightChange,
   skin: requestedSkin,
 }: BulletsWidgetProps) {
-  const inputRefs = useRef(new Map<string, HTMLInputElement>())
+  const inputRefs = useRef(new Map<string, HTMLTextAreaElement>())
   const pendingFocusId = useRef<string | null>(null)
   const rootRef = useRef<HTMLDivElement>(null)
   const [removingIds, setRemovingIds] = useState<ReadonlySet<string>>(new Set())
   const skin = requestedSkin ?? bulletSkin(data.skin)
   const outlineState = bulletOutlineState(skinStateFor(data, 'nested_outline'), data.items)
-  const logState = bulletLogState(skinStateFor(data, 'rolling_log'), data.items)
 
   useEffect(() => {
     if (pendingFocusId.current === null) return
@@ -64,7 +54,10 @@ export function BulletsWidget({
     pendingFocusId.current = null
   })
 
+  // Every field is re-fitted BEFORE the card's own height is reported, so the
+  // card never settles a wrapped line short of its content.
   useLayoutEffect(() => {
+    for (const field of inputRefs.current.values()) fitToText(field)
     if (rootRef.current) onHeightChange?.(rootRef.current.scrollHeight)
   }, [data, onHeightChange, removingIds, skin])
 
@@ -82,24 +75,8 @@ export function BulletsWidget({
     ) as BulletsData)
   }
 
-  const updateLog = (state: BulletLogState, items = data.items) => {
-    onChange(dataWithSkinState(
-      baseData(items) as ModuleData,
-      'rolling_log',
-      { ...state },
-    ) as BulletsData)
-  }
-
   const setItem = (id: string, text: string) => {
-    const items = data.items.map((item) => item.id === id ? { ...item, text } : item)
-    if (skin === 'rolling_log' && !logState.timestamps[id]) {
-      updateLog({
-        ...logState,
-        timestamps: { ...logState.timestamps, [id]: new Date().toISOString() },
-      }, items)
-      return
-    }
-    onChange(baseData(items))
+    onChange(baseData(data.items.map((item) => item.id === id ? { ...item, text } : item)))
   }
 
   const beginRemove = (id: string) => {
@@ -123,12 +100,6 @@ export function BulletsWidget({
       }, items)
       return
     }
-    if (skin === 'rolling_log') {
-      const timestamps = { ...logState.timestamps }
-      delete timestamps[id]
-      updateLog({ ...logState, timestamps }, items)
-      return
-    }
     onChange(baseData(items))
   }
 
@@ -148,23 +119,18 @@ export function BulletsWidget({
       }, items)
       return
     }
-    if (skin === 'rolling_log') {
-      updateLog({
-        ...logState,
-        timestamps: { ...logState.timestamps, [item.id]: new Date().toISOString() },
-      }, items)
-      return
-    }
     onChange(baseData(items))
   }
 
   const onItemKeyDown = (
-    event: React.KeyboardEvent<HTMLInputElement>,
+    event: React.KeyboardEvent<HTMLTextAreaElement>,
     item: BulletItem,
   ) => {
     const index = data.items.findIndex((candidate) => candidate.id === item.id)
     if (index < 0) return
-    if (event.key === 'Enter') {
+    // Enter still means "next point" — a paragraph wraps on its own, so the
+    // key never has to double as a line break.
+    if (event.key === 'Enter' && !event.shiftKey) {
       event.preventDefault()
       insertAfter(index)
     } else if (
@@ -179,16 +145,21 @@ export function BulletsWidget({
     }
   }
 
-  const input = (item: BulletItem, placeholder: string) => (
-    <input
+  const input = (item: BulletItem) => (
+    <textarea
+      rows={1}
       data-floor-overflow="scroll"
       ref={(element) => {
-        if (element) inputRefs.current.set(item.id, element)
-        else inputRefs.current.delete(item.id)
+        if (element) {
+          inputRefs.current.set(item.id, element)
+          fitToText(element)
+        } else inputRefs.current.delete(item.id)
       }}
       value={item.text}
-      placeholder={placeholder}
-      onChange={(event) => setItem(item.id, event.target.value)}
+      onChange={(event) => {
+        fitToText(event.currentTarget)
+        setItem(item.id, event.target.value)
+      }}
       onKeyDown={(event) => onItemKeyDown(event, item)}
       className="gp-bullet-input"
     />
@@ -205,31 +176,20 @@ export function BulletsWidget({
     </button>
   )
 
-  const row = (
-    item: BulletItem,
-    marker: React.ReactNode,
-    className = '',
-    placeholder = 'List item  ↵ adds another',
-  ) => (
+  const row = (item: BulletItem, marker: React.ReactNode) => (
     <WidgetPanel
       key={item.id}
       removing={removingIds.has(item.id)}
       onExitComplete={() => finishRemove(item.id)}
       floor="controls"
       grip={false}
-      className={`gp-bullet-row ${className}`}
+      className="gp-bullet-row"
     >
       {marker}
-      {input(item, placeholder)}
+      {input(item)}
       {remove(item)}
     </WidgetPanel>
   )
-
-  const addLabel = skin === 'rolling_log'
-    ? 'Add log entry'
-    : skin === 'compact_chips'
-      ? 'Add chip'
-      : 'Add bullet'
 
   let content: React.ReactNode
 
@@ -243,39 +203,7 @@ export function BulletsWidget({
         <div className="gp-bullets-ledger">
           {data.items.map((item, index) => row(
             item,
-            <span className="gp-bullet-number" aria-hidden>{String(index + 1).padStart(2, '0')}</span>,
-          ))}
-        </div>
-      </div>
-    )
-  } else if (skin === 'compact_chips') {
-    content = (
-      <div className="gp-bullets-list gp-bullets-chips">
-        <header className="gp-bullets-heading">
-          <span><Hash size={13} aria-hidden /> Quick tags</span>
-          <small>{data.items.length}</small>
-        </header>
-        <div className="gp-bullet-chip-cloud">
-          {data.items.map((item) => row(
-            item,
-            <span className="gp-bullet-chip-dot" aria-hidden />,
-            'gp-bullet-chip',
-            'Short label',
-          ))}
-        </div>
-      </div>
-    )
-  } else if (skin === 'two_column') {
-    content = (
-      <div className="gp-bullets-list gp-bullets-columns">
-        <header className="gp-bullets-heading">
-          <span><List size={13} aria-hidden /> Balanced list</span>
-          <small>{data.items.length} points</small>
-        </header>
-        <div className="gp-bullet-column-grid">
-          {data.items.map((item, index) => row(
-            item,
-            <span className="gp-bullet-column-number" aria-hidden>{index + 1}</span>,
+            <span className="gp-bullet-number" aria-hidden>{index + 1}</span>,
           ))}
         </div>
       </div>
@@ -334,7 +262,7 @@ export function BulletsWidget({
               ) : (
                 <span className="gp-bullet-outline-dot" aria-hidden />
               )}
-              {input(item, 'Outline point  ↵ adds a sibling')}
+              {input(item)}
               <span className="gp-bullet-indent-controls">
                 <button
                   type="button"
@@ -353,45 +281,6 @@ export function BulletsWidget({
                   <IndentIncrease size={11} aria-hidden />
                 </button>
               </span>
-              {remove(item)}
-            </WidgetPanel>
-          ))}
-        </div>
-      </div>
-    )
-  } else if (skin === 'rolling_log') {
-    const ordered = orderedLogItems(data.items, logState)
-    content = (
-      <div className="gp-bullets-list gp-bullets-log">
-        <header className="gp-bullets-log-heading">
-          <span><Clock3 size={13} aria-hidden /> Rolling log</span>
-          <button
-            type="button"
-            aria-label={`Show ${logState.order === 'newest' ? 'oldest' : 'newest'} entries first`}
-            onClick={() => updateLog({
-              ...logState,
-              order: logState.order === 'newest' ? 'oldest' : 'newest',
-            })}
-          >
-            <ArrowDownUp size={11} aria-hidden />
-            {logState.order === 'newest' ? 'Newest' : 'Oldest'}
-          </button>
-        </header>
-        <div className="gp-bullets-log-list">
-          {ordered.map((item) => (
-            <WidgetPanel
-              key={item.id}
-              removing={removingIds.has(item.id)}
-              onExitComplete={() => finishRemove(item.id)}
-              floor="controls"
-              grip={false}
-              className="gp-bullet-row gp-bullet-log-row"
-            >
-              <time dateTime={logState.timestamps[item.id]}>
-                {logTime(logState.timestamps[item.id])}
-              </time>
-              <span className="gp-bullet-log-dot" aria-hidden />
-              {input(item, 'What happened?  ↵ adds an entry')}
               {remove(item)}
             </WidgetPanel>
           ))}
@@ -424,11 +313,11 @@ export function BulletsWidget({
       {content}
       <button
         type="button"
+        aria-label="Add bullet"
         onClick={() => insertAfter(data.items.length - 1)}
         className="gp-bullet-add"
       >
-        <Plus size={11} aria-hidden />
-        {addLabel}
+        <Plus size={13} aria-hidden />
       </button>
     </div>
   )

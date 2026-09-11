@@ -12,21 +12,112 @@
 }
 
 [data-theme='light'] .gp-canvas-shell {
-  /* Bright paper with soft prismatic washes — enough chroma to read on the
-     light surface, never enough to compete with widget accents. */
-  background:
-    radial-gradient(75% 58% at 52% -8%, oklch(80% 0.1 145 / 0.2), transparent 72%),
-    radial-gradient(46% 42% at -6% 34%, oklch(78% 0.08 244 / 0.12), transparent 74%),
-    radial-gradient(48% 45% at 104% 20%, oklch(76% 0.09 300 / 0.09), transparent 74%),
-    radial-gradient(52% 45% at 82% 106%, oklch(83% 0.09 60 / 0.11), transparent 74%),
-    var(--gp-surface-canvas);
-  box-shadow: inset 0 0 140px rgb(46 70 52 / 0.07);
+  /* Flat neutral paper. The four prismatic washes that used to sit here (the
+     green one across the top especially) were a second, independent tint
+     source layered over the canvas token, so neutralizing the token alone
+     still left the board reading as coloured. Depth comes from the cards now,
+     not the page. The vignette is a grey faint enough to only round the edges. */
+  background: var(--gp-surface-canvas);
+  box-shadow: inset 0 0 140px rgb(38 42 48 / 0.05);
 }
 
+/* Chrome horizon.
+ *
+ * The persistent chrome floats as separate pills with bare board between them —
+ * at 1440px the top row alone leaves a ~390px hole. A card's floating title
+ * capsule drifting up through that hole lands level with the breadcrumb with no
+ * material between the two layers, and the eye reads it as broken text rather
+ * than as board passing behind chrome. This applies the popup standard's own
+ * rule 2.3 ("material is hierarchy") to the permanent chrome instead of only to
+ * temporary popups: one soft horizon, so the board recedes as it approaches the
+ * chrome and the pills always sit on something.
+ *
+ * Deliberately weak — a wash, not a bar — and static paint. It never animates,
+ * so it costs nothing on the pan/zoom path and reduced motion has nothing to
+ * collapse. It sits at z-20: above the board layer (z-10), below the chrome
+ * (z-30). ZoomControls moves from z-10 to z-30 to join the chrome above it.
+ */
+.gp-canvas-shell::before,
+.gp-canvas-shell::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  pointer-events: none;
+}
+
+.gp-canvas-shell::before {
+  top: 0;
+  height: 104px;
+  background: linear-gradient(
+    to bottom,
+    color-mix(in oklab, var(--gp-surface-canvas), transparent 42%),
+    color-mix(in oklab, var(--gp-surface-canvas), transparent 78%) 48%,
+    transparent
+  );
+}
+
+.gp-canvas-shell::after {
+  bottom: 0;
+  height: 92px;
+  background: linear-gradient(
+    to top,
+    color-mix(in oklab, var(--gp-surface-canvas), transparent 46%),
+    color-mix(in oklab, var(--gp-surface-canvas), transparent 80%) 46%,
+    transparent
+  );
+}
+
+/* Paper needs less: the board is already light, so the same strength would read
+   as a grey smear across the top of the page instead of as depth. */
+[data-theme='light'] .gp-canvas-shell::before {
+  background: linear-gradient(
+    to bottom,
+    color-mix(in oklab, var(--gp-surface-canvas), transparent 30%),
+    color-mix(in oklab, var(--gp-surface-canvas), transparent 72%) 48%,
+    transparent
+  );
+}
+
+[data-theme='light'] .gp-canvas-shell::after {
+  background: linear-gradient(
+    to top,
+    color-mix(in oklab, var(--gp-surface-canvas), transparent 34%),
+    color-mix(in oklab, var(--gp-surface-canvas), transparent 76%) 46%,
+    transparent
+  );
+}
+
+/* Second half of the boot sequence. The ground here — `.gp-splash-field` and
+   its aurora/grid/vignette children — is defined by the <style> block in
+   index.html, which outlives #root; this screen re-uses those class names so
+   the mount changes the copy without cutting the scene underneath it. Which is
+   also why the ground colour is the splash's #080a09 and not neutral-950. */
+.gp-app-boot {
+  position: relative;
+  overflow: hidden;
+  background: var(--gp-splash-ground, #080a09);
+}
+
+.gp-boot-copy {
+  position: relative;
+  z-index: 1;
+  animation: gp-boot-copy-in 0.7s var(--gp-ease-spring) both;
+}
+
+@keyframes gp-boot-copy-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* Drawn at 54x38 and scaled as a unit, so the branch geometry below stays in
+   the round numbers it was authored in. */
 .gp-boot-mark {
   position: relative;
   width: 54px;
   height: 38px;
+  transform: scale(1.35);
 }
 
 .gp-boot-mark span {
@@ -66,11 +157,36 @@
   border-radius: 5px;
   background: oklch(88% 0.31 136 / 0.08);
   box-shadow: 0 0 24px oklch(88% 0.31 136 / 0.18);
+  animation: gp-boot-node 2.1s ease-in-out infinite both;
+}
+
+/* A halo breathing out of the node, in time with the branches feeding it —
+   the same "a value just arrived here" beat the splash wires play. */
+.gp-boot-mark::after {
+  content: '';
+  position: absolute;
+  left: 13px;
+  top: 5px;
+  width: 28px;
+  height: 28px;
+  border-radius: 12px;
+  border: 1px solid oklch(88% 0.31 136 / 0.5);
+  animation: gp-boot-halo 2.1s cubic-bezier(0.16, 1, 0.3, 1) infinite both;
 }
 
 @keyframes gp-boot-branch {
   0%, 100% { opacity: 0.28; scale: 0.72 1; }
   48% { opacity: 1; scale: 1 1; }
+}
+
+@keyframes gp-boot-node {
+  0%, 100% { box-shadow: 0 0 20px oklch(88% 0.31 136 / 0.14); }
+  48% { box-shadow: 0 0 34px oklch(88% 0.31 136 / 0.3); }
+}
+
+@keyframes gp-boot-halo {
+  0% { opacity: 0.55; transform: scale(0.62); }
+  70%, 100% { opacity: 0; transform: scale(1.5); }
 }
 
 @media (pointer: coarse) {
@@ -113,9 +229,9 @@
 }
 
 [data-theme='light'] {
-  --gp-surface-control: oklch(91.5% 0.011 140 / 0.9);
-  --gp-surface-control-hover: oklch(88.5% 0.015 140 / 0.96);
-  --gp-surface-menu: oklch(98.3% 0.004 140 / 0.99);
+  --gp-surface-control: oklch(90% 0.011 140 / 0.9);
+  --gp-surface-control-hover: oklch(87% 0.015 140 / 0.96);
+  --gp-surface-menu: oklch(96.8% 0.004 140 / 0.99);
   --gp-border-medium: rgb(28 44 32 / 0.14);
   --gp-text-muted: oklch(44% 0.022 145);
   --gp-accent-soft: oklch(52% 0.19 140 / 0.1);
@@ -191,8 +307,8 @@ html:is([data-viewport-class='phone'], [data-viewport-class='tablet']) .gp-canva
   box-shadow:
     0 7px 20px rgb(0 0 0 / 0.14),
     0 0 18px color-mix(in oklab, var(--gp-frost-accent, #34d399) 14%, transparent);
-  backdrop-filter: blur(16px) saturate(1.25);
-  -webkit-backdrop-filter: blur(16px) saturate(1.25);
+  backdrop-filter: blur(calc(16px * var(--gp-blur-scale, 1))) saturate(1.25);
+  -webkit-backdrop-filter: blur(calc(16px * var(--gp-blur-scale, 1))) saturate(1.25);
 }
 
 .gp-canvas-frosted-control:hover {
@@ -254,6 +370,88 @@ html:is([data-viewport-class='phone'], [data-viewport-class='tablet']) .gp-canva
 .gp-toolbar-action:focus-visible::after {
   opacity: 0.65;
   scale: 1 1;
+}
+
+/* Open-canvas tabs. The row is a toolbar island, so a tab is a well inside it:
+   inactive tabs recede into the panel and only the active one lifts. */
+.gp-canvas-tab-scroller {
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+}
+
+.gp-canvas-tab-scroller::-webkit-scrollbar {
+  display: none;
+}
+
+.gp-canvas-tab {
+  color: var(--color-neutral-400);
+  background: transparent;
+  transition:
+    background-color var(--gp-duration-snap),
+    color var(--gp-duration-snap);
+}
+
+.gp-canvas-tab:hover {
+  background: oklch(100% 0 0 / 0.05);
+  color: var(--color-neutral-200);
+}
+
+.gp-canvas-tab[data-active] {
+  color: var(--color-neutral-100);
+  background: oklch(100% 0 0 / 0.09);
+  box-shadow: inset 0 1px 0 oklch(100% 0 0 / 0.07);
+}
+
+.gp-canvas-tab[data-dragging] {
+  opacity: 0.45;
+}
+
+[data-theme='light'] .gp-canvas-tab {
+  color: oklch(38% 0.02 150);
+}
+
+[data-theme='light'] .gp-canvas-tab:hover {
+  background: oklch(20% 0.02 150 / 0.06);
+  color: oklch(24% 0.03 150);
+}
+
+[data-theme='light'] .gp-canvas-tab[data-active] {
+  background: oklch(20% 0.02 150 / 0.1);
+  color: oklch(20% 0.03 150);
+  box-shadow: none;
+}
+
+/* The close control stays invisible until the tab is hovered, focused, or
+   active, so a long row reads as names rather than a wall of buttons. */
+.gp-canvas-tab-close {
+  color: inherit;
+  opacity: 0;
+  transition:
+    opacity var(--gp-duration-snap),
+    background-color var(--gp-duration-snap);
+}
+
+.gp-canvas-tab:hover .gp-canvas-tab-close,
+.gp-canvas-tab[data-active] .gp-canvas-tab-close,
+.gp-canvas-tab-close:focus-visible {
+  opacity: 0.7;
+}
+
+.gp-canvas-tab-close:hover {
+  opacity: 1;
+  background: oklch(100% 0 0 / 0.12);
+}
+
+[data-theme='light'] .gp-canvas-tab-close:hover {
+  background: oklch(20% 0.02 150 / 0.12);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gp-canvas-tab,
+  .gp-canvas-tab-close {
+    transition: none;
+  }
 }
 
 .gp-scrim {

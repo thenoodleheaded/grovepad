@@ -1,6 +1,8 @@
-import { clampZoom, screenToWorld, type Vector2D } from '../../types/spatial'
+import { clampZoom, screenToWorld, type Vector2D, type Widget } from '../../types/spatial'
 import { canvasPressMoved, resolveCanvasPointerIntent } from '../../utils/canvasGesturePolicy'
+import { marqueeModeFor, mergeMarqueeSelection, type MarqueeMode } from '../../utils/marqueeSelection'
 import { ghostNodeGrid } from '../../utils/ghostTreePresentation'
+import { restingFootprintWidget } from '../../utils/widgetRest'
 import { useAdaptiveInputStore } from '../../store/useAdaptiveInputStore'
 import { useCanvasStore } from '../../store/useCanvasStore'
 import { useCollaborationStore } from '../../store/useCollaborationStore'
@@ -59,6 +61,14 @@ function intersects(
   return a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y
 }
 
+/** The box a marquee has to touch: what the card actually draws, not the
+ * dormant stored size. A resting card is an icon tile, so hit-testing the
+ * stored box boxed cards from a patch of canvas the user can see is empty. */
+function marqueeHitRect(widget: Widget): { x: number; y: number; width: number; height: number } {
+  const box = restingFootprintWidget(widget)
+  return { x: box.position.x, y: box.position.y, width: box.size.width, height: box.size.height }
+}
+
 function applySelectionBox(box: HTMLDivElement, start: Vector2D, current: Vector2D): void {
   const x = Math.min(start.x, current.x)
   const y = Math.min(start.y, current.y)
@@ -91,6 +101,10 @@ export function attachCanvasGestures(el: HTMLElement): () => void {
   let selectionBadge: HTMLSpanElement | null = null
   let isSpaceHeld = false
   let isZHeld = false
+  // Read once at pointerdown: the modifier that STARTED the box is the one that
+  // decides how it merges, so releasing shift mid-drag cannot silently turn an
+  // additive box into a replacing one.
+  let marqueeMode: MarqueeMode = 'replace'
 
   const touches = new Map<number, Vector2D>()
   let pinchStart: { distance: number; midpoint: Vector2D; zoom: number; pan: Vector2D } | null = null
@@ -223,6 +237,7 @@ export function attachCanvasGestures(el: HTMLElement): () => void {
       gestureStart = viewportPoint(event)
       latestPoint = gestureStart
       hasPassedThreshold = false
+      marqueeMode = marqueeModeFor({ shift: event.shiftKey, alt: event.altKey })
       selectionBox = document.createElement('div')
       selectionBox.setAttribute('aria-hidden', 'true')
       selectionBox.className =
@@ -307,7 +322,7 @@ export function attachCanvasGestures(el: HTMLElement): () => void {
           Object.values(state.widgets).filter(
             (widget) =>
               widget.canvasId === state.activeCanvasId &&
-              intersects(rect, { x: widget.position.x, y: widget.position.y, width: widget.size.width, height: widget.size.height }),
+              intersects(rect, marqueeHitRect(widget)),
           ).length,
         )
       }
@@ -367,16 +382,16 @@ export function attachCanvasGestures(el: HTMLElement): () => void {
         height: Math.abs(worldA.y - worldB.y),
       }
       const state = useWidgetStore.getState()
-      const selected = new Set(state.selectedIds)
+      const boxed: string[] = []
       for (const widget of Object.values(state.widgets)) {
         if (
           widget.canvasId === state.activeCanvasId &&
-          intersects(selectionRect, { x: widget.position.x, y: widget.position.y, width: widget.size.width, height: widget.size.height })
+          intersects(selectionRect, marqueeHitRect(widget))
         ) {
-          selected.add(widget.id)
+          boxed.push(widget.id)
         }
       }
-      state.selectWidgets([...selected])
+      state.selectWidgets(mergeMarqueeSelection(state.selectedIds, boxed, marqueeMode))
       if (state.ghostConfig) {
         const hitNodeIds = state.ghostConfig.nodes
           .filter((node) => {

@@ -2,6 +2,7 @@ import type { Connection } from '../../types/circuit'
 import type { Relation } from '../../types/spatial'
 import { commandsFor, fieldDescriptor } from '../../widgets/fields'
 import { widgetDefinition } from '../../widgets/registry'
+import { settleWithGenerationFloor } from '../generationFloor'
 import { computeBlockedWidgetIds } from '../widgetGraph'
 import { computeDataHeight, computeDataWidth } from '../widgetSizing'
 import { settleWidgetLayout } from '../widgetSettling'
@@ -27,7 +28,13 @@ export function createCircuitSlice({ set, get, pushHistory }: WidgetStoreSliceCo
     }
     set((current) => {
       const relations = { ...current.relations, [id]: relation }
-      return { relations, blockedWidgetIds: computeBlockedWidgetIds(relations) }
+      // Drawing a parent line is the moment a node becomes a child, so the
+      // height rule applies right there: a card linked to a parent above it
+      // drops clear of that parent instead of waiting for the next drag.
+      const widgets = type === 'parent'
+        ? settleWithGenerationFloor(current.widgets, [toId], current.widgetGlueIndex, relations)
+        : current.widgets
+      return { relations, widgets, blockedWidgetIds: computeBlockedWidgetIds(relations) }
     })
     return id
   },
@@ -167,11 +174,21 @@ export function createCircuitSlice({ set, get, pushHistory }: WidgetStoreSliceCo
             height: Math.max(widget.size.height, newHeight),
           }
           widgets[widgetId] = { ...widget, data, size }
-          if (size !== widget.size) resized.push(widgetId)
+          // Compare DIMENSIONS, not references: `size` is a fresh literal every
+          // time, so `size !== widget.size` was always true and a full-canvas
+          // settle ran on every wire delivery. Anchored on the written cards
+          // for the same reason updateWidgetData is — otherwise the settle
+          // grid-snaps a card the user fine-nudged off-grid, with no history
+          // entry to undo it.
+          if (size.width !== widget.size.width || size.height !== widget.size.height) {
+            resized.push(widgetId)
+          }
         }
       }
       if (widgets === state.widgets) return state
-      if (resized.length > 0) widgets = settleWidgetLayout(widgets, resized)
+      if (resized.length > 0) {
+        widgets = settleWidgetLayout(widgets, resized, undefined, { anchorIds: resized })
+      }
       return { widgets }
     })
   },

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import type { ChecklistItem } from '../../../types/spatial'
 import {
   assignmentOrder,
@@ -137,5 +137,29 @@ describe('Tasks skin model', () => {
     expect(taskRoutineState({ runs: -3, lastRunAt: 'nope' })).toEqual({ runs: 0, lastRunAt: '' })
     expect(taskRoutineState({ runs: 4.6, lastRunAt: '2026-07-24T08:00:00.000Z' }))
       .toEqual({ runs: 5, lastRunAt: '2026-07-24T08:00:00.000Z' })
+  })
+})
+
+describe('Tasks due dates across a daylight-saving change', () => {
+  const original = process.env.TZ
+
+  beforeAll(() => { process.env.TZ = 'Pacific/Auckland' })
+  afterAll(() => {
+    if (original === undefined) delete process.env.TZ
+    else process.env.TZ = original
+  })
+
+  it('counts whole calendar days when the clock jumps to UTC+13', () => {
+    // New Zealand summer time starts on 27 Sep 2026, so local midnight on the
+    // 27th is 12 hours ahead of UTC and midnight on the 28th is 13. Rounding
+    // each date to an epoch day on its own lands both on the same number, and a
+    // task one day late reads as due today.
+    expect(new Date(2026, 8, 27).getTimezoneOffset()).toBe(-720)
+    expect(new Date(2026, 8, 28).getTimezoneOffset()).toBe(-780)
+
+    expect(dueReading('2026-09-27', '2026-09-28')).toMatchObject({ label: 'Yesterday', tone: 'overdue' })
+    expect(dueReading('2026-09-28', '2026-09-27')).toMatchObject({ label: 'Tomorrow', tone: 'soon' })
+    expect(dueReading('2026-09-26', '2026-09-28')).toMatchObject({ label: '2 days late', tone: 'overdue' })
+    expect(dueReading('2026-09-28', '2026-09-28')).toMatchObject({ label: 'Today', tone: 'today' })
   })
 })

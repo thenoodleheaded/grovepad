@@ -1,0 +1,185 @@
+/* Visual quality tiers. Loaded last on purpose: a tier is allowed to overrule
+   any earlier surface rule, and only ever by removing work.
+
+   `html[data-quality]` is written by useSettingsStore. There is deliberately no
+   `[data-quality='high']` block anywhere in the codebase — the richest tier is
+   the stylesheet exactly as authored, so the default look can never drift by
+   editing this file. Everything below is a reduction from that baseline.
+
+   What each tier costs per frame:
+     high      full backdrop blur, layered gradient glass, accent glow rings,
+               ambient aura canvas, full motion durations.
+     balanced  blur at 45%, no coloured glow rings, shallower drop shadows,
+               ~70% motion durations, aura at half the emitters and a 70%
+               buffer (see AURA_QUALITY_BUDGET in auraTuning.ts).
+     low       no backdrop blur at all, no aura layer (CanvasAuraLayer
+               unmounts), flat card and panel paint, hairline outlines instead
+               of shadow stacks, and 1ms animations/transitions.
+   ------------------------------------------------------------------------- */
+
+/* --- Balanced ----------------------------------------------------------- */
+
+html[data-quality='balanced'] {
+  --gp-blur-scale: 0.45;
+  --gp-motion-layout: 210ms;
+  --gp-motion-reveal: 180ms;
+  --gp-tune-snap: 110ms;
+}
+
+/* Cards keep their glass, lose the coloured bloom. The glow layers are the
+   only shadows here with a large blur radius and a non-black colour, so they
+   are also the ones the compositor repaints most expensively on hover. */
+html[data-quality='balanced'] .gp-widget-card {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 3px 10px rgb(0 0 0 / var(--gp-tune-card-shadow, 0.32)) !important;
+}
+
+html[data-quality='balanced'] .gp-widget-card:hover {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 6px 18px rgba(0, 0, 0, 0.4) !important;
+}
+
+html[data-quality='balanced'] .gp-widget-card[data-selected='true'] {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.09),
+    0 0 0 var(--gp-tune-select-ring, 3px) color-mix(in oklab, var(--gp-widget-accent), transparent 65%),
+    0 4px 14px rgba(0, 0, 0, 0.34) !important;
+}
+
+html[data-quality='balanced'] .gp-widget-card[data-link-source='true'] {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.09),
+    0 0 0 3px rgba(99, 102, 241, 0.42),
+    0 4px 14px rgba(0, 0, 0, 0.34) !important;
+}
+
+html[data-quality='balanced'] .gp-widget-card[data-rest-expanded='true'] {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.09),
+    0 12px 28px rgb(0 0 0 / var(--gp-tune-expand-shadow, 0.58)) !important;
+}
+
+html[data-quality='balanced'] .gp-widget-card[data-selected='true'][data-rest-expanded='true'] {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.09),
+    0 0 0 var(--gp-tune-select-ring, 3px) color-mix(in oklab, var(--gp-widget-accent), transparent 65%),
+    0 12px 28px rgb(0 0 0 / var(--gp-tune-expand-shadow, 0.58)) !important;
+}
+
+/* The expand halo is a live backdrop filter over a 120px ring around a card
+   that is mid-glide. Half the blur, half the reach. */
+html[data-quality='balanced'] .gp-rest-halo {
+  --gp-tune-halo-spread: 72px;
+  --gp-tune-halo-blur: 8px;
+}
+
+/* --- Low ---------------------------------------------------------------- */
+
+html[data-quality='low'] {
+  --gp-blur-scale: 0;
+  --gp-duration-instant: 1ms;
+  --gp-motion-layout: 1ms;
+  --gp-motion-reveal: 1ms;
+  --gp-tune-snap: 1ms;
+  /* Flat replacements for the layered gradient glass. */
+  --gp-flat-card: oklch(16% 0.004 250);
+}
+
+html[data-quality='low'][data-theme='light'] {
+  --gp-flat-card: oklch(95.5% 0.004 250);
+}
+
+/* One blanket removal pass. Every declaration here deletes work rather than
+   adding any, so it cannot introduce a filter, animation, or layer that the
+   element did not already pay for. Durations land on 1ms instead of 0s because
+   several surfaces (the settings shell, resting-face cross-fades, animated
+   list removal) close themselves on transitionend/animationend and a zero
+   duration is not guaranteed to fire those events. */
+html[data-quality='low'] *,
+html[data-quality='low'] *::before,
+html[data-quality='low'] *::after {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  animation-duration: 1ms !important;
+  animation-delay: 0s !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 1ms !important;
+  transition-delay: 0s !important;
+}
+
+/* Flat paint. The gradient stacks are static (they repaint only when the card's
+   box changes), but each one is four to five gradient layers with oklch and
+   color-mix per card — on a dense board that is the biggest paint bill left
+   once the blur is gone. */
+html[data-quality='low'] .gp-glass,
+html[data-quality='low'] .gp-widget-card.gp-glass,
+html[data-theme='light'][data-quality='low'] .gp-glass,
+html[data-theme='light'][data-quality='low'] .gp-widget-card.gp-glass {
+  background: var(--gp-flat-card) !important;
+}
+
+html[data-quality='low'] .gp-panel,
+html[data-theme='light'][data-quality='low'] .gp-panel {
+  background: var(--gp-surface-panel) !important;
+  box-shadow:
+    inset 0 0 0 1px var(--gp-hairline),
+    0 2px 6px rgb(0 0 0 / 0.28) !important;
+}
+
+/* Shadow stacks collapse to a hairline outline. Selection, link-source, and
+   lift stay legible — they are state, not decoration — but each is a single
+   spread-only ring with no blur radius, which is far cheaper to paint. */
+html[data-quality='low'] .gp-widget-card,
+html[data-quality='low'] .gp-widget-card:hover {
+  box-shadow: inset 0 0 0 1px var(--gp-hairline) !important;
+}
+
+html[data-quality='low'] .gp-widget-card[data-selected='true'] {
+  box-shadow:
+    inset 0 0 0 1px var(--gp-hairline),
+    0 0 0 2px color-mix(in oklab, var(--gp-widget-accent), transparent 40%) !important;
+}
+
+html[data-quality='low'] .gp-widget-card[data-link-source='true'] {
+  box-shadow:
+    inset 0 0 0 1px var(--gp-hairline),
+    0 0 0 2px rgb(99 102 241 / 0.62) !important;
+}
+
+html[data-quality='low'] .gp-widget-card[data-rest-expanded='true'] {
+  box-shadow:
+    inset 0 0 0 1px var(--gp-hairline-strong),
+    0 4px 12px rgb(0 0 0 / 0.42) !important;
+}
+
+html[data-quality='low'] .gp-widget-card[data-selected='true'][data-rest-expanded='true'] {
+  box-shadow:
+    inset 0 0 0 1px var(--gp-hairline-strong),
+    0 0 0 2px color-mix(in oklab, var(--gp-widget-accent), transparent 40%),
+    0 4px 12px rgb(0 0 0 / 0.42) !important;
+}
+
+/* Islands and wells inside a widget keep their fill (that is what says raised
+   or sunken) and drop the four-layer shadow that softens the edge. */
+html[data-quality='low'] .gp-widget-content :is(.gp-subpanel, .gp-subdivision),
+html[data-quality='low'] .gp-widget-content div[class*='group/'] {
+  box-shadow: inset 0 0 0 1px var(--gp-hairline) !important;
+}
+
+/* A blurred, dimmed 120px ring around every expanding card is the most
+   expensive single effect in the app. The lift already reads from the card's
+   own outline and shadow at this tier. */
+html[data-quality='low'] .gp-rest-halo {
+  display: none !important;
+}
+
+/* Chrome islands lose their sheen pseudo-layer; the surface fill stays. */
+html[data-quality='low'] :is(.gp-settings-preference-island, .gp-popup-island)::before {
+  display: none !important;
+}
+
+html[data-quality='low'] :is(.gp-settings-preference-island, .gp-popup-island)[data-checked] :is(.gp-settings-preference-icon, .gp-popup-island-icon) {
+  filter: none !important;
+}

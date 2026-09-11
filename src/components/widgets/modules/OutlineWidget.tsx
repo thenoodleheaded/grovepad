@@ -23,6 +23,7 @@ import {
   useEffect,
   useMemo,
   useRef,
+  useState,
   type CSSProperties,
   type KeyboardEvent,
 } from 'react'
@@ -68,6 +69,41 @@ const SKIN_META = {
 
 function rowStyle(depth: number): CSSProperties {
   return { '--gp-outline-depth': Math.min(depth, 5) } as CSSProperties
+}
+
+/**
+ * One field, a list underneath. Normalising on every keystroke made the field
+ * refuse the one thing it is for: a comma typed at the end produced an empty
+ * trailing entry, `filter(Boolean)` dropped it, the stored list came back
+ * unchanged, and React restored the old text over the character just typed —
+ * so a second attachment could never be started from the keyboard. The typed
+ * text is held here as written and only split when the field is left or
+ * Enter is pressed.
+ */
+function AttachmentsField({ label, attachments, onCommit }: {
+  label: string
+  attachments: string[]
+  onCommit: (next: string[]) => void
+}) {
+  const [draft, setDraft] = useState<string | null>(null)
+  const commit = () => {
+    if (draft === null) return
+    setDraft(null)
+    onCommit(draft.split(',').map((value) => value.trim()).filter(Boolean))
+  }
+  return (
+    <label className="gp-outline-attachment-field">
+      <Paperclip size={11} aria-hidden />
+      <input
+        aria-label={label}
+        value={draft ?? attachments.join(', ')}
+        placeholder="Links or filenames, separated by commas"
+        onChange={(event) => setDraft(event.target.value)}
+        onBlur={commit}
+        onKeyDown={(event) => { if (event.key === 'Enter') commit() }}
+      />
+    </label>
+  )
 }
 
 export function OutlineWidget({
@@ -276,24 +312,15 @@ export function OutlineWidget({
             ))}
           />
         </label>
-        <label className="gp-outline-attachment-field">
-          <Paperclip size={11} aria-hidden />
-          <input
-            aria-label={`Attachments for ${item.text || 'heading'}`}
-            value={detail.attachments.join(', ')}
-            placeholder="Links or filenames, separated by commas"
-            onChange={(event) => onChange(dataWithOutlineBriefDetail(
-              baseData(),
-              item.id,
-              {
-                attachments: event.target.value
-                  .split(',')
-                  .map((value) => value.trim())
-                  .filter(Boolean),
-              },
-            ))}
-          />
-        </label>
+        <AttachmentsField
+          label={`Attachments for ${item.text || 'heading'}`}
+          attachments={detail.attachments}
+          onCommit={(attachments) => onChange(dataWithOutlineBriefDetail(
+            baseData(),
+            item.id,
+            { attachments },
+          ))}
+        />
       </div>
     )
   }

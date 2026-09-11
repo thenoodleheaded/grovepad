@@ -2,9 +2,11 @@ import {
   PERSISTED_DEVICE_FORMAT,
   PERSISTED_DEVICE_VERSION,
   type BoardDeviceState,
+  type CanvasTab,
   type PersistedBoardDocumentState,
   type PersistedDeviceState,
 } from '../types/persistence'
+import { resolveCanvasTabs } from '../store/canvasTabs'
 import type { Vector2D } from '../types/spatial'
 import { clampZoom } from '../types/spatial'
 
@@ -59,7 +61,26 @@ export function resolvePersistedDeviceState(
     canvasViews[canvasId] = { pan: view.pan, zoom: clampZoom(view.zoom) }
   }
 
-  return { activeWorkspaceId, activeCanvasId, canvasViews }
+  // A payload written before tabs existed — or one whose tab list is malformed
+  // — simply reads as no tabs; the resolver then seeds a single tab on the
+  // canvas this device was last looking at, which is the pre-tabs behaviour.
+  const rawTabs = Array.isArray(source.openTabs) ? source.openTabs : []
+  const openTabs: CanvasTab[] = []
+  for (const tab of rawTabs) {
+    if (!isRecord(tab)) continue
+    if (typeof tab.id !== 'string' || typeof tab.canvasId !== 'string') continue
+    openTabs.push({ id: tab.id, canvasId: tab.canvasId })
+  }
+  const activeTabId = typeof source.activeTabId === 'string' ? source.activeTabId : ''
+  const tabs = resolveCanvasTabs({ openTabs, activeTabId, activeCanvasId }, board.canvases)
+
+  return {
+    activeWorkspaceId,
+    activeCanvasId: tabs.activeCanvasId || activeCanvasId,
+    canvasViews,
+    openTabs: tabs.openTabs,
+    activeTabId: tabs.activeTabId,
+  }
 }
 
 export function serializePersistedDeviceState(state: BoardDeviceState): PersistedDeviceState {
@@ -69,5 +90,7 @@ export function serializePersistedDeviceState(state: BoardDeviceState): Persiste
     activeWorkspaceId: state.activeWorkspaceId,
     activeCanvasId: state.activeCanvasId,
     canvasViews: state.canvasViews,
+    openTabs: state.openTabs,
+    activeTabId: state.activeTabId,
   }
 }

@@ -9,9 +9,11 @@ describe('dependencyAnchors', () => {
     const prerequisite = { center: { x: 100, y: 100 }, halfW: 60, halfH: 50 }
     const dependent = { center: { x: 340, y: 180 }, halfW: 80, halfH: 60 }
 
+    // 0.3 of a grid cell (12px) clear of each card, the standoff every line
+    // on the board keeps.
     expect(dependencyAnchors(prerequisite, dependent)).toEqual({
-      start: { x: 168, y: 126 },
-      end: { x: 252, y: 144 },
+      start: { x: 172, y: 126 },
+      end: { x: 248, y: 144 },
     })
   })
 
@@ -20,8 +22,8 @@ describe('dependencyAnchors', () => {
     const dependent = { center: { x: 80, y: 120 }, halfW: 50, halfH: 30 }
 
     const anchors = dependencyAnchors(prerequisite, dependent)
-    expect(anchors.start.x).toBe(378)
-    expect(anchors.end.x).toBe(22)
+    expect(anchors.start.x).toBe(382)
+    expect(anchors.end.x).toBe(18)
     expect(anchors.start.y).toBe(144)
     expect(anchors.end.y).toBe(126)
   })

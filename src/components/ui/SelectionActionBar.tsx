@@ -1,14 +1,35 @@
 import type { ReactNode } from 'react'
-import { Cable, Copy, Link2, Maximize2, Trash2, Wind, X } from 'lucide-react'
+import {
+  AlignCenterHorizontal,
+  AlignCenterVertical,
+  AlignEndHorizontal,
+  AlignEndVertical,
+  AlignHorizontalDistributeCenter,
+  AlignStartHorizontal,
+  AlignStartVertical,
+  AlignVerticalDistributeCenter,
+  Cable,
+  Copy,
+  Group,
+  Link2,
+  Maximize2,
+  MousePointer2,
+  Trash2,
+  Wind,
+  X,
+} from 'lucide-react'
+import { useAdaptiveInputStore } from '../../store/useAdaptiveInputStore'
 import { useWidgetStore } from '../../store/useWidgetStore'
 import { requestWidgetDeletion } from '../../store/useWidgetDeletionDialogStore'
 import { frameCanvas } from '../../utils/cameraFraming'
+import { offersSelectMore, usesTouchCanvasChrome } from '../../utils/adaptiveChrome'
 
 function ActionButton({
   label,
   danger = false,
   disabled = false,
   showLabel = false,
+  labelAlways = false,
   onClick,
   children,
 }: {
@@ -16,6 +37,9 @@ function ActionButton({
   danger?: boolean
   disabled?: boolean
   showLabel?: boolean
+  /** Show the words at every width. For controls whose icon alone would not
+   * explain them, on the phones they exist for. */
+  labelAlways?: boolean
   onClick: () => void
   children: ReactNode
 }) {
@@ -27,7 +51,7 @@ function ActionButton({
       disabled={disabled}
       onClick={onClick}
       className={`gp-touch-target flex h-9 items-center justify-center gap-1.5 rounded-xl text-xs font-medium transition-[background-color,color,transform,scale] active:scale-[0.96] disabled:pointer-events-none disabled:opacity-40 ${
-        showLabel ? 'w-9 px-0 md:w-auto md:px-2.5' : 'w-9'
+        labelAlways ? 'w-auto shrink-0 whitespace-nowrap px-2.5' : showLabel ? 'w-9 px-0 md:w-auto md:px-2.5' : 'w-9'
       } ${
         danger
           ? 'text-red-300 hover:bg-red-500/12 hover:text-red-200'
@@ -35,19 +59,23 @@ function ActionButton({
       }`}
     >
       {children}
-      {showLabel && <span className="hidden md:inline">{label}</span>}
+      {labelAlways ? <span>{label}</span> : showLabel && <span className="hidden md:inline">{label}</span>}
     </button>
   )
 }
 
 export function SelectionActionBar() {
   const selectedSet = useWidgetStore((state) => state.selectedIds)
+  const interactionMode = useAdaptiveInputStore((state) => state.interactionMode)
+  const viewportClass = useAdaptiveInputStore((state) => state.capabilities.viewportClass)
+  const activeInput = useAdaptiveInputStore((state) => state.activeInput)
   const selectedIds = [...selectedSet]
 
   if (selectedIds.length === 0) return null
 
   const selectedLabel = `${selectedIds.length} selected`
   const singleSelectedId = selectedIds.length === 1 ? selectedIds[0] : null
+  const showSelectMore = offersSelectMore(usesTouchCanvasChrome(viewportClass, activeInput), interactionMode)
 
   return (
     <div
@@ -59,6 +87,15 @@ export function SelectionActionBar() {
         {selectedLabel}
       </div>
       <div className="h-5 w-px bg-neutral-700/70" aria-hidden />
+      {showSelectMore && (
+        <ActionButton
+          label="Select more"
+          labelAlways
+          onClick={() => useAdaptiveInputStore.getState().setInteractionMode('select')}
+        >
+          <MousePointer2 size={13} aria-hidden />
+        </ActionButton>
+      )}
       <ActionButton
         label="Frame"
         showLabel={false}
@@ -82,6 +119,51 @@ export function SelectionActionBar() {
           <Wind size={13} aria-hidden />
         </ActionButton>
       )}
+      {selectedIds.length >= 2 && (
+        // The touch route to ⌘G and Option-drag: the same one-undo-step
+        // action the keyboard shortcut and Quick Add "glue" command use.
+        <ActionButton
+          label="Glue"
+          showLabel
+          onClick={() => useWidgetStore.getState().glueSelection(selectedIds)}
+        >
+          <Group size={13} aria-hidden />
+        </ActionButton>
+      )}
+      {selectedIds.length >= 2 && (
+        <>
+          <div className="h-5 w-px bg-neutral-700/70" aria-hidden />
+          <ActionButton label="Align left" onClick={() => useWidgetStore.getState().alignSelection('left')}>
+            <AlignStartVertical size={13} aria-hidden />
+          </ActionButton>
+          <ActionButton label="Align horizontal centers" onClick={() => useWidgetStore.getState().alignSelection('center-h')}>
+            <AlignCenterVertical size={13} aria-hidden />
+          </ActionButton>
+          <ActionButton label="Align right" onClick={() => useWidgetStore.getState().alignSelection('right')}>
+            <AlignEndVertical size={13} aria-hidden />
+          </ActionButton>
+          <ActionButton label="Align top" onClick={() => useWidgetStore.getState().alignSelection('top')}>
+            <AlignStartHorizontal size={13} aria-hidden />
+          </ActionButton>
+          <ActionButton label="Align vertical centers" onClick={() => useWidgetStore.getState().alignSelection('center-v')}>
+            <AlignCenterHorizontal size={13} aria-hidden />
+          </ActionButton>
+          <ActionButton label="Align bottom" onClick={() => useWidgetStore.getState().alignSelection('bottom')}>
+            <AlignEndHorizontal size={13} aria-hidden />
+          </ActionButton>
+        </>
+      )}
+      {selectedIds.length >= 3 && (
+        <>
+          <ActionButton label="Distribute horizontally" onClick={() => useWidgetStore.getState().distributeSelection('horizontal')}>
+            <AlignHorizontalDistributeCenter size={13} aria-hidden />
+          </ActionButton>
+          <ActionButton label="Distribute vertically" onClick={() => useWidgetStore.getState().distributeSelection('vertical')}>
+            <AlignVerticalDistributeCenter size={13} aria-hidden />
+          </ActionButton>
+        </>
+      )}
+      {selectedIds.length >= 2 && <div className="h-5 w-px bg-neutral-700/70" aria-hidden />}
       <ActionButton
         label="Connect"
         disabled={!singleSelectedId}

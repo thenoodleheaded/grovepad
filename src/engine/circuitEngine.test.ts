@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { Connection } from '../types/circuit'
 import { isValidConnectionShape, suggestTransform } from '../types/circuit'
-import type { ChecklistData, CounterData, ModuleData, ModuleType, ProgressData, TextInputData, Widget, WorldClockData } from '../types/spatial'
+import type { ChecklistData, CounterData, GoalTrackerData, ModuleData, ModuleType, TextInputData, Widget, WorldClockData } from '../types/spatial'
 import { makeWidget } from '../test/factories'
 import { commandsFor, fieldDescriptor } from '../widgets/fields'
 import {
@@ -110,7 +110,7 @@ describe('wire transforms', () => {
 describe('value propagation', () => {
   it('delivers a source change through a wire with a transform', () => {
     const counter = widget('counter', { label: '', count: 4, step: 1 })
-    const progress = widget('progress', { label: '', percent: 0 })
+    const progress = widget('goal_tracker', { mode: 'simple', goal: '', simple: { label: '', percent: 0 }, milestones: [] } as never)
     const widgets = record([counter, progress])
     const connection = wire({
       fromId: counter.id,
@@ -123,12 +123,12 @@ describe('value propagation', () => {
 
     const { result } = waveOnce(widgets, [connection], [counter.id])
     expect(result.firedIds).toEqual([connection.id])
-    expect((result.writes.get(progress.id) as ProgressData).percent).toBe(40)
+    expect((result.writes.get(progress.id) as GoalTrackerData).simple!.percent).toBe(40)
   })
 
   it('is silent when the delivered value has not changed (fixpoint)', () => {
     const counter = widget('counter', { label: '', count: 4, step: 1 })
-    const progress = widget('progress', { label: '', percent: 0 })
+    const progress = widget('goal_tracker', { mode: 'simple', goal: '', simple: { label: '', percent: 0 }, milestones: [] } as never)
     const widgets = record([counter, progress])
     const connection = wire({
       fromId: counter.id,
@@ -150,14 +150,14 @@ describe('value propagation', () => {
   it('chains across widgets within one wave', () => {
     const counter = widget('counter', { label: '', count: 7, step: 1 })
     const middle = widget('number_input', { label: '', value: 0, min: 0, max: 100, step: 1 })
-    const progress = widget('progress', { label: '', percent: 0 })
+    const progress = widget('goal_tracker', { mode: 'simple', goal: '', simple: { label: '', percent: 0 }, milestones: [] } as never)
     const widgets = record([counter, middle, progress])
     const first = wire({ fromId: counter.id, fromField: 'count', toId: middle.id, kind: 'value', toField: 'value' })
     const second = wire({ fromId: middle.id, fromField: 'value', toId: progress.id, kind: 'value', toField: 'percent' })
 
     const { result } = waveOnce(widgets, [first, second], [counter.id])
     expect(result.firedIds).toEqual([first.id, second.id])
-    expect((result.writes.get(progress.id) as ProgressData).percent).toBe(7)
+    expect((result.writes.get(progress.id) as GoalTrackerData).simple!.percent).toBe(7)
   })
 
   it('terminates on cycles: each wire fires at most once per wave', () => {
@@ -176,7 +176,7 @@ describe('value propagation', () => {
 
   it('skips disabled and damped wires', () => {
     const counter = widget('counter', { label: '', count: 9, step: 1 })
-    const progress = widget('progress', { label: '', percent: 0 })
+    const progress = widget('goal_tracker', { mode: 'simple', goal: '', simple: { label: '', percent: 0 }, milestones: [] } as never)
     const widgets = record([counter, progress])
     const disabled = wire({
       fromId: counter.id,
@@ -195,7 +195,7 @@ describe('value propagation', () => {
 
   it('baseline mode records memory without writing', () => {
     const counter = widget('counter', { label: '', count: 3, step: 1 })
-    const progress = widget('progress', { label: '', percent: 0 })
+    const progress = widget('goal_tracker', { mode: 'simple', goal: '', simple: { label: '', percent: 0 }, milestones: [] } as never)
     const widgets = record([counter, progress])
     const connection = wire({ fromId: counter.id, fromField: 'count', toId: progress.id, kind: 'value', toField: 'percent' })
     const memory = new Map<string, DeliveryState>()
@@ -210,7 +210,7 @@ describe('value propagation', () => {
     // …and a real change flows.
     const bumped = { ...counter, data: { label: '', count: 5, step: 1 } }
     const moved = waveOnce(record([bumped, progress]), [connection], [counter.id], memory)
-    expect((moved.result.writes.get(progress.id) as ProgressData).percent).toBe(5)
+    expect((moved.result.writes.get(progress.id) as GoalTrackerData).simple!.percent).toBe(5)
   })
 
   it('coerces across value types via the target setter', () => {
@@ -235,7 +235,7 @@ describe('trigger wires', () => {
         { id: 'i2', label: 'b', done: allDone },
       ],
     })
-    const timer = widget('timer', { label: '', durationSeconds: 60, remainingSeconds: 30, endAt: 99 })
+    const timer = widget('timekeeper', { mode: 'countdown', countdown: { label: '', durationSeconds: 60, remainingSeconds: 30, endAt: 99 } } as never)
     return { checklist, timer }
   }
 
@@ -261,7 +261,7 @@ describe('trigger wires', () => {
     done.timer.id = timer.id
     const second = waveOnce(record([done.checklist, timer]), [connection], [checklist.id], memory)
     expect(second.result.firedIds).toEqual([connection.id])
-    const timerData = second.result.writes.get(timer.id) as { endAt: number | null; remainingSeconds: number }
+    const timerData = (second.result.writes.get(timer.id) as { countdown: { endAt: number | null; remainingSeconds: number } }).countdown
     expect(timerData.endAt).toBeNull()
     expect(timerData.remainingSeconds).toBe(60)
 
@@ -350,14 +350,18 @@ describe('trigger wires', () => {
     expect(written.items[0]?.label).toBe('[wired] Buy milk')
   })
 
-  it('world_clock.add_zone validates, dedupes, and rejects bad payloads', () => {
-    const clock = widget('world_clock', { zones: ['UTC'] } as WorldClockData)
-    const addZone = commandsFor('world_clock').find((c) => c.key === 'add_zone')!
+  it('timekeeper.add_zone validates, dedupes, and rejects bad payloads', () => {
+    // The World Clock card was retired into Timekeeper's skin, so its command
+    // moved with it and now reads the zones out of the skin's own pocket.
+    const clock = widget('timekeeper', { mode: 'world_clock', worldClock: { zones: ['UTC'] } } as never)
+    const addZone = commandsFor('timekeeper').find((c) => c.key === 'add_zone')!
+    const zonesAfter = (payload: string) =>
+      (addZone.run(clock.data, payload) as { worldClock?: WorldClockData }).worldClock?.zones
     expect(addZone.acceptsPayload).toBe(true)
-    expect((addZone.run(clock.data, 'Asia/Tokyo') as WorldClockData).zones).toEqual(['UTC', 'Asia/Tokyo'])
-    expect((addZone.run(clock.data, 'UTC') as WorldClockData).zones).toEqual(['UTC']) // dedupe
-    expect((addZone.run(clock.data, 'Not/AZone') as WorldClockData).zones).toEqual(['UTC']) // invalid IANA name
-    expect((addZone.run(clock.data, '') as WorldClockData).zones).toEqual(['UTC']) // empty payload
+    expect(zonesAfter('Asia/Tokyo')).toEqual(['UTC', 'Asia/Tokyo'])
+    expect(zonesAfter('UTC')).toEqual(['UTC']) // dedupe
+    expect(zonesAfter('Not/AZone')).toEqual(['UTC']) // invalid IANA name
+    expect(zonesAfter('')).toEqual(['UTC']) // empty payload
   })
 })
 
@@ -383,8 +387,8 @@ describe('suggestTransform', () => {
 
 describe('engine support', () => {
   it('detects time-sensitive sources', () => {
-    const countdown = widget('countdown', { targetDate: '2030-01-01', label: '' } as never)
-    const notes = widget('notes', { text: '' })
+    const countdown = widget('timekeeper', { mode: 'deadline', deadline: { targetDate: '2030-01-01', label: '' } } as never)
+    const notes = widget('text', { text: '' })
     const connection = wire({
       fromId: countdown.id,
       fromField: 'days_left',
@@ -413,9 +417,9 @@ describe('engine support', () => {
   })
 
   it('port geometry is deterministic and agrees with hit testing', () => {
-    const progress = widget('progress', { label: '', percent: 10 }, 100, 100)
-    const outs = outputPortsFor('progress')
-    const ins = inputPortsFor('progress')
+    const progress = widget('goal_tracker', { mode: 'simple', goal: '', simple: { label: '', percent: 10 }, milestones: [] } as never, 100, 100)
+    const outs = outputPortsFor('goal_tracker')
+    const ins = inputPortsFor('goal_tracker')
     expect(outs.length).toBeGreaterThan(0)
     expect(ins.some((port) => port.kind === 'field' && port.key === 'percent')).toBe(true)
     expect(ins.some((port) => port.kind === 'command' && port.key === 'reset')).toBe(true)
@@ -491,7 +495,7 @@ describe('engine support', () => {
   it('every registered field key resolves through fieldDescriptor', () => {
     // The wave engine looks descriptors up by key; the registry must be
     // internally consistent for every port the UI can offer.
-    const types: ModuleType[] = ['counter', 'progress', 'checklist', 'toggle', 'formula', 'script_block', 'notes']
+    const types: ModuleType[] = ['counter', 'goal_tracker', 'checklist', 'toggle', 'formula', 'script_block', 'text']
     for (const type of types) {
       for (const port of outputPortsFor(type)) {
         expect(fieldDescriptor(type, port.key), `${type}.${port.key}`).toBeDefined()

@@ -5,6 +5,7 @@ import type {
   LogLevel,
   ModuleData,
 } from '../../../types/spatial'
+import { localDayKey } from '../../../utils/localDate'
 import {
   dataWithSkinState,
   skinStateFor,
@@ -126,7 +127,11 @@ export function logbookDayGroups(
 ): LogbookDayGroup[] {
   const groups = new Map<string, LogEntry[]>()
   for (const entry of orderedLogbookEntries(entries, order)) {
-    const day = entry.timestamp.slice(0, 10)
+    // The heading and every time beside it are rendered in local time, so the
+    // day a line is filed under has to be local too. Slicing the ISO string
+    // takes the UTC date, which files an evening entry under tomorrow for
+    // anyone west of Greenwich.
+    const day = localDayKey(new Date(entry.timestamp).getTime())
     const group = groups.get(day)
     if (group) group.push(entry)
     else groups.set(day, [entry])
@@ -250,6 +255,38 @@ export function removeLogbookEntry(data: LogbookData, entryId: string): LogbookD
     entries: data.entries.filter((entry) => entry.id !== entryId),
     ...(Object.keys(nextStates).length > 0 ? { skinStates: nextStates } : {}),
   }
+}
+
+export type ServiceDueTone = 'overdue' | 'today' | 'soon'
+
+export interface ServiceDueReading {
+  tone: ServiceDueTone
+  label: string
+}
+
+/** Whole days from today to a `yyyy-mm-dd` service date, or null if unusable. */
+function daysUntil(day: string): number | null {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return null
+  const due = new Date(`${day}T12:00:00`)
+  if (Number.isNaN(due.getTime())) return null
+  const now = new Date()
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12)
+  return Math.round((due.getTime() - today.getTime()) / 86_400_000)
+}
+
+/**
+ * The Maintenance badge is a readout, not stored state: overdue, due today, or
+ * due within a fortnight. Both the open card and the resting tile read this
+ * one derivation, so they can never disagree about what is overdue.
+ */
+export function logbookServiceDue(day: string | undefined): ServiceDueReading | null {
+  if (!day) return null
+  const days = daysUntil(day)
+  if (days === null) return null
+  if (days < 0) return { tone: 'overdue', label: days === -1 ? '1 day overdue' : `${-days} days overdue` }
+  if (days === 0) return { tone: 'today', label: 'Due today' }
+  if (days <= 14) return { tone: 'soon', label: `In ${days} ${days === 1 ? 'day' : 'days'}` }
+  return null
 }
 
 export function latestLogbookEntry(entries: readonly LogEntry[]): LogEntry | null {
