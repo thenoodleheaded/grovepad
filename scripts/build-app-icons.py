@@ -10,7 +10,8 @@ in the shape that platform expects:
              white `g`, green `p`; iOS 18+ paints its own dark gradient
              behind it) and tinted (transparent greyscale iOS recolours).
              Xcode derives every smaller size at build time.
-    web      apple-touch-icon.png (180px light, Safari "Add to Home Screen"),
+    web      favicon.png (64px rounded tile, mark enlarged for tab size),
+             apple-touch-icon.png (180px light, Safari "Add to Home Screen"),
              app-icon-192/512.png (rounded tile, manifest `purpose: any`) and
              app-icon-maskable-192/512.png (full-bleed with the mark pulled
              into the 80 % safe zone, manifest `purpose: maskable`).
@@ -26,8 +27,9 @@ Run from the repository root:
 
     python3 scripts/build-app-icons.py
 
-The browser-tab favicons are deliberately not produced here: at 16 px a
-plated icon is a green blob, so the tab keeps the borderless ink-only mark.
+The browser-tab favicon is the same rounded tile with the mark drawn larger,
+so it still reads at 16 px. It carries its own plate, so one file serves light
+and dark browser chrome alike.
 """
 
 from __future__ import annotations
@@ -90,6 +92,7 @@ BAR_FILLET = 50   # half the bowl-to-bar gap, so the sweep never bites the bowl
 MARK_BOX = (50, 50, 975, 960)   # bounding box of the mark in its own grid
 MARK_SCALE = 0.63               # fraction of the icon width the mark occupies
 MASKABLE_MARK_SCALE = 0.50      # inside the 80 % circle Android may mask to
+FAVICON_MARK_SCALE = 0.76       # tab icons are 16–32 px; the mark needs the room
 # Adaptive icons show the centre 72/108 of the layer and may mask to a circle
 # of 66/108: this keeps the mark the same visual size as on iOS and inside
 # that circle. `tauri icon` places the layers as-is, so the shrink happens here.
@@ -282,7 +285,9 @@ def write_ios(light: Image.Image) -> list[Path]:
 def write_web(light: Image.Image) -> list[Path]:
     tile = rounded_tile(light)
     maskable = render("light", mark_scale=MASKABLE_MARK_SCALE)
+    favicon = rounded_tile(render("light", mark_scale=FAVICON_MARK_SCALE))
     return [
+        _save(favicon, PUBLIC / "favicon.png", 64),
         # Safari has no dark/tinted variants for home-screen web apps; the
         # light plate matches the native icon best.
         _save(light, PUBLIC / "apple-touch-icon.png", 180),
