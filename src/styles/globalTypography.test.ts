@@ -1,6 +1,6 @@
 /// <reference types="node" />
 
-import { readdirSync, readFileSync } from 'node:fs'
+import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 
 const css = readFileSync(new URL('../index.css', import.meta.url), 'utf8')
@@ -16,22 +16,29 @@ function applicationSources(directory: URL): Array<{ file: string; source: strin
 }
 
 describe('global typography contract', () => {
-  it('loads every used Clash Display weight directly from Fontshare', () => {
-    expect(css).not.toContain('api.fontshare.com')
+  it('serves every used Clash Display weight from the bundle, never the network', () => {
+    // The app claims to work offline, so no face may be fetched at runtime.
+    expect(css).not.toContain('fontshare.com')
     expect(css.match(/font-family: 'Clash Display'/g)).toHaveLength(5)
-    expect(css.match(/cdn\.fontshare\.com/g)).toHaveLength(5)
+    expect(css.match(/url\('\/fonts\/clash-display-\d{3}\.woff2'\)/g)).toHaveLength(5)
+    // A late face would reflow every label a beat after launch.
+    expect(css).not.toContain('font-display: swap')
 
     for (const weight of [300, 400, 500, 600, 700]) {
       expect(css).toContain(`font-weight: ${weight}`)
+      // Each filename carries the weight it actually holds.
+      expect(css).toContain(`url('/fonts/clash-display-${weight}.woff2')`)
+      expect(existsSync(new URL(`../../public/fonts/clash-display-${weight}.woff2`, import.meta.url)))
+        .toBe(true)
     }
   })
 
-  it('uses Clash Display for the global sans token and preconnects its CDN', () => {
+  it('uses Clash Display for the global sans token and preconnects nothing', () => {
     expect(css).toContain("--font-sans: 'Clash Display'")
     expect(css).toContain('font-family: var(--font-sans)')
     expect(css).toContain(':where(input, textarea, select, button, code, kbd, samp, pre, svg text)')
     expect(css).not.toContain('ui-monospace')
-    expect(html).toContain('rel="preconnect" href="https://cdn.fontshare.com" crossorigin')
+    expect(html).not.toContain('fontshare.com')
   })
 
   it('contains no alternate application or widget font family', () => {

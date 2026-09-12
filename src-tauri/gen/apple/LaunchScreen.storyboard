@@ -1,9 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!-- Grovepad's launch screen.
+
+     This is the first thing iOS draws, before any web content exists. Tauri's
+     default filled it with systemBackgroundColor — WHITE — while the app itself
+     is grounded in #080a09, so every cold launch flashed white then cut to dark.
+     The background here is that same #080a09 (the gp-splash-ground
+     custom property in index.html), which makes the handover to the animated splash invisible.
+
+     No logo or text: the web splash fades its own aurora and grid in over this
+     exact colour, and a mark here would have to land pixel-identically to avoid
+     a jump. A flat ground cannot disagree with what follows.
+
+     HAZARD: this file lives under src-tauri/gen/apple/, which `tauri ios init`
+     regenerates from template. If the colour is ever white again, that command
+     was re-run — restore this file rather than re-deriving it. -->
 <document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="17150" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="Y6W-OH-hqX">
     <dependencies>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="17122"/>
         <capability name="Safe area layout guides" minToolsVersion="9.0"/>
-        <capability name="System colors in document resources" minToolsVersion="11.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <scenes>
@@ -15,16 +29,11 @@
                         <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <viewLayoutGuide key="safeArea" id="vDu-zF-Fre"/>
-                        <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+                        <color key="backgroundColor" red="0.03137254901960784" green="0.0392156862745098" blue="0.03529411764705882" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                     </view>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="Ief-a0-LHa" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
             </objects>
         </scene>
     </scenes>
-    <resources>
-        <systemColor name="systemBackgroundColor">
-            <color white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
-        </systemColor>
-    </resources>
 </document>

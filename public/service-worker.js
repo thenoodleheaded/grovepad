@@ -1,5 +1,5 @@
 const CACHE_PREFIX = 'grovepad-shell-'
-const CACHE_NAME = `${CACHE_PREFIX}v6`
+const CACHE_NAME = `${CACHE_PREFIX}v7`
 const INSTALL_SHELL = [
   '/manifest.webmanifest',
   '/favicon.png',
@@ -8,6 +8,14 @@ const INSTALL_SHELL = [
   '/app-icon-512.png',
   '/app-icon-maskable-192.png',
   '/app-icon-maskable-512.png',
+  // The faces are referenced from the built stylesheet, not from the HTML, so
+  // the /assets/ scrape below cannot find them. Without them here the first
+  // offline launch would fall back to the system font.
+  '/fonts/clash-display-300.woff2',
+  '/fonts/clash-display-400.woff2',
+  '/fonts/clash-display-500.woff2',
+  '/fonts/clash-display-600.woff2',
+  '/fonts/clash-display-700.woff2',
 ]
 
 async function precacheCurrentShell() {

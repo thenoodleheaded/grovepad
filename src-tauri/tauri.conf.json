@@ -21,7 +21,7 @@
       }
     ],
     "security": {
-      "csp": "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; font-src 'self' https://cdn.fontshare.com data:; img-src 'self' asset: http://asset.localhost data: blob: https:; media-src 'self' asset: http://asset.localhost data: blob: https:; connect-src 'self' ipc: http://ipc.localhost https://grovepad.app https://ijzmhkyhjptaitfxjlcu.supabase.co wss://ijzmhkyhjptaitfxjlcu.supabase.co https://api.openai.com https://www.googleapis.com https://huggingface.co https://raw.githubusercontent.com https://*.i.posthog.com http://127.0.0.1:* http://localhost:*; worker-src 'self' blob:; frame-src 'self' blob: data:; object-src 'none'; base-uri 'self'; form-action 'self'"
+      "csp": "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' asset: http://asset.localhost data: blob: https:; media-src 'self' asset: http://asset.localhost data: blob: https:; connect-src 'self' ipc: http://ipc.localhost https://grovepad.app https://ijzmhkyhjptaitfxjlcu.supabase.co wss://ijzmhkyhjptaitfxjlcu.supabase.co https://api.openai.com https://www.googleapis.com https://huggingface.co https://raw.githubusercontent.com https://*.i.posthog.com http://127.0.0.1:* http://localhost:*; worker-src 'self' blob:; frame-src 'self' blob: data:; object-src 'none'; base-uri 'self'; form-action 'self'"
     }
   },
   "bundle": {

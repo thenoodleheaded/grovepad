@@ -195,7 +195,11 @@ pub fn run() {
             });
             #[cfg(target_os = "ios")]
             if let Some(window) = app.get_webview_window("main") {
-                let _ = window.with_webview(|webview| ios_disable_safe_area_insets(webview.inner()));
+                let _ = window.with_webview(|webview| {
+                    let inner = webview.inner();
+                    ios_disable_safe_area_insets(inner);
+                    ios_disable_webview_zoom(inner);
+                });
             }
             Ok(())
         })
@@ -245,6 +249,41 @@ fn ios_disable_safe_area_insets(webview: *mut std::ffi::c_void) {
         let scroll_view: *mut AnyObject = objc2::msg_send![webview, scrollView];
         if let Some(scroll_view) = scroll_view.as_ref() {
             let _: () = objc2::msg_send![scroll_view, setContentInsetAdjustmentBehavior: NEVER];
+        }
+    }
+}
+
+/// Stop the webview zooming the interface.
+///
+/// WKWebView ships UIScrollView's own pinch-to-zoom and double-tap-to-zoom, and
+/// neither belongs in an app: the canvas already owns two-finger pinch as its
+/// camera zoom (`gestureEngine`), and double-tap is one of the three presses in
+/// the touch vocabulary (`tapGesture`). Left enabled, UIKit and the page fight
+/// over the same fingers and the whole interface scales instead of the board.
+///
+/// Pinning both ends of the zoom range to 1 is the load-bearing part — it is
+/// also what stops UIKit auto-zooming when a text field under 16px takes focus.
+/// Disabling the recognizer only covers the deliberate gesture, so both are set.
+/// `user-scalable=no` in the viewport meta would be the web answer, but WebKit
+/// has ignored it since iOS 10; this is the only route left.
+#[cfg(target_os = "ios")]
+fn ios_disable_webview_zoom(webview: *mut std::ffi::c_void) {
+    use objc2::runtime::{AnyObject, Bool};
+    if webview.is_null() {
+        return;
+    }
+    unsafe {
+        let webview = &*(webview as *const AnyObject);
+        let scroll_view: *mut AnyObject = objc2::msg_send![webview, scrollView];
+        let Some(scroll_view) = scroll_view.as_ref() else {
+            return;
+        };
+        let _: () = objc2::msg_send![scroll_view, setMinimumZoomScale: 1.0f64];
+        let _: () = objc2::msg_send![scroll_view, setMaximumZoomScale: 1.0f64];
+        let _: () = objc2::msg_send![scroll_view, setBouncesZoom: Bool::NO];
+        let pinch: *mut AnyObject = objc2::msg_send![scroll_view, pinchGestureRecognizer];
+        if let Some(pinch) = pinch.as_ref() {
+            let _: () = objc2::msg_send![pinch, setEnabled: Bool::NO];
         }
     }
 }
