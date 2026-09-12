@@ -2,6 +2,7 @@ use base64::Engine;
 use tauri::{Emitter, Manager};
 use tauri_plugin_native_auth::{AppleSignInResult, NativeAuthExt};
 use tauri_plugin_native_haptics::NativeHapticsExt;
+use tauri_plugin_native_share::NativeShareExt;
 use tauri_plugin_native_widget::{NativeWidgetExt, SyncResult};
 
 /// Payload sent to the frontend: raw file bytes, base64-encoded for IPC. Only
@@ -101,6 +102,36 @@ fn haptic_tap(app: tauri::AppHandle, kind: String) {
     }
 }
 
+/// A share is a file leaving the app, so the name is checked before it is ever
+/// used as a path component. The Swift side checks too — neither side may
+/// assume the other did, because this one is reachable from the webview.
+fn is_plain_file_name(name: &str) -> bool {
+    !name.is_empty()
+        && name.len() <= 255
+        && name != "."
+        && name != ".."
+        && !name.contains('/')
+        && !name.contains('\\')
+        && !name.contains('\0')
+}
+
+/// Hand a file to the system share sheet.
+///
+/// Only iOS answers this. Everywhere else it fails with a plain message so the
+/// caller falls back to the browser download that does work there, rather than
+/// reporting a save that never happened.
+#[tauri::command]
+async fn share_file(
+    app: tauri::AppHandle,
+    file_name: String,
+    base64: String,
+) -> Result<(), tauri_plugin_native_share::Error> {
+    if !is_plain_file_name(&file_name) {
+        return Err(tauri_plugin_native_share::Error::UnsafeFileName);
+    }
+    app.native_share().share(file_name, base64).await
+}
+
 const NOTE_WIDGET_PAYLOAD_MAX_BYTES: usize = 24 * 1024;
 
 #[derive(serde::Deserialize)]
@@ -195,6 +226,7 @@ pub fn run() {
         .plugin(tauri_plugin_native_widget::init())
         .plugin(tauri_plugin_native_auth::init())
         .plugin(tauri_plugin_native_haptics::init())
+        .plugin(tauri_plugin_native_share::init())
         .setup(|app| {
             if cfg!(debug_assertions) {
                 app.handle().plugin(
@@ -222,7 +254,8 @@ pub fn run() {
             take_pending_open_file,
             sync_note_widget,
             sign_in_with_apple,
-            haptic_tap
+            haptic_tap,
+            share_file
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")
@@ -306,7 +339,17 @@ fn ios_disable_webview_zoom(webview: *mut std::ffi::c_void) {
 
 #[cfg(test)]
 mod tests {
-    use super::validate_note_widget_payload;
+    use super::{is_plain_file_name, validate_note_widget_payload};
+
+    #[test]
+    fn rejects_any_file_name_that_could_escape_the_share_directory() {
+        assert!(is_plain_file_name("grovepad-2026-09-12.grovepad"));
+        assert!(is_plain_file_name("notes.md"));
+        for bad in ["", ".", "..", "../escape", "a/b", "a\\\\b", "nul\0byte"] {
+            assert!(!is_plain_file_name(bad), "{bad:?} should be refused");
+        }
+        assert!(!is_plain_file_name(&"x".repeat(256)));
+    }
 
     #[test]
     fn validates_note_widget_contract_and_clear_payload() {

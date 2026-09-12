@@ -14,6 +14,7 @@ const confirmDialog = readFileSync(new URL('./ConfirmDialog.tsx', import.meta.ur
 const skinGallery = readFileSync(new URL('../../utils/skinGalleryLoad.ts', import.meta.url), 'utf8')
 const packSettings = readFileSync(new URL('./DomainPackSettings.tsx', import.meta.url), 'utf8')
 const addModal = readFileSync(new URL('./AddWidgetModal.tsx', import.meta.url), 'utf8')
+const fileDelivery = readFileSync(new URL('../../utils/fileDelivery.ts', import.meta.url), 'utf8')
 
 describe('settings and chrome contracts', () => {
   it('uses five concise sections and keeps shortcuts inside settings', () => {
@@ -115,18 +116,29 @@ describe('settings and chrome contracts', () => {
     expect(data).not.toContain('Reset settings')
   })
 
-  it('lets the .grovepad download start before it frees the blob', () => {
-    // Revoking on the line after link.click() beats the download in WebKit and
+  it('sends every export through the one delivery route, hand-rolling none', () => {
+    // Each of these used to build its own anchor, which does nothing at all in
+    // the iOS webview — three buttons that looked like they worked. The route
+    // is now shared so a platform fix lands in one place.
+    for (const [name, source] of [['SettingsPanel', settings], ['AccountChip', account]] as const) {
+      expect(source, name).toContain('deliverFile')
+      expect(source, name).not.toContain('.download =')
+      expect(source, name).not.toContain('createObjectURL')
+    }
+    // The confirmation has to name the route the file actually took: an iPhone
+    // has no downloads folder to point at.
+    for (const source of [settings, account]) {
+      expect(source).toContain("route === 'shared' ? 'Grovepad package shared'")
+    }
+  })
+
+  it('lets a download start before it frees the blob', () => {
+    // Revoking on the line after click() beats the download in WebKit and
     // Firefox — including the Tauri macOS webview — and writes a zero-byte
-    // file while the toast still says the export worked.
-    const exportPath = settings.slice(
-      settings.indexOf('const exportPackage'),
-      settings.indexOf('const importPackage'),
-    )
-    expect(exportPath).toContain('document.body.appendChild(link)')
-    expect(exportPath).toContain('link.remove()')
-    expect(exportPath).toContain('setTimeout(() => URL.revokeObjectURL(url), 10_000)')
-    expect(exportPath).not.toContain('link.click()\n      URL.revokeObjectURL(url)')
+    // file while the toast still says the export worked. The rule moved with
+    // the implementation; this is now the only copy of it.
+    expect(fileDelivery).toContain('setTimeout(() => URL.revokeObjectURL(url), 10_000)')
+    expect(fileDelivery).not.toContain('anchor.click()\n  URL.revokeObjectURL(url)')
   })
 
   it('owns domain packs here, not as a detour inside the widget picker', () => {

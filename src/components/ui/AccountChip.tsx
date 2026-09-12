@@ -5,6 +5,7 @@ import { supabaseConfigured } from '../../lib/supabase'
 import { accountDisplayName, accountProfileColor, useAuthStore } from '../../store/useAuthStore'
 import { useOverlayLifecycle } from '../../store/useOverlayStore'
 import { belowAnchor } from '../../utils/popoverPosition'
+import { deliverFile } from '../../utils/fileDelivery'
 import { useWidgetStore } from '../../store/useWidgetStore'
 import { usePersistenceStatusStore } from '../../store/usePersistenceStatusStore'
 import { useToastStore } from '../../store/useToastStore'
@@ -63,22 +64,19 @@ export function AccountChip() {
     setOpen(true)
   }
 
-  const download = (blob: Blob, filename: string) => {
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = filename
-    link.click()
-    URL.revokeObjectURL(url)
-  }
-
   const today = () => localDayKey()
 
   const exportPackage = async () => {
     try {
       const bytes = await buildGrovepadPackage(useWidgetStore.getState())
-      download(new Blob([bytes as BlobPart], { type: 'application/octet-stream' }), `grovepad-${today()}.grovepad`)
-      useToastStore.getState().addToast('Grovepad package downloaded')
+      const route = await deliverFile({
+        bytes,
+        fileName: `grovepad-${today()}.grovepad`,
+        mimeType: 'application/vnd.grovepad.board+zip',
+      })
+      useToastStore.getState().addToast(
+        route === 'shared' ? 'Grovepad package shared' : 'Grovepad package downloaded',
+      )
     } catch {
       useToastStore.getState().addToast('Could not build the Grovepad package', { tone: 'danger' })
     }

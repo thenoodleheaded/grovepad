@@ -52,6 +52,7 @@ import {
 import { canEditCollaborativeCanvas, useCollaborationStore } from '../../store/useCollaborationStore'
 import { useThemeStore } from '../../store/useThemeStore'
 import { useToastStore } from '../../store/useToastStore'
+import { deliverFile } from '../../utils/fileDelivery'
 import { useWidgetStore } from '../../store/useWidgetStore'
 import type { CanvasMeta } from '../../types/spatial'
 import { importBoardFileOntoCanvas } from '../../utils/boardCanvasImport'
@@ -539,17 +540,14 @@ export function SettingsPanel() {
   const exportPackage = async () => {
     try {
       const bytes = await buildGrovepadPackage(useWidgetStore.getState())
-      const url = URL.createObjectURL(new Blob([bytes as BlobPart], { type: 'application/vnd.grovepad.board+zip' }))
-      const link = document.createElement('a')
-      link.href = url
-      link.download = `grovepad-${localDayKey()}.grovepad`
-      document.body.appendChild(link)
-      link.click()
-      link.remove()
-      // Freed on the next turn: revoking synchronously can beat the download
-      // in some browsers and produce an empty file.
-      setTimeout(() => URL.revokeObjectURL(url), 10_000)
-      useToastStore.getState().addToast('Grovepad package downloaded')
+      const route = await deliverFile({
+        bytes,
+        fileName: `grovepad-${localDayKey()}.grovepad`,
+        mimeType: 'application/vnd.grovepad.board+zip',
+      })
+      useToastStore.getState().addToast(
+        route === 'shared' ? 'Grovepad package shared' : 'Grovepad package downloaded',
+      )
     } catch {
       useToastStore.getState().addToast('Could not build the Grovepad package', { tone: 'danger' })
     }

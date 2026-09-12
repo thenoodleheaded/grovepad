@@ -1,3 +1,5 @@
+import { deliverFile, type DeliveryRoute } from './fileDelivery'
+
 /**
  * Getting the writing out of the board.
  *
@@ -313,23 +315,21 @@ export function exportBody(format: ExportFormat, text: string, options: ExportOp
   return documentFileHtml(text, options)
 }
 
-/** Hand the finished file to the browser as a download. */
+/**
+ * Hand the finished file to whichever route this platform actually has — the
+ * iOS share sheet, or a browser download. Reports which one carried it so the
+ * caller can say the right thing afterwards.
+ */
 export function downloadDocument(
   format: ExportFormat,
   text: string,
   options: ExportOptions,
-): void {
-  const blob = new Blob([exportBody(format, text, options)], { type: MIME[format] })
-  const url = URL.createObjectURL(blob)
-  const anchor = document.createElement('a')
-  anchor.href = url
-  anchor.download = exportFileName(options.title, EXTENSION[format])
-  document.body.appendChild(anchor)
-  anchor.click()
-  anchor.remove()
-  // Freed on the next turn: revoking synchronously can beat the download in
-  // some browsers and produce an empty file.
-  setTimeout(() => URL.revokeObjectURL(url), 10_000)
+): Promise<DeliveryRoute> {
+  return deliverFile({
+    bytes: exportBody(format, text, options),
+    fileName: exportFileName(options.title, EXTENSION[format]),
+    mimeType: MIME[format],
+  })
 }
 
 /**

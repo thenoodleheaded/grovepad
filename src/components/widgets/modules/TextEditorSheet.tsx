@@ -213,8 +213,13 @@ export function TextEditorSheet({
         printDocument(value, options)
         return
       }
-      downloadDocument(choice, value, options)
-      useToastStore.getState().addToast(`Saved ${title || 'the document'}`)
+      // Awaited so the confirmation follows the file rather than racing it —
+      // on iOS the share sheet is up by the time this resolves, and the wording
+      // has to match the route the file actually took.
+      void downloadDocument(choice, value, options).then((route) => {
+        const name = title || 'the document'
+        useToastStore.getState().addToast(route === 'shared' ? `Shared ${name}` : `Saved ${name}`)
+      })
     },
     [sources, style, title, value],
   )
