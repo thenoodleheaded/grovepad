@@ -1,6 +1,7 @@
 use base64::Engine;
 use tauri::{Emitter, Manager};
 use tauri_plugin_native_auth::{AppleSignInResult, NativeAuthExt};
+use tauri_plugin_native_haptics::NativeHapticsExt;
 use tauri_plugin_native_widget::{NativeWidgetExt, SyncResult};
 
 /// Payload sent to the frontend: raw file bytes, base64-encoded for IPC. Only
@@ -85,6 +86,19 @@ fn take_pending_open_file(state: tauri::State<AppState>) -> Option<OpenFilePaylo
         .store(true, std::sync::atomic::Ordering::Release);
     let path = state.pending_open.lock().ok()?.take()?;
     read_open_file_payload(&path)
+}
+
+/// Fire one haptic tick.
+///
+/// Deliberately returns `()` on every path including refusal. A tick is
+/// advisory: the interface has already done the thing the tick describes, so a
+/// caller that branched on the result would be making a visible decision out of
+/// whether a phone happened to buzz. Errors are logged, never surfaced.
+#[tauri::command]
+fn haptic_tap(app: tauri::AppHandle, kind: String) {
+    if let Err(error) = app.native_haptics().tap(kind) {
+        log::debug!("haptic tick skipped: {error}");
+    }
 }
 
 const NOTE_WIDGET_PAYLOAD_MAX_BYTES: usize = 24 * 1024;
@@ -180,6 +194,7 @@ pub fn run() {
     builder
         .plugin(tauri_plugin_native_widget::init())
         .plugin(tauri_plugin_native_auth::init())
+        .plugin(tauri_plugin_native_haptics::init())
         .setup(|app| {
             if cfg!(debug_assertions) {
                 app.handle().plugin(
@@ -206,7 +221,8 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             take_pending_open_file,
             sync_note_widget,
-            sign_in_with_apple
+            sign_in_with_apple,
+            haptic_tap
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")

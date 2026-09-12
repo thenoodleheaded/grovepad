@@ -1,5 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 
+import { type HostNavigator, type HostWindow, isNativeIosHost } from '../utils/nativeHost'
+
 /** What the iOS plugin hands back from Apple's native sign-in sheet. */
 export interface NativeAppleCredential {
   identityToken: string
@@ -20,15 +22,6 @@ export type AppleInvoke = (
   args: { nonce: string },
 ) => Promise<NativeAppleCredential>
 
-interface HostWindow {
-  [key: string]: unknown
-}
-
-interface HostNavigator {
-  userAgent: string
-  maxTouchPoints?: number
-}
-
 /** The exact rejection the Swift plugin uses when the person dismisses the sheet. */
 const CANCEL_MESSAGE = 'Apple sign-in canceled'
 
@@ -39,14 +32,8 @@ const toHex = (bytes: Uint8Array) => [...bytes].map((byte) => byte.toString(16).
  * the web redirect. A web redirect cannot come back there: the page lives at
  * tauri://localhost, which no sign-in provider will redirect to.
  */
-export function isNativeAppleHost(
-  win: HostWindow | undefined = typeof window === 'undefined' ? undefined : (window as unknown as HostWindow),
-  nav: HostNavigator | undefined = typeof navigator === 'undefined' ? undefined : navigator,
-): boolean {
-  if (!win || !('__TAURI_INTERNALS__' in win) || !nav) return false
-  if (/iPhone|iPad|iPod/.test(nav.userAgent)) return true
-  // iPadOS WebKit reports a desktop Mac user agent; touch points give it away.
-  return /Macintosh/.test(nav.userAgent) && (nav.maxTouchPoints ?? 0) > 1
+export function isNativeAppleHost(win?: HostWindow, nav?: HostNavigator): boolean {
+  return isNativeIosHost(win, nav)
 }
 
 /**
