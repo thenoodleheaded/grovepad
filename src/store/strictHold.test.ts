@@ -333,7 +333,12 @@ describe("the widget menu's soft/hard switch", () => {
 
   it('stays hidden for a widget with no family to hold', () => {
     expect(menu).toContain("relation.type === 'parent' && relation.fromId === contextMenu.widgetId")
-    expect(menu).toContain('{hasFamily ? (')
+    // The rows are built as a list now rather than written as JSX, so the guard
+    // is what keeps this one out of it — on the glass menu and the iOS action
+    // sheet alike, since both render that same list.
+    const guarded = menu.slice(menu.indexOf('if (hasFamily) {'), menu.indexOf("id: 'delete'"))
+    expect(guarded).toContain("id: 'strict-hold'")
+    expect(guarded).toContain('updateWidgetsMetadata([widget.id], { strictHold: !strictHold })')
   })
 
   it('is the only surface carrying the switch — a relation line never offers it', () => {

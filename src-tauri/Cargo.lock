@@ -78,6 +78,7 @@ dependencies = [
  "tauri-plugin-log",
  "tauri-plugin-native-auth",
  "tauri-plugin-native-haptics",
+ "tauri-plugin-native-menu",
  "tauri-plugin-native-share",
  "tauri-plugin-native-widget",
  "tauri-plugin-single-instance",
@@ -3453,6 +3454,16 @@ dependencies = [
 
 [[package]]
 name = "tauri-plugin-native-haptics"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "tauri",
+ "tauri-plugin",
+ "thiserror 2.0.18",
+]
+
+[[package]]
+name = "tauri-plugin-native-menu"
 version = "0.1.0"
 dependencies = [
  "serde",

@@ -2,6 +2,7 @@ use base64::Engine;
 use tauri::{Emitter, Manager};
 use tauri_plugin_native_auth::{AppleSignInResult, NativeAuthExt};
 use tauri_plugin_native_haptics::NativeHapticsExt;
+use tauri_plugin_native_menu::NativeMenuExt;
 use tauri_plugin_native_share::NativeShareExt;
 use tauri_plugin_native_widget::{NativeWidgetExt, SyncResult};
 
@@ -132,6 +133,26 @@ async fn share_file(
     app.native_share().share(file_name, base64).await
 }
 
+/// A sheet with more rows than this is not a menu any more, and iOS starts
+/// scrolling it. The web menu has never come close; the cap exists so a bug
+/// upstream cannot put an unusable wall of actions on screen.
+const MENU_ITEM_MAX: usize = 16;
+
+/// Present the app's contextual actions as the system action sheet.
+///
+/// Only iOS answers. Everywhere else this fails and the caller draws its own
+/// menu, which is what every other platform should be doing anyway.
+#[tauri::command]
+async fn present_menu(
+    app: tauri::AppHandle,
+    request: tauri_plugin_native_menu::PresentMenuRequest,
+) -> Result<tauri_plugin_native_menu::MenuChoice, tauri_plugin_native_menu::Error> {
+    if request.items.is_empty() || request.items.len() > MENU_ITEM_MAX {
+        return Err(tauri_plugin_native_menu::Error::Empty);
+    }
+    app.native_menu().present(request).await
+}
+
 const NOTE_WIDGET_PAYLOAD_MAX_BYTES: usize = 24 * 1024;
 
 #[derive(serde::Deserialize)]
@@ -227,6 +248,7 @@ pub fn run() {
         .plugin(tauri_plugin_native_auth::init())
         .plugin(tauri_plugin_native_haptics::init())
         .plugin(tauri_plugin_native_share::init())
+        .plugin(tauri_plugin_native_menu::init())
         .setup(|app| {
             if cfg!(debug_assertions) {
                 app.handle().plugin(
@@ -255,7 +277,8 @@ pub fn run() {
             sync_note_widget,
             sign_in_with_apple,
             haptic_tap,
-            share_file
+            share_file,
+            present_menu
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")

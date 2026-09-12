@@ -28,6 +28,7 @@ tauri-plugin-native-widget = { path = "plugins/native-widget" }
 tauri-plugin-native-auth = { path = "plugins/native-auth" }
 tauri-plugin-native-haptics = { path = "plugins/native-haptics" }
 tauri-plugin-native-share = { path = "plugins/native-share" }
+tauri-plugin-native-menu = { path = "plugins/native-menu" }
 
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
 tauri-plugin-single-instance = "2"

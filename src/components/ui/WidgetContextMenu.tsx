@@ -12,7 +12,7 @@ import {
   Trash2,
   Waypoints,
 } from 'lucide-react'
-import { useEffect, useRef } from 'react'
+import { Fragment, useEffect, useMemo, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { useShallow } from 'zustand/react/shallow'
 import { useOverlayLifecycle } from '../../store/useOverlayStore'
@@ -24,6 +24,23 @@ import { clampPopover } from '../../utils/popoverPosition'
 import { menuNavigationIndex } from '../../utils/menuNavigation'
 import { truncate } from '../../utils/text'
 import { isNativeWidgetHost } from '../../runtime/nativeNoteWidgetSync'
+import { presentNativeMenu, usesNativeMenu } from '../../utils/nativeMenu'
+
+/**
+ * One row of the context menu, described rather than drawn.
+ *
+ * Both surfaces read this same list — the glass menu on desktop and the system
+ * action sheet on iOS — so an action can never exist on one and not the other.
+ * `icon` and `separatorBefore` are the web menu's business; iOS has neither.
+ */
+interface MenuAction {
+  id: string
+  label: string
+  icon: ReactNode
+  danger?: boolean
+  separatorBefore?: boolean
+  run: () => void
+}
 
 function MenuButton({
   label,
@@ -95,6 +112,8 @@ export function WidgetContextMenu() {
     nativeWidgetSyncStatus: state.syncStatus,
   })))
 
+  const nativeMenu = usesNativeMenu()
+
   useOverlayLifecycle(contextMenu !== null)
 
   useEffect(() => {
@@ -125,20 +144,183 @@ export function WidgetContextMenu() {
     }
   }, [contextMenu])
 
-  if (!contextMenu || !widget) return null
-
-  const isSelected = selectedIds.includes(widget.id)
-  const actionIds = isSelected ? selectedIds : [widget.id]
-  // Height is what keeps the menu on screen near the bottom edge, so the
-  // estimate counts the tallest the menu gets: every conditional row present,
-  // including the strict-hold switch.
-  const { x: left, y: top } = clampPopover(contextMenu.x, contextMenu.y, 220, 550)
-
+  // Every value the actions read is derived above, so the list is built from
+  // one place and both surfaces render the same menu.
+  const isSelected = contextMenu && widget ? selectedIds.includes(widget.id) : false
+  // Memoized because the action list is: a fresh array every render would
+  // rebuild every row's closure on every store change.
+  const actionIds = useMemo(
+    () => (widget ? (isSelected ? selectedIds : [widget.id]) : []),
+    [widget, isSelected, selectedIds],
+  )
   const close = () => useWidgetStore.getState().closeContextMenu()
   const run = (action: () => void) => {
     action()
     close()
   }
+
+  const actions = useMemo<MenuAction[]>(() => {
+    if (!contextMenu || !widget) return []
+    const list: MenuAction[] = []
+    const many = actionIds.length > 1
+
+    if (widget.type === 'canvas_node') {
+      list.push({
+        id: 'open-canvas',
+        label: 'Open canvas',
+        icon: <FolderOpen size={13} aria-hidden />,
+        run: () => {
+          const canvasId = (widget.data as { canvasId: string }).canvasId
+          useWidgetStore.getState().navigateToCanvas(canvasId)
+        },
+      })
+    }
+
+    if (widget.type === 'text' && isNativeWidgetHost() && nativeWidgetSyncStatus !== 'unsupported') {
+      list.push({
+        id: 'home-screen-widget',
+        label: nativeWidgetId === widget.id
+          ? 'Remove from home-screen widget'
+          : 'Use in home-screen widget',
+        icon: <MonitorSmartphone size={13} aria-hidden />,
+        run: () => {
+          const nextId = nativeWidgetId === widget.id ? null : widget.id
+          useNativeWidgetStore.getState().setSelectedWidgetId(nextId)
+          useToastStore.getState().addToast(
+            nextId
+              ? 'Selected for Grovepad Note in your device widget gallery'
+              : 'Removed from the home-screen widget',
+          )
+        },
+      })
+    }
+
+    list.push(
+      {
+        id: 'duplicate',
+        label: many ? `Duplicate ${actionIds.length}` : 'Duplicate',
+        icon: <Copy size={13} aria-hidden />,
+        run: () => useWidgetStore.getState().duplicateWidgets(actionIds),
+      },
+      {
+        id: 'copy',
+        label: many ? `Copy ${actionIds.length}` : 'Copy',
+        icon: <Copy size={13} aria-hidden />,
+        run: () => useWidgetStore.getState().copyWidgets(actionIds),
+      },
+      {
+        id: 'cut',
+        label: many ? `Cut ${actionIds.length}` : 'Cut',
+        icon: <Scissors size={13} aria-hidden />,
+        run: () => useWidgetStore.getState().cutWidgets(actionIds),
+      },
+      {
+        id: 'rename',
+        // The key hint is desktop-only: a phone has no F2, and the system sheet
+        // would read it as part of the action's name.
+        label: nativeMenu ? 'Rename' : 'Rename (F2)',
+        icon: <PenLine size={13} aria-hidden />,
+        run: () => useWidgetStore.getState().startRenaming(widget.id),
+      },
+      {
+        id: 'lock',
+        label: many
+          ? widget.metadata.locked ? `Unlock ${actionIds.length}` : `Lock ${actionIds.length}`
+          : widget.metadata.locked ? 'Unlock widget' : 'Lock widget',
+        icon: widget.metadata.locked
+          ? <UnlockKeyhole size={13} aria-hidden />
+          : <LockKeyhole size={13} aria-hidden />,
+        // The clicked card decides the direction, so a mixed selection resolves
+        // to one predictable state instead of flipping each card.
+        run: () => useWidgetStore.getState().lockWidgets(actionIds, !widget.metadata.locked),
+      },
+    )
+
+    if (isGlued) {
+      list.push({
+        id: 'unglue',
+        label: 'Unglue',
+        icon: <Droplets size={13} aria-hidden />,
+        run: () => useWidgetStore.getState().unglueWidget(widget.id),
+      })
+    }
+
+    if (hasFamily) {
+      // Hard by default, and every node owns the hold on its own branch: the row
+      // always switches. An answer a node inherited names where it was decided
+      // instead of refusing to move.
+      list.push({
+        id: 'strict-hold',
+        separatorBefore: true,
+        label: strictHold
+          ? 'Release strict hold'
+          : releasedByTitle !== null
+            ? `Hold family strictly (released by ${truncate(releasedByTitle, 12)})`
+            : 'Hold family strictly',
+        icon: strictHold ? <Waypoints size={13} aria-hidden /> : <Magnet size={13} aria-hidden />,
+        run: () =>
+          useWidgetStore.getState().updateWidgetsMetadata([widget.id], { strictHold: !strictHold }),
+      })
+    }
+
+    list.push({
+      id: 'delete',
+      separatorBefore: true,
+      label: many ? `Delete ${actionIds.length}` : 'Delete',
+      icon: <Trash2 size={13} aria-hidden />,
+      danger: true,
+      run: () => requestWidgetDeletion(actionIds),
+    })
+
+    return list
+  }, [
+    contextMenu, widget, actionIds, isGlued, hasFamily, strictHold, releasedByTitle,
+    nativeWidgetId, nativeWidgetSyncStatus, nativeMenu,
+  ])
+
+  // Read by the presentation effect, which must not re-fire when a label
+  // changes underneath an open sheet.
+  const actionsRef = useRef(actions)
+  actionsRef.current = actions
+
+  // iOS hands the whole menu to UIKit. Presented once per opening: the sheet is
+  // already on screen, and re-presenting on a store change would stack a second
+  // one on top of it.
+  const presentedFor = useRef<string | null>(null)
+  useEffect(() => {
+    if (!nativeMenu) return
+    if (!contextMenu) {
+      presentedFor.current = null
+      return
+    }
+    if (presentedFor.current === contextMenu.widgetId) return
+    presentedFor.current = contextMenu.widgetId
+
+    const items = actionsRef.current
+    const title = widget?.title ?? ''
+    void presentNativeMenu(
+      title,
+      items.map(({ label, danger }) => ({ label, danger })),
+      // A zero-size rect at the press point. iPhone ignores it; iPad anchors its
+      // popover there, and raises outright without one.
+      { x: contextMenu.x, y: contextMenu.y, width: 0, height: 0 },
+    ).then((index) => {
+      // Close first either way: the sheet has already gone, and leaving the
+      // store open would strand the menu state after a dismissal.
+      useWidgetStore.getState().closeContextMenu()
+      if (index !== null) items[index]?.run()
+    })
+  }, [nativeMenu, contextMenu, widget])
+
+  if (!contextMenu || !widget) return null
+  // The system sheet is the menu on iOS; drawing the glass one underneath it
+  // would put two menus on screen for the same press.
+  if (nativeMenu) return null
+
+  // Height is what keeps the menu on screen near the bottom edge, so the
+  // estimate counts the tallest the menu gets: every conditional row present,
+  // including the strict-hold switch.
+  const { x: left, y: top } = clampPopover(contextMenu.x, contextMenu.y, 220, 550)
 
   return createPortal(
     <>
@@ -164,117 +346,14 @@ export function WidgetContextMenu() {
           {widget.title}
         </p>
         <div className="border-t border-neutral-800" />
-        {widget.type === 'canvas_node' && (
-          <MenuButton
-            label="Open canvas"
-            onClick={() =>
-              run(() => {
-                const canvasId = (widget.data as { canvasId: string }).canvasId
-                useWidgetStore.getState().navigateToCanvas(canvasId)
-              })
-            }
-          >
-            <FolderOpen size={13} aria-hidden />
-          </MenuButton>
-        )}
-        {widget.type === 'text' && isNativeWidgetHost() && nativeWidgetSyncStatus !== 'unsupported' && (
-          <MenuButton
-            label={nativeWidgetId === widget.id ? 'Remove from home-screen widget' : 'Use in home-screen widget'}
-            onClick={() => run(() => {
-              const nextId = nativeWidgetId === widget.id ? null : widget.id
-              useNativeWidgetStore.getState().setSelectedWidgetId(nextId)
-              useToastStore.getState().addToast(
-                nextId
-                  ? 'Selected for Grovepad Note in your device widget gallery'
-                  : 'Removed from the home-screen widget',
-              )
-            })}
-          >
-            <MonitorSmartphone size={13} aria-hidden />
-          </MenuButton>
-        )}
-        <MenuButton
-          label={actionIds.length > 1 ? `Duplicate ${actionIds.length}` : 'Duplicate'}
-          onClick={() => run(() => useWidgetStore.getState().duplicateWidgets(actionIds))}
-        >
-          <Copy size={13} aria-hidden />
-        </MenuButton>
-        <MenuButton
-          label={actionIds.length > 1 ? `Copy ${actionIds.length}` : 'Copy'}
-          onClick={() => run(() => useWidgetStore.getState().copyWidgets(actionIds))}
-        >
-          <Copy size={13} aria-hidden />
-        </MenuButton>
-        <MenuButton
-          label={actionIds.length > 1 ? `Cut ${actionIds.length}` : 'Cut'}
-          onClick={() => run(() => useWidgetStore.getState().cutWidgets(actionIds))}
-        >
-          <Scissors size={13} aria-hidden />
-        </MenuButton>
-        <MenuButton
-          label="Rename (F2)"
-          onClick={() => run(() => useWidgetStore.getState().startRenaming(widget.id))}
-        >
-          <PenLine size={13} aria-hidden />
-        </MenuButton>
-        <MenuButton
-          label={
-            actionIds.length > 1
-              ? widget.metadata.locked ? `Unlock ${actionIds.length}` : `Lock ${actionIds.length}`
-              : widget.metadata.locked ? 'Unlock widget' : 'Lock widget'
-          }
-          onClick={() =>
-            run(() => {
-              // The clicked card decides the direction, so a mixed selection
-              // resolves to one predictable state instead of flipping each card.
-              useWidgetStore.getState().lockWidgets(actionIds, !widget.metadata.locked)
-            })
-          }
-        >
-          {widget.metadata.locked ? <UnlockKeyhole size={13} aria-hidden /> : <LockKeyhole size={13} aria-hidden />}
-        </MenuButton>
-        {isGlued && (
-          <MenuButton
-            label="Unglue"
-            onClick={() => run(() => useWidgetStore.getState().unglueWidget(widget.id))}
-          >
-            <Droplets size={13} aria-hidden />
-          </MenuButton>
-        )}
-        {hasFamily ? (
-          <div className="my-1 border-t border-neutral-800" />
-        ) : null}
-        {hasFamily ? (
-          // Hard by default, and every node owns the hold on its own branch:
-          // the row always switches. An answer a node inherited names where it
-          // was decided instead of refusing to move.
-          <MenuButton
-            label={
-              strictHold
-                ? 'Release strict hold'
-                : releasedByTitle !== null
-                  ? `Hold family strictly (released by ${truncate(releasedByTitle, 12)})`
-                  : 'Hold family strictly'
-            }
-            onClick={() =>
-              run(() =>
-                useWidgetStore
-                  .getState()
-                  .updateWidgetsMetadata([widget.id], { strictHold: !strictHold }),
-              )
-            }
-          >
-            {strictHold ? <Waypoints size={13} aria-hidden /> : <Magnet size={13} aria-hidden />}
-          </MenuButton>
-        ) : null}
-        <div className="my-1 border-t border-neutral-800" />
-        <MenuButton
-          label={actionIds.length > 1 ? `Delete ${actionIds.length}` : 'Delete'}
-          danger
-          onClick={() => run(() => requestWidgetDeletion(actionIds))}
-        >
-          <Trash2 size={13} aria-hidden />
-        </MenuButton>
+        {actions.map((action) => (
+          <Fragment key={action.id}>
+            {action.separatorBefore ? <div className="my-1 border-t border-neutral-800" /> : null}
+            <MenuButton label={action.label} danger={action.danger} onClick={() => run(action.run)}>
+              {action.icon}
+            </MenuButton>
+          </Fragment>
+        ))}
       </div>
     </>,
     document.body,
