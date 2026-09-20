@@ -1,0 +1,548 @@
+{
+  "cases": [
+    {
+      "name": "empty",
+      "raw": null,
+      "topology": {
+        "workspaces": {
+          "first": {
+            "id": "first",
+            "name": "First",
+            "rootCanvasId": "root1",
+            "createdAt": 1
+          },
+          "second": {
+            "id": "second",
+            "name": "Second",
+            "rootCanvasId": "root2",
+            "createdAt": 2
+          }
+        },
+        "canvases": {
+          "root1": {
+            "id": "root1",
+            "name": "R1",
+            "workspaceId": "first",
+            "parentCanvasId": null
+          },
+          "child1": {
+            "id": "child1",
+            "name": "C1",
+            "workspaceId": "first",
+            "parentCanvasId": "root1"
+          },
+          "root2": {
+            "id": "root2",
+            "name": "R2",
+            "workspaceId": "second",
+            "parentCanvasId": null
+          }
+        }
+      },
+      "resolved": {
+        "activeWorkspaceId": "first",
+        "activeCanvasId": "root1",
+        "canvasViews": {},
+        "openTabs": [
+          {
+            "id": "uuid-0001",
+            "canvasId": "root1"
+          }
+        ],
+        "activeTabId": "uuid-0001"
+      },
+      "serialized": "{\"format\":\"grovepad-device\",\"v\":1,\"activeWorkspaceId\":\"first\",\"activeCanvasId\":\"root1\",\"canvasViews\":{},\"openTabs\":[{\"id\":\"uuid-0001\",\"canvasId\":\"root1\"}],\"activeTabId\":\"uuid-0001\"}"
+    },
+    {
+      "name": "current-full",
+      "raw": {
+        "format": "grovepad-device",
+        "v": 1,
+        "activeWorkspaceId": "second",
+        "activeCanvasId": "root2",
+        "canvasViews": {
+          "root2": {
+            "pan": {
+              "x": 1,
+              "y": 2
+            },
+            "zoom": 9
+          },
+          "gone": {
+            "pan": {
+              "x": 0,
+              "y": 0
+            },
+            "zoom": 1
+          },
+          "child1": {
+            "pan": {
+              "x": 3,
+              "y": 4
+            },
+            "zoom": 0.5
+          }
+        },
+        "openTabs": [
+          {
+            "id": "t1",
+            "canvasId": "root1"
+          },
+          {
+            "id": "t2",
+            "canvasId": "root2"
+          },
+          {
+            "id": "t3",
+            "canvasId": "gone"
+          },
+          {
+            "id": "t1",
+            "canvasId": "child1"
+          }
+        ],
+        "activeTabId": "t2"
+      },
+      "topology": {
+        "workspaces": {
+          "first": {
+            "id": "first",
+            "name": "First",
+            "rootCanvasId": "root1",
+            "createdAt": 1
+          },
+          "second": {
+            "id": "second",
+            "name": "Second",
+            "rootCanvasId": "root2",
+            "createdAt": 2
+          }
+        },
+        "canvases": {
+          "root1": {
+            "id": "root1",
+            "name": "R1",
+            "workspaceId": "first",
+            "parentCanvasId": null
+          },
+          "child1": {
+            "id": "child1",
+            "name": "C1",
+            "workspaceId": "first",
+            "parentCanvasId": "root1"
+          },
+          "root2": {
+            "id": "root2",
+            "name": "R2",
+            "workspaceId": "second",
+            "parentCanvasId": null
+          }
+        }
+      },
+      "resolved": {
+        "activeWorkspaceId": "second",
+        "activeCanvasId": "root2",
+        "canvasViews": {
+          "root2": {
+            "pan": {
+              "x": 1,
+              "y": 2
+            },
+            "zoom": 3
+          },
+          "child1": {
+            "pan": {
+              "x": 3,
+              "y": 4
+            },
+            "zoom": 0.5
+          }
+        },
+        "openTabs": [
+          {
+            "id": "t1",
+            "canvasId": "root1"
+          },
+          {
+            "id": "t2",
+            "canvasId": "root2"
+          }
+        ],
+        "activeTabId": "t2"
+      },
+      "serialized": "{\"format\":\"grovepad-device\",\"v\":1,\"activeWorkspaceId\":\"second\",\"activeCanvasId\":\"root2\",\"canvasViews\":{\"root2\":{\"pan\":{\"x\":1,\"y\":2},\"zoom\":3},\"child1\":{\"pan\":{\"x\":3,\"y\":4},\"zoom\":0.5}},\"openTabs\":[{\"id\":\"t1\",\"canvasId\":\"root1\"},{\"id\":\"t2\",\"canvasId\":\"root2\"}],\"activeTabId\":\"t2\"}"
+    },
+    {
+      "name": "active-tab-dropped",
+      "raw": {
+        "format": "grovepad-device",
+        "v": 1,
+        "activeWorkspaceId": "first",
+        "activeCanvasId": "child1",
+        "canvasViews": {},
+        "openTabs": [
+          {
+            "id": "t1",
+            "canvasId": "root1"
+          },
+          {
+            "id": "t2",
+            "canvasId": "gone"
+          },
+          {
+            "id": "t3",
+            "canvasId": "root2"
+          }
+        ],
+        "activeTabId": "t2"
+      },
+      "topology": {
+        "workspaces": {
+          "first": {
+            "id": "first",
+            "name": "First",
+            "rootCanvasId": "root1",
+            "createdAt": 1
+          },
+          "second": {
+            "id": "second",
+            "name": "Second",
+            "rootCanvasId": "root2",
+            "createdAt": 2
+          }
+        },
+        "canvases": {
+          "root1": {
+            "id": "root1",
+            "name": "R1",
+            "workspaceId": "first",
+            "parentCanvasId": null
+          },
+          "child1": {
+            "id": "child1",
+            "name": "C1",
+            "workspaceId": "first",
+            "parentCanvasId": "root1"
+          },
+          "root2": {
+            "id": "root2",
+            "name": "R2",
+            "workspaceId": "second",
+            "parentCanvasId": null
+          }
+        }
+      },
+      "resolved": {
+        "activeWorkspaceId": "first",
+        "activeCanvasId": "child1",
+        "canvasViews": {},
+        "openTabs": [
+          {
+            "id": "t1",
+            "canvasId": "root1"
+          },
+          {
+            "id": "uuid-0001",
+            "canvasId": "child1"
+          },
+          {
+            "id": "t3",
+            "canvasId": "root2"
+          }
+        ],
+        "activeTabId": "uuid-0001"
+      },
+      "serialized": "{\"format\":\"grovepad-device\",\"v\":1,\"activeWorkspaceId\":\"first\",\"activeCanvasId\":\"child1\",\"canvasViews\":{},\"openTabs\":[{\"id\":\"t1\",\"canvasId\":\"root1\"},{\"id\":\"uuid-0001\",\"canvasId\":\"child1\"},{\"id\":\"t3\",\"canvasId\":\"root2\"}],\"activeTabId\":\"uuid-0001\"}"
+    },
+    {
+      "name": "canvas-in-other-workspace",
+      "raw": {
+        "format": "grovepad-device",
+        "v": 1,
+        "activeWorkspaceId": "first",
+        "activeCanvasId": "root2",
+        "canvasViews": {},
+        "openTabs": [],
+        "activeTabId": ""
+      },
+      "topology": {
+        "workspaces": {
+          "first": {
+            "id": "first",
+            "name": "First",
+            "rootCanvasId": "root1",
+            "createdAt": 1
+          },
+          "second": {
+            "id": "second",
+            "name": "Second",
+            "rootCanvasId": "root2",
+            "createdAt": 2
+          }
+        },
+        "canvases": {
+          "root1": {
+            "id": "root1",
+            "name": "R1",
+            "workspaceId": "first",
+            "parentCanvasId": null
+          },
+          "child1": {
+            "id": "child1",
+            "name": "C1",
+            "workspaceId": "first",
+            "parentCanvasId": "root1"
+          },
+          "root2": {
+            "id": "root2",
+            "name": "R2",
+            "workspaceId": "second",
+            "parentCanvasId": null
+          }
+        }
+      },
+      "resolved": {
+        "activeWorkspaceId": "first",
+        "activeCanvasId": "root1",
+        "canvasViews": {},
+        "openTabs": [
+          {
+            "id": "uuid-0001",
+            "canvasId": "root1"
+          }
+        ],
+        "activeTabId": "uuid-0001"
+      },
+      "serialized": "{\"format\":\"grovepad-device\",\"v\":1,\"activeWorkspaceId\":\"first\",\"activeCanvasId\":\"root1\",\"canvasViews\":{},\"openTabs\":[{\"id\":\"uuid-0001\",\"canvasId\":\"root1\"}],\"activeTabId\":\"uuid-0001\"}"
+    },
+    {
+      "name": "wrong-version",
+      "raw": {
+        "format": "grovepad-device",
+        "v": 2,
+        "activeWorkspaceId": "second",
+        "activeCanvasId": "root2",
+        "canvasViews": {}
+      },
+      "legacyFallback": {
+        "activeWorkspaceId": "first",
+        "activeCanvasId": "child1",
+        "canvasViews": {
+          "child1": {
+            "pan": {
+              "x": 7,
+              "y": 8
+            },
+            "zoom": 1.25
+          }
+        }
+      },
+      "topology": {
+        "workspaces": {
+          "first": {
+            "id": "first",
+            "name": "First",
+            "rootCanvasId": "root1",
+            "createdAt": 1
+          },
+          "second": {
+            "id": "second",
+            "name": "Second",
+            "rootCanvasId": "root2",
+            "createdAt": 2
+          }
+        },
+        "canvases": {
+          "root1": {
+            "id": "root1",
+            "name": "R1",
+            "workspaceId": "first",
+            "parentCanvasId": null
+          },
+          "child1": {
+            "id": "child1",
+            "name": "C1",
+            "workspaceId": "first",
+            "parentCanvasId": "root1"
+          },
+          "root2": {
+            "id": "root2",
+            "name": "R2",
+            "workspaceId": "second",
+            "parentCanvasId": null
+          }
+        }
+      },
+      "resolved": {
+        "activeWorkspaceId": "first",
+        "activeCanvasId": "child1",
+        "canvasViews": {
+          "child1": {
+            "pan": {
+              "x": 7,
+              "y": 8
+            },
+            "zoom": 1.25
+          }
+        },
+        "openTabs": [
+          {
+            "id": "uuid-0001",
+            "canvasId": "child1"
+          }
+        ],
+        "activeTabId": "uuid-0001"
+      },
+      "serialized": "{\"format\":\"grovepad-device\",\"v\":1,\"activeWorkspaceId\":\"first\",\"activeCanvasId\":\"child1\",\"canvasViews\":{\"child1\":{\"pan\":{\"x\":7,\"y\":8},\"zoom\":1.25}},\"openTabs\":[{\"id\":\"uuid-0001\",\"canvasId\":\"child1\"}],\"activeTabId\":\"uuid-0001\"}"
+    },
+    {
+      "name": "legacy-fallback",
+      "raw": null,
+      "legacyFallback": {
+        "activeWorkspaceId": "second",
+        "activeCanvasId": "root2",
+        "canvasViews": {
+          "root2": {
+            "pan": {
+              "x": 1,
+              "y": 1
+            },
+            "zoom": 0.05
+          }
+        }
+      },
+      "topology": {
+        "workspaces": {
+          "first": {
+            "id": "first",
+            "name": "First",
+            "rootCanvasId": "root1",
+            "createdAt": 1
+          },
+          "second": {
+            "id": "second",
+            "name": "Second",
+            "rootCanvasId": "root2",
+            "createdAt": 2
+          }
+        },
+        "canvases": {
+          "root1": {
+            "id": "root1",
+            "name": "R1",
+            "workspaceId": "first",
+            "parentCanvasId": null
+          },
+          "child1": {
+            "id": "child1",
+            "name": "C1",
+            "workspaceId": "first",
+            "parentCanvasId": "root1"
+          },
+          "root2": {
+            "id": "root2",
+            "name": "R2",
+            "workspaceId": "second",
+            "parentCanvasId": null
+          }
+        }
+      },
+      "resolved": {
+        "activeWorkspaceId": "second",
+        "activeCanvasId": "root2",
+        "canvasViews": {
+          "root2": {
+            "pan": {
+              "x": 1,
+              "y": 1
+            },
+            "zoom": 0.1
+          }
+        },
+        "openTabs": [
+          {
+            "id": "uuid-0001",
+            "canvasId": "root2"
+          }
+        ],
+        "activeTabId": "uuid-0001"
+      },
+      "serialized": "{\"format\":\"grovepad-device\",\"v\":1,\"activeWorkspaceId\":\"second\",\"activeCanvasId\":\"root2\",\"canvasViews\":{\"root2\":{\"pan\":{\"x\":1,\"y\":1},\"zoom\":0.1}},\"openTabs\":[{\"id\":\"uuid-0001\",\"canvasId\":\"root2\"}],\"activeTabId\":\"uuid-0001\"}"
+    },
+    {
+      "name": "malformed-tabs",
+      "raw": {
+        "format": "grovepad-device",
+        "v": 1,
+        "activeWorkspaceId": "first",
+        "activeCanvasId": "root1",
+        "canvasViews": "nope",
+        "openTabs": [
+          {
+            "id": 1,
+            "canvasId": "root1"
+          },
+          "x",
+          {
+            "id": "ok",
+            "canvasId": "child1"
+          }
+        ],
+        "activeTabId": 5
+      },
+      "topology": {
+        "workspaces": {
+          "first": {
+            "id": "first",
+            "name": "First",
+            "rootCanvasId": "root1",
+            "createdAt": 1
+          },
+          "second": {
+            "id": "second",
+            "name": "Second",
+            "rootCanvasId": "root2",
+            "createdAt": 2
+          }
+        },
+        "canvases": {
+          "root1": {
+            "id": "root1",
+            "name": "R1",
+            "workspaceId": "first",
+            "parentCanvasId": null
+          },
+          "child1": {
+            "id": "child1",
+            "name": "C1",
+            "workspaceId": "first",
+            "parentCanvasId": "root1"
+          },
+          "root2": {
+            "id": "root2",
+            "name": "R2",
+            "workspaceId": "second",
+            "parentCanvasId": null
+          }
+        }
+      },
+      "resolved": {
+        "activeWorkspaceId": "first",
+        "activeCanvasId": "root1",
+        "canvasViews": {},
+        "openTabs": [
+          {
+            "id": "ok",
+            "canvasId": "child1"
+          },
+          {
+            "id": "uuid-0001",
+            "canvasId": "root1"
+          }
+        ],
+        "activeTabId": "uuid-0001"
+      },
+      "serialized": "{\"format\":\"grovepad-device\",\"v\":1,\"activeWorkspaceId\":\"first\",\"activeCanvasId\":\"root1\",\"canvasViews\":{},\"openTabs\":[{\"id\":\"ok\",\"canvasId\":\"child1\"},{\"id\":\"uuid-0001\",\"canvasId\":\"root1\"}],\"activeTabId\":\"uuid-0001\"}"
+    }
+  ]
+}

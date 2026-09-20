@@ -1,0 +1,165 @@
+{
+  "name": "chain-within-one-wave",
+  "widgets": {
+    "counter": {
+      "id": "counter",
+      "type": "counter",
+      "title": "counter",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 280,
+        "height": 200
+      },
+      "data": {
+        "label": "Tally",
+        "count": 7,
+        "step": 1,
+        "skin": "tally"
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "middle": {
+      "id": "middle",
+      "type": "number_input",
+      "title": "middle",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 280,
+        "height": 200
+      },
+      "data": {
+        "label": "Value",
+        "value": 0,
+        "min": 0,
+        "max": 100,
+        "step": 1
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "goal": {
+      "id": "goal",
+      "type": "goal_tracker",
+      "title": "goal",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 280,
+        "height": 200
+      },
+      "data": {
+        "goal": "",
+        "mode": "simple",
+        "simple": {
+          "label": "Progress",
+          "percent": 0
+        },
+        "milestones": []
+      },
+      "metadata": {
+        "badges": []
+      }
+    }
+  },
+  "connections": {
+    "first": {
+      "id": "first",
+      "enabled": true,
+      "fromId": "counter",
+      "fromField": "count",
+      "toId": "middle",
+      "kind": "value",
+      "toField": "value"
+    },
+    "second": {
+      "id": "second",
+      "enabled": true,
+      "fromId": "middle",
+      "fromField": "value",
+      "toId": "goal",
+      "kind": "value",
+      "toField": "percent"
+    }
+  },
+  "steps": [
+    {
+      "label": "chain",
+      "seeds": [
+        "counter"
+      ],
+      "expect": {
+        "writes": {
+          "middle": {
+            "label": "Value",
+            "value": 7,
+            "min": 0,
+            "max": 100,
+            "step": 1
+          },
+          "goal": {
+            "goal": "",
+            "mode": "simple",
+            "simple": {
+              "label": "Progress",
+              "percent": 7
+            },
+            "milestones": []
+          }
+        },
+        "firedIds": [
+          "first",
+          "second"
+        ],
+        "executeRequests": [],
+        "memory": {
+          "first": {
+            "serialized": "n:7",
+            "bool": true
+          },
+          "second": {
+            "serialized": "n:7",
+            "bool": true
+          }
+        },
+        "widgetsAfter": {
+          "counter": {
+            "label": "Tally",
+            "count": 7,
+            "step": 1,
+            "skin": "tally"
+          },
+          "middle": {
+            "label": "Value",
+            "value": 7,
+            "min": 0,
+            "max": 100,
+            "step": 1
+          },
+          "goal": {
+            "goal": "",
+            "mode": "simple",
+            "simple": {
+              "label": "Progress",
+              "percent": 7
+            },
+            "milestones": []
+          }
+        }
+      }
+    }
+  ]
+}

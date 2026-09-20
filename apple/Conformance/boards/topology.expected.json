@@ -1,0 +1,60 @@
+{
+  "parse": "ok",
+  "mode": "parse",
+  "widgetIds": [
+    "onRoot2",
+    "onGrandchild"
+  ],
+  "widgetTypes": {
+    "onRoot2": "text",
+    "onGrandchild": "text"
+  },
+  "opaqueWidgets": {},
+  "relationIds": [],
+  "connectionIds": [],
+  "glueIds": [],
+  "activePacks": [],
+  "unknownRelationIds": [],
+  "unknownConnectionIds": [],
+  "unknownGlueIds": [],
+  "unknownBoardFields": [],
+  "rawActivePacks": [],
+  "device": {
+    "activeWorkspaceId": "second",
+    "activeCanvasId": "root2",
+    "canvasViews": {}
+  },
+  "serialized": "{\"format\":\"grovepad-board\",\"v\":2,\"workspaces\":{\"first\":{\"id\":\"first\",\"name\":\"First\",\"rootCanvasId\":\"root1\",\"createdAt\":10,\"sortIndex\":1,\"tint\":\"#fff\"},\"second\":{\"id\":\"second\",\"name\":\"Second\",\"rootCanvasId\":\"root2\",\"createdAt\":20}},\"canvases\":{\"root1\":{\"id\":\"root1\",\"name\":\"Root 1\",\"workspaceId\":\"first\",\"parentCanvasId\":null},\"child1\":{\"id\":\"child1\",\"name\":\"Child 1\",\"workspaceId\":\"first\",\"parentCanvasId\":\"root1\"},\"grandchild1\":{\"id\":\"grandchild1\",\"name\":\"Grandchild\",\"workspaceId\":\"first\",\"parentCanvasId\":\"child1\"},\"root2\":{\"id\":\"root2\",\"name\":\"Root 2\",\"workspaceId\":\"second\",\"parentCanvasId\":null}},\"widgets\":{\"onRoot2\":{\"id\":\"onRoot2\",\"type\":\"text\",\"title\":\"onRoot2\",\"canvasId\":\"root2\",\"position\":{\"x\":0,\"y\":0},\"size\":{\"width\":320,\"height\":200},\"data\":{\"text\":\"\",\"mode\":\"plain\",\"color\":\"yellow\"},\"metadata\":{\"badges\":[]}},\"onGrandchild\":{\"id\":\"onGrandchild\",\"type\":\"text\",\"title\":\"onGrandchild\",\"canvasId\":\"grandchild1\",\"position\":{\"x\":0,\"y\":0},\"size\":{\"width\":320,\"height\":200},\"data\":{\"text\":\"\",\"mode\":\"plain\",\"color\":\"yellow\"},\"metadata\":{\"badges\":[]}}},\"relations\":{},\"connections\":{},\"glues\":{},\"activePacks\":[]}",
+  "sha256": "6bff2746ca586aba7e0c2501bd01384849ad91e9adef2e4c0163ac6a368a1964",
+  "canonical": "{\"activePacks\":[],\"canvases\":{\"child1\":{\"id\":\"child1\",\"name\":\"Child 1\",\"parentCanvasId\":\"root1\",\"workspaceId\":\"first\"},\"grandchild1\":{\"id\":\"grandchild1\",\"name\":\"Grandchild\",\"parentCanvasId\":\"child1\",\"workspaceId\":\"first\"},\"root1\":{\"id\":\"root1\",\"name\":\"Root 1\",\"parentCanvasId\":null,\"workspaceId\":\"first\"},\"root2\":{\"id\":\"root2\",\"name\":\"Root 2\",\"parentCanvasId\":null,\"workspaceId\":\"second\"}},\"connections\":{},\"format\":\"grovepad-board\",\"glues\":{},\"relations\":{},\"v\":2,\"widgets\":{\"onGrandchild\":{\"canvasId\":\"grandchild1\",\"data\":{\"color\":\"yellow\",\"mode\":\"plain\",\"text\":\"\"},\"id\":\"onGrandchild\",\"metadata\":{\"badges\":[]},\"position\":{\"x\":0,\"y\":0},\"size\":{\"height\":200,\"width\":320},\"title\":\"onGrandchild\",\"type\":\"text\"},\"onRoot2\":{\"canvasId\":\"root2\",\"data\":{\"color\":\"yellow\",\"mode\":\"plain\",\"text\":\"\"},\"id\":\"onRoot2\",\"metadata\":{\"badges\":[]},\"position\":{\"x\":0,\"y\":0},\"size\":{\"height\":200,\"width\":320},\"title\":\"onRoot2\",\"type\":\"text\"}},\"workspaces\":{\"first\":{\"createdAt\":10,\"id\":\"first\",\"name\":\"First\",\"rootCanvasId\":\"root1\",\"sortIndex\":1,\"tint\":\"#fff\"},\"second\":{\"createdAt\":20,\"id\":\"second\",\"name\":\"Second\",\"rootCanvasId\":\"root2\"}}}",
+  "canonicalSha256": "0d7dd3fc0ed4457ac240023914dc061466cb814496e860b2c3acc378513d531e",
+  "split": {
+    "index": {
+      "canonical": "{\"activePacks\":[],\"boardFormat\":\"grovepad-board\",\"boardVersion\":2,\"canvases\":{\"child1\":{\"id\":\"child1\",\"name\":\"Child 1\",\"parentCanvasId\":\"root1\",\"workspaceId\":\"first\"},\"grandchild1\":{\"id\":\"grandchild1\",\"name\":\"Grandchild\",\"parentCanvasId\":\"child1\",\"workspaceId\":\"first\"},\"root1\":{\"id\":\"root1\",\"name\":\"Root 1\",\"parentCanvasId\":null,\"workspaceId\":\"first\"},\"root2\":{\"id\":\"root2\",\"name\":\"Root 2\",\"parentCanvasId\":null,\"workspaceId\":\"second\"}},\"connections\":{},\"extra\":{},\"format\":\"grovepad-board-index\",\"glues\":{},\"relations\":{},\"v\":1,\"workspaces\":{\"first\":{\"createdAt\":10,\"id\":\"first\",\"name\":\"First\",\"rootCanvasId\":\"root1\",\"sortIndex\":1,\"tint\":\"#fff\"},\"second\":{\"createdAt\":20,\"id\":\"second\",\"name\":\"Second\",\"rootCanvasId\":\"root2\"}}}",
+      "sha256": "48627e3493c5b5f81c2831b0c1da764180003ae4a8f11d7f88e0ffa4373d1934",
+      "pretty": "{\n  \"format\": \"grovepad-board-index\",\n  \"v\": 1,\n  \"boardFormat\": \"grovepad-board\",\n  \"boardVersion\": 2,\n  \"workspaces\": {\n    \"first\": {\n      \"id\": \"first\",\n      \"name\": \"First\",\n      \"rootCanvasId\": \"root1\",\n      \"createdAt\": 10,\n      \"sortIndex\": 1,\n      \"tint\": \"#fff\"\n    },\n    \"second\": {\n      \"id\": \"second\",\n      \"name\": \"Second\",\n      \"rootCanvasId\": \"root2\",\n      \"createdAt\": 20\n    }\n  },\n  \"canvases\": {\n    \"root1\": {\n      \"id\": \"root1\",\n      \"name\": \"Root 1\",\n      \"workspaceId\": \"first\",\n      \"parentCanvasId\": null\n    },\n    \"child1\": {\n      \"id\": \"child1\",\n      \"name\": \"Child 1\",\n      \"workspaceId\": \"first\",\n      \"parentCanvasId\": \"root1\"\n    },\n    \"grandchild1\": {\n      \"id\": \"grandchild1\",\n      \"name\": \"Grandchild\",\n      \"workspaceId\": \"first\",\n      \"parentCanvasId\": \"child1\"\n    },\n    \"root2\": {\n      \"id\": \"root2\",\n      \"name\": \"Root 2\",\n      \"workspaceId\": \"second\",\n      \"parentCanvasId\": null\n    }\n  },\n  \"activePacks\": [],\n  \"relations\": {},\n  \"connections\": {},\n  \"glues\": {},\n  \"extra\": {}\n}"
+    },
+    "canvases": {
+      "root1": {
+        "canonical": "{\"canvasId\":\"root1\",\"connections\":{},\"format\":\"grovepad-canvas\",\"glues\":{},\"relations\":{},\"v\":1,\"widgets\":{}}",
+        "sha256": "523799e70fed455927d93ce4ac76b316d438a6ba50c5d8852726ea05b7558c6b",
+        "pretty": "{\n  \"format\": \"grovepad-canvas\",\n  \"v\": 1,\n  \"canvasId\": \"root1\",\n  \"widgets\": {},\n  \"relations\": {},\n  \"connections\": {},\n  \"glues\": {}\n}"
+      },
+      "child1": {
+        "canonical": "{\"canvasId\":\"child1\",\"connections\":{},\"format\":\"grovepad-canvas\",\"glues\":{},\"relations\":{},\"v\":1,\"widgets\":{}}",
+        "sha256": "a217e624bdab347634a2cb2d164a6d971db657dccca5686c91ec5ccc87a81f76",
+        "pretty": "{\n  \"format\": \"grovepad-canvas\",\n  \"v\": 1,\n  \"canvasId\": \"child1\",\n  \"widgets\": {},\n  \"relations\": {},\n  \"connections\": {},\n  \"glues\": {}\n}"
+      },
+      "grandchild1": {
+        "canonical": "{\"canvasId\":\"grandchild1\",\"connections\":{},\"format\":\"grovepad-canvas\",\"glues\":{},\"relations\":{},\"v\":1,\"widgets\":{\"onGrandchild\":{\"canvasId\":\"grandchild1\",\"data\":{\"color\":\"yellow\",\"mode\":\"plain\",\"text\":\"\"},\"id\":\"onGrandchild\",\"metadata\":{\"badges\":[]},\"position\":{\"x\":0,\"y\":0},\"size\":{\"height\":200,\"width\":320},\"title\":\"onGrandchild\",\"type\":\"text\"}}}",
+        "sha256": "a9692acb7b83e6ee005103ffa9df496871547ce1b3c55f4ffc46e535d7fa05e5",
+        "pretty": "{\n  \"format\": \"grovepad-canvas\",\n  \"v\": 1,\n  \"canvasId\": \"grandchild1\",\n  \"widgets\": {\n    \"onGrandchild\": {\n      \"id\": \"onGrandchild\",\n      \"type\": \"text\",\n      \"title\": \"onGrandchild\",\n      \"canvasId\": \"grandchild1\",\n      \"position\": {\n        \"x\": 0,\n        \"y\": 0\n      },\n      \"size\": {\n        \"width\": 320,\n        \"height\": 200\n      },\n      \"data\": {\n        \"text\": \"\",\n        \"mode\": \"plain\",\n        \"color\": \"yellow\"\n      },\n      \"metadata\": {\n        \"badges\": []\n      }\n    }\n  },\n  \"relations\": {},\n  \"connections\": {},\n  \"glues\": {}\n}"
+      },
+      "root2": {
+        "canonical": "{\"canvasId\":\"root2\",\"connections\":{},\"format\":\"grovepad-canvas\",\"glues\":{},\"relations\":{},\"v\":1,\"widgets\":{\"onRoot2\":{\"canvasId\":\"root2\",\"data\":{\"color\":\"yellow\",\"mode\":\"plain\",\"text\":\"\"},\"id\":\"onRoot2\",\"metadata\":{\"badges\":[]},\"position\":{\"x\":0,\"y\":0},\"size\":{\"height\":200,\"width\":320},\"title\":\"onRoot2\",\"type\":\"text\"}}}",
+        "sha256": "b7e505a2d118a56835a8f0fb5ab1dae348e9f7b7b7e41e537b0e1cc58bc660ef",
+        "pretty": "{\n  \"format\": \"grovepad-canvas\",\n  \"v\": 1,\n  \"canvasId\": \"root2\",\n  \"widgets\": {\n    \"onRoot2\": {\n      \"id\": \"onRoot2\",\n      \"type\": \"text\",\n      \"title\": \"onRoot2\",\n      \"canvasId\": \"root2\",\n      \"position\": {\n        \"x\": 0,\n        \"y\": 0\n      },\n      \"size\": {\n        \"width\": 320,\n        \"height\": 200\n      },\n      \"data\": {\n        \"text\": \"\",\n        \"mode\": \"plain\",\n        \"color\": \"yellow\"\n      },\n      \"metadata\": {\n        \"badges\": []\n      }\n    }\n  },\n  \"relations\": {},\n  \"connections\": {},\n  \"glues\": {}\n}"
+      }
+    }
+  }
+}

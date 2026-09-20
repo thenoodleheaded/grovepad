@@ -1,0 +1,29 @@
+[package]
+name = "grovepad-yrs"
+description = "The Yjs engine (yrs) behind native realtime collaboration, shaped to the web's canvas schema (src/collaboration/yjsCanvas.ts)."
+version = "0.1.0"
+edition = "2021"
+publish = false
+license = "UNLICENSED"
+
+[lib]
+# staticlib: linked into the Apple XCFramework; lib: host tests and bindgen.
+crate-type = ["staticlib", "lib"]
+name = "grovepad_yrs"
+
+[[bin]]
+name = "uniffi-bindgen"
+path = "src/bin/uniffi-bindgen.rs"
+required-features = ["cli"]
+
+[features]
+cli = ["uniffi/cli"]
+
+[dependencies]
+yrs = { version = "0.28", features = ["sync"] }
+uniffi = { version = "0.32.1", default-features = false }
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+opt-level = "s"

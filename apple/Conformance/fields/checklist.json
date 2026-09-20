@@ -1,0 +1,1143 @@
+{
+  "outputs": [
+    {
+      "key": "done_count",
+      "label": "Done count",
+      "valueType": "number",
+      "unit": "count",
+      "index": 0,
+      "timeSensitive": false
+    },
+    {
+      "key": "all_done",
+      "label": "All done",
+      "valueType": "boolean",
+      "unit": null,
+      "index": 1,
+      "timeSensitive": false
+    }
+  ],
+  "inputs": [
+    {
+      "key": "uncheck_all",
+      "label": "Uncheck all tasks",
+      "kind": "command",
+      "valueType": null,
+      "unit": null,
+      "acceptsPayload": false,
+      "index": 0
+    },
+    {
+      "key": "check_all",
+      "label": "Check all tasks",
+      "kind": "command",
+      "valueType": null,
+      "unit": null,
+      "acceptsPayload": false,
+      "index": 1
+    },
+    {
+      "key": "add_item",
+      "label": "Add task from wire",
+      "kind": "command",
+      "valueType": null,
+      "unit": null,
+      "acceptsPayload": true,
+      "index": 2
+    }
+  ],
+  "samples": [
+    {
+      "mode": "list",
+      "items": [
+        {
+          "id": "uuid-0001",
+          "label": "New task",
+          "done": false,
+          "status": "todo",
+          "due": "",
+          "day": 0,
+          "time": "09:00",
+          "start": 0,
+          "span": 1,
+          "quadrant": 0
+        }
+      ]
+    },
+    {
+      "mode": "board",
+      "items": [
+        {
+          "id": "c1",
+          "label": "a",
+          "done": true,
+          "status": "done"
+        },
+        {
+          "id": "c2",
+          "label": "b",
+          "done": false,
+          "status": "todo"
+        }
+      ]
+    },
+    {
+      "mode": "list",
+      "items": [
+        {
+          "id": "c1",
+          "label": "a",
+          "done": true
+        },
+        {
+          "id": "c2",
+          "label": "b",
+          "done": true
+        }
+      ]
+    },
+    {
+      "mode": "list",
+      "items": []
+    }
+  ],
+  "gets": [
+    {
+      "sample": 0,
+      "key": "done_count",
+      "value": 0
+    },
+    {
+      "sample": 0,
+      "key": "all_done",
+      "value": false
+    },
+    {
+      "sample": 1,
+      "key": "done_count",
+      "value": 1
+    },
+    {
+      "sample": 1,
+      "key": "all_done",
+      "value": false
+    },
+    {
+      "sample": 2,
+      "key": "done_count",
+      "value": 2
+    },
+    {
+      "sample": 2,
+      "key": "all_done",
+      "value": true
+    },
+    {
+      "sample": 3,
+      "key": "done_count",
+      "value": 0
+    },
+    {
+      "sample": 3,
+      "key": "all_done",
+      "value": false
+    }
+  ],
+  "sets": [],
+  "commands": [
+    {
+      "sample": 0,
+      "key": "uncheck_all",
+      "payload": null,
+      "hasPayload": false,
+      "data": {
+        "mode": "list",
+        "items": [
+          {
+            "id": "uuid-0001",
+            "label": "New task",
+            "done": false,
+            "status": "todo",
+            "due": "",
+            "day": 0,
+            "time": "09:00",
+            "start": 0,
+            "span": 1,
+            "quadrant": 0
+          }
+        ]
+      }
+    },
+    {
+      "sample": 0,
+      "key": "check_all",
+      "payload": null,
+      "hasPayload": false,
+      "data": {
+        "mode": "list",
+        "items": [
+          {
+            "id": "uuid-0001",
+            "label": "New task",
+            "done": true,
+            "status": "done",
+            "due": "",
+            "day": 0,
+            "time": "09:00",
+            "start": 0,
+            "span": 1,
+            "quadrant": 0
+          }
+        ]
+      }
+    },
+    {
+      "sample": 0,
+      "key": "add_item",
+      "payload": null,
+      "hasPayload": false,
+      "data": {
+        "mode": "list",
+        "items": [
+          {
+            "id": "uuid-0001",
+            "label": "New task",
+            "done": false,
+            "status": "todo",
+            "due": "",
+            "day": 0,
+            "time": "09:00",
+            "start": 0,
+            "span": 1,
+            "quadrant": 0
+          },
+          {
+            "id": "uuid-0001",
+            "label": "New task",
+            "done": false,
+            "status": "todo"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 0,
+      "key": "add_item",
+      "payload": "Buy milk",
+      "hasPayload": true,
+      "data": {
+        "mode": "list",
+        "items": [
+          {
+            "id": "uuid-0001",
+            "label": "New task",
+            "done": false,
+            "status": "todo",
+            "due": "",
+            "day": 0,
+            "time": "09:00",
+            "start": 0,
+            "span": 1,
+            "quadrant": 0
+          },
+          {
+            "id": "uuid-0001",
+            "label": "Buy milk",
+            "done": false,
+            "status": "todo"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 0,
+      "key": "add_item",
+      "payload": "  spaced  ",
+      "hasPayload": true,
+      "data": {
+        "mode": "list",
+        "items": [
+          {
+            "id": "uuid-0001",
+            "label": "New task",
+            "done": false,
+            "status": "todo",
+            "due": "",
+            "day": 0,
+            "time": "09:00",
+            "start": 0,
+            "span": 1,
+            "quadrant": 0
+          },
+          {
+            "id": "uuid-0001",
+            "label": "spaced",
+            "done": false,
+            "status": "todo"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 0,
+      "key": "add_item",
+      "payload": "",
+      "hasPayload": true,
+      "data": {
+        "mode": "list",
+        "items": [
+          {
+            "id": "uuid-0001",
+            "label": "New task",
+            "done": false,
+            "status": "todo",
+            "due": "",
+            "day": 0,
+            "time": "09:00",
+            "start": 0,
+            "span": 1,
+            "quadrant": 0
+          },
+          {
+            "id": "uuid-0001",
+            "label": "New task",
+            "done": false,
+            "status": "todo"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 0,
+      "key": "add_item",
+      "payload": 42,
+      "hasPayload": true,
+      "data": {
+        "mode": "list",
+        "items": [
+          {
+            "id": "uuid-0001",
+            "label": "New task",
+            "done": false,
+            "status": "todo",
+            "due": "",
+            "day": 0,
+            "time": "09:00",
+            "start": 0,
+            "span": 1,
+            "quadrant": 0
+          },
+          {
+            "id": "uuid-0001",
+            "label": "42",
+            "done": false,
+            "status": "todo"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 0,
+      "key": "add_item",
+      "payload": true,
+      "hasPayload": true,
+      "data": {
+        "mode": "list",
+        "items": [
+          {
+            "id": "uuid-0001",
+            "label": "New task",
+            "done": false,
+            "status": "todo",
+            "due": "",
+            "day": 0,
+            "time": "09:00",
+            "start": 0,
+            "span": 1,
+            "quadrant": 0
+          },
+          {
+            "id": "uuid-0001",
+            "label": "true",
+            "done": false,
+            "status": "todo"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 0,
+      "key": "add_item",
+      "payload": [
+        {
+          "t": 0,
+          "v": 1
+        }
+      ],
+      "hasPayload": true,
+      "data": {
+        "mode": "list",
+        "items": [
+          {
+            "id": "uuid-0001",
+            "label": "New task",
+            "done": false,
+            "status": "todo",
+            "due": "",
+            "day": 0,
+            "time": "09:00",
+            "start": 0,
+            "span": 1,
+            "quadrant": 0
+          },
+          {
+            "id": "uuid-0001",
+            "label": "1",
+            "done": false,
+            "status": "todo"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 0,
+      "key": "add_item",
+      "payload": "https://example.com/x",
+      "hasPayload": true,
+      "data": {
+        "mode": "list",
+        "items": [
+          {
+            "id": "uuid-0001",
+            "label": "New task",
+            "done": false,
+            "status": "todo",
+            "due": "",
+            "day": 0,
+            "time": "09:00",
+            "start": 0,
+            "span": 1,
+            "quadrant": 0
+          },
+          {
+            "id": "uuid-0001",
+            "label": "https://example.com/x",
+            "done": false,
+            "status": "todo"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 1,
+      "key": "uncheck_all",
+      "payload": null,
+      "hasPayload": false,
+      "data": {
+        "mode": "board",
+        "items": [
+          {
+            "id": "c1",
+            "label": "a",
+            "done": false,
+            "status": "todo"
+          },
+          {
+            "id": "c2",
+            "label": "b",
+            "done": false,
+            "status": "todo"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 1,
+      "key": "check_all",
+      "payload": null,
+      "hasPayload": false,
+      "data": {
+        "mode": "board",
+        "items": [
+          {
+            "id": "c1",
+            "label": "a",
+            "done": true,
+            "status": "done"
+          },
+          {
+            "id": "c2",
+            "label": "b",
+            "done": true,
+            "status": "done"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 1,
+      "key": "add_item",
+      "payload": null,
+      "hasPayload": false,
+      "data": {
+        "mode": "board",
+        "items": [
+          {
+            "id": "c1",
+            "label": "a",
+            "done": true,
+            "status": "done"
+          },
+          {
+            "id": "c2",
+            "label": "b",
+            "done": false,
+            "status": "todo"
+          },
+          {
+            "id": "uuid-0001",
+            "label": "New task",
+            "done": false,
+            "status": "todo"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 1,
+      "key": "add_item",
+      "payload": "Buy milk",
+      "hasPayload": true,
+      "data": {
+        "mode": "board",
+        "items": [
+          {
+            "id": "c1",
+            "label": "a",
+            "done": true,
+            "status": "done"
+          },
+          {
+            "id": "c2",
+            "label": "b",
+            "done": false,
+            "status": "todo"
+          },
+          {
+            "id": "uuid-0001",
+            "label": "Buy milk",
+            "done": false,
+            "status": "todo"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 1,
+      "key": "add_item",
+      "payload": "  spaced  ",
+      "hasPayload": true,
+      "data": {
+        "mode": "board",
+        "items": [
+          {
+            "id": "c1",
+            "label": "a",
+            "done": true,
+            "status": "done"
+          },
+          {
+            "id": "c2",
+            "label": "b",
+            "done": false,
+            "status": "todo"
+          },
+          {
+            "id": "uuid-0001",
+            "label": "spaced",
+            "done": false,
+            "status": "todo"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 1,
+      "key": "add_item",
+      "payload": "",
+      "hasPayload": true,
+      "data": {
+        "mode": "board",
+        "items": [
+          {
+            "id": "c1",
+            "label": "a",
+            "done": true,
+            "status": "done"
+          },
+          {
+            "id": "c2",
+            "label": "b",
+            "done": false,
+            "status": "todo"
+          },
+          {
+            "id": "uuid-0001",
+            "label": "New task",
+            "done": false,
+            "status": "todo"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 1,
+      "key": "add_item",
+      "payload": 42,
+      "hasPayload": true,
+      "data": {
+        "mode": "board",
+        "items": [
+          {
+            "id": "c1",
+            "label": "a",
+            "done": true,
+            "status": "done"
+          },
+          {
+            "id": "c2",
+            "label": "b",
+            "done": false,
+            "status": "todo"
+          },
+          {
+            "id": "uuid-0001",
+            "label": "42",
+            "done": false,
+            "status": "todo"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 1,
+      "key": "add_item",
+      "payload": true,
+      "hasPayload": true,
+      "data": {
+        "mode": "board",
+        "items": [
+          {
+            "id": "c1",
+            "label": "a",
+            "done": true,
+            "status": "done"
+          },
+          {
+            "id": "c2",
+            "label": "b",
+            "done": false,
+            "status": "todo"
+          },
+          {
+            "id": "uuid-0001",
+            "label": "true",
+            "done": false,
+            "status": "todo"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 1,
+      "key": "add_item",
+      "payload": [
+        {
+          "t": 0,
+          "v": 1
+        }
+      ],
+      "hasPayload": true,
+      "data": {
+        "mode": "board",
+        "items": [
+          {
+            "id": "c1",
+            "label": "a",
+            "done": true,
+            "status": "done"
+          },
+          {
+            "id": "c2",
+            "label": "b",
+            "done": false,
+            "status": "todo"
+          },
+          {
+            "id": "uuid-0001",
+            "label": "1",
+            "done": false,
+            "status": "todo"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 1,
+      "key": "add_item",
+      "payload": "https://example.com/x",
+      "hasPayload": true,
+      "data": {
+        "mode": "board",
+        "items": [
+          {
+            "id": "c1",
+            "label": "a",
+            "done": true,
+            "status": "done"
+          },
+          {
+            "id": "c2",
+            "label": "b",
+            "done": false,
+            "status": "todo"
+          },
+          {
+            "id": "uuid-0001",
+            "label": "https://example.com/x",
+            "done": false,
+            "status": "todo"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 2,
+      "key": "uncheck_all",
+      "payload": null,
+      "hasPayload": false,
+      "data": {
+        "mode": "list",
+        "items": [
+          {
+            "id": "c1",
+            "label": "a",
+            "done": false,
+            "status": "todo"
+          },
+          {
+            "id": "c2",
+            "label": "b",
+            "done": false,
+            "status": "todo"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 2,
+      "key": "check_all",
+      "payload": null,
+      "hasPayload": false,
+      "data": {
+        "mode": "list",
+        "items": [
+          {
+            "id": "c1",
+            "label": "a",
+            "done": true,
+            "status": "done"
+          },
+          {
+            "id": "c2",
+            "label": "b",
+            "done": true,
+            "status": "done"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 2,
+      "key": "add_item",
+      "payload": null,
+      "hasPayload": false,
+      "data": {
+        "mode": "list",
+        "items": [
+          {
+            "id": "c1",
+            "label": "a",
+            "done": true
+          },
+          {
+            "id": "c2",
+            "label": "b",
+            "done": true
+          },
+          {
+            "id": "uuid-0001",
+            "label": "New task",
+            "done": false,
+            "status": "todo"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 2,
+      "key": "add_item",
+      "payload": "Buy milk",
+      "hasPayload": true,
+      "data": {
+        "mode": "list",
+        "items": [
+          {
+            "id": "c1",
+            "label": "a",
+            "done": true
+          },
+          {
+            "id": "c2",
+            "label": "b",
+            "done": true
+          },
+          {
+            "id": "uuid-0001",
+            "label": "Buy milk",
+            "done": false,
+            "status": "todo"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 2,
+      "key": "add_item",
+      "payload": "  spaced  ",
+      "hasPayload": true,
+      "data": {
+        "mode": "list",
+        "items": [
+          {
+            "id": "c1",
+            "label": "a",
+            "done": true
+          },
+          {
+            "id": "c2",
+            "label": "b",
+            "done": true
+          },
+          {
+            "id": "uuid-0001",
+            "label": "spaced",
+            "done": false,
+            "status": "todo"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 2,
+      "key": "add_item",
+      "payload": "",
+      "hasPayload": true,
+      "data": {
+        "mode": "list",
+        "items": [
+          {
+            "id": "c1",
+            "label": "a",
+            "done": true
+          },
+          {
+            "id": "c2",
+            "label": "b",
+            "done": true
+          },
+          {
+            "id": "uuid-0001",
+            "label": "New task",
+            "done": false,
+            "status": "todo"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 2,
+      "key": "add_item",
+      "payload": 42,
+      "hasPayload": true,
+      "data": {
+        "mode": "list",
+        "items": [
+          {
+            "id": "c1",
+            "label": "a",
+            "done": true
+          },
+          {
+            "id": "c2",
+            "label": "b",
+            "done": true
+          },
+          {
+            "id": "uuid-0001",
+            "label": "42",
+            "done": false,
+            "status": "todo"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 2,
+      "key": "add_item",
+      "payload": true,
+      "hasPayload": true,
+      "data": {
+        "mode": "list",
+        "items": [
+          {
+            "id": "c1",
+            "label": "a",
+            "done": true
+          },
+          {
+            "id": "c2",
+            "label": "b",
+            "done": true
+          },
+          {
+            "id": "uuid-0001",
+            "label": "true",
+            "done": false,
+            "status": "todo"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 2,
+      "key": "add_item",
+      "payload": [
+        {
+          "t": 0,
+          "v": 1
+        }
+      ],
+      "hasPayload": true,
+      "data": {
+        "mode": "list",
+        "items": [
+          {
+            "id": "c1",
+            "label": "a",
+            "done": true
+          },
+          {
+            "id": "c2",
+            "label": "b",
+            "done": true
+          },
+          {
+            "id": "uuid-0001",
+            "label": "1",
+            "done": false,
+            "status": "todo"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 2,
+      "key": "add_item",
+      "payload": "https://example.com/x",
+      "hasPayload": true,
+      "data": {
+        "mode": "list",
+        "items": [
+          {
+            "id": "c1",
+            "label": "a",
+            "done": true
+          },
+          {
+            "id": "c2",
+            "label": "b",
+            "done": true
+          },
+          {
+            "id": "uuid-0001",
+            "label": "https://example.com/x",
+            "done": false,
+            "status": "todo"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 3,
+      "key": "uncheck_all",
+      "payload": null,
+      "hasPayload": false,
+      "data": {
+        "mode": "list",
+        "items": []
+      }
+    },
+    {
+      "sample": 3,
+      "key": "check_all",
+      "payload": null,
+      "hasPayload": false,
+      "data": {
+        "mode": "list",
+        "items": []
+      }
+    },
+    {
+      "sample": 3,
+      "key": "add_item",
+      "payload": null,
+      "hasPayload": false,
+      "data": {
+        "mode": "list",
+        "items": [
+          {
+            "id": "uuid-0001",
+            "label": "New task",
+            "done": false,
+            "status": "todo"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 3,
+      "key": "add_item",
+      "payload": "Buy milk",
+      "hasPayload": true,
+      "data": {
+        "mode": "list",
+        "items": [
+          {
+            "id": "uuid-0001",
+            "label": "Buy milk",
+            "done": false,
+            "status": "todo"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 3,
+      "key": "add_item",
+      "payload": "  spaced  ",
+      "hasPayload": true,
+      "data": {
+        "mode": "list",
+        "items": [
+          {
+            "id": "uuid-0001",
+            "label": "spaced",
+            "done": false,
+            "status": "todo"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 3,
+      "key": "add_item",
+      "payload": "",
+      "hasPayload": true,
+      "data": {
+        "mode": "list",
+        "items": [
+          {
+            "id": "uuid-0001",
+            "label": "New task",
+            "done": false,
+            "status": "todo"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 3,
+      "key": "add_item",
+      "payload": 42,
+      "hasPayload": true,
+      "data": {
+        "mode": "list",
+        "items": [
+          {
+            "id": "uuid-0001",
+            "label": "42",
+            "done": false,
+            "status": "todo"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 3,
+      "key": "add_item",
+      "payload": true,
+      "hasPayload": true,
+      "data": {
+        "mode": "list",
+        "items": [
+          {
+            "id": "uuid-0001",
+            "label": "true",
+            "done": false,
+            "status": "todo"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 3,
+      "key": "add_item",
+      "payload": [
+        {
+          "t": 0,
+          "v": 1
+        }
+      ],
+      "hasPayload": true,
+      "data": {
+        "mode": "list",
+        "items": [
+          {
+            "id": "uuid-0001",
+            "label": "1",
+            "done": false,
+            "status": "todo"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 3,
+      "key": "add_item",
+      "payload": "https://example.com/x",
+      "hasPayload": true,
+      "data": {
+        "mode": "list",
+        "items": [
+          {
+            "id": "uuid-0001",
+            "label": "https://example.com/x",
+            "done": false,
+            "status": "todo"
+          }
+        ]
+      }
+    }
+  ]
+}

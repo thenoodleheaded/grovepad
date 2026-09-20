@@ -1,0 +1,1355 @@
+{
+  "outputs": [
+    {
+      "key": "value",
+      "label": "Text value",
+      "valueType": "text",
+      "unit": null,
+      "index": 0,
+      "timeSensitive": false
+    },
+    {
+      "key": "has_value",
+      "label": "Has value",
+      "valueType": "boolean",
+      "unit": null,
+      "index": 1,
+      "timeSensitive": false
+    }
+  ],
+  "inputs": [
+    {
+      "key": "value",
+      "label": "Text value",
+      "kind": "field",
+      "valueType": "text",
+      "unit": null,
+      "acceptsPayload": false,
+      "index": 0
+    }
+  ],
+  "samples": [
+    {
+      "label": "Input",
+      "value": "",
+      "placeholder": "Type a value…",
+      "multiline": false,
+      "skin": "single_line"
+    },
+    {
+      "label": "Input",
+      "value": "Buy milk",
+      "placeholder": "Type a value…",
+      "multiline": false,
+      "skin": "tags"
+    },
+    {
+      "label": "Input",
+      "value": "   ",
+      "placeholder": "Type a value…",
+      "multiline": false,
+      "skin": "single_line"
+    }
+  ],
+  "gets": [
+    {
+      "sample": 0,
+      "key": "value",
+      "value": ""
+    },
+    {
+      "sample": 0,
+      "key": "has_value",
+      "value": false
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": "Buy milk"
+    },
+    {
+      "sample": 1,
+      "key": "has_value",
+      "value": true
+    },
+    {
+      "sample": 2,
+      "key": "value",
+      "value": "   "
+    },
+    {
+      "sample": 2,
+      "key": "has_value",
+      "value": false
+    }
+  ],
+  "sets": [
+    {
+      "sample": 0,
+      "key": "value",
+      "value": 0,
+      "data": {
+        "label": "Input",
+        "value": "0",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "single_line"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": 1,
+      "data": {
+        "label": "Input",
+        "value": "1",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "single_line"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": -1,
+      "data": {
+        "label": "Input",
+        "value": "-1",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "single_line"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": 7,
+      "data": {
+        "label": "Input",
+        "value": "7",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "single_line"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": 2.5,
+      "data": {
+        "label": "Input",
+        "value": "2.5",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "single_line"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": 2.6,
+      "data": {
+        "label": "Input",
+        "value": "2.6",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "single_line"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": -2.5,
+      "data": {
+        "label": "Input",
+        "value": "-2.5",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "single_line"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": 0.5,
+      "data": {
+        "label": "Input",
+        "value": "0.5",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "single_line"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": 4.9,
+      "data": {
+        "label": "Input",
+        "value": "4.9",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "single_line"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": 5,
+      "data": {
+        "label": "Input",
+        "value": "5",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "single_line"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": 10,
+      "data": {
+        "label": "Input",
+        "value": "10",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "single_line"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": 50,
+      "data": {
+        "label": "Input",
+        "value": "50",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "single_line"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": 150,
+      "data": {
+        "label": "Input",
+        "value": "150",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "single_line"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": 1e+21,
+      "data": {
+        "label": "Input",
+        "value": "1e+21",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "single_line"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": 1.7976931348623157e+308,
+      "data": {
+        "label": "Input",
+        "value": "1.7976931348623157e+308",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "single_line"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": true,
+      "data": {
+        "label": "Input",
+        "value": "true",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "single_line"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": false,
+      "data": {
+        "label": "Input",
+        "value": "false",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "single_line"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": "",
+      "data": {
+        "label": "Input",
+        "value": "",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "single_line"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": "12.5",
+      "data": {
+        "label": "Input",
+        "value": "12.5",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "single_line"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": "not a number",
+      "data": {
+        "label": "Input",
+        "value": "not a number",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "single_line"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": "1",
+      "data": {
+        "label": "Input",
+        "value": "1",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "single_line"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": "true",
+      "data": {
+        "label": "Input",
+        "value": "true",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "single_line"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": "yes",
+      "data": {
+        "label": "Input",
+        "value": "yes",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "single_line"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": "on",
+      "data": {
+        "label": "Input",
+        "value": "on",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "single_line"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": "off",
+      "data": {
+        "label": "Input",
+        "value": "off",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "single_line"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": "0",
+      "data": {
+        "label": "Input",
+        "value": "0",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "single_line"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": " 8 ",
+      "data": {
+        "label": "Input",
+        "value": " 8 ",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "single_line"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": "3abc",
+      "data": {
+        "label": "Input",
+        "value": "3abc",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "single_line"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": "-4e2",
+      "data": {
+        "label": "Input",
+        "value": "-4e2",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "single_line"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": "Infinity",
+      "data": {
+        "label": "Input",
+        "value": "Infinity",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "single_line"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": "NaN",
+      "data": {
+        "label": "Input",
+        "value": "NaN",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "single_line"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": [],
+      "data": {
+        "label": "Input",
+        "value": "",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "single_line"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": [
+        {
+          "t": 0,
+          "v": 4
+        },
+        {
+          "t": 1,
+          "v": 9
+        }
+      ],
+      "data": {
+        "label": "Input",
+        "value": "4, 9",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "single_line"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": [
+        {
+          "t": 5,
+          "v": -2.5
+        }
+      ],
+      "data": {
+        "label": "Input",
+        "value": "-2.5",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "single_line"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": 0,
+      "data": {
+        "label": "Input",
+        "value": "0",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "tags"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": 1,
+      "data": {
+        "label": "Input",
+        "value": "1",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "tags"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": -1,
+      "data": {
+        "label": "Input",
+        "value": "-1",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "tags"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": 7,
+      "data": {
+        "label": "Input",
+        "value": "7",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "tags"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": 2.5,
+      "data": {
+        "label": "Input",
+        "value": "2.5",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "tags"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": 2.6,
+      "data": {
+        "label": "Input",
+        "value": "2.6",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "tags"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": -2.5,
+      "data": {
+        "label": "Input",
+        "value": "-2.5",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "tags"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": 0.5,
+      "data": {
+        "label": "Input",
+        "value": "0.5",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "tags"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": 4.9,
+      "data": {
+        "label": "Input",
+        "value": "4.9",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "tags"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": 5,
+      "data": {
+        "label": "Input",
+        "value": "5",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "tags"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": 10,
+      "data": {
+        "label": "Input",
+        "value": "10",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "tags"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": 50,
+      "data": {
+        "label": "Input",
+        "value": "50",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "tags"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": 150,
+      "data": {
+        "label": "Input",
+        "value": "150",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "tags"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": 1e+21,
+      "data": {
+        "label": "Input",
+        "value": "1e+21",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "tags"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": 1.7976931348623157e+308,
+      "data": {
+        "label": "Input",
+        "value": "1.7976931348623157e+308",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "tags"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": true,
+      "data": {
+        "label": "Input",
+        "value": "true",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "tags"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": false,
+      "data": {
+        "label": "Input",
+        "value": "false",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "tags"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": "",
+      "data": {
+        "label": "Input",
+        "value": "",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "tags"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": "12.5",
+      "data": {
+        "label": "Input",
+        "value": "12.5",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "tags"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": "not a number",
+      "data": {
+        "label": "Input",
+        "value": "not a number",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "tags"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": "1",
+      "data": {
+        "label": "Input",
+        "value": "1",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "tags"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": "true",
+      "data": {
+        "label": "Input",
+        "value": "true",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "tags"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": "yes",
+      "data": {
+        "label": "Input",
+        "value": "yes",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "tags"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": "on",
+      "data": {
+        "label": "Input",
+        "value": "on",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "tags"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": "off",
+      "data": {
+        "label": "Input",
+        "value": "off",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "tags"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": "0",
+      "data": {
+        "label": "Input",
+        "value": "0",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "tags"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": " 8 ",
+      "data": {
+        "label": "Input",
+        "value": " 8 ",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "tags"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": "3abc",
+      "data": {
+        "label": "Input",
+        "value": "3abc",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "tags"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": "-4e2",
+      "data": {
+        "label": "Input",
+        "value": "-4e2",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "tags"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": "Infinity",
+      "data": {
+        "label": "Input",
+        "value": "Infinity",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "tags"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": "NaN",
+      "data": {
+        "label": "Input",
+        "value": "NaN",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "tags"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": [],
+      "data": {
+        "label": "Input",
+        "value": "",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "tags"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": [
+        {
+          "t": 0,
+          "v": 4
+        },
+        {
+          "t": 1,
+          "v": 9
+        }
+      ],
+      "data": {
+        "label": "Input",
+        "value": "4, 9",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "tags"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": [
+        {
+          "t": 5,
+          "v": -2.5
+        }
+      ],
+      "data": {
+        "label": "Input",
+        "value": "-2.5",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "tags"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value",
+      "value": 0,
+      "data": {
+        "label": "Input",
+        "value": "0",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "single_line"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value",
+      "value": 1,
+      "data": {
+        "label": "Input",
+        "value": "1",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "single_line"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value",
+      "value": -1,
+      "data": {
+        "label": "Input",
+        "value": "-1",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "single_line"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value",
+      "value": 7,
+      "data": {
+        "label": "Input",
+        "value": "7",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "single_line"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value",
+      "value": 2.5,
+      "data": {
+        "label": "Input",
+        "value": "2.5",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "single_line"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value",
+      "value": 2.6,
+      "data": {
+        "label": "Input",
+        "value": "2.6",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "single_line"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value",
+      "value": -2.5,
+      "data": {
+        "label": "Input",
+        "value": "-2.5",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "single_line"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value",
+      "value": 0.5,
+      "data": {
+        "label": "Input",
+        "value": "0.5",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "single_line"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value",
+      "value": 4.9,
+      "data": {
+        "label": "Input",
+        "value": "4.9",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "single_line"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value",
+      "value": 5,
+      "data": {
+        "label": "Input",
+        "value": "5",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "single_line"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value",
+      "value": 10,
+      "data": {
+        "label": "Input",
+        "value": "10",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "single_line"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value",
+      "value": 50,
+      "data": {
+        "label": "Input",
+        "value": "50",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "single_line"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value",
+      "value": 150,
+      "data": {
+        "label": "Input",
+        "value": "150",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "single_line"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value",
+      "value": 1e+21,
+      "data": {
+        "label": "Input",
+        "value": "1e+21",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "single_line"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value",
+      "value": 1.7976931348623157e+308,
+      "data": {
+        "label": "Input",
+        "value": "1.7976931348623157e+308",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "single_line"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value",
+      "value": true,
+      "data": {
+        "label": "Input",
+        "value": "true",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "single_line"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value",
+      "value": false,
+      "data": {
+        "label": "Input",
+        "value": "false",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "single_line"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value",
+      "value": "",
+      "data": {
+        "label": "Input",
+        "value": "",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "single_line"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value",
+      "value": "12.5",
+      "data": {
+        "label": "Input",
+        "value": "12.5",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "single_line"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value",
+      "value": "not a number",
+      "data": {
+        "label": "Input",
+        "value": "not a number",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "single_line"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value",
+      "value": "1",
+      "data": {
+        "label": "Input",
+        "value": "1",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "single_line"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value",
+      "value": "true",
+      "data": {
+        "label": "Input",
+        "value": "true",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "single_line"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value",
+      "value": "yes",
+      "data": {
+        "label": "Input",
+        "value": "yes",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "single_line"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value",
+      "value": "on",
+      "data": {
+        "label": "Input",
+        "value": "on",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "single_line"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value",
+      "value": "off",
+      "data": {
+        "label": "Input",
+        "value": "off",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "single_line"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value",
+      "value": "0",
+      "data": {
+        "label": "Input",
+        "value": "0",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "single_line"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value",
+      "value": " 8 ",
+      "data": {
+        "label": "Input",
+        "value": " 8 ",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "single_line"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value",
+      "value": "3abc",
+      "data": {
+        "label": "Input",
+        "value": "3abc",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "single_line"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value",
+      "value": "-4e2",
+      "data": {
+        "label": "Input",
+        "value": "-4e2",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "single_line"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value",
+      "value": "Infinity",
+      "data": {
+        "label": "Input",
+        "value": "Infinity",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "single_line"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value",
+      "value": "NaN",
+      "data": {
+        "label": "Input",
+        "value": "NaN",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "single_line"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value",
+      "value": [],
+      "data": {
+        "label": "Input",
+        "value": "",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "single_line"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value",
+      "value": [
+        {
+          "t": 0,
+          "v": 4
+        },
+        {
+          "t": 1,
+          "v": 9
+        }
+      ],
+      "data": {
+        "label": "Input",
+        "value": "4, 9",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "single_line"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value",
+      "value": [
+        {
+          "t": 5,
+          "v": -2.5
+        }
+      ],
+      "data": {
+        "label": "Input",
+        "value": "-2.5",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "single_line"
+      }
+    }
+  ],
+  "commands": []
+}

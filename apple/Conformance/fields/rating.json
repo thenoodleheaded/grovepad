@@ -1,0 +1,790 @@
+{
+  "outputs": [
+    {
+      "key": "value",
+      "label": "Rating",
+      "valueType": "number",
+      "unit": null,
+      "index": 0,
+      "timeSensitive": false
+    }
+  ],
+  "inputs": [
+    {
+      "key": "value",
+      "label": "Rating",
+      "kind": "field",
+      "valueType": "number",
+      "unit": null,
+      "acceptsPayload": false,
+      "index": 0
+    },
+    {
+      "key": "reset",
+      "label": "Clear rating",
+      "kind": "command",
+      "valueType": null,
+      "unit": null,
+      "acceptsPayload": false,
+      "index": 1
+    }
+  ],
+  "samples": [
+    {
+      "label": "Rate it",
+      "value": 0,
+      "skin": "stars"
+    },
+    {
+      "label": "Rate it",
+      "value": 3,
+      "skin": "stars"
+    }
+  ],
+  "gets": [
+    {
+      "sample": 0,
+      "key": "value",
+      "value": 0
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": 3
+    }
+  ],
+  "sets": [
+    {
+      "sample": 0,
+      "key": "value",
+      "value": 0,
+      "data": {
+        "label": "Rate it",
+        "value": 0,
+        "skin": "stars"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": 1,
+      "data": {
+        "label": "Rate it",
+        "value": 1,
+        "skin": "stars"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": -1,
+      "data": {
+        "label": "Rate it",
+        "value": 0,
+        "skin": "stars"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": 7,
+      "data": {
+        "label": "Rate it",
+        "value": 5,
+        "skin": "stars"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": 2.5,
+      "data": {
+        "label": "Rate it",
+        "value": 3,
+        "skin": "stars"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": 2.6,
+      "data": {
+        "label": "Rate it",
+        "value": 3,
+        "skin": "stars"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": -2.5,
+      "data": {
+        "label": "Rate it",
+        "value": 0,
+        "skin": "stars"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": 0.5,
+      "data": {
+        "label": "Rate it",
+        "value": 1,
+        "skin": "stars"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": 4.9,
+      "data": {
+        "label": "Rate it",
+        "value": 5,
+        "skin": "stars"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": 5,
+      "data": {
+        "label": "Rate it",
+        "value": 5,
+        "skin": "stars"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": 10,
+      "data": {
+        "label": "Rate it",
+        "value": 5,
+        "skin": "stars"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": 50,
+      "data": {
+        "label": "Rate it",
+        "value": 5,
+        "skin": "stars"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": 150,
+      "data": {
+        "label": "Rate it",
+        "value": 5,
+        "skin": "stars"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": 1e+21,
+      "data": {
+        "label": "Rate it",
+        "value": 5,
+        "skin": "stars"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": 1.7976931348623157e+308,
+      "data": {
+        "label": "Rate it",
+        "value": 5,
+        "skin": "stars"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": true,
+      "data": {
+        "label": "Rate it",
+        "value": 1,
+        "skin": "stars"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": false,
+      "data": {
+        "label": "Rate it",
+        "value": 0,
+        "skin": "stars"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": "",
+      "data": {
+        "label": "Rate it",
+        "value": 0,
+        "skin": "stars"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": "12.5",
+      "data": {
+        "label": "Rate it",
+        "value": 5,
+        "skin": "stars"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": "not a number",
+      "data": {
+        "label": "Rate it",
+        "value": 0,
+        "skin": "stars"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": "1",
+      "data": {
+        "label": "Rate it",
+        "value": 1,
+        "skin": "stars"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": "true",
+      "data": {
+        "label": "Rate it",
+        "value": 0,
+        "skin": "stars"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": "yes",
+      "data": {
+        "label": "Rate it",
+        "value": 0,
+        "skin": "stars"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": "on",
+      "data": {
+        "label": "Rate it",
+        "value": 0,
+        "skin": "stars"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": "off",
+      "data": {
+        "label": "Rate it",
+        "value": 0,
+        "skin": "stars"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": "0",
+      "data": {
+        "label": "Rate it",
+        "value": 0,
+        "skin": "stars"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": " 8 ",
+      "data": {
+        "label": "Rate it",
+        "value": 5,
+        "skin": "stars"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": "3abc",
+      "data": {
+        "label": "Rate it",
+        "value": 3,
+        "skin": "stars"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": "-4e2",
+      "data": {
+        "label": "Rate it",
+        "value": 0,
+        "skin": "stars"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": "Infinity",
+      "data": {
+        "label": "Rate it",
+        "value": 0,
+        "skin": "stars"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": "NaN",
+      "data": {
+        "label": "Rate it",
+        "value": 0,
+        "skin": "stars"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": [],
+      "data": {
+        "label": "Rate it",
+        "value": 0,
+        "skin": "stars"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": [
+        {
+          "t": 0,
+          "v": 4
+        },
+        {
+          "t": 1,
+          "v": 9
+        }
+      ],
+      "data": {
+        "label": "Rate it",
+        "value": 5,
+        "skin": "stars"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": [
+        {
+          "t": 5,
+          "v": -2.5
+        }
+      ],
+      "data": {
+        "label": "Rate it",
+        "value": 0,
+        "skin": "stars"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": 0,
+      "data": {
+        "label": "Rate it",
+        "value": 0,
+        "skin": "stars"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": 1,
+      "data": {
+        "label": "Rate it",
+        "value": 1,
+        "skin": "stars"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": -1,
+      "data": {
+        "label": "Rate it",
+        "value": 0,
+        "skin": "stars"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": 7,
+      "data": {
+        "label": "Rate it",
+        "value": 5,
+        "skin": "stars"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": 2.5,
+      "data": {
+        "label": "Rate it",
+        "value": 3,
+        "skin": "stars"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": 2.6,
+      "data": {
+        "label": "Rate it",
+        "value": 3,
+        "skin": "stars"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": -2.5,
+      "data": {
+        "label": "Rate it",
+        "value": 0,
+        "skin": "stars"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": 0.5,
+      "data": {
+        "label": "Rate it",
+        "value": 1,
+        "skin": "stars"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": 4.9,
+      "data": {
+        "label": "Rate it",
+        "value": 5,
+        "skin": "stars"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": 5,
+      "data": {
+        "label": "Rate it",
+        "value": 5,
+        "skin": "stars"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": 10,
+      "data": {
+        "label": "Rate it",
+        "value": 5,
+        "skin": "stars"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": 50,
+      "data": {
+        "label": "Rate it",
+        "value": 5,
+        "skin": "stars"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": 150,
+      "data": {
+        "label": "Rate it",
+        "value": 5,
+        "skin": "stars"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": 1e+21,
+      "data": {
+        "label": "Rate it",
+        "value": 5,
+        "skin": "stars"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": 1.7976931348623157e+308,
+      "data": {
+        "label": "Rate it",
+        "value": 5,
+        "skin": "stars"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": true,
+      "data": {
+        "label": "Rate it",
+        "value": 1,
+        "skin": "stars"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": false,
+      "data": {
+        "label": "Rate it",
+        "value": 0,
+        "skin": "stars"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": "",
+      "data": {
+        "label": "Rate it",
+        "value": 0,
+        "skin": "stars"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": "12.5",
+      "data": {
+        "label": "Rate it",
+        "value": 5,
+        "skin": "stars"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": "not a number",
+      "data": {
+        "label": "Rate it",
+        "value": 0,
+        "skin": "stars"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": "1",
+      "data": {
+        "label": "Rate it",
+        "value": 1,
+        "skin": "stars"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": "true",
+      "data": {
+        "label": "Rate it",
+        "value": 0,
+        "skin": "stars"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": "yes",
+      "data": {
+        "label": "Rate it",
+        "value": 0,
+        "skin": "stars"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": "on",
+      "data": {
+        "label": "Rate it",
+        "value": 0,
+        "skin": "stars"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": "off",
+      "data": {
+        "label": "Rate it",
+        "value": 0,
+        "skin": "stars"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": "0",
+      "data": {
+        "label": "Rate it",
+        "value": 0,
+        "skin": "stars"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": " 8 ",
+      "data": {
+        "label": "Rate it",
+        "value": 5,
+        "skin": "stars"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": "3abc",
+      "data": {
+        "label": "Rate it",
+        "value": 3,
+        "skin": "stars"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": "-4e2",
+      "data": {
+        "label": "Rate it",
+        "value": 0,
+        "skin": "stars"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": "Infinity",
+      "data": {
+        "label": "Rate it",
+        "value": 0,
+        "skin": "stars"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": "NaN",
+      "data": {
+        "label": "Rate it",
+        "value": 0,
+        "skin": "stars"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": [],
+      "data": {
+        "label": "Rate it",
+        "value": 0,
+        "skin": "stars"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": [
+        {
+          "t": 0,
+          "v": 4
+        },
+        {
+          "t": 1,
+          "v": 9
+        }
+      ],
+      "data": {
+        "label": "Rate it",
+        "value": 5,
+        "skin": "stars"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": [
+        {
+          "t": 5,
+          "v": -2.5
+        }
+      ],
+      "data": {
+        "label": "Rate it",
+        "value": 0,
+        "skin": "stars"
+      }
+    }
+  ],
+  "commands": [
+    {
+      "sample": 0,
+      "key": "reset",
+      "payload": null,
+      "hasPayload": false,
+      "data": {
+        "label": "Rate it",
+        "value": 0,
+        "skin": "stars"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "reset",
+      "payload": null,
+      "hasPayload": false,
+      "data": {
+        "label": "Rate it",
+        "value": 0,
+        "skin": "stars"
+      }
+    }
+  ]
+}

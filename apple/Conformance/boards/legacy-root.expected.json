@@ -1,0 +1,67 @@
+{
+  "parse": "ok",
+  "mode": "parse-then-remap-root",
+  "widgetIds": [
+    "door",
+    "backDoor",
+    "note"
+  ],
+  "widgetTypes": {
+    "door": "canvas_node",
+    "backDoor": "canvas_node",
+    "note": "text"
+  },
+  "opaqueWidgets": {},
+  "relationIds": [],
+  "connectionIds": [],
+  "glueIds": [],
+  "activePacks": [],
+  "unknownRelationIds": [],
+  "unknownConnectionIds": [],
+  "unknownGlueIds": [],
+  "unknownBoardFields": [],
+  "rawActivePacks": [],
+  "device": {
+    "activeWorkspaceId": "ws",
+    "activeCanvasId": "uuid-0001",
+    "canvasViews": {
+      "uuid-0001": {
+        "pan": {
+          "x": 5,
+          "y": 6
+        },
+        "zoom": 1
+      },
+      "child": {
+        "pan": {
+          "x": 0,
+          "y": 0
+        },
+        "zoom": 1
+      }
+    }
+  },
+  "serialized": "{\"format\":\"grovepad-board\",\"v\":2,\"workspaces\":{\"ws\":{\"id\":\"ws\",\"name\":\"WS\",\"rootCanvasId\":\"uuid-0001\",\"createdAt\":1}},\"canvases\":{\"uuid-0001\":{\"id\":\"uuid-0001\",\"name\":\"Origin\",\"workspaceId\":\"ws\",\"parentCanvasId\":null},\"child\":{\"id\":\"child\",\"name\":\"Child\",\"workspaceId\":\"ws\",\"parentCanvasId\":\"uuid-0001\"}},\"widgets\":{\"door\":{\"id\":\"door\",\"type\":\"canvas_node\",\"title\":\"door\",\"canvasId\":\"uuid-0001\",\"position\":{\"x\":0,\"y\":0},\"size\":{\"width\":280,\"height\":80},\"data\":{\"canvasId\":\"child\",\"skin\":\"portal\"},\"metadata\":{\"badges\":[]}},\"backDoor\":{\"id\":\"backDoor\",\"type\":\"canvas_node\",\"title\":\"backDoor\",\"canvasId\":\"child\",\"position\":{\"x\":0,\"y\":0},\"size\":{\"width\":280,\"height\":80},\"data\":{\"canvasId\":\"uuid-0001\",\"skin\":\"portal\"},\"metadata\":{\"badges\":[]}},\"note\":{\"id\":\"note\",\"type\":\"text\",\"title\":\"note\",\"canvasId\":\"uuid-0001\",\"position\":{\"x\":0,\"y\":0},\"size\":{\"width\":320,\"height\":200},\"data\":{\"text\":\"\",\"mode\":\"plain\",\"color\":\"yellow\"},\"metadata\":{\"badges\":[]}}},\"relations\":{},\"connections\":{},\"glues\":{},\"activePacks\":[]}",
+  "sha256": "0c8a83c01a370482d963cf6911ff2e58ccc76dcf41fcaac142a7fe7207ac2155",
+  "canonical": "{\"activePacks\":[],\"canvases\":{\"child\":{\"id\":\"child\",\"name\":\"Child\",\"parentCanvasId\":\"uuid-0001\",\"workspaceId\":\"ws\"},\"uuid-0001\":{\"id\":\"uuid-0001\",\"name\":\"Origin\",\"parentCanvasId\":null,\"workspaceId\":\"ws\"}},\"connections\":{},\"format\":\"grovepad-board\",\"glues\":{},\"relations\":{},\"v\":2,\"widgets\":{\"backDoor\":{\"canvasId\":\"child\",\"data\":{\"canvasId\":\"uuid-0001\",\"skin\":\"portal\"},\"id\":\"backDoor\",\"metadata\":{\"badges\":[]},\"position\":{\"x\":0,\"y\":0},\"size\":{\"height\":80,\"width\":280},\"title\":\"backDoor\",\"type\":\"canvas_node\"},\"door\":{\"canvasId\":\"uuid-0001\",\"data\":{\"canvasId\":\"child\",\"skin\":\"portal\"},\"id\":\"door\",\"metadata\":{\"badges\":[]},\"position\":{\"x\":0,\"y\":0},\"size\":{\"height\":80,\"width\":280},\"title\":\"door\",\"type\":\"canvas_node\"},\"note\":{\"canvasId\":\"uuid-0001\",\"data\":{\"color\":\"yellow\",\"mode\":\"plain\",\"text\":\"\"},\"id\":\"note\",\"metadata\":{\"badges\":[]},\"position\":{\"x\":0,\"y\":0},\"size\":{\"height\":200,\"width\":320},\"title\":\"note\",\"type\":\"text\"}},\"workspaces\":{\"ws\":{\"createdAt\":1,\"id\":\"ws\",\"name\":\"WS\",\"rootCanvasId\":\"uuid-0001\"}}}",
+  "canonicalSha256": "1a59d35c747b129d7c71d6d104f0a21eb15706241ada7f50fd2fc25edf82c847",
+  "split": {
+    "index": {
+      "canonical": "{\"activePacks\":[],\"boardFormat\":\"grovepad-board\",\"boardVersion\":2,\"canvases\":{\"child\":{\"id\":\"child\",\"name\":\"Child\",\"parentCanvasId\":\"uuid-0001\",\"workspaceId\":\"ws\"},\"uuid-0001\":{\"id\":\"uuid-0001\",\"name\":\"Origin\",\"parentCanvasId\":null,\"workspaceId\":\"ws\"}},\"connections\":{},\"extra\":{},\"format\":\"grovepad-board-index\",\"glues\":{},\"relations\":{},\"v\":1,\"workspaces\":{\"ws\":{\"createdAt\":1,\"id\":\"ws\",\"name\":\"WS\",\"rootCanvasId\":\"uuid-0001\"}}}",
+      "sha256": "400e9bfe5a7b2687b9b21620b97588d418ce7e693460c6b02f74aa03909523b9",
+      "pretty": "{\n  \"format\": \"grovepad-board-index\",\n  \"v\": 1,\n  \"boardFormat\": \"grovepad-board\",\n  \"boardVersion\": 2,\n  \"workspaces\": {\n    \"ws\": {\n      \"id\": \"ws\",\n      \"name\": \"WS\",\n      \"rootCanvasId\": \"uuid-0001\",\n      \"createdAt\": 1\n    }\n  },\n  \"canvases\": {\n    \"uuid-0001\": {\n      \"id\": \"uuid-0001\",\n      \"name\": \"Origin\",\n      \"workspaceId\": \"ws\",\n      \"parentCanvasId\": null\n    },\n    \"child\": {\n      \"id\": \"child\",\n      \"name\": \"Child\",\n      \"workspaceId\": \"ws\",\n      \"parentCanvasId\": \"uuid-0001\"\n    }\n  },\n  \"activePacks\": [],\n  \"relations\": {},\n  \"connections\": {},\n  \"glues\": {},\n  \"extra\": {}\n}"
+    },
+    "canvases": {
+      "uuid-0001": {
+        "canonical": "{\"canvasId\":\"uuid-0001\",\"connections\":{},\"format\":\"grovepad-canvas\",\"glues\":{},\"relations\":{},\"v\":1,\"widgets\":{\"door\":{\"canvasId\":\"uuid-0001\",\"data\":{\"canvasId\":\"child\",\"skin\":\"portal\"},\"id\":\"door\",\"metadata\":{\"badges\":[]},\"position\":{\"x\":0,\"y\":0},\"size\":{\"height\":80,\"width\":280},\"title\":\"door\",\"type\":\"canvas_node\"},\"note\":{\"canvasId\":\"uuid-0001\",\"data\":{\"color\":\"yellow\",\"mode\":\"plain\",\"text\":\"\"},\"id\":\"note\",\"metadata\":{\"badges\":[]},\"position\":{\"x\":0,\"y\":0},\"size\":{\"height\":200,\"width\":320},\"title\":\"note\",\"type\":\"text\"}}}",
+        "sha256": "974d6267575f14437210a60ce49d851ed16a99cc25c9de6a85c2e09aa6c20a4f",
+        "pretty": "{\n  \"format\": \"grovepad-canvas\",\n  \"v\": 1,\n  \"canvasId\": \"uuid-0001\",\n  \"widgets\": {\n    \"door\": {\n      \"id\": \"door\",\n      \"type\": \"canvas_node\",\n      \"title\": \"door\",\n      \"canvasId\": \"uuid-0001\",\n      \"position\": {\n        \"x\": 0,\n        \"y\": 0\n      },\n      \"size\": {\n        \"width\": 280,\n        \"height\": 80\n      },\n      \"data\": {\n        \"canvasId\": \"child\",\n        \"skin\": \"portal\"\n      },\n      \"metadata\": {\n        \"badges\": []\n      }\n    },\n    \"note\": {\n      \"id\": \"note\",\n      \"type\": \"text\",\n      \"title\": \"note\",\n      \"canvasId\": \"uuid-0001\",\n      \"position\": {\n        \"x\": 0,\n        \"y\": 0\n      },\n      \"size\": {\n        \"width\": 320,\n        \"height\": 200\n      },\n      \"data\": {\n        \"text\": \"\",\n        \"mode\": \"plain\",\n        \"color\": \"yellow\"\n      },\n      \"metadata\": {\n        \"badges\": []\n      }\n    }\n  },\n  \"relations\": {},\n  \"connections\": {},\n  \"glues\": {}\n}"
+      },
+      "child": {
+        "canonical": "{\"canvasId\":\"child\",\"connections\":{},\"format\":\"grovepad-canvas\",\"glues\":{},\"relations\":{},\"v\":1,\"widgets\":{\"backDoor\":{\"canvasId\":\"child\",\"data\":{\"canvasId\":\"uuid-0001\",\"skin\":\"portal\"},\"id\":\"backDoor\",\"metadata\":{\"badges\":[]},\"position\":{\"x\":0,\"y\":0},\"size\":{\"height\":80,\"width\":280},\"title\":\"backDoor\",\"type\":\"canvas_node\"}}}",
+        "sha256": "fe4a75d39442bf34e25df7790823365cf3e420e08a3cc295cefc459aa04be29e",
+        "pretty": "{\n  \"format\": \"grovepad-canvas\",\n  \"v\": 1,\n  \"canvasId\": \"child\",\n  \"widgets\": {\n    \"backDoor\": {\n      \"id\": \"backDoor\",\n      \"type\": \"canvas_node\",\n      \"title\": \"backDoor\",\n      \"canvasId\": \"child\",\n      \"position\": {\n        \"x\": 0,\n        \"y\": 0\n      },\n      \"size\": {\n        \"width\": 280,\n        \"height\": 80\n      },\n      \"data\": {\n        \"canvasId\": \"uuid-0001\",\n        \"skin\": \"portal\"\n      },\n      \"metadata\": {\n        \"badges\": []\n      }\n    }\n  },\n  \"relations\": {},\n  \"connections\": {},\n  \"glues\": {}\n}"
+      }
+    }
+  }
+}

@@ -1,0 +1,1501 @@
+{
+  "outputs": [
+    {
+      "key": "status",
+      "label": "Status",
+      "valueType": "text",
+      "unit": null,
+      "index": 0,
+      "timeSensitive": false
+    },
+    {
+      "key": "progress",
+      "label": "Progress %",
+      "valueType": "number",
+      "unit": "percent",
+      "index": 1,
+      "timeSensitive": false
+    },
+    {
+      "key": "complete",
+      "label": "Complete",
+      "valueType": "boolean",
+      "unit": null,
+      "index": 2,
+      "timeSensitive": false
+    }
+  ],
+  "inputs": [
+    {
+      "key": "status",
+      "label": "Status",
+      "kind": "field",
+      "valueType": "text",
+      "unit": null,
+      "acceptsPayload": false,
+      "index": 0
+    },
+    {
+      "key": "reset",
+      "label": "Reset status",
+      "kind": "command",
+      "valueType": null,
+      "unit": null,
+      "acceptsPayload": false,
+      "index": 1
+    },
+    {
+      "key": "check_all",
+      "label": "Mark done",
+      "kind": "command",
+      "valueType": null,
+      "unit": null,
+      "acceptsPayload": false,
+      "index": 2
+    }
+  ],
+  "samples": [
+    {
+      "label": "Status",
+      "value": "not_started"
+    },
+    {
+      "label": "Status",
+      "value": "in_progress"
+    },
+    {
+      "label": "Status",
+      "value": "blocked"
+    },
+    {
+      "label": "Status",
+      "value": "done"
+    }
+  ],
+  "gets": [
+    {
+      "sample": 0,
+      "key": "status",
+      "value": "not_started"
+    },
+    {
+      "sample": 0,
+      "key": "progress",
+      "value": 0
+    },
+    {
+      "sample": 0,
+      "key": "complete",
+      "value": false
+    },
+    {
+      "sample": 1,
+      "key": "status",
+      "value": "in_progress"
+    },
+    {
+      "sample": 1,
+      "key": "progress",
+      "value": 50
+    },
+    {
+      "sample": 1,
+      "key": "complete",
+      "value": false
+    },
+    {
+      "sample": 2,
+      "key": "status",
+      "value": "blocked"
+    },
+    {
+      "sample": 2,
+      "key": "progress",
+      "value": 50
+    },
+    {
+      "sample": 2,
+      "key": "complete",
+      "value": false
+    },
+    {
+      "sample": 3,
+      "key": "status",
+      "value": "done"
+    },
+    {
+      "sample": 3,
+      "key": "progress",
+      "value": 100
+    },
+    {
+      "sample": 3,
+      "key": "complete",
+      "value": true
+    }
+  ],
+  "sets": [
+    {
+      "sample": 0,
+      "key": "status",
+      "value": 0,
+      "data": {
+        "label": "Status",
+        "value": "not_started"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "status",
+      "value": 1,
+      "data": {
+        "label": "Status",
+        "value": "not_started"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "status",
+      "value": -1,
+      "data": {
+        "label": "Status",
+        "value": "not_started"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "status",
+      "value": 7,
+      "data": {
+        "label": "Status",
+        "value": "not_started"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "status",
+      "value": 2.5,
+      "data": {
+        "label": "Status",
+        "value": "not_started"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "status",
+      "value": 2.6,
+      "data": {
+        "label": "Status",
+        "value": "not_started"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "status",
+      "value": -2.5,
+      "data": {
+        "label": "Status",
+        "value": "not_started"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "status",
+      "value": 0.5,
+      "data": {
+        "label": "Status",
+        "value": "not_started"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "status",
+      "value": 4.9,
+      "data": {
+        "label": "Status",
+        "value": "not_started"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "status",
+      "value": 5,
+      "data": {
+        "label": "Status",
+        "value": "not_started"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "status",
+      "value": 10,
+      "data": {
+        "label": "Status",
+        "value": "not_started"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "status",
+      "value": 50,
+      "data": {
+        "label": "Status",
+        "value": "not_started"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "status",
+      "value": 150,
+      "data": {
+        "label": "Status",
+        "value": "not_started"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "status",
+      "value": 1e+21,
+      "data": {
+        "label": "Status",
+        "value": "not_started"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "status",
+      "value": 1.7976931348623157e+308,
+      "data": {
+        "label": "Status",
+        "value": "not_started"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "status",
+      "value": true,
+      "data": {
+        "label": "Status",
+        "value": "not_started"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "status",
+      "value": false,
+      "data": {
+        "label": "Status",
+        "value": "not_started"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "status",
+      "value": "",
+      "data": {
+        "label": "Status",
+        "value": "not_started"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "status",
+      "value": "12.5",
+      "data": {
+        "label": "Status",
+        "value": "not_started"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "status",
+      "value": "not a number",
+      "data": {
+        "label": "Status",
+        "value": "not_started"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "status",
+      "value": "1",
+      "data": {
+        "label": "Status",
+        "value": "not_started"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "status",
+      "value": "true",
+      "data": {
+        "label": "Status",
+        "value": "not_started"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "status",
+      "value": "yes",
+      "data": {
+        "label": "Status",
+        "value": "not_started"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "status",
+      "value": "on",
+      "data": {
+        "label": "Status",
+        "value": "not_started"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "status",
+      "value": "off",
+      "data": {
+        "label": "Status",
+        "value": "not_started"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "status",
+      "value": "0",
+      "data": {
+        "label": "Status",
+        "value": "not_started"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "status",
+      "value": " 8 ",
+      "data": {
+        "label": "Status",
+        "value": "not_started"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "status",
+      "value": "3abc",
+      "data": {
+        "label": "Status",
+        "value": "not_started"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "status",
+      "value": "-4e2",
+      "data": {
+        "label": "Status",
+        "value": "not_started"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "status",
+      "value": "Infinity",
+      "data": {
+        "label": "Status",
+        "value": "not_started"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "status",
+      "value": "NaN",
+      "data": {
+        "label": "Status",
+        "value": "not_started"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "status",
+      "value": [],
+      "data": {
+        "label": "Status",
+        "value": "not_started"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "status",
+      "value": [
+        {
+          "t": 0,
+          "v": 4
+        },
+        {
+          "t": 1,
+          "v": 9
+        }
+      ],
+      "data": {
+        "label": "Status",
+        "value": "not_started"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "status",
+      "value": [
+        {
+          "t": 5,
+          "v": -2.5
+        }
+      ],
+      "data": {
+        "label": "Status",
+        "value": "not_started"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "status",
+      "value": 0,
+      "data": {
+        "label": "Status",
+        "value": "in_progress"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "status",
+      "value": 1,
+      "data": {
+        "label": "Status",
+        "value": "in_progress"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "status",
+      "value": -1,
+      "data": {
+        "label": "Status",
+        "value": "in_progress"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "status",
+      "value": 7,
+      "data": {
+        "label": "Status",
+        "value": "in_progress"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "status",
+      "value": 2.5,
+      "data": {
+        "label": "Status",
+        "value": "in_progress"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "status",
+      "value": 2.6,
+      "data": {
+        "label": "Status",
+        "value": "in_progress"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "status",
+      "value": -2.5,
+      "data": {
+        "label": "Status",
+        "value": "in_progress"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "status",
+      "value": 0.5,
+      "data": {
+        "label": "Status",
+        "value": "in_progress"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "status",
+      "value": 4.9,
+      "data": {
+        "label": "Status",
+        "value": "in_progress"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "status",
+      "value": 5,
+      "data": {
+        "label": "Status",
+        "value": "in_progress"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "status",
+      "value": 10,
+      "data": {
+        "label": "Status",
+        "value": "in_progress"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "status",
+      "value": 50,
+      "data": {
+        "label": "Status",
+        "value": "in_progress"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "status",
+      "value": 150,
+      "data": {
+        "label": "Status",
+        "value": "in_progress"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "status",
+      "value": 1e+21,
+      "data": {
+        "label": "Status",
+        "value": "in_progress"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "status",
+      "value": 1.7976931348623157e+308,
+      "data": {
+        "label": "Status",
+        "value": "in_progress"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "status",
+      "value": true,
+      "data": {
+        "label": "Status",
+        "value": "in_progress"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "status",
+      "value": false,
+      "data": {
+        "label": "Status",
+        "value": "in_progress"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "status",
+      "value": "",
+      "data": {
+        "label": "Status",
+        "value": "in_progress"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "status",
+      "value": "12.5",
+      "data": {
+        "label": "Status",
+        "value": "in_progress"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "status",
+      "value": "not a number",
+      "data": {
+        "label": "Status",
+        "value": "in_progress"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "status",
+      "value": "1",
+      "data": {
+        "label": "Status",
+        "value": "in_progress"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "status",
+      "value": "true",
+      "data": {
+        "label": "Status",
+        "value": "in_progress"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "status",
+      "value": "yes",
+      "data": {
+        "label": "Status",
+        "value": "in_progress"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "status",
+      "value": "on",
+      "data": {
+        "label": "Status",
+        "value": "in_progress"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "status",
+      "value": "off",
+      "data": {
+        "label": "Status",
+        "value": "in_progress"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "status",
+      "value": "0",
+      "data": {
+        "label": "Status",
+        "value": "in_progress"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "status",
+      "value": " 8 ",
+      "data": {
+        "label": "Status",
+        "value": "in_progress"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "status",
+      "value": "3abc",
+      "data": {
+        "label": "Status",
+        "value": "in_progress"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "status",
+      "value": "-4e2",
+      "data": {
+        "label": "Status",
+        "value": "in_progress"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "status",
+      "value": "Infinity",
+      "data": {
+        "label": "Status",
+        "value": "in_progress"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "status",
+      "value": "NaN",
+      "data": {
+        "label": "Status",
+        "value": "in_progress"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "status",
+      "value": [],
+      "data": {
+        "label": "Status",
+        "value": "in_progress"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "status",
+      "value": [
+        {
+          "t": 0,
+          "v": 4
+        },
+        {
+          "t": 1,
+          "v": 9
+        }
+      ],
+      "data": {
+        "label": "Status",
+        "value": "in_progress"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "status",
+      "value": [
+        {
+          "t": 5,
+          "v": -2.5
+        }
+      ],
+      "data": {
+        "label": "Status",
+        "value": "in_progress"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "status",
+      "value": 0,
+      "data": {
+        "label": "Status",
+        "value": "blocked"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "status",
+      "value": 1,
+      "data": {
+        "label": "Status",
+        "value": "blocked"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "status",
+      "value": -1,
+      "data": {
+        "label": "Status",
+        "value": "blocked"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "status",
+      "value": 7,
+      "data": {
+        "label": "Status",
+        "value": "blocked"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "status",
+      "value": 2.5,
+      "data": {
+        "label": "Status",
+        "value": "blocked"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "status",
+      "value": 2.6,
+      "data": {
+        "label": "Status",
+        "value": "blocked"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "status",
+      "value": -2.5,
+      "data": {
+        "label": "Status",
+        "value": "blocked"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "status",
+      "value": 0.5,
+      "data": {
+        "label": "Status",
+        "value": "blocked"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "status",
+      "value": 4.9,
+      "data": {
+        "label": "Status",
+        "value": "blocked"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "status",
+      "value": 5,
+      "data": {
+        "label": "Status",
+        "value": "blocked"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "status",
+      "value": 10,
+      "data": {
+        "label": "Status",
+        "value": "blocked"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "status",
+      "value": 50,
+      "data": {
+        "label": "Status",
+        "value": "blocked"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "status",
+      "value": 150,
+      "data": {
+        "label": "Status",
+        "value": "blocked"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "status",
+      "value": 1e+21,
+      "data": {
+        "label": "Status",
+        "value": "blocked"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "status",
+      "value": 1.7976931348623157e+308,
+      "data": {
+        "label": "Status",
+        "value": "blocked"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "status",
+      "value": true,
+      "data": {
+        "label": "Status",
+        "value": "blocked"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "status",
+      "value": false,
+      "data": {
+        "label": "Status",
+        "value": "blocked"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "status",
+      "value": "",
+      "data": {
+        "label": "Status",
+        "value": "blocked"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "status",
+      "value": "12.5",
+      "data": {
+        "label": "Status",
+        "value": "blocked"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "status",
+      "value": "not a number",
+      "data": {
+        "label": "Status",
+        "value": "blocked"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "status",
+      "value": "1",
+      "data": {
+        "label": "Status",
+        "value": "blocked"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "status",
+      "value": "true",
+      "data": {
+        "label": "Status",
+        "value": "blocked"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "status",
+      "value": "yes",
+      "data": {
+        "label": "Status",
+        "value": "blocked"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "status",
+      "value": "on",
+      "data": {
+        "label": "Status",
+        "value": "blocked"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "status",
+      "value": "off",
+      "data": {
+        "label": "Status",
+        "value": "blocked"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "status",
+      "value": "0",
+      "data": {
+        "label": "Status",
+        "value": "blocked"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "status",
+      "value": " 8 ",
+      "data": {
+        "label": "Status",
+        "value": "blocked"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "status",
+      "value": "3abc",
+      "data": {
+        "label": "Status",
+        "value": "blocked"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "status",
+      "value": "-4e2",
+      "data": {
+        "label": "Status",
+        "value": "blocked"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "status",
+      "value": "Infinity",
+      "data": {
+        "label": "Status",
+        "value": "blocked"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "status",
+      "value": "NaN",
+      "data": {
+        "label": "Status",
+        "value": "blocked"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "status",
+      "value": [],
+      "data": {
+        "label": "Status",
+        "value": "blocked"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "status",
+      "value": [
+        {
+          "t": 0,
+          "v": 4
+        },
+        {
+          "t": 1,
+          "v": 9
+        }
+      ],
+      "data": {
+        "label": "Status",
+        "value": "blocked"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "status",
+      "value": [
+        {
+          "t": 5,
+          "v": -2.5
+        }
+      ],
+      "data": {
+        "label": "Status",
+        "value": "blocked"
+      }
+    },
+    {
+      "sample": 3,
+      "key": "status",
+      "value": 0,
+      "data": {
+        "label": "Status",
+        "value": "done"
+      }
+    },
+    {
+      "sample": 3,
+      "key": "status",
+      "value": 1,
+      "data": {
+        "label": "Status",
+        "value": "done"
+      }
+    },
+    {
+      "sample": 3,
+      "key": "status",
+      "value": -1,
+      "data": {
+        "label": "Status",
+        "value": "done"
+      }
+    },
+    {
+      "sample": 3,
+      "key": "status",
+      "value": 7,
+      "data": {
+        "label": "Status",
+        "value": "done"
+      }
+    },
+    {
+      "sample": 3,
+      "key": "status",
+      "value": 2.5,
+      "data": {
+        "label": "Status",
+        "value": "done"
+      }
+    },
+    {
+      "sample": 3,
+      "key": "status",
+      "value": 2.6,
+      "data": {
+        "label": "Status",
+        "value": "done"
+      }
+    },
+    {
+      "sample": 3,
+      "key": "status",
+      "value": -2.5,
+      "data": {
+        "label": "Status",
+        "value": "done"
+      }
+    },
+    {
+      "sample": 3,
+      "key": "status",
+      "value": 0.5,
+      "data": {
+        "label": "Status",
+        "value": "done"
+      }
+    },
+    {
+      "sample": 3,
+      "key": "status",
+      "value": 4.9,
+      "data": {
+        "label": "Status",
+        "value": "done"
+      }
+    },
+    {
+      "sample": 3,
+      "key": "status",
+      "value": 5,
+      "data": {
+        "label": "Status",
+        "value": "done"
+      }
+    },
+    {
+      "sample": 3,
+      "key": "status",
+      "value": 10,
+      "data": {
+        "label": "Status",
+        "value": "done"
+      }
+    },
+    {
+      "sample": 3,
+      "key": "status",
+      "value": 50,
+      "data": {
+        "label": "Status",
+        "value": "done"
+      }
+    },
+    {
+      "sample": 3,
+      "key": "status",
+      "value": 150,
+      "data": {
+        "label": "Status",
+        "value": "done"
+      }
+    },
+    {
+      "sample": 3,
+      "key": "status",
+      "value": 1e+21,
+      "data": {
+        "label": "Status",
+        "value": "done"
+      }
+    },
+    {
+      "sample": 3,
+      "key": "status",
+      "value": 1.7976931348623157e+308,
+      "data": {
+        "label": "Status",
+        "value": "done"
+      }
+    },
+    {
+      "sample": 3,
+      "key": "status",
+      "value": true,
+      "data": {
+        "label": "Status",
+        "value": "done"
+      }
+    },
+    {
+      "sample": 3,
+      "key": "status",
+      "value": false,
+      "data": {
+        "label": "Status",
+        "value": "done"
+      }
+    },
+    {
+      "sample": 3,
+      "key": "status",
+      "value": "",
+      "data": {
+        "label": "Status",
+        "value": "done"
+      }
+    },
+    {
+      "sample": 3,
+      "key": "status",
+      "value": "12.5",
+      "data": {
+        "label": "Status",
+        "value": "done"
+      }
+    },
+    {
+      "sample": 3,
+      "key": "status",
+      "value": "not a number",
+      "data": {
+        "label": "Status",
+        "value": "done"
+      }
+    },
+    {
+      "sample": 3,
+      "key": "status",
+      "value": "1",
+      "data": {
+        "label": "Status",
+        "value": "done"
+      }
+    },
+    {
+      "sample": 3,
+      "key": "status",
+      "value": "true",
+      "data": {
+        "label": "Status",
+        "value": "done"
+      }
+    },
+    {
+      "sample": 3,
+      "key": "status",
+      "value": "yes",
+      "data": {
+        "label": "Status",
+        "value": "done"
+      }
+    },
+    {
+      "sample": 3,
+      "key": "status",
+      "value": "on",
+      "data": {
+        "label": "Status",
+        "value": "done"
+      }
+    },
+    {
+      "sample": 3,
+      "key": "status",
+      "value": "off",
+      "data": {
+        "label": "Status",
+        "value": "done"
+      }
+    },
+    {
+      "sample": 3,
+      "key": "status",
+      "value": "0",
+      "data": {
+        "label": "Status",
+        "value": "done"
+      }
+    },
+    {
+      "sample": 3,
+      "key": "status",
+      "value": " 8 ",
+      "data": {
+        "label": "Status",
+        "value": "done"
+      }
+    },
+    {
+      "sample": 3,
+      "key": "status",
+      "value": "3abc",
+      "data": {
+        "label": "Status",
+        "value": "done"
+      }
+    },
+    {
+      "sample": 3,
+      "key": "status",
+      "value": "-4e2",
+      "data": {
+        "label": "Status",
+        "value": "done"
+      }
+    },
+    {
+      "sample": 3,
+      "key": "status",
+      "value": "Infinity",
+      "data": {
+        "label": "Status",
+        "value": "done"
+      }
+    },
+    {
+      "sample": 3,
+      "key": "status",
+      "value": "NaN",
+      "data": {
+        "label": "Status",
+        "value": "done"
+      }
+    },
+    {
+      "sample": 3,
+      "key": "status",
+      "value": [],
+      "data": {
+        "label": "Status",
+        "value": "done"
+      }
+    },
+    {
+      "sample": 3,
+      "key": "status",
+      "value": [
+        {
+          "t": 0,
+          "v": 4
+        },
+        {
+          "t": 1,
+          "v": 9
+        }
+      ],
+      "data": {
+        "label": "Status",
+        "value": "done"
+      }
+    },
+    {
+      "sample": 3,
+      "key": "status",
+      "value": [
+        {
+          "t": 5,
+          "v": -2.5
+        }
+      ],
+      "data": {
+        "label": "Status",
+        "value": "done"
+      }
+    }
+  ],
+  "commands": [
+    {
+      "sample": 0,
+      "key": "reset",
+      "payload": null,
+      "hasPayload": false,
+      "data": {
+        "label": "Status",
+        "value": "not_started"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "check_all",
+      "payload": null,
+      "hasPayload": false,
+      "data": {
+        "label": "Status",
+        "value": "done"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "reset",
+      "payload": null,
+      "hasPayload": false,
+      "data": {
+        "label": "Status",
+        "value": "not_started"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "check_all",
+      "payload": null,
+      "hasPayload": false,
+      "data": {
+        "label": "Status",
+        "value": "done"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "reset",
+      "payload": null,
+      "hasPayload": false,
+      "data": {
+        "label": "Status",
+        "value": "not_started"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "check_all",
+      "payload": null,
+      "hasPayload": false,
+      "data": {
+        "label": "Status",
+        "value": "done"
+      }
+    },
+    {
+      "sample": 3,
+      "key": "reset",
+      "payload": null,
+      "hasPayload": false,
+      "data": {
+        "label": "Status",
+        "value": "not_started"
+      }
+    },
+    {
+      "sample": 3,
+      "key": "check_all",
+      "payload": null,
+      "hasPayload": false,
+      "data": {
+        "label": "Status",
+        "value": "done"
+      }
+    }
+  ]
+}

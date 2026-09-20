@@ -1,0 +1,45 @@
+{
+  "parse": "ok",
+  "mode": "parse",
+  "widgetIds": [
+    "n"
+  ],
+  "widgetTypes": {
+    "n": "text"
+  },
+  "opaqueWidgets": {},
+  "relationIds": [],
+  "connectionIds": [],
+  "glueIds": [],
+  "activePacks": [],
+  "unknownRelationIds": [],
+  "unknownConnectionIds": [],
+  "unknownGlueIds": [],
+  "unknownBoardFields": [
+    "numberField"
+  ],
+  "rawActivePacks": [],
+  "device": {
+    "activeWorkspaceId": "workspace",
+    "activeCanvasId": "canvas",
+    "canvasViews": {}
+  },
+  "serialized": "{\"numberField\":[0,0,1,-1,1.5,0.1,0.2,0.30000000000000004,100,255,1000000,1e+21,1e+21,123456789012345680000,1e+21,12345678901234567000,9007199254740992,1e-7,0.000001,1e-7,0.000025,1e+100,-1e-10,5e-324,1.7976931348623157e+308,4.35,1.005,3.14159265358979,2.718281828459045,10000000000000000,12345678.9,1,1000,240.5,-160.25,1,10,1],\"format\":\"grovepad-board\",\"v\":2,\"workspaces\":{\"workspace\":{\"id\":\"workspace\",\"name\":\"Workspace\",\"rootCanvasId\":\"canvas\",\"createdAt\":1}},\"canvases\":{\"canvas\":{\"id\":\"canvas\",\"name\":\"Origin\",\"workspaceId\":\"workspace\",\"parentCanvasId\":null}},\"widgets\":{\"n\":{\"id\":\"n\",\"type\":\"text\",\"title\":\"n\",\"canvasId\":\"canvas\",\"position\":{\"x\":0.5,\"y\":-0.25},\"size\":{\"width\":100,\"height\":150},\"data\":{\"text\":\"\",\"numbers\":[0,0,1,-1,1.5,0.1,0.2,0.30000000000000004,100,255,1000000,1e+21,1e+21,123456789012345680000,1e+21,12345678901234567000,9007199254740992,1e-7,0.000001,1e-7,0.000025,1e+100,-1e-10,5e-324,1.7976931348623157e+308,4.35,1.005,3.14159265358979,2.718281828459045,10000000000000000,12345678.9,1,1000,240.5,-160.25,1,10,1],\"nested\":{\"deep\":[[1e+21],{\"tiny\":5e-324}]}},\"metadata\":{\"badges\":[]}}},\"relations\":{},\"connections\":{},\"glues\":{},\"activePacks\":[]}",
+  "sha256": "33155ea6ebc7fb811d716da6c06b552e6a8003e5a32ddc707f814fd91566d705",
+  "canonical": "{\"activePacks\":[],\"canvases\":{\"canvas\":{\"id\":\"canvas\",\"name\":\"Origin\",\"parentCanvasId\":null,\"workspaceId\":\"workspace\"}},\"connections\":{},\"format\":\"grovepad-board\",\"glues\":{},\"numberField\":[0,0,1,-1,1.5,0.1,0.2,0.30000000000000004,100,255,1000000,1e+21,1e+21,123456789012345680000,1e+21,12345678901234567000,9007199254740992,1e-7,0.000001,1e-7,0.000025,1e+100,-1e-10,5e-324,1.7976931348623157e+308,4.35,1.005,3.14159265358979,2.718281828459045,10000000000000000,12345678.9,1,1000,240.5,-160.25,1,10,1],\"relations\":{},\"v\":2,\"widgets\":{\"n\":{\"canvasId\":\"canvas\",\"data\":{\"nested\":{\"deep\":[[1e+21],{\"tiny\":5e-324}]},\"numbers\":[0,0,1,-1,1.5,0.1,0.2,0.30000000000000004,100,255,1000000,1e+21,1e+21,123456789012345680000,1e+21,12345678901234567000,9007199254740992,1e-7,0.000001,1e-7,0.000025,1e+100,-1e-10,5e-324,1.7976931348623157e+308,4.35,1.005,3.14159265358979,2.718281828459045,10000000000000000,12345678.9,1,1000,240.5,-160.25,1,10,1],\"text\":\"\"},\"id\":\"n\",\"metadata\":{\"badges\":[]},\"position\":{\"x\":0.5,\"y\":-0.25},\"size\":{\"height\":150,\"width\":100},\"title\":\"n\",\"type\":\"text\"}},\"workspaces\":{\"workspace\":{\"createdAt\":1,\"id\":\"workspace\",\"name\":\"Workspace\",\"rootCanvasId\":\"canvas\"}}}",
+  "canonicalSha256": "e14a5a6091a2e02ba51ae427461f9713dc26cdc12b1186cc69b1a22f2c17e4c9",
+  "split": {
+    "index": {
+      "canonical": "{\"activePacks\":[],\"boardFormat\":\"grovepad-board\",\"boardVersion\":2,\"canvases\":{\"canvas\":{\"id\":\"canvas\",\"name\":\"Origin\",\"parentCanvasId\":null,\"workspaceId\":\"workspace\"}},\"connections\":{},\"extra\":{\"numberField\":[0,0,1,-1,1.5,0.1,0.2,0.30000000000000004,100,255,1000000,1e+21,1e+21,123456789012345680000,1e+21,12345678901234567000,9007199254740992,1e-7,0.000001,1e-7,0.000025,1e+100,-1e-10,5e-324,1.7976931348623157e+308,4.35,1.005,3.14159265358979,2.718281828459045,10000000000000000,12345678.9,1,1000,240.5,-160.25,1,10,1]},\"format\":\"grovepad-board-index\",\"glues\":{},\"relations\":{},\"v\":1,\"workspaces\":{\"workspace\":{\"createdAt\":1,\"id\":\"workspace\",\"name\":\"Workspace\",\"rootCanvasId\":\"canvas\"}}}",
+      "sha256": "23914feb7000fdcfdd5f7d2595752c6d7c456a41ee22a7bd2fdbd338d734dafb",
+      "pretty": "{\n  \"format\": \"grovepad-board-index\",\n  \"v\": 1,\n  \"boardFormat\": \"grovepad-board\",\n  \"boardVersion\": 2,\n  \"workspaces\": {\n    \"workspace\": {\n      \"id\": \"workspace\",\n      \"name\": \"Workspace\",\n      \"rootCanvasId\": \"canvas\",\n      \"createdAt\": 1\n    }\n  },\n  \"canvases\": {\n    \"canvas\": {\n      \"id\": \"canvas\",\n      \"name\": \"Origin\",\n      \"workspaceId\": \"workspace\",\n      \"parentCanvasId\": null\n    }\n  },\n  \"activePacks\": [],\n  \"relations\": {},\n  \"connections\": {},\n  \"glues\": {},\n  \"extra\": {\n    \"numberField\": [\n      0,\n      0,\n      1,\n      -1,\n      1.5,\n      0.1,\n      0.2,\n      0.30000000000000004,\n      100,\n      255,\n      1000000,\n      1e+21,\n      1e+21,\n      123456789012345680000,\n      1e+21,\n      12345678901234567000,\n      9007199254740992,\n      1e-7,\n      0.000001,\n      1e-7,\n      0.000025,\n      1e+100,\n      -1e-10,\n      5e-324,\n      1.7976931348623157e+308,\n      4.35,\n      1.005,\n      3.14159265358979,\n      2.718281828459045,\n      10000000000000000,\n      12345678.9,\n      1,\n      1000,\n      240.5,\n      -160.25,\n      1,\n      10,\n      1\n    ]\n  }\n}"
+    },
+    "canvases": {
+      "canvas": {
+        "canonical": "{\"canvasId\":\"canvas\",\"connections\":{},\"format\":\"grovepad-canvas\",\"glues\":{},\"relations\":{},\"v\":1,\"widgets\":{\"n\":{\"canvasId\":\"canvas\",\"data\":{\"nested\":{\"deep\":[[1e+21],{\"tiny\":5e-324}]},\"numbers\":[0,0,1,-1,1.5,0.1,0.2,0.30000000000000004,100,255,1000000,1e+21,1e+21,123456789012345680000,1e+21,12345678901234567000,9007199254740992,1e-7,0.000001,1e-7,0.000025,1e+100,-1e-10,5e-324,1.7976931348623157e+308,4.35,1.005,3.14159265358979,2.718281828459045,10000000000000000,12345678.9,1,1000,240.5,-160.25,1,10,1],\"text\":\"\"},\"id\":\"n\",\"metadata\":{\"badges\":[]},\"position\":{\"x\":0.5,\"y\":-0.25},\"size\":{\"height\":150,\"width\":100},\"title\":\"n\",\"type\":\"text\"}}}",
+        "sha256": "4328ae9a8b4bc5c977a185b56523614b81c8de07040522dd8f2c35dd977a160f",
+        "pretty": "{\n  \"format\": \"grovepad-canvas\",\n  \"v\": 1,\n  \"canvasId\": \"canvas\",\n  \"widgets\": {\n    \"n\": {\n      \"id\": \"n\",\n      \"type\": \"text\",\n      \"title\": \"n\",\n      \"canvasId\": \"canvas\",\n      \"position\": {\n        \"x\": 0.5,\n        \"y\": -0.25\n      },\n      \"size\": {\n        \"width\": 100,\n        \"height\": 150\n      },\n      \"data\": {\n        \"text\": \"\",\n        \"numbers\": [\n          0,\n          0,\n          1,\n          -1,\n          1.5,\n          0.1,\n          0.2,\n          0.30000000000000004,\n          100,\n          255,\n          1000000,\n          1e+21,\n          1e+21,\n          123456789012345680000,\n          1e+21,\n          12345678901234567000,\n          9007199254740992,\n          1e-7,\n          0.000001,\n          1e-7,\n          0.000025,\n          1e+100,\n          -1e-10,\n          5e-324,\n          1.7976931348623157e+308,\n          4.35,\n          1.005,\n          3.14159265358979,\n          2.718281828459045,\n          10000000000000000,\n          12345678.9,\n          1,\n          1000,\n          240.5,\n          -160.25,\n          1,\n          10,\n          1\n        ],\n        \"nested\": {\n          \"deep\": [\n            [\n              1e+21\n            ],\n            {\n              \"tiny\": 5e-324\n            }\n          ]\n        }\n      },\n      \"metadata\": {\n        \"badges\": []\n      }\n    }\n  },\n  \"relations\": {},\n  \"connections\": {},\n  \"glues\": {}\n}"
+      }
+    }
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "parse": "ok",
+  "mode": "parse",
+  "widgetIds": [],
+  "widgetTypes": {},
+  "opaqueWidgets": {},
+  "relationIds": [],
+  "connectionIds": [],
+  "glueIds": [],
+  "activePacks": [],
+  "unknownRelationIds": [],
+  "unknownConnectionIds": [],
+  "unknownGlueIds": [],
+  "unknownBoardFields": [],
+  "rawActivePacks": [],
+  "device": {
+    "activeWorkspaceId": "workspace",
+    "activeCanvasId": "canvas",
+    "canvasViews": {}
+  },
+  "serialized": "{\"format\":\"grovepad-board\",\"v\":2,\"workspaces\":{\"workspace\":{\"id\":\"workspace\",\"name\":\"Workspace\",\"rootCanvasId\":\"canvas\",\"createdAt\":1}},\"canvases\":{\"canvas\":{\"id\":\"canvas\",\"name\":\"Origin\",\"workspaceId\":\"workspace\",\"parentCanvasId\":null}},\"widgets\":{},\"relations\":{},\"connections\":{},\"glues\":{},\"activePacks\":[]}",
+  "sha256": "323eb06f556e5236393d93593941ab3012835ac5f84342443f9fbbf820b50ff0",
+  "canonical": "{\"activePacks\":[],\"canvases\":{\"canvas\":{\"id\":\"canvas\",\"name\":\"Origin\",\"parentCanvasId\":null,\"workspaceId\":\"workspace\"}},\"connections\":{},\"format\":\"grovepad-board\",\"glues\":{},\"relations\":{},\"v\":2,\"widgets\":{},\"workspaces\":{\"workspace\":{\"createdAt\":1,\"id\":\"workspace\",\"name\":\"Workspace\",\"rootCanvasId\":\"canvas\"}}}",
+  "canonicalSha256": "53b34c72f7e7f5d905dd0c572ec9a58c8c13b9ba1b32c1e7d2e53ea673761f2b",
+  "split": {
+    "index": {
+      "canonical": "{\"activePacks\":[],\"boardFormat\":\"grovepad-board\",\"boardVersion\":2,\"canvases\":{\"canvas\":{\"id\":\"canvas\",\"name\":\"Origin\",\"parentCanvasId\":null,\"workspaceId\":\"workspace\"}},\"connections\":{},\"extra\":{},\"format\":\"grovepad-board-index\",\"glues\":{},\"relations\":{},\"v\":1,\"workspaces\":{\"workspace\":{\"createdAt\":1,\"id\":\"workspace\",\"name\":\"Workspace\",\"rootCanvasId\":\"canvas\"}}}",
+      "sha256": "8aeda9811054eff883f2d04c0f14b77584d1b5a02d970317ef0e97baf76dbf29",
+      "pretty": "{\n  \"format\": \"grovepad-board-index\",\n  \"v\": 1,\n  \"boardFormat\": \"grovepad-board\",\n  \"boardVersion\": 2,\n  \"workspaces\": {\n    \"workspace\": {\n      \"id\": \"workspace\",\n      \"name\": \"Workspace\",\n      \"rootCanvasId\": \"canvas\",\n      \"createdAt\": 1\n    }\n  },\n  \"canvases\": {\n    \"canvas\": {\n      \"id\": \"canvas\",\n      \"name\": \"Origin\",\n      \"workspaceId\": \"workspace\",\n      \"parentCanvasId\": null\n    }\n  },\n  \"activePacks\": [],\n  \"relations\": {},\n  \"connections\": {},\n  \"glues\": {},\n  \"extra\": {}\n}"
+    },
+    "canvases": {
+      "canvas": {
+        "canonical": "{\"canvasId\":\"canvas\",\"connections\":{},\"format\":\"grovepad-canvas\",\"glues\":{},\"relations\":{},\"v\":1,\"widgets\":{}}",
+        "sha256": "e3f04fa84da874db19d4a0276e1a84885b7b79f86f578b2440807dcca8140339",
+        "pretty": "{\n  \"format\": \"grovepad-canvas\",\n  \"v\": 1,\n  \"canvasId\": \"canvas\",\n  \"widgets\": {},\n  \"relations\": {},\n  \"connections\": {},\n  \"glues\": {}\n}"
+      }
+    }
+  }
+}

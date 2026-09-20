@@ -1,0 +1,208 @@
+{
+  "name": "trigger-baseline-mode-never-fires",
+  "widgets": {
+    "toggle": {
+      "id": "toggle",
+      "type": "toggle",
+      "title": "toggle",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 280,
+        "height": 200
+      },
+      "data": {
+        "label": "Condition",
+        "value": false
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "counter": {
+      "id": "counter",
+      "type": "counter",
+      "title": "counter",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 280,
+        "height": 200
+      },
+      "data": {
+        "label": "Tally",
+        "count": 0,
+        "step": 1,
+        "skin": "tally"
+      },
+      "metadata": {
+        "badges": []
+      }
+    }
+  },
+  "connections": {
+    "t": {
+      "id": "t",
+      "enabled": true,
+      "fromId": "toggle",
+      "fromField": "value",
+      "toId": "counter",
+      "kind": "trigger",
+      "command": "increment",
+      "edge": "rising"
+    }
+  },
+  "steps": [
+    {
+      "label": "baseline off",
+      "seeds": [
+        "toggle"
+      ],
+      "baselineOnly": true,
+      "expect": {
+        "writes": {},
+        "firedIds": [],
+        "executeRequests": [],
+        "memory": {
+          "t": {
+            "serialized": "b:false",
+            "bool": false
+          }
+        },
+        "widgetsAfter": {
+          "toggle": {
+            "label": "Condition",
+            "value": false
+          },
+          "counter": {
+            "label": "Tally",
+            "count": 0,
+            "step": 1,
+            "skin": "tally"
+          }
+        }
+      }
+    },
+    {
+      "label": "baseline on (no fire)",
+      "seeds": [
+        "toggle"
+      ],
+      "baselineOnly": true,
+      "edits": {
+        "toggle": {
+          "label": "Condition",
+          "value": true
+        }
+      },
+      "expect": {
+        "writes": {},
+        "firedIds": [],
+        "executeRequests": [],
+        "memory": {
+          "t": {
+            "serialized": "b:true",
+            "bool": true
+          }
+        },
+        "widgetsAfter": {
+          "toggle": {
+            "label": "Condition",
+            "value": true
+          },
+          "counter": {
+            "label": "Tally",
+            "count": 0,
+            "step": 1,
+            "skin": "tally"
+          }
+        }
+      }
+    },
+    {
+      "label": "off then on fires once",
+      "seeds": [
+        "toggle"
+      ],
+      "edits": {
+        "toggle": {
+          "label": "Condition",
+          "value": false
+        }
+      },
+      "expect": {
+        "writes": {},
+        "firedIds": [],
+        "executeRequests": [],
+        "memory": {
+          "t": {
+            "serialized": "b:false",
+            "bool": false
+          }
+        },
+        "widgetsAfter": {
+          "toggle": {
+            "label": "Condition",
+            "value": false
+          },
+          "counter": {
+            "label": "Tally",
+            "count": 0,
+            "step": 1,
+            "skin": "tally"
+          }
+        }
+      }
+    },
+    {
+      "label": "on",
+      "seeds": [
+        "toggle"
+      ],
+      "edits": {
+        "toggle": {
+          "label": "Condition",
+          "value": true
+        }
+      },
+      "expect": {
+        "writes": {
+          "counter": {
+            "label": "Tally",
+            "count": 1,
+            "step": 1,
+            "skin": "tally"
+          }
+        },
+        "firedIds": [
+          "t"
+        ],
+        "executeRequests": [],
+        "memory": {
+          "t": {
+            "serialized": "b:true",
+            "bool": true
+          }
+        },
+        "widgetsAfter": {
+          "toggle": {
+            "label": "Condition",
+            "value": true
+          },
+          "counter": {
+            "label": "Tally",
+            "count": 1,
+            "step": 1,
+            "skin": "tally"
+          }
+        }
+      }
+    }
+  ]
+}

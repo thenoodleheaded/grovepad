@@ -1,0 +1,18 @@
+{
+  "format": "grovepad-board",
+  "v": 2,
+  "workspaces": {},
+  "canvases": {
+    "canvas": {
+      "id": "canvas",
+      "name": "Origin",
+      "workspaceId": "workspace",
+      "parentCanvasId": null
+    }
+  },
+  "widgets": {},
+  "relations": {},
+  "connections": {},
+  "glues": {},
+  "activePacks": []
+}

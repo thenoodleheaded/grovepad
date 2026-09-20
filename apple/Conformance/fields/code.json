@@ -1,0 +1,688 @@
+{
+  "outputs": [
+    {
+      "key": "code",
+      "label": "Code",
+      "valueType": "text",
+      "unit": null,
+      "index": 0,
+      "timeSensitive": false
+    }
+  ],
+  "inputs": [
+    {
+      "key": "code",
+      "label": "Code",
+      "kind": "field",
+      "valueType": "text",
+      "unit": null,
+      "acceptsPayload": false,
+      "index": 0
+    }
+  ],
+  "samples": [
+    {
+      "language": "ts",
+      "code": ""
+    },
+    {
+      "language": "swift",
+      "code": "let x = 1\n"
+    }
+  ],
+  "gets": [
+    {
+      "sample": 0,
+      "key": "code",
+      "value": ""
+    },
+    {
+      "sample": 1,
+      "key": "code",
+      "value": "let x = 1\n"
+    }
+  ],
+  "sets": [
+    {
+      "sample": 0,
+      "key": "code",
+      "value": 0,
+      "data": {
+        "language": "ts",
+        "code": "0"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "code",
+      "value": 1,
+      "data": {
+        "language": "ts",
+        "code": "1"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "code",
+      "value": -1,
+      "data": {
+        "language": "ts",
+        "code": "-1"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "code",
+      "value": 7,
+      "data": {
+        "language": "ts",
+        "code": "7"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "code",
+      "value": 2.5,
+      "data": {
+        "language": "ts",
+        "code": "2.5"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "code",
+      "value": 2.6,
+      "data": {
+        "language": "ts",
+        "code": "2.6"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "code",
+      "value": -2.5,
+      "data": {
+        "language": "ts",
+        "code": "-2.5"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "code",
+      "value": 0.5,
+      "data": {
+        "language": "ts",
+        "code": "0.5"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "code",
+      "value": 4.9,
+      "data": {
+        "language": "ts",
+        "code": "4.9"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "code",
+      "value": 5,
+      "data": {
+        "language": "ts",
+        "code": "5"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "code",
+      "value": 10,
+      "data": {
+        "language": "ts",
+        "code": "10"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "code",
+      "value": 50,
+      "data": {
+        "language": "ts",
+        "code": "50"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "code",
+      "value": 150,
+      "data": {
+        "language": "ts",
+        "code": "150"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "code",
+      "value": 1e+21,
+      "data": {
+        "language": "ts",
+        "code": "1e+21"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "code",
+      "value": 1.7976931348623157e+308,
+      "data": {
+        "language": "ts",
+        "code": "1.7976931348623157e+308"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "code",
+      "value": true,
+      "data": {
+        "language": "ts",
+        "code": "true"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "code",
+      "value": false,
+      "data": {
+        "language": "ts",
+        "code": "false"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "code",
+      "value": "",
+      "data": {
+        "language": "ts",
+        "code": ""
+      }
+    },
+    {
+      "sample": 0,
+      "key": "code",
+      "value": "12.5",
+      "data": {
+        "language": "ts",
+        "code": "12.5"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "code",
+      "value": "not a number",
+      "data": {
+        "language": "ts",
+        "code": "not a number"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "code",
+      "value": "1",
+      "data": {
+        "language": "ts",
+        "code": "1"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "code",
+      "value": "true",
+      "data": {
+        "language": "ts",
+        "code": "true"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "code",
+      "value": "yes",
+      "data": {
+        "language": "ts",
+        "code": "yes"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "code",
+      "value": "on",
+      "data": {
+        "language": "ts",
+        "code": "on"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "code",
+      "value": "off",
+      "data": {
+        "language": "ts",
+        "code": "off"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "code",
+      "value": "0",
+      "data": {
+        "language": "ts",
+        "code": "0"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "code",
+      "value": " 8 ",
+      "data": {
+        "language": "ts",
+        "code": " 8 "
+      }
+    },
+    {
+      "sample": 0,
+      "key": "code",
+      "value": "3abc",
+      "data": {
+        "language": "ts",
+        "code": "3abc"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "code",
+      "value": "-4e2",
+      "data": {
+        "language": "ts",
+        "code": "-4e2"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "code",
+      "value": "Infinity",
+      "data": {
+        "language": "ts",
+        "code": "Infinity"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "code",
+      "value": "NaN",
+      "data": {
+        "language": "ts",
+        "code": "NaN"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "code",
+      "value": [],
+      "data": {
+        "language": "ts",
+        "code": ""
+      }
+    },
+    {
+      "sample": 0,
+      "key": "code",
+      "value": [
+        {
+          "t": 0,
+          "v": 4
+        },
+        {
+          "t": 1,
+          "v": 9
+        }
+      ],
+      "data": {
+        "language": "ts",
+        "code": "4, 9"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "code",
+      "value": [
+        {
+          "t": 5,
+          "v": -2.5
+        }
+      ],
+      "data": {
+        "language": "ts",
+        "code": "-2.5"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "code",
+      "value": 0,
+      "data": {
+        "language": "swift",
+        "code": "0"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "code",
+      "value": 1,
+      "data": {
+        "language": "swift",
+        "code": "1"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "code",
+      "value": -1,
+      "data": {
+        "language": "swift",
+        "code": "-1"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "code",
+      "value": 7,
+      "data": {
+        "language": "swift",
+        "code": "7"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "code",
+      "value": 2.5,
+      "data": {
+        "language": "swift",
+        "code": "2.5"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "code",
+      "value": 2.6,
+      "data": {
+        "language": "swift",
+        "code": "2.6"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "code",
+      "value": -2.5,
+      "data": {
+        "language": "swift",
+        "code": "-2.5"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "code",
+      "value": 0.5,
+      "data": {
+        "language": "swift",
+        "code": "0.5"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "code",
+      "value": 4.9,
+      "data": {
+        "language": "swift",
+        "code": "4.9"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "code",
+      "value": 5,
+      "data": {
+        "language": "swift",
+        "code": "5"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "code",
+      "value": 10,
+      "data": {
+        "language": "swift",
+        "code": "10"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "code",
+      "value": 50,
+      "data": {
+        "language": "swift",
+        "code": "50"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "code",
+      "value": 150,
+      "data": {
+        "language": "swift",
+        "code": "150"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "code",
+      "value": 1e+21,
+      "data": {
+        "language": "swift",
+        "code": "1e+21"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "code",
+      "value": 1.7976931348623157e+308,
+      "data": {
+        "language": "swift",
+        "code": "1.7976931348623157e+308"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "code",
+      "value": true,
+      "data": {
+        "language": "swift",
+        "code": "true"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "code",
+      "value": false,
+      "data": {
+        "language": "swift",
+        "code": "false"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "code",
+      "value": "",
+      "data": {
+        "language": "swift",
+        "code": ""
+      }
+    },
+    {
+      "sample": 1,
+      "key": "code",
+      "value": "12.5",
+      "data": {
+        "language": "swift",
+        "code": "12.5"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "code",
+      "value": "not a number",
+      "data": {
+        "language": "swift",
+        "code": "not a number"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "code",
+      "value": "1",
+      "data": {
+        "language": "swift",
+        "code": "1"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "code",
+      "value": "true",
+      "data": {
+        "language": "swift",
+        "code": "true"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "code",
+      "value": "yes",
+      "data": {
+        "language": "swift",
+        "code": "yes"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "code",
+      "value": "on",
+      "data": {
+        "language": "swift",
+        "code": "on"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "code",
+      "value": "off",
+      "data": {
+        "language": "swift",
+        "code": "off"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "code",
+      "value": "0",
+      "data": {
+        "language": "swift",
+        "code": "0"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "code",
+      "value": " 8 ",
+      "data": {
+        "language": "swift",
+        "code": " 8 "
+      }
+    },
+    {
+      "sample": 1,
+      "key": "code",
+      "value": "3abc",
+      "data": {
+        "language": "swift",
+        "code": "3abc"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "code",
+      "value": "-4e2",
+      "data": {
+        "language": "swift",
+        "code": "-4e2"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "code",
+      "value": "Infinity",
+      "data": {
+        "language": "swift",
+        "code": "Infinity"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "code",
+      "value": "NaN",
+      "data": {
+        "language": "swift",
+        "code": "NaN"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "code",
+      "value": [],
+      "data": {
+        "language": "swift",
+        "code": ""
+      }
+    },
+    {
+      "sample": 1,
+      "key": "code",
+      "value": [
+        {
+          "t": 0,
+          "v": 4
+        },
+        {
+          "t": 1,
+          "v": 9
+        }
+      ],
+      "data": {
+        "language": "swift",
+        "code": "4, 9"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "code",
+      "value": [
+        {
+          "t": 5,
+          "v": -2.5
+        }
+      ],
+      "data": {
+        "language": "swift",
+        "code": "-2.5"
+      }
+    }
+  ],
+  "commands": []
+}

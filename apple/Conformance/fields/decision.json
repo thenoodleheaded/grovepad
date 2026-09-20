@@ -1,0 +1,651 @@
+{
+  "outputs": [
+    {
+      "key": "picked",
+      "label": "Picked option",
+      "valueType": "text",
+      "unit": null,
+      "index": 0,
+      "timeSensitive": false
+    }
+  ],
+  "inputs": [
+    {
+      "key": "add_item",
+      "label": "Add option from wire",
+      "kind": "command",
+      "valueType": null,
+      "unit": null,
+      "acceptsPayload": true,
+      "index": 0
+    }
+  ],
+  "samples": [
+    {
+      "question": "",
+      "options": [
+        "",
+        ""
+      ],
+      "pickedIndex": null,
+      "mode": "simple",
+      "weights": [
+        1,
+        1
+      ],
+      "history": [],
+      "lastRolledAt": null,
+      "noRepeatWindow": 1
+    },
+    {
+      "question": "",
+      "options": [
+        "tea",
+        "coffee"
+      ],
+      "pickedIndex": 1,
+      "mode": "simple",
+      "weights": [
+        1,
+        1
+      ],
+      "history": [],
+      "lastRolledAt": null,
+      "noRepeatWindow": 1
+    },
+    {
+      "question": "",
+      "options": [
+        "tea"
+      ],
+      "pickedIndex": 5,
+      "mode": "simple",
+      "weights": [
+        1,
+        1
+      ],
+      "history": [],
+      "lastRolledAt": null,
+      "noRepeatWindow": 1
+    }
+  ],
+  "gets": [
+    {
+      "sample": 0,
+      "key": "picked",
+      "value": ""
+    },
+    {
+      "sample": 1,
+      "key": "picked",
+      "value": "coffee"
+    },
+    {
+      "sample": 2,
+      "key": "picked",
+      "value": ""
+    }
+  ],
+  "sets": [],
+  "commands": [
+    {
+      "sample": 0,
+      "key": "add_item",
+      "payload": null,
+      "hasPayload": false,
+      "data": {
+        "question": "",
+        "options": [
+          "",
+          "",
+          "New option"
+        ],
+        "pickedIndex": null,
+        "mode": "simple",
+        "weights": [
+          1,
+          1
+        ],
+        "history": [],
+        "lastRolledAt": null,
+        "noRepeatWindow": 1
+      }
+    },
+    {
+      "sample": 0,
+      "key": "add_item",
+      "payload": "Buy milk",
+      "hasPayload": true,
+      "data": {
+        "question": "",
+        "options": [
+          "",
+          "",
+          "Buy milk"
+        ],
+        "pickedIndex": null,
+        "mode": "simple",
+        "weights": [
+          1,
+          1
+        ],
+        "history": [],
+        "lastRolledAt": null,
+        "noRepeatWindow": 1
+      }
+    },
+    {
+      "sample": 0,
+      "key": "add_item",
+      "payload": "  spaced  ",
+      "hasPayload": true,
+      "data": {
+        "question": "",
+        "options": [
+          "",
+          "",
+          "spaced"
+        ],
+        "pickedIndex": null,
+        "mode": "simple",
+        "weights": [
+          1,
+          1
+        ],
+        "history": [],
+        "lastRolledAt": null,
+        "noRepeatWindow": 1
+      }
+    },
+    {
+      "sample": 0,
+      "key": "add_item",
+      "payload": "",
+      "hasPayload": true,
+      "data": {
+        "question": "",
+        "options": [
+          "",
+          "",
+          "New option"
+        ],
+        "pickedIndex": null,
+        "mode": "simple",
+        "weights": [
+          1,
+          1
+        ],
+        "history": [],
+        "lastRolledAt": null,
+        "noRepeatWindow": 1
+      }
+    },
+    {
+      "sample": 0,
+      "key": "add_item",
+      "payload": 42,
+      "hasPayload": true,
+      "data": {
+        "question": "",
+        "options": [
+          "",
+          "",
+          "42"
+        ],
+        "pickedIndex": null,
+        "mode": "simple",
+        "weights": [
+          1,
+          1
+        ],
+        "history": [],
+        "lastRolledAt": null,
+        "noRepeatWindow": 1
+      }
+    },
+    {
+      "sample": 0,
+      "key": "add_item",
+      "payload": true,
+      "hasPayload": true,
+      "data": {
+        "question": "",
+        "options": [
+          "",
+          "",
+          "true"
+        ],
+        "pickedIndex": null,
+        "mode": "simple",
+        "weights": [
+          1,
+          1
+        ],
+        "history": [],
+        "lastRolledAt": null,
+        "noRepeatWindow": 1
+      }
+    },
+    {
+      "sample": 0,
+      "key": "add_item",
+      "payload": [
+        {
+          "t": 0,
+          "v": 1
+        }
+      ],
+      "hasPayload": true,
+      "data": {
+        "question": "",
+        "options": [
+          "",
+          "",
+          "1"
+        ],
+        "pickedIndex": null,
+        "mode": "simple",
+        "weights": [
+          1,
+          1
+        ],
+        "history": [],
+        "lastRolledAt": null,
+        "noRepeatWindow": 1
+      }
+    },
+    {
+      "sample": 0,
+      "key": "add_item",
+      "payload": "https://example.com/x",
+      "hasPayload": true,
+      "data": {
+        "question": "",
+        "options": [
+          "",
+          "",
+          "https://example.com/x"
+        ],
+        "pickedIndex": null,
+        "mode": "simple",
+        "weights": [
+          1,
+          1
+        ],
+        "history": [],
+        "lastRolledAt": null,
+        "noRepeatWindow": 1
+      }
+    },
+    {
+      "sample": 1,
+      "key": "add_item",
+      "payload": null,
+      "hasPayload": false,
+      "data": {
+        "question": "",
+        "options": [
+          "tea",
+          "coffee",
+          "New option"
+        ],
+        "pickedIndex": 1,
+        "mode": "simple",
+        "weights": [
+          1,
+          1
+        ],
+        "history": [],
+        "lastRolledAt": null,
+        "noRepeatWindow": 1
+      }
+    },
+    {
+      "sample": 1,
+      "key": "add_item",
+      "payload": "Buy milk",
+      "hasPayload": true,
+      "data": {
+        "question": "",
+        "options": [
+          "tea",
+          "coffee",
+          "Buy milk"
+        ],
+        "pickedIndex": 1,
+        "mode": "simple",
+        "weights": [
+          1,
+          1
+        ],
+        "history": [],
+        "lastRolledAt": null,
+        "noRepeatWindow": 1
+      }
+    },
+    {
+      "sample": 1,
+      "key": "add_item",
+      "payload": "  spaced  ",
+      "hasPayload": true,
+      "data": {
+        "question": "",
+        "options": [
+          "tea",
+          "coffee",
+          "spaced"
+        ],
+        "pickedIndex": 1,
+        "mode": "simple",
+        "weights": [
+          1,
+          1
+        ],
+        "history": [],
+        "lastRolledAt": null,
+        "noRepeatWindow": 1
+      }
+    },
+    {
+      "sample": 1,
+      "key": "add_item",
+      "payload": "",
+      "hasPayload": true,
+      "data": {
+        "question": "",
+        "options": [
+          "tea",
+          "coffee",
+          "New option"
+        ],
+        "pickedIndex": 1,
+        "mode": "simple",
+        "weights": [
+          1,
+          1
+        ],
+        "history": [],
+        "lastRolledAt": null,
+        "noRepeatWindow": 1
+      }
+    },
+    {
+      "sample": 1,
+      "key": "add_item",
+      "payload": 42,
+      "hasPayload": true,
+      "data": {
+        "question": "",
+        "options": [
+          "tea",
+          "coffee",
+          "42"
+        ],
+        "pickedIndex": 1,
+        "mode": "simple",
+        "weights": [
+          1,
+          1
+        ],
+        "history": [],
+        "lastRolledAt": null,
+        "noRepeatWindow": 1
+      }
+    },
+    {
+      "sample": 1,
+      "key": "add_item",
+      "payload": true,
+      "hasPayload": true,
+      "data": {
+        "question": "",
+        "options": [
+          "tea",
+          "coffee",
+          "true"
+        ],
+        "pickedIndex": 1,
+        "mode": "simple",
+        "weights": [
+          1,
+          1
+        ],
+        "history": [],
+        "lastRolledAt": null,
+        "noRepeatWindow": 1
+      }
+    },
+    {
+      "sample": 1,
+      "key": "add_item",
+      "payload": [
+        {
+          "t": 0,
+          "v": 1
+        }
+      ],
+      "hasPayload": true,
+      "data": {
+        "question": "",
+        "options": [
+          "tea",
+          "coffee",
+          "1"
+        ],
+        "pickedIndex": 1,
+        "mode": "simple",
+        "weights": [
+          1,
+          1
+        ],
+        "history": [],
+        "lastRolledAt": null,
+        "noRepeatWindow": 1
+      }
+    },
+    {
+      "sample": 1,
+      "key": "add_item",
+      "payload": "https://example.com/x",
+      "hasPayload": true,
+      "data": {
+        "question": "",
+        "options": [
+          "tea",
+          "coffee",
+          "https://example.com/x"
+        ],
+        "pickedIndex": 1,
+        "mode": "simple",
+        "weights": [
+          1,
+          1
+        ],
+        "history": [],
+        "lastRolledAt": null,
+        "noRepeatWindow": 1
+      }
+    },
+    {
+      "sample": 2,
+      "key": "add_item",
+      "payload": null,
+      "hasPayload": false,
+      "data": {
+        "question": "",
+        "options": [
+          "tea",
+          "New option"
+        ],
+        "pickedIndex": 5,
+        "mode": "simple",
+        "weights": [
+          1,
+          1
+        ],
+        "history": [],
+        "lastRolledAt": null,
+        "noRepeatWindow": 1
+      }
+    },
+    {
+      "sample": 2,
+      "key": "add_item",
+      "payload": "Buy milk",
+      "hasPayload": true,
+      "data": {
+        "question": "",
+        "options": [
+          "tea",
+          "Buy milk"
+        ],
+        "pickedIndex": 5,
+        "mode": "simple",
+        "weights": [
+          1,
+          1
+        ],
+        "history": [],
+        "lastRolledAt": null,
+        "noRepeatWindow": 1
+      }
+    },
+    {
+      "sample": 2,
+      "key": "add_item",
+      "payload": "  spaced  ",
+      "hasPayload": true,
+      "data": {
+        "question": "",
+        "options": [
+          "tea",
+          "spaced"
+        ],
+        "pickedIndex": 5,
+        "mode": "simple",
+        "weights": [
+          1,
+          1
+        ],
+        "history": [],
+        "lastRolledAt": null,
+        "noRepeatWindow": 1
+      }
+    },
+    {
+      "sample": 2,
+      "key": "add_item",
+      "payload": "",
+      "hasPayload": true,
+      "data": {
+        "question": "",
+        "options": [
+          "tea",
+          "New option"
+        ],
+        "pickedIndex": 5,
+        "mode": "simple",
+        "weights": [
+          1,
+          1
+        ],
+        "history": [],
+        "lastRolledAt": null,
+        "noRepeatWindow": 1
+      }
+    },
+    {
+      "sample": 2,
+      "key": "add_item",
+      "payload": 42,
+      "hasPayload": true,
+      "data": {
+        "question": "",
+        "options": [
+          "tea",
+          "42"
+        ],
+        "pickedIndex": 5,
+        "mode": "simple",
+        "weights": [
+          1,
+          1
+        ],
+        "history": [],
+        "lastRolledAt": null,
+        "noRepeatWindow": 1
+      }
+    },
+    {
+      "sample": 2,
+      "key": "add_item",
+      "payload": true,
+      "hasPayload": true,
+      "data": {
+        "question": "",
+        "options": [
+          "tea",
+          "true"
+        ],
+        "pickedIndex": 5,
+        "mode": "simple",
+        "weights": [
+          1,
+          1
+        ],
+        "history": [],
+        "lastRolledAt": null,
+        "noRepeatWindow": 1
+      }
+    },
+    {
+      "sample": 2,
+      "key": "add_item",
+      "payload": [
+        {
+          "t": 0,
+          "v": 1
+        }
+      ],
+      "hasPayload": true,
+      "data": {
+        "question": "",
+        "options": [
+          "tea",
+          "1"
+        ],
+        "pickedIndex": 5,
+        "mode": "simple",
+        "weights": [
+          1,
+          1
+        ],
+        "history": [],
+        "lastRolledAt": null,
+        "noRepeatWindow": 1
+      }
+    },
+    {
+      "sample": 2,
+      "key": "add_item",
+      "payload": "https://example.com/x",
+      "hasPayload": true,
+      "data": {
+        "question": "",
+        "options": [
+          "tea",
+          "https://example.com/x"
+        ],
+        "pickedIndex": 5,
+        "mode": "simple",
+        "weights": [
+          1,
+          1
+        ],
+        "history": [],
+        "lastRolledAt": null,
+        "noRepeatWindow": 1
+      }
+    }
+  ]
+}

@@ -1,0 +1,57 @@
+{
+  "outputs": [
+    {
+      "key": "count",
+      "label": "Sources",
+      "valueType": "number",
+      "unit": null,
+      "index": 0,
+      "timeSensitive": false
+    }
+  ],
+  "inputs": [],
+  "samples": [
+    {
+      "style": "APA",
+      "sources": [
+        {
+          "id": "uuid-0001",
+          "title": "",
+          "author": "",
+          "year": ""
+        }
+      ]
+    },
+    {
+      "style": "APA",
+      "sources": [
+        {
+          "id": "s1",
+          "title": "Paper",
+          "author": "A",
+          "year": "2020"
+        },
+        {
+          "id": "s2",
+          "title": "  ",
+          "author": "",
+          "year": ""
+        }
+      ]
+    }
+  ],
+  "gets": [
+    {
+      "sample": 0,
+      "key": "count",
+      "value": 0
+    },
+    {
+      "sample": 1,
+      "key": "count",
+      "value": 1
+    }
+  ],
+  "sets": [],
+  "commands": []
+}

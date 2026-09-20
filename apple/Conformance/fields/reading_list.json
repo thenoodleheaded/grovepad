@@ -1,0 +1,108 @@
+{
+  "outputs": [
+    {
+      "key": "done_count",
+      "label": "Read",
+      "valueType": "number",
+      "unit": "count",
+      "index": 0,
+      "timeSensitive": false
+    }
+  ],
+  "inputs": [
+    {
+      "key": "reset",
+      "label": "Re-queue everything",
+      "kind": "command",
+      "valueType": null,
+      "unit": null,
+      "acceptsPayload": false,
+      "index": 0
+    }
+  ],
+  "samples": [
+    {
+      "items": [
+        {
+          "id": "uuid-0001",
+          "title": "",
+          "status": "queued"
+        }
+      ]
+    },
+    {
+      "items": [
+        {
+          "id": "r1",
+          "title": "A",
+          "status": "done"
+        },
+        {
+          "id": "r2",
+          "title": "B",
+          "status": "reading"
+        },
+        {
+          "id": "r3",
+          "title": "C",
+          "status": "done"
+        }
+      ]
+    }
+  ],
+  "gets": [
+    {
+      "sample": 0,
+      "key": "done_count",
+      "value": 0
+    },
+    {
+      "sample": 1,
+      "key": "done_count",
+      "value": 2
+    }
+  ],
+  "sets": [],
+  "commands": [
+    {
+      "sample": 0,
+      "key": "reset",
+      "payload": null,
+      "hasPayload": false,
+      "data": {
+        "items": [
+          {
+            "id": "uuid-0001",
+            "title": "",
+            "status": "queued"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 1,
+      "key": "reset",
+      "payload": null,
+      "hasPayload": false,
+      "data": {
+        "items": [
+          {
+            "id": "r1",
+            "title": "A",
+            "status": "queued"
+          },
+          {
+            "id": "r2",
+            "title": "B",
+            "status": "queued"
+          },
+          {
+            "id": "r3",
+            "title": "C",
+            "status": "queued"
+          }
+        ]
+      }
+    }
+  ]
+}

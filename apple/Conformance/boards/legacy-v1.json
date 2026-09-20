@@ -1,0 +1,180 @@
+{
+  "widgets": {
+    "note": {
+      "id": "note",
+      "type": "notes",
+      "title": "Old note",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 240,
+        "height": 160
+      },
+      "data": {
+        "text": "from v1"
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "timer": {
+      "id": "timer",
+      "type": "timer",
+      "title": "Retired",
+      "position": {
+        "x": 300,
+        "y": 0
+      },
+      "size": {
+        "width": 240,
+        "height": 160
+      },
+      "data": {
+        "seconds": 5
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "unknown": {
+      "id": "unknown",
+      "type": "hologram",
+      "title": "Future",
+      "position": {
+        "x": 600,
+        "y": 0
+      },
+      "size": {
+        "width": 240,
+        "height": 160
+      },
+      "data": {
+        "beam": 3
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "counter": {
+      "id": "counter",
+      "type": "counter",
+      "title": "Count",
+      "position": {
+        "x": 0,
+        "y": 300
+      },
+      "size": {
+        "width": 240,
+        "height": 160
+      },
+      "data": {
+        "label": "Tally",
+        "count": 4,
+        "step": 1
+      },
+      "metadata": {
+        "badges": []
+      },
+      "isHydrating": true
+    },
+    "bullets": {
+      "id": "bullets",
+      "type": "bullets",
+      "title": "Old bullets",
+      "position": {
+        "x": 300,
+        "y": 300
+      },
+      "size": {
+        "width": 240,
+        "height": 160
+      },
+      "data": {
+        "items": [
+          "a",
+          "b"
+        ]
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "mismatch": {
+      "id": "other",
+      "type": "text",
+      "title": "Mismatch",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 1,
+        "height": 1
+      },
+      "data": {},
+      "metadata": {
+        "badges": []
+      }
+    }
+  },
+  "relations": {
+    "keep": {
+      "id": "keep",
+      "fromId": "note",
+      "toId": "counter",
+      "type": "parent",
+      "isResolved": false
+    },
+    "toTimer": {
+      "id": "toTimer",
+      "fromId": "note",
+      "toId": "timer",
+      "type": "blocker",
+      "isResolved": false
+    },
+    "toUnknown": {
+      "id": "toUnknown",
+      "fromId": "note",
+      "toId": "unknown",
+      "type": "cousin",
+      "isResolved": false
+    }
+  },
+  "connections": {
+    "ok": {
+      "id": "ok",
+      "fromId": "counter",
+      "fromField": "count",
+      "toId": "note",
+      "kind": "value",
+      "toField": "text",
+      "enabled": true
+    }
+  },
+  "glues": {
+    "pair": {
+      "id": "pair",
+      "widgetIds": [
+        "note",
+        "counter"
+      ]
+    }
+  },
+  "activePacks": [
+    "life",
+    "mystery"
+  ],
+  "activeCanvasId": "ignored",
+  "canvasViews": {
+    "whatever": {
+      "pan": {
+        "x": 1,
+        "y": 1
+      },
+      "zoom": 2
+    }
+  },
+  "legacyTopLevel": "kept as unknown field"
+}

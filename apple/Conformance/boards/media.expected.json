@@ -1,0 +1,49 @@
+{
+  "parse": "ok",
+  "mode": "parse",
+  "widgetIds": [
+    "photo",
+    "photoCopy",
+    "missing",
+    "note"
+  ],
+  "widgetTypes": {
+    "photo": "media",
+    "photoCopy": "media",
+    "missing": "media",
+    "note": "text"
+  },
+  "opaqueWidgets": {},
+  "relationIds": [],
+  "connectionIds": [],
+  "glueIds": [],
+  "activePacks": [],
+  "unknownRelationIds": [],
+  "unknownConnectionIds": [],
+  "unknownGlueIds": [],
+  "unknownBoardFields": [],
+  "rawActivePacks": [],
+  "device": {
+    "activeWorkspaceId": "workspace",
+    "activeCanvasId": "canvas",
+    "canvasViews": {}
+  },
+  "serialized": "{\"format\":\"grovepad-board\",\"v\":2,\"workspaces\":{\"workspace\":{\"id\":\"workspace\",\"name\":\"Workspace\",\"rootCanvasId\":\"canvas\",\"createdAt\":1}},\"canvases\":{\"canvas\":{\"id\":\"canvas\",\"name\":\"Origin\",\"workspaceId\":\"workspace\",\"parentCanvasId\":null}},\"widgets\":{\"photo\":{\"id\":\"photo\",\"type\":\"media\",\"title\":\"photo\",\"canvasId\":\"canvas\",\"position\":{\"x\":0,\"y\":0},\"size\":{\"width\":320,\"height\":200},\"data\":{\"url\":\"\",\"caption\":\"A photo\",\"localBlobKey\":\"photo\"},\"metadata\":{\"badges\":[]}},\"photoCopy\":{\"id\":\"photoCopy\",\"type\":\"media\",\"title\":\"photoCopy\",\"canvasId\":\"canvas\",\"position\":{\"x\":400,\"y\":0},\"size\":{\"width\":320,\"height\":200},\"data\":{\"url\":\"\",\"caption\":\"\",\"localBlobKey\":\"photoCopy\"},\"metadata\":{\"badges\":[]}},\"missing\":{\"id\":\"missing\",\"type\":\"media\",\"title\":\"missing\",\"canvasId\":\"canvas\",\"position\":{\"x\":800,\"y\":0},\"size\":{\"width\":320,\"height\":200},\"data\":{\"url\":\"\",\"caption\":\"\",\"localBlobKey\":\"missing\"},\"metadata\":{\"badges\":[]}},\"note\":{\"id\":\"note\",\"type\":\"text\",\"title\":\"note\",\"canvasId\":\"canvas\",\"position\":{\"x\":0,\"y\":400},\"size\":{\"width\":320,\"height\":200},\"data\":{\"text\":\"\",\"mode\":\"plain\",\"color\":\"yellow\"},\"metadata\":{\"badges\":[]}}},\"relations\":{},\"connections\":{},\"glues\":{},\"activePacks\":[]}",
+  "sha256": "b79e59eb209c0a1e1f450b0beb7d652722ea7f6d853ad55a760700e0959c96ac",
+  "canonical": "{\"activePacks\":[],\"canvases\":{\"canvas\":{\"id\":\"canvas\",\"name\":\"Origin\",\"parentCanvasId\":null,\"workspaceId\":\"workspace\"}},\"connections\":{},\"format\":\"grovepad-board\",\"glues\":{},\"relations\":{},\"v\":2,\"widgets\":{\"missing\":{\"canvasId\":\"canvas\",\"data\":{\"caption\":\"\",\"localBlobKey\":\"missing\",\"url\":\"\"},\"id\":\"missing\",\"metadata\":{\"badges\":[]},\"position\":{\"x\":800,\"y\":0},\"size\":{\"height\":200,\"width\":320},\"title\":\"missing\",\"type\":\"media\"},\"note\":{\"canvasId\":\"canvas\",\"data\":{\"color\":\"yellow\",\"mode\":\"plain\",\"text\":\"\"},\"id\":\"note\",\"metadata\":{\"badges\":[]},\"position\":{\"x\":0,\"y\":400},\"size\":{\"height\":200,\"width\":320},\"title\":\"note\",\"type\":\"text\"},\"photo\":{\"canvasId\":\"canvas\",\"data\":{\"caption\":\"A photo\",\"localBlobKey\":\"photo\",\"url\":\"\"},\"id\":\"photo\",\"metadata\":{\"badges\":[]},\"position\":{\"x\":0,\"y\":0},\"size\":{\"height\":200,\"width\":320},\"title\":\"photo\",\"type\":\"media\"},\"photoCopy\":{\"canvasId\":\"canvas\",\"data\":{\"caption\":\"\",\"localBlobKey\":\"photoCopy\",\"url\":\"\"},\"id\":\"photoCopy\",\"metadata\":{\"badges\":[]},\"position\":{\"x\":400,\"y\":0},\"size\":{\"height\":200,\"width\":320},\"title\":\"photoCopy\",\"type\":\"media\"}},\"workspaces\":{\"workspace\":{\"createdAt\":1,\"id\":\"workspace\",\"name\":\"Workspace\",\"rootCanvasId\":\"canvas\"}}}",
+  "canonicalSha256": "fe0c591d81fcfd5491d1748669005af3968bbbeaa82cccff22c2f0545ce1d40f",
+  "split": {
+    "index": {
+      "canonical": "{\"activePacks\":[],\"boardFormat\":\"grovepad-board\",\"boardVersion\":2,\"canvases\":{\"canvas\":{\"id\":\"canvas\",\"name\":\"Origin\",\"parentCanvasId\":null,\"workspaceId\":\"workspace\"}},\"connections\":{},\"extra\":{},\"format\":\"grovepad-board-index\",\"glues\":{},\"relations\":{},\"v\":1,\"workspaces\":{\"workspace\":{\"createdAt\":1,\"id\":\"workspace\",\"name\":\"Workspace\",\"rootCanvasId\":\"canvas\"}}}",
+      "sha256": "8aeda9811054eff883f2d04c0f14b77584d1b5a02d970317ef0e97baf76dbf29",
+      "pretty": "{\n  \"format\": \"grovepad-board-index\",\n  \"v\": 1,\n  \"boardFormat\": \"grovepad-board\",\n  \"boardVersion\": 2,\n  \"workspaces\": {\n    \"workspace\": {\n      \"id\": \"workspace\",\n      \"name\": \"Workspace\",\n      \"rootCanvasId\": \"canvas\",\n      \"createdAt\": 1\n    }\n  },\n  \"canvases\": {\n    \"canvas\": {\n      \"id\": \"canvas\",\n      \"name\": \"Origin\",\n      \"workspaceId\": \"workspace\",\n      \"parentCanvasId\": null\n    }\n  },\n  \"activePacks\": [],\n  \"relations\": {},\n  \"connections\": {},\n  \"glues\": {},\n  \"extra\": {}\n}"
+    },
+    "canvases": {
+      "canvas": {
+        "canonical": "{\"canvasId\":\"canvas\",\"connections\":{},\"format\":\"grovepad-canvas\",\"glues\":{},\"relations\":{},\"v\":1,\"widgets\":{\"missing\":{\"canvasId\":\"canvas\",\"data\":{\"caption\":\"\",\"localBlobKey\":\"missing\",\"url\":\"\"},\"id\":\"missing\",\"metadata\":{\"badges\":[]},\"position\":{\"x\":800,\"y\":0},\"size\":{\"height\":200,\"width\":320},\"title\":\"missing\",\"type\":\"media\"},\"note\":{\"canvasId\":\"canvas\",\"data\":{\"color\":\"yellow\",\"mode\":\"plain\",\"text\":\"\"},\"id\":\"note\",\"metadata\":{\"badges\":[]},\"position\":{\"x\":0,\"y\":400},\"size\":{\"height\":200,\"width\":320},\"title\":\"note\",\"type\":\"text\"},\"photo\":{\"canvasId\":\"canvas\",\"data\":{\"caption\":\"A photo\",\"localBlobKey\":\"photo\",\"url\":\"\"},\"id\":\"photo\",\"metadata\":{\"badges\":[]},\"position\":{\"x\":0,\"y\":0},\"size\":{\"height\":200,\"width\":320},\"title\":\"photo\",\"type\":\"media\"},\"photoCopy\":{\"canvasId\":\"canvas\",\"data\":{\"caption\":\"\",\"localBlobKey\":\"photoCopy\",\"url\":\"\"},\"id\":\"photoCopy\",\"metadata\":{\"badges\":[]},\"position\":{\"x\":400,\"y\":0},\"size\":{\"height\":200,\"width\":320},\"title\":\"photoCopy\",\"type\":\"media\"}}}",
+        "sha256": "96e2f3661ed90ce82843078e346c0aa4bcfcb9d1649518885455295f5422fa2b",
+        "pretty": "{\n  \"format\": \"grovepad-canvas\",\n  \"v\": 1,\n  \"canvasId\": \"canvas\",\n  \"widgets\": {\n    \"photo\": {\n      \"id\": \"photo\",\n      \"type\": \"media\",\n      \"title\": \"photo\",\n      \"canvasId\": \"canvas\",\n      \"position\": {\n        \"x\": 0,\n        \"y\": 0\n      },\n      \"size\": {\n        \"width\": 320,\n        \"height\": 200\n      },\n      \"data\": {\n        \"url\": \"\",\n        \"caption\": \"A photo\",\n        \"localBlobKey\": \"photo\"\n      },\n      \"metadata\": {\n        \"badges\": []\n      }\n    },\n    \"photoCopy\": {\n      \"id\": \"photoCopy\",\n      \"type\": \"media\",\n      \"title\": \"photoCopy\",\n      \"canvasId\": \"canvas\",\n      \"position\": {\n        \"x\": 400,\n        \"y\": 0\n      },\n      \"size\": {\n        \"width\": 320,\n        \"height\": 200\n      },\n      \"data\": {\n        \"url\": \"\",\n        \"caption\": \"\",\n        \"localBlobKey\": \"photoCopy\"\n      },\n      \"metadata\": {\n        \"badges\": []\n      }\n    },\n    \"missing\": {\n      \"id\": \"missing\",\n      \"type\": \"media\",\n      \"title\": \"missing\",\n      \"canvasId\": \"canvas\",\n      \"position\": {\n        \"x\": 800,\n        \"y\": 0\n      },\n      \"size\": {\n        \"width\": 320,\n        \"height\": 200\n      },\n      \"data\": {\n        \"url\": \"\",\n        \"caption\": \"\",\n        \"localBlobKey\": \"missing\"\n      },\n      \"metadata\": {\n        \"badges\": []\n      }\n    },\n    \"note\": {\n      \"id\": \"note\",\n      \"type\": \"text\",\n      \"title\": \"note\",\n      \"canvasId\": \"canvas\",\n      \"position\": {\n        \"x\": 0,\n        \"y\": 400\n      },\n      \"size\": {\n        \"width\": 320,\n        \"height\": 200\n      },\n      \"data\": {\n        \"text\": \"\",\n        \"mode\": \"plain\",\n        \"color\": \"yellow\"\n      },\n      \"metadata\": {\n        \"badges\": []\n      }\n    }\n  },\n  \"relations\": {},\n  \"connections\": {},\n  \"glues\": {}\n}"
+      }
+    }
+  }
+}

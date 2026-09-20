@@ -1,0 +1,311 @@
+{
+  "name": "trigger-payload-add-item",
+  "widgets": {
+    "source": {
+      "id": "source",
+      "type": "text_input",
+      "title": "source",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 280,
+        "height": 200
+      },
+      "data": {
+        "label": "Input",
+        "value": "",
+        "placeholder": "",
+        "multiline": false
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "list": {
+      "id": "list",
+      "type": "checklist",
+      "title": "list",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 280,
+        "height": 200
+      },
+      "data": {
+        "items": []
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "bullets": {
+      "id": "bullets",
+      "type": "bullets",
+      "title": "bullets",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 280,
+        "height": 200
+      },
+      "data": {
+        "items": [],
+        "skin": "dots"
+      },
+      "metadata": {
+        "badges": []
+      }
+    }
+  },
+  "connections": {
+    "plain": {
+      "id": "plain",
+      "enabled": true,
+      "fromId": "source",
+      "fromField": "value",
+      "toId": "list",
+      "kind": "trigger",
+      "command": "add_item",
+      "edge": "change"
+    },
+    "formatted": {
+      "id": "formatted",
+      "enabled": true,
+      "fromId": "source",
+      "fromField": "value",
+      "toId": "bullets",
+      "kind": "trigger",
+      "command": "add_item",
+      "edge": "change",
+      "transform": {
+        "op": "format",
+        "template": "[wired] {value}"
+      }
+    }
+  },
+  "steps": [
+    {
+      "label": "baseline empty",
+      "seeds": [
+        "source"
+      ],
+      "expect": {
+        "writes": {},
+        "firedIds": [],
+        "executeRequests": [],
+        "memory": {
+          "plain": {
+            "serialized": "t:",
+            "bool": false
+          },
+          "formatted": {
+            "serialized": "t:",
+            "bool": false
+          }
+        },
+        "widgetsAfter": {
+          "source": {
+            "label": "Input",
+            "value": "",
+            "placeholder": "",
+            "multiline": false
+          },
+          "list": {
+            "items": []
+          },
+          "bullets": {
+            "items": [],
+            "skin": "dots"
+          }
+        }
+      }
+    },
+    {
+      "label": "typed",
+      "seeds": [
+        "source"
+      ],
+      "edits": {
+        "source": {
+          "label": "Input",
+          "value": "Buy milk",
+          "placeholder": "",
+          "multiline": false
+        }
+      },
+      "expect": {
+        "writes": {
+          "list": {
+            "items": [
+              {
+                "id": "uuid-0001",
+                "label": "Buy milk",
+                "done": false,
+                "status": "todo"
+              }
+            ]
+          },
+          "bullets": {
+            "items": [
+              {
+                "id": "uuid-0002",
+                "text": "[wired] Buy milk"
+              }
+            ],
+            "skin": "dots"
+          }
+        },
+        "firedIds": [
+          "plain",
+          "formatted"
+        ],
+        "executeRequests": [],
+        "memory": {
+          "plain": {
+            "serialized": "t:Buy milk",
+            "bool": false
+          },
+          "formatted": {
+            "serialized": "t:Buy milk",
+            "bool": false
+          }
+        },
+        "widgetsAfter": {
+          "source": {
+            "label": "Input",
+            "value": "Buy milk",
+            "placeholder": "",
+            "multiline": false
+          },
+          "list": {
+            "items": [
+              {
+                "id": "uuid-0001",
+                "label": "Buy milk",
+                "done": false,
+                "status": "todo"
+              }
+            ]
+          },
+          "bullets": {
+            "items": [
+              {
+                "id": "uuid-0002",
+                "text": "[wired] Buy milk"
+              }
+            ],
+            "skin": "dots"
+          }
+        }
+      }
+    },
+    {
+      "label": "cleared fires change too",
+      "seeds": [
+        "source"
+      ],
+      "edits": {
+        "source": {
+          "label": "Input",
+          "value": "",
+          "placeholder": "",
+          "multiline": false
+        }
+      },
+      "expect": {
+        "writes": {
+          "list": {
+            "items": [
+              {
+                "id": "uuid-0001",
+                "label": "Buy milk",
+                "done": false,
+                "status": "todo"
+              },
+              {
+                "id": "uuid-0001",
+                "label": "New task",
+                "done": false,
+                "status": "todo"
+              }
+            ]
+          },
+          "bullets": {
+            "items": [
+              {
+                "id": "uuid-0002",
+                "text": "[wired] Buy milk"
+              },
+              {
+                "id": "uuid-0002",
+                "text": "[wired]"
+              }
+            ],
+            "skin": "dots"
+          }
+        },
+        "firedIds": [
+          "plain",
+          "formatted"
+        ],
+        "executeRequests": [],
+        "memory": {
+          "plain": {
+            "serialized": "t:",
+            "bool": false
+          },
+          "formatted": {
+            "serialized": "t:",
+            "bool": false
+          }
+        },
+        "widgetsAfter": {
+          "source": {
+            "label": "Input",
+            "value": "",
+            "placeholder": "",
+            "multiline": false
+          },
+          "list": {
+            "items": [
+              {
+                "id": "uuid-0001",
+                "label": "Buy milk",
+                "done": false,
+                "status": "todo"
+              },
+              {
+                "id": "uuid-0001",
+                "label": "New task",
+                "done": false,
+                "status": "todo"
+              }
+            ]
+          },
+          "bullets": {
+            "items": [
+              {
+                "id": "uuid-0002",
+                "text": "[wired] Buy milk"
+              },
+              {
+                "id": "uuid-0002",
+                "text": "[wired]"
+              }
+            ],
+            "skin": "dots"
+          }
+        }
+      }
+    }
+  ]
+}

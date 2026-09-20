@@ -1,0 +1,933 @@
+{
+  "outputs": [
+    {
+      "key": "text",
+      "label": "Text",
+      "valueType": "text",
+      "unit": null,
+      "index": 0,
+      "timeSensitive": false
+    }
+  ],
+  "inputs": [
+    {
+      "key": "text",
+      "label": "Text",
+      "kind": "field",
+      "valueType": "text",
+      "unit": null,
+      "acceptsPayload": false,
+      "index": 0
+    }
+  ],
+  "samples": [
+    {
+      "text": "",
+      "mode": "plain",
+      "color": "yellow"
+    },
+    {
+      "text": "Hello board",
+      "mode": "sticky",
+      "color": "pink",
+      "skinStates": {
+        "sticky": {
+          "strokes": []
+        }
+      }
+    }
+  ],
+  "gets": [
+    {
+      "sample": 0,
+      "key": "text",
+      "value": ""
+    },
+    {
+      "sample": 1,
+      "key": "text",
+      "value": "Hello board"
+    }
+  ],
+  "sets": [
+    {
+      "sample": 0,
+      "key": "text",
+      "value": 0,
+      "data": {
+        "text": "0",
+        "mode": "plain",
+        "color": "yellow"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "text",
+      "value": 1,
+      "data": {
+        "text": "1",
+        "mode": "plain",
+        "color": "yellow"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "text",
+      "value": -1,
+      "data": {
+        "text": "-1",
+        "mode": "plain",
+        "color": "yellow"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "text",
+      "value": 7,
+      "data": {
+        "text": "7",
+        "mode": "plain",
+        "color": "yellow"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "text",
+      "value": 2.5,
+      "data": {
+        "text": "2.5",
+        "mode": "plain",
+        "color": "yellow"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "text",
+      "value": 2.6,
+      "data": {
+        "text": "2.6",
+        "mode": "plain",
+        "color": "yellow"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "text",
+      "value": -2.5,
+      "data": {
+        "text": "-2.5",
+        "mode": "plain",
+        "color": "yellow"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "text",
+      "value": 0.5,
+      "data": {
+        "text": "0.5",
+        "mode": "plain",
+        "color": "yellow"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "text",
+      "value": 4.9,
+      "data": {
+        "text": "4.9",
+        "mode": "plain",
+        "color": "yellow"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "text",
+      "value": 5,
+      "data": {
+        "text": "5",
+        "mode": "plain",
+        "color": "yellow"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "text",
+      "value": 10,
+      "data": {
+        "text": "10",
+        "mode": "plain",
+        "color": "yellow"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "text",
+      "value": 50,
+      "data": {
+        "text": "50",
+        "mode": "plain",
+        "color": "yellow"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "text",
+      "value": 150,
+      "data": {
+        "text": "150",
+        "mode": "plain",
+        "color": "yellow"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "text",
+      "value": 1e+21,
+      "data": {
+        "text": "1e+21",
+        "mode": "plain",
+        "color": "yellow"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "text",
+      "value": 1.7976931348623157e+308,
+      "data": {
+        "text": "1.7976931348623157e+308",
+        "mode": "plain",
+        "color": "yellow"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "text",
+      "value": true,
+      "data": {
+        "text": "true",
+        "mode": "plain",
+        "color": "yellow"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "text",
+      "value": false,
+      "data": {
+        "text": "false",
+        "mode": "plain",
+        "color": "yellow"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "text",
+      "value": "",
+      "data": {
+        "text": "",
+        "mode": "plain",
+        "color": "yellow"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "text",
+      "value": "12.5",
+      "data": {
+        "text": "12.5",
+        "mode": "plain",
+        "color": "yellow"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "text",
+      "value": "not a number",
+      "data": {
+        "text": "not a number",
+        "mode": "plain",
+        "color": "yellow"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "text",
+      "value": "1",
+      "data": {
+        "text": "1",
+        "mode": "plain",
+        "color": "yellow"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "text",
+      "value": "true",
+      "data": {
+        "text": "true",
+        "mode": "plain",
+        "color": "yellow"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "text",
+      "value": "yes",
+      "data": {
+        "text": "yes",
+        "mode": "plain",
+        "color": "yellow"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "text",
+      "value": "on",
+      "data": {
+        "text": "on",
+        "mode": "plain",
+        "color": "yellow"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "text",
+      "value": "off",
+      "data": {
+        "text": "off",
+        "mode": "plain",
+        "color": "yellow"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "text",
+      "value": "0",
+      "data": {
+        "text": "0",
+        "mode": "plain",
+        "color": "yellow"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "text",
+      "value": " 8 ",
+      "data": {
+        "text": " 8 ",
+        "mode": "plain",
+        "color": "yellow"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "text",
+      "value": "3abc",
+      "data": {
+        "text": "3abc",
+        "mode": "plain",
+        "color": "yellow"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "text",
+      "value": "-4e2",
+      "data": {
+        "text": "-4e2",
+        "mode": "plain",
+        "color": "yellow"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "text",
+      "value": "Infinity",
+      "data": {
+        "text": "Infinity",
+        "mode": "plain",
+        "color": "yellow"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "text",
+      "value": "NaN",
+      "data": {
+        "text": "NaN",
+        "mode": "plain",
+        "color": "yellow"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "text",
+      "value": [],
+      "data": {
+        "text": "",
+        "mode": "plain",
+        "color": "yellow"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "text",
+      "value": [
+        {
+          "t": 0,
+          "v": 4
+        },
+        {
+          "t": 1,
+          "v": 9
+        }
+      ],
+      "data": {
+        "text": "4, 9",
+        "mode": "plain",
+        "color": "yellow"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "text",
+      "value": [
+        {
+          "t": 5,
+          "v": -2.5
+        }
+      ],
+      "data": {
+        "text": "-2.5",
+        "mode": "plain",
+        "color": "yellow"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "text",
+      "value": 0,
+      "data": {
+        "text": "0",
+        "mode": "sticky",
+        "color": "pink",
+        "skinStates": {
+          "sticky": {
+            "strokes": []
+          }
+        }
+      }
+    },
+    {
+      "sample": 1,
+      "key": "text",
+      "value": 1,
+      "data": {
+        "text": "1",
+        "mode": "sticky",
+        "color": "pink",
+        "skinStates": {
+          "sticky": {
+            "strokes": []
+          }
+        }
+      }
+    },
+    {
+      "sample": 1,
+      "key": "text",
+      "value": -1,
+      "data": {
+        "text": "-1",
+        "mode": "sticky",
+        "color": "pink",
+        "skinStates": {
+          "sticky": {
+            "strokes": []
+          }
+        }
+      }
+    },
+    {
+      "sample": 1,
+      "key": "text",
+      "value": 7,
+      "data": {
+        "text": "7",
+        "mode": "sticky",
+        "color": "pink",
+        "skinStates": {
+          "sticky": {
+            "strokes": []
+          }
+        }
+      }
+    },
+    {
+      "sample": 1,
+      "key": "text",
+      "value": 2.5,
+      "data": {
+        "text": "2.5",
+        "mode": "sticky",
+        "color": "pink",
+        "skinStates": {
+          "sticky": {
+            "strokes": []
+          }
+        }
+      }
+    },
+    {
+      "sample": 1,
+      "key": "text",
+      "value": 2.6,
+      "data": {
+        "text": "2.6",
+        "mode": "sticky",
+        "color": "pink",
+        "skinStates": {
+          "sticky": {
+            "strokes": []
+          }
+        }
+      }
+    },
+    {
+      "sample": 1,
+      "key": "text",
+      "value": -2.5,
+      "data": {
+        "text": "-2.5",
+        "mode": "sticky",
+        "color": "pink",
+        "skinStates": {
+          "sticky": {
+            "strokes": []
+          }
+        }
+      }
+    },
+    {
+      "sample": 1,
+      "key": "text",
+      "value": 0.5,
+      "data": {
+        "text": "0.5",
+        "mode": "sticky",
+        "color": "pink",
+        "skinStates": {
+          "sticky": {
+            "strokes": []
+          }
+        }
+      }
+    },
+    {
+      "sample": 1,
+      "key": "text",
+      "value": 4.9,
+      "data": {
+        "text": "4.9",
+        "mode": "sticky",
+        "color": "pink",
+        "skinStates": {
+          "sticky": {
+            "strokes": []
+          }
+        }
+      }
+    },
+    {
+      "sample": 1,
+      "key": "text",
+      "value": 5,
+      "data": {
+        "text": "5",
+        "mode": "sticky",
+        "color": "pink",
+        "skinStates": {
+          "sticky": {
+            "strokes": []
+          }
+        }
+      }
+    },
+    {
+      "sample": 1,
+      "key": "text",
+      "value": 10,
+      "data": {
+        "text": "10",
+        "mode": "sticky",
+        "color": "pink",
+        "skinStates": {
+          "sticky": {
+            "strokes": []
+          }
+        }
+      }
+    },
+    {
+      "sample": 1,
+      "key": "text",
+      "value": 50,
+      "data": {
+        "text": "50",
+        "mode": "sticky",
+        "color": "pink",
+        "skinStates": {
+          "sticky": {
+            "strokes": []
+          }
+        }
+      }
+    },
+    {
+      "sample": 1,
+      "key": "text",
+      "value": 150,
+      "data": {
+        "text": "150",
+        "mode": "sticky",
+        "color": "pink",
+        "skinStates": {
+          "sticky": {
+            "strokes": []
+          }
+        }
+      }
+    },
+    {
+      "sample": 1,
+      "key": "text",
+      "value": 1e+21,
+      "data": {
+        "text": "1e+21",
+        "mode": "sticky",
+        "color": "pink",
+        "skinStates": {
+          "sticky": {
+            "strokes": []
+          }
+        }
+      }
+    },
+    {
+      "sample": 1,
+      "key": "text",
+      "value": 1.7976931348623157e+308,
+      "data": {
+        "text": "1.7976931348623157e+308",
+        "mode": "sticky",
+        "color": "pink",
+        "skinStates": {
+          "sticky": {
+            "strokes": []
+          }
+        }
+      }
+    },
+    {
+      "sample": 1,
+      "key": "text",
+      "value": true,
+      "data": {
+        "text": "true",
+        "mode": "sticky",
+        "color": "pink",
+        "skinStates": {
+          "sticky": {
+            "strokes": []
+          }
+        }
+      }
+    },
+    {
+      "sample": 1,
+      "key": "text",
+      "value": false,
+      "data": {
+        "text": "false",
+        "mode": "sticky",
+        "color": "pink",
+        "skinStates": {
+          "sticky": {
+            "strokes": []
+          }
+        }
+      }
+    },
+    {
+      "sample": 1,
+      "key": "text",
+      "value": "",
+      "data": {
+        "text": "",
+        "mode": "sticky",
+        "color": "pink",
+        "skinStates": {
+          "sticky": {
+            "strokes": []
+          }
+        }
+      }
+    },
+    {
+      "sample": 1,
+      "key": "text",
+      "value": "12.5",
+      "data": {
+        "text": "12.5",
+        "mode": "sticky",
+        "color": "pink",
+        "skinStates": {
+          "sticky": {
+            "strokes": []
+          }
+        }
+      }
+    },
+    {
+      "sample": 1,
+      "key": "text",
+      "value": "not a number",
+      "data": {
+        "text": "not a number",
+        "mode": "sticky",
+        "color": "pink",
+        "skinStates": {
+          "sticky": {
+            "strokes": []
+          }
+        }
+      }
+    },
+    {
+      "sample": 1,
+      "key": "text",
+      "value": "1",
+      "data": {
+        "text": "1",
+        "mode": "sticky",
+        "color": "pink",
+        "skinStates": {
+          "sticky": {
+            "strokes": []
+          }
+        }
+      }
+    },
+    {
+      "sample": 1,
+      "key": "text",
+      "value": "true",
+      "data": {
+        "text": "true",
+        "mode": "sticky",
+        "color": "pink",
+        "skinStates": {
+          "sticky": {
+            "strokes": []
+          }
+        }
+      }
+    },
+    {
+      "sample": 1,
+      "key": "text",
+      "value": "yes",
+      "data": {
+        "text": "yes",
+        "mode": "sticky",
+        "color": "pink",
+        "skinStates": {
+          "sticky": {
+            "strokes": []
+          }
+        }
+      }
+    },
+    {
+      "sample": 1,
+      "key": "text",
+      "value": "on",
+      "data": {
+        "text": "on",
+        "mode": "sticky",
+        "color": "pink",
+        "skinStates": {
+          "sticky": {
+            "strokes": []
+          }
+        }
+      }
+    },
+    {
+      "sample": 1,
+      "key": "text",
+      "value": "off",
+      "data": {
+        "text": "off",
+        "mode": "sticky",
+        "color": "pink",
+        "skinStates": {
+          "sticky": {
+            "strokes": []
+          }
+        }
+      }
+    },
+    {
+      "sample": 1,
+      "key": "text",
+      "value": "0",
+      "data": {
+        "text": "0",
+        "mode": "sticky",
+        "color": "pink",
+        "skinStates": {
+          "sticky": {
+            "strokes": []
+          }
+        }
+      }
+    },
+    {
+      "sample": 1,
+      "key": "text",
+      "value": " 8 ",
+      "data": {
+        "text": " 8 ",
+        "mode": "sticky",
+        "color": "pink",
+        "skinStates": {
+          "sticky": {
+            "strokes": []
+          }
+        }
+      }
+    },
+    {
+      "sample": 1,
+      "key": "text",
+      "value": "3abc",
+      "data": {
+        "text": "3abc",
+        "mode": "sticky",
+        "color": "pink",
+        "skinStates": {
+          "sticky": {
+            "strokes": []
+          }
+        }
+      }
+    },
+    {
+      "sample": 1,
+      "key": "text",
+      "value": "-4e2",
+      "data": {
+        "text": "-4e2",
+        "mode": "sticky",
+        "color": "pink",
+        "skinStates": {
+          "sticky": {
+            "strokes": []
+          }
+        }
+      }
+    },
+    {
+      "sample": 1,
+      "key": "text",
+      "value": "Infinity",
+      "data": {
+        "text": "Infinity",
+        "mode": "sticky",
+        "color": "pink",
+        "skinStates": {
+          "sticky": {
+            "strokes": []
+          }
+        }
+      }
+    },
+    {
+      "sample": 1,
+      "key": "text",
+      "value": "NaN",
+      "data": {
+        "text": "NaN",
+        "mode": "sticky",
+        "color": "pink",
+        "skinStates": {
+          "sticky": {
+            "strokes": []
+          }
+        }
+      }
+    },
+    {
+      "sample": 1,
+      "key": "text",
+      "value": [],
+      "data": {
+        "text": "",
+        "mode": "sticky",
+        "color": "pink",
+        "skinStates": {
+          "sticky": {
+            "strokes": []
+          }
+        }
+      }
+    },
+    {
+      "sample": 1,
+      "key": "text",
+      "value": [
+        {
+          "t": 0,
+          "v": 4
+        },
+        {
+          "t": 1,
+          "v": 9
+        }
+      ],
+      "data": {
+        "text": "4, 9",
+        "mode": "sticky",
+        "color": "pink",
+        "skinStates": {
+          "sticky": {
+            "strokes": []
+          }
+        }
+      }
+    },
+    {
+      "sample": 1,
+      "key": "text",
+      "value": [
+        {
+          "t": 5,
+          "v": -2.5
+        }
+      ],
+      "data": {
+        "text": "-2.5",
+        "mode": "sticky",
+        "color": "pink",
+        "skinStates": {
+          "sticky": {
+            "strokes": []
+          }
+        }
+      }
+    }
+  ],
+  "commands": []
+}

@@ -1,0 +1,8 @@
+# Xcode/SwiftPM build output — regenerated on every build.
+.build/
+.swiftpm/
+App/Grovepad.xcodeproj/-Xcc/
+*.xcuserstate
+xcuserdata/
+Supabase.local.xcconfig
+.DS_Store

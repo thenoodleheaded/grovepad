@@ -1,0 +1,81 @@
+{
+  "outputs": [
+    {
+      "key": "item_count",
+      "label": "Items",
+      "valueType": "number",
+      "unit": null,
+      "index": 0,
+      "timeSensitive": false
+    },
+    {
+      "key": "top_level_count",
+      "label": "Top-level items",
+      "valueType": "number",
+      "unit": null,
+      "index": 1,
+      "timeSensitive": false
+    }
+  ],
+  "inputs": [],
+  "samples": [
+    {
+      "skin": "tree",
+      "items": [
+        {
+          "id": "uuid-0001",
+          "text": "First idea",
+          "depth": 0,
+          "collapsed": false
+        }
+      ]
+    },
+    {
+      "skin": "tree",
+      "items": [
+        {
+          "id": "o1",
+          "text": "root",
+          "depth": 0,
+          "collapsed": false
+        },
+        {
+          "id": "o2",
+          "text": "child",
+          "depth": 1,
+          "collapsed": false
+        },
+        {
+          "id": "o3",
+          "text": "",
+          "depth": 0,
+          "collapsed": true
+        }
+      ]
+    }
+  ],
+  "gets": [
+    {
+      "sample": 0,
+      "key": "item_count",
+      "value": 1
+    },
+    {
+      "sample": 0,
+      "key": "top_level_count",
+      "value": 1
+    },
+    {
+      "sample": 1,
+      "key": "item_count",
+      "value": 2
+    },
+    {
+      "sample": 1,
+      "key": "top_level_count",
+      "value": 1
+    }
+  ],
+  "sets": [],
+  "commands": []
+}

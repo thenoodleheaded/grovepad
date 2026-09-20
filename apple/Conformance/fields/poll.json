@@ -1,0 +1,1060 @@
+{
+  "outputs": [
+    {
+      "key": "votes",
+      "label": "Total votes",
+      "valueType": "number",
+      "unit": "count",
+      "index": 0,
+      "timeSensitive": false
+    },
+    {
+      "key": "leader",
+      "label": "Leading option",
+      "valueType": "text",
+      "unit": null,
+      "index": 1,
+      "timeSensitive": false
+    },
+    {
+      "key": "leader_share",
+      "label": "Leading share",
+      "valueType": "number",
+      "unit": "percent",
+      "index": 2,
+      "timeSensitive": false
+    }
+  ],
+  "inputs": [
+    {
+      "key": "reset",
+      "label": "Clear votes",
+      "kind": "command",
+      "valueType": null,
+      "unit": null,
+      "acceptsPayload": false,
+      "index": 0
+    }
+  ],
+  "samples": [
+    {
+      "skin": "bars",
+      "question": "Which direction?",
+      "options": [
+        {
+          "id": "uuid-0001",
+          "label": "Option A",
+          "votes": 0
+        },
+        {
+          "id": "uuid-0002",
+          "label": "Option B",
+          "votes": 0
+        }
+      ]
+    },
+    {
+      "skin": "bars",
+      "question": "Which direction?",
+      "options": [
+        {
+          "id": "a",
+          "label": "North",
+          "votes": 3
+        },
+        {
+          "id": "b",
+          "label": "South",
+          "votes": 1
+        },
+        {
+          "id": "c",
+          "label": "East",
+          "votes": 0
+        }
+      ]
+    },
+    {
+      "skin": "bars",
+      "question": "Which direction?",
+      "options": [
+        {
+          "id": "a",
+          "label": "A",
+          "votes": 2
+        },
+        {
+          "id": "b",
+          "label": "B",
+          "votes": 2
+        }
+      ]
+    },
+    {
+      "skin": "bars",
+      "question": "Which direction?",
+      "options": [
+        {
+          "id": "a",
+          "label": "A",
+          "votes": 0
+        },
+        {
+          "id": "b",
+          "label": "B",
+          "votes": 0
+        }
+      ]
+    },
+    {
+      "skin": "bars",
+      "question": "Which direction?",
+      "options": []
+    },
+    {
+      "skin": "bars",
+      "question": "Which direction?",
+      "options": "nope"
+    },
+    {
+      "skin": "bars",
+      "question": "Which direction?",
+      "options": [
+        {
+          "id": "a",
+          "label": "Keep",
+          "votes": 2
+        },
+        {
+          "id": "a",
+          "label": "Duplicate",
+          "votes": 9
+        },
+        {
+          "id": "b",
+          "label": "Negative",
+          "votes": -4
+        },
+        "not an option",
+        null,
+        {
+          "label": "No id",
+          "votes": 1.9
+        },
+        {
+          "id": "",
+          "label": "Empty id",
+          "votes": 2.5,
+          "extra": "dropped"
+        },
+        [
+          1,
+          2
+        ]
+      ]
+    },
+    {
+      "skin": "ranked_choice",
+      "question": "Which direction?",
+      "options": [
+        {
+          "id": "a",
+          "label": "A",
+          "votes": 1
+        },
+        {
+          "id": "b",
+          "label": "B",
+          "votes": 2
+        },
+        {
+          "id": "c",
+          "label": "C",
+          "votes": 2
+        }
+      ],
+      "skinStates": {
+        "ranked_choice": {
+          "ballots": [
+            [
+              "b",
+              "a"
+            ],
+            [
+              "c"
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "skin": "pairwise",
+      "question": "Which direction?",
+      "options": [
+        {
+          "id": "a",
+          "label": "A",
+          "votes": 5
+        },
+        {
+          "id": "b",
+          "label": "B",
+          "votes": 1
+        }
+      ],
+      "skinStates": {
+        "pairwise": {
+          "duels": {
+            "a|b": 5,
+            "b|a": 1
+          }
+        },
+        "live_room": {
+          "phase": "open",
+          "participants": 8
+        }
+      }
+    },
+    {
+      "skin": "bars",
+      "question": "Which direction?",
+      "options": [
+        {
+          "id": "x",
+          "label": "Huge",
+          "votes": 5000000
+        },
+        {
+          "id": "y",
+          "label": "Small",
+          "votes": 1
+        }
+      ]
+    },
+    {
+      "skin": "bars",
+      "question": "Which direction?",
+      "options": [
+        {
+          "id": "x",
+          "label": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "votes": 2
+        },
+        {
+          "id": "y",
+          "label": "Y",
+          "votes": 1
+        }
+      ]
+    },
+    {
+      "skin": "bars",
+      "question": "Which direction?",
+      "options": [
+        {
+          "id": "a",
+          "label": "A",
+          "votes": 3
+        },
+        {
+          "id": "b",
+          "label": "B",
+          "votes": 1
+        },
+        {
+          "id": "c",
+          "label": "C",
+          "votes": 3
+        }
+      ]
+    },
+    {
+      "skin": "bars",
+      "question": "Which direction?",
+      "options": [
+        {
+          "id": "o0",
+          "label": "Option 0",
+          "votes": 0
+        },
+        {
+          "id": "o1",
+          "label": "Option 1",
+          "votes": 1
+        },
+        {
+          "id": "o2",
+          "label": "Option 2",
+          "votes": 2
+        },
+        {
+          "id": "o3",
+          "label": "Option 3",
+          "votes": 3
+        },
+        {
+          "id": "o4",
+          "label": "Option 4",
+          "votes": 4
+        },
+        {
+          "id": "o5",
+          "label": "Option 5",
+          "votes": 5
+        },
+        {
+          "id": "o6",
+          "label": "Option 6",
+          "votes": 6
+        },
+        {
+          "id": "o7",
+          "label": "Option 7",
+          "votes": 7
+        },
+        {
+          "id": "o8",
+          "label": "Option 8",
+          "votes": 8
+        },
+        {
+          "id": "o9",
+          "label": "Option 9",
+          "votes": 9
+        },
+        {
+          "id": "o10",
+          "label": "Option 10",
+          "votes": 10
+        },
+        {
+          "id": "o11",
+          "label": "Option 11",
+          "votes": 11
+        },
+        {
+          "id": "o12",
+          "label": "Option 12",
+          "votes": 12
+        },
+        {
+          "id": "o13",
+          "label": "Option 13",
+          "votes": 13
+        },
+        {
+          "id": "o14",
+          "label": "Option 14",
+          "votes": 14
+        },
+        {
+          "id": "o15",
+          "label": "Option 15",
+          "votes": 15
+        },
+        {
+          "id": "o16",
+          "label": "Option 16",
+          "votes": 16
+        },
+        {
+          "id": "o17",
+          "label": "Option 17",
+          "votes": 17
+        },
+        {
+          "id": "o18",
+          "label": "Option 18",
+          "votes": 18
+        },
+        {
+          "id": "o19",
+          "label": "Option 19",
+          "votes": 19
+        },
+        {
+          "id": "o20",
+          "label": "Option 20",
+          "votes": 20
+        },
+        {
+          "id": "o21",
+          "label": "Option 21",
+          "votes": 21
+        },
+        {
+          "id": "o22",
+          "label": "Option 22",
+          "votes": 22
+        },
+        {
+          "id": "o23",
+          "label": "Option 23",
+          "votes": 23
+        },
+        {
+          "id": "o24",
+          "label": "Option 24",
+          "votes": 50
+        }
+      ]
+    },
+    {
+      "skin": "bars",
+      "question": "Which direction?",
+      "options": [
+        {
+          "id": "a",
+          "label": "A",
+          "votes": "7"
+        },
+        {
+          "id": "b",
+          "label": 42,
+          "votes": true
+        }
+      ]
+    }
+  ],
+  "gets": [
+    {
+      "sample": 0,
+      "key": "votes",
+      "value": 0
+    },
+    {
+      "sample": 0,
+      "key": "leader",
+      "value": ""
+    },
+    {
+      "sample": 0,
+      "key": "leader_share",
+      "value": 0
+    },
+    {
+      "sample": 1,
+      "key": "votes",
+      "value": 4
+    },
+    {
+      "sample": 1,
+      "key": "leader",
+      "value": "North"
+    },
+    {
+      "sample": 1,
+      "key": "leader_share",
+      "value": 75
+    },
+    {
+      "sample": 2,
+      "key": "votes",
+      "value": 4
+    },
+    {
+      "sample": 2,
+      "key": "leader",
+      "value": "Tied"
+    },
+    {
+      "sample": 2,
+      "key": "leader_share",
+      "value": 50
+    },
+    {
+      "sample": 3,
+      "key": "votes",
+      "value": 0
+    },
+    {
+      "sample": 3,
+      "key": "leader",
+      "value": ""
+    },
+    {
+      "sample": 3,
+      "key": "leader_share",
+      "value": 0
+    },
+    {
+      "sample": 4,
+      "key": "votes",
+      "value": 0
+    },
+    {
+      "sample": 4,
+      "key": "leader",
+      "value": ""
+    },
+    {
+      "sample": 4,
+      "key": "leader_share",
+      "value": 0
+    },
+    {
+      "sample": 5,
+      "key": "votes",
+      "value": 0
+    },
+    {
+      "sample": 5,
+      "key": "leader",
+      "value": ""
+    },
+    {
+      "sample": 5,
+      "key": "leader_share",
+      "value": 0
+    },
+    {
+      "sample": 6,
+      "key": "votes",
+      "value": 5
+    },
+    {
+      "sample": 6,
+      "key": "leader",
+      "value": "Tied"
+    },
+    {
+      "sample": 6,
+      "key": "leader_share",
+      "value": 40
+    },
+    {
+      "sample": 7,
+      "key": "votes",
+      "value": 5
+    },
+    {
+      "sample": 7,
+      "key": "leader",
+      "value": "Tied"
+    },
+    {
+      "sample": 7,
+      "key": "leader_share",
+      "value": 40
+    },
+    {
+      "sample": 8,
+      "key": "votes",
+      "value": 6
+    },
+    {
+      "sample": 8,
+      "key": "leader",
+      "value": "A"
+    },
+    {
+      "sample": 8,
+      "key": "leader_share",
+      "value": 83.3
+    },
+    {
+      "sample": 9,
+      "key": "votes",
+      "value": 1000001
+    },
+    {
+      "sample": 9,
+      "key": "leader",
+      "value": "Huge"
+    },
+    {
+      "sample": 9,
+      "key": "leader_share",
+      "value": 100
+    },
+    {
+      "sample": 10,
+      "key": "votes",
+      "value": 3
+    },
+    {
+      "sample": 10,
+      "key": "leader",
+      "value": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    },
+    {
+      "sample": 10,
+      "key": "leader_share",
+      "value": 66.7
+    },
+    {
+      "sample": 11,
+      "key": "votes",
+      "value": 7
+    },
+    {
+      "sample": 11,
+      "key": "leader",
+      "value": "Tied"
+    },
+    {
+      "sample": 11,
+      "key": "leader_share",
+      "value": 42.9
+    },
+    {
+      "sample": 12,
+      "key": "votes",
+      "value": 276
+    },
+    {
+      "sample": 12,
+      "key": "leader",
+      "value": "Option 23"
+    },
+    {
+      "sample": 12,
+      "key": "leader_share",
+      "value": 8.3
+    },
+    {
+      "sample": 13,
+      "key": "votes",
+      "value": 0
+    },
+    {
+      "sample": 13,
+      "key": "leader",
+      "value": ""
+    },
+    {
+      "sample": 13,
+      "key": "leader_share",
+      "value": 0
+    }
+  ],
+  "sets": [],
+  "commands": [
+    {
+      "sample": 0,
+      "key": "reset",
+      "payload": null,
+      "hasPayload": false,
+      "data": {
+        "skin": "bars",
+        "question": "Which direction?",
+        "options": [
+          {
+            "id": "uuid-0001",
+            "label": "Option A",
+            "votes": 0
+          },
+          {
+            "id": "uuid-0002",
+            "label": "Option B",
+            "votes": 0
+          }
+        ]
+      }
+    },
+    {
+      "sample": 1,
+      "key": "reset",
+      "payload": null,
+      "hasPayload": false,
+      "data": {
+        "skin": "bars",
+        "question": "Which direction?",
+        "options": [
+          {
+            "id": "a",
+            "label": "North",
+            "votes": 0
+          },
+          {
+            "id": "b",
+            "label": "South",
+            "votes": 0
+          },
+          {
+            "id": "c",
+            "label": "East",
+            "votes": 0
+          }
+        ]
+      }
+    },
+    {
+      "sample": 2,
+      "key": "reset",
+      "payload": null,
+      "hasPayload": false,
+      "data": {
+        "skin": "bars",
+        "question": "Which direction?",
+        "options": [
+          {
+            "id": "a",
+            "label": "A",
+            "votes": 0
+          },
+          {
+            "id": "b",
+            "label": "B",
+            "votes": 0
+          }
+        ]
+      }
+    },
+    {
+      "sample": 3,
+      "key": "reset",
+      "payload": null,
+      "hasPayload": false,
+      "data": {
+        "skin": "bars",
+        "question": "Which direction?",
+        "options": [
+          {
+            "id": "a",
+            "label": "A",
+            "votes": 0
+          },
+          {
+            "id": "b",
+            "label": "B",
+            "votes": 0
+          }
+        ]
+      }
+    },
+    {
+      "sample": 4,
+      "key": "reset",
+      "payload": null,
+      "hasPayload": false,
+      "data": {
+        "skin": "bars",
+        "question": "Which direction?",
+        "options": []
+      }
+    },
+    {
+      "sample": 5,
+      "key": "reset",
+      "payload": null,
+      "hasPayload": false,
+      "data": {
+        "skin": "bars",
+        "question": "Which direction?",
+        "options": []
+      }
+    },
+    {
+      "sample": 6,
+      "key": "reset",
+      "payload": null,
+      "hasPayload": false,
+      "data": {
+        "skin": "bars",
+        "question": "Which direction?",
+        "options": [
+          {
+            "id": "a",
+            "label": "Keep",
+            "votes": 0
+          },
+          {
+            "id": "b",
+            "label": "Negative",
+            "votes": 0
+          },
+          {
+            "id": "option-5",
+            "label": "No id",
+            "votes": 0
+          },
+          {
+            "id": "option-6",
+            "label": "Empty id",
+            "votes": 0
+          },
+          {
+            "id": "option-7",
+            "label": "",
+            "votes": 0
+          }
+        ]
+      }
+    },
+    {
+      "sample": 7,
+      "key": "reset",
+      "payload": null,
+      "hasPayload": false,
+      "data": {
+        "skin": "ranked_choice",
+        "question": "Which direction?",
+        "options": [
+          {
+            "id": "a",
+            "label": "A",
+            "votes": 0
+          },
+          {
+            "id": "b",
+            "label": "B",
+            "votes": 0
+          },
+          {
+            "id": "c",
+            "label": "C",
+            "votes": 0
+          }
+        ]
+      }
+    },
+    {
+      "sample": 8,
+      "key": "reset",
+      "payload": null,
+      "hasPayload": false,
+      "data": {
+        "skin": "pairwise",
+        "question": "Which direction?",
+        "options": [
+          {
+            "id": "a",
+            "label": "A",
+            "votes": 0
+          },
+          {
+            "id": "b",
+            "label": "B",
+            "votes": 0
+          }
+        ]
+      }
+    },
+    {
+      "sample": 9,
+      "key": "reset",
+      "payload": null,
+      "hasPayload": false,
+      "data": {
+        "skin": "bars",
+        "question": "Which direction?",
+        "options": [
+          {
+            "id": "x",
+            "label": "Huge",
+            "votes": 0
+          },
+          {
+            "id": "y",
+            "label": "Small",
+            "votes": 0
+          }
+        ]
+      }
+    },
+    {
+      "sample": 10,
+      "key": "reset",
+      "payload": null,
+      "hasPayload": false,
+      "data": {
+        "skin": "bars",
+        "question": "Which direction?",
+        "options": [
+          {
+            "id": "x",
+            "label": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+            "votes": 0
+          },
+          {
+            "id": "y",
+            "label": "Y",
+            "votes": 0
+          }
+        ]
+      }
+    },
+    {
+      "sample": 11,
+      "key": "reset",
+      "payload": null,
+      "hasPayload": false,
+      "data": {
+        "skin": "bars",
+        "question": "Which direction?",
+        "options": [
+          {
+            "id": "a",
+            "label": "A",
+            "votes": 0
+          },
+          {
+            "id": "b",
+            "label": "B",
+            "votes": 0
+          },
+          {
+            "id": "c",
+            "label": "C",
+            "votes": 0
+          }
+        ]
+      }
+    },
+    {
+      "sample": 12,
+      "key": "reset",
+      "payload": null,
+      "hasPayload": false,
+      "data": {
+        "skin": "bars",
+        "question": "Which direction?",
+        "options": [
+          {
+            "id": "o0",
+            "label": "Option 0",
+            "votes": 0
+          },
+          {
+            "id": "o1",
+            "label": "Option 1",
+            "votes": 0
+          },
+          {
+            "id": "o2",
+            "label": "Option 2",
+            "votes": 0
+          },
+          {
+            "id": "o3",
+            "label": "Option 3",
+            "votes": 0
+          },
+          {
+            "id": "o4",
+            "label": "Option 4",
+            "votes": 0
+          },
+          {
+            "id": "o5",
+            "label": "Option 5",
+            "votes": 0
+          },
+          {
+            "id": "o6",
+            "label": "Option 6",
+            "votes": 0
+          },
+          {
+            "id": "o7",
+            "label": "Option 7",
+            "votes": 0
+          },
+          {
+            "id": "o8",
+            "label": "Option 8",
+            "votes": 0
+          },
+          {
+            "id": "o9",
+            "label": "Option 9",
+            "votes": 0
+          },
+          {
+            "id": "o10",
+            "label": "Option 10",
+            "votes": 0
+          },
+          {
+            "id": "o11",
+            "label": "Option 11",
+            "votes": 0
+          },
+          {
+            "id": "o12",
+            "label": "Option 12",
+            "votes": 0
+          },
+          {
+            "id": "o13",
+            "label": "Option 13",
+            "votes": 0
+          },
+          {
+            "id": "o14",
+            "label": "Option 14",
+            "votes": 0
+          },
+          {
+            "id": "o15",
+            "label": "Option 15",
+            "votes": 0
+          },
+          {
+            "id": "o16",
+            "label": "Option 16",
+            "votes": 0
+          },
+          {
+            "id": "o17",
+            "label": "Option 17",
+            "votes": 0
+          },
+          {
+            "id": "o18",
+            "label": "Option 18",
+            "votes": 0
+          },
+          {
+            "id": "o19",
+            "label": "Option 19",
+            "votes": 0
+          },
+          {
+            "id": "o20",
+            "label": "Option 20",
+            "votes": 0
+          },
+          {
+            "id": "o21",
+            "label": "Option 21",
+            "votes": 0
+          },
+          {
+            "id": "o22",
+            "label": "Option 22",
+            "votes": 0
+          },
+          {
+            "id": "o23",
+            "label": "Option 23",
+            "votes": 0
+          }
+        ]
+      }
+    },
+    {
+      "sample": 13,
+      "key": "reset",
+      "payload": null,
+      "hasPayload": false,
+      "data": {
+        "skin": "bars",
+        "question": "Which direction?",
+        "options": [
+          {
+            "id": "a",
+            "label": "A",
+            "votes": 0
+          },
+          {
+            "id": "b",
+            "label": "",
+            "votes": 0
+          }
+        ]
+      }
+    }
+  ]
+}

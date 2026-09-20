@@ -1,0 +1,1293 @@
+{
+  "format": "grovepad-board",
+  "v": 2,
+  "workspaces": {
+    "workspace": {
+      "id": "workspace",
+      "name": "Workspace",
+      "rootCanvasId": "canvas",
+      "createdAt": 1
+    }
+  },
+  "canvases": {
+    "canvas": {
+      "id": "canvas",
+      "name": "Origin",
+      "workspaceId": "workspace",
+      "parentCanvasId": null
+    }
+  },
+  "widgets": {
+    "generating": {
+      "id": "generating",
+      "type": "ai_generator",
+      "title": "generating",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 320,
+        "height": 160
+      },
+      "data": {
+        "prompt": "Draft it",
+        "status": "generating"
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "secret": {
+      "id": "secret",
+      "type": "secret_reference",
+      "title": "secret",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 360,
+        "height": 240
+      },
+      "data": {
+        "label": "Secret",
+        "input": "token-raw",
+        "output": "token-raw",
+        "config": "{\"secret\":\"token-raw\"}",
+        "mode": "standard",
+        "enabled": true,
+        "running": false,
+        "count": 1,
+        "concurrency": 1,
+        "lastRunAt": 1,
+        "lastError": "",
+        "items": []
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "running": {
+      "id": "running",
+      "type": "http_request",
+      "title": "running",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 360,
+        "height": 240
+      },
+      "data": {
+        "label": "HTTP",
+        "input": "",
+        "output": "",
+        "config": "{}",
+        "mode": "standard",
+        "enabled": true,
+        "running": true,
+        "count": 0,
+        "concurrency": 1,
+        "lastRunAt": null,
+        "lastError": "",
+        "items": []
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "loopRunning": {
+      "id": "loopRunning",
+      "type": "loop",
+      "title": "loopRunning",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 360,
+        "height": 240
+      },
+      "data": {
+        "label": "Loop",
+        "input": "",
+        "output": "",
+        "config": "{}",
+        "mode": "standard",
+        "enabled": true,
+        "running": true,
+        "count": 0,
+        "concurrency": 1,
+        "lastRunAt": null,
+        "lastError": "",
+        "items": []
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "legacyBullets": {
+      "id": "legacyBullets",
+      "type": "bullets",
+      "title": "legacyBullets",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 240,
+        "height": 120
+      },
+      "data": {
+        "items": [
+          "one",
+          {
+            "id": "kept",
+            "text": "two",
+            "extra": "stays"
+          },
+          7,
+          {
+            "id": 3,
+            "text": "bad"
+          }
+        ]
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "pill": {
+      "id": "pill",
+      "type": "text",
+      "title": "pill",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 200,
+        "height": 40
+      },
+      "data": {
+        "text": "",
+        "mode": "plain",
+        "color": "yellow"
+      },
+      "metadata": {
+        "badges": []
+      },
+      "expandedSize": {
+        "width": 320,
+        "height": 240
+      },
+      "collapsed": true
+    },
+    "pillNoMemory": {
+      "id": "pillNoMemory",
+      "type": "text",
+      "title": "pillNoMemory",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 200,
+        "height": 40
+      },
+      "data": {
+        "text": "",
+        "mode": "plain",
+        "color": "yellow"
+      },
+      "metadata": {
+        "badges": []
+      },
+      "collapsed": true
+    },
+    "pillIcon": {
+      "id": "pillIcon",
+      "type": "text",
+      "title": "pillIcon",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 80,
+        "height": 80
+      },
+      "data": {
+        "text": "",
+        "mode": "plain",
+        "color": "yellow"
+      },
+      "metadata": {
+        "badges": []
+      },
+      "iconified": true,
+      "expandedSize": {
+        "width": 320,
+        "height": 240
+      },
+      "collapsed": true
+    },
+    "hydrating": {
+      "id": "hydrating",
+      "type": "text",
+      "title": "hydrating",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 320,
+        "height": 200
+      },
+      "data": {
+        "text": "",
+        "mode": "plain",
+        "color": "yellow"
+      },
+      "metadata": {
+        "badges": []
+      },
+      "isHydrating": true
+    },
+    "pinnedRest": {
+      "id": "pinnedRest",
+      "type": "text",
+      "title": "pinnedRest",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 320,
+        "height": 200
+      },
+      "data": {
+        "text": "",
+        "mode": "plain",
+        "color": "yellow"
+      },
+      "metadata": {
+        "badges": [],
+        "pinned": true,
+        "pinnedFrom": {
+          "kind": "rest"
+        }
+      }
+    },
+    "pinnedIcon": {
+      "id": "pinnedIcon",
+      "type": "text",
+      "title": "pinnedIcon",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 320,
+        "height": 200
+      },
+      "data": {
+        "text": "",
+        "mode": "plain",
+        "color": "yellow"
+      },
+      "metadata": {
+        "badges": [],
+        "pinned": true,
+        "pinnedFrom": {
+          "kind": "icon",
+          "width": 120,
+          "height": 120
+        }
+      }
+    },
+    "pinnedBadIcon": {
+      "id": "pinnedBadIcon",
+      "type": "text",
+      "title": "pinnedBadIcon",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 320,
+        "height": 200
+      },
+      "data": {
+        "text": "",
+        "mode": "plain",
+        "color": "yellow"
+      },
+      "metadata": {
+        "badges": [],
+        "pinned": true,
+        "pinnedFrom": {
+          "kind": "icon",
+          "width": 0,
+          "height": 120
+        }
+      }
+    },
+    "staleOrigin": {
+      "id": "staleOrigin",
+      "type": "text",
+      "title": "staleOrigin",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 320,
+        "height": 200
+      },
+      "data": {
+        "text": "",
+        "mode": "plain",
+        "color": "yellow"
+      },
+      "metadata": {
+        "badges": [],
+        "pinnedFrom": {
+          "kind": "rest"
+        }
+      }
+    },
+    "renamed": {
+      "id": "renamed",
+      "type": "notes",
+      "title": "renamed",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 240,
+        "height": 160
+      },
+      "data": {
+        "text": "old name"
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "future": {
+      "id": "future",
+      "type": "quantum_planner",
+      "title": "future",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 240,
+        "height": 160
+      },
+      "data": {
+        "entanglements": [
+          1,
+          2
+        ]
+      },
+      "metadata": {
+        "badges": [],
+        "futureChrome": "prismatic"
+      }
+    },
+    "futureHydrating": {
+      "id": "futureHydrating",
+      "type": "quantum_planner",
+      "title": "futureHydrating",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 240,
+        "height": 160
+      },
+      "data": {},
+      "metadata": {
+        "badges": []
+      },
+      "isHydrating": true
+    },
+    "wrongCanvas": {
+      "id": "wrongCanvas",
+      "type": "text",
+      "title": "wrongCanvas",
+      "canvasId": "nowhere",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 320,
+        "height": 200
+      },
+      "data": {
+        "text": "",
+        "mode": "plain",
+        "color": "yellow"
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "idMismatch": {
+      "id": "someOtherId",
+      "type": "text",
+      "title": "someOtherId",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 320,
+        "height": 200
+      },
+      "data": {
+        "text": "",
+        "mode": "plain",
+        "color": "yellow"
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "badEnvelope": {
+      "id": "badEnvelope",
+      "type": "text",
+      "title": "no position",
+      "canvasId": "canvas",
+      "size": {
+        "width": 1,
+        "height": 1
+      },
+      "data": {},
+      "metadata": {
+        "badges": []
+      }
+    },
+    "noBadges": {
+      "id": "noBadges",
+      "type": "text",
+      "title": "noBadges",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 320,
+        "height": 200
+      },
+      "data": {
+        "text": "",
+        "mode": "plain",
+        "color": "yellow"
+      },
+      "metadata": {}
+    },
+    "integerSize": {
+      "id": "integerSize",
+      "type": "text",
+      "title": "integerSize",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 240.5,
+        "height": 160.25
+      },
+      "data": {
+        "text": "",
+        "mode": "plain",
+        "color": "yellow"
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "deleted-quote": {
+      "id": "deleted-quote",
+      "type": "quote",
+      "title": "deleted-quote",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 240,
+        "height": 160
+      },
+      "data": {
+        "text": "gone"
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "deleted-sticky_note": {
+      "id": "deleted-sticky_note",
+      "type": "sticky_note",
+      "title": "deleted-sticky_note",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 240,
+        "height": 160
+      },
+      "data": {
+        "text": "gone"
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "deleted-cornell": {
+      "id": "deleted-cornell",
+      "type": "cornell",
+      "title": "deleted-cornell",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 240,
+        "height": 160
+      },
+      "data": {
+        "text": "gone"
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "deleted-line_chart": {
+      "id": "deleted-line_chart",
+      "type": "line_chart",
+      "title": "deleted-line_chart",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 240,
+        "height": 160
+      },
+      "data": {
+        "text": "gone"
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "deleted-pie_chart": {
+      "id": "deleted-pie_chart",
+      "type": "pie_chart",
+      "title": "deleted-pie_chart",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 240,
+        "height": 160
+      },
+      "data": {
+        "text": "gone"
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "deleted-progress": {
+      "id": "deleted-progress",
+      "type": "progress",
+      "title": "deleted-progress",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 240,
+        "height": 160
+      },
+      "data": {
+        "text": "gone"
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "deleted-study_goal": {
+      "id": "deleted-study_goal",
+      "type": "study_goal",
+      "title": "deleted-study_goal",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 240,
+        "height": 160
+      },
+      "data": {
+        "text": "gone"
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "deleted-okr": {
+      "id": "deleted-okr",
+      "type": "okr",
+      "title": "deleted-okr",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 240,
+        "height": 160
+      },
+      "data": {
+        "text": "gone"
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "deleted-timer": {
+      "id": "deleted-timer",
+      "type": "timer",
+      "title": "deleted-timer",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 240,
+        "height": 160
+      },
+      "data": {
+        "text": "gone"
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "deleted-pomodoro": {
+      "id": "deleted-pomodoro",
+      "type": "pomodoro",
+      "title": "deleted-pomodoro",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 240,
+        "height": 160
+      },
+      "data": {
+        "text": "gone"
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "deleted-stopwatch": {
+      "id": "deleted-stopwatch",
+      "type": "stopwatch",
+      "title": "deleted-stopwatch",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 240,
+        "height": 160
+      },
+      "data": {
+        "text": "gone"
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "deleted-countdown": {
+      "id": "deleted-countdown",
+      "type": "countdown",
+      "title": "deleted-countdown",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 240,
+        "height": 160
+      },
+      "data": {
+        "text": "gone"
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "deleted-world_clock": {
+      "id": "deleted-world_clock",
+      "type": "world_clock",
+      "title": "deleted-world_clock",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 240,
+        "height": 160
+      },
+      "data": {
+        "text": "gone"
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "deleted-excalidraw": {
+      "id": "deleted-excalidraw",
+      "type": "excalidraw",
+      "title": "deleted-excalidraw",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 240,
+        "height": 160
+      },
+      "data": {
+        "text": "gone"
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "deleted-random_picker": {
+      "id": "deleted-random_picker",
+      "type": "random_picker",
+      "title": "deleted-random_picker",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 240,
+        "height": 160
+      },
+      "data": {
+        "text": "gone"
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "deleted-gpa": {
+      "id": "deleted-gpa",
+      "type": "gpa",
+      "title": "deleted-gpa",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 240,
+        "height": 160
+      },
+      "data": {
+        "text": "gone"
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "deleted-vocab": {
+      "id": "deleted-vocab",
+      "type": "vocab",
+      "title": "deleted-vocab",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 240,
+        "height": 160
+      },
+      "data": {
+        "text": "gone"
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "deleted-quiz": {
+      "id": "deleted-quiz",
+      "type": "quiz",
+      "title": "deleted-quiz",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 240,
+        "height": 160
+      },
+      "data": {
+        "text": "gone"
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "deleted-kanban": {
+      "id": "deleted-kanban",
+      "type": "kanban",
+      "title": "deleted-kanban",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 240,
+        "height": 160
+      },
+      "data": {
+        "text": "gone"
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "deleted-assignment": {
+      "id": "deleted-assignment",
+      "type": "assignment",
+      "title": "deleted-assignment",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 240,
+        "height": 160
+      },
+      "data": {
+        "text": "gone"
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "deleted-daily_agenda": {
+      "id": "deleted-daily_agenda",
+      "type": "daily_agenda",
+      "title": "deleted-daily_agenda",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 240,
+        "height": 160
+      },
+      "data": {
+        "text": "gone"
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "deleted-weekly_planner": {
+      "id": "deleted-weekly_planner",
+      "type": "weekly_planner",
+      "title": "deleted-weekly_planner",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 240,
+        "height": 160
+      },
+      "data": {
+        "text": "gone"
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "deleted-timeline": {
+      "id": "deleted-timeline",
+      "type": "timeline",
+      "title": "deleted-timeline",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 240,
+        "height": 160
+      },
+      "data": {
+        "text": "gone"
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "deleted-priority_matrix": {
+      "id": "deleted-priority_matrix",
+      "type": "priority_matrix",
+      "title": "deleted-priority_matrix",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 240,
+        "height": 160
+      },
+      "data": {
+        "text": "gone"
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "deleted-divider": {
+      "id": "deleted-divider",
+      "type": "divider",
+      "title": "deleted-divider",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 240,
+        "height": 160
+      },
+      "data": {
+        "text": "gone"
+      },
+      "metadata": {
+        "badges": []
+      }
+    }
+  },
+  "relations": {
+    "keep": {
+      "id": "keep",
+      "fromId": "generating",
+      "toId": "secret",
+      "type": "parent",
+      "isResolved": false
+    },
+    "toDeleted": {
+      "id": "toDeleted",
+      "fromId": "generating",
+      "toId": "deleted-quote",
+      "type": "parent",
+      "isResolved": false
+    },
+    "toFuture": {
+      "id": "toFuture",
+      "fromId": "generating",
+      "toId": "future",
+      "type": "blocker",
+      "isResolved": false
+    },
+    "unknownKind": {
+      "id": "unknownKind",
+      "fromId": "generating",
+      "toId": "future",
+      "type": "supports",
+      "isResolved": false,
+      "strength": 0.8
+    },
+    "mismatch": {
+      "id": "otherId",
+      "fromId": "generating",
+      "toId": "secret",
+      "type": "parent",
+      "isResolved": false
+    },
+    "missingResolved": {
+      "id": "missingResolved",
+      "fromId": "generating",
+      "toId": "secret",
+      "type": "parent"
+    }
+  },
+  "connections": {
+    "ok": {
+      "id": "ok",
+      "fromId": "running",
+      "fromField": "output",
+      "toId": "generating",
+      "kind": "value",
+      "toField": "prompt",
+      "enabled": true
+    },
+    "unknownKind": {
+      "id": "unknownKind",
+      "fromId": "running",
+      "fromField": "output",
+      "toId": "generating",
+      "kind": "stream",
+      "enabled": true,
+      "futureStreamMode": "batched"
+    },
+    "unknownTransform": {
+      "id": "unknownTransform",
+      "fromId": "running",
+      "fromField": "output",
+      "toId": "generating",
+      "kind": "value",
+      "toField": "prompt",
+      "transform": {
+        "op": "quantize",
+        "steps": 8
+      },
+      "enabled": true
+    },
+    "badTransform": {
+      "id": "badTransform",
+      "fromId": "running",
+      "fromField": "output",
+      "toId": "generating",
+      "kind": "value",
+      "toField": "prompt",
+      "transform": "nope",
+      "enabled": true
+    },
+    "missingToField": {
+      "id": "missingToField",
+      "fromId": "running",
+      "fromField": "output",
+      "toId": "generating",
+      "kind": "value",
+      "enabled": true
+    },
+    "triggerNoEdge": {
+      "id": "triggerNoEdge",
+      "fromId": "running",
+      "fromField": "output",
+      "toId": "generating",
+      "kind": "trigger",
+      "command": "reset",
+      "enabled": true
+    },
+    "triggerBadEdge": {
+      "id": "triggerBadEdge",
+      "fromId": "running",
+      "fromField": "output",
+      "toId": "generating",
+      "kind": "trigger",
+      "command": "reset",
+      "edge": "sideways",
+      "enabled": true
+    },
+    "toDeleted": {
+      "id": "toDeleted",
+      "fromId": "running",
+      "fromField": "output",
+      "toId": "deleted-timer",
+      "kind": "value",
+      "toField": "x",
+      "enabled": true
+    }
+  },
+  "glues": {
+    "ok": {
+      "id": "ok",
+      "widgetIds": [
+        "generating",
+        "secret",
+        "deleted-quote",
+        42
+      ]
+    },
+    "tooFew": {
+      "id": "tooFew",
+      "widgetIds": [
+        "generating",
+        "deleted-quote"
+      ]
+    },
+    "longName": {
+      "id": "longName",
+      "widgetIds": [
+        "generating",
+        "secret"
+      ],
+      "name": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    },
+    "blankName": {
+      "id": "blankName",
+      "widgetIds": [
+        "generating",
+        "secret"
+      ],
+      "name": "   "
+    },
+    "collapsedNoRestore": {
+      "id": "collapsedNoRestore",
+      "widgetIds": [
+        "generating",
+        "secret"
+      ],
+      "collapsed": true,
+      "foldedAt": {
+        "x": 1,
+        "y": 2
+      }
+    },
+    "collapsedBadRestore": {
+      "id": "collapsedBadRestore",
+      "widgetIds": [
+        "generating",
+        "secret"
+      ],
+      "collapsed": true,
+      "restore": {
+        "generating": {
+          "x": 1,
+          "y": 2,
+          "width": 0,
+          "height": 10,
+          "iconified": true
+        }
+      }
+    },
+    "collapsedGood": {
+      "id": "collapsedGood",
+      "widgetIds": [
+        "generating",
+        "secret"
+      ],
+      "collapsed": true,
+      "restore": {
+        "generating": {
+          "x": 1,
+          "y": 2,
+          "width": 10,
+          "height": 10,
+          "iconified": "yes"
+        }
+      },
+      "foldedAt": {
+        "x": "a",
+        "y": 2
+      }
+    },
+    "extraFields": {
+      "id": "extraFields",
+      "widgetIds": [
+        "generating",
+        "secret"
+      ],
+      "futureGlueField": {
+        "kept": true
+      }
+    }
+  },
+  "activePacks": [
+    "life",
+    "life",
+    "unknown_pack",
+    "education"
+  ],
+  "activeWorkspaceId": "nope",
+  "activeCanvasId": "nowhere",
+  "canvasViews": {
+    "canvas": {
+      "pan": {
+        "x": 1,
+        "y": 2
+      },
+      "zoom": 0.01,
+      "extraView": "kept"
+    },
+    "nowhere": {
+      "pan": {
+        "x": 0,
+        "y": 0
+      },
+      "zoom": 1
+    },
+    "badView": "text"
+  },
+  "groups": {
+    "legacy": {
+      "id": "legacy",
+      "widgetIds": [
+        "generating"
+      ]
+    }
+  },
+  "futureBoardField": {
+    "mode": "tomorrow"
+  }
+}

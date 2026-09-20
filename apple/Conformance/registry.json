@@ -1,0 +1,4130 @@
+{
+  "types": {
+    "canvas_node": {
+      "label": "Canvas",
+      "description": "A whole board inside a card — click its name to enter it",
+      "category": "structure",
+      "accent": "#a3e635",
+      "defaultSize": {
+        "width": 280,
+        "height": 80
+      },
+      "sizing": {
+        "minWidth": 160,
+        "minHeight": 80,
+        "maxWidth": 480,
+        "maxHeight": null,
+        "autoHeight": true,
+        "autoWidth": true,
+        "fixed": "predicate"
+      },
+      "skinField": "skin",
+      "skins": [
+        {
+          "value": "portal",
+          "label": "Portal",
+          "icon": "FolderOpen",
+          "accent": "#a3e635",
+          "presentation": "standard",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "cover",
+          "label": "Cover",
+          "icon": "Image",
+          "accent": "#7fd94b",
+          "presentation": "cards",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "live_thumbnail",
+          "label": "Live Thumbnail",
+          "icon": "Network",
+          "accent": "#5ec95f",
+          "presentation": "standard",
+          "implementation": "schema-extension"
+        }
+      ],
+      "rendererOwnedSkinDetails": [
+        "live_thumbnail"
+      ],
+      "pack": null,
+      "availability": "public",
+      "restingFace": false,
+      "titleChrome": false,
+      "defaultData": {
+        "canvasId": "",
+        "skin": "portal"
+      }
+    },
+    "text": {
+      "label": "Text",
+      "description": "Plain, sticky, and focused writing skins in one card",
+      "category": "notes",
+      "accent": "#e2e8f0",
+      "defaultSize": {
+        "width": 320,
+        "height": 200
+      },
+      "sizing": {
+        "minWidth": 160,
+        "minHeight": null,
+        "maxWidth": null,
+        "maxHeight": null,
+        "autoHeight": true,
+        "autoWidth": false,
+        "fixed": false
+      },
+      "skinField": null,
+      "skins": [
+        {
+          "value": "plain",
+          "label": "Plain",
+          "icon": "FileText",
+          "accent": "#e2e8f0",
+          "presentation": null,
+          "implementation": null
+        },
+        {
+          "value": "sticky",
+          "label": "Sticky",
+          "icon": "StickyNote",
+          "accent": "#fcd34d",
+          "presentation": null,
+          "implementation": null
+        },
+        {
+          "value": "typewriter",
+          "label": "Typewriter",
+          "icon": "PenLine",
+          "accent": "#72cfe4",
+          "presentation": "form",
+          "implementation": "renderer-ready"
+        }
+      ],
+      "rendererOwnedSkinDetails": [],
+      "pack": null,
+      "availability": "public",
+      "restingFace": true,
+      "titleChrome": true,
+      "defaultData": {
+        "text": "",
+        "mode": "plain",
+        "color": "yellow"
+      }
+    },
+    "bullets": {
+      "label": "Bullets",
+      "description": "Quick unordered list of short points",
+      "category": "notes",
+      "accent": "#93c5fd",
+      "defaultSize": {
+        "width": 240,
+        "height": 120
+      },
+      "sizing": {
+        "minWidth": 240,
+        "minHeight": 120,
+        "maxWidth": 640,
+        "maxHeight": null,
+        "autoHeight": true,
+        "autoWidth": false,
+        "fixed": false
+      },
+      "skinField": "skin",
+      "skins": [
+        {
+          "value": "dots",
+          "label": "Dots",
+          "icon": "List",
+          "accent": "#7294e4",
+          "presentation": "ledger",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "numbered",
+          "label": "Numbered",
+          "icon": "ListOrdered",
+          "accent": "#e472d7",
+          "presentation": "steps",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "nested_outline",
+          "label": "Nested Outline",
+          "icon": "Sparkles",
+          "accent": "#9c72e4",
+          "presentation": "standard",
+          "implementation": "schema-extension"
+        }
+      ],
+      "rendererOwnedSkinDetails": [
+        "nested_outline"
+      ],
+      "pack": null,
+      "availability": "public",
+      "restingFace": true,
+      "titleChrome": true,
+      "defaultData": {
+        "items": [
+          {
+            "id": "uuid-0001",
+            "text": "First point"
+          }
+        ],
+        "skin": "dots"
+      }
+    },
+    "code": {
+      "label": "Code Snippet",
+      "description": "Monospace code block with a language tag",
+      "category": "notes",
+      "accent": "#7dd3fc",
+      "defaultSize": {
+        "width": 360,
+        "height": 200
+      },
+      "sizing": null,
+      "skinField": "skin",
+      "skins": [
+        {
+          "value": "editor",
+          "label": "Editor",
+          "icon": "Sparkles",
+          "accent": "#e48972",
+          "presentation": "standard",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "terminal",
+          "label": "Terminal",
+          "icon": "Terminal",
+          "accent": "#72ade4",
+          "presentation": "terminal",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "config",
+          "label": "Config",
+          "icon": "Terminal",
+          "accent": "#72d7e4",
+          "presentation": "terminal",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "compact_snippet",
+          "label": "Compact Snippet",
+          "icon": "Tags",
+          "accent": "#e4be72",
+          "presentation": "compact",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "diff",
+          "label": "Diff",
+          "icon": "Sparkles",
+          "accent": "#c772e4",
+          "presentation": "standard",
+          "implementation": "schema-extension"
+        },
+        {
+          "value": "runnable_example",
+          "label": "Runnable Example",
+          "icon": "Sparkles",
+          "accent": "#e4a772",
+          "presentation": "standard",
+          "implementation": "schema-extension"
+        }
+      ],
+      "rendererOwnedSkinDetails": [],
+      "pack": null,
+      "availability": "public",
+      "restingFace": true,
+      "titleChrome": true,
+      "defaultData": {
+        "language": "ts",
+        "code": ""
+      }
+    },
+    "outline": {
+      "label": "Outline",
+      "description": "Shape ideas as trees, formal documents, stories, sites, courses, plans, and expandable briefs",
+      "category": "notes",
+      "accent": "#60a5fa",
+      "defaultSize": {
+        "width": 400,
+        "height": 280
+      },
+      "sizing": {
+        "minWidth": 280,
+        "minHeight": 200,
+        "maxWidth": 720,
+        "maxHeight": 640,
+        "autoHeight": false,
+        "autoWidth": false,
+        "fixed": false
+      },
+      "skinField": "skin",
+      "skins": [
+        {
+          "value": "tree",
+          "label": "Tree",
+          "icon": "ListTree",
+          "accent": "#e47279",
+          "presentation": "standard",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "roman",
+          "label": "Roman",
+          "icon": "ScrollText",
+          "accent": "#729ce4",
+          "presentation": "form",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "scenes",
+          "label": "Scenes",
+          "icon": "Clapperboard",
+          "accent": "#72e496",
+          "presentation": "steps",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "sitemap",
+          "label": "Sitemap",
+          "icon": "FolderTree",
+          "accent": "#a372e4",
+          "presentation": "map",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "course",
+          "label": "Course",
+          "icon": "GraduationCap",
+          "accent": "#e472d3",
+          "presentation": "standard",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "work_breakdown",
+          "label": "Work Breakdown",
+          "icon": "ListChecks",
+          "accent": "#e472cd",
+          "presentation": "standard",
+          "implementation": "schema-extension"
+        },
+        {
+          "value": "collapsible_brief",
+          "label": "Collapsible Brief",
+          "icon": "PanelsTopLeft",
+          "accent": "#729ce4",
+          "presentation": "standard",
+          "implementation": "schema-extension"
+        }
+      ],
+      "rendererOwnedSkinDetails": [
+        "work_breakdown",
+        "collapsible_brief"
+      ],
+      "pack": "creative_writing",
+      "availability": "public",
+      "restingFace": true,
+      "titleChrome": true,
+      "defaultData": {
+        "skin": "tree",
+        "items": [
+          {
+            "id": "uuid-0001",
+            "text": "First idea",
+            "depth": 0,
+            "collapsed": false
+          }
+        ]
+      }
+    },
+    "checklist": {
+      "label": "Tasks",
+      "description": "One task collection worn as a list, a queue, a board, a week, or a plan",
+      "category": "planning",
+      "accent": "#86efac",
+      "defaultSize": {
+        "width": 280,
+        "height": 160
+      },
+      "sizing": {
+        "minWidth": 240,
+        "minHeight": 120,
+        "maxWidth": 640,
+        "maxHeight": null,
+        "autoHeight": true,
+        "autoWidth": false,
+        "fixed": "predicate"
+      },
+      "skinField": null,
+      "skins": [
+        {
+          "value": "list",
+          "label": "List",
+          "icon": "ListChecks",
+          "accent": "#86efac",
+          "presentation": "standard",
+          "implementation": null
+        },
+        {
+          "value": "inbox",
+          "label": "Inbox",
+          "icon": "Inbox",
+          "accent": "#e472b1",
+          "presentation": "standard",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "shopping",
+          "label": "Shopping",
+          "icon": "ShoppingCart",
+          "accent": "#72e4a1",
+          "presentation": "standard",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "assignments",
+          "label": "Assignments",
+          "icon": "ClipboardList",
+          "accent": "#c4b5fd",
+          "presentation": "ledger",
+          "implementation": null
+        },
+        {
+          "value": "day",
+          "label": "Day",
+          "icon": "CalendarRange",
+          "accent": "#fbbf24",
+          "presentation": "time",
+          "implementation": null
+        },
+        {
+          "value": "week",
+          "label": "Week",
+          "icon": "CalendarDays",
+          "accent": "#fb923c",
+          "presentation": "grid",
+          "implementation": null
+        },
+        {
+          "value": "board",
+          "label": "Board",
+          "icon": "Columns3",
+          "accent": "#38bdf8",
+          "presentation": "board",
+          "implementation": null
+        },
+        {
+          "value": "timeline",
+          "label": "Timeline",
+          "icon": "GalleryHorizontalEnd",
+          "accent": "#5eead4",
+          "presentation": "timeline",
+          "implementation": null
+        },
+        {
+          "value": "matrix",
+          "label": "Priority Matrix",
+          "icon": "Grid2x2",
+          "accent": "#f472b6",
+          "presentation": "matrix",
+          "implementation": null
+        },
+        {
+          "value": "recurring",
+          "label": "Recurring",
+          "icon": "Repeat",
+          "accent": "#e4a772",
+          "presentation": "timeline",
+          "implementation": "schema-extension"
+        },
+        {
+          "value": "sprint",
+          "label": "Sprint",
+          "icon": "Flag",
+          "accent": "#e47772",
+          "presentation": "board",
+          "implementation": "schema-extension"
+        },
+        {
+          "value": "dependencies",
+          "label": "Dependencies",
+          "icon": "Link2",
+          "accent": "#e472c9",
+          "presentation": "standard",
+          "implementation": "schema-extension"
+        },
+        {
+          "value": "routine",
+          "label": "Routine",
+          "icon": "RotateCcw",
+          "accent": "#72e4de",
+          "presentation": "ledger",
+          "implementation": "schema-extension"
+        }
+      ],
+      "rendererOwnedSkinDetails": [
+        "recurring",
+        "sprint",
+        "dependencies",
+        "routine"
+      ],
+      "pack": null,
+      "availability": "public",
+      "restingFace": true,
+      "titleChrome": true,
+      "defaultData": {
+        "mode": "list",
+        "items": [
+          {
+            "id": "uuid-0001",
+            "label": "New task",
+            "done": false,
+            "status": "todo",
+            "due": "",
+            "day": 0,
+            "time": "09:00",
+            "start": 0,
+            "span": 1,
+            "quadrant": 0
+          }
+        ]
+      }
+    },
+    "pros_cons": {
+      "label": "Pros & Cons",
+      "description": "Two-column argument sheet for weighing a decision",
+      "category": "planning",
+      "accent": "#fbbf24",
+      "defaultSize": {
+        "width": 420,
+        "height": 200
+      },
+      "sizing": {
+        "minWidth": 280,
+        "minHeight": 160,
+        "maxWidth": 720,
+        "maxHeight": 640,
+        "autoHeight": false,
+        "autoWidth": false,
+        "fixed": false
+      },
+      "skinField": "skin",
+      "skins": [
+        {
+          "value": "balance",
+          "label": "Balance",
+          "icon": "Scale",
+          "accent": "#72e496",
+          "presentation": "standard",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "debate",
+          "label": "Debate",
+          "icon": "Swords",
+          "accent": "#e49a72",
+          "presentation": "standard",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "red_team",
+          "label": "Red Team",
+          "icon": "ShieldAlert",
+          "accent": "#e47572",
+          "presentation": "standard",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "weighted_trade_off",
+          "label": "Weighted Trade-off",
+          "icon": "Gavel",
+          "accent": "#e4cd72",
+          "presentation": "dashboard",
+          "implementation": "schema-extension"
+        },
+        {
+          "value": "reversible_irreversible",
+          "label": "Reversible / Irreversible",
+          "icon": "Undo2",
+          "accent": "#72e4a1",
+          "presentation": "steps",
+          "implementation": "schema-extension"
+        }
+      ],
+      "rendererOwnedSkinDetails": [
+        "weighted_trade_off",
+        "reversible_irreversible"
+      ],
+      "pack": "project_management",
+      "availability": "public",
+      "restingFace": true,
+      "titleChrome": true,
+      "defaultData": {
+        "skin": "balance",
+        "topic": "",
+        "pros": [
+          {
+            "id": "uuid-0001",
+            "text": ""
+          }
+        ],
+        "cons": [
+          {
+            "id": "uuid-0002",
+            "text": ""
+          }
+        ]
+      }
+    },
+    "decision": {
+      "label": "Decision Picker",
+      "description": "Choose simply or use weighted, no-repeat decisions",
+      "category": "planning",
+      "accent": "#f0abfc",
+      "defaultSize": {
+        "width": 300,
+        "height": 200
+      },
+      "sizing": {
+        "minWidth": 280,
+        "minHeight": 160,
+        "maxWidth": 640,
+        "maxHeight": 640,
+        "autoHeight": false,
+        "autoWidth": false,
+        "fixed": false
+      },
+      "skinField": null,
+      "skins": [
+        {
+          "value": "simple",
+          "label": "Simple",
+          "icon": "Dices",
+          "accent": "#f0abfc",
+          "presentation": null,
+          "implementation": null
+        },
+        {
+          "value": "weighted",
+          "label": "Weighted",
+          "icon": "Scale",
+          "accent": "#a78bfa",
+          "presentation": null,
+          "implementation": null
+        },
+        {
+          "value": "wheel",
+          "label": "Wheel",
+          "icon": "PanelsTopLeft",
+          "accent": "#cfe472",
+          "presentation": "cards",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "coin_dice",
+          "label": "Coin / Dice",
+          "icon": "Sparkles",
+          "accent": "#e47277",
+          "presentation": "standard",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "tournament",
+          "label": "Tournament",
+          "icon": "Grid2x2",
+          "accent": "#e4bc72",
+          "presentation": "matrix",
+          "implementation": "schema-extension"
+        },
+        {
+          "value": "elimination",
+          "label": "Elimination",
+          "icon": "Sparkles",
+          "accent": "#e472a3",
+          "presentation": "standard",
+          "implementation": "schema-extension"
+        },
+        {
+          "value": "consensus",
+          "label": "Consensus",
+          "icon": "Sparkles",
+          "accent": "#e4a972",
+          "presentation": "standard",
+          "implementation": "schema-extension"
+        }
+      ],
+      "rendererOwnedSkinDetails": [],
+      "pack": "project_management",
+      "availability": "public",
+      "restingFace": true,
+      "titleChrome": true,
+      "defaultData": {
+        "question": "",
+        "options": [
+          "",
+          ""
+        ],
+        "pickedIndex": null,
+        "mode": "simple",
+        "weights": [
+          1,
+          1
+        ],
+        "history": [],
+        "lastRolledAt": null,
+        "noRepeatWindow": 1
+      }
+    },
+    "meeting_notes": {
+      "label": "Meeting Notes",
+      "description": "Date, attendees, notes, and action items",
+      "category": "notes",
+      "accent": "#a5b4fc",
+      "defaultSize": {
+        "width": 340,
+        "height": 280
+      },
+      "sizing": null,
+      "skinField": "skin",
+      "skins": [
+        {
+          "value": "agenda",
+          "label": "Agenda",
+          "icon": "ListOrdered",
+          "accent": "#e4a772",
+          "presentation": "timeline",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "minutes",
+          "label": "Minutes",
+          "icon": "ScrollText",
+          "accent": "#729fe4",
+          "presentation": "form",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "stand_up",
+          "label": "Stand-up",
+          "icon": "Sunrise",
+          "accent": "#9ce472",
+          "presentation": "standard",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "retrospective",
+          "label": "Retrospective",
+          "icon": "Repeat2",
+          "accent": "#e472ab",
+          "presentation": "standard",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "one_to_one",
+          "label": "One-to-One",
+          "icon": "MessagesSquare",
+          "accent": "#72dee4",
+          "presentation": "form",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "decision_review",
+          "label": "Decision Review",
+          "icon": "Gavel",
+          "accent": "#e472a9",
+          "presentation": "standard",
+          "implementation": "schema-extension"
+        },
+        {
+          "value": "handoff",
+          "label": "Handoff",
+          "icon": "Handshake",
+          "accent": "#e47572",
+          "presentation": "standard",
+          "implementation": "schema-extension"
+        }
+      ],
+      "rendererOwnedSkinDetails": [
+        "decision_review",
+        "handoff"
+      ],
+      "pack": "project_management",
+      "availability": "public",
+      "restingFace": true,
+      "titleChrome": true,
+      "defaultData": {
+        "skin": "agenda",
+        "date": "2026-09-10",
+        "attendees": "",
+        "notes": "",
+        "actions": []
+      }
+    },
+    "flashcards": {
+      "label": "Study Deck",
+      "description": "Flashcard, vocabulary, and self-quiz skins",
+      "category": "notes",
+      "accent": "#c4b5fd",
+      "defaultSize": {
+        "width": 360,
+        "height": 240
+      },
+      "sizing": null,
+      "skinField": null,
+      "skins": [
+        {
+          "value": "flashcards",
+          "label": "Flashcards",
+          "icon": "Layers",
+          "accent": "#c4b5fd",
+          "presentation": null,
+          "implementation": null
+        },
+        {
+          "value": "vocabulary",
+          "label": "Vocabulary",
+          "icon": "Languages",
+          "accent": "#38bdf8",
+          "presentation": null,
+          "implementation": null
+        },
+        {
+          "value": "quiz",
+          "label": "Quiz",
+          "icon": "BrainCircuit",
+          "accent": "#f472b6",
+          "presentation": null,
+          "implementation": null
+        },
+        {
+          "value": "cloze",
+          "label": "Cloze",
+          "icon": "Sparkles",
+          "accent": "#c472e4",
+          "presentation": "standard",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "leitner_boxes",
+          "label": "Leitner Boxes",
+          "icon": "PanelsTopLeft",
+          "accent": "#72e49c",
+          "presentation": "cards",
+          "implementation": "schema-extension"
+        },
+        {
+          "value": "spaced_repetition",
+          "label": "Spaced Repetition",
+          "icon": "Timeline",
+          "accent": "#e4a772",
+          "presentation": "timeline",
+          "implementation": "schema-extension"
+        },
+        {
+          "value": "match_pairs",
+          "label": "Match Pairs",
+          "icon": "Columns3",
+          "accent": "#e4a772",
+          "presentation": "board",
+          "implementation": "schema-extension"
+        },
+        {
+          "value": "image_recall",
+          "label": "Image Recall",
+          "icon": "Image",
+          "accent": "#7294e4",
+          "presentation": "media",
+          "implementation": "schema-extension"
+        }
+      ],
+      "rendererOwnedSkinDetails": [],
+      "pack": "education",
+      "availability": "public",
+      "restingFace": true,
+      "titleChrome": true,
+      "defaultData": {
+        "cards": [
+          {
+            "id": "uuid-0001",
+            "front": "",
+            "back": ""
+          }
+        ],
+        "current": 0,
+        "mode": "flashcards",
+        "vocabulary": {
+          "terms": [
+            {
+              "id": "uuid-0002",
+              "term": "",
+              "definition": "",
+              "known": false
+            }
+          ]
+        },
+        "quiz": {
+          "prompt": "",
+          "options": [
+            {
+              "id": "uuid-0003",
+              "text": "",
+              "correct": true
+            },
+            {
+              "id": "uuid-0004",
+              "text": "",
+              "correct": false
+            }
+          ],
+          "picked": null
+        }
+      }
+    },
+    "goal_tracker": {
+      "label": "Goal",
+      "description": "Simple progress, milestones, study hours, and OKR skins",
+      "category": "tracking",
+      "accent": "#86efac",
+      "defaultSize": {
+        "width": 360,
+        "height": 280
+      },
+      "sizing": null,
+      "skinField": null,
+      "skins": [
+        {
+          "value": "simple",
+          "label": "Simple",
+          "icon": "Target",
+          "accent": "#86efac",
+          "presentation": null,
+          "implementation": null
+        },
+        {
+          "value": "milestones",
+          "label": "Milestones",
+          "icon": "Goal",
+          "accent": "#fbbf24",
+          "presentation": null,
+          "implementation": null
+        },
+        {
+          "value": "hours",
+          "label": "Study Hours",
+          "icon": "Hourglass",
+          "accent": "#38bdf8",
+          "presentation": null,
+          "implementation": null
+        },
+        {
+          "value": "okr",
+          "label": "OKR",
+          "icon": "Target",
+          "accent": "#f472b6",
+          "presentation": null,
+          "implementation": null
+        },
+        {
+          "value": "thermometer",
+          "label": "Thermometer",
+          "icon": "Sparkles",
+          "accent": "#72e0e4",
+          "presentation": "standard",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "burn_up",
+          "label": "Burn-up",
+          "icon": "ChartColumn",
+          "accent": "#72e4a1",
+          "presentation": "chart",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "score_ring",
+          "label": "Score Ring",
+          "icon": "Columns3",
+          "accent": "#e4cd72",
+          "presentation": "board",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "streak_goal",
+          "label": "Streak Goal",
+          "icon": "Sparkles",
+          "accent": "#e4cd72",
+          "presentation": "standard",
+          "implementation": "schema-extension"
+        },
+        {
+          "value": "savings_goal",
+          "label": "Savings Goal",
+          "icon": "Sparkles",
+          "accent": "#e4cd72",
+          "presentation": "standard",
+          "implementation": "schema-extension"
+        },
+        {
+          "value": "outcome_inputs",
+          "label": "Outcome / Inputs",
+          "icon": "Sparkles",
+          "accent": "#e472c9",
+          "presentation": "standard",
+          "implementation": "schema-extension"
+        }
+      ],
+      "rendererOwnedSkinDetails": [],
+      "pack": null,
+      "availability": "public",
+      "restingFace": true,
+      "titleChrome": true,
+      "defaultData": {
+        "goal": "",
+        "milestones": [
+          {
+            "id": "uuid-0001",
+            "label": "",
+            "done": false
+          }
+        ],
+        "mode": "milestones",
+        "simple": {
+          "label": "Progress",
+          "percent": 40
+        },
+        "hours": {
+          "subject": "",
+          "targetHours": 10,
+          "loggedHours": 0
+        },
+        "okr": {
+          "objective": "Meaningful objective",
+          "keyResults": [
+            {
+              "id": "uuid-0002",
+              "label": "Key result",
+              "current": 0,
+              "target": 100,
+              "weight": 1
+            }
+          ]
+        }
+      }
+    },
+    "reading_list": {
+      "label": "Reading List",
+      "description": "Books & articles with queued/reading/done states",
+      "category": "tracking",
+      "accent": "#fdba74",
+      "defaultSize": {
+        "width": 320,
+        "height": 160
+      },
+      "sizing": null,
+      "skinField": "skin",
+      "skins": [
+        {
+          "value": "bookshelf",
+          "label": "Bookshelf",
+          "icon": "LayoutGrid",
+          "accent": "#d3e472",
+          "presentation": "grid",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "reading_queue",
+          "label": "Reading Queue",
+          "icon": "List",
+          "accent": "#729ce4",
+          "presentation": "ledger",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "curriculum",
+          "label": "Curriculum",
+          "icon": "Sparkles",
+          "accent": "#729ce4",
+          "presentation": "standard",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "reference_library",
+          "label": "Reference Library",
+          "icon": "List",
+          "accent": "#729ce4",
+          "presentation": "ledger",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "reading_log",
+          "label": "Reading Log",
+          "icon": "List",
+          "accent": "#729ce4",
+          "presentation": "ledger",
+          "implementation": "schema-extension"
+        },
+        {
+          "value": "citation_trail",
+          "label": "Citation Trail",
+          "icon": "Sparkles",
+          "accent": "#729ce4",
+          "presentation": "standard",
+          "implementation": "schema-extension"
+        }
+      ],
+      "rendererOwnedSkinDetails": [],
+      "pack": "education",
+      "availability": "public",
+      "restingFace": true,
+      "titleChrome": true,
+      "defaultData": {
+        "items": [
+          {
+            "id": "uuid-0001",
+            "title": "",
+            "status": "queued"
+          }
+        ]
+      }
+    },
+    "grade_calc": {
+      "label": "Grades",
+      "description": "Weighted course grade and GPA skins",
+      "category": "study",
+      "accent": "#5eead4",
+      "defaultSize": {
+        "width": 320,
+        "height": 200
+      },
+      "sizing": null,
+      "skinField": null,
+      "skins": [
+        {
+          "value": "weighted",
+          "label": "Weighted Grade",
+          "icon": "Calculator",
+          "accent": "#5eead4",
+          "presentation": "standard",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "gpa",
+          "label": "GPA",
+          "icon": "GraduationCap",
+          "accent": "#a78bfa",
+          "presentation": "ledger",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "pass_fail",
+          "label": "Pass / Fail",
+          "icon": "BadgeCheck",
+          "accent": "#72e479",
+          "presentation": "standard",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "what_if",
+          "label": "What-if",
+          "icon": "FlaskConical",
+          "accent": "#e4cd72",
+          "presentation": "dashboard",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "rubric",
+          "label": "Rubric",
+          "icon": "ClipboardCheck",
+          "accent": "#e4cd72",
+          "presentation": "matrix",
+          "implementation": "schema-extension"
+        },
+        {
+          "value": "dropped_scores",
+          "label": "Dropped Scores",
+          "icon": "ListMinus",
+          "accent": "#e4cd72",
+          "presentation": "dashboard",
+          "implementation": "schema-extension"
+        },
+        {
+          "value": "curve_simulator",
+          "label": "Curve Simulator",
+          "icon": "ChartSpline",
+          "accent": "#e47d72",
+          "presentation": "chart",
+          "implementation": "schema-extension"
+        }
+      ],
+      "rendererOwnedSkinDetails": [
+        "rubric",
+        "dropped_scores",
+        "curve_simulator"
+      ],
+      "pack": "education",
+      "availability": "public",
+      "restingFace": true,
+      "titleChrome": true,
+      "defaultData": {
+        "components": [
+          {
+            "id": "uuid-0001",
+            "name": "Exams",
+            "score": 0,
+            "weight": 50
+          },
+          {
+            "id": "uuid-0002",
+            "name": "Homework",
+            "score": 0,
+            "weight": 50
+          }
+        ],
+        "mode": "weighted",
+        "gpa": {
+          "courses": [
+            {
+              "id": "uuid-0003",
+              "name": "",
+              "credits": 3,
+              "points": 4
+            }
+          ]
+        }
+      }
+    },
+    "formula_sheet": {
+      "label": "Formula Sheet",
+      "description": "A quick-reference list of named formulas",
+      "category": "study",
+      "accent": "#a5b4fc",
+      "defaultSize": {
+        "width": 320,
+        "height": 200
+      },
+      "sizing": null,
+      "skinField": "skin",
+      "skins": [
+        {
+          "value": "reference_sheet",
+          "label": "Reference Sheet",
+          "icon": "ListChecks",
+          "accent": "#729ce4",
+          "presentation": "form",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "equation_cards",
+          "label": "Equation Cards",
+          "icon": "PanelsTopLeft",
+          "accent": "#72e4c4",
+          "presentation": "cards",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "exam_strip",
+          "label": "Exam Strip",
+          "icon": "ListChecks",
+          "accent": "#7972e4",
+          "presentation": "form",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "derivation",
+          "label": "Derivation",
+          "icon": "ListChecks",
+          "accent": "#e4e472",
+          "presentation": "form",
+          "implementation": "schema-extension"
+        },
+        {
+          "value": "unit_aware",
+          "label": "Unit-aware",
+          "icon": "Sparkles",
+          "accent": "#e4727f",
+          "presentation": "standard",
+          "implementation": "schema-extension"
+        },
+        {
+          "value": "worked_example",
+          "label": "Worked Example",
+          "icon": "ListChecks",
+          "accent": "#e4b472",
+          "presentation": "form",
+          "implementation": "schema-extension"
+        }
+      ],
+      "rendererOwnedSkinDetails": [
+        "derivation",
+        "unit_aware",
+        "worked_example"
+      ],
+      "pack": "education",
+      "availability": "public",
+      "restingFace": true,
+      "titleChrome": true,
+      "defaultData": {
+        "formulas": [
+          {
+            "id": "uuid-0001",
+            "name": "",
+            "expression": ""
+          }
+        ]
+      }
+    },
+    "citation": {
+      "label": "Citations",
+      "description": "Source manager with an APA/MLA/Chicago toggle",
+      "category": "study",
+      "accent": "#d8b4fe",
+      "defaultSize": {
+        "width": 340,
+        "height": 200
+      },
+      "sizing": null,
+      "skinField": "skin",
+      "skins": [
+        {
+          "value": "bibliography",
+          "label": "Bibliography",
+          "icon": "ChartColumn",
+          "accent": "#729ce4",
+          "presentation": "chart",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "source_cards",
+          "label": "Source Cards",
+          "icon": "PanelsTopLeft",
+          "accent": "#72d1e4",
+          "presentation": "cards",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "annotated",
+          "label": "Annotated",
+          "icon": "Sparkles",
+          "accent": "#729ce4",
+          "presentation": "standard",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "footnotes",
+          "label": "Footnotes",
+          "icon": "Tags",
+          "accent": "#729ce4",
+          "presentation": "compact",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "literature_matrix",
+          "label": "Literature Matrix",
+          "icon": "Grid2x2",
+          "accent": "#96e472",
+          "presentation": "matrix",
+          "implementation": "schema-extension"
+        },
+        {
+          "value": "evidence_map",
+          "label": "Evidence Map",
+          "icon": "Map",
+          "accent": "#a372e4",
+          "presentation": "map",
+          "implementation": "schema-extension"
+        }
+      ],
+      "rendererOwnedSkinDetails": [],
+      "pack": "education",
+      "availability": "public",
+      "restingFace": true,
+      "titleChrome": true,
+      "defaultData": {
+        "style": "APA",
+        "sources": [
+          {
+            "id": "uuid-0001",
+            "title": "",
+            "author": "",
+            "year": ""
+          }
+        ]
+      }
+    },
+    "counter": {
+      "label": "Counter",
+      "description": "A tally counter — one number, step-adjustable",
+      "category": "tracking",
+      "accent": "#93c5fd",
+      "defaultSize": {
+        "width": 280,
+        "height": 200
+      },
+      "sizing": null,
+      "skinField": "skin",
+      "skins": [
+        {
+          "value": "tally",
+          "label": "Tally",
+          "icon": "Hash",
+          "accent": "#bce472",
+          "presentation": "standard",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "clicker",
+          "label": "Clicker",
+          "icon": "MousePointerClick",
+          "accent": "#72e490",
+          "presentation": "standard",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "goal_counter",
+          "label": "Goal Counter",
+          "icon": "Target",
+          "accent": "#e4cd72",
+          "presentation": "standard",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "up_down",
+          "label": "Up / Down",
+          "icon": "ChevronsUpDown",
+          "accent": "#89e472",
+          "presentation": "standard",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "multi_counter",
+          "label": "Multi-counter",
+          "icon": "ListPlus",
+          "accent": "#b2e472",
+          "presentation": "cards",
+          "implementation": "schema-extension"
+        },
+        {
+          "value": "timed_rate",
+          "label": "Timed Rate",
+          "icon": "Gauge",
+          "accent": "#e4a772",
+          "presentation": "standard",
+          "implementation": "schema-extension"
+        },
+        {
+          "value": "resetting_period",
+          "label": "Resetting Period",
+          "icon": "CalendarSync",
+          "accent": "#e47272",
+          "presentation": "time",
+          "implementation": "schema-extension"
+        }
+      ],
+      "rendererOwnedSkinDetails": [
+        "multi_counter",
+        "timed_rate",
+        "resetting_period"
+      ],
+      "pack": null,
+      "availability": "public",
+      "restingFace": true,
+      "titleChrome": true,
+      "defaultData": {
+        "label": "Tally",
+        "count": 0,
+        "step": 1,
+        "skin": "tally"
+      }
+    },
+    "habit": {
+      "label": "Habit Tracker",
+      "description": "One habit, seven beautifully focused ways to keep it moving",
+      "category": "tracking",
+      "accent": "#fdba74",
+      "defaultSize": {
+        "width": 320,
+        "height": 200
+      },
+      "sizing": {
+        "minWidth": 280,
+        "minHeight": 160,
+        "maxWidth": 600,
+        "maxHeight": null,
+        "autoHeight": true,
+        "autoWidth": false,
+        "fixed": false
+      },
+      "skinField": "skin",
+      "skins": [
+        {
+          "value": "week_grid",
+          "label": "Week Grid",
+          "icon": "CalendarDays",
+          "accent": "#72d1e4",
+          "presentation": "grid",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "month_heatmap",
+          "label": "Month Heatmap",
+          "icon": "CalendarRange",
+          "accent": "#a372e4",
+          "presentation": "map",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "chain",
+          "label": "Chain",
+          "icon": "Link2",
+          "accent": "#72e49d",
+          "presentation": "steps",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "scorecard",
+          "label": "Scorecard",
+          "icon": "Gauge",
+          "accent": "#e4cd72",
+          "presentation": "cards",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "routine_stack",
+          "label": "Routine Stack",
+          "icon": "ListRestart",
+          "accent": "#7281e4",
+          "presentation": "standard",
+          "implementation": "schema-extension"
+        },
+        {
+          "value": "minimum_target",
+          "label": "Minimum / Target",
+          "icon": "TimerReset",
+          "accent": "#72d1e4",
+          "presentation": "time",
+          "implementation": "schema-extension"
+        },
+        {
+          "value": "flexible_frequency",
+          "label": "Flexible Frequency",
+          "icon": "Repeat2",
+          "accent": "#e4a772",
+          "presentation": "standard",
+          "implementation": "schema-extension"
+        }
+      ],
+      "rendererOwnedSkinDetails": [
+        "routine_stack",
+        "minimum_target",
+        "flexible_frequency"
+      ],
+      "pack": "life",
+      "availability": "public",
+      "restingFace": true,
+      "titleChrome": true,
+      "defaultData": {
+        "label": "Daily habit",
+        "days": [
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false
+        ],
+        "streak": 0,
+        "skin": "week_grid"
+      }
+    },
+    "timekeeper": {
+      "label": "Time",
+      "description": "Timers, focus cycles, deadlines, clocks, and lap tracking in one card",
+      "category": "tracking",
+      "accent": "#86efac",
+      "defaultSize": {
+        "width": 240,
+        "height": 240
+      },
+      "sizing": {
+        "minWidth": 200,
+        "minHeight": 200,
+        "maxWidth": 320,
+        "maxHeight": 320,
+        "autoHeight": false,
+        "autoWidth": false,
+        "fixed": false
+      },
+      "skinField": null,
+      "skins": [
+        {
+          "value": "countdown",
+          "label": "Timer",
+          "icon": "Timer",
+          "accent": "#86efac",
+          "presentation": null,
+          "implementation": null
+        },
+        {
+          "value": "pomodoro",
+          "label": "Pomodoro",
+          "icon": "Coffee",
+          "accent": "#fb7185",
+          "presentation": null,
+          "implementation": null
+        },
+        {
+          "value": "stopwatch",
+          "label": "Stopwatch",
+          "icon": "Hourglass",
+          "accent": "#7dd3fc",
+          "presentation": null,
+          "implementation": null
+        },
+        {
+          "value": "deadline",
+          "label": "Deadline",
+          "icon": "CalendarClock",
+          "accent": "#fb923c",
+          "presentation": null,
+          "implementation": null
+        },
+        {
+          "value": "world_clock",
+          "label": "World Clock",
+          "icon": "Earth",
+          "accent": "#67e8f9",
+          "presentation": null,
+          "implementation": null
+        },
+        {
+          "value": "hourglass",
+          "label": "Hourglass",
+          "icon": "Hourglass",
+          "accent": "#89e472",
+          "presentation": "time",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "intervals",
+          "label": "Intervals",
+          "icon": "Repeat2",
+          "accent": "#83e472",
+          "presentation": "terminal",
+          "implementation": "schema-extension"
+        },
+        {
+          "value": "tabata",
+          "label": "Tabata",
+          "icon": "Dumbbell",
+          "accent": "#72e0e4",
+          "presentation": "standard",
+          "implementation": "schema-extension"
+        },
+        {
+          "value": "chess_clock",
+          "label": "Chess Clock",
+          "icon": "Swords",
+          "accent": "#e4a772",
+          "presentation": "time",
+          "implementation": "schema-extension"
+        },
+        {
+          "value": "lap_timer",
+          "label": "Lap Timer",
+          "icon": "TimerReset",
+          "accent": "#e4a772",
+          "presentation": "time",
+          "implementation": "schema-extension"
+        },
+        {
+          "value": "multi_stage_timer",
+          "label": "Multi-stage Timer",
+          "icon": "ListRestart",
+          "accent": "#e4a772",
+          "presentation": "time",
+          "implementation": "schema-extension"
+        }
+      ],
+      "rendererOwnedSkinDetails": [
+        "intervals",
+        "tabata",
+        "chess_clock",
+        "multi_stage_timer"
+      ],
+      "pack": null,
+      "availability": "public",
+      "restingFace": true,
+      "titleChrome": true,
+      "defaultData": {
+        "mode": "countdown",
+        "countdown": {
+          "label": "Timer",
+          "durationSeconds": 300,
+          "remainingSeconds": 300,
+          "endAt": null
+        },
+        "pomodoro": {
+          "label": "Focus",
+          "workMinutes": 25,
+          "breakMinutes": 5,
+          "phase": "work",
+          "endAt": null,
+          "remainingSeconds": 1500,
+          "completed": 0
+        },
+        "stopwatch": {
+          "elapsedMs": 0,
+          "startedAt": null,
+          "laps": []
+        },
+        "deadline": {
+          "label": "Launch day",
+          "targetDate": "2026-09-24"
+        },
+        "worldClock": {
+          "zones": [
+            "America/New_York",
+            "Europe/London",
+            "Asia/Tokyo"
+          ]
+        }
+      }
+    },
+    "calendar": {
+      "label": "Calendar",
+      "description": "A month view — click days to mark them",
+      "category": "planning",
+      "accent": "#7dd3fc",
+      "defaultSize": {
+        "width": 280,
+        "height": 240
+      },
+      "sizing": null,
+      "skinField": "skin",
+      "skins": [
+        {
+          "value": "month",
+          "label": "Month",
+          "icon": "LayoutGrid",
+          "accent": "#72d1e4",
+          "presentation": "grid",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "week",
+          "label": "Week",
+          "icon": "Sparkles",
+          "accent": "#e4a772",
+          "presentation": "standard",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "agenda",
+          "label": "Agenda",
+          "icon": "Timeline",
+          "accent": "#e4a772",
+          "presentation": "timeline",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "year_heatmap",
+          "label": "Year Heatmap",
+          "icon": "Map",
+          "accent": "#a372e4",
+          "presentation": "map",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "availability",
+          "label": "Availability",
+          "icon": "Clock3",
+          "accent": "#72e4b6",
+          "presentation": "time",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "shift_rota",
+          "label": "Shift Rota",
+          "icon": "Sparkles",
+          "accent": "#e4cd72",
+          "presentation": "standard",
+          "implementation": "schema-extension"
+        },
+        {
+          "value": "birthday_and_anniversary",
+          "label": "Birthday & Anniversary",
+          "icon": "Sparkles",
+          "accent": "#72c9e4",
+          "presentation": "standard",
+          "implementation": "schema-extension"
+        },
+        {
+          "value": "connected_calendars",
+          "label": "Connected Calendars",
+          "icon": "Timeline",
+          "accent": "#72e4a1",
+          "presentation": "timeline",
+          "implementation": "renderer-ready"
+        }
+      ],
+      "rendererOwnedSkinDetails": [
+        "shift_rota",
+        "birthday_and_anniversary"
+      ],
+      "pack": null,
+      "availability": "public",
+      "restingFace": true,
+      "titleChrome": true,
+      "defaultData": {
+        "year": 2026,
+        "month": 8,
+        "markedDates": [],
+        "skin": "month"
+      }
+    },
+    "rating": {
+      "label": "Rating",
+      "description": "Stars, sentiment, score, rubric, and confidence in one rating",
+      "category": "data",
+      "accent": "#fbbf24",
+      "defaultSize": {
+        "width": 320,
+        "height": 160
+      },
+      "sizing": {
+        "minWidth": 320,
+        "minHeight": 160,
+        "maxWidth": null,
+        "maxHeight": null,
+        "autoHeight": true,
+        "autoWidth": false,
+        "fixed": true
+      },
+      "skinField": "skin",
+      "skins": [
+        {
+          "value": "stars",
+          "label": "Stars",
+          "icon": "Star",
+          "accent": "#e4cd72",
+          "presentation": "standard",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "slider",
+          "label": "Slider",
+          "icon": "SlidersHorizontal",
+          "accent": "#729ce4",
+          "presentation": "standard",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "emoji",
+          "label": "Emoji",
+          "icon": "Smile",
+          "accent": "#e472a5",
+          "presentation": "standard",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "traffic_light",
+          "label": "Traffic Light",
+          "icon": "TrafficCone",
+          "accent": "#e4c072",
+          "presentation": "standard",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "nps",
+          "label": "NPS",
+          "icon": "Gauge",
+          "accent": "#729de4",
+          "presentation": "standard",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "rubric",
+          "label": "Rubric",
+          "icon": "Rows3",
+          "accent": "#e4cd72",
+          "presentation": "matrix",
+          "implementation": "schema-extension"
+        },
+        {
+          "value": "confidence",
+          "label": "Confidence",
+          "icon": "Percent",
+          "accent": "#e4cd72",
+          "presentation": "standard",
+          "implementation": "schema-extension"
+        }
+      ],
+      "rendererOwnedSkinDetails": [
+        "rubric",
+        "confidence"
+      ],
+      "pack": "data_science",
+      "availability": "public",
+      "restingFace": true,
+      "titleChrome": true,
+      "defaultData": {
+        "label": "Rate it",
+        "value": 0,
+        "skin": "stars"
+      }
+    },
+    "calculator": {
+      "label": "Calculator",
+      "description": "Pocket, scientific, tape, finance, and programmer calculators in one card",
+      "category": "data",
+      "accent": "#a7f3d0",
+      "defaultSize": {
+        "width": 280,
+        "height": 360
+      },
+      "sizing": {
+        "minWidth": 240,
+        "minHeight": 280,
+        "maxWidth": null,
+        "maxHeight": null,
+        "autoHeight": false,
+        "autoWidth": false,
+        "fixed": false
+      },
+      "skinField": "skin",
+      "skins": [
+        {
+          "value": "basic",
+          "label": "Basic",
+          "icon": "Calculator",
+          "accent": "#a7e472",
+          "presentation": "standard",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "scientific",
+          "label": "Scientific",
+          "icon": "Sigma",
+          "accent": "#e48c72",
+          "presentation": "standard",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "tape",
+          "label": "Tape",
+          "icon": "ReceiptText",
+          "accent": "#72e4ab",
+          "presentation": "standard",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "finance",
+          "label": "Finance",
+          "icon": "Percent",
+          "accent": "#72e4a1",
+          "presentation": "standard",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "programmer",
+          "label": "Programmer",
+          "icon": "Binary",
+          "accent": "#bce472",
+          "presentation": "standard",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "date_math",
+          "label": "Date Math",
+          "icon": "CalendarRange",
+          "accent": "#8772e4",
+          "presentation": "standard",
+          "implementation": "schema-extension"
+        },
+        {
+          "value": "named_variables",
+          "label": "Named Variables",
+          "icon": "Variable",
+          "accent": "#a572e4",
+          "presentation": "standard",
+          "implementation": "schema-extension"
+        }
+      ],
+      "rendererOwnedSkinDetails": [
+        "date_math",
+        "named_variables"
+      ],
+      "pack": null,
+      "availability": "public",
+      "restingFace": true,
+      "titleChrome": true,
+      "defaultData": {
+        "expression": "",
+        "result": ""
+      }
+    },
+    "bar_chart": {
+      "label": "Chart",
+      "description": "Bar, line, donut, and pie views over one shared series",
+      "category": "data",
+      "accent": "#7dd3fc",
+      "defaultSize": {
+        "width": 400,
+        "height": 280
+      },
+      "sizing": null,
+      "skinField": null,
+      "skins": [
+        {
+          "value": "bar",
+          "label": "Bar",
+          "icon": "ChartColumn",
+          "accent": "#7dd3fc",
+          "presentation": null,
+          "implementation": null
+        },
+        {
+          "value": "line",
+          "label": "Line",
+          "icon": "ChartLine",
+          "accent": "#4ade80",
+          "presentation": null,
+          "implementation": null
+        },
+        {
+          "value": "donut",
+          "label": "Donut",
+          "icon": "ChartPie",
+          "accent": "#fbbf24",
+          "presentation": null,
+          "implementation": null
+        },
+        {
+          "value": "pie",
+          "label": "Pie",
+          "icon": "ChartPie",
+          "accent": "#fb923c",
+          "presentation": null,
+          "implementation": null
+        },
+        {
+          "value": "area",
+          "label": "Area",
+          "icon": "Sparkles",
+          "accent": "#72e4a1",
+          "presentation": "standard",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "sparkline",
+          "label": "Sparkline",
+          "icon": "Columns3",
+          "accent": "#e472ba",
+          "presentation": "board",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "gauge",
+          "label": "Gauge",
+          "icon": "Map",
+          "accent": "#a372e4",
+          "presentation": "map",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "progress_ring",
+          "label": "Progress Ring",
+          "icon": "Sparkles",
+          "accent": "#e48372",
+          "presentation": "standard",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "heatmap",
+          "label": "Heatmap",
+          "icon": "Map",
+          "accent": "#72d1e4",
+          "presentation": "map",
+          "implementation": "schema-extension"
+        },
+        {
+          "value": "scatter",
+          "label": "Scatter",
+          "icon": "Sparkles",
+          "accent": "#c272e4",
+          "presentation": "standard",
+          "implementation": "schema-extension"
+        },
+        {
+          "value": "stacked",
+          "label": "Stacked",
+          "icon": "Sparkles",
+          "accent": "#9472e4",
+          "presentation": "standard",
+          "implementation": "schema-extension"
+        }
+      ],
+      "rendererOwnedSkinDetails": [
+        "heatmap",
+        "scatter",
+        "stacked"
+      ],
+      "pack": "data_science",
+      "availability": "public",
+      "restingFace": true,
+      "titleChrome": true,
+      "defaultData": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": [
+          {
+            "id": "uuid-0001",
+            "label": "A",
+            "value": 3,
+            "color": "#38bdf8"
+          },
+          {
+            "id": "uuid-0002",
+            "label": "B",
+            "value": 5,
+            "color": "#a3e635"
+          }
+        ]
+      }
+    },
+    "table": {
+      "label": "Table",
+      "description": "Editable grid with a header row",
+      "category": "data",
+      "accent": "#94a3b8",
+      "defaultSize": {
+        "width": 440,
+        "height": 200
+      },
+      "sizing": {
+        "minWidth": 340,
+        "minHeight": 200,
+        "maxWidth": 840,
+        "maxHeight": null,
+        "autoHeight": false,
+        "autoWidth": false,
+        "fixed": false
+      },
+      "skinField": "skin",
+      "skins": [
+        {
+          "value": "grid",
+          "label": "Grid",
+          "icon": "LayoutGrid",
+          "accent": "#72d1e4",
+          "presentation": "grid",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "compact_ledger",
+          "label": "Compact Ledger",
+          "icon": "Tags",
+          "accent": "#e49a72",
+          "presentation": "compact",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "cards",
+          "label": "Cards",
+          "icon": "PanelsTopLeft",
+          "accent": "#72dce4",
+          "presentation": "cards",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "database",
+          "label": "Database",
+          "icon": "Sparkles",
+          "accent": "#72d1e4",
+          "presentation": "standard",
+          "implementation": "schema-extension"
+        },
+        {
+          "value": "kanban",
+          "label": "Kanban",
+          "icon": "Columns3",
+          "accent": "#72e489",
+          "presentation": "board",
+          "implementation": "schema-extension"
+        },
+        {
+          "value": "gallery",
+          "label": "Gallery",
+          "icon": "LayoutGrid",
+          "accent": "#a372e4",
+          "presentation": "grid",
+          "implementation": "schema-extension"
+        },
+        {
+          "value": "form_view",
+          "label": "Form View",
+          "icon": "ListChecks",
+          "accent": "#e4dc72",
+          "presentation": "form",
+          "implementation": "schema-extension"
+        },
+        {
+          "value": "pivot",
+          "label": "Pivot",
+          "icon": "Sparkles",
+          "accent": "#9ae472",
+          "presentation": "standard",
+          "implementation": "schema-extension"
+        }
+      ],
+      "rendererOwnedSkinDetails": [
+        "database",
+        "kanban",
+        "gallery",
+        "form_view",
+        "pivot"
+      ],
+      "pack": null,
+      "availability": "public",
+      "restingFace": true,
+      "titleChrome": true,
+      "defaultData": {
+        "rows": [
+          [
+            "Item",
+            "Owner",
+            "Status"
+          ],
+          [
+            "",
+            "",
+            ""
+          ],
+          [
+            "",
+            "",
+            ""
+          ]
+        ]
+      }
+    },
+    "metrics": {
+      "label": "Metrics",
+      "description": "KPI tiles with value, unit, and trend",
+      "category": "data",
+      "accent": "#67e8f9",
+      "defaultSize": {
+        "width": 400,
+        "height": 280
+      },
+      "sizing": {
+        "minWidth": 320,
+        "minHeight": 240,
+        "maxWidth": 720,
+        "maxHeight": null,
+        "autoHeight": false,
+        "autoWidth": false,
+        "fixed": false
+      },
+      "skinField": "skin",
+      "skins": [
+        {
+          "value": "kpi_tiles",
+          "label": "KPI Tiles",
+          "icon": "PanelsTopLeft",
+          "accent": "#bce472",
+          "presentation": "cards",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "big_number",
+          "label": "Big Number",
+          "icon": "Tags",
+          "accent": "#729ce4",
+          "presentation": "compact",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "scoreboard",
+          "label": "Scoreboard",
+          "icon": "Columns3",
+          "accent": "#e4cd72",
+          "presentation": "board",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "traffic_lights",
+          "label": "Traffic Lights",
+          "icon": "Map",
+          "accent": "#729ce4",
+          "presentation": "map",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "delta",
+          "label": "Delta",
+          "icon": "Sparkles",
+          "accent": "#a7e472",
+          "presentation": "standard",
+          "implementation": "schema-extension"
+        },
+        {
+          "value": "target",
+          "label": "Target",
+          "icon": "Sparkles",
+          "accent": "#e4cd72",
+          "presentation": "standard",
+          "implementation": "schema-extension"
+        },
+        {
+          "value": "executive_strip",
+          "label": "Executive Strip",
+          "icon": "ChartColumn",
+          "accent": "#72e4cf",
+          "presentation": "chart",
+          "implementation": "schema-extension"
+        }
+      ],
+      "rendererOwnedSkinDetails": [
+        "delta",
+        "target",
+        "executive_strip"
+      ],
+      "pack": "data_science",
+      "availability": "public",
+      "restingFace": true,
+      "titleChrome": true,
+      "defaultData": {
+        "tiles": [
+          {
+            "id": "uuid-0001",
+            "label": "Users",
+            "value": "128",
+            "unit": "",
+            "trend": "up"
+          },
+          {
+            "id": "uuid-0002",
+            "label": "Revenue",
+            "value": "3.2",
+            "unit": "k",
+            "trend": "flat"
+          }
+        ]
+      }
+    },
+    "mood_tracker": {
+      "label": "Mood Tracker",
+      "description": "A weekly mood log — tap a day to cycle through",
+      "category": "tracking",
+      "accent": "#fde047",
+      "defaultSize": {
+        "width": 300,
+        "height": 160
+      },
+      "sizing": {
+        "minWidth": 260,
+        "minHeight": 160,
+        "maxWidth": 560,
+        "maxHeight": 160,
+        "autoHeight": true,
+        "autoWidth": false,
+        "fixed": false
+      },
+      "skinField": "skin",
+      "skins": [
+        {
+          "value": "week_check_in",
+          "label": "Week Check-in",
+          "icon": "Tags",
+          "accent": "#e472b2",
+          "presentation": "compact",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "month_heatmap",
+          "label": "Month Heatmap",
+          "icon": "Map",
+          "accent": "#a372e4",
+          "presentation": "map",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "mood_wheel",
+          "label": "Mood Wheel",
+          "icon": "Sparkles",
+          "accent": "#e472b2",
+          "presentation": "standard",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "mood_journal",
+          "label": "Mood Journal",
+          "icon": "Sparkles",
+          "accent": "#729ce4",
+          "presentation": "standard",
+          "implementation": "schema-extension"
+        },
+        {
+          "value": "energy_matrix",
+          "label": "Energy Matrix",
+          "icon": "Grid2x2",
+          "accent": "#cbe472",
+          "presentation": "matrix",
+          "implementation": "schema-extension"
+        },
+        {
+          "value": "trend",
+          "label": "Trend",
+          "icon": "ChartColumn",
+          "accent": "#e472b2",
+          "presentation": "chart",
+          "implementation": "schema-extension"
+        }
+      ],
+      "rendererOwnedSkinDetails": [],
+      "pack": "life",
+      "availability": "public",
+      "restingFace": true,
+      "titleChrome": true,
+      "defaultData": {
+        "days": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      }
+    },
+    "links": {
+      "label": "Link List",
+      "description": "Labelled external links, click to open",
+      "category": "tracking",
+      "accent": "#93c5fd",
+      "defaultSize": {
+        "width": 300,
+        "height": 160
+      },
+      "sizing": null,
+      "skinField": "skin",
+      "skins": [
+        {
+          "value": "bookmark_grid",
+          "label": "Bookmark Grid",
+          "icon": "LayoutGrid",
+          "accent": "#72d1e4",
+          "presentation": "grid",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "reading_queue",
+          "label": "Reading Queue",
+          "icon": "Sparkles",
+          "accent": "#729ce4",
+          "presentation": "standard",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "resource_list",
+          "label": "Resource List",
+          "icon": "List",
+          "accent": "#729ce4",
+          "presentation": "ledger",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "link_in_bio",
+          "label": "Link-in-bio",
+          "icon": "Sparkles",
+          "accent": "#e472c2",
+          "presentation": "standard",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "research_trail",
+          "label": "Research Trail",
+          "icon": "Sparkles",
+          "accent": "#729ce4",
+          "presentation": "standard",
+          "implementation": "schema-extension"
+        },
+        {
+          "value": "watch_later",
+          "label": "Watch Later",
+          "icon": "ListChecks",
+          "accent": "#7274e4",
+          "presentation": "form",
+          "implementation": "schema-extension"
+        },
+        {
+          "value": "health_monitor",
+          "label": "Health Monitor",
+          "icon": "Sparkles",
+          "accent": "#72e4a1",
+          "presentation": "standard",
+          "implementation": "schema-extension"
+        }
+      ],
+      "rendererOwnedSkinDetails": [],
+      "pack": null,
+      "availability": "public",
+      "restingFace": true,
+      "titleChrome": true,
+      "defaultData": {
+        "items": [
+          {
+            "id": "uuid-0001",
+            "label": "grovepad",
+            "url": "https://example.com"
+          }
+        ]
+      }
+    },
+    "poll": {
+      "label": "Poll",
+      "description": "Gather a preference as bars, a share dial, an approval or ranked ballot, duels, a live room, or an anonymous vote",
+      "category": "planning",
+      "accent": "#f0abfc",
+      "defaultSize": {
+        "width": 340,
+        "height": 240
+      },
+      "sizing": null,
+      "skinField": "skin",
+      "skins": [
+        {
+          "value": "bars",
+          "label": "Bars",
+          "icon": "ChartNoAxesColumn",
+          "accent": "#72e472",
+          "presentation": "matrix",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "donut",
+          "label": "Donut",
+          "icon": "ChartPie",
+          "accent": "#72e4c9",
+          "presentation": "board",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "approval",
+          "label": "Approval",
+          "icon": "ListChecks",
+          "accent": "#e4c772",
+          "presentation": "standard",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "ranked_choice",
+          "label": "Ranked Choice",
+          "icon": "ListOrdered",
+          "accent": "#729ce4",
+          "presentation": "standard",
+          "implementation": "schema-extension"
+        },
+        {
+          "value": "pairwise",
+          "label": "Pairwise",
+          "icon": "Swords",
+          "accent": "#e4b872",
+          "presentation": "matrix",
+          "implementation": "schema-extension"
+        },
+        {
+          "value": "live_room",
+          "label": "Live Room",
+          "icon": "Radio",
+          "accent": "#72e4d5",
+          "presentation": "standard",
+          "implementation": "schema-extension"
+        },
+        {
+          "value": "anonymous",
+          "label": "Anonymous",
+          "icon": "ShieldCheck",
+          "accent": "#e472cf",
+          "presentation": "standard",
+          "implementation": "schema-extension"
+        }
+      ],
+      "rendererOwnedSkinDetails": [
+        "ranked_choice",
+        "pairwise",
+        "live_room",
+        "anonymous"
+      ],
+      "pack": "project_management",
+      "availability": "public",
+      "restingFace": true,
+      "titleChrome": true,
+      "defaultData": {
+        "skin": "bars",
+        "question": "Which direction?",
+        "options": [
+          {
+            "id": "uuid-0001",
+            "label": "Option A",
+            "votes": 0
+          },
+          {
+            "id": "uuid-0002",
+            "label": "Option B",
+            "votes": 0
+          }
+        ]
+      }
+    },
+    "text_input": {
+      "label": "Text Input",
+      "description": "A clean text value that can feed any connected branch",
+      "category": "data",
+      "accent": "#f472b6",
+      "defaultSize": {
+        "width": 300,
+        "height": 200
+      },
+      "sizing": {
+        "minWidth": 240,
+        "minHeight": 120,
+        "maxWidth": 640,
+        "maxHeight": 520,
+        "autoHeight": false,
+        "autoWidth": false,
+        "fixed": false
+      },
+      "skinField": "skin",
+      "skins": [
+        {
+          "value": "single_line",
+          "label": "Single Line",
+          "icon": "TextCursorInput",
+          "accent": "#e472c7",
+          "presentation": "compact",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "multiline",
+          "label": "Multiline",
+          "icon": "TextAlignStart",
+          "accent": "#7281e4",
+          "presentation": "chart",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "search",
+          "label": "Search",
+          "icon": "Search",
+          "accent": "#729de4",
+          "presentation": "standard",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "url",
+          "label": "URL",
+          "icon": "Link2",
+          "accent": "#e4b172",
+          "presentation": "standard",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "email",
+          "label": "Email",
+          "icon": "AtSign",
+          "accent": "#e472dc",
+          "presentation": "standard",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "tags",
+          "label": "Tags",
+          "icon": "Tags",
+          "accent": "#e47772",
+          "presentation": "ledger",
+          "implementation": "schema-extension"
+        },
+        {
+          "value": "command",
+          "label": "Command",
+          "icon": "SquareTerminal",
+          "accent": "#72a5e4",
+          "presentation": "terminal",
+          "implementation": "schema-extension"
+        }
+      ],
+      "rendererOwnedSkinDetails": [
+        "tags",
+        "command"
+      ],
+      "pack": null,
+      "availability": "public",
+      "restingFace": true,
+      "titleChrome": true,
+      "defaultData": {
+        "label": "Input",
+        "value": "",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "single_line"
+      }
+    },
+    "number_input": {
+      "label": "Number Input",
+      "description": "A bounded number, slider, and stepper for live calculations",
+      "category": "data",
+      "accent": "#38bdf8",
+      "defaultSize": {
+        "width": 280,
+        "height": 160
+      },
+      "sizing": {
+        "minWidth": 260,
+        "minHeight": 160,
+        "maxWidth": 640,
+        "maxHeight": null,
+        "autoHeight": true,
+        "autoWidth": false,
+        "fixed": false
+      },
+      "skinField": "skin",
+      "skins": [
+        {
+          "value": "stepper",
+          "label": "Stepper",
+          "icon": "ListOrdered",
+          "accent": "#c672e4",
+          "presentation": "steps",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "slider",
+          "label": "Slider",
+          "icon": "Sparkles",
+          "accent": "#bce472",
+          "presentation": "standard",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "dial",
+          "label": "Dial",
+          "icon": "Sparkles",
+          "accent": "#e4c472",
+          "presentation": "standard",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "currency",
+          "label": "Currency",
+          "icon": "ListChecks",
+          "accent": "#a572e4",
+          "presentation": "form",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "percent",
+          "label": "Percent",
+          "icon": "Sparkles",
+          "accent": "#e4b472",
+          "presentation": "standard",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "duration",
+          "label": "Duration",
+          "icon": "Sparkles",
+          "accent": "#72e2e4",
+          "presentation": "standard",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "range",
+          "label": "Range",
+          "icon": "Sparkles",
+          "accent": "#72e4a1",
+          "presentation": "standard",
+          "implementation": "schema-extension"
+        }
+      ],
+      "rendererOwnedSkinDetails": [],
+      "pack": null,
+      "availability": "public",
+      "restingFace": true,
+      "titleChrome": true,
+      "defaultData": {
+        "label": "Value",
+        "value": 0,
+        "min": 0,
+        "max": 100,
+        "step": 1
+      }
+    },
+    "toggle": {
+      "label": "Toggle",
+      "description": "A simple on/off condition for gates, triggers, and branches",
+      "category": "data",
+      "accent": "#fbbf24",
+      "defaultSize": {
+        "width": 240,
+        "height": 160
+      },
+      "sizing": {
+        "minWidth": 220,
+        "minHeight": 120,
+        "maxWidth": 480,
+        "maxHeight": null,
+        "autoHeight": true,
+        "autoWidth": false,
+        "fixed": false
+      },
+      "skinField": "skin",
+      "skins": [
+        {
+          "value": "switch",
+          "label": "Switch",
+          "icon": "ToggleRight",
+          "accent": "#9872e4",
+          "presentation": "standard",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "checkbox",
+          "label": "Checkbox",
+          "icon": "SquareCheckBig",
+          "accent": "#bce472",
+          "presentation": "standard",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "power",
+          "label": "Power",
+          "icon": "Power",
+          "accent": "#72e4a7",
+          "presentation": "standard",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "segment",
+          "label": "Segment",
+          "icon": "Columns2",
+          "accent": "#72d1e4",
+          "presentation": "standard",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "availability",
+          "label": "Availability",
+          "icon": "CircleDot",
+          "accent": "#cbe472",
+          "presentation": "dashboard",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "tri_state",
+          "label": "Tri-state",
+          "icon": "CircleDashed",
+          "accent": "#b872e4",
+          "presentation": "standard",
+          "implementation": "schema-extension"
+        }
+      ],
+      "rendererOwnedSkinDetails": [
+        "tri_state"
+      ],
+      "pack": null,
+      "availability": "public",
+      "restingFace": true,
+      "titleChrome": true,
+      "defaultData": {
+        "label": "Condition",
+        "value": false
+      }
+    },
+    "date_picker": {
+      "label": "Date",
+      "description": "Choose a reusable date and optional time",
+      "category": "planning",
+      "accent": "#fb923c",
+      "defaultSize": {
+        "width": 280,
+        "height": 160
+      },
+      "sizing": {
+        "minWidth": 240,
+        "minHeight": 160,
+        "maxWidth": 640,
+        "maxHeight": null,
+        "autoHeight": true,
+        "autoWidth": false,
+        "fixed": false
+      },
+      "skinField": "mode",
+      "skins": [
+        {
+          "value": "date_time",
+          "label": "Date & Time",
+          "icon": "CalendarClock",
+          "accent": "#fb923c",
+          "presentation": "time",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "deadline",
+          "label": "Deadline",
+          "icon": "Hourglass",
+          "accent": "#e47572",
+          "presentation": "standard",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "anniversary",
+          "label": "Anniversary",
+          "icon": "CalendarHeart",
+          "accent": "#85e472",
+          "presentation": "timeline",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "relative_date",
+          "label": "Relative Date",
+          "icon": "Sunrise",
+          "accent": "#e4a772",
+          "presentation": "standard",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "range",
+          "label": "Range",
+          "icon": "CalendarRange",
+          "accent": "#e4cd72",
+          "presentation": "standard",
+          "implementation": "schema-extension"
+        },
+        {
+          "value": "recurring_date",
+          "label": "Recurring Date",
+          "icon": "Repeat",
+          "accent": "#72a1e4",
+          "presentation": "standard",
+          "implementation": "schema-extension"
+        },
+        {
+          "value": "milestone",
+          "label": "Milestone",
+          "icon": "Flag",
+          "accent": "#7292e4",
+          "presentation": "dashboard",
+          "implementation": "schema-extension"
+        }
+      ],
+      "rendererOwnedSkinDetails": [
+        "range",
+        "recurring_date",
+        "milestone"
+      ],
+      "pack": "project_management",
+      "availability": "public",
+      "restingFace": true,
+      "titleChrome": true,
+      "defaultData": {
+        "label": "Target date",
+        "date": "2026-09-11",
+        "time": "",
+        "includeTime": false,
+        "mode": "date_time"
+      }
+    },
+    "formula": {
+      "label": "Formula",
+      "description": "Ask one question of up to six connected numbers and publish the answer",
+      "category": "data",
+      "accent": "#818cf8",
+      "defaultSize": {
+        "width": 320,
+        "height": 240
+      },
+      "sizing": {
+        "minWidth": 300,
+        "minHeight": 160,
+        "maxWidth": 720,
+        "maxHeight": null,
+        "autoHeight": true,
+        "autoWidth": false,
+        "fixed": false
+      },
+      "skinField": "skin",
+      "skins": [
+        {
+          "value": "two_input",
+          "label": "Two-input",
+          "icon": "Sigma",
+          "accent": "#72cfe4",
+          "presentation": "standard",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "percent_change",
+          "label": "Percent Change",
+          "icon": "Percent",
+          "accent": "#c7e472",
+          "presentation": "standard",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "ratio",
+          "label": "Ratio",
+          "icon": "Scale",
+          "accent": "#ab72e4",
+          "presentation": "standard",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "growth",
+          "label": "Growth",
+          "icon": "TrendingUp",
+          "accent": "#e4cd72",
+          "presentation": "standard",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "expression",
+          "label": "Expression",
+          "icon": "Variable",
+          "accent": "#e47275",
+          "presentation": "standard",
+          "implementation": "schema-extension"
+        },
+        {
+          "value": "weighted_score",
+          "label": "Weighted Score",
+          "icon": "Scale3d",
+          "accent": "#e4cd72",
+          "presentation": "dashboard",
+          "implementation": "schema-extension"
+        },
+        {
+          "value": "conditional",
+          "label": "Conditional",
+          "icon": "GitBranch",
+          "accent": "#e47b72",
+          "presentation": "matrix",
+          "implementation": "schema-extension"
+        }
+      ],
+      "rendererOwnedSkinDetails": [
+        "expression",
+        "weighted_score",
+        "conditional"
+      ],
+      "pack": null,
+      "availability": "public",
+      "restingFace": true,
+      "titleChrome": true,
+      "defaultData": {
+        "label": "Calculation",
+        "a": 0,
+        "b": 0,
+        "operator": "add"
+      }
+    },
+    "status": {
+      "label": "Status",
+      "description": "A universal workflow state with progress and completion outputs",
+      "category": "tracking",
+      "accent": "#34d399",
+      "defaultSize": {
+        "width": 280,
+        "height": 120
+      },
+      "sizing": {
+        "minWidth": 240,
+        "minHeight": 120,
+        "maxWidth": 520,
+        "maxHeight": null,
+        "autoHeight": true,
+        "autoWidth": false,
+        "fixed": false
+      },
+      "skinField": "skin",
+      "skins": [
+        {
+          "value": "badge",
+          "label": "Badge",
+          "icon": "ListOrdered",
+          "accent": "#72e4dc",
+          "presentation": "steps",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "traffic_light",
+          "label": "Traffic Light",
+          "icon": "Sparkles",
+          "accent": "#72e4a1",
+          "presentation": "standard",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "progress",
+          "label": "Progress",
+          "icon": "Sparkles",
+          "accent": "#cf72e4",
+          "presentation": "standard",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "pipeline",
+          "label": "Pipeline",
+          "icon": "Columns3",
+          "accent": "#cb72e4",
+          "presentation": "board",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "availability",
+          "label": "Availability",
+          "icon": "Sparkles",
+          "accent": "#7b72e4",
+          "presentation": "standard",
+          "implementation": "renderer-ready"
+        },
+        {
+          "value": "approval",
+          "label": "Approval",
+          "icon": "Sparkles",
+          "accent": "#72e47d",
+          "presentation": "standard",
+          "implementation": "schema-extension"
+        },
+        {
+          "value": "service_health",
+          "label": "Service Health",
+          "icon": "Sparkles",
+          "accent": "#e47572",
+          "presentation": "standard",
+          "implementation": "schema-extension"
+        }
+      ],
+      "rendererOwnedSkinDetails": [],
+      "pack": "software_eng",
+      "availability": "public",
+      "restingFace": true,
+      "titleChrome": true,
+      "defaultData": {
+        "label": "Status",
+        "value": "not_started"
+      }
+    }
+  },
+  "moduleTypes": [
+    "canvas_node",
+    "text",
+    "bullets",
+    "code",
+    "checklist",
+    "pros_cons",
+    "decision",
+    "meeting_notes",
+    "flashcards",
+    "canvas_lms",
+    "goal_tracker",
+    "reading_list",
+    "grade_calc",
+    "formula_sheet",
+    "citation",
+    "calendar",
+    "poll",
+    "rating",
+    "calculator",
+    "bar_chart",
+    "table",
+    "budget",
+    "metrics",
+    "timekeeper",
+    "mood_tracker",
+    "counter",
+    "links",
+    "habit",
+    "contact",
+    "color_palette",
+    "media",
+    "sketchpad",
+    "dialog",
+    "ai_generator",
+    "text_input",
+    "number_input",
+    "toggle",
+    "branch_gate",
+    "formula",
+    "status",
+    "date_picker",
+    "outline",
+    "form",
+    "process",
+    "risk_register",
+    "decision_matrix",
+    "swot",
+    "timesheet",
+    "inventory",
+    "logbook",
+    "unit_converter",
+    "game_tuner",
+    "audio_player",
+    "clock_pulse",
+    "comparator",
+    "aggregator",
+    "range_mapper",
+    "latch",
+    "sequencer",
+    "template",
+    "recorder",
+    "notifier",
+    "location",
+    "subscriptions",
+    "debt_payoff",
+    "expense_split",
+    "invoices",
+    "meal_planner",
+    "recipe",
+    "home_maintenance",
+    "chore_rotation",
+    "renewals_vault",
+    "medications",
+    "workout_plan",
+    "job_applications",
+    "decision_journal",
+    "weekly_review",
+    "snippet_library",
+    "keep_in_touch",
+    "gifts_occasions",
+    "trip_itinerary",
+    "guest_list",
+    "tracker",
+    "savings_circle",
+    "zakat",
+    "remittance_planner",
+    "price_book",
+    "utility_runway",
+    "fuel_log",
+    "side_income",
+    "wishlist_saver",
+    "vitals_log",
+    "cycle_tracker",
+    "fasting_window",
+    "hydration",
+    "sleep_ledger",
+    "stretch_deck",
+    "prayer_times",
+    "scripture_plan",
+    "gratitude_jar",
+    "prayer_wall",
+    "outage_schedule",
+    "borrowed_items",
+    "plant_care",
+    "go_bag",
+    "bin_night",
+    "sun_window",
+    "moving_boxes",
+    "meeting_cost",
+    "waiting_on",
+    "office_hours",
+    "scope_meter",
+    "handover_note",
+    "crit_queue",
+    "on_call",
+    "estimate_builder",
+    "past_papers",
+    "memorization_ladder",
+    "experiments",
+    "mistake_bank",
+    "skill_tree",
+    "care_plan",
+    "gift_ledger",
+    "team_kudos",
+    "potluck_matrix",
+    "star_chart",
+    "pet_care",
+    "visa_runway",
+    "packing_matrix",
+    "jet_lag_shifter",
+    "currency_pocket",
+    "commission_queue",
+    "content_pipeline",
+    "loop",
+    "batch_processor",
+    "parallel_runner",
+    "race",
+    "transaction",
+    "subroutine",
+    "approval_gate",
+    "workflow_lock",
+    "webhook_receiver",
+    "manual_trigger",
+    "canvas_lifecycle",
+    "event_merger",
+    "data_join",
+    "object_builder",
+    "event_correlator",
+    "multi_source_aggregator",
+    "widget_creator",
+    "widget_updater",
+    "widget_deleter",
+    "branch_builder",
+    "relation_builder",
+    "canvas_router",
+    "clone_branch",
+    "template_instantiator",
+    "archive_action",
+    "auto_layout_action",
+    "focus_action",
+    "variable_store",
+    "key_value_store",
+    "queue",
+    "stack_store",
+    "set_store",
+    "state_machine",
+    "idempotency_store",
+    "session_store",
+    "mutex",
+    "script_block",
+    "local_function",
+    "http_request",
+    "webhook_sender",
+    "secret_reference",
+    "environment_config",
+    "automation_console",
+    "test_data_generator",
+    "automation_recorder",
+    "workflow_test_suite",
+    "failure_inbox",
+    "run_ledger"
+  ],
+  "defaultSizes": {
+    "canvas_node": {
+      "width": 280,
+      "height": 80
+    },
+    "text": {
+      "width": 320,
+      "height": 200
+    },
+    "bullets": {
+      "width": 240,
+      "height": 120
+    },
+    "code": {
+      "width": 360,
+      "height": 200
+    },
+    "checklist": {
+      "width": 280,
+      "height": 160
+    },
+    "pros_cons": {
+      "width": 420,
+      "height": 200
+    },
+    "decision": {
+      "width": 300,
+      "height": 200
+    },
+    "meeting_notes": {
+      "width": 340,
+      "height": 280
+    },
+    "flashcards": {
+      "width": 360,
+      "height": 240
+    },
+    "canvas_lms": {
+      "width": 380,
+      "height": 280
+    },
+    "goal_tracker": {
+      "width": 360,
+      "height": 280
+    },
+    "reading_list": {
+      "width": 320,
+      "height": 160
+    },
+    "grade_calc": {
+      "width": 320,
+      "height": 200
+    },
+    "formula_sheet": {
+      "width": 320,
+      "height": 200
+    },
+    "citation": {
+      "width": 340,
+      "height": 200
+    },
+    "calendar": {
+      "width": 280,
+      "height": 240
+    },
+    "poll": {
+      "width": 340,
+      "height": 240
+    },
+    "rating": {
+      "width": 320,
+      "height": 160
+    },
+    "calculator": {
+      "width": 280,
+      "height": 360
+    },
+    "bar_chart": {
+      "width": 400,
+      "height": 280
+    },
+    "table": {
+      "width": 440,
+      "height": 200
+    },
+    "budget": {
+      "width": 400,
+      "height": 320
+    },
+    "metrics": {
+      "width": 400,
+      "height": 280
+    },
+    "timekeeper": {
+      "width": 240,
+      "height": 240
+    },
+    "mood_tracker": {
+      "width": 300,
+      "height": 160
+    },
+    "counter": {
+      "width": 280,
+      "height": 200
+    },
+    "links": {
+      "width": 300,
+      "height": 160
+    },
+    "habit": {
+      "width": 320,
+      "height": 200
+    },
+    "contact": {
+      "width": 320,
+      "height": 280
+    },
+    "color_palette": {
+      "width": 260,
+      "height": 160
+    },
+    "media": {
+      "width": 320,
+      "height": 200
+    },
+    "sketchpad": {
+      "width": 480,
+      "height": 360
+    },
+    "dialog": {
+      "width": 400,
+      "height": 280
+    },
+    "ai_generator": {
+      "width": 320,
+      "height": 160
+    },
+    "text_input": {
+      "width": 300,
+      "height": 200
+    },
+    "number_input": {
+      "width": 280,
+      "height": 160
+    },
+    "toggle": {
+      "width": 240,
+      "height": 160
+    },
+    "branch_gate": {
+      "width": 280,
+      "height": 120
+    },
+    "formula": {
+      "width": 320,
+      "height": 240
+    },
+    "status": {
+      "width": 280,
+      "height": 120
+    },
+    "date_picker": {
+      "width": 280,
+      "height": 160
+    },
+    "outline": {
+      "width": 400,
+      "height": 280
+    },
+    "form": {
+      "width": 400,
+      "height": 280
+    },
+    "process": {
+      "width": 360,
+      "height": 240
+    },
+    "risk_register": {
+      "width": 440,
+      "height": 240
+    },
+    "decision_matrix": {
+      "width": 440,
+      "height": 240
+    },
+    "swot": {
+      "width": 400,
+      "height": 240
+    },
+    "timesheet": {
+      "width": 400,
+      "height": 240
+    },
+    "inventory": {
+      "width": 400,
+      "height": 240
+    },
+    "logbook": {
+      "width": 400,
+      "height": 280
+    },
+    "unit_converter": {
+      "width": 320,
+      "height": 200
+    },
+    "game_tuner": {
+      "width": 320,
+      "height": 160
+    },
+    "audio_player": {
+      "width": 360,
+      "height": 320
+    },
+    "clock_pulse": {
+      "width": 300,
+      "height": 240
+    },
+    "comparator": {
+      "width": 320,
+      "height": 160
+    },
+    "aggregator": {
+      "width": 300,
+      "height": 200
+    },
+    "range_mapper": {
+      "width": 300,
+      "height": 200
+    },
+    "latch": {
+      "width": 280,
+      "height": 160
+    },
+    "sequencer": {
+      "width": 320,
+      "height": 240
+    },
+    "template": {
+      "width": 320,
+      "height": 200
+    },
+    "recorder": {
+      "width": 320,
+      "height": 200
+    },
+    "notifier": {
+      "width": 320,
+      "height": 200
+    },
+    "location": {
+      "width": 340,
+      "height": 280
+    },
+    "subscriptions": {
+      "width": 360,
+      "height": 240
+    },
+    "debt_payoff": {
+      "width": 380,
+      "height": 280
+    },
+    "expense_split": {
+      "width": 380,
+      "height": 280
+    },
+    "invoices": {
+      "width": 360,
+      "height": 240
+    },
+    "meal_planner": {
+      "width": 440,
+      "height": 360
+    },
+    "recipe": {
+      "width": 360,
+      "height": 280
+    },
+    "home_maintenance": {
+      "width": 360,
+      "height": 280
+    },
+    "chore_rotation": {
+      "width": 340,
+      "height": 320
+    },
+    "renewals_vault": {
+      "width": 360,
+      "height": 280
+    },
+    "medications": {
+      "width": 360,
+      "height": 240
+    },
+    "workout_plan": {
+      "width": 400,
+      "height": 320
+    },
+    "job_applications": {
+      "width": 400,
+      "height": 280
+    },
+    "decision_journal": {
+      "width": 380,
+      "height": 280
+    },
+    "weekly_review": {
+      "width": 360,
+      "height": 280
+    },
+    "snippet_library": {
+      "width": 360,
+      "height": 280
+    },
+    "keep_in_touch": {
+      "width": 360,
+      "height": 240
+    },
+    "gifts_occasions": {
+      "width": 360,
+      "height": 240
+    },
+    "trip_itinerary": {
+      "width": 420,
+      "height": 400
+    },
+    "guest_list": {
+      "width": 360,
+      "height": 280
+    },
+    "tracker": {
+      "width": 360,
+      "height": 280
+    },
+    "savings_circle": {
+      "width": 360,
+      "height": 240
+    },
+    "zakat": {
+      "width": 360,
+      "height": 240
+    },
+    "remittance_planner": {
+      "width": 360,
+      "height": 240
+    },
+    "price_book": {
+      "width": 360,
+      "height": 240
+    },
+    "utility_runway": {
+      "width": 360,
+      "height": 240
+    },
+    "fuel_log": {
+      "width": 360,
+      "height": 240
+    },
+    "side_income": {
+      "width": 360,
+      "height": 240
+    },
+    "wishlist_saver": {
+      "width": 360,
+      "height": 240
+    },
+    "vitals_log": {
+      "width": 360,
+      "height": 240
+    },
+    "cycle_tracker": {
+      "width": 360,
+      "height": 240
+    },
+    "fasting_window": {
+      "width": 360,
+      "height": 240
+    },
+    "hydration": {
+      "width": 360,
+      "height": 240
+    },
+    "sleep_ledger": {
+      "width": 360,
+      "height": 240
+    },
+    "stretch_deck": {
+      "width": 360,
+      "height": 240
+    },
+    "prayer_times": {
+      "width": 400,
+      "height": 280
+    },
+    "scripture_plan": {
+      "width": 360,
+      "height": 240
+    },
+    "gratitude_jar": {
+      "width": 360,
+      "height": 240
+    },
+    "prayer_wall": {
+      "width": 360,
+      "height": 240
+    },
+    "outage_schedule": {
+      "width": 360,
+      "height": 240
+    },
+    "borrowed_items": {
+      "width": 360,
+      "height": 240
+    },
+    "plant_care": {
+      "width": 360,
+      "height": 240
+    },
+    "go_bag": {
+      "width": 360,
+      "height": 240
+    },
+    "bin_night": {
+      "width": 360,
+      "height": 240
+    },
+    "sun_window": {
+      "width": 360,
+      "height": 240
+    },
+    "moving_boxes": {
+      "width": 360,
+      "height": 240
+    },
+    "meeting_cost": {
+      "width": 360,
+      "height": 240
+    },
+    "waiting_on": {
+      "width": 360,
+      "height": 240
+    },
+    "office_hours": {
+      "width": 360,
+      "height": 240
+    },
+    "scope_meter": {
+      "width": 360,
+      "height": 240
+    },
+    "handover_note": {
+      "width": 360,
+      "height": 240
+    },
+    "crit_queue": {
+      "width": 360,
+      "height": 240
+    },
+    "on_call": {
+      "width": 360,
+      "height": 240
+    },
+    "estimate_builder": {
+      "width": 360,
+      "height": 240
+    },
+    "past_papers": {
+      "width": 400,
+      "height": 280
+    },
+    "memorization_ladder": {
+      "width": 360,
+      "height": 240
+    },
+    "experiments": {
+      "width": 360,
+      "height": 240
+    },
+    "mistake_bank": {
+      "width": 360,
+      "height": 240
+    },
+    "skill_tree": {
+      "width": 400,
+      "height": 280
+    },
+    "care_plan": {
+      "width": 400,
+      "height": 280
+    },
+    "gift_ledger": {
+      "width": 360,
+      "height": 240
+    },
+    "team_kudos": {
+      "width": 360,
+      "height": 240
+    },
+    "potluck_matrix": {
+      "width": 360,
+      "height": 240
+    },
+    "star_chart": {
+      "width": 360,
+      "height": 240
+    },
+    "pet_care": {
+      "width": 360,
+      "height": 240
+    },
+    "visa_runway": {
+      "width": 360,
+      "height": 240
+    },
+    "packing_matrix": {
+      "width": 360,
+      "height": 240
+    },
+    "jet_lag_shifter": {
+      "width": 360,
+      "height": 240
+    },
+    "currency_pocket": {
+      "width": 360,
+      "height": 240
+    },
+    "commission_queue": {
+      "width": 400,
+      "height": 280
+    },
+    "content_pipeline": {
+      "width": 400,
+      "height": 280
+    },
+    "loop": {
+      "width": 360,
+      "height": 240
+    },
+    "batch_processor": {
+      "width": 360,
+      "height": 240
+    },
+    "parallel_runner": {
+      "width": 360,
+      "height": 240
+    },
+    "race": {
+      "width": 360,
+      "height": 240
+    },
+    "transaction": {
+      "width": 360,
+      "height": 240
+    },
+    "subroutine": {
+      "width": 360,
+      "height": 240
+    },
+    "approval_gate": {
+      "width": 360,
+      "height": 240
+    },
+    "workflow_lock": {
+      "width": 360,
+      "height": 240
+    },
+    "webhook_receiver": {
+      "width": 360,
+      "height": 240
+    },
+    "manual_trigger": {
+      "width": 360,
+      "height": 240
+    },
+    "canvas_lifecycle": {
+      "width": 360,
+      "height": 240
+    },
+    "event_merger": {
+      "width": 360,
+      "height": 240
+    },
+    "data_join": {
+      "width": 360,
+      "height": 240
+    },
+    "object_builder": {
+      "width": 360,
+      "height": 240
+    },
+    "event_correlator": {
+      "width": 360,
+      "height": 240
+    },
+    "multi_source_aggregator": {
+      "width": 360,
+      "height": 240
+    },
+    "widget_creator": {
+      "width": 360,
+      "height": 240
+    },
+    "widget_updater": {
+      "width": 360,
+      "height": 240
+    },
+    "widget_deleter": {
+      "width": 360,
+      "height": 240
+    },
+    "branch_builder": {
+      "width": 360,
+      "height": 240
+    },
+    "relation_builder": {
+      "width": 360,
+      "height": 240
+    },
+    "canvas_router": {
+      "width": 360,
+      "height": 240
+    },
+    "clone_branch": {
+      "width": 360,
+      "height": 240
+    },
+    "template_instantiator": {
+      "width": 360,
+      "height": 240
+    },
+    "archive_action": {
+      "width": 360,
+      "height": 240
+    },
+    "auto_layout_action": {
+      "width": 360,
+      "height": 240
+    },
+    "focus_action": {
+      "width": 360,
+      "height": 240
+    },
+    "variable_store": {
+      "width": 360,
+      "height": 240
+    },
+    "key_value_store": {
+      "width": 360,
+      "height": 240
+    },
+    "queue": {
+      "width": 360,
+      "height": 240
+    },
+    "stack_store": {
+      "width": 360,
+      "height": 240
+    },
+    "set_store": {
+      "width": 360,
+      "height": 240
+    },
+    "state_machine": {
+      "width": 360,
+      "height": 240
+    },
+    "idempotency_store": {
+      "width": 360,
+      "height": 240
+    },
+    "session_store": {
+      "width": 360,
+      "height": 240
+    },
+    "mutex": {
+      "width": 360,
+      "height": 240
+    },
+    "script_block": {
+      "width": 360,
+      "height": 240
+    },
+    "local_function": {
+      "width": 360,
+      "height": 240
+    },
+    "http_request": {
+      "width": 360,
+      "height": 240
+    },
+    "webhook_sender": {
+      "width": 360,
+      "height": 240
+    },
+    "secret_reference": {
+      "width": 360,
+      "height": 240
+    },
+    "environment_config": {
+      "width": 360,
+      "height": 240
+    },
+    "automation_console": {
+      "width": 360,
+      "height": 240
+    },
+    "test_data_generator": {
+      "width": 360,
+      "height": 240
+    },
+    "automation_recorder": {
+      "width": 360,
+      "height": 240
+    },
+    "workflow_test_suite": {
+      "width": 360,
+      "height": 240
+    },
+    "failure_inbox": {
+      "width": 360,
+      "height": 240
+    },
+    "run_ledger": {
+      "width": 360,
+      "height": 240
+    }
+  },
+  "automationCoreTypes": [
+    "loop",
+    "batch_processor",
+    "parallel_runner",
+    "race",
+    "transaction",
+    "subroutine",
+    "approval_gate",
+    "workflow_lock",
+    "webhook_receiver",
+    "manual_trigger",
+    "canvas_lifecycle",
+    "event_merger",
+    "data_join",
+    "object_builder",
+    "event_correlator",
+    "multi_source_aggregator",
+    "widget_creator",
+    "widget_updater",
+    "widget_deleter",
+    "branch_builder",
+    "relation_builder",
+    "canvas_router",
+    "clone_branch",
+    "template_instantiator",
+    "archive_action",
+    "auto_layout_action",
+    "focus_action",
+    "variable_store",
+    "key_value_store",
+    "queue",
+    "stack_store",
+    "set_store",
+    "state_machine",
+    "idempotency_store",
+    "session_store",
+    "mutex",
+    "script_block",
+    "local_function",
+    "http_request",
+    "webhook_sender",
+    "secret_reference",
+    "environment_config",
+    "automation_console",
+    "test_data_generator",
+    "automation_recorder",
+    "workflow_test_suite",
+    "failure_inbox",
+    "run_ledger"
+  ],
+  "domainPacks": [
+    "game_dev",
+    "music_production",
+    "software_eng",
+    "data_science",
+    "ux_design",
+    "creative_writing",
+    "finance_analytics",
+    "project_management",
+    "education",
+    "life"
+  ],
+  "deletedTypes": [
+    "quote",
+    "sticky_note",
+    "cornell",
+    "line_chart",
+    "pie_chart",
+    "progress",
+    "study_goal",
+    "okr",
+    "timer",
+    "pomodoro",
+    "stopwatch",
+    "countdown",
+    "world_clock",
+    "excalidraw",
+    "random_picker",
+    "gpa",
+    "vocab",
+    "quiz",
+    "kanban",
+    "assignment",
+    "daily_agenda",
+    "weekly_planner",
+    "timeline",
+    "priority_matrix",
+    "divider"
+  ],
+  "renamedTypes": {
+    "notes": "text"
+  }
+}

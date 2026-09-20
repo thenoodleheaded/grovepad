@@ -1,0 +1,205 @@
+{
+  "name": "value-delivery-with-transform",
+  "widgets": {
+    "counter": {
+      "id": "counter",
+      "type": "counter",
+      "title": "counter",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 280,
+        "height": 200
+      },
+      "data": {
+        "label": "Tally",
+        "count": 4,
+        "step": 1,
+        "skin": "tally"
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "goal": {
+      "id": "goal",
+      "type": "goal_tracker",
+      "title": "goal",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 280,
+        "height": 200
+      },
+      "data": {
+        "goal": "",
+        "mode": "simple",
+        "simple": {
+          "label": "Progress",
+          "percent": 0
+        },
+        "milestones": []
+      },
+      "metadata": {
+        "badges": []
+      }
+    }
+  },
+  "connections": {
+    "w": {
+      "id": "w",
+      "enabled": true,
+      "fromId": "counter",
+      "fromField": "count",
+      "toId": "goal",
+      "kind": "value",
+      "toField": "percent",
+      "transform": {
+        "op": "scale",
+        "factor": 10
+      }
+    }
+  },
+  "steps": [
+    {
+      "label": "deliver 4×10",
+      "seeds": [
+        "counter"
+      ],
+      "expect": {
+        "writes": {
+          "goal": {
+            "goal": "",
+            "mode": "simple",
+            "simple": {
+              "label": "Progress",
+              "percent": 40
+            },
+            "milestones": []
+          }
+        },
+        "firedIds": [
+          "w"
+        ],
+        "executeRequests": [],
+        "memory": {
+          "w": {
+            "serialized": "n:40",
+            "bool": true
+          }
+        },
+        "widgetsAfter": {
+          "counter": {
+            "label": "Tally",
+            "count": 4,
+            "step": 1,
+            "skin": "tally"
+          },
+          "goal": {
+            "goal": "",
+            "mode": "simple",
+            "simple": {
+              "label": "Progress",
+              "percent": 40
+            },
+            "milestones": []
+          }
+        }
+      }
+    },
+    {
+      "label": "fixpoint: reseed unchanged",
+      "seeds": [
+        "counter"
+      ],
+      "expect": {
+        "writes": {},
+        "firedIds": [],
+        "executeRequests": [],
+        "memory": {
+          "w": {
+            "serialized": "n:40",
+            "bool": true
+          }
+        },
+        "widgetsAfter": {
+          "counter": {
+            "label": "Tally",
+            "count": 4,
+            "step": 1,
+            "skin": "tally"
+          },
+          "goal": {
+            "goal": "",
+            "mode": "simple",
+            "simple": {
+              "label": "Progress",
+              "percent": 40
+            },
+            "milestones": []
+          }
+        }
+      }
+    },
+    {
+      "label": "edit counter to 6",
+      "seeds": [
+        "counter"
+      ],
+      "edits": {
+        "counter": {
+          "label": "Tally",
+          "count": 6,
+          "step": 1,
+          "skin": "tally"
+        }
+      },
+      "expect": {
+        "writes": {
+          "goal": {
+            "goal": "",
+            "mode": "simple",
+            "simple": {
+              "label": "Progress",
+              "percent": 60
+            },
+            "milestones": []
+          }
+        },
+        "firedIds": [
+          "w"
+        ],
+        "executeRequests": [],
+        "memory": {
+          "w": {
+            "serialized": "n:60",
+            "bool": true
+          }
+        },
+        "widgetsAfter": {
+          "counter": {
+            "label": "Tally",
+            "count": 6,
+            "step": 1,
+            "skin": "tally"
+          },
+          "goal": {
+            "goal": "",
+            "mode": "simple",
+            "simple": {
+              "label": "Progress",
+              "percent": 60
+            },
+            "milestones": []
+          }
+        }
+      }
+    }
+  ]
+}

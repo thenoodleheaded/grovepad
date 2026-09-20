@@ -1,0 +1,108 @@
+{
+  "outputs": [
+    {
+      "key": "streak",
+      "label": "Days done",
+      "valueType": "number",
+      "unit": "count",
+      "index": 0,
+      "timeSensitive": false
+    }
+  ],
+  "inputs": [
+    {
+      "key": "reset",
+      "label": "Clear the week",
+      "kind": "command",
+      "valueType": null,
+      "unit": null,
+      "acceptsPayload": false,
+      "index": 0
+    }
+  ],
+  "samples": [
+    {
+      "label": "Daily habit",
+      "days": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "streak": 0,
+      "skin": "week_grid"
+    },
+    {
+      "label": "Daily habit",
+      "days": [
+        true,
+        false,
+        true,
+        true,
+        false,
+        false,
+        true
+      ],
+      "streak": 2,
+      "skin": "week_grid"
+    }
+  ],
+  "gets": [
+    {
+      "sample": 0,
+      "key": "streak",
+      "value": 0
+    },
+    {
+      "sample": 1,
+      "key": "streak",
+      "value": 4
+    }
+  ],
+  "sets": [],
+  "commands": [
+    {
+      "sample": 0,
+      "key": "reset",
+      "payload": null,
+      "hasPayload": false,
+      "data": {
+        "label": "Daily habit",
+        "days": [
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false
+        ],
+        "streak": 0,
+        "skin": "week_grid"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "reset",
+      "payload": null,
+      "hasPayload": false,
+      "data": {
+        "label": "Daily habit",
+        "days": [
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false
+        ],
+        "streak": 0,
+        "skin": "week_grid"
+      }
+    }
+  ]
+}

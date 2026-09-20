@@ -1,0 +1,799 @@
+{
+  "format": "grovepad-board",
+  "v": 2,
+  "workspaces": {
+    "workspace": {
+      "id": "workspace",
+      "name": "Workspace",
+      "rootCanvasId": "canvas",
+      "createdAt": 1
+    }
+  },
+  "canvases": {
+    "canvas": {
+      "id": "canvas",
+      "name": "Origin",
+      "workspaceId": "workspace",
+      "parentCanvasId": null
+    }
+  },
+  "widgets": {
+    "0": {
+      "id": "0",
+      "type": "text",
+      "title": "0",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 320,
+        "height": 200
+      },
+      "data": {
+        "text": "",
+        "mode": "plain",
+        "color": "yellow"
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "2": {
+      "id": "2",
+      "type": "text",
+      "title": "2",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 320,
+        "height": 200
+      },
+      "data": {
+        "text": "",
+        "mode": "plain",
+        "color": "yellow"
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "10": {
+      "id": "10",
+      "type": "text",
+      "title": "10",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 320,
+        "height": 200
+      },
+      "data": {
+        "text": "",
+        "mode": "plain",
+        "color": "yellow"
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "4294967294": {
+      "id": "4294967294",
+      "type": "text",
+      "title": "4294967294",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 320,
+        "height": 200
+      },
+      "data": {
+        "text": "",
+        "mode": "plain",
+        "color": "yellow"
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "k0:": {
+      "id": "k0:",
+      "type": "text",
+      "title": "",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 320,
+        "height": 200
+      },
+      "data": {
+        "text": "",
+        "": 0
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "k1:plain": {
+      "id": "k1:plain",
+      "type": "text",
+      "title": "plain",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 320,
+        "height": 200
+      },
+      "data": {
+        "text": "plain",
+        "plain": 1
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "k2:quote\"inside": {
+      "id": "k2:quote\"inside",
+      "type": "text",
+      "title": "quote\"inside",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 320,
+        "height": 200
+      },
+      "data": {
+        "text": "quote\"inside",
+        "quote\"inside": 2
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "k3:back\\slash": {
+      "id": "k3:back\\slash",
+      "type": "text",
+      "title": "back\\slash",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 320,
+        "height": 200
+      },
+      "data": {
+        "text": "back\\slash",
+        "back\\slash": 3
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "k4:slash/not/escaped": {
+      "id": "k4:slash/not/escaped",
+      "type": "text",
+      "title": "slash/not/escaped",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 320,
+        "height": 200
+      },
+      "data": {
+        "text": "slash/not/escaped",
+        "slash/not/escaped": 4
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "k5:line\nbreak": {
+      "id": "k5:line\nbreak",
+      "type": "text",
+      "title": "line\nbreak",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 320,
+        "height": 200
+      },
+      "data": {
+        "text": "line\nbreak",
+        "line\nbreak": 5
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "k6:tab\there": {
+      "id": "k6:tab\there",
+      "type": "text",
+      "title": "tab\there",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 320,
+        "height": 200
+      },
+      "data": {
+        "text": "tab\there",
+        "tab\there": 6
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "k7:cr\r": {
+      "id": "k7:cr\r",
+      "type": "text",
+      "title": "cr\r",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 320,
+        "height": 200
+      },
+      "data": {
+        "text": "cr\r",
+        "cr\r": 7
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "k8:bs\b": {
+      "id": "k8:bs\b",
+      "type": "text",
+      "title": "bs\b",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 320,
+        "height": 200
+      },
+      "data": {
+        "text": "bs\b",
+        "bs\b": 8
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "k9:ff\f": {
+      "id": "k9:ff\f",
+      "type": "text",
+      "title": "ff\f",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 320,
+        "height": 200
+      },
+      "data": {
+        "text": "ff\f",
+        "ff\f": 9
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "k10:ctl\u0001\u001f": {
+      "id": "k10:ctl\u0001\u001f",
+      "type": "text",
+      "title": "ctl\u0001\u001f",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 320,
+        "height": 200
+      },
+      "data": {
+        "text": "ctl\u0001\u001f",
+        "ctl\u0001\u001f": 10
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "k11:del": {
+      "id": "k11:del",
+      "type": "text",
+      "title": "del",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 320,
+        "height": 200
+      },
+      "data": {
+        "text": "del",
+        "del": 11
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "k12:café": {
+      "id": "k12:café",
+      "type": "text",
+      "title": "café",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 320,
+        "height": 200
+      },
+      "data": {
+        "text": "café",
+        "café": 12
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "k13:日本": {
+      "id": "k13:日本",
+      "type": "text",
+      "title": "日本",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 320,
+        "height": 200
+      },
+      "data": {
+        "text": "日本",
+        "日本": 13
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "k14:emoji 😀": {
+      "id": "k14:emoji 😀",
+      "type": "text",
+      "title": "emoji 😀",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 320,
+        "height": 200
+      },
+      "data": {
+        "text": "emoji 😀",
+        "emoji 😀": 14
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "k15:lone \ud800 high": {
+      "id": "k15:lone \ud800 high",
+      "type": "text",
+      "title": "lone \ud800 high",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 320,
+        "height": 200
+      },
+      "data": {
+        "text": "lone \ud800 high",
+        "lone \ud800 high": 15
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "k16:lone \udc00 low": {
+      "id": "k16:lone \udc00 low",
+      "type": "text",
+      "title": "lone \udc00 low",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 320,
+        "height": 200
+      },
+      "data": {
+        "text": "lone \udc00 low",
+        "lone \udc00 low": 16
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "k17:sep  ": {
+      "id": "k17:sep  ",
+      "type": "text",
+      "title": "sep  ",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 320,
+        "height": 200
+      },
+      "data": {
+        "text": "sep  ",
+        "sep  ": 17
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "k18:<script>": {
+      "id": "k18:<script>",
+      "type": "text",
+      "title": "<script>",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 320,
+        "height": 200
+      },
+      "data": {
+        "text": "<script>",
+        "<script>": 18
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "k19:&amp;": {
+      "id": "k19:&amp;",
+      "type": "text",
+      "title": "&amp;",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 320,
+        "height": 200
+      },
+      "data": {
+        "text": "&amp;",
+        "&amp;": 19
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "k20:\u0000nul": {
+      "id": "k20:\u0000nul",
+      "type": "text",
+      "title": "\u0000nul",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 320,
+        "height": 200
+      },
+      "data": {
+        "text": "\u0000nul",
+        "\u0000nul": 20
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "k21:\u001b[31m": {
+      "id": "k21:\u001b[31m",
+      "type": "text",
+      "title": "\u001b[31m",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 320,
+        "height": 200
+      },
+      "data": {
+        "text": "\u001b[31m",
+        "\u001b[31m": 21
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "k22:mixed 😀𐀀 end": {
+      "id": "k22:mixed 😀𐀀 end",
+      "type": "text",
+      "title": "mixed 😀𐀀 end",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 320,
+        "height": 200
+      },
+      "data": {
+        "text": "mixed 😀𐀀 end",
+        "mixed 😀𐀀 end": 22
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "k23: nbsp": {
+      "id": "k23: nbsp",
+      "type": "text",
+      "title": " nbsp",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 320,
+        "height": 200
+      },
+      "data": {
+        "text": " nbsp",
+        " nbsp": 23
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "zeta": {
+      "id": "zeta",
+      "type": "text",
+      "title": "zeta",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 320,
+        "height": 200
+      },
+      "data": {
+        "text": "",
+        "mode": "plain",
+        "color": "yellow"
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "alpha": {
+      "id": "alpha",
+      "type": "text",
+      "title": "alpha",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 320,
+        "height": 200
+      },
+      "data": {
+        "text": "",
+        "mode": "plain",
+        "color": "yellow"
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "01": {
+      "id": "01",
+      "type": "text",
+      "title": "01",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 320,
+        "height": 200
+      },
+      "data": {
+        "text": "",
+        "mode": "plain",
+        "color": "yellow"
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "-1": {
+      "id": "-1",
+      "type": "text",
+      "title": "-1",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 320,
+        "height": 200
+      },
+      "data": {
+        "text": "",
+        "mode": "plain",
+        "color": "yellow"
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "4294967295": {
+      "id": "4294967295",
+      "type": "text",
+      "title": "4294967295",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 320,
+        "height": 200
+      },
+      "data": {
+        "text": "",
+        "mode": "plain",
+        "color": "yellow"
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "1.5": {
+      "id": "1.5",
+      "type": "text",
+      "title": "1.5",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 320,
+        "height": 200
+      },
+      "data": {
+        "text": "",
+        "mode": "plain",
+        "color": "yellow"
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    " 3": {
+      "id": " 3",
+      "type": "text",
+      "title": " 3",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 320,
+        "height": 200
+      },
+      "data": {
+        "text": "",
+        "mode": "plain",
+        "color": "yellow"
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "3 ": {
+      "id": "3 ",
+      "type": "text",
+      "title": "3 ",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 320,
+        "height": 200
+      },
+      "data": {
+        "text": "",
+        "mode": "plain",
+        "color": "yellow"
+      },
+      "metadata": {
+        "badges": []
+      }
+    }
+  },
+  "relations": {},
+  "connections": {},
+  "glues": {},
+  "activePacks": [],
+  "orderé key": {
+    "1": "third",
+    "9": "first",
+    "b": "second"
+  }
+}

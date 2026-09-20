@@ -1,0 +1,250 @@
+{
+  "name": "single-fire-fan-out-and-fan-in",
+  "widgets": {
+    "a": {
+      "id": "a",
+      "type": "toggle",
+      "title": "a",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 280,
+        "height": 200
+      },
+      "data": {
+        "label": "Condition",
+        "value": false
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "b": {
+      "id": "b",
+      "type": "toggle",
+      "title": "b",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 280,
+        "height": 200
+      },
+      "data": {
+        "label": "Condition",
+        "value": false
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "target": {
+      "id": "target",
+      "type": "counter",
+      "title": "target",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 280,
+        "height": 200
+      },
+      "data": {
+        "label": "Tally",
+        "count": 0,
+        "step": 1,
+        "skin": "tally"
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "mirror": {
+      "id": "mirror",
+      "type": "number_input",
+      "title": "mirror",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 280,
+        "height": 200
+      },
+      "data": {
+        "label": "Value",
+        "value": 0,
+        "min": 0,
+        "max": 100,
+        "step": 1
+      },
+      "metadata": {
+        "badges": []
+      }
+    }
+  },
+  "connections": {
+    "ta": {
+      "id": "ta",
+      "enabled": true,
+      "fromId": "a",
+      "fromField": "value",
+      "toId": "target",
+      "kind": "trigger",
+      "command": "increment",
+      "edge": "rising"
+    },
+    "tb": {
+      "id": "tb",
+      "enabled": true,
+      "fromId": "b",
+      "fromField": "value",
+      "toId": "target",
+      "kind": "trigger",
+      "command": "increment",
+      "edge": "rising"
+    },
+    "mirror": {
+      "id": "mirror",
+      "enabled": true,
+      "fromId": "target",
+      "fromField": "count",
+      "toId": "mirror",
+      "kind": "value",
+      "toField": "value"
+    }
+  },
+  "steps": [
+    {
+      "label": "baseline both",
+      "seeds": [
+        "a",
+        "b"
+      ],
+      "baselineOnly": true,
+      "expect": {
+        "writes": {},
+        "firedIds": [],
+        "executeRequests": [],
+        "memory": {
+          "ta": {
+            "serialized": "b:false",
+            "bool": false
+          },
+          "tb": {
+            "serialized": "b:false",
+            "bool": false
+          }
+        },
+        "widgetsAfter": {
+          "a": {
+            "label": "Condition",
+            "value": false
+          },
+          "b": {
+            "label": "Condition",
+            "value": false
+          },
+          "target": {
+            "label": "Tally",
+            "count": 0,
+            "step": 1,
+            "skin": "tally"
+          },
+          "mirror": {
+            "label": "Value",
+            "value": 0,
+            "min": 0,
+            "max": 100,
+            "step": 1
+          }
+        }
+      }
+    },
+    {
+      "label": "both rise in one wave",
+      "seeds": [
+        "a",
+        "b"
+      ],
+      "edits": {
+        "a": {
+          "label": "Condition",
+          "value": true
+        },
+        "b": {
+          "label": "Condition",
+          "value": true
+        }
+      },
+      "expect": {
+        "writes": {
+          "target": {
+            "label": "Tally",
+            "count": 2,
+            "step": 1,
+            "skin": "tally"
+          },
+          "mirror": {
+            "label": "Value",
+            "value": 2,
+            "min": 0,
+            "max": 100,
+            "step": 1
+          }
+        },
+        "firedIds": [
+          "ta",
+          "tb",
+          "mirror"
+        ],
+        "executeRequests": [],
+        "memory": {
+          "ta": {
+            "serialized": "b:true",
+            "bool": true
+          },
+          "tb": {
+            "serialized": "b:true",
+            "bool": true
+          },
+          "mirror": {
+            "serialized": "n:2",
+            "bool": true
+          }
+        },
+        "widgetsAfter": {
+          "a": {
+            "label": "Condition",
+            "value": true
+          },
+          "b": {
+            "label": "Condition",
+            "value": true
+          },
+          "target": {
+            "label": "Tally",
+            "count": 2,
+            "step": 1,
+            "skin": "tally"
+          },
+          "mirror": {
+            "label": "Value",
+            "value": 2,
+            "min": 0,
+            "max": 100,
+            "step": 1
+          }
+        }
+      }
+    }
+  ]
+}

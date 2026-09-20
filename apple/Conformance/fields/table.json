@@ -1,0 +1,76 @@
+{
+  "outputs": [
+    {
+      "key": "row_count",
+      "label": "Rows",
+      "valueType": "number",
+      "unit": "count",
+      "index": 0,
+      "timeSensitive": false
+    }
+  ],
+  "inputs": [],
+  "samples": [
+    {
+      "rows": [
+        [
+          "Item",
+          "Owner",
+          "Status"
+        ],
+        [
+          "",
+          "",
+          ""
+        ],
+        [
+          "",
+          "",
+          ""
+        ]
+      ]
+    },
+    {
+      "rows": [
+        [
+          "h1",
+          "h2"
+        ],
+        [
+          "a",
+          "b"
+        ],
+        [
+          "c",
+          "d"
+        ],
+        [
+          "e",
+          "f"
+        ]
+      ]
+    },
+    {
+      "rows": []
+    }
+  ],
+  "gets": [
+    {
+      "sample": 0,
+      "key": "row_count",
+      "value": 2
+    },
+    {
+      "sample": 1,
+      "key": "row_count",
+      "value": 3
+    },
+    {
+      "sample": 2,
+      "key": "row_count",
+      "value": 0
+    }
+  ],
+  "sets": [],
+  "commands": []
+}

@@ -1,0 +1,2334 @@
+{
+  "outputs": [
+    {
+      "key": "total",
+      "label": "Total",
+      "valueType": "number",
+      "unit": "count",
+      "index": 0,
+      "timeSensitive": false
+    },
+    {
+      "key": "series",
+      "label": "Series",
+      "valueType": "series",
+      "unit": null,
+      "index": 1,
+      "timeSensitive": false
+    },
+    {
+      "key": "latest",
+      "label": "Latest value",
+      "valueType": "number",
+      "unit": null,
+      "index": 2,
+      "timeSensitive": false
+    },
+    {
+      "key": "average",
+      "label": "Average",
+      "valueType": "number",
+      "unit": null,
+      "index": 3,
+      "timeSensitive": false
+    }
+  ],
+  "inputs": [
+    {
+      "key": "series",
+      "label": "Series",
+      "kind": "field",
+      "valueType": "series",
+      "unit": null,
+      "acceptsPayload": false,
+      "index": 0
+    }
+  ],
+  "samples": [
+    {
+      "title": "Chart",
+      "mode": "bar",
+      "unit": "",
+      "bars": [
+        {
+          "id": "uuid-0001",
+          "label": "A",
+          "value": 3,
+          "color": "#38bdf8"
+        },
+        {
+          "id": "uuid-0002",
+          "label": "B",
+          "value": 5,
+          "color": "#a3e635"
+        }
+      ]
+    },
+    {
+      "title": "Chart",
+      "mode": "bar",
+      "unit": "",
+      "bars": [
+        {
+          "id": "x1",
+          "label": "A",
+          "value": 3,
+          "color": "#38bdf8"
+        },
+        {
+          "id": "x2",
+          "label": "B",
+          "value": 5
+        },
+        {
+          "id": "x3",
+          "label": "C",
+          "value": -2
+        }
+      ]
+    },
+    {
+      "title": "Chart",
+      "mode": "bar",
+      "unit": "",
+      "bars": []
+    }
+  ],
+  "gets": [
+    {
+      "sample": 0,
+      "key": "total",
+      "value": 8
+    },
+    {
+      "sample": 0,
+      "key": "series",
+      "value": [
+        {
+          "t": 0,
+          "v": 3
+        },
+        {
+          "t": 1,
+          "v": 5
+        }
+      ]
+    },
+    {
+      "sample": 0,
+      "key": "latest",
+      "value": 5
+    },
+    {
+      "sample": 0,
+      "key": "average",
+      "value": 4
+    },
+    {
+      "sample": 1,
+      "key": "total",
+      "value": 6
+    },
+    {
+      "sample": 1,
+      "key": "series",
+      "value": [
+        {
+          "t": 0,
+          "v": 3
+        },
+        {
+          "t": 1,
+          "v": 5
+        },
+        {
+          "t": 2,
+          "v": -2
+        }
+      ]
+    },
+    {
+      "sample": 1,
+      "key": "latest",
+      "value": -2
+    },
+    {
+      "sample": 1,
+      "key": "average",
+      "value": 2
+    },
+    {
+      "sample": 2,
+      "key": "total",
+      "value": 0
+    },
+    {
+      "sample": 2,
+      "key": "series",
+      "value": []
+    },
+    {
+      "sample": 2,
+      "key": "latest",
+      "value": 0
+    },
+    {
+      "sample": 2,
+      "key": "average",
+      "value": 0
+    }
+  ],
+  "sets": [
+    {
+      "sample": 0,
+      "key": "series",
+      "value": 0,
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": [
+          {
+            "id": "uuid-0001",
+            "label": "A",
+            "value": 3,
+            "color": "#38bdf8"
+          },
+          {
+            "id": "uuid-0002",
+            "label": "B",
+            "value": 5,
+            "color": "#a3e635"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 0,
+      "key": "series",
+      "value": 1,
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": [
+          {
+            "id": "uuid-0001",
+            "label": "A",
+            "value": 3,
+            "color": "#38bdf8"
+          },
+          {
+            "id": "uuid-0002",
+            "label": "B",
+            "value": 5,
+            "color": "#a3e635"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 0,
+      "key": "series",
+      "value": -1,
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": [
+          {
+            "id": "uuid-0001",
+            "label": "A",
+            "value": 3,
+            "color": "#38bdf8"
+          },
+          {
+            "id": "uuid-0002",
+            "label": "B",
+            "value": 5,
+            "color": "#a3e635"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 0,
+      "key": "series",
+      "value": 7,
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": [
+          {
+            "id": "uuid-0001",
+            "label": "A",
+            "value": 3,
+            "color": "#38bdf8"
+          },
+          {
+            "id": "uuid-0002",
+            "label": "B",
+            "value": 5,
+            "color": "#a3e635"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 0,
+      "key": "series",
+      "value": 2.5,
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": [
+          {
+            "id": "uuid-0001",
+            "label": "A",
+            "value": 3,
+            "color": "#38bdf8"
+          },
+          {
+            "id": "uuid-0002",
+            "label": "B",
+            "value": 5,
+            "color": "#a3e635"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 0,
+      "key": "series",
+      "value": 2.6,
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": [
+          {
+            "id": "uuid-0001",
+            "label": "A",
+            "value": 3,
+            "color": "#38bdf8"
+          },
+          {
+            "id": "uuid-0002",
+            "label": "B",
+            "value": 5,
+            "color": "#a3e635"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 0,
+      "key": "series",
+      "value": -2.5,
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": [
+          {
+            "id": "uuid-0001",
+            "label": "A",
+            "value": 3,
+            "color": "#38bdf8"
+          },
+          {
+            "id": "uuid-0002",
+            "label": "B",
+            "value": 5,
+            "color": "#a3e635"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 0,
+      "key": "series",
+      "value": 0.5,
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": [
+          {
+            "id": "uuid-0001",
+            "label": "A",
+            "value": 3,
+            "color": "#38bdf8"
+          },
+          {
+            "id": "uuid-0002",
+            "label": "B",
+            "value": 5,
+            "color": "#a3e635"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 0,
+      "key": "series",
+      "value": 4.9,
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": [
+          {
+            "id": "uuid-0001",
+            "label": "A",
+            "value": 3,
+            "color": "#38bdf8"
+          },
+          {
+            "id": "uuid-0002",
+            "label": "B",
+            "value": 5,
+            "color": "#a3e635"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 0,
+      "key": "series",
+      "value": 5,
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": [
+          {
+            "id": "uuid-0001",
+            "label": "A",
+            "value": 3,
+            "color": "#38bdf8"
+          },
+          {
+            "id": "uuid-0002",
+            "label": "B",
+            "value": 5,
+            "color": "#a3e635"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 0,
+      "key": "series",
+      "value": 10,
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": [
+          {
+            "id": "uuid-0001",
+            "label": "A",
+            "value": 3,
+            "color": "#38bdf8"
+          },
+          {
+            "id": "uuid-0002",
+            "label": "B",
+            "value": 5,
+            "color": "#a3e635"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 0,
+      "key": "series",
+      "value": 50,
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": [
+          {
+            "id": "uuid-0001",
+            "label": "A",
+            "value": 3,
+            "color": "#38bdf8"
+          },
+          {
+            "id": "uuid-0002",
+            "label": "B",
+            "value": 5,
+            "color": "#a3e635"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 0,
+      "key": "series",
+      "value": 150,
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": [
+          {
+            "id": "uuid-0001",
+            "label": "A",
+            "value": 3,
+            "color": "#38bdf8"
+          },
+          {
+            "id": "uuid-0002",
+            "label": "B",
+            "value": 5,
+            "color": "#a3e635"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 0,
+      "key": "series",
+      "value": 1e+21,
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": [
+          {
+            "id": "uuid-0001",
+            "label": "A",
+            "value": 3,
+            "color": "#38bdf8"
+          },
+          {
+            "id": "uuid-0002",
+            "label": "B",
+            "value": 5,
+            "color": "#a3e635"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 0,
+      "key": "series",
+      "value": 1.7976931348623157e+308,
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": [
+          {
+            "id": "uuid-0001",
+            "label": "A",
+            "value": 3,
+            "color": "#38bdf8"
+          },
+          {
+            "id": "uuid-0002",
+            "label": "B",
+            "value": 5,
+            "color": "#a3e635"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 0,
+      "key": "series",
+      "value": true,
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": [
+          {
+            "id": "uuid-0001",
+            "label": "A",
+            "value": 3,
+            "color": "#38bdf8"
+          },
+          {
+            "id": "uuid-0002",
+            "label": "B",
+            "value": 5,
+            "color": "#a3e635"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 0,
+      "key": "series",
+      "value": false,
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": [
+          {
+            "id": "uuid-0001",
+            "label": "A",
+            "value": 3,
+            "color": "#38bdf8"
+          },
+          {
+            "id": "uuid-0002",
+            "label": "B",
+            "value": 5,
+            "color": "#a3e635"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 0,
+      "key": "series",
+      "value": "",
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": [
+          {
+            "id": "uuid-0001",
+            "label": "A",
+            "value": 3,
+            "color": "#38bdf8"
+          },
+          {
+            "id": "uuid-0002",
+            "label": "B",
+            "value": 5,
+            "color": "#a3e635"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 0,
+      "key": "series",
+      "value": "12.5",
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": [
+          {
+            "id": "uuid-0001",
+            "label": "A",
+            "value": 3,
+            "color": "#38bdf8"
+          },
+          {
+            "id": "uuid-0002",
+            "label": "B",
+            "value": 5,
+            "color": "#a3e635"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 0,
+      "key": "series",
+      "value": "not a number",
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": [
+          {
+            "id": "uuid-0001",
+            "label": "A",
+            "value": 3,
+            "color": "#38bdf8"
+          },
+          {
+            "id": "uuid-0002",
+            "label": "B",
+            "value": 5,
+            "color": "#a3e635"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 0,
+      "key": "series",
+      "value": "1",
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": [
+          {
+            "id": "uuid-0001",
+            "label": "A",
+            "value": 3,
+            "color": "#38bdf8"
+          },
+          {
+            "id": "uuid-0002",
+            "label": "B",
+            "value": 5,
+            "color": "#a3e635"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 0,
+      "key": "series",
+      "value": "true",
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": [
+          {
+            "id": "uuid-0001",
+            "label": "A",
+            "value": 3,
+            "color": "#38bdf8"
+          },
+          {
+            "id": "uuid-0002",
+            "label": "B",
+            "value": 5,
+            "color": "#a3e635"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 0,
+      "key": "series",
+      "value": "yes",
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": [
+          {
+            "id": "uuid-0001",
+            "label": "A",
+            "value": 3,
+            "color": "#38bdf8"
+          },
+          {
+            "id": "uuid-0002",
+            "label": "B",
+            "value": 5,
+            "color": "#a3e635"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 0,
+      "key": "series",
+      "value": "on",
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": [
+          {
+            "id": "uuid-0001",
+            "label": "A",
+            "value": 3,
+            "color": "#38bdf8"
+          },
+          {
+            "id": "uuid-0002",
+            "label": "B",
+            "value": 5,
+            "color": "#a3e635"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 0,
+      "key": "series",
+      "value": "off",
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": [
+          {
+            "id": "uuid-0001",
+            "label": "A",
+            "value": 3,
+            "color": "#38bdf8"
+          },
+          {
+            "id": "uuid-0002",
+            "label": "B",
+            "value": 5,
+            "color": "#a3e635"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 0,
+      "key": "series",
+      "value": "0",
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": [
+          {
+            "id": "uuid-0001",
+            "label": "A",
+            "value": 3,
+            "color": "#38bdf8"
+          },
+          {
+            "id": "uuid-0002",
+            "label": "B",
+            "value": 5,
+            "color": "#a3e635"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 0,
+      "key": "series",
+      "value": " 8 ",
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": [
+          {
+            "id": "uuid-0001",
+            "label": "A",
+            "value": 3,
+            "color": "#38bdf8"
+          },
+          {
+            "id": "uuid-0002",
+            "label": "B",
+            "value": 5,
+            "color": "#a3e635"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 0,
+      "key": "series",
+      "value": "3abc",
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": [
+          {
+            "id": "uuid-0001",
+            "label": "A",
+            "value": 3,
+            "color": "#38bdf8"
+          },
+          {
+            "id": "uuid-0002",
+            "label": "B",
+            "value": 5,
+            "color": "#a3e635"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 0,
+      "key": "series",
+      "value": "-4e2",
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": [
+          {
+            "id": "uuid-0001",
+            "label": "A",
+            "value": 3,
+            "color": "#38bdf8"
+          },
+          {
+            "id": "uuid-0002",
+            "label": "B",
+            "value": 5,
+            "color": "#a3e635"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 0,
+      "key": "series",
+      "value": "Infinity",
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": [
+          {
+            "id": "uuid-0001",
+            "label": "A",
+            "value": 3,
+            "color": "#38bdf8"
+          },
+          {
+            "id": "uuid-0002",
+            "label": "B",
+            "value": 5,
+            "color": "#a3e635"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 0,
+      "key": "series",
+      "value": "NaN",
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": [
+          {
+            "id": "uuid-0001",
+            "label": "A",
+            "value": 3,
+            "color": "#38bdf8"
+          },
+          {
+            "id": "uuid-0002",
+            "label": "B",
+            "value": 5,
+            "color": "#a3e635"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 0,
+      "key": "series",
+      "value": [],
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": []
+      }
+    },
+    {
+      "sample": 0,
+      "key": "series",
+      "value": [
+        {
+          "t": 0,
+          "v": 4
+        },
+        {
+          "t": 1,
+          "v": 9
+        }
+      ],
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": [
+          {
+            "id": "uuid-0001",
+            "label": "A",
+            "color": "#38bdf8",
+            "value": 4
+          },
+          {
+            "id": "uuid-0002",
+            "label": "B",
+            "color": "#a3e635",
+            "value": 9
+          }
+        ]
+      }
+    },
+    {
+      "sample": 0,
+      "key": "series",
+      "value": [
+        {
+          "t": 5,
+          "v": -2.5
+        }
+      ],
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": [
+          {
+            "id": "uuid-0001",
+            "label": "A",
+            "color": "#38bdf8",
+            "value": -2.5
+          }
+        ]
+      }
+    },
+    {
+      "sample": 1,
+      "key": "series",
+      "value": 0,
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": [
+          {
+            "id": "x1",
+            "label": "A",
+            "value": 3,
+            "color": "#38bdf8"
+          },
+          {
+            "id": "x2",
+            "label": "B",
+            "value": 5
+          },
+          {
+            "id": "x3",
+            "label": "C",
+            "value": -2
+          }
+        ]
+      }
+    },
+    {
+      "sample": 1,
+      "key": "series",
+      "value": 1,
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": [
+          {
+            "id": "x1",
+            "label": "A",
+            "value": 3,
+            "color": "#38bdf8"
+          },
+          {
+            "id": "x2",
+            "label": "B",
+            "value": 5
+          },
+          {
+            "id": "x3",
+            "label": "C",
+            "value": -2
+          }
+        ]
+      }
+    },
+    {
+      "sample": 1,
+      "key": "series",
+      "value": -1,
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": [
+          {
+            "id": "x1",
+            "label": "A",
+            "value": 3,
+            "color": "#38bdf8"
+          },
+          {
+            "id": "x2",
+            "label": "B",
+            "value": 5
+          },
+          {
+            "id": "x3",
+            "label": "C",
+            "value": -2
+          }
+        ]
+      }
+    },
+    {
+      "sample": 1,
+      "key": "series",
+      "value": 7,
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": [
+          {
+            "id": "x1",
+            "label": "A",
+            "value": 3,
+            "color": "#38bdf8"
+          },
+          {
+            "id": "x2",
+            "label": "B",
+            "value": 5
+          },
+          {
+            "id": "x3",
+            "label": "C",
+            "value": -2
+          }
+        ]
+      }
+    },
+    {
+      "sample": 1,
+      "key": "series",
+      "value": 2.5,
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": [
+          {
+            "id": "x1",
+            "label": "A",
+            "value": 3,
+            "color": "#38bdf8"
+          },
+          {
+            "id": "x2",
+            "label": "B",
+            "value": 5
+          },
+          {
+            "id": "x3",
+            "label": "C",
+            "value": -2
+          }
+        ]
+      }
+    },
+    {
+      "sample": 1,
+      "key": "series",
+      "value": 2.6,
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": [
+          {
+            "id": "x1",
+            "label": "A",
+            "value": 3,
+            "color": "#38bdf8"
+          },
+          {
+            "id": "x2",
+            "label": "B",
+            "value": 5
+          },
+          {
+            "id": "x3",
+            "label": "C",
+            "value": -2
+          }
+        ]
+      }
+    },
+    {
+      "sample": 1,
+      "key": "series",
+      "value": -2.5,
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": [
+          {
+            "id": "x1",
+            "label": "A",
+            "value": 3,
+            "color": "#38bdf8"
+          },
+          {
+            "id": "x2",
+            "label": "B",
+            "value": 5
+          },
+          {
+            "id": "x3",
+            "label": "C",
+            "value": -2
+          }
+        ]
+      }
+    },
+    {
+      "sample": 1,
+      "key": "series",
+      "value": 0.5,
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": [
+          {
+            "id": "x1",
+            "label": "A",
+            "value": 3,
+            "color": "#38bdf8"
+          },
+          {
+            "id": "x2",
+            "label": "B",
+            "value": 5
+          },
+          {
+            "id": "x3",
+            "label": "C",
+            "value": -2
+          }
+        ]
+      }
+    },
+    {
+      "sample": 1,
+      "key": "series",
+      "value": 4.9,
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": [
+          {
+            "id": "x1",
+            "label": "A",
+            "value": 3,
+            "color": "#38bdf8"
+          },
+          {
+            "id": "x2",
+            "label": "B",
+            "value": 5
+          },
+          {
+            "id": "x3",
+            "label": "C",
+            "value": -2
+          }
+        ]
+      }
+    },
+    {
+      "sample": 1,
+      "key": "series",
+      "value": 5,
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": [
+          {
+            "id": "x1",
+            "label": "A",
+            "value": 3,
+            "color": "#38bdf8"
+          },
+          {
+            "id": "x2",
+            "label": "B",
+            "value": 5
+          },
+          {
+            "id": "x3",
+            "label": "C",
+            "value": -2
+          }
+        ]
+      }
+    },
+    {
+      "sample": 1,
+      "key": "series",
+      "value": 10,
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": [
+          {
+            "id": "x1",
+            "label": "A",
+            "value": 3,
+            "color": "#38bdf8"
+          },
+          {
+            "id": "x2",
+            "label": "B",
+            "value": 5
+          },
+          {
+            "id": "x3",
+            "label": "C",
+            "value": -2
+          }
+        ]
+      }
+    },
+    {
+      "sample": 1,
+      "key": "series",
+      "value": 50,
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": [
+          {
+            "id": "x1",
+            "label": "A",
+            "value": 3,
+            "color": "#38bdf8"
+          },
+          {
+            "id": "x2",
+            "label": "B",
+            "value": 5
+          },
+          {
+            "id": "x3",
+            "label": "C",
+            "value": -2
+          }
+        ]
+      }
+    },
+    {
+      "sample": 1,
+      "key": "series",
+      "value": 150,
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": [
+          {
+            "id": "x1",
+            "label": "A",
+            "value": 3,
+            "color": "#38bdf8"
+          },
+          {
+            "id": "x2",
+            "label": "B",
+            "value": 5
+          },
+          {
+            "id": "x3",
+            "label": "C",
+            "value": -2
+          }
+        ]
+      }
+    },
+    {
+      "sample": 1,
+      "key": "series",
+      "value": 1e+21,
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": [
+          {
+            "id": "x1",
+            "label": "A",
+            "value": 3,
+            "color": "#38bdf8"
+          },
+          {
+            "id": "x2",
+            "label": "B",
+            "value": 5
+          },
+          {
+            "id": "x3",
+            "label": "C",
+            "value": -2
+          }
+        ]
+      }
+    },
+    {
+      "sample": 1,
+      "key": "series",
+      "value": 1.7976931348623157e+308,
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": [
+          {
+            "id": "x1",
+            "label": "A",
+            "value": 3,
+            "color": "#38bdf8"
+          },
+          {
+            "id": "x2",
+            "label": "B",
+            "value": 5
+          },
+          {
+            "id": "x3",
+            "label": "C",
+            "value": -2
+          }
+        ]
+      }
+    },
+    {
+      "sample": 1,
+      "key": "series",
+      "value": true,
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": [
+          {
+            "id": "x1",
+            "label": "A",
+            "value": 3,
+            "color": "#38bdf8"
+          },
+          {
+            "id": "x2",
+            "label": "B",
+            "value": 5
+          },
+          {
+            "id": "x3",
+            "label": "C",
+            "value": -2
+          }
+        ]
+      }
+    },
+    {
+      "sample": 1,
+      "key": "series",
+      "value": false,
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": [
+          {
+            "id": "x1",
+            "label": "A",
+            "value": 3,
+            "color": "#38bdf8"
+          },
+          {
+            "id": "x2",
+            "label": "B",
+            "value": 5
+          },
+          {
+            "id": "x3",
+            "label": "C",
+            "value": -2
+          }
+        ]
+      }
+    },
+    {
+      "sample": 1,
+      "key": "series",
+      "value": "",
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": [
+          {
+            "id": "x1",
+            "label": "A",
+            "value": 3,
+            "color": "#38bdf8"
+          },
+          {
+            "id": "x2",
+            "label": "B",
+            "value": 5
+          },
+          {
+            "id": "x3",
+            "label": "C",
+            "value": -2
+          }
+        ]
+      }
+    },
+    {
+      "sample": 1,
+      "key": "series",
+      "value": "12.5",
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": [
+          {
+            "id": "x1",
+            "label": "A",
+            "value": 3,
+            "color": "#38bdf8"
+          },
+          {
+            "id": "x2",
+            "label": "B",
+            "value": 5
+          },
+          {
+            "id": "x3",
+            "label": "C",
+            "value": -2
+          }
+        ]
+      }
+    },
+    {
+      "sample": 1,
+      "key": "series",
+      "value": "not a number",
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": [
+          {
+            "id": "x1",
+            "label": "A",
+            "value": 3,
+            "color": "#38bdf8"
+          },
+          {
+            "id": "x2",
+            "label": "B",
+            "value": 5
+          },
+          {
+            "id": "x3",
+            "label": "C",
+            "value": -2
+          }
+        ]
+      }
+    },
+    {
+      "sample": 1,
+      "key": "series",
+      "value": "1",
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": [
+          {
+            "id": "x1",
+            "label": "A",
+            "value": 3,
+            "color": "#38bdf8"
+          },
+          {
+            "id": "x2",
+            "label": "B",
+            "value": 5
+          },
+          {
+            "id": "x3",
+            "label": "C",
+            "value": -2
+          }
+        ]
+      }
+    },
+    {
+      "sample": 1,
+      "key": "series",
+      "value": "true",
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": [
+          {
+            "id": "x1",
+            "label": "A",
+            "value": 3,
+            "color": "#38bdf8"
+          },
+          {
+            "id": "x2",
+            "label": "B",
+            "value": 5
+          },
+          {
+            "id": "x3",
+            "label": "C",
+            "value": -2
+          }
+        ]
+      }
+    },
+    {
+      "sample": 1,
+      "key": "series",
+      "value": "yes",
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": [
+          {
+            "id": "x1",
+            "label": "A",
+            "value": 3,
+            "color": "#38bdf8"
+          },
+          {
+            "id": "x2",
+            "label": "B",
+            "value": 5
+          },
+          {
+            "id": "x3",
+            "label": "C",
+            "value": -2
+          }
+        ]
+      }
+    },
+    {
+      "sample": 1,
+      "key": "series",
+      "value": "on",
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": [
+          {
+            "id": "x1",
+            "label": "A",
+            "value": 3,
+            "color": "#38bdf8"
+          },
+          {
+            "id": "x2",
+            "label": "B",
+            "value": 5
+          },
+          {
+            "id": "x3",
+            "label": "C",
+            "value": -2
+          }
+        ]
+      }
+    },
+    {
+      "sample": 1,
+      "key": "series",
+      "value": "off",
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": [
+          {
+            "id": "x1",
+            "label": "A",
+            "value": 3,
+            "color": "#38bdf8"
+          },
+          {
+            "id": "x2",
+            "label": "B",
+            "value": 5
+          },
+          {
+            "id": "x3",
+            "label": "C",
+            "value": -2
+          }
+        ]
+      }
+    },
+    {
+      "sample": 1,
+      "key": "series",
+      "value": "0",
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": [
+          {
+            "id": "x1",
+            "label": "A",
+            "value": 3,
+            "color": "#38bdf8"
+          },
+          {
+            "id": "x2",
+            "label": "B",
+            "value": 5
+          },
+          {
+            "id": "x3",
+            "label": "C",
+            "value": -2
+          }
+        ]
+      }
+    },
+    {
+      "sample": 1,
+      "key": "series",
+      "value": " 8 ",
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": [
+          {
+            "id": "x1",
+            "label": "A",
+            "value": 3,
+            "color": "#38bdf8"
+          },
+          {
+            "id": "x2",
+            "label": "B",
+            "value": 5
+          },
+          {
+            "id": "x3",
+            "label": "C",
+            "value": -2
+          }
+        ]
+      }
+    },
+    {
+      "sample": 1,
+      "key": "series",
+      "value": "3abc",
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": [
+          {
+            "id": "x1",
+            "label": "A",
+            "value": 3,
+            "color": "#38bdf8"
+          },
+          {
+            "id": "x2",
+            "label": "B",
+            "value": 5
+          },
+          {
+            "id": "x3",
+            "label": "C",
+            "value": -2
+          }
+        ]
+      }
+    },
+    {
+      "sample": 1,
+      "key": "series",
+      "value": "-4e2",
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": [
+          {
+            "id": "x1",
+            "label": "A",
+            "value": 3,
+            "color": "#38bdf8"
+          },
+          {
+            "id": "x2",
+            "label": "B",
+            "value": 5
+          },
+          {
+            "id": "x3",
+            "label": "C",
+            "value": -2
+          }
+        ]
+      }
+    },
+    {
+      "sample": 1,
+      "key": "series",
+      "value": "Infinity",
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": [
+          {
+            "id": "x1",
+            "label": "A",
+            "value": 3,
+            "color": "#38bdf8"
+          },
+          {
+            "id": "x2",
+            "label": "B",
+            "value": 5
+          },
+          {
+            "id": "x3",
+            "label": "C",
+            "value": -2
+          }
+        ]
+      }
+    },
+    {
+      "sample": 1,
+      "key": "series",
+      "value": "NaN",
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": [
+          {
+            "id": "x1",
+            "label": "A",
+            "value": 3,
+            "color": "#38bdf8"
+          },
+          {
+            "id": "x2",
+            "label": "B",
+            "value": 5
+          },
+          {
+            "id": "x3",
+            "label": "C",
+            "value": -2
+          }
+        ]
+      }
+    },
+    {
+      "sample": 1,
+      "key": "series",
+      "value": [],
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": []
+      }
+    },
+    {
+      "sample": 1,
+      "key": "series",
+      "value": [
+        {
+          "t": 0,
+          "v": 4
+        },
+        {
+          "t": 1,
+          "v": 9
+        }
+      ],
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": [
+          {
+            "id": "x1",
+            "label": "A",
+            "color": "#38bdf8",
+            "value": 4
+          },
+          {
+            "id": "x2",
+            "label": "B",
+            "value": 9
+          }
+        ]
+      }
+    },
+    {
+      "sample": 1,
+      "key": "series",
+      "value": [
+        {
+          "t": 5,
+          "v": -2.5
+        }
+      ],
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": [
+          {
+            "id": "x1",
+            "label": "A",
+            "color": "#38bdf8",
+            "value": -2.5
+          }
+        ]
+      }
+    },
+    {
+      "sample": 2,
+      "key": "series",
+      "value": 0,
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": []
+      }
+    },
+    {
+      "sample": 2,
+      "key": "series",
+      "value": 1,
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": []
+      }
+    },
+    {
+      "sample": 2,
+      "key": "series",
+      "value": -1,
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": []
+      }
+    },
+    {
+      "sample": 2,
+      "key": "series",
+      "value": 7,
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": []
+      }
+    },
+    {
+      "sample": 2,
+      "key": "series",
+      "value": 2.5,
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": []
+      }
+    },
+    {
+      "sample": 2,
+      "key": "series",
+      "value": 2.6,
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": []
+      }
+    },
+    {
+      "sample": 2,
+      "key": "series",
+      "value": -2.5,
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": []
+      }
+    },
+    {
+      "sample": 2,
+      "key": "series",
+      "value": 0.5,
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": []
+      }
+    },
+    {
+      "sample": 2,
+      "key": "series",
+      "value": 4.9,
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": []
+      }
+    },
+    {
+      "sample": 2,
+      "key": "series",
+      "value": 5,
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": []
+      }
+    },
+    {
+      "sample": 2,
+      "key": "series",
+      "value": 10,
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": []
+      }
+    },
+    {
+      "sample": 2,
+      "key": "series",
+      "value": 50,
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": []
+      }
+    },
+    {
+      "sample": 2,
+      "key": "series",
+      "value": 150,
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": []
+      }
+    },
+    {
+      "sample": 2,
+      "key": "series",
+      "value": 1e+21,
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": []
+      }
+    },
+    {
+      "sample": 2,
+      "key": "series",
+      "value": 1.7976931348623157e+308,
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": []
+      }
+    },
+    {
+      "sample": 2,
+      "key": "series",
+      "value": true,
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": []
+      }
+    },
+    {
+      "sample": 2,
+      "key": "series",
+      "value": false,
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": []
+      }
+    },
+    {
+      "sample": 2,
+      "key": "series",
+      "value": "",
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": []
+      }
+    },
+    {
+      "sample": 2,
+      "key": "series",
+      "value": "12.5",
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": []
+      }
+    },
+    {
+      "sample": 2,
+      "key": "series",
+      "value": "not a number",
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": []
+      }
+    },
+    {
+      "sample": 2,
+      "key": "series",
+      "value": "1",
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": []
+      }
+    },
+    {
+      "sample": 2,
+      "key": "series",
+      "value": "true",
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": []
+      }
+    },
+    {
+      "sample": 2,
+      "key": "series",
+      "value": "yes",
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": []
+      }
+    },
+    {
+      "sample": 2,
+      "key": "series",
+      "value": "on",
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": []
+      }
+    },
+    {
+      "sample": 2,
+      "key": "series",
+      "value": "off",
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": []
+      }
+    },
+    {
+      "sample": 2,
+      "key": "series",
+      "value": "0",
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": []
+      }
+    },
+    {
+      "sample": 2,
+      "key": "series",
+      "value": " 8 ",
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": []
+      }
+    },
+    {
+      "sample": 2,
+      "key": "series",
+      "value": "3abc",
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": []
+      }
+    },
+    {
+      "sample": 2,
+      "key": "series",
+      "value": "-4e2",
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": []
+      }
+    },
+    {
+      "sample": 2,
+      "key": "series",
+      "value": "Infinity",
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": []
+      }
+    },
+    {
+      "sample": 2,
+      "key": "series",
+      "value": "NaN",
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": []
+      }
+    },
+    {
+      "sample": 2,
+      "key": "series",
+      "value": [],
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": []
+      }
+    },
+    {
+      "sample": 2,
+      "key": "series",
+      "value": [
+        {
+          "t": 0,
+          "v": 4
+        },
+        {
+          "t": 1,
+          "v": 9
+        }
+      ],
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": [
+          {
+            "id": "uuid-0001",
+            "label": "1",
+            "value": 4
+          },
+          {
+            "id": "uuid-0002",
+            "label": "2",
+            "value": 9
+          }
+        ]
+      }
+    },
+    {
+      "sample": 2,
+      "key": "series",
+      "value": [
+        {
+          "t": 5,
+          "v": -2.5
+        }
+      ],
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": [
+          {
+            "id": "uuid-0001",
+            "label": "1",
+            "value": -2.5
+          }
+        ]
+      }
+    }
+  ],
+  "commands": []
+}

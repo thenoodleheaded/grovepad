@@ -1,0 +1,694 @@
+{
+  "outputs": [
+    {
+      "key": "card_count",
+      "label": "Cards",
+      "valueType": "number",
+      "unit": "count",
+      "index": 0,
+      "timeSensitive": false
+    }
+  ],
+  "inputs": [
+    {
+      "key": "increment",
+      "label": "Next card",
+      "kind": "command",
+      "valueType": null,
+      "unit": null,
+      "acceptsPayload": false,
+      "index": 0
+    },
+    {
+      "key": "decrement",
+      "label": "Previous card",
+      "kind": "command",
+      "valueType": null,
+      "unit": null,
+      "acceptsPayload": false,
+      "index": 1
+    }
+  ],
+  "samples": [
+    {
+      "cards": [
+        {
+          "id": "uuid-0001",
+          "front": "",
+          "back": ""
+        }
+      ],
+      "current": 0,
+      "mode": "flashcards",
+      "vocabulary": {
+        "terms": [
+          {
+            "id": "uuid-0002",
+            "term": "",
+            "definition": "",
+            "known": false
+          }
+        ]
+      },
+      "quiz": {
+        "prompt": "",
+        "options": [
+          {
+            "id": "uuid-0003",
+            "text": "",
+            "correct": true
+          },
+          {
+            "id": "uuid-0004",
+            "text": "",
+            "correct": false
+          }
+        ],
+        "picked": null
+      }
+    },
+    {
+      "cards": [
+        {
+          "id": "f1",
+          "front": "a",
+          "back": "b"
+        },
+        {
+          "id": "f2",
+          "front": "c",
+          "back": "d"
+        },
+        {
+          "id": "f3",
+          "front": "e",
+          "back": "f"
+        }
+      ],
+      "current": 2,
+      "mode": "flashcards",
+      "vocabulary": {
+        "terms": [
+          {
+            "id": "uuid-0002",
+            "term": "",
+            "definition": "",
+            "known": false
+          }
+        ]
+      },
+      "quiz": {
+        "prompt": "",
+        "options": [
+          {
+            "id": "uuid-0003",
+            "text": "",
+            "correct": true
+          },
+          {
+            "id": "uuid-0004",
+            "text": "",
+            "correct": false
+          }
+        ],
+        "picked": null
+      }
+    },
+    {
+      "cards": [],
+      "current": 0,
+      "mode": "flashcards",
+      "vocabulary": {
+        "terms": [
+          {
+            "id": "uuid-0002",
+            "term": "",
+            "definition": "",
+            "known": false
+          }
+        ]
+      },
+      "quiz": {
+        "prompt": "",
+        "options": [
+          {
+            "id": "uuid-0003",
+            "text": "",
+            "correct": true
+          },
+          {
+            "id": "uuid-0004",
+            "text": "",
+            "correct": false
+          }
+        ],
+        "picked": null
+      }
+    },
+    {
+      "cards": [
+        {
+          "id": "uuid-0001",
+          "front": "",
+          "back": ""
+        }
+      ],
+      "current": 0,
+      "mode": "vocabulary",
+      "vocabulary": {
+        "terms": [
+          {
+            "id": "v1",
+            "term": "x",
+            "definition": "y",
+            "known": true
+          },
+          {
+            "id": "v2",
+            "term": "z",
+            "definition": "w",
+            "known": false
+          }
+        ]
+      },
+      "quiz": {
+        "prompt": "",
+        "options": [
+          {
+            "id": "uuid-0003",
+            "text": "",
+            "correct": true
+          },
+          {
+            "id": "uuid-0004",
+            "text": "",
+            "correct": false
+          }
+        ],
+        "picked": null
+      }
+    },
+    {
+      "cards": [
+        {
+          "id": "uuid-0001",
+          "front": "",
+          "back": ""
+        }
+      ],
+      "current": 0,
+      "mode": "quiz",
+      "vocabulary": {
+        "terms": [
+          {
+            "id": "uuid-0002",
+            "term": "",
+            "definition": "",
+            "known": false
+          }
+        ]
+      },
+      "quiz": {
+        "prompt": "q",
+        "options": [
+          {
+            "id": "q1",
+            "text": "a",
+            "correct": true
+          }
+        ],
+        "picked": null
+      }
+    }
+  ],
+  "gets": [
+    {
+      "sample": 0,
+      "key": "card_count",
+      "value": 1
+    },
+    {
+      "sample": 1,
+      "key": "card_count",
+      "value": 3
+    },
+    {
+      "sample": 2,
+      "key": "card_count",
+      "value": 0
+    },
+    {
+      "sample": 3,
+      "key": "card_count",
+      "value": 2
+    },
+    {
+      "sample": 4,
+      "key": "card_count",
+      "value": 1
+    }
+  ],
+  "sets": [],
+  "commands": [
+    {
+      "sample": 0,
+      "key": "increment",
+      "payload": null,
+      "hasPayload": false,
+      "data": {
+        "cards": [
+          {
+            "id": "uuid-0001",
+            "front": "",
+            "back": ""
+          }
+        ],
+        "current": 0,
+        "mode": "flashcards",
+        "vocabulary": {
+          "terms": [
+            {
+              "id": "uuid-0002",
+              "term": "",
+              "definition": "",
+              "known": false
+            }
+          ]
+        },
+        "quiz": {
+          "prompt": "",
+          "options": [
+            {
+              "id": "uuid-0003",
+              "text": "",
+              "correct": true
+            },
+            {
+              "id": "uuid-0004",
+              "text": "",
+              "correct": false
+            }
+          ],
+          "picked": null
+        }
+      }
+    },
+    {
+      "sample": 0,
+      "key": "decrement",
+      "payload": null,
+      "hasPayload": false,
+      "data": {
+        "cards": [
+          {
+            "id": "uuid-0001",
+            "front": "",
+            "back": ""
+          }
+        ],
+        "current": 0,
+        "mode": "flashcards",
+        "vocabulary": {
+          "terms": [
+            {
+              "id": "uuid-0002",
+              "term": "",
+              "definition": "",
+              "known": false
+            }
+          ]
+        },
+        "quiz": {
+          "prompt": "",
+          "options": [
+            {
+              "id": "uuid-0003",
+              "text": "",
+              "correct": true
+            },
+            {
+              "id": "uuid-0004",
+              "text": "",
+              "correct": false
+            }
+          ],
+          "picked": null
+        }
+      }
+    },
+    {
+      "sample": 1,
+      "key": "increment",
+      "payload": null,
+      "hasPayload": false,
+      "data": {
+        "cards": [
+          {
+            "id": "f1",
+            "front": "a",
+            "back": "b"
+          },
+          {
+            "id": "f2",
+            "front": "c",
+            "back": "d"
+          },
+          {
+            "id": "f3",
+            "front": "e",
+            "back": "f"
+          }
+        ],
+        "current": 0,
+        "mode": "flashcards",
+        "vocabulary": {
+          "terms": [
+            {
+              "id": "uuid-0002",
+              "term": "",
+              "definition": "",
+              "known": false
+            }
+          ]
+        },
+        "quiz": {
+          "prompt": "",
+          "options": [
+            {
+              "id": "uuid-0003",
+              "text": "",
+              "correct": true
+            },
+            {
+              "id": "uuid-0004",
+              "text": "",
+              "correct": false
+            }
+          ],
+          "picked": null
+        }
+      }
+    },
+    {
+      "sample": 1,
+      "key": "decrement",
+      "payload": null,
+      "hasPayload": false,
+      "data": {
+        "cards": [
+          {
+            "id": "f1",
+            "front": "a",
+            "back": "b"
+          },
+          {
+            "id": "f2",
+            "front": "c",
+            "back": "d"
+          },
+          {
+            "id": "f3",
+            "front": "e",
+            "back": "f"
+          }
+        ],
+        "current": 1,
+        "mode": "flashcards",
+        "vocabulary": {
+          "terms": [
+            {
+              "id": "uuid-0002",
+              "term": "",
+              "definition": "",
+              "known": false
+            }
+          ]
+        },
+        "quiz": {
+          "prompt": "",
+          "options": [
+            {
+              "id": "uuid-0003",
+              "text": "",
+              "correct": true
+            },
+            {
+              "id": "uuid-0004",
+              "text": "",
+              "correct": false
+            }
+          ],
+          "picked": null
+        }
+      }
+    },
+    {
+      "sample": 2,
+      "key": "increment",
+      "payload": null,
+      "hasPayload": false,
+      "data": {
+        "cards": [],
+        "current": 0,
+        "mode": "flashcards",
+        "vocabulary": {
+          "terms": [
+            {
+              "id": "uuid-0002",
+              "term": "",
+              "definition": "",
+              "known": false
+            }
+          ]
+        },
+        "quiz": {
+          "prompt": "",
+          "options": [
+            {
+              "id": "uuid-0003",
+              "text": "",
+              "correct": true
+            },
+            {
+              "id": "uuid-0004",
+              "text": "",
+              "correct": false
+            }
+          ],
+          "picked": null
+        }
+      }
+    },
+    {
+      "sample": 2,
+      "key": "decrement",
+      "payload": null,
+      "hasPayload": false,
+      "data": {
+        "cards": [],
+        "current": 0,
+        "mode": "flashcards",
+        "vocabulary": {
+          "terms": [
+            {
+              "id": "uuid-0002",
+              "term": "",
+              "definition": "",
+              "known": false
+            }
+          ]
+        },
+        "quiz": {
+          "prompt": "",
+          "options": [
+            {
+              "id": "uuid-0003",
+              "text": "",
+              "correct": true
+            },
+            {
+              "id": "uuid-0004",
+              "text": "",
+              "correct": false
+            }
+          ],
+          "picked": null
+        }
+      }
+    },
+    {
+      "sample": 3,
+      "key": "increment",
+      "payload": null,
+      "hasPayload": false,
+      "data": {
+        "cards": [
+          {
+            "id": "uuid-0001",
+            "front": "",
+            "back": ""
+          }
+        ],
+        "current": 0,
+        "mode": "vocabulary",
+        "vocabulary": {
+          "terms": [
+            {
+              "id": "v1",
+              "term": "x",
+              "definition": "y",
+              "known": true
+            },
+            {
+              "id": "v2",
+              "term": "z",
+              "definition": "w",
+              "known": false
+            }
+          ]
+        },
+        "quiz": {
+          "prompt": "",
+          "options": [
+            {
+              "id": "uuid-0003",
+              "text": "",
+              "correct": true
+            },
+            {
+              "id": "uuid-0004",
+              "text": "",
+              "correct": false
+            }
+          ],
+          "picked": null
+        }
+      }
+    },
+    {
+      "sample": 3,
+      "key": "decrement",
+      "payload": null,
+      "hasPayload": false,
+      "data": {
+        "cards": [
+          {
+            "id": "uuid-0001",
+            "front": "",
+            "back": ""
+          }
+        ],
+        "current": 0,
+        "mode": "vocabulary",
+        "vocabulary": {
+          "terms": [
+            {
+              "id": "v1",
+              "term": "x",
+              "definition": "y",
+              "known": true
+            },
+            {
+              "id": "v2",
+              "term": "z",
+              "definition": "w",
+              "known": false
+            }
+          ]
+        },
+        "quiz": {
+          "prompt": "",
+          "options": [
+            {
+              "id": "uuid-0003",
+              "text": "",
+              "correct": true
+            },
+            {
+              "id": "uuid-0004",
+              "text": "",
+              "correct": false
+            }
+          ],
+          "picked": null
+        }
+      }
+    },
+    {
+      "sample": 4,
+      "key": "increment",
+      "payload": null,
+      "hasPayload": false,
+      "data": {
+        "cards": [
+          {
+            "id": "uuid-0001",
+            "front": "",
+            "back": ""
+          }
+        ],
+        "current": 0,
+        "mode": "quiz",
+        "vocabulary": {
+          "terms": [
+            {
+              "id": "uuid-0002",
+              "term": "",
+              "definition": "",
+              "known": false
+            }
+          ]
+        },
+        "quiz": {
+          "prompt": "q",
+          "options": [
+            {
+              "id": "q1",
+              "text": "a",
+              "correct": true
+            }
+          ],
+          "picked": null
+        }
+      }
+    },
+    {
+      "sample": 4,
+      "key": "decrement",
+      "payload": null,
+      "hasPayload": false,
+      "data": {
+        "cards": [
+          {
+            "id": "uuid-0001",
+            "front": "",
+            "back": ""
+          }
+        ],
+        "current": 0,
+        "mode": "quiz",
+        "vocabulary": {
+          "terms": [
+            {
+              "id": "uuid-0002",
+              "term": "",
+              "definition": "",
+              "known": false
+            }
+          ]
+        },
+        "quiz": {
+          "prompt": "q",
+          "options": [
+            {
+              "id": "q1",
+              "text": "a",
+              "correct": true
+            }
+          ],
+          "picked": null
+        }
+      }
+    }
+  ]
+}

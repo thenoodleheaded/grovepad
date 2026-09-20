@@ -1,0 +1,13 @@
+// The Supabase project the app signs in to and syncs with. Both entries are
+// read from Info.plist by `CloudSettings` (GrovepadApp). Leave them blank and
+// the app runs as a guest with every local feature and no login page.
+//
+// xcconfig treats `//` as a comment, so a URL must split the slashes:
+//   GROVEPAD_SUPABASE_URL = https:/$()/ijzmhkyhjptaitfxjlcu.supabase.co
+//
+// Put your real values in Supabase.local.xcconfig (gitignored), which this
+// file includes when it exists. Never commit a key.
+GROVEPAD_SUPABASE_URL =
+GROVEPAD_SUPABASE_ANON_KEY =
+
+#include? "Supabase.local.xcconfig"

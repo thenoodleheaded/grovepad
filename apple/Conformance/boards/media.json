@@ -1,0 +1,114 @@
+{
+  "format": "grovepad-board",
+  "v": 2,
+  "workspaces": {
+    "workspace": {
+      "id": "workspace",
+      "name": "Workspace",
+      "rootCanvasId": "canvas",
+      "createdAt": 1
+    }
+  },
+  "canvases": {
+    "canvas": {
+      "id": "canvas",
+      "name": "Origin",
+      "workspaceId": "workspace",
+      "parentCanvasId": null
+    }
+  },
+  "widgets": {
+    "photo": {
+      "id": "photo",
+      "type": "media",
+      "title": "photo",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 320,
+        "height": 200
+      },
+      "data": {
+        "url": "",
+        "caption": "A photo",
+        "localBlobKey": "photo"
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "photoCopy": {
+      "id": "photoCopy",
+      "type": "media",
+      "title": "photoCopy",
+      "canvasId": "canvas",
+      "position": {
+        "x": 400,
+        "y": 0
+      },
+      "size": {
+        "width": 320,
+        "height": 200
+      },
+      "data": {
+        "url": "",
+        "caption": "",
+        "localBlobKey": "photoCopy"
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "missing": {
+      "id": "missing",
+      "type": "media",
+      "title": "missing",
+      "canvasId": "canvas",
+      "position": {
+        "x": 800,
+        "y": 0
+      },
+      "size": {
+        "width": 320,
+        "height": 200
+      },
+      "data": {
+        "url": "",
+        "caption": "",
+        "localBlobKey": "missing"
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "note": {
+      "id": "note",
+      "type": "text",
+      "title": "note",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 400
+      },
+      "size": {
+        "width": 320,
+        "height": 200
+      },
+      "data": {
+        "text": "",
+        "mode": "plain",
+        "color": "yellow"
+      },
+      "metadata": {
+        "badges": []
+      }
+    }
+  },
+  "relations": {},
+  "connections": {},
+  "glues": {},
+  "activePacks": []
+}

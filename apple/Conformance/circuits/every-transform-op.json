@@ -1,0 +1,1217 @@
+{
+  "name": "every-transform-op",
+  "widgets": {
+    "source": {
+      "id": "source",
+      "type": "number_input",
+      "title": "source",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 280,
+        "height": 200
+      },
+      "data": {
+        "label": "Value",
+        "value": 42,
+        "min": 0,
+        "max": 100,
+        "step": 1
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "t-identity": {
+      "id": "t-identity",
+      "type": "text",
+      "title": "t-identity",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 280,
+        "height": 200
+      },
+      "data": {
+        "text": ""
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "t-scale": {
+      "id": "t-scale",
+      "type": "text",
+      "title": "t-scale",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 280,
+        "height": 200
+      },
+      "data": {
+        "text": ""
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "t-offset": {
+      "id": "t-offset",
+      "type": "text",
+      "title": "t-offset",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 280,
+        "height": 200
+      },
+      "data": {
+        "text": ""
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "t-clamp": {
+      "id": "t-clamp",
+      "type": "text",
+      "title": "t-clamp",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 280,
+        "height": 200
+      },
+      "data": {
+        "text": ""
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "t-map_range": {
+      "id": "t-map_range",
+      "type": "text",
+      "title": "t-map_range",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 280,
+        "height": 200
+      },
+      "data": {
+        "text": ""
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "t-round": {
+      "id": "t-round",
+      "type": "text",
+      "title": "t-round",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 280,
+        "height": 200
+      },
+      "data": {
+        "text": ""
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "t-invert": {
+      "id": "t-invert",
+      "type": "text",
+      "title": "t-invert",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 280,
+        "height": 200
+      },
+      "data": {
+        "text": ""
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "t-threshold": {
+      "id": "t-threshold",
+      "type": "text",
+      "title": "t-threshold",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 280,
+        "height": 200
+      },
+      "data": {
+        "text": ""
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "t-format": {
+      "id": "t-format",
+      "type": "text",
+      "title": "t-format",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 280,
+        "height": 200
+      },
+      "data": {
+        "text": ""
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "n-identity": {
+      "id": "n-identity",
+      "type": "counter",
+      "title": "n-identity",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 280,
+        "height": 200
+      },
+      "data": {
+        "label": "Tally",
+        "count": 0,
+        "step": 1,
+        "skin": "tally"
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "n-scale": {
+      "id": "n-scale",
+      "type": "counter",
+      "title": "n-scale",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 280,
+        "height": 200
+      },
+      "data": {
+        "label": "Tally",
+        "count": 0,
+        "step": 1,
+        "skin": "tally"
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "n-offset": {
+      "id": "n-offset",
+      "type": "counter",
+      "title": "n-offset",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 280,
+        "height": 200
+      },
+      "data": {
+        "label": "Tally",
+        "count": 0,
+        "step": 1,
+        "skin": "tally"
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "n-clamp": {
+      "id": "n-clamp",
+      "type": "counter",
+      "title": "n-clamp",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 280,
+        "height": 200
+      },
+      "data": {
+        "label": "Tally",
+        "count": 0,
+        "step": 1,
+        "skin": "tally"
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "n-map_range": {
+      "id": "n-map_range",
+      "type": "counter",
+      "title": "n-map_range",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 280,
+        "height": 200
+      },
+      "data": {
+        "label": "Tally",
+        "count": 0,
+        "step": 1,
+        "skin": "tally"
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "n-round": {
+      "id": "n-round",
+      "type": "counter",
+      "title": "n-round",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 280,
+        "height": 200
+      },
+      "data": {
+        "label": "Tally",
+        "count": 0,
+        "step": 1,
+        "skin": "tally"
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "n-invert": {
+      "id": "n-invert",
+      "type": "counter",
+      "title": "n-invert",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 280,
+        "height": 200
+      },
+      "data": {
+        "label": "Tally",
+        "count": 0,
+        "step": 1,
+        "skin": "tally"
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "n-threshold": {
+      "id": "n-threshold",
+      "type": "counter",
+      "title": "n-threshold",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 280,
+        "height": 200
+      },
+      "data": {
+        "label": "Tally",
+        "count": 0,
+        "step": 1,
+        "skin": "tally"
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "n-format": {
+      "id": "n-format",
+      "type": "counter",
+      "title": "n-format",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 280,
+        "height": 200
+      },
+      "data": {
+        "label": "Tally",
+        "count": 0,
+        "step": 1,
+        "skin": "tally"
+      },
+      "metadata": {
+        "badges": []
+      }
+    }
+  },
+  "connections": {
+    "text-identity": {
+      "id": "text-identity",
+      "enabled": true,
+      "fromId": "source",
+      "fromField": "value",
+      "toId": "t-identity",
+      "kind": "value",
+      "toField": "text",
+      "transform": {
+        "op": "identity"
+      }
+    },
+    "text-scale": {
+      "id": "text-scale",
+      "enabled": true,
+      "fromId": "source",
+      "fromField": "value",
+      "toId": "t-scale",
+      "kind": "value",
+      "toField": "text",
+      "transform": {
+        "op": "scale",
+        "factor": 2
+      }
+    },
+    "text-offset": {
+      "id": "text-offset",
+      "enabled": true,
+      "fromId": "source",
+      "fromField": "value",
+      "toId": "t-offset",
+      "kind": "value",
+      "toField": "text",
+      "transform": {
+        "op": "offset",
+        "amount": 1
+      }
+    },
+    "text-clamp": {
+      "id": "text-clamp",
+      "enabled": true,
+      "fromId": "source",
+      "fromField": "value",
+      "toId": "t-clamp",
+      "kind": "value",
+      "toField": "text",
+      "transform": {
+        "op": "clamp",
+        "min": 0,
+        "max": 100
+      }
+    },
+    "text-map_range": {
+      "id": "text-map_range",
+      "enabled": true,
+      "fromId": "source",
+      "fromField": "value",
+      "toId": "t-map_range",
+      "kind": "value",
+      "toField": "text",
+      "transform": {
+        "op": "map_range",
+        "inMin": 0,
+        "inMax": 100,
+        "outMin": 0,
+        "outMax": 1
+      }
+    },
+    "text-round": {
+      "id": "text-round",
+      "enabled": true,
+      "fromId": "source",
+      "fromField": "value",
+      "toId": "t-round",
+      "kind": "value",
+      "toField": "text",
+      "transform": {
+        "op": "round"
+      }
+    },
+    "text-invert": {
+      "id": "text-invert",
+      "enabled": true,
+      "fromId": "source",
+      "fromField": "value",
+      "toId": "t-invert",
+      "kind": "value",
+      "toField": "text",
+      "transform": {
+        "op": "invert"
+      }
+    },
+    "text-threshold": {
+      "id": "text-threshold",
+      "enabled": true,
+      "fromId": "source",
+      "fromField": "value",
+      "toId": "t-threshold",
+      "kind": "value",
+      "toField": "text",
+      "transform": {
+        "op": "threshold",
+        "value": 1
+      }
+    },
+    "text-format": {
+      "id": "text-format",
+      "enabled": true,
+      "fromId": "source",
+      "fromField": "value",
+      "toId": "t-format",
+      "kind": "value",
+      "toField": "text",
+      "transform": {
+        "op": "format",
+        "template": "{value}"
+      }
+    },
+    "num-identity": {
+      "id": "num-identity",
+      "enabled": true,
+      "fromId": "source",
+      "fromField": "value",
+      "toId": "n-identity",
+      "kind": "value",
+      "toField": "count",
+      "transform": {
+        "op": "identity"
+      }
+    },
+    "num-scale": {
+      "id": "num-scale",
+      "enabled": true,
+      "fromId": "source",
+      "fromField": "value",
+      "toId": "n-scale",
+      "kind": "value",
+      "toField": "count",
+      "transform": {
+        "op": "scale",
+        "factor": 2
+      }
+    },
+    "num-offset": {
+      "id": "num-offset",
+      "enabled": true,
+      "fromId": "source",
+      "fromField": "value",
+      "toId": "n-offset",
+      "kind": "value",
+      "toField": "count",
+      "transform": {
+        "op": "offset",
+        "amount": 1
+      }
+    },
+    "num-clamp": {
+      "id": "num-clamp",
+      "enabled": true,
+      "fromId": "source",
+      "fromField": "value",
+      "toId": "n-clamp",
+      "kind": "value",
+      "toField": "count",
+      "transform": {
+        "op": "clamp",
+        "min": 0,
+        "max": 100
+      }
+    },
+    "num-map_range": {
+      "id": "num-map_range",
+      "enabled": true,
+      "fromId": "source",
+      "fromField": "value",
+      "toId": "n-map_range",
+      "kind": "value",
+      "toField": "count",
+      "transform": {
+        "op": "map_range",
+        "inMin": 0,
+        "inMax": 100,
+        "outMin": 0,
+        "outMax": 1
+      }
+    },
+    "num-round": {
+      "id": "num-round",
+      "enabled": true,
+      "fromId": "source",
+      "fromField": "value",
+      "toId": "n-round",
+      "kind": "value",
+      "toField": "count",
+      "transform": {
+        "op": "round"
+      }
+    },
+    "num-invert": {
+      "id": "num-invert",
+      "enabled": true,
+      "fromId": "source",
+      "fromField": "value",
+      "toId": "n-invert",
+      "kind": "value",
+      "toField": "count",
+      "transform": {
+        "op": "invert"
+      }
+    },
+    "num-threshold": {
+      "id": "num-threshold",
+      "enabled": true,
+      "fromId": "source",
+      "fromField": "value",
+      "toId": "n-threshold",
+      "kind": "value",
+      "toField": "count",
+      "transform": {
+        "op": "threshold",
+        "value": 1
+      }
+    },
+    "num-format": {
+      "id": "num-format",
+      "enabled": true,
+      "fromId": "source",
+      "fromField": "value",
+      "toId": "n-format",
+      "kind": "value",
+      "toField": "count",
+      "transform": {
+        "op": "format",
+        "template": "{value}"
+      }
+    }
+  },
+  "steps": [
+    {
+      "label": "42",
+      "seeds": [
+        "source"
+      ],
+      "expect": {
+        "writes": {
+          "t-identity": {
+            "text": "42"
+          },
+          "t-scale": {
+            "text": "84"
+          },
+          "t-offset": {
+            "text": "43"
+          },
+          "t-clamp": {
+            "text": "42"
+          },
+          "t-map_range": {
+            "text": "0.42"
+          },
+          "t-round": {
+            "text": "42"
+          },
+          "t-invert": {
+            "text": "-42"
+          },
+          "t-threshold": {
+            "text": "true"
+          },
+          "t-format": {
+            "text": "42"
+          },
+          "n-identity": {
+            "label": "Tally",
+            "count": 42,
+            "step": 1,
+            "skin": "tally"
+          },
+          "n-scale": {
+            "label": "Tally",
+            "count": 84,
+            "step": 1,
+            "skin": "tally"
+          },
+          "n-offset": {
+            "label": "Tally",
+            "count": 43,
+            "step": 1,
+            "skin": "tally"
+          },
+          "n-clamp": {
+            "label": "Tally",
+            "count": 42,
+            "step": 1,
+            "skin": "tally"
+          },
+          "n-map_range": {
+            "label": "Tally",
+            "count": 0.42,
+            "step": 1,
+            "skin": "tally"
+          },
+          "n-round": {
+            "label": "Tally",
+            "count": 42,
+            "step": 1,
+            "skin": "tally"
+          },
+          "n-invert": {
+            "label": "Tally",
+            "count": -42,
+            "step": 1,
+            "skin": "tally"
+          },
+          "n-threshold": {
+            "label": "Tally",
+            "count": 1,
+            "step": 1,
+            "skin": "tally"
+          },
+          "n-format": {
+            "label": "Tally",
+            "count": 42,
+            "step": 1,
+            "skin": "tally"
+          }
+        },
+        "firedIds": [
+          "text-identity",
+          "text-scale",
+          "text-offset",
+          "text-clamp",
+          "text-map_range",
+          "text-round",
+          "text-invert",
+          "text-threshold",
+          "text-format",
+          "num-identity",
+          "num-scale",
+          "num-offset",
+          "num-clamp",
+          "num-map_range",
+          "num-round",
+          "num-invert",
+          "num-threshold",
+          "num-format"
+        ],
+        "executeRequests": [],
+        "memory": {
+          "text-identity": {
+            "serialized": "n:42",
+            "bool": true
+          },
+          "text-scale": {
+            "serialized": "n:84",
+            "bool": true
+          },
+          "text-offset": {
+            "serialized": "n:43",
+            "bool": true
+          },
+          "text-clamp": {
+            "serialized": "n:42",
+            "bool": true
+          },
+          "text-map_range": {
+            "serialized": "n:0.42",
+            "bool": false
+          },
+          "text-round": {
+            "serialized": "n:42",
+            "bool": true
+          },
+          "text-invert": {
+            "serialized": "n:-42",
+            "bool": false
+          },
+          "text-threshold": {
+            "serialized": "b:true",
+            "bool": true
+          },
+          "text-format": {
+            "serialized": "t:42",
+            "bool": false
+          },
+          "num-identity": {
+            "serialized": "n:42",
+            "bool": true
+          },
+          "num-scale": {
+            "serialized": "n:84",
+            "bool": true
+          },
+          "num-offset": {
+            "serialized": "n:43",
+            "bool": true
+          },
+          "num-clamp": {
+            "serialized": "n:42",
+            "bool": true
+          },
+          "num-map_range": {
+            "serialized": "n:0.42",
+            "bool": false
+          },
+          "num-round": {
+            "serialized": "n:42",
+            "bool": true
+          },
+          "num-invert": {
+            "serialized": "n:-42",
+            "bool": false
+          },
+          "num-threshold": {
+            "serialized": "b:true",
+            "bool": true
+          },
+          "num-format": {
+            "serialized": "t:42",
+            "bool": false
+          }
+        },
+        "widgetsAfter": {
+          "source": {
+            "label": "Value",
+            "value": 42,
+            "min": 0,
+            "max": 100,
+            "step": 1
+          },
+          "t-identity": {
+            "text": "42"
+          },
+          "t-scale": {
+            "text": "84"
+          },
+          "t-offset": {
+            "text": "43"
+          },
+          "t-clamp": {
+            "text": "42"
+          },
+          "t-map_range": {
+            "text": "0.42"
+          },
+          "t-round": {
+            "text": "42"
+          },
+          "t-invert": {
+            "text": "-42"
+          },
+          "t-threshold": {
+            "text": "true"
+          },
+          "t-format": {
+            "text": "42"
+          },
+          "n-identity": {
+            "label": "Tally",
+            "count": 42,
+            "step": 1,
+            "skin": "tally"
+          },
+          "n-scale": {
+            "label": "Tally",
+            "count": 84,
+            "step": 1,
+            "skin": "tally"
+          },
+          "n-offset": {
+            "label": "Tally",
+            "count": 43,
+            "step": 1,
+            "skin": "tally"
+          },
+          "n-clamp": {
+            "label": "Tally",
+            "count": 42,
+            "step": 1,
+            "skin": "tally"
+          },
+          "n-map_range": {
+            "label": "Tally",
+            "count": 0.42,
+            "step": 1,
+            "skin": "tally"
+          },
+          "n-round": {
+            "label": "Tally",
+            "count": 42,
+            "step": 1,
+            "skin": "tally"
+          },
+          "n-invert": {
+            "label": "Tally",
+            "count": -42,
+            "step": 1,
+            "skin": "tally"
+          },
+          "n-threshold": {
+            "label": "Tally",
+            "count": 1,
+            "step": 1,
+            "skin": "tally"
+          },
+          "n-format": {
+            "label": "Tally",
+            "count": 42,
+            "step": 1,
+            "skin": "tally"
+          }
+        }
+      }
+    },
+    {
+      "label": "0.4",
+      "seeds": [
+        "source"
+      ],
+      "edits": {
+        "source": {
+          "label": "Value",
+          "value": 0.4,
+          "min": 0,
+          "max": 100,
+          "step": 1
+        }
+      },
+      "expect": {
+        "writes": {
+          "t-identity": {
+            "text": "0.4"
+          },
+          "t-scale": {
+            "text": "0.8"
+          },
+          "t-offset": {
+            "text": "1.4"
+          },
+          "t-clamp": {
+            "text": "0.4"
+          },
+          "t-map_range": {
+            "text": "0.004"
+          },
+          "t-round": {
+            "text": "0"
+          },
+          "t-invert": {
+            "text": "-0.4"
+          },
+          "t-threshold": {
+            "text": "false"
+          },
+          "t-format": {
+            "text": "0.4"
+          },
+          "n-identity": {
+            "label": "Tally",
+            "count": 0.4,
+            "step": 1,
+            "skin": "tally"
+          },
+          "n-scale": {
+            "label": "Tally",
+            "count": 0.8,
+            "step": 1,
+            "skin": "tally"
+          },
+          "n-offset": {
+            "label": "Tally",
+            "count": 1.4,
+            "step": 1,
+            "skin": "tally"
+          },
+          "n-clamp": {
+            "label": "Tally",
+            "count": 0.4,
+            "step": 1,
+            "skin": "tally"
+          },
+          "n-map_range": {
+            "label": "Tally",
+            "count": 0.004,
+            "step": 1,
+            "skin": "tally"
+          },
+          "n-round": {
+            "label": "Tally",
+            "count": 0,
+            "step": 1,
+            "skin": "tally"
+          },
+          "n-invert": {
+            "label": "Tally",
+            "count": -0.4,
+            "step": 1,
+            "skin": "tally"
+          },
+          "n-threshold": {
+            "label": "Tally",
+            "count": 0,
+            "step": 1,
+            "skin": "tally"
+          },
+          "n-format": {
+            "label": "Tally",
+            "count": 0.4,
+            "step": 1,
+            "skin": "tally"
+          }
+        },
+        "firedIds": [
+          "text-identity",
+          "text-scale",
+          "text-offset",
+          "text-clamp",
+          "text-map_range",
+          "text-round",
+          "text-invert",
+          "text-threshold",
+          "text-format",
+          "num-identity",
+          "num-scale",
+          "num-offset",
+          "num-clamp",
+          "num-map_range",
+          "num-round",
+          "num-invert",
+          "num-threshold",
+          "num-format"
+        ],
+        "executeRequests": [],
+        "memory": {
+          "text-identity": {
+            "serialized": "n:0.4",
+            "bool": false
+          },
+          "text-scale": {
+            "serialized": "n:0.8",
+            "bool": false
+          },
+          "text-offset": {
+            "serialized": "n:1.4",
+            "bool": true
+          },
+          "text-clamp": {
+            "serialized": "n:0.4",
+            "bool": false
+          },
+          "text-map_range": {
+            "serialized": "n:0.004",
+            "bool": false
+          },
+          "text-round": {
+            "serialized": "n:0",
+            "bool": false
+          },
+          "text-invert": {
+            "serialized": "n:-0.4",
+            "bool": false
+          },
+          "text-threshold": {
+            "serialized": "b:false",
+            "bool": false
+          },
+          "text-format": {
+            "serialized": "t:0.4",
+            "bool": false
+          },
+          "num-identity": {
+            "serialized": "n:0.4",
+            "bool": false
+          },
+          "num-scale": {
+            "serialized": "n:0.8",
+            "bool": false
+          },
+          "num-offset": {
+            "serialized": "n:1.4",
+            "bool": true
+          },
+          "num-clamp": {
+            "serialized": "n:0.4",
+            "bool": false
+          },
+          "num-map_range": {
+            "serialized": "n:0.004",
+            "bool": false
+          },
+          "num-round": {
+            "serialized": "n:0",
+            "bool": false
+          },
+          "num-invert": {
+            "serialized": "n:-0.4",
+            "bool": false
+          },
+          "num-threshold": {
+            "serialized": "b:false",
+            "bool": false
+          },
+          "num-format": {
+            "serialized": "t:0.4",
+            "bool": false
+          }
+        },
+        "widgetsAfter": {
+          "source": {
+            "label": "Value",
+            "value": 0.4,
+            "min": 0,
+            "max": 100,
+            "step": 1
+          },
+          "t-identity": {
+            "text": "0.4"
+          },
+          "t-scale": {
+            "text": "0.8"
+          },
+          "t-offset": {
+            "text": "1.4"
+          },
+          "t-clamp": {
+            "text": "0.4"
+          },
+          "t-map_range": {
+            "text": "0.004"
+          },
+          "t-round": {
+            "text": "0"
+          },
+          "t-invert": {
+            "text": "-0.4"
+          },
+          "t-threshold": {
+            "text": "false"
+          },
+          "t-format": {
+            "text": "0.4"
+          },
+          "n-identity": {
+            "label": "Tally",
+            "count": 0.4,
+            "step": 1,
+            "skin": "tally"
+          },
+          "n-scale": {
+            "label": "Tally",
+            "count": 0.8,
+            "step": 1,
+            "skin": "tally"
+          },
+          "n-offset": {
+            "label": "Tally",
+            "count": 1.4,
+            "step": 1,
+            "skin": "tally"
+          },
+          "n-clamp": {
+            "label": "Tally",
+            "count": 0.4,
+            "step": 1,
+            "skin": "tally"
+          },
+          "n-map_range": {
+            "label": "Tally",
+            "count": 0.004,
+            "step": 1,
+            "skin": "tally"
+          },
+          "n-round": {
+            "label": "Tally",
+            "count": 0,
+            "step": 1,
+            "skin": "tally"
+          },
+          "n-invert": {
+            "label": "Tally",
+            "count": -0.4,
+            "step": 1,
+            "skin": "tally"
+          },
+          "n-threshold": {
+            "label": "Tally",
+            "count": 0,
+            "step": 1,
+            "skin": "tally"
+          },
+          "n-format": {
+            "label": "Tally",
+            "count": 0.4,
+            "step": 1,
+            "skin": "tally"
+          }
+        }
+      }
+    }
+  ]
+}

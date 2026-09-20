@@ -1,0 +1,6760 @@
+{
+  "cases": [
+    {
+      "value": 0,
+      "transform": null,
+      "result": 0
+    },
+    {
+      "value": 1,
+      "transform": null,
+      "result": 1
+    },
+    {
+      "value": -1,
+      "transform": null,
+      "result": -1
+    },
+    {
+      "value": 7,
+      "transform": null,
+      "result": 7
+    },
+    {
+      "value": 2.5,
+      "transform": null,
+      "result": 2.5
+    },
+    {
+      "value": 2.6,
+      "transform": null,
+      "result": 2.6
+    },
+    {
+      "value": -2.5,
+      "transform": null,
+      "result": -2.5
+    },
+    {
+      "value": 0.5,
+      "transform": null,
+      "result": 0.5
+    },
+    {
+      "value": 4.9,
+      "transform": null,
+      "result": 4.9
+    },
+    {
+      "value": 5,
+      "transform": null,
+      "result": 5
+    },
+    {
+      "value": 10,
+      "transform": null,
+      "result": 10
+    },
+    {
+      "value": 50,
+      "transform": null,
+      "result": 50
+    },
+    {
+      "value": 150,
+      "transform": null,
+      "result": 150
+    },
+    {
+      "value": 1e+21,
+      "transform": null,
+      "result": 1e+21
+    },
+    {
+      "value": 1.7976931348623157e+308,
+      "transform": null,
+      "result": 1.7976931348623157e+308
+    },
+    {
+      "value": true,
+      "transform": null,
+      "result": true
+    },
+    {
+      "value": false,
+      "transform": null,
+      "result": false
+    },
+    {
+      "value": "",
+      "transform": null,
+      "result": ""
+    },
+    {
+      "value": "12.5",
+      "transform": null,
+      "result": "12.5"
+    },
+    {
+      "value": "not a number",
+      "transform": null,
+      "result": "not a number"
+    },
+    {
+      "value": "1",
+      "transform": null,
+      "result": "1"
+    },
+    {
+      "value": "true",
+      "transform": null,
+      "result": "true"
+    },
+    {
+      "value": "yes",
+      "transform": null,
+      "result": "yes"
+    },
+    {
+      "value": "on",
+      "transform": null,
+      "result": "on"
+    },
+    {
+      "value": "off",
+      "transform": null,
+      "result": "off"
+    },
+    {
+      "value": "0",
+      "transform": null,
+      "result": "0"
+    },
+    {
+      "value": " 8 ",
+      "transform": null,
+      "result": " 8 "
+    },
+    {
+      "value": "3abc",
+      "transform": null,
+      "result": "3abc"
+    },
+    {
+      "value": "-4e2",
+      "transform": null,
+      "result": "-4e2"
+    },
+    {
+      "value": "Infinity",
+      "transform": null,
+      "result": "Infinity"
+    },
+    {
+      "value": "NaN",
+      "transform": null,
+      "result": "NaN"
+    },
+    {
+      "value": [],
+      "transform": null,
+      "result": []
+    },
+    {
+      "value": [
+        {
+          "t": 0,
+          "v": 4
+        },
+        {
+          "t": 1,
+          "v": 9
+        }
+      ],
+      "transform": null,
+      "result": [
+        {
+          "t": 0,
+          "v": 4
+        },
+        {
+          "t": 1,
+          "v": 9
+        }
+      ]
+    },
+    {
+      "value": [
+        {
+          "t": 5,
+          "v": -2.5
+        }
+      ],
+      "transform": null,
+      "result": [
+        {
+          "t": 5,
+          "v": -2.5
+        }
+      ]
+    },
+    {
+      "value": 0,
+      "transform": {
+        "op": "identity"
+      },
+      "result": 0
+    },
+    {
+      "value": 1,
+      "transform": {
+        "op": "identity"
+      },
+      "result": 1
+    },
+    {
+      "value": -1,
+      "transform": {
+        "op": "identity"
+      },
+      "result": -1
+    },
+    {
+      "value": 7,
+      "transform": {
+        "op": "identity"
+      },
+      "result": 7
+    },
+    {
+      "value": 2.5,
+      "transform": {
+        "op": "identity"
+      },
+      "result": 2.5
+    },
+    {
+      "value": 2.6,
+      "transform": {
+        "op": "identity"
+      },
+      "result": 2.6
+    },
+    {
+      "value": -2.5,
+      "transform": {
+        "op": "identity"
+      },
+      "result": -2.5
+    },
+    {
+      "value": 0.5,
+      "transform": {
+        "op": "identity"
+      },
+      "result": 0.5
+    },
+    {
+      "value": 4.9,
+      "transform": {
+        "op": "identity"
+      },
+      "result": 4.9
+    },
+    {
+      "value": 5,
+      "transform": {
+        "op": "identity"
+      },
+      "result": 5
+    },
+    {
+      "value": 10,
+      "transform": {
+        "op": "identity"
+      },
+      "result": 10
+    },
+    {
+      "value": 50,
+      "transform": {
+        "op": "identity"
+      },
+      "result": 50
+    },
+    {
+      "value": 150,
+      "transform": {
+        "op": "identity"
+      },
+      "result": 150
+    },
+    {
+      "value": 1e+21,
+      "transform": {
+        "op": "identity"
+      },
+      "result": 1e+21
+    },
+    {
+      "value": 1.7976931348623157e+308,
+      "transform": {
+        "op": "identity"
+      },
+      "result": 1.7976931348623157e+308
+    },
+    {
+      "value": true,
+      "transform": {
+        "op": "identity"
+      },
+      "result": true
+    },
+    {
+      "value": false,
+      "transform": {
+        "op": "identity"
+      },
+      "result": false
+    },
+    {
+      "value": "",
+      "transform": {
+        "op": "identity"
+      },
+      "result": ""
+    },
+    {
+      "value": "12.5",
+      "transform": {
+        "op": "identity"
+      },
+      "result": "12.5"
+    },
+    {
+      "value": "not a number",
+      "transform": {
+        "op": "identity"
+      },
+      "result": "not a number"
+    },
+    {
+      "value": "1",
+      "transform": {
+        "op": "identity"
+      },
+      "result": "1"
+    },
+    {
+      "value": "true",
+      "transform": {
+        "op": "identity"
+      },
+      "result": "true"
+    },
+    {
+      "value": "yes",
+      "transform": {
+        "op": "identity"
+      },
+      "result": "yes"
+    },
+    {
+      "value": "on",
+      "transform": {
+        "op": "identity"
+      },
+      "result": "on"
+    },
+    {
+      "value": "off",
+      "transform": {
+        "op": "identity"
+      },
+      "result": "off"
+    },
+    {
+      "value": "0",
+      "transform": {
+        "op": "identity"
+      },
+      "result": "0"
+    },
+    {
+      "value": " 8 ",
+      "transform": {
+        "op": "identity"
+      },
+      "result": " 8 "
+    },
+    {
+      "value": "3abc",
+      "transform": {
+        "op": "identity"
+      },
+      "result": "3abc"
+    },
+    {
+      "value": "-4e2",
+      "transform": {
+        "op": "identity"
+      },
+      "result": "-4e2"
+    },
+    {
+      "value": "Infinity",
+      "transform": {
+        "op": "identity"
+      },
+      "result": "Infinity"
+    },
+    {
+      "value": "NaN",
+      "transform": {
+        "op": "identity"
+      },
+      "result": "NaN"
+    },
+    {
+      "value": [],
+      "transform": {
+        "op": "identity"
+      },
+      "result": []
+    },
+    {
+      "value": [
+        {
+          "t": 0,
+          "v": 4
+        },
+        {
+          "t": 1,
+          "v": 9
+        }
+      ],
+      "transform": {
+        "op": "identity"
+      },
+      "result": [
+        {
+          "t": 0,
+          "v": 4
+        },
+        {
+          "t": 1,
+          "v": 9
+        }
+      ]
+    },
+    {
+      "value": [
+        {
+          "t": 5,
+          "v": -2.5
+        }
+      ],
+      "transform": {
+        "op": "identity"
+      },
+      "result": [
+        {
+          "t": 5,
+          "v": -2.5
+        }
+      ]
+    },
+    {
+      "value": 0,
+      "transform": {
+        "op": "scale",
+        "factor": 2.5
+      },
+      "result": 0
+    },
+    {
+      "value": 1,
+      "transform": {
+        "op": "scale",
+        "factor": 2.5
+      },
+      "result": 2.5
+    },
+    {
+      "value": -1,
+      "transform": {
+        "op": "scale",
+        "factor": 2.5
+      },
+      "result": -2.5
+    },
+    {
+      "value": 7,
+      "transform": {
+        "op": "scale",
+        "factor": 2.5
+      },
+      "result": 17.5
+    },
+    {
+      "value": 2.5,
+      "transform": {
+        "op": "scale",
+        "factor": 2.5
+      },
+      "result": 6.25
+    },
+    {
+      "value": 2.6,
+      "transform": {
+        "op": "scale",
+        "factor": 2.5
+      },
+      "result": 6.5
+    },
+    {
+      "value": -2.5,
+      "transform": {
+        "op": "scale",
+        "factor": 2.5
+      },
+      "result": -6.25
+    },
+    {
+      "value": 0.5,
+      "transform": {
+        "op": "scale",
+        "factor": 2.5
+      },
+      "result": 1.25
+    },
+    {
+      "value": 4.9,
+      "transform": {
+        "op": "scale",
+        "factor": 2.5
+      },
+      "result": 12.25
+    },
+    {
+      "value": 5,
+      "transform": {
+        "op": "scale",
+        "factor": 2.5
+      },
+      "result": 12.5
+    },
+    {
+      "value": 10,
+      "transform": {
+        "op": "scale",
+        "factor": 2.5
+      },
+      "result": 25
+    },
+    {
+      "value": 50,
+      "transform": {
+        "op": "scale",
+        "factor": 2.5
+      },
+      "result": 125
+    },
+    {
+      "value": 150,
+      "transform": {
+        "op": "scale",
+        "factor": 2.5
+      },
+      "result": 375
+    },
+    {
+      "value": 1e+21,
+      "transform": {
+        "op": "scale",
+        "factor": 2.5
+      },
+      "result": 2.5e+21
+    },
+    {
+      "value": 1.7976931348623157e+308,
+      "transform": {
+        "op": "scale",
+        "factor": 2.5
+      },
+      "result": 0
+    },
+    {
+      "value": true,
+      "transform": {
+        "op": "scale",
+        "factor": 2.5
+      },
+      "result": 2.5
+    },
+    {
+      "value": false,
+      "transform": {
+        "op": "scale",
+        "factor": 2.5
+      },
+      "result": 0
+    },
+    {
+      "value": "",
+      "transform": {
+        "op": "scale",
+        "factor": 2.5
+      },
+      "result": 0
+    },
+    {
+      "value": "12.5",
+      "transform": {
+        "op": "scale",
+        "factor": 2.5
+      },
+      "result": 31.25
+    },
+    {
+      "value": "not a number",
+      "transform": {
+        "op": "scale",
+        "factor": 2.5
+      },
+      "result": 0
+    },
+    {
+      "value": "1",
+      "transform": {
+        "op": "scale",
+        "factor": 2.5
+      },
+      "result": 2.5
+    },
+    {
+      "value": "true",
+      "transform": {
+        "op": "scale",
+        "factor": 2.5
+      },
+      "result": 0
+    },
+    {
+      "value": "yes",
+      "transform": {
+        "op": "scale",
+        "factor": 2.5
+      },
+      "result": 0
+    },
+    {
+      "value": "on",
+      "transform": {
+        "op": "scale",
+        "factor": 2.5
+      },
+      "result": 0
+    },
+    {
+      "value": "off",
+      "transform": {
+        "op": "scale",
+        "factor": 2.5
+      },
+      "result": 0
+    },
+    {
+      "value": "0",
+      "transform": {
+        "op": "scale",
+        "factor": 2.5
+      },
+      "result": 0
+    },
+    {
+      "value": " 8 ",
+      "transform": {
+        "op": "scale",
+        "factor": 2.5
+      },
+      "result": 20
+    },
+    {
+      "value": "3abc",
+      "transform": {
+        "op": "scale",
+        "factor": 2.5
+      },
+      "result": 7.5
+    },
+    {
+      "value": "-4e2",
+      "transform": {
+        "op": "scale",
+        "factor": 2.5
+      },
+      "result": -1000
+    },
+    {
+      "value": "Infinity",
+      "transform": {
+        "op": "scale",
+        "factor": 2.5
+      },
+      "result": 0
+    },
+    {
+      "value": "NaN",
+      "transform": {
+        "op": "scale",
+        "factor": 2.5
+      },
+      "result": 0
+    },
+    {
+      "value": [],
+      "transform": {
+        "op": "scale",
+        "factor": 2.5
+      },
+      "result": 0
+    },
+    {
+      "value": [
+        {
+          "t": 0,
+          "v": 4
+        },
+        {
+          "t": 1,
+          "v": 9
+        }
+      ],
+      "transform": {
+        "op": "scale",
+        "factor": 2.5
+      },
+      "result": 22.5
+    },
+    {
+      "value": [
+        {
+          "t": 5,
+          "v": -2.5
+        }
+      ],
+      "transform": {
+        "op": "scale",
+        "factor": 2.5
+      },
+      "result": -6.25
+    },
+    {
+      "value": 0,
+      "transform": {
+        "op": "scale",
+        "factor": 0
+      },
+      "result": 0
+    },
+    {
+      "value": 1,
+      "transform": {
+        "op": "scale",
+        "factor": 0
+      },
+      "result": 0
+    },
+    {
+      "value": -1,
+      "transform": {
+        "op": "scale",
+        "factor": 0
+      },
+      "result": 0
+    },
+    {
+      "value": 7,
+      "transform": {
+        "op": "scale",
+        "factor": 0
+      },
+      "result": 0
+    },
+    {
+      "value": 2.5,
+      "transform": {
+        "op": "scale",
+        "factor": 0
+      },
+      "result": 0
+    },
+    {
+      "value": 2.6,
+      "transform": {
+        "op": "scale",
+        "factor": 0
+      },
+      "result": 0
+    },
+    {
+      "value": -2.5,
+      "transform": {
+        "op": "scale",
+        "factor": 0
+      },
+      "result": 0
+    },
+    {
+      "value": 0.5,
+      "transform": {
+        "op": "scale",
+        "factor": 0
+      },
+      "result": 0
+    },
+    {
+      "value": 4.9,
+      "transform": {
+        "op": "scale",
+        "factor": 0
+      },
+      "result": 0
+    },
+    {
+      "value": 5,
+      "transform": {
+        "op": "scale",
+        "factor": 0
+      },
+      "result": 0
+    },
+    {
+      "value": 10,
+      "transform": {
+        "op": "scale",
+        "factor": 0
+      },
+      "result": 0
+    },
+    {
+      "value": 50,
+      "transform": {
+        "op": "scale",
+        "factor": 0
+      },
+      "result": 0
+    },
+    {
+      "value": 150,
+      "transform": {
+        "op": "scale",
+        "factor": 0
+      },
+      "result": 0
+    },
+    {
+      "value": 1e+21,
+      "transform": {
+        "op": "scale",
+        "factor": 0
+      },
+      "result": 0
+    },
+    {
+      "value": 1.7976931348623157e+308,
+      "transform": {
+        "op": "scale",
+        "factor": 0
+      },
+      "result": 0
+    },
+    {
+      "value": true,
+      "transform": {
+        "op": "scale",
+        "factor": 0
+      },
+      "result": 0
+    },
+    {
+      "value": false,
+      "transform": {
+        "op": "scale",
+        "factor": 0
+      },
+      "result": 0
+    },
+    {
+      "value": "",
+      "transform": {
+        "op": "scale",
+        "factor": 0
+      },
+      "result": 0
+    },
+    {
+      "value": "12.5",
+      "transform": {
+        "op": "scale",
+        "factor": 0
+      },
+      "result": 0
+    },
+    {
+      "value": "not a number",
+      "transform": {
+        "op": "scale",
+        "factor": 0
+      },
+      "result": 0
+    },
+    {
+      "value": "1",
+      "transform": {
+        "op": "scale",
+        "factor": 0
+      },
+      "result": 0
+    },
+    {
+      "value": "true",
+      "transform": {
+        "op": "scale",
+        "factor": 0
+      },
+      "result": 0
+    },
+    {
+      "value": "yes",
+      "transform": {
+        "op": "scale",
+        "factor": 0
+      },
+      "result": 0
+    },
+    {
+      "value": "on",
+      "transform": {
+        "op": "scale",
+        "factor": 0
+      },
+      "result": 0
+    },
+    {
+      "value": "off",
+      "transform": {
+        "op": "scale",
+        "factor": 0
+      },
+      "result": 0
+    },
+    {
+      "value": "0",
+      "transform": {
+        "op": "scale",
+        "factor": 0
+      },
+      "result": 0
+    },
+    {
+      "value": " 8 ",
+      "transform": {
+        "op": "scale",
+        "factor": 0
+      },
+      "result": 0
+    },
+    {
+      "value": "3abc",
+      "transform": {
+        "op": "scale",
+        "factor": 0
+      },
+      "result": 0
+    },
+    {
+      "value": "-4e2",
+      "transform": {
+        "op": "scale",
+        "factor": 0
+      },
+      "result": 0
+    },
+    {
+      "value": "Infinity",
+      "transform": {
+        "op": "scale",
+        "factor": 0
+      },
+      "result": 0
+    },
+    {
+      "value": "NaN",
+      "transform": {
+        "op": "scale",
+        "factor": 0
+      },
+      "result": 0
+    },
+    {
+      "value": [],
+      "transform": {
+        "op": "scale",
+        "factor": 0
+      },
+      "result": 0
+    },
+    {
+      "value": [
+        {
+          "t": 0,
+          "v": 4
+        },
+        {
+          "t": 1,
+          "v": 9
+        }
+      ],
+      "transform": {
+        "op": "scale",
+        "factor": 0
+      },
+      "result": 0
+    },
+    {
+      "value": [
+        {
+          "t": 5,
+          "v": -2.5
+        }
+      ],
+      "transform": {
+        "op": "scale",
+        "factor": 0
+      },
+      "result": 0
+    },
+    {
+      "value": 0,
+      "transform": {
+        "op": "scale",
+        "factor": 1.7976931348623157e+308
+      },
+      "result": 0
+    },
+    {
+      "value": 1,
+      "transform": {
+        "op": "scale",
+        "factor": 1.7976931348623157e+308
+      },
+      "result": 1.7976931348623157e+308
+    },
+    {
+      "value": -1,
+      "transform": {
+        "op": "scale",
+        "factor": 1.7976931348623157e+308
+      },
+      "result": -1.7976931348623157e+308
+    },
+    {
+      "value": 7,
+      "transform": {
+        "op": "scale",
+        "factor": 1.7976931348623157e+308
+      },
+      "result": 0
+    },
+    {
+      "value": 2.5,
+      "transform": {
+        "op": "scale",
+        "factor": 1.7976931348623157e+308
+      },
+      "result": 0
+    },
+    {
+      "value": 2.6,
+      "transform": {
+        "op": "scale",
+        "factor": 1.7976931348623157e+308
+      },
+      "result": 0
+    },
+    {
+      "value": -2.5,
+      "transform": {
+        "op": "scale",
+        "factor": 1.7976931348623157e+308
+      },
+      "result": 0
+    },
+    {
+      "value": 0.5,
+      "transform": {
+        "op": "scale",
+        "factor": 1.7976931348623157e+308
+      },
+      "result": 8.988465674311579e+307
+    },
+    {
+      "value": 4.9,
+      "transform": {
+        "op": "scale",
+        "factor": 1.7976931348623157e+308
+      },
+      "result": 0
+    },
+    {
+      "value": 5,
+      "transform": {
+        "op": "scale",
+        "factor": 1.7976931348623157e+308
+      },
+      "result": 0
+    },
+    {
+      "value": 10,
+      "transform": {
+        "op": "scale",
+        "factor": 1.7976931348623157e+308
+      },
+      "result": 0
+    },
+    {
+      "value": 50,
+      "transform": {
+        "op": "scale",
+        "factor": 1.7976931348623157e+308
+      },
+      "result": 0
+    },
+    {
+      "value": 150,
+      "transform": {
+        "op": "scale",
+        "factor": 1.7976931348623157e+308
+      },
+      "result": 0
+    },
+    {
+      "value": 1e+21,
+      "transform": {
+        "op": "scale",
+        "factor": 1.7976931348623157e+308
+      },
+      "result": 0
+    },
+    {
+      "value": 1.7976931348623157e+308,
+      "transform": {
+        "op": "scale",
+        "factor": 1.7976931348623157e+308
+      },
+      "result": 0
+    },
+    {
+      "value": true,
+      "transform": {
+        "op": "scale",
+        "factor": 1.7976931348623157e+308
+      },
+      "result": 1.7976931348623157e+308
+    },
+    {
+      "value": false,
+      "transform": {
+        "op": "scale",
+        "factor": 1.7976931348623157e+308
+      },
+      "result": 0
+    },
+    {
+      "value": "",
+      "transform": {
+        "op": "scale",
+        "factor": 1.7976931348623157e+308
+      },
+      "result": 0
+    },
+    {
+      "value": "12.5",
+      "transform": {
+        "op": "scale",
+        "factor": 1.7976931348623157e+308
+      },
+      "result": 0
+    },
+    {
+      "value": "not a number",
+      "transform": {
+        "op": "scale",
+        "factor": 1.7976931348623157e+308
+      },
+      "result": 0
+    },
+    {
+      "value": "1",
+      "transform": {
+        "op": "scale",
+        "factor": 1.7976931348623157e+308
+      },
+      "result": 1.7976931348623157e+308
+    },
+    {
+      "value": "true",
+      "transform": {
+        "op": "scale",
+        "factor": 1.7976931348623157e+308
+      },
+      "result": 0
+    },
+    {
+      "value": "yes",
+      "transform": {
+        "op": "scale",
+        "factor": 1.7976931348623157e+308
+      },
+      "result": 0
+    },
+    {
+      "value": "on",
+      "transform": {
+        "op": "scale",
+        "factor": 1.7976931348623157e+308
+      },
+      "result": 0
+    },
+    {
+      "value": "off",
+      "transform": {
+        "op": "scale",
+        "factor": 1.7976931348623157e+308
+      },
+      "result": 0
+    },
+    {
+      "value": "0",
+      "transform": {
+        "op": "scale",
+        "factor": 1.7976931348623157e+308
+      },
+      "result": 0
+    },
+    {
+      "value": " 8 ",
+      "transform": {
+        "op": "scale",
+        "factor": 1.7976931348623157e+308
+      },
+      "result": 0
+    },
+    {
+      "value": "3abc",
+      "transform": {
+        "op": "scale",
+        "factor": 1.7976931348623157e+308
+      },
+      "result": 0
+    },
+    {
+      "value": "-4e2",
+      "transform": {
+        "op": "scale",
+        "factor": 1.7976931348623157e+308
+      },
+      "result": 0
+    },
+    {
+      "value": "Infinity",
+      "transform": {
+        "op": "scale",
+        "factor": 1.7976931348623157e+308
+      },
+      "result": 0
+    },
+    {
+      "value": "NaN",
+      "transform": {
+        "op": "scale",
+        "factor": 1.7976931348623157e+308
+      },
+      "result": 0
+    },
+    {
+      "value": [],
+      "transform": {
+        "op": "scale",
+        "factor": 1.7976931348623157e+308
+      },
+      "result": 0
+    },
+    {
+      "value": [
+        {
+          "t": 0,
+          "v": 4
+        },
+        {
+          "t": 1,
+          "v": 9
+        }
+      ],
+      "transform": {
+        "op": "scale",
+        "factor": 1.7976931348623157e+308
+      },
+      "result": 0
+    },
+    {
+      "value": [
+        {
+          "t": 5,
+          "v": -2.5
+        }
+      ],
+      "transform": {
+        "op": "scale",
+        "factor": 1.7976931348623157e+308
+      },
+      "result": 0
+    },
+    {
+      "value": 0,
+      "transform": {
+        "op": "scale",
+        "factor": -1
+      },
+      "result": 0
+    },
+    {
+      "value": 1,
+      "transform": {
+        "op": "scale",
+        "factor": -1
+      },
+      "result": -1
+    },
+    {
+      "value": -1,
+      "transform": {
+        "op": "scale",
+        "factor": -1
+      },
+      "result": 1
+    },
+    {
+      "value": 7,
+      "transform": {
+        "op": "scale",
+        "factor": -1
+      },
+      "result": -7
+    },
+    {
+      "value": 2.5,
+      "transform": {
+        "op": "scale",
+        "factor": -1
+      },
+      "result": -2.5
+    },
+    {
+      "value": 2.6,
+      "transform": {
+        "op": "scale",
+        "factor": -1
+      },
+      "result": -2.6
+    },
+    {
+      "value": -2.5,
+      "transform": {
+        "op": "scale",
+        "factor": -1
+      },
+      "result": 2.5
+    },
+    {
+      "value": 0.5,
+      "transform": {
+        "op": "scale",
+        "factor": -1
+      },
+      "result": -0.5
+    },
+    {
+      "value": 4.9,
+      "transform": {
+        "op": "scale",
+        "factor": -1
+      },
+      "result": -4.9
+    },
+    {
+      "value": 5,
+      "transform": {
+        "op": "scale",
+        "factor": -1
+      },
+      "result": -5
+    },
+    {
+      "value": 10,
+      "transform": {
+        "op": "scale",
+        "factor": -1
+      },
+      "result": -10
+    },
+    {
+      "value": 50,
+      "transform": {
+        "op": "scale",
+        "factor": -1
+      },
+      "result": -50
+    },
+    {
+      "value": 150,
+      "transform": {
+        "op": "scale",
+        "factor": -1
+      },
+      "result": -150
+    },
+    {
+      "value": 1e+21,
+      "transform": {
+        "op": "scale",
+        "factor": -1
+      },
+      "result": -1e+21
+    },
+    {
+      "value": 1.7976931348623157e+308,
+      "transform": {
+        "op": "scale",
+        "factor": -1
+      },
+      "result": -1.7976931348623157e+308
+    },
+    {
+      "value": true,
+      "transform": {
+        "op": "scale",
+        "factor": -1
+      },
+      "result": -1
+    },
+    {
+      "value": false,
+      "transform": {
+        "op": "scale",
+        "factor": -1
+      },
+      "result": 0
+    },
+    {
+      "value": "",
+      "transform": {
+        "op": "scale",
+        "factor": -1
+      },
+      "result": 0
+    },
+    {
+      "value": "12.5",
+      "transform": {
+        "op": "scale",
+        "factor": -1
+      },
+      "result": -12.5
+    },
+    {
+      "value": "not a number",
+      "transform": {
+        "op": "scale",
+        "factor": -1
+      },
+      "result": 0
+    },
+    {
+      "value": "1",
+      "transform": {
+        "op": "scale",
+        "factor": -1
+      },
+      "result": -1
+    },
+    {
+      "value": "true",
+      "transform": {
+        "op": "scale",
+        "factor": -1
+      },
+      "result": 0
+    },
+    {
+      "value": "yes",
+      "transform": {
+        "op": "scale",
+        "factor": -1
+      },
+      "result": 0
+    },
+    {
+      "value": "on",
+      "transform": {
+        "op": "scale",
+        "factor": -1
+      },
+      "result": 0
+    },
+    {
+      "value": "off",
+      "transform": {
+        "op": "scale",
+        "factor": -1
+      },
+      "result": 0
+    },
+    {
+      "value": "0",
+      "transform": {
+        "op": "scale",
+        "factor": -1
+      },
+      "result": 0
+    },
+    {
+      "value": " 8 ",
+      "transform": {
+        "op": "scale",
+        "factor": -1
+      },
+      "result": -8
+    },
+    {
+      "value": "3abc",
+      "transform": {
+        "op": "scale",
+        "factor": -1
+      },
+      "result": -3
+    },
+    {
+      "value": "-4e2",
+      "transform": {
+        "op": "scale",
+        "factor": -1
+      },
+      "result": 400
+    },
+    {
+      "value": "Infinity",
+      "transform": {
+        "op": "scale",
+        "factor": -1
+      },
+      "result": 0
+    },
+    {
+      "value": "NaN",
+      "transform": {
+        "op": "scale",
+        "factor": -1
+      },
+      "result": 0
+    },
+    {
+      "value": [],
+      "transform": {
+        "op": "scale",
+        "factor": -1
+      },
+      "result": 0
+    },
+    {
+      "value": [
+        {
+          "t": 0,
+          "v": 4
+        },
+        {
+          "t": 1,
+          "v": 9
+        }
+      ],
+      "transform": {
+        "op": "scale",
+        "factor": -1
+      },
+      "result": -9
+    },
+    {
+      "value": [
+        {
+          "t": 5,
+          "v": -2.5
+        }
+      ],
+      "transform": {
+        "op": "scale",
+        "factor": -1
+      },
+      "result": 2.5
+    },
+    {
+      "value": 0,
+      "transform": {
+        "op": "offset",
+        "amount": -4
+      },
+      "result": -4
+    },
+    {
+      "value": 1,
+      "transform": {
+        "op": "offset",
+        "amount": -4
+      },
+      "result": -3
+    },
+    {
+      "value": -1,
+      "transform": {
+        "op": "offset",
+        "amount": -4
+      },
+      "result": -5
+    },
+    {
+      "value": 7,
+      "transform": {
+        "op": "offset",
+        "amount": -4
+      },
+      "result": 3
+    },
+    {
+      "value": 2.5,
+      "transform": {
+        "op": "offset",
+        "amount": -4
+      },
+      "result": -1.5
+    },
+    {
+      "value": 2.6,
+      "transform": {
+        "op": "offset",
+        "amount": -4
+      },
+      "result": -1.4
+    },
+    {
+      "value": -2.5,
+      "transform": {
+        "op": "offset",
+        "amount": -4
+      },
+      "result": -6.5
+    },
+    {
+      "value": 0.5,
+      "transform": {
+        "op": "offset",
+        "amount": -4
+      },
+      "result": -3.5
+    },
+    {
+      "value": 4.9,
+      "transform": {
+        "op": "offset",
+        "amount": -4
+      },
+      "result": 0.9000000000000004
+    },
+    {
+      "value": 5,
+      "transform": {
+        "op": "offset",
+        "amount": -4
+      },
+      "result": 1
+    },
+    {
+      "value": 10,
+      "transform": {
+        "op": "offset",
+        "amount": -4
+      },
+      "result": 6
+    },
+    {
+      "value": 50,
+      "transform": {
+        "op": "offset",
+        "amount": -4
+      },
+      "result": 46
+    },
+    {
+      "value": 150,
+      "transform": {
+        "op": "offset",
+        "amount": -4
+      },
+      "result": 146
+    },
+    {
+      "value": 1e+21,
+      "transform": {
+        "op": "offset",
+        "amount": -4
+      },
+      "result": 1e+21
+    },
+    {
+      "value": 1.7976931348623157e+308,
+      "transform": {
+        "op": "offset",
+        "amount": -4
+      },
+      "result": 1.7976931348623157e+308
+    },
+    {
+      "value": true,
+      "transform": {
+        "op": "offset",
+        "amount": -4
+      },
+      "result": -3
+    },
+    {
+      "value": false,
+      "transform": {
+        "op": "offset",
+        "amount": -4
+      },
+      "result": -4
+    },
+    {
+      "value": "",
+      "transform": {
+        "op": "offset",
+        "amount": -4
+      },
+      "result": -4
+    },
+    {
+      "value": "12.5",
+      "transform": {
+        "op": "offset",
+        "amount": -4
+      },
+      "result": 8.5
+    },
+    {
+      "value": "not a number",
+      "transform": {
+        "op": "offset",
+        "amount": -4
+      },
+      "result": -4
+    },
+    {
+      "value": "1",
+      "transform": {
+        "op": "offset",
+        "amount": -4
+      },
+      "result": -3
+    },
+    {
+      "value": "true",
+      "transform": {
+        "op": "offset",
+        "amount": -4
+      },
+      "result": -4
+    },
+    {
+      "value": "yes",
+      "transform": {
+        "op": "offset",
+        "amount": -4
+      },
+      "result": -4
+    },
+    {
+      "value": "on",
+      "transform": {
+        "op": "offset",
+        "amount": -4
+      },
+      "result": -4
+    },
+    {
+      "value": "off",
+      "transform": {
+        "op": "offset",
+        "amount": -4
+      },
+      "result": -4
+    },
+    {
+      "value": "0",
+      "transform": {
+        "op": "offset",
+        "amount": -4
+      },
+      "result": -4
+    },
+    {
+      "value": " 8 ",
+      "transform": {
+        "op": "offset",
+        "amount": -4
+      },
+      "result": 4
+    },
+    {
+      "value": "3abc",
+      "transform": {
+        "op": "offset",
+        "amount": -4
+      },
+      "result": -1
+    },
+    {
+      "value": "-4e2",
+      "transform": {
+        "op": "offset",
+        "amount": -4
+      },
+      "result": -404
+    },
+    {
+      "value": "Infinity",
+      "transform": {
+        "op": "offset",
+        "amount": -4
+      },
+      "result": -4
+    },
+    {
+      "value": "NaN",
+      "transform": {
+        "op": "offset",
+        "amount": -4
+      },
+      "result": -4
+    },
+    {
+      "value": [],
+      "transform": {
+        "op": "offset",
+        "amount": -4
+      },
+      "result": -4
+    },
+    {
+      "value": [
+        {
+          "t": 0,
+          "v": 4
+        },
+        {
+          "t": 1,
+          "v": 9
+        }
+      ],
+      "transform": {
+        "op": "offset",
+        "amount": -4
+      },
+      "result": 5
+    },
+    {
+      "value": [
+        {
+          "t": 5,
+          "v": -2.5
+        }
+      ],
+      "transform": {
+        "op": "offset",
+        "amount": -4
+      },
+      "result": -6.5
+    },
+    {
+      "value": 0,
+      "transform": {
+        "op": "offset",
+        "amount": 0.5
+      },
+      "result": 0.5
+    },
+    {
+      "value": 1,
+      "transform": {
+        "op": "offset",
+        "amount": 0.5
+      },
+      "result": 1.5
+    },
+    {
+      "value": -1,
+      "transform": {
+        "op": "offset",
+        "amount": 0.5
+      },
+      "result": -0.5
+    },
+    {
+      "value": 7,
+      "transform": {
+        "op": "offset",
+        "amount": 0.5
+      },
+      "result": 7.5
+    },
+    {
+      "value": 2.5,
+      "transform": {
+        "op": "offset",
+        "amount": 0.5
+      },
+      "result": 3
+    },
+    {
+      "value": 2.6,
+      "transform": {
+        "op": "offset",
+        "amount": 0.5
+      },
+      "result": 3.1
+    },
+    {
+      "value": -2.5,
+      "transform": {
+        "op": "offset",
+        "amount": 0.5
+      },
+      "result": -2
+    },
+    {
+      "value": 0.5,
+      "transform": {
+        "op": "offset",
+        "amount": 0.5
+      },
+      "result": 1
+    },
+    {
+      "value": 4.9,
+      "transform": {
+        "op": "offset",
+        "amount": 0.5
+      },
+      "result": 5.4
+    },
+    {
+      "value": 5,
+      "transform": {
+        "op": "offset",
+        "amount": 0.5
+      },
+      "result": 5.5
+    },
+    {
+      "value": 10,
+      "transform": {
+        "op": "offset",
+        "amount": 0.5
+      },
+      "result": 10.5
+    },
+    {
+      "value": 50,
+      "transform": {
+        "op": "offset",
+        "amount": 0.5
+      },
+      "result": 50.5
+    },
+    {
+      "value": 150,
+      "transform": {
+        "op": "offset",
+        "amount": 0.5
+      },
+      "result": 150.5
+    },
+    {
+      "value": 1e+21,
+      "transform": {
+        "op": "offset",
+        "amount": 0.5
+      },
+      "result": 1e+21
+    },
+    {
+      "value": 1.7976931348623157e+308,
+      "transform": {
+        "op": "offset",
+        "amount": 0.5
+      },
+      "result": 1.7976931348623157e+308
+    },
+    {
+      "value": true,
+      "transform": {
+        "op": "offset",
+        "amount": 0.5
+      },
+      "result": 1.5
+    },
+    {
+      "value": false,
+      "transform": {
+        "op": "offset",
+        "amount": 0.5
+      },
+      "result": 0.5
+    },
+    {
+      "value": "",
+      "transform": {
+        "op": "offset",
+        "amount": 0.5
+      },
+      "result": 0.5
+    },
+    {
+      "value": "12.5",
+      "transform": {
+        "op": "offset",
+        "amount": 0.5
+      },
+      "result": 13
+    },
+    {
+      "value": "not a number",
+      "transform": {
+        "op": "offset",
+        "amount": 0.5
+      },
+      "result": 0.5
+    },
+    {
+      "value": "1",
+      "transform": {
+        "op": "offset",
+        "amount": 0.5
+      },
+      "result": 1.5
+    },
+    {
+      "value": "true",
+      "transform": {
+        "op": "offset",
+        "amount": 0.5
+      },
+      "result": 0.5
+    },
+    {
+      "value": "yes",
+      "transform": {
+        "op": "offset",
+        "amount": 0.5
+      },
+      "result": 0.5
+    },
+    {
+      "value": "on",
+      "transform": {
+        "op": "offset",
+        "amount": 0.5
+      },
+      "result": 0.5
+    },
+    {
+      "value": "off",
+      "transform": {
+        "op": "offset",
+        "amount": 0.5
+      },
+      "result": 0.5
+    },
+    {
+      "value": "0",
+      "transform": {
+        "op": "offset",
+        "amount": 0.5
+      },
+      "result": 0.5
+    },
+    {
+      "value": " 8 ",
+      "transform": {
+        "op": "offset",
+        "amount": 0.5
+      },
+      "result": 8.5
+    },
+    {
+      "value": "3abc",
+      "transform": {
+        "op": "offset",
+        "amount": 0.5
+      },
+      "result": 3.5
+    },
+    {
+      "value": "-4e2",
+      "transform": {
+        "op": "offset",
+        "amount": 0.5
+      },
+      "result": -399.5
+    },
+    {
+      "value": "Infinity",
+      "transform": {
+        "op": "offset",
+        "amount": 0.5
+      },
+      "result": 0.5
+    },
+    {
+      "value": "NaN",
+      "transform": {
+        "op": "offset",
+        "amount": 0.5
+      },
+      "result": 0.5
+    },
+    {
+      "value": [],
+      "transform": {
+        "op": "offset",
+        "amount": 0.5
+      },
+      "result": 0.5
+    },
+    {
+      "value": [
+        {
+          "t": 0,
+          "v": 4
+        },
+        {
+          "t": 1,
+          "v": 9
+        }
+      ],
+      "transform": {
+        "op": "offset",
+        "amount": 0.5
+      },
+      "result": 9.5
+    },
+    {
+      "value": [
+        {
+          "t": 5,
+          "v": -2.5
+        }
+      ],
+      "transform": {
+        "op": "offset",
+        "amount": 0.5
+      },
+      "result": -2
+    },
+    {
+      "value": 0,
+      "transform": {
+        "op": "clamp",
+        "min": 0,
+        "max": 100
+      },
+      "result": 0
+    },
+    {
+      "value": 1,
+      "transform": {
+        "op": "clamp",
+        "min": 0,
+        "max": 100
+      },
+      "result": 1
+    },
+    {
+      "value": -1,
+      "transform": {
+        "op": "clamp",
+        "min": 0,
+        "max": 100
+      },
+      "result": 0
+    },
+    {
+      "value": 7,
+      "transform": {
+        "op": "clamp",
+        "min": 0,
+        "max": 100
+      },
+      "result": 7
+    },
+    {
+      "value": 2.5,
+      "transform": {
+        "op": "clamp",
+        "min": 0,
+        "max": 100
+      },
+      "result": 2.5
+    },
+    {
+      "value": 2.6,
+      "transform": {
+        "op": "clamp",
+        "min": 0,
+        "max": 100
+      },
+      "result": 2.6
+    },
+    {
+      "value": -2.5,
+      "transform": {
+        "op": "clamp",
+        "min": 0,
+        "max": 100
+      },
+      "result": 0
+    },
+    {
+      "value": 0.5,
+      "transform": {
+        "op": "clamp",
+        "min": 0,
+        "max": 100
+      },
+      "result": 0.5
+    },
+    {
+      "value": 4.9,
+      "transform": {
+        "op": "clamp",
+        "min": 0,
+        "max": 100
+      },
+      "result": 4.9
+    },
+    {
+      "value": 5,
+      "transform": {
+        "op": "clamp",
+        "min": 0,
+        "max": 100
+      },
+      "result": 5
+    },
+    {
+      "value": 10,
+      "transform": {
+        "op": "clamp",
+        "min": 0,
+        "max": 100
+      },
+      "result": 10
+    },
+    {
+      "value": 50,
+      "transform": {
+        "op": "clamp",
+        "min": 0,
+        "max": 100
+      },
+      "result": 50
+    },
+    {
+      "value": 150,
+      "transform": {
+        "op": "clamp",
+        "min": 0,
+        "max": 100
+      },
+      "result": 100
+    },
+    {
+      "value": 1e+21,
+      "transform": {
+        "op": "clamp",
+        "min": 0,
+        "max": 100
+      },
+      "result": 100
+    },
+    {
+      "value": 1.7976931348623157e+308,
+      "transform": {
+        "op": "clamp",
+        "min": 0,
+        "max": 100
+      },
+      "result": 100
+    },
+    {
+      "value": true,
+      "transform": {
+        "op": "clamp",
+        "min": 0,
+        "max": 100
+      },
+      "result": 1
+    },
+    {
+      "value": false,
+      "transform": {
+        "op": "clamp",
+        "min": 0,
+        "max": 100
+      },
+      "result": 0
+    },
+    {
+      "value": "",
+      "transform": {
+        "op": "clamp",
+        "min": 0,
+        "max": 100
+      },
+      "result": 0
+    },
+    {
+      "value": "12.5",
+      "transform": {
+        "op": "clamp",
+        "min": 0,
+        "max": 100
+      },
+      "result": 12.5
+    },
+    {
+      "value": "not a number",
+      "transform": {
+        "op": "clamp",
+        "min": 0,
+        "max": 100
+      },
+      "result": 0
+    },
+    {
+      "value": "1",
+      "transform": {
+        "op": "clamp",
+        "min": 0,
+        "max": 100
+      },
+      "result": 1
+    },
+    {
+      "value": "true",
+      "transform": {
+        "op": "clamp",
+        "min": 0,
+        "max": 100
+      },
+      "result": 0
+    },
+    {
+      "value": "yes",
+      "transform": {
+        "op": "clamp",
+        "min": 0,
+        "max": 100
+      },
+      "result": 0
+    },
+    {
+      "value": "on",
+      "transform": {
+        "op": "clamp",
+        "min": 0,
+        "max": 100
+      },
+      "result": 0
+    },
+    {
+      "value": "off",
+      "transform": {
+        "op": "clamp",
+        "min": 0,
+        "max": 100
+      },
+      "result": 0
+    },
+    {
+      "value": "0",
+      "transform": {
+        "op": "clamp",
+        "min": 0,
+        "max": 100
+      },
+      "result": 0
+    },
+    {
+      "value": " 8 ",
+      "transform": {
+        "op": "clamp",
+        "min": 0,
+        "max": 100
+      },
+      "result": 8
+    },
+    {
+      "value": "3abc",
+      "transform": {
+        "op": "clamp",
+        "min": 0,
+        "max": 100
+      },
+      "result": 3
+    },
+    {
+      "value": "-4e2",
+      "transform": {
+        "op": "clamp",
+        "min": 0,
+        "max": 100
+      },
+      "result": 0
+    },
+    {
+      "value": "Infinity",
+      "transform": {
+        "op": "clamp",
+        "min": 0,
+        "max": 100
+      },
+      "result": 0
+    },
+    {
+      "value": "NaN",
+      "transform": {
+        "op": "clamp",
+        "min": 0,
+        "max": 100
+      },
+      "result": 0
+    },
+    {
+      "value": [],
+      "transform": {
+        "op": "clamp",
+        "min": 0,
+        "max": 100
+      },
+      "result": 0
+    },
+    {
+      "value": [
+        {
+          "t": 0,
+          "v": 4
+        },
+        {
+          "t": 1,
+          "v": 9
+        }
+      ],
+      "transform": {
+        "op": "clamp",
+        "min": 0,
+        "max": 100
+      },
+      "result": 9
+    },
+    {
+      "value": [
+        {
+          "t": 5,
+          "v": -2.5
+        }
+      ],
+      "transform": {
+        "op": "clamp",
+        "min": 0,
+        "max": 100
+      },
+      "result": 0
+    },
+    {
+      "value": 0,
+      "transform": {
+        "op": "clamp",
+        "min": 100,
+        "max": 0
+      },
+      "result": 0
+    },
+    {
+      "value": 1,
+      "transform": {
+        "op": "clamp",
+        "min": 100,
+        "max": 0
+      },
+      "result": 1
+    },
+    {
+      "value": -1,
+      "transform": {
+        "op": "clamp",
+        "min": 100,
+        "max": 0
+      },
+      "result": 0
+    },
+    {
+      "value": 7,
+      "transform": {
+        "op": "clamp",
+        "min": 100,
+        "max": 0
+      },
+      "result": 7
+    },
+    {
+      "value": 2.5,
+      "transform": {
+        "op": "clamp",
+        "min": 100,
+        "max": 0
+      },
+      "result": 2.5
+    },
+    {
+      "value": 2.6,
+      "transform": {
+        "op": "clamp",
+        "min": 100,
+        "max": 0
+      },
+      "result": 2.6
+    },
+    {
+      "value": -2.5,
+      "transform": {
+        "op": "clamp",
+        "min": 100,
+        "max": 0
+      },
+      "result": 0
+    },
+    {
+      "value": 0.5,
+      "transform": {
+        "op": "clamp",
+        "min": 100,
+        "max": 0
+      },
+      "result": 0.5
+    },
+    {
+      "value": 4.9,
+      "transform": {
+        "op": "clamp",
+        "min": 100,
+        "max": 0
+      },
+      "result": 4.9
+    },
+    {
+      "value": 5,
+      "transform": {
+        "op": "clamp",
+        "min": 100,
+        "max": 0
+      },
+      "result": 5
+    },
+    {
+      "value": 10,
+      "transform": {
+        "op": "clamp",
+        "min": 100,
+        "max": 0
+      },
+      "result": 10
+    },
+    {
+      "value": 50,
+      "transform": {
+        "op": "clamp",
+        "min": 100,
+        "max": 0
+      },
+      "result": 50
+    },
+    {
+      "value": 150,
+      "transform": {
+        "op": "clamp",
+        "min": 100,
+        "max": 0
+      },
+      "result": 100
+    },
+    {
+      "value": 1e+21,
+      "transform": {
+        "op": "clamp",
+        "min": 100,
+        "max": 0
+      },
+      "result": 100
+    },
+    {
+      "value": 1.7976931348623157e+308,
+      "transform": {
+        "op": "clamp",
+        "min": 100,
+        "max": 0
+      },
+      "result": 100
+    },
+    {
+      "value": true,
+      "transform": {
+        "op": "clamp",
+        "min": 100,
+        "max": 0
+      },
+      "result": 1
+    },
+    {
+      "value": false,
+      "transform": {
+        "op": "clamp",
+        "min": 100,
+        "max": 0
+      },
+      "result": 0
+    },
+    {
+      "value": "",
+      "transform": {
+        "op": "clamp",
+        "min": 100,
+        "max": 0
+      },
+      "result": 0
+    },
+    {
+      "value": "12.5",
+      "transform": {
+        "op": "clamp",
+        "min": 100,
+        "max": 0
+      },
+      "result": 12.5
+    },
+    {
+      "value": "not a number",
+      "transform": {
+        "op": "clamp",
+        "min": 100,
+        "max": 0
+      },
+      "result": 0
+    },
+    {
+      "value": "1",
+      "transform": {
+        "op": "clamp",
+        "min": 100,
+        "max": 0
+      },
+      "result": 1
+    },
+    {
+      "value": "true",
+      "transform": {
+        "op": "clamp",
+        "min": 100,
+        "max": 0
+      },
+      "result": 0
+    },
+    {
+      "value": "yes",
+      "transform": {
+        "op": "clamp",
+        "min": 100,
+        "max": 0
+      },
+      "result": 0
+    },
+    {
+      "value": "on",
+      "transform": {
+        "op": "clamp",
+        "min": 100,
+        "max": 0
+      },
+      "result": 0
+    },
+    {
+      "value": "off",
+      "transform": {
+        "op": "clamp",
+        "min": 100,
+        "max": 0
+      },
+      "result": 0
+    },
+    {
+      "value": "0",
+      "transform": {
+        "op": "clamp",
+        "min": 100,
+        "max": 0
+      },
+      "result": 0
+    },
+    {
+      "value": " 8 ",
+      "transform": {
+        "op": "clamp",
+        "min": 100,
+        "max": 0
+      },
+      "result": 8
+    },
+    {
+      "value": "3abc",
+      "transform": {
+        "op": "clamp",
+        "min": 100,
+        "max": 0
+      },
+      "result": 3
+    },
+    {
+      "value": "-4e2",
+      "transform": {
+        "op": "clamp",
+        "min": 100,
+        "max": 0
+      },
+      "result": 0
+    },
+    {
+      "value": "Infinity",
+      "transform": {
+        "op": "clamp",
+        "min": 100,
+        "max": 0
+      },
+      "result": 0
+    },
+    {
+      "value": "NaN",
+      "transform": {
+        "op": "clamp",
+        "min": 100,
+        "max": 0
+      },
+      "result": 0
+    },
+    {
+      "value": [],
+      "transform": {
+        "op": "clamp",
+        "min": 100,
+        "max": 0
+      },
+      "result": 0
+    },
+    {
+      "value": [
+        {
+          "t": 0,
+          "v": 4
+        },
+        {
+          "t": 1,
+          "v": 9
+        }
+      ],
+      "transform": {
+        "op": "clamp",
+        "min": 100,
+        "max": 0
+      },
+      "result": 9
+    },
+    {
+      "value": [
+        {
+          "t": 5,
+          "v": -2.5
+        }
+      ],
+      "transform": {
+        "op": "clamp",
+        "min": 100,
+        "max": 0
+      },
+      "result": 0
+    },
+    {
+      "value": 0,
+      "transform": {
+        "op": "clamp",
+        "min": 5,
+        "max": 5
+      },
+      "result": 5
+    },
+    {
+      "value": 1,
+      "transform": {
+        "op": "clamp",
+        "min": 5,
+        "max": 5
+      },
+      "result": 5
+    },
+    {
+      "value": -1,
+      "transform": {
+        "op": "clamp",
+        "min": 5,
+        "max": 5
+      },
+      "result": 5
+    },
+    {
+      "value": 7,
+      "transform": {
+        "op": "clamp",
+        "min": 5,
+        "max": 5
+      },
+      "result": 5
+    },
+    {
+      "value": 2.5,
+      "transform": {
+        "op": "clamp",
+        "min": 5,
+        "max": 5
+      },
+      "result": 5
+    },
+    {
+      "value": 2.6,
+      "transform": {
+        "op": "clamp",
+        "min": 5,
+        "max": 5
+      },
+      "result": 5
+    },
+    {
+      "value": -2.5,
+      "transform": {
+        "op": "clamp",
+        "min": 5,
+        "max": 5
+      },
+      "result": 5
+    },
+    {
+      "value": 0.5,
+      "transform": {
+        "op": "clamp",
+        "min": 5,
+        "max": 5
+      },
+      "result": 5
+    },
+    {
+      "value": 4.9,
+      "transform": {
+        "op": "clamp",
+        "min": 5,
+        "max": 5
+      },
+      "result": 5
+    },
+    {
+      "value": 5,
+      "transform": {
+        "op": "clamp",
+        "min": 5,
+        "max": 5
+      },
+      "result": 5
+    },
+    {
+      "value": 10,
+      "transform": {
+        "op": "clamp",
+        "min": 5,
+        "max": 5
+      },
+      "result": 5
+    },
+    {
+      "value": 50,
+      "transform": {
+        "op": "clamp",
+        "min": 5,
+        "max": 5
+      },
+      "result": 5
+    },
+    {
+      "value": 150,
+      "transform": {
+        "op": "clamp",
+        "min": 5,
+        "max": 5
+      },
+      "result": 5
+    },
+    {
+      "value": 1e+21,
+      "transform": {
+        "op": "clamp",
+        "min": 5,
+        "max": 5
+      },
+      "result": 5
+    },
+    {
+      "value": 1.7976931348623157e+308,
+      "transform": {
+        "op": "clamp",
+        "min": 5,
+        "max": 5
+      },
+      "result": 5
+    },
+    {
+      "value": true,
+      "transform": {
+        "op": "clamp",
+        "min": 5,
+        "max": 5
+      },
+      "result": 5
+    },
+    {
+      "value": false,
+      "transform": {
+        "op": "clamp",
+        "min": 5,
+        "max": 5
+      },
+      "result": 5
+    },
+    {
+      "value": "",
+      "transform": {
+        "op": "clamp",
+        "min": 5,
+        "max": 5
+      },
+      "result": 5
+    },
+    {
+      "value": "12.5",
+      "transform": {
+        "op": "clamp",
+        "min": 5,
+        "max": 5
+      },
+      "result": 5
+    },
+    {
+      "value": "not a number",
+      "transform": {
+        "op": "clamp",
+        "min": 5,
+        "max": 5
+      },
+      "result": 5
+    },
+    {
+      "value": "1",
+      "transform": {
+        "op": "clamp",
+        "min": 5,
+        "max": 5
+      },
+      "result": 5
+    },
+    {
+      "value": "true",
+      "transform": {
+        "op": "clamp",
+        "min": 5,
+        "max": 5
+      },
+      "result": 5
+    },
+    {
+      "value": "yes",
+      "transform": {
+        "op": "clamp",
+        "min": 5,
+        "max": 5
+      },
+      "result": 5
+    },
+    {
+      "value": "on",
+      "transform": {
+        "op": "clamp",
+        "min": 5,
+        "max": 5
+      },
+      "result": 5
+    },
+    {
+      "value": "off",
+      "transform": {
+        "op": "clamp",
+        "min": 5,
+        "max": 5
+      },
+      "result": 5
+    },
+    {
+      "value": "0",
+      "transform": {
+        "op": "clamp",
+        "min": 5,
+        "max": 5
+      },
+      "result": 5
+    },
+    {
+      "value": " 8 ",
+      "transform": {
+        "op": "clamp",
+        "min": 5,
+        "max": 5
+      },
+      "result": 5
+    },
+    {
+      "value": "3abc",
+      "transform": {
+        "op": "clamp",
+        "min": 5,
+        "max": 5
+      },
+      "result": 5
+    },
+    {
+      "value": "-4e2",
+      "transform": {
+        "op": "clamp",
+        "min": 5,
+        "max": 5
+      },
+      "result": 5
+    },
+    {
+      "value": "Infinity",
+      "transform": {
+        "op": "clamp",
+        "min": 5,
+        "max": 5
+      },
+      "result": 5
+    },
+    {
+      "value": "NaN",
+      "transform": {
+        "op": "clamp",
+        "min": 5,
+        "max": 5
+      },
+      "result": 5
+    },
+    {
+      "value": [],
+      "transform": {
+        "op": "clamp",
+        "min": 5,
+        "max": 5
+      },
+      "result": 5
+    },
+    {
+      "value": [
+        {
+          "t": 0,
+          "v": 4
+        },
+        {
+          "t": 1,
+          "v": 9
+        }
+      ],
+      "transform": {
+        "op": "clamp",
+        "min": 5,
+        "max": 5
+      },
+      "result": 5
+    },
+    {
+      "value": [
+        {
+          "t": 5,
+          "v": -2.5
+        }
+      ],
+      "transform": {
+        "op": "clamp",
+        "min": 5,
+        "max": 5
+      },
+      "result": 5
+    },
+    {
+      "value": 0,
+      "transform": {
+        "op": "map_range",
+        "inMin": 0,
+        "inMax": 100,
+        "outMin": 0,
+        "outMax": 1
+      },
+      "result": 0
+    },
+    {
+      "value": 1,
+      "transform": {
+        "op": "map_range",
+        "inMin": 0,
+        "inMax": 100,
+        "outMin": 0,
+        "outMax": 1
+      },
+      "result": 0.01
+    },
+    {
+      "value": -1,
+      "transform": {
+        "op": "map_range",
+        "inMin": 0,
+        "inMax": 100,
+        "outMin": 0,
+        "outMax": 1
+      },
+      "result": -0.01
+    },
+    {
+      "value": 7,
+      "transform": {
+        "op": "map_range",
+        "inMin": 0,
+        "inMax": 100,
+        "outMin": 0,
+        "outMax": 1
+      },
+      "result": 0.07
+    },
+    {
+      "value": 2.5,
+      "transform": {
+        "op": "map_range",
+        "inMin": 0,
+        "inMax": 100,
+        "outMin": 0,
+        "outMax": 1
+      },
+      "result": 0.025
+    },
+    {
+      "value": 2.6,
+      "transform": {
+        "op": "map_range",
+        "inMin": 0,
+        "inMax": 100,
+        "outMin": 0,
+        "outMax": 1
+      },
+      "result": 0.026000000000000002
+    },
+    {
+      "value": -2.5,
+      "transform": {
+        "op": "map_range",
+        "inMin": 0,
+        "inMax": 100,
+        "outMin": 0,
+        "outMax": 1
+      },
+      "result": -0.025
+    },
+    {
+      "value": 0.5,
+      "transform": {
+        "op": "map_range",
+        "inMin": 0,
+        "inMax": 100,
+        "outMin": 0,
+        "outMax": 1
+      },
+      "result": 0.005
+    },
+    {
+      "value": 4.9,
+      "transform": {
+        "op": "map_range",
+        "inMin": 0,
+        "inMax": 100,
+        "outMin": 0,
+        "outMax": 1
+      },
+      "result": 0.049
+    },
+    {
+      "value": 5,
+      "transform": {
+        "op": "map_range",
+        "inMin": 0,
+        "inMax": 100,
+        "outMin": 0,
+        "outMax": 1
+      },
+      "result": 0.05
+    },
+    {
+      "value": 10,
+      "transform": {
+        "op": "map_range",
+        "inMin": 0,
+        "inMax": 100,
+        "outMin": 0,
+        "outMax": 1
+      },
+      "result": 0.1
+    },
+    {
+      "value": 50,
+      "transform": {
+        "op": "map_range",
+        "inMin": 0,
+        "inMax": 100,
+        "outMin": 0,
+        "outMax": 1
+      },
+      "result": 0.5
+    },
+    {
+      "value": 150,
+      "transform": {
+        "op": "map_range",
+        "inMin": 0,
+        "inMax": 100,
+        "outMin": 0,
+        "outMax": 1
+      },
+      "result": 1.5
+    },
+    {
+      "value": 1e+21,
+      "transform": {
+        "op": "map_range",
+        "inMin": 0,
+        "inMax": 100,
+        "outMin": 0,
+        "outMax": 1
+      },
+      "result": 10000000000000000000
+    },
+    {
+      "value": 1.7976931348623157e+308,
+      "transform": {
+        "op": "map_range",
+        "inMin": 0,
+        "inMax": 100,
+        "outMin": 0,
+        "outMax": 1
+      },
+      "result": 1.7976931348623156e+306
+    },
+    {
+      "value": true,
+      "transform": {
+        "op": "map_range",
+        "inMin": 0,
+        "inMax": 100,
+        "outMin": 0,
+        "outMax": 1
+      },
+      "result": 0.01
+    },
+    {
+      "value": false,
+      "transform": {
+        "op": "map_range",
+        "inMin": 0,
+        "inMax": 100,
+        "outMin": 0,
+        "outMax": 1
+      },
+      "result": 0
+    },
+    {
+      "value": "",
+      "transform": {
+        "op": "map_range",
+        "inMin": 0,
+        "inMax": 100,
+        "outMin": 0,
+        "outMax": 1
+      },
+      "result": 0
+    },
+    {
+      "value": "12.5",
+      "transform": {
+        "op": "map_range",
+        "inMin": 0,
+        "inMax": 100,
+        "outMin": 0,
+        "outMax": 1
+      },
+      "result": 0.125
+    },
+    {
+      "value": "not a number",
+      "transform": {
+        "op": "map_range",
+        "inMin": 0,
+        "inMax": 100,
+        "outMin": 0,
+        "outMax": 1
+      },
+      "result": 0
+    },
+    {
+      "value": "1",
+      "transform": {
+        "op": "map_range",
+        "inMin": 0,
+        "inMax": 100,
+        "outMin": 0,
+        "outMax": 1
+      },
+      "result": 0.01
+    },
+    {
+      "value": "true",
+      "transform": {
+        "op": "map_range",
+        "inMin": 0,
+        "inMax": 100,
+        "outMin": 0,
+        "outMax": 1
+      },
+      "result": 0
+    },
+    {
+      "value": "yes",
+      "transform": {
+        "op": "map_range",
+        "inMin": 0,
+        "inMax": 100,
+        "outMin": 0,
+        "outMax": 1
+      },
+      "result": 0
+    },
+    {
+      "value": "on",
+      "transform": {
+        "op": "map_range",
+        "inMin": 0,
+        "inMax": 100,
+        "outMin": 0,
+        "outMax": 1
+      },
+      "result": 0
+    },
+    {
+      "value": "off",
+      "transform": {
+        "op": "map_range",
+        "inMin": 0,
+        "inMax": 100,
+        "outMin": 0,
+        "outMax": 1
+      },
+      "result": 0
+    },
+    {
+      "value": "0",
+      "transform": {
+        "op": "map_range",
+        "inMin": 0,
+        "inMax": 100,
+        "outMin": 0,
+        "outMax": 1
+      },
+      "result": 0
+    },
+    {
+      "value": " 8 ",
+      "transform": {
+        "op": "map_range",
+        "inMin": 0,
+        "inMax": 100,
+        "outMin": 0,
+        "outMax": 1
+      },
+      "result": 0.08
+    },
+    {
+      "value": "3abc",
+      "transform": {
+        "op": "map_range",
+        "inMin": 0,
+        "inMax": 100,
+        "outMin": 0,
+        "outMax": 1
+      },
+      "result": 0.03
+    },
+    {
+      "value": "-4e2",
+      "transform": {
+        "op": "map_range",
+        "inMin": 0,
+        "inMax": 100,
+        "outMin": 0,
+        "outMax": 1
+      },
+      "result": -4
+    },
+    {
+      "value": "Infinity",
+      "transform": {
+        "op": "map_range",
+        "inMin": 0,
+        "inMax": 100,
+        "outMin": 0,
+        "outMax": 1
+      },
+      "result": 0
+    },
+    {
+      "value": "NaN",
+      "transform": {
+        "op": "map_range",
+        "inMin": 0,
+        "inMax": 100,
+        "outMin": 0,
+        "outMax": 1
+      },
+      "result": 0
+    },
+    {
+      "value": [],
+      "transform": {
+        "op": "map_range",
+        "inMin": 0,
+        "inMax": 100,
+        "outMin": 0,
+        "outMax": 1
+      },
+      "result": 0
+    },
+    {
+      "value": [
+        {
+          "t": 0,
+          "v": 4
+        },
+        {
+          "t": 1,
+          "v": 9
+        }
+      ],
+      "transform": {
+        "op": "map_range",
+        "inMin": 0,
+        "inMax": 100,
+        "outMin": 0,
+        "outMax": 1
+      },
+      "result": 0.09
+    },
+    {
+      "value": [
+        {
+          "t": 5,
+          "v": -2.5
+        }
+      ],
+      "transform": {
+        "op": "map_range",
+        "inMin": 0,
+        "inMax": 100,
+        "outMin": 0,
+        "outMax": 1
+      },
+      "result": -0.025
+    },
+    {
+      "value": 0,
+      "transform": {
+        "op": "map_range",
+        "inMin": 5,
+        "inMax": 5,
+        "outMin": 0,
+        "outMax": 1
+      },
+      "result": 0
+    },
+    {
+      "value": 1,
+      "transform": {
+        "op": "map_range",
+        "inMin": 5,
+        "inMax": 5,
+        "outMin": 0,
+        "outMax": 1
+      },
+      "result": 0
+    },
+    {
+      "value": -1,
+      "transform": {
+        "op": "map_range",
+        "inMin": 5,
+        "inMax": 5,
+        "outMin": 0,
+        "outMax": 1
+      },
+      "result": 0
+    },
+    {
+      "value": 7,
+      "transform": {
+        "op": "map_range",
+        "inMin": 5,
+        "inMax": 5,
+        "outMin": 0,
+        "outMax": 1
+      },
+      "result": 0
+    },
+    {
+      "value": 2.5,
+      "transform": {
+        "op": "map_range",
+        "inMin": 5,
+        "inMax": 5,
+        "outMin": 0,
+        "outMax": 1
+      },
+      "result": 0
+    },
+    {
+      "value": 2.6,
+      "transform": {
+        "op": "map_range",
+        "inMin": 5,
+        "inMax": 5,
+        "outMin": 0,
+        "outMax": 1
+      },
+      "result": 0
+    },
+    {
+      "value": -2.5,
+      "transform": {
+        "op": "map_range",
+        "inMin": 5,
+        "inMax": 5,
+        "outMin": 0,
+        "outMax": 1
+      },
+      "result": 0
+    },
+    {
+      "value": 0.5,
+      "transform": {
+        "op": "map_range",
+        "inMin": 5,
+        "inMax": 5,
+        "outMin": 0,
+        "outMax": 1
+      },
+      "result": 0
+    },
+    {
+      "value": 4.9,
+      "transform": {
+        "op": "map_range",
+        "inMin": 5,
+        "inMax": 5,
+        "outMin": 0,
+        "outMax": 1
+      },
+      "result": 0
+    },
+    {
+      "value": 5,
+      "transform": {
+        "op": "map_range",
+        "inMin": 5,
+        "inMax": 5,
+        "outMin": 0,
+        "outMax": 1
+      },
+      "result": 0
+    },
+    {
+      "value": 10,
+      "transform": {
+        "op": "map_range",
+        "inMin": 5,
+        "inMax": 5,
+        "outMin": 0,
+        "outMax": 1
+      },
+      "result": 0
+    },
+    {
+      "value": 50,
+      "transform": {
+        "op": "map_range",
+        "inMin": 5,
+        "inMax": 5,
+        "outMin": 0,
+        "outMax": 1
+      },
+      "result": 0
+    },
+    {
+      "value": 150,
+      "transform": {
+        "op": "map_range",
+        "inMin": 5,
+        "inMax": 5,
+        "outMin": 0,
+        "outMax": 1
+      },
+      "result": 0
+    },
+    {
+      "value": 1e+21,
+      "transform": {
+        "op": "map_range",
+        "inMin": 5,
+        "inMax": 5,
+        "outMin": 0,
+        "outMax": 1
+      },
+      "result": 0
+    },
+    {
+      "value": 1.7976931348623157e+308,
+      "transform": {
+        "op": "map_range",
+        "inMin": 5,
+        "inMax": 5,
+        "outMin": 0,
+        "outMax": 1
+      },
+      "result": 0
+    },
+    {
+      "value": true,
+      "transform": {
+        "op": "map_range",
+        "inMin": 5,
+        "inMax": 5,
+        "outMin": 0,
+        "outMax": 1
+      },
+      "result": 0
+    },
+    {
+      "value": false,
+      "transform": {
+        "op": "map_range",
+        "inMin": 5,
+        "inMax": 5,
+        "outMin": 0,
+        "outMax": 1
+      },
+      "result": 0
+    },
+    {
+      "value": "",
+      "transform": {
+        "op": "map_range",
+        "inMin": 5,
+        "inMax": 5,
+        "outMin": 0,
+        "outMax": 1
+      },
+      "result": 0
+    },
+    {
+      "value": "12.5",
+      "transform": {
+        "op": "map_range",
+        "inMin": 5,
+        "inMax": 5,
+        "outMin": 0,
+        "outMax": 1
+      },
+      "result": 0
+    },
+    {
+      "value": "not a number",
+      "transform": {
+        "op": "map_range",
+        "inMin": 5,
+        "inMax": 5,
+        "outMin": 0,
+        "outMax": 1
+      },
+      "result": 0
+    },
+    {
+      "value": "1",
+      "transform": {
+        "op": "map_range",
+        "inMin": 5,
+        "inMax": 5,
+        "outMin": 0,
+        "outMax": 1
+      },
+      "result": 0
+    },
+    {
+      "value": "true",
+      "transform": {
+        "op": "map_range",
+        "inMin": 5,
+        "inMax": 5,
+        "outMin": 0,
+        "outMax": 1
+      },
+      "result": 0
+    },
+    {
+      "value": "yes",
+      "transform": {
+        "op": "map_range",
+        "inMin": 5,
+        "inMax": 5,
+        "outMin": 0,
+        "outMax": 1
+      },
+      "result": 0
+    },
+    {
+      "value": "on",
+      "transform": {
+        "op": "map_range",
+        "inMin": 5,
+        "inMax": 5,
+        "outMin": 0,
+        "outMax": 1
+      },
+      "result": 0
+    },
+    {
+      "value": "off",
+      "transform": {
+        "op": "map_range",
+        "inMin": 5,
+        "inMax": 5,
+        "outMin": 0,
+        "outMax": 1
+      },
+      "result": 0
+    },
+    {
+      "value": "0",
+      "transform": {
+        "op": "map_range",
+        "inMin": 5,
+        "inMax": 5,
+        "outMin": 0,
+        "outMax": 1
+      },
+      "result": 0
+    },
+    {
+      "value": " 8 ",
+      "transform": {
+        "op": "map_range",
+        "inMin": 5,
+        "inMax": 5,
+        "outMin": 0,
+        "outMax": 1
+      },
+      "result": 0
+    },
+    {
+      "value": "3abc",
+      "transform": {
+        "op": "map_range",
+        "inMin": 5,
+        "inMax": 5,
+        "outMin": 0,
+        "outMax": 1
+      },
+      "result": 0
+    },
+    {
+      "value": "-4e2",
+      "transform": {
+        "op": "map_range",
+        "inMin": 5,
+        "inMax": 5,
+        "outMin": 0,
+        "outMax": 1
+      },
+      "result": 0
+    },
+    {
+      "value": "Infinity",
+      "transform": {
+        "op": "map_range",
+        "inMin": 5,
+        "inMax": 5,
+        "outMin": 0,
+        "outMax": 1
+      },
+      "result": 0
+    },
+    {
+      "value": "NaN",
+      "transform": {
+        "op": "map_range",
+        "inMin": 5,
+        "inMax": 5,
+        "outMin": 0,
+        "outMax": 1
+      },
+      "result": 0
+    },
+    {
+      "value": [],
+      "transform": {
+        "op": "map_range",
+        "inMin": 5,
+        "inMax": 5,
+        "outMin": 0,
+        "outMax": 1
+      },
+      "result": 0
+    },
+    {
+      "value": [
+        {
+          "t": 0,
+          "v": 4
+        },
+        {
+          "t": 1,
+          "v": 9
+        }
+      ],
+      "transform": {
+        "op": "map_range",
+        "inMin": 5,
+        "inMax": 5,
+        "outMin": 0,
+        "outMax": 1
+      },
+      "result": 0
+    },
+    {
+      "value": [
+        {
+          "t": 5,
+          "v": -2.5
+        }
+      ],
+      "transform": {
+        "op": "map_range",
+        "inMin": 5,
+        "inMax": 5,
+        "outMin": 0,
+        "outMax": 1
+      },
+      "result": 0
+    },
+    {
+      "value": 0,
+      "transform": {
+        "op": "map_range",
+        "inMin": 100,
+        "inMax": 0,
+        "outMin": -1,
+        "outMax": 1
+      },
+      "result": 1
+    },
+    {
+      "value": 1,
+      "transform": {
+        "op": "map_range",
+        "inMin": 100,
+        "inMax": 0,
+        "outMin": -1,
+        "outMax": 1
+      },
+      "result": 0.98
+    },
+    {
+      "value": -1,
+      "transform": {
+        "op": "map_range",
+        "inMin": 100,
+        "inMax": 0,
+        "outMin": -1,
+        "outMax": 1
+      },
+      "result": 1.02
+    },
+    {
+      "value": 7,
+      "transform": {
+        "op": "map_range",
+        "inMin": 100,
+        "inMax": 0,
+        "outMin": -1,
+        "outMax": 1
+      },
+      "result": 0.8600000000000001
+    },
+    {
+      "value": 2.5,
+      "transform": {
+        "op": "map_range",
+        "inMin": 100,
+        "inMax": 0,
+        "outMin": -1,
+        "outMax": 1
+      },
+      "result": 0.95
+    },
+    {
+      "value": 2.6,
+      "transform": {
+        "op": "map_range",
+        "inMin": 100,
+        "inMax": 0,
+        "outMin": -1,
+        "outMax": 1
+      },
+      "result": 0.9480000000000002
+    },
+    {
+      "value": -2.5,
+      "transform": {
+        "op": "map_range",
+        "inMin": 100,
+        "inMax": 0,
+        "outMin": -1,
+        "outMax": 1
+      },
+      "result": 1.0499999999999998
+    },
+    {
+      "value": 0.5,
+      "transform": {
+        "op": "map_range",
+        "inMin": 100,
+        "inMax": 0,
+        "outMin": -1,
+        "outMax": 1
+      },
+      "result": 0.99
+    },
+    {
+      "value": 4.9,
+      "transform": {
+        "op": "map_range",
+        "inMin": 100,
+        "inMax": 0,
+        "outMin": -1,
+        "outMax": 1
+      },
+      "result": 0.9019999999999999
+    },
+    {
+      "value": 5,
+      "transform": {
+        "op": "map_range",
+        "inMin": 100,
+        "inMax": 0,
+        "outMin": -1,
+        "outMax": 1
+      },
+      "result": 0.8999999999999999
+    },
+    {
+      "value": 10,
+      "transform": {
+        "op": "map_range",
+        "inMin": 100,
+        "inMax": 0,
+        "outMin": -1,
+        "outMax": 1
+      },
+      "result": 0.8
+    },
+    {
+      "value": 50,
+      "transform": {
+        "op": "map_range",
+        "inMin": 100,
+        "inMax": 0,
+        "outMin": -1,
+        "outMax": 1
+      },
+      "result": 0
+    },
+    {
+      "value": 150,
+      "transform": {
+        "op": "map_range",
+        "inMin": 100,
+        "inMax": 0,
+        "outMin": -1,
+        "outMax": 1
+      },
+      "result": -2
+    },
+    {
+      "value": 1e+21,
+      "transform": {
+        "op": "map_range",
+        "inMin": 100,
+        "inMax": 0,
+        "outMin": -1,
+        "outMax": 1
+      },
+      "result": -20000000000000000000
+    },
+    {
+      "value": 1.7976931348623157e+308,
+      "transform": {
+        "op": "map_range",
+        "inMin": 100,
+        "inMax": 0,
+        "outMin": -1,
+        "outMax": 1
+      },
+      "result": -3.595386269724631e+306
+    },
+    {
+      "value": true,
+      "transform": {
+        "op": "map_range",
+        "inMin": 100,
+        "inMax": 0,
+        "outMin": -1,
+        "outMax": 1
+      },
+      "result": 0.98
+    },
+    {
+      "value": false,
+      "transform": {
+        "op": "map_range",
+        "inMin": 100,
+        "inMax": 0,
+        "outMin": -1,
+        "outMax": 1
+      },
+      "result": 1
+    },
+    {
+      "value": "",
+      "transform": {
+        "op": "map_range",
+        "inMin": 100,
+        "inMax": 0,
+        "outMin": -1,
+        "outMax": 1
+      },
+      "result": 1
+    },
+    {
+      "value": "12.5",
+      "transform": {
+        "op": "map_range",
+        "inMin": 100,
+        "inMax": 0,
+        "outMin": -1,
+        "outMax": 1
+      },
+      "result": 0.75
+    },
+    {
+      "value": "not a number",
+      "transform": {
+        "op": "map_range",
+        "inMin": 100,
+        "inMax": 0,
+        "outMin": -1,
+        "outMax": 1
+      },
+      "result": 1
+    },
+    {
+      "value": "1",
+      "transform": {
+        "op": "map_range",
+        "inMin": 100,
+        "inMax": 0,
+        "outMin": -1,
+        "outMax": 1
+      },
+      "result": 0.98
+    },
+    {
+      "value": "true",
+      "transform": {
+        "op": "map_range",
+        "inMin": 100,
+        "inMax": 0,
+        "outMin": -1,
+        "outMax": 1
+      },
+      "result": 1
+    },
+    {
+      "value": "yes",
+      "transform": {
+        "op": "map_range",
+        "inMin": 100,
+        "inMax": 0,
+        "outMin": -1,
+        "outMax": 1
+      },
+      "result": 1
+    },
+    {
+      "value": "on",
+      "transform": {
+        "op": "map_range",
+        "inMin": 100,
+        "inMax": 0,
+        "outMin": -1,
+        "outMax": 1
+      },
+      "result": 1
+    },
+    {
+      "value": "off",
+      "transform": {
+        "op": "map_range",
+        "inMin": 100,
+        "inMax": 0,
+        "outMin": -1,
+        "outMax": 1
+      },
+      "result": 1
+    },
+    {
+      "value": "0",
+      "transform": {
+        "op": "map_range",
+        "inMin": 100,
+        "inMax": 0,
+        "outMin": -1,
+        "outMax": 1
+      },
+      "result": 1
+    },
+    {
+      "value": " 8 ",
+      "transform": {
+        "op": "map_range",
+        "inMin": 100,
+        "inMax": 0,
+        "outMin": -1,
+        "outMax": 1
+      },
+      "result": 0.8400000000000001
+    },
+    {
+      "value": "3abc",
+      "transform": {
+        "op": "map_range",
+        "inMin": 100,
+        "inMax": 0,
+        "outMin": -1,
+        "outMax": 1
+      },
+      "result": 0.94
+    },
+    {
+      "value": "-4e2",
+      "transform": {
+        "op": "map_range",
+        "inMin": 100,
+        "inMax": 0,
+        "outMin": -1,
+        "outMax": 1
+      },
+      "result": 9
+    },
+    {
+      "value": "Infinity",
+      "transform": {
+        "op": "map_range",
+        "inMin": 100,
+        "inMax": 0,
+        "outMin": -1,
+        "outMax": 1
+      },
+      "result": 1
+    },
+    {
+      "value": "NaN",
+      "transform": {
+        "op": "map_range",
+        "inMin": 100,
+        "inMax": 0,
+        "outMin": -1,
+        "outMax": 1
+      },
+      "result": 1
+    },
+    {
+      "value": [],
+      "transform": {
+        "op": "map_range",
+        "inMin": 100,
+        "inMax": 0,
+        "outMin": -1,
+        "outMax": 1
+      },
+      "result": 1
+    },
+    {
+      "value": [
+        {
+          "t": 0,
+          "v": 4
+        },
+        {
+          "t": 1,
+          "v": 9
+        }
+      ],
+      "transform": {
+        "op": "map_range",
+        "inMin": 100,
+        "inMax": 0,
+        "outMin": -1,
+        "outMax": 1
+      },
+      "result": 0.8200000000000001
+    },
+    {
+      "value": [
+        {
+          "t": 5,
+          "v": -2.5
+        }
+      ],
+      "transform": {
+        "op": "map_range",
+        "inMin": 100,
+        "inMax": 0,
+        "outMin": -1,
+        "outMax": 1
+      },
+      "result": 1.0499999999999998
+    },
+    {
+      "value": 0,
+      "transform": {
+        "op": "round"
+      },
+      "result": 0
+    },
+    {
+      "value": 1,
+      "transform": {
+        "op": "round"
+      },
+      "result": 1
+    },
+    {
+      "value": -1,
+      "transform": {
+        "op": "round"
+      },
+      "result": -1
+    },
+    {
+      "value": 7,
+      "transform": {
+        "op": "round"
+      },
+      "result": 7
+    },
+    {
+      "value": 2.5,
+      "transform": {
+        "op": "round"
+      },
+      "result": 3
+    },
+    {
+      "value": 2.6,
+      "transform": {
+        "op": "round"
+      },
+      "result": 3
+    },
+    {
+      "value": -2.5,
+      "transform": {
+        "op": "round"
+      },
+      "result": -2
+    },
+    {
+      "value": 0.5,
+      "transform": {
+        "op": "round"
+      },
+      "result": 1
+    },
+    {
+      "value": 4.9,
+      "transform": {
+        "op": "round"
+      },
+      "result": 5
+    },
+    {
+      "value": 5,
+      "transform": {
+        "op": "round"
+      },
+      "result": 5
+    },
+    {
+      "value": 10,
+      "transform": {
+        "op": "round"
+      },
+      "result": 10
+    },
+    {
+      "value": 50,
+      "transform": {
+        "op": "round"
+      },
+      "result": 50
+    },
+    {
+      "value": 150,
+      "transform": {
+        "op": "round"
+      },
+      "result": 150
+    },
+    {
+      "value": 1e+21,
+      "transform": {
+        "op": "round"
+      },
+      "result": 1e+21
+    },
+    {
+      "value": 1.7976931348623157e+308,
+      "transform": {
+        "op": "round"
+      },
+      "result": 1.7976931348623157e+308
+    },
+    {
+      "value": true,
+      "transform": {
+        "op": "round"
+      },
+      "result": 1
+    },
+    {
+      "value": false,
+      "transform": {
+        "op": "round"
+      },
+      "result": 0
+    },
+    {
+      "value": "",
+      "transform": {
+        "op": "round"
+      },
+      "result": 0
+    },
+    {
+      "value": "12.5",
+      "transform": {
+        "op": "round"
+      },
+      "result": 13
+    },
+    {
+      "value": "not a number",
+      "transform": {
+        "op": "round"
+      },
+      "result": 0
+    },
+    {
+      "value": "1",
+      "transform": {
+        "op": "round"
+      },
+      "result": 1
+    },
+    {
+      "value": "true",
+      "transform": {
+        "op": "round"
+      },
+      "result": 0
+    },
+    {
+      "value": "yes",
+      "transform": {
+        "op": "round"
+      },
+      "result": 0
+    },
+    {
+      "value": "on",
+      "transform": {
+        "op": "round"
+      },
+      "result": 0
+    },
+    {
+      "value": "off",
+      "transform": {
+        "op": "round"
+      },
+      "result": 0
+    },
+    {
+      "value": "0",
+      "transform": {
+        "op": "round"
+      },
+      "result": 0
+    },
+    {
+      "value": " 8 ",
+      "transform": {
+        "op": "round"
+      },
+      "result": 8
+    },
+    {
+      "value": "3abc",
+      "transform": {
+        "op": "round"
+      },
+      "result": 3
+    },
+    {
+      "value": "-4e2",
+      "transform": {
+        "op": "round"
+      },
+      "result": -400
+    },
+    {
+      "value": "Infinity",
+      "transform": {
+        "op": "round"
+      },
+      "result": 0
+    },
+    {
+      "value": "NaN",
+      "transform": {
+        "op": "round"
+      },
+      "result": 0
+    },
+    {
+      "value": [],
+      "transform": {
+        "op": "round"
+      },
+      "result": 0
+    },
+    {
+      "value": [
+        {
+          "t": 0,
+          "v": 4
+        },
+        {
+          "t": 1,
+          "v": 9
+        }
+      ],
+      "transform": {
+        "op": "round"
+      },
+      "result": 9
+    },
+    {
+      "value": [
+        {
+          "t": 5,
+          "v": -2.5
+        }
+      ],
+      "transform": {
+        "op": "round"
+      },
+      "result": -2
+    },
+    {
+      "value": 0,
+      "transform": {
+        "op": "invert"
+      },
+      "result": 0
+    },
+    {
+      "value": 1,
+      "transform": {
+        "op": "invert"
+      },
+      "result": -1
+    },
+    {
+      "value": -1,
+      "transform": {
+        "op": "invert"
+      },
+      "result": 1
+    },
+    {
+      "value": 7,
+      "transform": {
+        "op": "invert"
+      },
+      "result": -7
+    },
+    {
+      "value": 2.5,
+      "transform": {
+        "op": "invert"
+      },
+      "result": -2.5
+    },
+    {
+      "value": 2.6,
+      "transform": {
+        "op": "invert"
+      },
+      "result": -2.6
+    },
+    {
+      "value": -2.5,
+      "transform": {
+        "op": "invert"
+      },
+      "result": 2.5
+    },
+    {
+      "value": 0.5,
+      "transform": {
+        "op": "invert"
+      },
+      "result": -0.5
+    },
+    {
+      "value": 4.9,
+      "transform": {
+        "op": "invert"
+      },
+      "result": -4.9
+    },
+    {
+      "value": 5,
+      "transform": {
+        "op": "invert"
+      },
+      "result": -5
+    },
+    {
+      "value": 10,
+      "transform": {
+        "op": "invert"
+      },
+      "result": -10
+    },
+    {
+      "value": 50,
+      "transform": {
+        "op": "invert"
+      },
+      "result": -50
+    },
+    {
+      "value": 150,
+      "transform": {
+        "op": "invert"
+      },
+      "result": -150
+    },
+    {
+      "value": 1e+21,
+      "transform": {
+        "op": "invert"
+      },
+      "result": -1e+21
+    },
+    {
+      "value": 1.7976931348623157e+308,
+      "transform": {
+        "op": "invert"
+      },
+      "result": -1.7976931348623157e+308
+    },
+    {
+      "value": true,
+      "transform": {
+        "op": "invert"
+      },
+      "result": false
+    },
+    {
+      "value": false,
+      "transform": {
+        "op": "invert"
+      },
+      "result": true
+    },
+    {
+      "value": "",
+      "transform": {
+        "op": "invert"
+      },
+      "result": 0
+    },
+    {
+      "value": "12.5",
+      "transform": {
+        "op": "invert"
+      },
+      "result": -12.5
+    },
+    {
+      "value": "not a number",
+      "transform": {
+        "op": "invert"
+      },
+      "result": 0
+    },
+    {
+      "value": "1",
+      "transform": {
+        "op": "invert"
+      },
+      "result": -1
+    },
+    {
+      "value": "true",
+      "transform": {
+        "op": "invert"
+      },
+      "result": 0
+    },
+    {
+      "value": "yes",
+      "transform": {
+        "op": "invert"
+      },
+      "result": 0
+    },
+    {
+      "value": "on",
+      "transform": {
+        "op": "invert"
+      },
+      "result": 0
+    },
+    {
+      "value": "off",
+      "transform": {
+        "op": "invert"
+      },
+      "result": 0
+    },
+    {
+      "value": "0",
+      "transform": {
+        "op": "invert"
+      },
+      "result": 0
+    },
+    {
+      "value": " 8 ",
+      "transform": {
+        "op": "invert"
+      },
+      "result": -8
+    },
+    {
+      "value": "3abc",
+      "transform": {
+        "op": "invert"
+      },
+      "result": -3
+    },
+    {
+      "value": "-4e2",
+      "transform": {
+        "op": "invert"
+      },
+      "result": 400
+    },
+    {
+      "value": "Infinity",
+      "transform": {
+        "op": "invert"
+      },
+      "result": 0
+    },
+    {
+      "value": "NaN",
+      "transform": {
+        "op": "invert"
+      },
+      "result": 0
+    },
+    {
+      "value": [],
+      "transform": {
+        "op": "invert"
+      },
+      "result": 0
+    },
+    {
+      "value": [
+        {
+          "t": 0,
+          "v": 4
+        },
+        {
+          "t": 1,
+          "v": 9
+        }
+      ],
+      "transform": {
+        "op": "invert"
+      },
+      "result": -9
+    },
+    {
+      "value": [
+        {
+          "t": 5,
+          "v": -2.5
+        }
+      ],
+      "transform": {
+        "op": "invert"
+      },
+      "result": 2.5
+    },
+    {
+      "value": 0,
+      "transform": {
+        "op": "threshold",
+        "value": 5
+      },
+      "result": false
+    },
+    {
+      "value": 1,
+      "transform": {
+        "op": "threshold",
+        "value": 5
+      },
+      "result": false
+    },
+    {
+      "value": -1,
+      "transform": {
+        "op": "threshold",
+        "value": 5
+      },
+      "result": false
+    },
+    {
+      "value": 7,
+      "transform": {
+        "op": "threshold",
+        "value": 5
+      },
+      "result": true
+    },
+    {
+      "value": 2.5,
+      "transform": {
+        "op": "threshold",
+        "value": 5
+      },
+      "result": false
+    },
+    {
+      "value": 2.6,
+      "transform": {
+        "op": "threshold",
+        "value": 5
+      },
+      "result": false
+    },
+    {
+      "value": -2.5,
+      "transform": {
+        "op": "threshold",
+        "value": 5
+      },
+      "result": false
+    },
+    {
+      "value": 0.5,
+      "transform": {
+        "op": "threshold",
+        "value": 5
+      },
+      "result": false
+    },
+    {
+      "value": 4.9,
+      "transform": {
+        "op": "threshold",
+        "value": 5
+      },
+      "result": false
+    },
+    {
+      "value": 5,
+      "transform": {
+        "op": "threshold",
+        "value": 5
+      },
+      "result": true
+    },
+    {
+      "value": 10,
+      "transform": {
+        "op": "threshold",
+        "value": 5
+      },
+      "result": true
+    },
+    {
+      "value": 50,
+      "transform": {
+        "op": "threshold",
+        "value": 5
+      },
+      "result": true
+    },
+    {
+      "value": 150,
+      "transform": {
+        "op": "threshold",
+        "value": 5
+      },
+      "result": true
+    },
+    {
+      "value": 1e+21,
+      "transform": {
+        "op": "threshold",
+        "value": 5
+      },
+      "result": true
+    },
+    {
+      "value": 1.7976931348623157e+308,
+      "transform": {
+        "op": "threshold",
+        "value": 5
+      },
+      "result": true
+    },
+    {
+      "value": true,
+      "transform": {
+        "op": "threshold",
+        "value": 5
+      },
+      "result": false
+    },
+    {
+      "value": false,
+      "transform": {
+        "op": "threshold",
+        "value": 5
+      },
+      "result": false
+    },
+    {
+      "value": "",
+      "transform": {
+        "op": "threshold",
+        "value": 5
+      },
+      "result": false
+    },
+    {
+      "value": "12.5",
+      "transform": {
+        "op": "threshold",
+        "value": 5
+      },
+      "result": true
+    },
+    {
+      "value": "not a number",
+      "transform": {
+        "op": "threshold",
+        "value": 5
+      },
+      "result": false
+    },
+    {
+      "value": "1",
+      "transform": {
+        "op": "threshold",
+        "value": 5
+      },
+      "result": false
+    },
+    {
+      "value": "true",
+      "transform": {
+        "op": "threshold",
+        "value": 5
+      },
+      "result": false
+    },
+    {
+      "value": "yes",
+      "transform": {
+        "op": "threshold",
+        "value": 5
+      },
+      "result": false
+    },
+    {
+      "value": "on",
+      "transform": {
+        "op": "threshold",
+        "value": 5
+      },
+      "result": false
+    },
+    {
+      "value": "off",
+      "transform": {
+        "op": "threshold",
+        "value": 5
+      },
+      "result": false
+    },
+    {
+      "value": "0",
+      "transform": {
+        "op": "threshold",
+        "value": 5
+      },
+      "result": false
+    },
+    {
+      "value": " 8 ",
+      "transform": {
+        "op": "threshold",
+        "value": 5
+      },
+      "result": true
+    },
+    {
+      "value": "3abc",
+      "transform": {
+        "op": "threshold",
+        "value": 5
+      },
+      "result": false
+    },
+    {
+      "value": "-4e2",
+      "transform": {
+        "op": "threshold",
+        "value": 5
+      },
+      "result": false
+    },
+    {
+      "value": "Infinity",
+      "transform": {
+        "op": "threshold",
+        "value": 5
+      },
+      "result": false
+    },
+    {
+      "value": "NaN",
+      "transform": {
+        "op": "threshold",
+        "value": 5
+      },
+      "result": false
+    },
+    {
+      "value": [],
+      "transform": {
+        "op": "threshold",
+        "value": 5
+      },
+      "result": false
+    },
+    {
+      "value": [
+        {
+          "t": 0,
+          "v": 4
+        },
+        {
+          "t": 1,
+          "v": 9
+        }
+      ],
+      "transform": {
+        "op": "threshold",
+        "value": 5
+      },
+      "result": true
+    },
+    {
+      "value": [
+        {
+          "t": 5,
+          "v": -2.5
+        }
+      ],
+      "transform": {
+        "op": "threshold",
+        "value": 5
+      },
+      "result": false
+    },
+    {
+      "value": 0,
+      "transform": {
+        "op": "threshold",
+        "value": 0
+      },
+      "result": true
+    },
+    {
+      "value": 1,
+      "transform": {
+        "op": "threshold",
+        "value": 0
+      },
+      "result": true
+    },
+    {
+      "value": -1,
+      "transform": {
+        "op": "threshold",
+        "value": 0
+      },
+      "result": false
+    },
+    {
+      "value": 7,
+      "transform": {
+        "op": "threshold",
+        "value": 0
+      },
+      "result": true
+    },
+    {
+      "value": 2.5,
+      "transform": {
+        "op": "threshold",
+        "value": 0
+      },
+      "result": true
+    },
+    {
+      "value": 2.6,
+      "transform": {
+        "op": "threshold",
+        "value": 0
+      },
+      "result": true
+    },
+    {
+      "value": -2.5,
+      "transform": {
+        "op": "threshold",
+        "value": 0
+      },
+      "result": false
+    },
+    {
+      "value": 0.5,
+      "transform": {
+        "op": "threshold",
+        "value": 0
+      },
+      "result": true
+    },
+    {
+      "value": 4.9,
+      "transform": {
+        "op": "threshold",
+        "value": 0
+      },
+      "result": true
+    },
+    {
+      "value": 5,
+      "transform": {
+        "op": "threshold",
+        "value": 0
+      },
+      "result": true
+    },
+    {
+      "value": 10,
+      "transform": {
+        "op": "threshold",
+        "value": 0
+      },
+      "result": true
+    },
+    {
+      "value": 50,
+      "transform": {
+        "op": "threshold",
+        "value": 0
+      },
+      "result": true
+    },
+    {
+      "value": 150,
+      "transform": {
+        "op": "threshold",
+        "value": 0
+      },
+      "result": true
+    },
+    {
+      "value": 1e+21,
+      "transform": {
+        "op": "threshold",
+        "value": 0
+      },
+      "result": true
+    },
+    {
+      "value": 1.7976931348623157e+308,
+      "transform": {
+        "op": "threshold",
+        "value": 0
+      },
+      "result": true
+    },
+    {
+      "value": true,
+      "transform": {
+        "op": "threshold",
+        "value": 0
+      },
+      "result": true
+    },
+    {
+      "value": false,
+      "transform": {
+        "op": "threshold",
+        "value": 0
+      },
+      "result": true
+    },
+    {
+      "value": "",
+      "transform": {
+        "op": "threshold",
+        "value": 0
+      },
+      "result": true
+    },
+    {
+      "value": "12.5",
+      "transform": {
+        "op": "threshold",
+        "value": 0
+      },
+      "result": true
+    },
+    {
+      "value": "not a number",
+      "transform": {
+        "op": "threshold",
+        "value": 0
+      },
+      "result": true
+    },
+    {
+      "value": "1",
+      "transform": {
+        "op": "threshold",
+        "value": 0
+      },
+      "result": true
+    },
+    {
+      "value": "true",
+      "transform": {
+        "op": "threshold",
+        "value": 0
+      },
+      "result": true
+    },
+    {
+      "value": "yes",
+      "transform": {
+        "op": "threshold",
+        "value": 0
+      },
+      "result": true
+    },
+    {
+      "value": "on",
+      "transform": {
+        "op": "threshold",
+        "value": 0
+      },
+      "result": true
+    },
+    {
+      "value": "off",
+      "transform": {
+        "op": "threshold",
+        "value": 0
+      },
+      "result": true
+    },
+    {
+      "value": "0",
+      "transform": {
+        "op": "threshold",
+        "value": 0
+      },
+      "result": true
+    },
+    {
+      "value": " 8 ",
+      "transform": {
+        "op": "threshold",
+        "value": 0
+      },
+      "result": true
+    },
+    {
+      "value": "3abc",
+      "transform": {
+        "op": "threshold",
+        "value": 0
+      },
+      "result": true
+    },
+    {
+      "value": "-4e2",
+      "transform": {
+        "op": "threshold",
+        "value": 0
+      },
+      "result": false
+    },
+    {
+      "value": "Infinity",
+      "transform": {
+        "op": "threshold",
+        "value": 0
+      },
+      "result": true
+    },
+    {
+      "value": "NaN",
+      "transform": {
+        "op": "threshold",
+        "value": 0
+      },
+      "result": true
+    },
+    {
+      "value": [],
+      "transform": {
+        "op": "threshold",
+        "value": 0
+      },
+      "result": true
+    },
+    {
+      "value": [
+        {
+          "t": 0,
+          "v": 4
+        },
+        {
+          "t": 1,
+          "v": 9
+        }
+      ],
+      "transform": {
+        "op": "threshold",
+        "value": 0
+      },
+      "result": true
+    },
+    {
+      "value": [
+        {
+          "t": 5,
+          "v": -2.5
+        }
+      ],
+      "transform": {
+        "op": "threshold",
+        "value": 0
+      },
+      "result": false
+    },
+    {
+      "value": 0,
+      "transform": {
+        "op": "format",
+        "template": "Score: {value} pts"
+      },
+      "result": "Score: 0 pts"
+    },
+    {
+      "value": 1,
+      "transform": {
+        "op": "format",
+        "template": "Score: {value} pts"
+      },
+      "result": "Score: 1 pts"
+    },
+    {
+      "value": -1,
+      "transform": {
+        "op": "format",
+        "template": "Score: {value} pts"
+      },
+      "result": "Score: -1 pts"
+    },
+    {
+      "value": 7,
+      "transform": {
+        "op": "format",
+        "template": "Score: {value} pts"
+      },
+      "result": "Score: 7 pts"
+    },
+    {
+      "value": 2.5,
+      "transform": {
+        "op": "format",
+        "template": "Score: {value} pts"
+      },
+      "result": "Score: 2.5 pts"
+    },
+    {
+      "value": 2.6,
+      "transform": {
+        "op": "format",
+        "template": "Score: {value} pts"
+      },
+      "result": "Score: 2.6 pts"
+    },
+    {
+      "value": -2.5,
+      "transform": {
+        "op": "format",
+        "template": "Score: {value} pts"
+      },
+      "result": "Score: -2.5 pts"
+    },
+    {
+      "value": 0.5,
+      "transform": {
+        "op": "format",
+        "template": "Score: {value} pts"
+      },
+      "result": "Score: 0.5 pts"
+    },
+    {
+      "value": 4.9,
+      "transform": {
+        "op": "format",
+        "template": "Score: {value} pts"
+      },
+      "result": "Score: 4.9 pts"
+    },
+    {
+      "value": 5,
+      "transform": {
+        "op": "format",
+        "template": "Score: {value} pts"
+      },
+      "result": "Score: 5 pts"
+    },
+    {
+      "value": 10,
+      "transform": {
+        "op": "format",
+        "template": "Score: {value} pts"
+      },
+      "result": "Score: 10 pts"
+    },
+    {
+      "value": 50,
+      "transform": {
+        "op": "format",
+        "template": "Score: {value} pts"
+      },
+      "result": "Score: 50 pts"
+    },
+    {
+      "value": 150,
+      "transform": {
+        "op": "format",
+        "template": "Score: {value} pts"
+      },
+      "result": "Score: 150 pts"
+    },
+    {
+      "value": 1e+21,
+      "transform": {
+        "op": "format",
+        "template": "Score: {value} pts"
+      },
+      "result": "Score: 1e+21 pts"
+    },
+    {
+      "value": 1.7976931348623157e+308,
+      "transform": {
+        "op": "format",
+        "template": "Score: {value} pts"
+      },
+      "result": "Score: 1.7976931348623157e+308 pts"
+    },
+    {
+      "value": true,
+      "transform": {
+        "op": "format",
+        "template": "Score: {value} pts"
+      },
+      "result": "Score: true pts"
+    },
+    {
+      "value": false,
+      "transform": {
+        "op": "format",
+        "template": "Score: {value} pts"
+      },
+      "result": "Score: false pts"
+    },
+    {
+      "value": "",
+      "transform": {
+        "op": "format",
+        "template": "Score: {value} pts"
+      },
+      "result": "Score:  pts"
+    },
+    {
+      "value": "12.5",
+      "transform": {
+        "op": "format",
+        "template": "Score: {value} pts"
+      },
+      "result": "Score: 12.5 pts"
+    },
+    {
+      "value": "not a number",
+      "transform": {
+        "op": "format",
+        "template": "Score: {value} pts"
+      },
+      "result": "Score: not a number pts"
+    },
+    {
+      "value": "1",
+      "transform": {
+        "op": "format",
+        "template": "Score: {value} pts"
+      },
+      "result": "Score: 1 pts"
+    },
+    {
+      "value": "true",
+      "transform": {
+        "op": "format",
+        "template": "Score: {value} pts"
+      },
+      "result": "Score: true pts"
+    },
+    {
+      "value": "yes",
+      "transform": {
+        "op": "format",
+        "template": "Score: {value} pts"
+      },
+      "result": "Score: yes pts"
+    },
+    {
+      "value": "on",
+      "transform": {
+        "op": "format",
+        "template": "Score: {value} pts"
+      },
+      "result": "Score: on pts"
+    },
+    {
+      "value": "off",
+      "transform": {
+        "op": "format",
+        "template": "Score: {value} pts"
+      },
+      "result": "Score: off pts"
+    },
+    {
+      "value": "0",
+      "transform": {
+        "op": "format",
+        "template": "Score: {value} pts"
+      },
+      "result": "Score: 0 pts"
+    },
+    {
+      "value": " 8 ",
+      "transform": {
+        "op": "format",
+        "template": "Score: {value} pts"
+      },
+      "result": "Score:  8  pts"
+    },
+    {
+      "value": "3abc",
+      "transform": {
+        "op": "format",
+        "template": "Score: {value} pts"
+      },
+      "result": "Score: 3abc pts"
+    },
+    {
+      "value": "-4e2",
+      "transform": {
+        "op": "format",
+        "template": "Score: {value} pts"
+      },
+      "result": "Score: -4e2 pts"
+    },
+    {
+      "value": "Infinity",
+      "transform": {
+        "op": "format",
+        "template": "Score: {value} pts"
+      },
+      "result": "Score: Infinity pts"
+    },
+    {
+      "value": "NaN",
+      "transform": {
+        "op": "format",
+        "template": "Score: {value} pts"
+      },
+      "result": "Score: NaN pts"
+    },
+    {
+      "value": [],
+      "transform": {
+        "op": "format",
+        "template": "Score: {value} pts"
+      },
+      "result": "Score:  pts"
+    },
+    {
+      "value": [
+        {
+          "t": 0,
+          "v": 4
+        },
+        {
+          "t": 1,
+          "v": 9
+        }
+      ],
+      "transform": {
+        "op": "format",
+        "template": "Score: {value} pts"
+      },
+      "result": "Score: 4, 9 pts"
+    },
+    {
+      "value": [
+        {
+          "t": 5,
+          "v": -2.5
+        }
+      ],
+      "transform": {
+        "op": "format",
+        "template": "Score: {value} pts"
+      },
+      "result": "Score: -2.5 pts"
+    },
+    {
+      "value": 0,
+      "transform": {
+        "op": "format",
+        "template": "{value}{value}"
+      },
+      "result": "00"
+    },
+    {
+      "value": 1,
+      "transform": {
+        "op": "format",
+        "template": "{value}{value}"
+      },
+      "result": "11"
+    },
+    {
+      "value": -1,
+      "transform": {
+        "op": "format",
+        "template": "{value}{value}"
+      },
+      "result": "-1-1"
+    },
+    {
+      "value": 7,
+      "transform": {
+        "op": "format",
+        "template": "{value}{value}"
+      },
+      "result": "77"
+    },
+    {
+      "value": 2.5,
+      "transform": {
+        "op": "format",
+        "template": "{value}{value}"
+      },
+      "result": "2.52.5"
+    },
+    {
+      "value": 2.6,
+      "transform": {
+        "op": "format",
+        "template": "{value}{value}"
+      },
+      "result": "2.62.6"
+    },
+    {
+      "value": -2.5,
+      "transform": {
+        "op": "format",
+        "template": "{value}{value}"
+      },
+      "result": "-2.5-2.5"
+    },
+    {
+      "value": 0.5,
+      "transform": {
+        "op": "format",
+        "template": "{value}{value}"
+      },
+      "result": "0.50.5"
+    },
+    {
+      "value": 4.9,
+      "transform": {
+        "op": "format",
+        "template": "{value}{value}"
+      },
+      "result": "4.94.9"
+    },
+    {
+      "value": 5,
+      "transform": {
+        "op": "format",
+        "template": "{value}{value}"
+      },
+      "result": "55"
+    },
+    {
+      "value": 10,
+      "transform": {
+        "op": "format",
+        "template": "{value}{value}"
+      },
+      "result": "1010"
+    },
+    {
+      "value": 50,
+      "transform": {
+        "op": "format",
+        "template": "{value}{value}"
+      },
+      "result": "5050"
+    },
+    {
+      "value": 150,
+      "transform": {
+        "op": "format",
+        "template": "{value}{value}"
+      },
+      "result": "150150"
+    },
+    {
+      "value": 1e+21,
+      "transform": {
+        "op": "format",
+        "template": "{value}{value}"
+      },
+      "result": "1e+211e+21"
+    },
+    {
+      "value": 1.7976931348623157e+308,
+      "transform": {
+        "op": "format",
+        "template": "{value}{value}"
+      },
+      "result": "1.7976931348623157e+3081.7976931348623157e+308"
+    },
+    {
+      "value": true,
+      "transform": {
+        "op": "format",
+        "template": "{value}{value}"
+      },
+      "result": "truetrue"
+    },
+    {
+      "value": false,
+      "transform": {
+        "op": "format",
+        "template": "{value}{value}"
+      },
+      "result": "falsefalse"
+    },
+    {
+      "value": "",
+      "transform": {
+        "op": "format",
+        "template": "{value}{value}"
+      },
+      "result": ""
+    },
+    {
+      "value": "12.5",
+      "transform": {
+        "op": "format",
+        "template": "{value}{value}"
+      },
+      "result": "12.512.5"
+    },
+    {
+      "value": "not a number",
+      "transform": {
+        "op": "format",
+        "template": "{value}{value}"
+      },
+      "result": "not a numbernot a number"
+    },
+    {
+      "value": "1",
+      "transform": {
+        "op": "format",
+        "template": "{value}{value}"
+      },
+      "result": "11"
+    },
+    {
+      "value": "true",
+      "transform": {
+        "op": "format",
+        "template": "{value}{value}"
+      },
+      "result": "truetrue"
+    },
+    {
+      "value": "yes",
+      "transform": {
+        "op": "format",
+        "template": "{value}{value}"
+      },
+      "result": "yesyes"
+    },
+    {
+      "value": "on",
+      "transform": {
+        "op": "format",
+        "template": "{value}{value}"
+      },
+      "result": "onon"
+    },
+    {
+      "value": "off",
+      "transform": {
+        "op": "format",
+        "template": "{value}{value}"
+      },
+      "result": "offoff"
+    },
+    {
+      "value": "0",
+      "transform": {
+        "op": "format",
+        "template": "{value}{value}"
+      },
+      "result": "00"
+    },
+    {
+      "value": " 8 ",
+      "transform": {
+        "op": "format",
+        "template": "{value}{value}"
+      },
+      "result": " 8  8 "
+    },
+    {
+      "value": "3abc",
+      "transform": {
+        "op": "format",
+        "template": "{value}{value}"
+      },
+      "result": "3abc3abc"
+    },
+    {
+      "value": "-4e2",
+      "transform": {
+        "op": "format",
+        "template": "{value}{value}"
+      },
+      "result": "-4e2-4e2"
+    },
+    {
+      "value": "Infinity",
+      "transform": {
+        "op": "format",
+        "template": "{value}{value}"
+      },
+      "result": "InfinityInfinity"
+    },
+    {
+      "value": "NaN",
+      "transform": {
+        "op": "format",
+        "template": "{value}{value}"
+      },
+      "result": "NaNNaN"
+    },
+    {
+      "value": [],
+      "transform": {
+        "op": "format",
+        "template": "{value}{value}"
+      },
+      "result": ""
+    },
+    {
+      "value": [
+        {
+          "t": 0,
+          "v": 4
+        },
+        {
+          "t": 1,
+          "v": 9
+        }
+      ],
+      "transform": {
+        "op": "format",
+        "template": "{value}{value}"
+      },
+      "result": "4, 94, 9"
+    },
+    {
+      "value": [
+        {
+          "t": 5,
+          "v": -2.5
+        }
+      ],
+      "transform": {
+        "op": "format",
+        "template": "{value}{value}"
+      },
+      "result": "-2.5-2.5"
+    },
+    {
+      "value": 0,
+      "transform": {
+        "op": "format",
+        "template": "no slot"
+      },
+      "result": "no slot"
+    },
+    {
+      "value": 1,
+      "transform": {
+        "op": "format",
+        "template": "no slot"
+      },
+      "result": "no slot"
+    },
+    {
+      "value": -1,
+      "transform": {
+        "op": "format",
+        "template": "no slot"
+      },
+      "result": "no slot"
+    },
+    {
+      "value": 7,
+      "transform": {
+        "op": "format",
+        "template": "no slot"
+      },
+      "result": "no slot"
+    },
+    {
+      "value": 2.5,
+      "transform": {
+        "op": "format",
+        "template": "no slot"
+      },
+      "result": "no slot"
+    },
+    {
+      "value": 2.6,
+      "transform": {
+        "op": "format",
+        "template": "no slot"
+      },
+      "result": "no slot"
+    },
+    {
+      "value": -2.5,
+      "transform": {
+        "op": "format",
+        "template": "no slot"
+      },
+      "result": "no slot"
+    },
+    {
+      "value": 0.5,
+      "transform": {
+        "op": "format",
+        "template": "no slot"
+      },
+      "result": "no slot"
+    },
+    {
+      "value": 4.9,
+      "transform": {
+        "op": "format",
+        "template": "no slot"
+      },
+      "result": "no slot"
+    },
+    {
+      "value": 5,
+      "transform": {
+        "op": "format",
+        "template": "no slot"
+      },
+      "result": "no slot"
+    },
+    {
+      "value": 10,
+      "transform": {
+        "op": "format",
+        "template": "no slot"
+      },
+      "result": "no slot"
+    },
+    {
+      "value": 50,
+      "transform": {
+        "op": "format",
+        "template": "no slot"
+      },
+      "result": "no slot"
+    },
+    {
+      "value": 150,
+      "transform": {
+        "op": "format",
+        "template": "no slot"
+      },
+      "result": "no slot"
+    },
+    {
+      "value": 1e+21,
+      "transform": {
+        "op": "format",
+        "template": "no slot"
+      },
+      "result": "no slot"
+    },
+    {
+      "value": 1.7976931348623157e+308,
+      "transform": {
+        "op": "format",
+        "template": "no slot"
+      },
+      "result": "no slot"
+    },
+    {
+      "value": true,
+      "transform": {
+        "op": "format",
+        "template": "no slot"
+      },
+      "result": "no slot"
+    },
+    {
+      "value": false,
+      "transform": {
+        "op": "format",
+        "template": "no slot"
+      },
+      "result": "no slot"
+    },
+    {
+      "value": "",
+      "transform": {
+        "op": "format",
+        "template": "no slot"
+      },
+      "result": "no slot"
+    },
+    {
+      "value": "12.5",
+      "transform": {
+        "op": "format",
+        "template": "no slot"
+      },
+      "result": "no slot"
+    },
+    {
+      "value": "not a number",
+      "transform": {
+        "op": "format",
+        "template": "no slot"
+      },
+      "result": "no slot"
+    },
+    {
+      "value": "1",
+      "transform": {
+        "op": "format",
+        "template": "no slot"
+      },
+      "result": "no slot"
+    },
+    {
+      "value": "true",
+      "transform": {
+        "op": "format",
+        "template": "no slot"
+      },
+      "result": "no slot"
+    },
+    {
+      "value": "yes",
+      "transform": {
+        "op": "format",
+        "template": "no slot"
+      },
+      "result": "no slot"
+    },
+    {
+      "value": "on",
+      "transform": {
+        "op": "format",
+        "template": "no slot"
+      },
+      "result": "no slot"
+    },
+    {
+      "value": "off",
+      "transform": {
+        "op": "format",
+        "template": "no slot"
+      },
+      "result": "no slot"
+    },
+    {
+      "value": "0",
+      "transform": {
+        "op": "format",
+        "template": "no slot"
+      },
+      "result": "no slot"
+    },
+    {
+      "value": " 8 ",
+      "transform": {
+        "op": "format",
+        "template": "no slot"
+      },
+      "result": "no slot"
+    },
+    {
+      "value": "3abc",
+      "transform": {
+        "op": "format",
+        "template": "no slot"
+      },
+      "result": "no slot"
+    },
+    {
+      "value": "-4e2",
+      "transform": {
+        "op": "format",
+        "template": "no slot"
+      },
+      "result": "no slot"
+    },
+    {
+      "value": "Infinity",
+      "transform": {
+        "op": "format",
+        "template": "no slot"
+      },
+      "result": "no slot"
+    },
+    {
+      "value": "NaN",
+      "transform": {
+        "op": "format",
+        "template": "no slot"
+      },
+      "result": "no slot"
+    },
+    {
+      "value": [],
+      "transform": {
+        "op": "format",
+        "template": "no slot"
+      },
+      "result": "no slot"
+    },
+    {
+      "value": [
+        {
+          "t": 0,
+          "v": 4
+        },
+        {
+          "t": 1,
+          "v": 9
+        }
+      ],
+      "transform": {
+        "op": "format",
+        "template": "no slot"
+      },
+      "result": "no slot"
+    },
+    {
+      "value": [
+        {
+          "t": 5,
+          "v": -2.5
+        }
+      ],
+      "transform": {
+        "op": "format",
+        "template": "no slot"
+      },
+      "result": "no slot"
+    }
+  ],
+  "fieldValues": [
+    {
+      "value": 0,
+      "serialized": "n:0",
+      "bool": false
+    },
+    {
+      "value": 1,
+      "serialized": "n:1",
+      "bool": true
+    },
+    {
+      "value": -1,
+      "serialized": "n:-1",
+      "bool": false
+    },
+    {
+      "value": 7,
+      "serialized": "n:7",
+      "bool": true
+    },
+    {
+      "value": 2.5,
+      "serialized": "n:2.5",
+      "bool": true
+    },
+    {
+      "value": 2.6,
+      "serialized": "n:2.6",
+      "bool": true
+    },
+    {
+      "value": -2.5,
+      "serialized": "n:-2.5",
+      "bool": false
+    },
+    {
+      "value": 0.5,
+      "serialized": "n:0.5",
+      "bool": false
+    },
+    {
+      "value": 4.9,
+      "serialized": "n:4.9",
+      "bool": true
+    },
+    {
+      "value": 5,
+      "serialized": "n:5",
+      "bool": true
+    },
+    {
+      "value": 10,
+      "serialized": "n:10",
+      "bool": true
+    },
+    {
+      "value": 50,
+      "serialized": "n:50",
+      "bool": true
+    },
+    {
+      "value": 150,
+      "serialized": "n:150",
+      "bool": true
+    },
+    {
+      "value": 1e+21,
+      "serialized": "n:1e+21",
+      "bool": true
+    },
+    {
+      "value": 1.7976931348623157e+308,
+      "serialized": "n:1.7976931348623157e+308",
+      "bool": true
+    },
+    {
+      "value": true,
+      "serialized": "b:true",
+      "bool": true
+    },
+    {
+      "value": false,
+      "serialized": "b:false",
+      "bool": false
+    },
+    {
+      "value": "",
+      "serialized": "t:",
+      "bool": false
+    },
+    {
+      "value": "12.5",
+      "serialized": "t:12.5",
+      "bool": false
+    },
+    {
+      "value": "not a number",
+      "serialized": "t:not a number",
+      "bool": false
+    },
+    {
+      "value": "1",
+      "serialized": "t:1",
+      "bool": true
+    },
+    {
+      "value": "true",
+      "serialized": "t:true",
+      "bool": true
+    },
+    {
+      "value": "yes",
+      "serialized": "t:yes",
+      "bool": true
+    },
+    {
+      "value": "on",
+      "serialized": "t:on",
+      "bool": true
+    },
+    {
+      "value": "off",
+      "serialized": "t:off",
+      "bool": false
+    },
+    {
+      "value": "0",
+      "serialized": "t:0",
+      "bool": false
+    },
+    {
+      "value": " 8 ",
+      "serialized": "t: 8 ",
+      "bool": false
+    },
+    {
+      "value": "3abc",
+      "serialized": "t:3abc",
+      "bool": false
+    },
+    {
+      "value": "-4e2",
+      "serialized": "t:-4e2",
+      "bool": false
+    },
+    {
+      "value": "Infinity",
+      "serialized": "t:Infinity",
+      "bool": false
+    },
+    {
+      "value": "NaN",
+      "serialized": "t:NaN",
+      "bool": false
+    },
+    {
+      "value": [],
+      "serialized": "s:",
+      "bool": false
+    },
+    {
+      "value": [
+        {
+          "t": 0,
+          "v": 4
+        },
+        {
+          "t": 1,
+          "v": 9
+        }
+      ],
+      "serialized": "s:0,4;1,9;",
+      "bool": true
+    },
+    {
+      "value": [
+        {
+          "t": 5,
+          "v": -2.5
+        }
+      ],
+      "serialized": "s:5,-2.5;",
+      "bool": true
+    }
+  ],
+  "suggestions": [
+    {
+      "from": "percent",
+      "to": "percent",
+      "transform": null
+    },
+    {
+      "from": "percent",
+      "to": "ratio",
+      "transform": {
+        "op": "scale",
+        "factor": 0.01
+      }
+    },
+    {
+      "from": "percent",
+      "to": "currency",
+      "transform": null
+    },
+    {
+      "from": "percent",
+      "to": "count",
+      "transform": null
+    },
+    {
+      "from": "percent",
+      "to": "duration_s",
+      "transform": null
+    },
+    {
+      "from": "percent",
+      "to": "date_iso",
+      "transform": null
+    },
+    {
+      "from": "percent",
+      "to": "none",
+      "transform": null
+    },
+    {
+      "from": "percent",
+      "to": null,
+      "transform": null
+    },
+    {
+      "from": "ratio",
+      "to": "percent",
+      "transform": {
+        "op": "scale",
+        "factor": 100
+      }
+    },
+    {
+      "from": "ratio",
+      "to": "ratio",
+      "transform": null
+    },
+    {
+      "from": "ratio",
+      "to": "currency",
+      "transform": null
+    },
+    {
+      "from": "ratio",
+      "to": "count",
+      "transform": null
+    },
+    {
+      "from": "ratio",
+      "to": "duration_s",
+      "transform": null
+    },
+    {
+      "from": "ratio",
+      "to": "date_iso",
+      "transform": null
+    },
+    {
+      "from": "ratio",
+      "to": "none",
+      "transform": null
+    },
+    {
+      "from": "ratio",
+      "to": null,
+      "transform": null
+    },
+    {
+      "from": "currency",
+      "to": "percent",
+      "transform": null
+    },
+    {
+      "from": "currency",
+      "to": "ratio",
+      "transform": null
+    },
+    {
+      "from": "currency",
+      "to": "currency",
+      "transform": null
+    },
+    {
+      "from": "currency",
+      "to": "count",
+      "transform": null
+    },
+    {
+      "from": "currency",
+      "to": "duration_s",
+      "transform": null
+    },
+    {
+      "from": "currency",
+      "to": "date_iso",
+      "transform": null
+    },
+    {
+      "from": "currency",
+      "to": "none",
+      "transform": null
+    },
+    {
+      "from": "currency",
+      "to": null,
+      "transform": null
+    },
+    {
+      "from": "count",
+      "to": "percent",
+      "transform": {
+        "op": "clamp",
+        "min": 0,
+        "max": 100
+      }
+    },
+    {
+      "from": "count",
+      "to": "ratio",
+      "transform": null
+    },
+    {
+      "from": "count",
+      "to": "currency",
+      "transform": null
+    },
+    {
+      "from": "count",
+      "to": "count",
+      "transform": null
+    },
+    {
+      "from": "count",
+      "to": "duration_s",
+      "transform": null
+    },
+    {
+      "from": "count",
+      "to": "date_iso",
+      "transform": null
+    },
+    {
+      "from": "count",
+      "to": "none",
+      "transform": null
+    },
+    {
+      "from": "count",
+      "to": null,
+      "transform": null
+    },
+    {
+      "from": "duration_s",
+      "to": "percent",
+      "transform": null
+    },
+    {
+      "from": "duration_s",
+      "to": "ratio",
+      "transform": null
+    },
+    {
+      "from": "duration_s",
+      "to": "currency",
+      "transform": null
+    },
+    {
+      "from": "duration_s",
+      "to": "count",
+      "transform": null
+    },
+    {
+      "from": "duration_s",
+      "to": "duration_s",
+      "transform": null
+    },
+    {
+      "from": "duration_s",
+      "to": "date_iso",
+      "transform": null
+    },
+    {
+      "from": "duration_s",
+      "to": "none",
+      "transform": null
+    },
+    {
+      "from": "duration_s",
+      "to": null,
+      "transform": null
+    },
+    {
+      "from": "date_iso",
+      "to": "percent",
+      "transform": null
+    },
+    {
+      "from": "date_iso",
+      "to": "ratio",
+      "transform": null
+    },
+    {
+      "from": "date_iso",
+      "to": "currency",
+      "transform": null
+    },
+    {
+      "from": "date_iso",
+      "to": "count",
+      "transform": null
+    },
+    {
+      "from": "date_iso",
+      "to": "duration_s",
+      "transform": null
+    },
+    {
+      "from": "date_iso",
+      "to": "date_iso",
+      "transform": null
+    },
+    {
+      "from": "date_iso",
+      "to": "none",
+      "transform": null
+    },
+    {
+      "from": "date_iso",
+      "to": null,
+      "transform": null
+    },
+    {
+      "from": "none",
+      "to": "percent",
+      "transform": null
+    },
+    {
+      "from": "none",
+      "to": "ratio",
+      "transform": null
+    },
+    {
+      "from": "none",
+      "to": "currency",
+      "transform": null
+    },
+    {
+      "from": "none",
+      "to": "count",
+      "transform": null
+    },
+    {
+      "from": "none",
+      "to": "duration_s",
+      "transform": null
+    },
+    {
+      "from": "none",
+      "to": "date_iso",
+      "transform": null
+    },
+    {
+      "from": "none",
+      "to": "none",
+      "transform": null
+    },
+    {
+      "from": "none",
+      "to": null,
+      "transform": null
+    },
+    {
+      "from": null,
+      "to": "percent",
+      "transform": null
+    },
+    {
+      "from": null,
+      "to": "ratio",
+      "transform": null
+    },
+    {
+      "from": null,
+      "to": "currency",
+      "transform": null
+    },
+    {
+      "from": null,
+      "to": "count",
+      "transform": null
+    },
+    {
+      "from": null,
+      "to": "duration_s",
+      "transform": null
+    },
+    {
+      "from": null,
+      "to": "date_iso",
+      "transform": null
+    },
+    {
+      "from": null,
+      "to": "none",
+      "transform": null
+    },
+    {
+      "from": null,
+      "to": null,
+      "transform": null
+    }
+  ]
+}

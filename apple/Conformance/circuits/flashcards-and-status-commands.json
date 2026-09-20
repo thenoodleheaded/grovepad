@@ -1,0 +1,381 @@
+{
+  "name": "flashcards-and-status-commands",
+  "widgets": {
+    "toggle": {
+      "id": "toggle",
+      "type": "toggle",
+      "title": "toggle",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 280,
+        "height": 200
+      },
+      "data": {
+        "label": "Condition",
+        "value": false
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "deck": {
+      "id": "deck",
+      "type": "flashcards",
+      "title": "deck",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 280,
+        "height": 200
+      },
+      "data": {
+        "cards": [
+          {
+            "id": "f1",
+            "front": "a",
+            "back": "b"
+          },
+          {
+            "id": "f2",
+            "front": "c",
+            "back": "d"
+          }
+        ],
+        "current": 1,
+        "mode": "flashcards"
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "status": {
+      "id": "status",
+      "type": "status",
+      "title": "status",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 280,
+        "height": 200
+      },
+      "data": {
+        "label": "Status",
+        "value": "not_started"
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "rating": {
+      "id": "rating",
+      "type": "rating",
+      "title": "rating",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 280,
+        "height": 200
+      },
+      "data": {
+        "label": "Rate",
+        "value": 4,
+        "skin": "stars"
+      },
+      "metadata": {
+        "badges": []
+      }
+    }
+  },
+  "connections": {
+    "next": {
+      "id": "next",
+      "enabled": true,
+      "fromId": "toggle",
+      "fromField": "value",
+      "toId": "deck",
+      "kind": "trigger",
+      "command": "increment",
+      "edge": "rising"
+    },
+    "done": {
+      "id": "done",
+      "enabled": true,
+      "fromId": "toggle",
+      "fromField": "value",
+      "toId": "status",
+      "kind": "trigger",
+      "command": "check_all",
+      "edge": "rising"
+    },
+    "clear": {
+      "id": "clear",
+      "enabled": true,
+      "fromId": "toggle",
+      "fromField": "value",
+      "toId": "rating",
+      "kind": "trigger",
+      "command": "reset",
+      "edge": "falling"
+    },
+    "progress": {
+      "id": "progress",
+      "enabled": true,
+      "fromId": "status",
+      "fromField": "progress",
+      "toId": "rating",
+      "kind": "value",
+      "toField": "value",
+      "transform": {
+        "op": "scale",
+        "factor": 0.05
+      }
+    }
+  },
+  "steps": [
+    {
+      "label": "baseline",
+      "seeds": [
+        "toggle",
+        "status"
+      ],
+      "baselineOnly": true,
+      "expect": {
+        "writes": {},
+        "firedIds": [],
+        "executeRequests": [],
+        "memory": {
+          "next": {
+            "serialized": "b:false",
+            "bool": false
+          },
+          "done": {
+            "serialized": "b:false",
+            "bool": false
+          },
+          "clear": {
+            "serialized": "b:false",
+            "bool": false
+          },
+          "progress": {
+            "serialized": "n:0",
+            "bool": false
+          }
+        },
+        "widgetsAfter": {
+          "toggle": {
+            "label": "Condition",
+            "value": false
+          },
+          "deck": {
+            "cards": [
+              {
+                "id": "f1",
+                "front": "a",
+                "back": "b"
+              },
+              {
+                "id": "f2",
+                "front": "c",
+                "back": "d"
+              }
+            ],
+            "current": 1,
+            "mode": "flashcards"
+          },
+          "status": {
+            "label": "Status",
+            "value": "not_started"
+          },
+          "rating": {
+            "label": "Rate",
+            "value": 4,
+            "skin": "stars"
+          }
+        }
+      }
+    },
+    {
+      "label": "on",
+      "seeds": [
+        "toggle"
+      ],
+      "edits": {
+        "toggle": {
+          "label": "Condition",
+          "value": true
+        }
+      },
+      "expect": {
+        "writes": {
+          "deck": {
+            "cards": [
+              {
+                "id": "f1",
+                "front": "a",
+                "back": "b"
+              },
+              {
+                "id": "f2",
+                "front": "c",
+                "back": "d"
+              }
+            ],
+            "current": 0,
+            "mode": "flashcards"
+          },
+          "status": {
+            "label": "Status",
+            "value": "done"
+          },
+          "rating": {
+            "label": "Rate",
+            "value": 5,
+            "skin": "stars"
+          }
+        },
+        "firedIds": [
+          "next",
+          "done",
+          "progress"
+        ],
+        "executeRequests": [],
+        "memory": {
+          "next": {
+            "serialized": "b:true",
+            "bool": true
+          },
+          "done": {
+            "serialized": "b:true",
+            "bool": true
+          },
+          "clear": {
+            "serialized": "b:true",
+            "bool": true
+          },
+          "progress": {
+            "serialized": "n:5",
+            "bool": true
+          }
+        },
+        "widgetsAfter": {
+          "toggle": {
+            "label": "Condition",
+            "value": true
+          },
+          "deck": {
+            "cards": [
+              {
+                "id": "f1",
+                "front": "a",
+                "back": "b"
+              },
+              {
+                "id": "f2",
+                "front": "c",
+                "back": "d"
+              }
+            ],
+            "current": 0,
+            "mode": "flashcards"
+          },
+          "status": {
+            "label": "Status",
+            "value": "done"
+          },
+          "rating": {
+            "label": "Rate",
+            "value": 5,
+            "skin": "stars"
+          }
+        }
+      }
+    },
+    {
+      "label": "off",
+      "seeds": [
+        "toggle"
+      ],
+      "edits": {
+        "toggle": {
+          "label": "Condition",
+          "value": false
+        }
+      },
+      "expect": {
+        "writes": {
+          "rating": {
+            "label": "Rate",
+            "value": 0,
+            "skin": "stars"
+          }
+        },
+        "firedIds": [
+          "clear"
+        ],
+        "executeRequests": [],
+        "memory": {
+          "next": {
+            "serialized": "b:false",
+            "bool": false
+          },
+          "done": {
+            "serialized": "b:false",
+            "bool": false
+          },
+          "clear": {
+            "serialized": "b:false",
+            "bool": false
+          },
+          "progress": {
+            "serialized": "n:5",
+            "bool": true
+          }
+        },
+        "widgetsAfter": {
+          "toggle": {
+            "label": "Condition",
+            "value": false
+          },
+          "deck": {
+            "cards": [
+              {
+                "id": "f1",
+                "front": "a",
+                "back": "b"
+              },
+              {
+                "id": "f2",
+                "front": "c",
+                "back": "d"
+              }
+            ],
+            "current": 0,
+            "mode": "flashcards"
+          },
+          "status": {
+            "label": "Status",
+            "value": "done"
+          },
+          "rating": {
+            "label": "Rate",
+            "value": 0,
+            "skin": "stars"
+          }
+        }
+      }
+    }
+  ]
+}

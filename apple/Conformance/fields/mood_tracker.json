@@ -1,0 +1,96 @@
+{
+  "outputs": [
+    {
+      "key": "logged_count",
+      "label": "Days logged",
+      "valueType": "number",
+      "unit": "count",
+      "index": 0,
+      "timeSensitive": false
+    }
+  ],
+  "inputs": [
+    {
+      "key": "reset",
+      "label": "Clear the week",
+      "kind": "command",
+      "valueType": null,
+      "unit": null,
+      "acceptsPayload": false,
+      "index": 0
+    }
+  ],
+  "samples": [
+    {
+      "days": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    },
+    {
+      "days": [
+        3,
+        null,
+        5,
+        1,
+        null,
+        null,
+        4
+      ]
+    }
+  ],
+  "gets": [
+    {
+      "sample": 0,
+      "key": "logged_count",
+      "value": 0
+    },
+    {
+      "sample": 1,
+      "key": "logged_count",
+      "value": 4
+    }
+  ],
+  "sets": [],
+  "commands": [
+    {
+      "sample": 0,
+      "key": "reset",
+      "payload": null,
+      "hasPayload": false,
+      "data": {
+        "days": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      }
+    },
+    {
+      "sample": 1,
+      "key": "reset",
+      "payload": null,
+      "hasPayload": false,
+      "data": {
+        "days": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      }
+    }
+  ]
+}

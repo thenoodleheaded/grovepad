@@ -1,0 +1,1477 @@
+{
+  "outputs": [
+    {
+      "key": "value",
+      "label": "Number value",
+      "valueType": "number",
+      "unit": null,
+      "index": 0,
+      "timeSensitive": false
+    }
+  ],
+  "inputs": [
+    {
+      "key": "value",
+      "label": "Number value",
+      "kind": "field",
+      "valueType": "number",
+      "unit": null,
+      "acceptsPayload": false,
+      "index": 0
+    },
+    {
+      "key": "increment",
+      "label": "Increase by step",
+      "kind": "command",
+      "valueType": null,
+      "unit": null,
+      "acceptsPayload": false,
+      "index": 1
+    },
+    {
+      "key": "decrement",
+      "label": "Decrease by step",
+      "kind": "command",
+      "valueType": null,
+      "unit": null,
+      "acceptsPayload": false,
+      "index": 2
+    },
+    {
+      "key": "reset",
+      "label": "Reset to minimum",
+      "kind": "command",
+      "valueType": null,
+      "unit": null,
+      "acceptsPayload": false,
+      "index": 3
+    }
+  ],
+  "samples": [
+    {
+      "label": "Value",
+      "value": 0,
+      "min": 0,
+      "max": 100,
+      "step": 1
+    },
+    {
+      "label": "Value",
+      "value": 50,
+      "min": 10,
+      "max": 20,
+      "step": 2.5
+    },
+    {
+      "label": "Value",
+      "value": 5,
+      "min": 20,
+      "max": 10,
+      "step": 0
+    }
+  ],
+  "gets": [
+    {
+      "sample": 0,
+      "key": "value",
+      "value": 0
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": 50
+    },
+    {
+      "sample": 2,
+      "key": "value",
+      "value": 5
+    }
+  ],
+  "sets": [
+    {
+      "sample": 0,
+      "key": "value",
+      "value": 0,
+      "data": {
+        "label": "Value",
+        "value": 0,
+        "min": 0,
+        "max": 100,
+        "step": 1
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": 1,
+      "data": {
+        "label": "Value",
+        "value": 1,
+        "min": 0,
+        "max": 100,
+        "step": 1
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": -1,
+      "data": {
+        "label": "Value",
+        "value": 0,
+        "min": 0,
+        "max": 100,
+        "step": 1
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": 7,
+      "data": {
+        "label": "Value",
+        "value": 7,
+        "min": 0,
+        "max": 100,
+        "step": 1
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": 2.5,
+      "data": {
+        "label": "Value",
+        "value": 2.5,
+        "min": 0,
+        "max": 100,
+        "step": 1
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": 2.6,
+      "data": {
+        "label": "Value",
+        "value": 2.6,
+        "min": 0,
+        "max": 100,
+        "step": 1
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": -2.5,
+      "data": {
+        "label": "Value",
+        "value": 0,
+        "min": 0,
+        "max": 100,
+        "step": 1
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": 0.5,
+      "data": {
+        "label": "Value",
+        "value": 0.5,
+        "min": 0,
+        "max": 100,
+        "step": 1
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": 4.9,
+      "data": {
+        "label": "Value",
+        "value": 4.9,
+        "min": 0,
+        "max": 100,
+        "step": 1
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": 5,
+      "data": {
+        "label": "Value",
+        "value": 5,
+        "min": 0,
+        "max": 100,
+        "step": 1
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": 10,
+      "data": {
+        "label": "Value",
+        "value": 10,
+        "min": 0,
+        "max": 100,
+        "step": 1
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": 50,
+      "data": {
+        "label": "Value",
+        "value": 50,
+        "min": 0,
+        "max": 100,
+        "step": 1
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": 150,
+      "data": {
+        "label": "Value",
+        "value": 100,
+        "min": 0,
+        "max": 100,
+        "step": 1
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": 1e+21,
+      "data": {
+        "label": "Value",
+        "value": 100,
+        "min": 0,
+        "max": 100,
+        "step": 1
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": 1.7976931348623157e+308,
+      "data": {
+        "label": "Value",
+        "value": 100,
+        "min": 0,
+        "max": 100,
+        "step": 1
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": true,
+      "data": {
+        "label": "Value",
+        "value": 1,
+        "min": 0,
+        "max": 100,
+        "step": 1
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": false,
+      "data": {
+        "label": "Value",
+        "value": 0,
+        "min": 0,
+        "max": 100,
+        "step": 1
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": "",
+      "data": {
+        "label": "Value",
+        "value": 0,
+        "min": 0,
+        "max": 100,
+        "step": 1
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": "12.5",
+      "data": {
+        "label": "Value",
+        "value": 12.5,
+        "min": 0,
+        "max": 100,
+        "step": 1
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": "not a number",
+      "data": {
+        "label": "Value",
+        "value": 0,
+        "min": 0,
+        "max": 100,
+        "step": 1
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": "1",
+      "data": {
+        "label": "Value",
+        "value": 1,
+        "min": 0,
+        "max": 100,
+        "step": 1
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": "true",
+      "data": {
+        "label": "Value",
+        "value": 0,
+        "min": 0,
+        "max": 100,
+        "step": 1
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": "yes",
+      "data": {
+        "label": "Value",
+        "value": 0,
+        "min": 0,
+        "max": 100,
+        "step": 1
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": "on",
+      "data": {
+        "label": "Value",
+        "value": 0,
+        "min": 0,
+        "max": 100,
+        "step": 1
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": "off",
+      "data": {
+        "label": "Value",
+        "value": 0,
+        "min": 0,
+        "max": 100,
+        "step": 1
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": "0",
+      "data": {
+        "label": "Value",
+        "value": 0,
+        "min": 0,
+        "max": 100,
+        "step": 1
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": " 8 ",
+      "data": {
+        "label": "Value",
+        "value": 8,
+        "min": 0,
+        "max": 100,
+        "step": 1
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": "3abc",
+      "data": {
+        "label": "Value",
+        "value": 3,
+        "min": 0,
+        "max": 100,
+        "step": 1
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": "-4e2",
+      "data": {
+        "label": "Value",
+        "value": 0,
+        "min": 0,
+        "max": 100,
+        "step": 1
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": "Infinity",
+      "data": {
+        "label": "Value",
+        "value": 0,
+        "min": 0,
+        "max": 100,
+        "step": 1
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": "NaN",
+      "data": {
+        "label": "Value",
+        "value": 0,
+        "min": 0,
+        "max": 100,
+        "step": 1
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": [],
+      "data": {
+        "label": "Value",
+        "value": 0,
+        "min": 0,
+        "max": 100,
+        "step": 1
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": [
+        {
+          "t": 0,
+          "v": 4
+        },
+        {
+          "t": 1,
+          "v": 9
+        }
+      ],
+      "data": {
+        "label": "Value",
+        "value": 9,
+        "min": 0,
+        "max": 100,
+        "step": 1
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": [
+        {
+          "t": 5,
+          "v": -2.5
+        }
+      ],
+      "data": {
+        "label": "Value",
+        "value": 0,
+        "min": 0,
+        "max": 100,
+        "step": 1
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": 0,
+      "data": {
+        "label": "Value",
+        "value": 10,
+        "min": 10,
+        "max": 20,
+        "step": 2.5
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": 1,
+      "data": {
+        "label": "Value",
+        "value": 10,
+        "min": 10,
+        "max": 20,
+        "step": 2.5
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": -1,
+      "data": {
+        "label": "Value",
+        "value": 10,
+        "min": 10,
+        "max": 20,
+        "step": 2.5
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": 7,
+      "data": {
+        "label": "Value",
+        "value": 10,
+        "min": 10,
+        "max": 20,
+        "step": 2.5
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": 2.5,
+      "data": {
+        "label": "Value",
+        "value": 10,
+        "min": 10,
+        "max": 20,
+        "step": 2.5
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": 2.6,
+      "data": {
+        "label": "Value",
+        "value": 10,
+        "min": 10,
+        "max": 20,
+        "step": 2.5
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": -2.5,
+      "data": {
+        "label": "Value",
+        "value": 10,
+        "min": 10,
+        "max": 20,
+        "step": 2.5
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": 0.5,
+      "data": {
+        "label": "Value",
+        "value": 10,
+        "min": 10,
+        "max": 20,
+        "step": 2.5
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": 4.9,
+      "data": {
+        "label": "Value",
+        "value": 10,
+        "min": 10,
+        "max": 20,
+        "step": 2.5
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": 5,
+      "data": {
+        "label": "Value",
+        "value": 10,
+        "min": 10,
+        "max": 20,
+        "step": 2.5
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": 10,
+      "data": {
+        "label": "Value",
+        "value": 10,
+        "min": 10,
+        "max": 20,
+        "step": 2.5
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": 50,
+      "data": {
+        "label": "Value",
+        "value": 20,
+        "min": 10,
+        "max": 20,
+        "step": 2.5
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": 150,
+      "data": {
+        "label": "Value",
+        "value": 20,
+        "min": 10,
+        "max": 20,
+        "step": 2.5
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": 1e+21,
+      "data": {
+        "label": "Value",
+        "value": 20,
+        "min": 10,
+        "max": 20,
+        "step": 2.5
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": 1.7976931348623157e+308,
+      "data": {
+        "label": "Value",
+        "value": 20,
+        "min": 10,
+        "max": 20,
+        "step": 2.5
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": true,
+      "data": {
+        "label": "Value",
+        "value": 10,
+        "min": 10,
+        "max": 20,
+        "step": 2.5
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": false,
+      "data": {
+        "label": "Value",
+        "value": 10,
+        "min": 10,
+        "max": 20,
+        "step": 2.5
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": "",
+      "data": {
+        "label": "Value",
+        "value": 10,
+        "min": 10,
+        "max": 20,
+        "step": 2.5
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": "12.5",
+      "data": {
+        "label": "Value",
+        "value": 12.5,
+        "min": 10,
+        "max": 20,
+        "step": 2.5
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": "not a number",
+      "data": {
+        "label": "Value",
+        "value": 10,
+        "min": 10,
+        "max": 20,
+        "step": 2.5
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": "1",
+      "data": {
+        "label": "Value",
+        "value": 10,
+        "min": 10,
+        "max": 20,
+        "step": 2.5
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": "true",
+      "data": {
+        "label": "Value",
+        "value": 10,
+        "min": 10,
+        "max": 20,
+        "step": 2.5
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": "yes",
+      "data": {
+        "label": "Value",
+        "value": 10,
+        "min": 10,
+        "max": 20,
+        "step": 2.5
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": "on",
+      "data": {
+        "label": "Value",
+        "value": 10,
+        "min": 10,
+        "max": 20,
+        "step": 2.5
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": "off",
+      "data": {
+        "label": "Value",
+        "value": 10,
+        "min": 10,
+        "max": 20,
+        "step": 2.5
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": "0",
+      "data": {
+        "label": "Value",
+        "value": 10,
+        "min": 10,
+        "max": 20,
+        "step": 2.5
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": " 8 ",
+      "data": {
+        "label": "Value",
+        "value": 10,
+        "min": 10,
+        "max": 20,
+        "step": 2.5
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": "3abc",
+      "data": {
+        "label": "Value",
+        "value": 10,
+        "min": 10,
+        "max": 20,
+        "step": 2.5
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": "-4e2",
+      "data": {
+        "label": "Value",
+        "value": 10,
+        "min": 10,
+        "max": 20,
+        "step": 2.5
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": "Infinity",
+      "data": {
+        "label": "Value",
+        "value": 10,
+        "min": 10,
+        "max": 20,
+        "step": 2.5
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": "NaN",
+      "data": {
+        "label": "Value",
+        "value": 10,
+        "min": 10,
+        "max": 20,
+        "step": 2.5
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": [],
+      "data": {
+        "label": "Value",
+        "value": 10,
+        "min": 10,
+        "max": 20,
+        "step": 2.5
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": [
+        {
+          "t": 0,
+          "v": 4
+        },
+        {
+          "t": 1,
+          "v": 9
+        }
+      ],
+      "data": {
+        "label": "Value",
+        "value": 10,
+        "min": 10,
+        "max": 20,
+        "step": 2.5
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": [
+        {
+          "t": 5,
+          "v": -2.5
+        }
+      ],
+      "data": {
+        "label": "Value",
+        "value": 10,
+        "min": 10,
+        "max": 20,
+        "step": 2.5
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value",
+      "value": 0,
+      "data": {
+        "label": "Value",
+        "value": 10,
+        "min": 20,
+        "max": 10,
+        "step": 0
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value",
+      "value": 1,
+      "data": {
+        "label": "Value",
+        "value": 10,
+        "min": 20,
+        "max": 10,
+        "step": 0
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value",
+      "value": -1,
+      "data": {
+        "label": "Value",
+        "value": 10,
+        "min": 20,
+        "max": 10,
+        "step": 0
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value",
+      "value": 7,
+      "data": {
+        "label": "Value",
+        "value": 10,
+        "min": 20,
+        "max": 10,
+        "step": 0
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value",
+      "value": 2.5,
+      "data": {
+        "label": "Value",
+        "value": 10,
+        "min": 20,
+        "max": 10,
+        "step": 0
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value",
+      "value": 2.6,
+      "data": {
+        "label": "Value",
+        "value": 10,
+        "min": 20,
+        "max": 10,
+        "step": 0
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value",
+      "value": -2.5,
+      "data": {
+        "label": "Value",
+        "value": 10,
+        "min": 20,
+        "max": 10,
+        "step": 0
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value",
+      "value": 0.5,
+      "data": {
+        "label": "Value",
+        "value": 10,
+        "min": 20,
+        "max": 10,
+        "step": 0
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value",
+      "value": 4.9,
+      "data": {
+        "label": "Value",
+        "value": 10,
+        "min": 20,
+        "max": 10,
+        "step": 0
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value",
+      "value": 5,
+      "data": {
+        "label": "Value",
+        "value": 10,
+        "min": 20,
+        "max": 10,
+        "step": 0
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value",
+      "value": 10,
+      "data": {
+        "label": "Value",
+        "value": 10,
+        "min": 20,
+        "max": 10,
+        "step": 0
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value",
+      "value": 50,
+      "data": {
+        "label": "Value",
+        "value": 20,
+        "min": 20,
+        "max": 10,
+        "step": 0
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value",
+      "value": 150,
+      "data": {
+        "label": "Value",
+        "value": 20,
+        "min": 20,
+        "max": 10,
+        "step": 0
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value",
+      "value": 1e+21,
+      "data": {
+        "label": "Value",
+        "value": 20,
+        "min": 20,
+        "max": 10,
+        "step": 0
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value",
+      "value": 1.7976931348623157e+308,
+      "data": {
+        "label": "Value",
+        "value": 20,
+        "min": 20,
+        "max": 10,
+        "step": 0
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value",
+      "value": true,
+      "data": {
+        "label": "Value",
+        "value": 10,
+        "min": 20,
+        "max": 10,
+        "step": 0
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value",
+      "value": false,
+      "data": {
+        "label": "Value",
+        "value": 10,
+        "min": 20,
+        "max": 10,
+        "step": 0
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value",
+      "value": "",
+      "data": {
+        "label": "Value",
+        "value": 10,
+        "min": 20,
+        "max": 10,
+        "step": 0
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value",
+      "value": "12.5",
+      "data": {
+        "label": "Value",
+        "value": 12.5,
+        "min": 20,
+        "max": 10,
+        "step": 0
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value",
+      "value": "not a number",
+      "data": {
+        "label": "Value",
+        "value": 10,
+        "min": 20,
+        "max": 10,
+        "step": 0
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value",
+      "value": "1",
+      "data": {
+        "label": "Value",
+        "value": 10,
+        "min": 20,
+        "max": 10,
+        "step": 0
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value",
+      "value": "true",
+      "data": {
+        "label": "Value",
+        "value": 10,
+        "min": 20,
+        "max": 10,
+        "step": 0
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value",
+      "value": "yes",
+      "data": {
+        "label": "Value",
+        "value": 10,
+        "min": 20,
+        "max": 10,
+        "step": 0
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value",
+      "value": "on",
+      "data": {
+        "label": "Value",
+        "value": 10,
+        "min": 20,
+        "max": 10,
+        "step": 0
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value",
+      "value": "off",
+      "data": {
+        "label": "Value",
+        "value": 10,
+        "min": 20,
+        "max": 10,
+        "step": 0
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value",
+      "value": "0",
+      "data": {
+        "label": "Value",
+        "value": 10,
+        "min": 20,
+        "max": 10,
+        "step": 0
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value",
+      "value": " 8 ",
+      "data": {
+        "label": "Value",
+        "value": 10,
+        "min": 20,
+        "max": 10,
+        "step": 0
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value",
+      "value": "3abc",
+      "data": {
+        "label": "Value",
+        "value": 10,
+        "min": 20,
+        "max": 10,
+        "step": 0
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value",
+      "value": "-4e2",
+      "data": {
+        "label": "Value",
+        "value": 10,
+        "min": 20,
+        "max": 10,
+        "step": 0
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value",
+      "value": "Infinity",
+      "data": {
+        "label": "Value",
+        "value": 10,
+        "min": 20,
+        "max": 10,
+        "step": 0
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value",
+      "value": "NaN",
+      "data": {
+        "label": "Value",
+        "value": 10,
+        "min": 20,
+        "max": 10,
+        "step": 0
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value",
+      "value": [],
+      "data": {
+        "label": "Value",
+        "value": 10,
+        "min": 20,
+        "max": 10,
+        "step": 0
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value",
+      "value": [
+        {
+          "t": 0,
+          "v": 4
+        },
+        {
+          "t": 1,
+          "v": 9
+        }
+      ],
+      "data": {
+        "label": "Value",
+        "value": 10,
+        "min": 20,
+        "max": 10,
+        "step": 0
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value",
+      "value": [
+        {
+          "t": 5,
+          "v": -2.5
+        }
+      ],
+      "data": {
+        "label": "Value",
+        "value": 10,
+        "min": 20,
+        "max": 10,
+        "step": 0
+      }
+    }
+  ],
+  "commands": [
+    {
+      "sample": 0,
+      "key": "increment",
+      "payload": null,
+      "hasPayload": false,
+      "data": {
+        "label": "Value",
+        "value": 1,
+        "min": 0,
+        "max": 100,
+        "step": 1
+      }
+    },
+    {
+      "sample": 0,
+      "key": "decrement",
+      "payload": null,
+      "hasPayload": false,
+      "data": {
+        "label": "Value",
+        "value": 0,
+        "min": 0,
+        "max": 100,
+        "step": 1
+      }
+    },
+    {
+      "sample": 0,
+      "key": "reset",
+      "payload": null,
+      "hasPayload": false,
+      "data": {
+        "label": "Value",
+        "value": 0,
+        "min": 0,
+        "max": 100,
+        "step": 1
+      }
+    },
+    {
+      "sample": 1,
+      "key": "increment",
+      "payload": null,
+      "hasPayload": false,
+      "data": {
+        "label": "Value",
+        "value": 20,
+        "min": 10,
+        "max": 20,
+        "step": 2.5
+      }
+    },
+    {
+      "sample": 1,
+      "key": "decrement",
+      "payload": null,
+      "hasPayload": false,
+      "data": {
+        "label": "Value",
+        "value": 47.5,
+        "min": 10,
+        "max": 20,
+        "step": 2.5
+      }
+    },
+    {
+      "sample": 1,
+      "key": "reset",
+      "payload": null,
+      "hasPayload": false,
+      "data": {
+        "label": "Value",
+        "value": 10,
+        "min": 10,
+        "max": 20,
+        "step": 2.5
+      }
+    },
+    {
+      "sample": 2,
+      "key": "increment",
+      "payload": null,
+      "hasPayload": false,
+      "data": {
+        "label": "Value",
+        "value": 5.0001,
+        "min": 20,
+        "max": 10,
+        "step": 0
+      }
+    },
+    {
+      "sample": 2,
+      "key": "decrement",
+      "payload": null,
+      "hasPayload": false,
+      "data": {
+        "label": "Value",
+        "value": 20,
+        "min": 20,
+        "max": 10,
+        "step": 0
+      }
+    },
+    {
+      "sample": 2,
+      "key": "reset",
+      "payload": null,
+      "hasPayload": false,
+      "data": {
+        "label": "Value",
+        "value": 20,
+        "min": 20,
+        "max": 10,
+        "step": 0
+      }
+    }
+  ]
+}

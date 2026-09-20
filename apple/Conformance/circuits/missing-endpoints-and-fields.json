@@ -1,0 +1,226 @@
+{
+  "name": "missing-endpoints-and-fields",
+  "widgets": {
+    "counter": {
+      "id": "counter",
+      "type": "counter",
+      "title": "counter",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 280,
+        "height": 200
+      },
+      "data": {
+        "label": "Tally",
+        "count": 1,
+        "step": 1,
+        "skin": "tally"
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "goal": {
+      "id": "goal",
+      "type": "goal_tracker",
+      "title": "goal",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 280,
+        "height": 200
+      },
+      "data": {
+        "goal": "",
+        "mode": "simple",
+        "simple": {
+          "label": "Progress",
+          "percent": 0
+        },
+        "milestones": []
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "door": {
+      "id": "door",
+      "type": "canvas_node",
+      "title": "door",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 280,
+        "height": 200
+      },
+      "data": {
+        "canvasId": "x",
+        "skin": "portal"
+      },
+      "metadata": {
+        "badges": []
+      }
+    }
+  },
+  "connections": {
+    "noField": {
+      "id": "noField",
+      "enabled": true,
+      "fromId": "counter",
+      "fromField": "nope",
+      "toId": "goal",
+      "kind": "value",
+      "toField": "percent"
+    },
+    "noTarget": {
+      "id": "noTarget",
+      "enabled": true,
+      "fromId": "counter",
+      "fromField": "count",
+      "toId": "ghost",
+      "kind": "value",
+      "toField": "percent"
+    },
+    "readOnlyTarget": {
+      "id": "readOnlyTarget",
+      "enabled": true,
+      "fromId": "counter",
+      "fromField": "count",
+      "toId": "goal",
+      "kind": "value",
+      "toField": "complete"
+    },
+    "noCommand": {
+      "id": "noCommand",
+      "enabled": true,
+      "fromId": "counter",
+      "fromField": "count",
+      "toId": "door",
+      "kind": "trigger",
+      "command": "reset",
+      "edge": "change"
+    },
+    "unknownCommand": {
+      "id": "unknownCommand",
+      "enabled": true,
+      "fromId": "counter",
+      "fromField": "count",
+      "toId": "goal",
+      "kind": "trigger",
+      "command": "notify",
+      "edge": "change"
+    }
+  },
+  "steps": [
+    {
+      "label": "all skipped",
+      "seeds": [
+        "counter"
+      ],
+      "expect": {
+        "writes": {},
+        "firedIds": [],
+        "executeRequests": [],
+        "memory": {
+          "readOnlyTarget": {
+            "serialized": "n:1",
+            "bool": true
+          },
+          "noCommand": {
+            "serialized": "n:1",
+            "bool": true
+          },
+          "unknownCommand": {
+            "serialized": "n:1",
+            "bool": true
+          }
+        },
+        "widgetsAfter": {
+          "counter": {
+            "label": "Tally",
+            "count": 1,
+            "step": 1,
+            "skin": "tally"
+          },
+          "goal": {
+            "goal": "",
+            "mode": "simple",
+            "simple": {
+              "label": "Progress",
+              "percent": 0
+            },
+            "milestones": []
+          },
+          "door": {
+            "canvasId": "x",
+            "skin": "portal"
+          }
+        }
+      }
+    },
+    {
+      "label": "still skipped after edit",
+      "seeds": [
+        "counter"
+      ],
+      "edits": {
+        "counter": {
+          "label": "Tally",
+          "count": 2,
+          "step": 1,
+          "skin": "tally"
+        }
+      },
+      "expect": {
+        "writes": {},
+        "firedIds": [],
+        "executeRequests": [],
+        "memory": {
+          "readOnlyTarget": {
+            "serialized": "n:2",
+            "bool": true
+          },
+          "noCommand": {
+            "serialized": "n:2",
+            "bool": true
+          },
+          "unknownCommand": {
+            "serialized": "n:2",
+            "bool": true
+          }
+        },
+        "widgetsAfter": {
+          "counter": {
+            "label": "Tally",
+            "count": 2,
+            "step": 1,
+            "skin": "tally"
+          },
+          "goal": {
+            "goal": "",
+            "mode": "simple",
+            "simple": {
+              "label": "Progress",
+              "percent": 0
+            },
+            "milestones": []
+          },
+          "door": {
+            "canvasId": "x",
+            "skin": "portal"
+          }
+        }
+      }
+    }
+  ]
+}

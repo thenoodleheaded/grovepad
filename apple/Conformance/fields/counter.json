@@ -1,0 +1,1798 @@
+{
+  "outputs": [
+    {
+      "key": "count",
+      "label": "Count",
+      "valueType": "number",
+      "unit": "count",
+      "index": 0,
+      "timeSensitive": false
+    }
+  ],
+  "inputs": [
+    {
+      "key": "count",
+      "label": "Count",
+      "kind": "field",
+      "valueType": "number",
+      "unit": "count",
+      "acceptsPayload": false,
+      "index": 0
+    },
+    {
+      "key": "increment",
+      "label": "Increment counter",
+      "kind": "command",
+      "valueType": null,
+      "unit": null,
+      "acceptsPayload": false,
+      "index": 1
+    },
+    {
+      "key": "decrement",
+      "label": "Decrement counter",
+      "kind": "command",
+      "valueType": null,
+      "unit": null,
+      "acceptsPayload": false,
+      "index": 2
+    },
+    {
+      "key": "reset",
+      "label": "Reset counter",
+      "kind": "command",
+      "valueType": null,
+      "unit": null,
+      "acceptsPayload": false,
+      "index": 3
+    }
+  ],
+  "samples": [
+    {
+      "label": "Tally",
+      "count": 0,
+      "step": 1,
+      "skin": "tally"
+    },
+    {
+      "label": "Tally",
+      "count": 4,
+      "step": 3,
+      "skin": "tally"
+    },
+    {
+      "label": "Tally",
+      "count": -2.5,
+      "step": 0,
+      "skin": "tally"
+    },
+    {
+      "label": "Tally",
+      "count": 1,
+      "step": -2,
+      "skin": "tally"
+    }
+  ],
+  "gets": [
+    {
+      "sample": 0,
+      "key": "count",
+      "value": 0
+    },
+    {
+      "sample": 1,
+      "key": "count",
+      "value": 4
+    },
+    {
+      "sample": 2,
+      "key": "count",
+      "value": -2.5
+    },
+    {
+      "sample": 3,
+      "key": "count",
+      "value": 1
+    }
+  ],
+  "sets": [
+    {
+      "sample": 0,
+      "key": "count",
+      "value": 0,
+      "data": {
+        "label": "Tally",
+        "count": 0,
+        "step": 1,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "count",
+      "value": 1,
+      "data": {
+        "label": "Tally",
+        "count": 1,
+        "step": 1,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "count",
+      "value": -1,
+      "data": {
+        "label": "Tally",
+        "count": -1,
+        "step": 1,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "count",
+      "value": 7,
+      "data": {
+        "label": "Tally",
+        "count": 7,
+        "step": 1,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "count",
+      "value": 2.5,
+      "data": {
+        "label": "Tally",
+        "count": 2.5,
+        "step": 1,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "count",
+      "value": 2.6,
+      "data": {
+        "label": "Tally",
+        "count": 2.6,
+        "step": 1,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "count",
+      "value": -2.5,
+      "data": {
+        "label": "Tally",
+        "count": -2.5,
+        "step": 1,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "count",
+      "value": 0.5,
+      "data": {
+        "label": "Tally",
+        "count": 0.5,
+        "step": 1,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "count",
+      "value": 4.9,
+      "data": {
+        "label": "Tally",
+        "count": 4.9,
+        "step": 1,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "count",
+      "value": 5,
+      "data": {
+        "label": "Tally",
+        "count": 5,
+        "step": 1,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "count",
+      "value": 10,
+      "data": {
+        "label": "Tally",
+        "count": 10,
+        "step": 1,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "count",
+      "value": 50,
+      "data": {
+        "label": "Tally",
+        "count": 50,
+        "step": 1,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "count",
+      "value": 150,
+      "data": {
+        "label": "Tally",
+        "count": 150,
+        "step": 1,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "count",
+      "value": 1e+21,
+      "data": {
+        "label": "Tally",
+        "count": 1e+21,
+        "step": 1,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "count",
+      "value": 1.7976931348623157e+308,
+      "data": {
+        "label": "Tally",
+        "count": 1.7976931348623157e+308,
+        "step": 1,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "count",
+      "value": true,
+      "data": {
+        "label": "Tally",
+        "count": 1,
+        "step": 1,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "count",
+      "value": false,
+      "data": {
+        "label": "Tally",
+        "count": 0,
+        "step": 1,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "count",
+      "value": "",
+      "data": {
+        "label": "Tally",
+        "count": 0,
+        "step": 1,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "count",
+      "value": "12.5",
+      "data": {
+        "label": "Tally",
+        "count": 12.5,
+        "step": 1,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "count",
+      "value": "not a number",
+      "data": {
+        "label": "Tally",
+        "count": 0,
+        "step": 1,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "count",
+      "value": "1",
+      "data": {
+        "label": "Tally",
+        "count": 1,
+        "step": 1,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "count",
+      "value": "true",
+      "data": {
+        "label": "Tally",
+        "count": 0,
+        "step": 1,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "count",
+      "value": "yes",
+      "data": {
+        "label": "Tally",
+        "count": 0,
+        "step": 1,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "count",
+      "value": "on",
+      "data": {
+        "label": "Tally",
+        "count": 0,
+        "step": 1,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "count",
+      "value": "off",
+      "data": {
+        "label": "Tally",
+        "count": 0,
+        "step": 1,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "count",
+      "value": "0",
+      "data": {
+        "label": "Tally",
+        "count": 0,
+        "step": 1,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "count",
+      "value": " 8 ",
+      "data": {
+        "label": "Tally",
+        "count": 8,
+        "step": 1,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "count",
+      "value": "3abc",
+      "data": {
+        "label": "Tally",
+        "count": 3,
+        "step": 1,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "count",
+      "value": "-4e2",
+      "data": {
+        "label": "Tally",
+        "count": -400,
+        "step": 1,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "count",
+      "value": "Infinity",
+      "data": {
+        "label": "Tally",
+        "count": 0,
+        "step": 1,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "count",
+      "value": "NaN",
+      "data": {
+        "label": "Tally",
+        "count": 0,
+        "step": 1,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "count",
+      "value": [],
+      "data": {
+        "label": "Tally",
+        "count": 0,
+        "step": 1,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "count",
+      "value": [
+        {
+          "t": 0,
+          "v": 4
+        },
+        {
+          "t": 1,
+          "v": 9
+        }
+      ],
+      "data": {
+        "label": "Tally",
+        "count": 9,
+        "step": 1,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "count",
+      "value": [
+        {
+          "t": 5,
+          "v": -2.5
+        }
+      ],
+      "data": {
+        "label": "Tally",
+        "count": -2.5,
+        "step": 1,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "count",
+      "value": 0,
+      "data": {
+        "label": "Tally",
+        "count": 0,
+        "step": 3,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "count",
+      "value": 1,
+      "data": {
+        "label": "Tally",
+        "count": 1,
+        "step": 3,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "count",
+      "value": -1,
+      "data": {
+        "label": "Tally",
+        "count": -1,
+        "step": 3,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "count",
+      "value": 7,
+      "data": {
+        "label": "Tally",
+        "count": 7,
+        "step": 3,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "count",
+      "value": 2.5,
+      "data": {
+        "label": "Tally",
+        "count": 2.5,
+        "step": 3,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "count",
+      "value": 2.6,
+      "data": {
+        "label": "Tally",
+        "count": 2.6,
+        "step": 3,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "count",
+      "value": -2.5,
+      "data": {
+        "label": "Tally",
+        "count": -2.5,
+        "step": 3,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "count",
+      "value": 0.5,
+      "data": {
+        "label": "Tally",
+        "count": 0.5,
+        "step": 3,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "count",
+      "value": 4.9,
+      "data": {
+        "label": "Tally",
+        "count": 4.9,
+        "step": 3,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "count",
+      "value": 5,
+      "data": {
+        "label": "Tally",
+        "count": 5,
+        "step": 3,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "count",
+      "value": 10,
+      "data": {
+        "label": "Tally",
+        "count": 10,
+        "step": 3,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "count",
+      "value": 50,
+      "data": {
+        "label": "Tally",
+        "count": 50,
+        "step": 3,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "count",
+      "value": 150,
+      "data": {
+        "label": "Tally",
+        "count": 150,
+        "step": 3,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "count",
+      "value": 1e+21,
+      "data": {
+        "label": "Tally",
+        "count": 1e+21,
+        "step": 3,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "count",
+      "value": 1.7976931348623157e+308,
+      "data": {
+        "label": "Tally",
+        "count": 1.7976931348623157e+308,
+        "step": 3,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "count",
+      "value": true,
+      "data": {
+        "label": "Tally",
+        "count": 1,
+        "step": 3,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "count",
+      "value": false,
+      "data": {
+        "label": "Tally",
+        "count": 0,
+        "step": 3,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "count",
+      "value": "",
+      "data": {
+        "label": "Tally",
+        "count": 0,
+        "step": 3,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "count",
+      "value": "12.5",
+      "data": {
+        "label": "Tally",
+        "count": 12.5,
+        "step": 3,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "count",
+      "value": "not a number",
+      "data": {
+        "label": "Tally",
+        "count": 0,
+        "step": 3,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "count",
+      "value": "1",
+      "data": {
+        "label": "Tally",
+        "count": 1,
+        "step": 3,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "count",
+      "value": "true",
+      "data": {
+        "label": "Tally",
+        "count": 0,
+        "step": 3,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "count",
+      "value": "yes",
+      "data": {
+        "label": "Tally",
+        "count": 0,
+        "step": 3,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "count",
+      "value": "on",
+      "data": {
+        "label": "Tally",
+        "count": 0,
+        "step": 3,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "count",
+      "value": "off",
+      "data": {
+        "label": "Tally",
+        "count": 0,
+        "step": 3,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "count",
+      "value": "0",
+      "data": {
+        "label": "Tally",
+        "count": 0,
+        "step": 3,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "count",
+      "value": " 8 ",
+      "data": {
+        "label": "Tally",
+        "count": 8,
+        "step": 3,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "count",
+      "value": "3abc",
+      "data": {
+        "label": "Tally",
+        "count": 3,
+        "step": 3,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "count",
+      "value": "-4e2",
+      "data": {
+        "label": "Tally",
+        "count": -400,
+        "step": 3,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "count",
+      "value": "Infinity",
+      "data": {
+        "label": "Tally",
+        "count": 0,
+        "step": 3,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "count",
+      "value": "NaN",
+      "data": {
+        "label": "Tally",
+        "count": 0,
+        "step": 3,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "count",
+      "value": [],
+      "data": {
+        "label": "Tally",
+        "count": 0,
+        "step": 3,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "count",
+      "value": [
+        {
+          "t": 0,
+          "v": 4
+        },
+        {
+          "t": 1,
+          "v": 9
+        }
+      ],
+      "data": {
+        "label": "Tally",
+        "count": 9,
+        "step": 3,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "count",
+      "value": [
+        {
+          "t": 5,
+          "v": -2.5
+        }
+      ],
+      "data": {
+        "label": "Tally",
+        "count": -2.5,
+        "step": 3,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "count",
+      "value": 0,
+      "data": {
+        "label": "Tally",
+        "count": 0,
+        "step": 0,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "count",
+      "value": 1,
+      "data": {
+        "label": "Tally",
+        "count": 1,
+        "step": 0,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "count",
+      "value": -1,
+      "data": {
+        "label": "Tally",
+        "count": -1,
+        "step": 0,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "count",
+      "value": 7,
+      "data": {
+        "label": "Tally",
+        "count": 7,
+        "step": 0,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "count",
+      "value": 2.5,
+      "data": {
+        "label": "Tally",
+        "count": 2.5,
+        "step": 0,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "count",
+      "value": 2.6,
+      "data": {
+        "label": "Tally",
+        "count": 2.6,
+        "step": 0,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "count",
+      "value": -2.5,
+      "data": {
+        "label": "Tally",
+        "count": -2.5,
+        "step": 0,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "count",
+      "value": 0.5,
+      "data": {
+        "label": "Tally",
+        "count": 0.5,
+        "step": 0,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "count",
+      "value": 4.9,
+      "data": {
+        "label": "Tally",
+        "count": 4.9,
+        "step": 0,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "count",
+      "value": 5,
+      "data": {
+        "label": "Tally",
+        "count": 5,
+        "step": 0,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "count",
+      "value": 10,
+      "data": {
+        "label": "Tally",
+        "count": 10,
+        "step": 0,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "count",
+      "value": 50,
+      "data": {
+        "label": "Tally",
+        "count": 50,
+        "step": 0,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "count",
+      "value": 150,
+      "data": {
+        "label": "Tally",
+        "count": 150,
+        "step": 0,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "count",
+      "value": 1e+21,
+      "data": {
+        "label": "Tally",
+        "count": 1e+21,
+        "step": 0,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "count",
+      "value": 1.7976931348623157e+308,
+      "data": {
+        "label": "Tally",
+        "count": 1.7976931348623157e+308,
+        "step": 0,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "count",
+      "value": true,
+      "data": {
+        "label": "Tally",
+        "count": 1,
+        "step": 0,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "count",
+      "value": false,
+      "data": {
+        "label": "Tally",
+        "count": 0,
+        "step": 0,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "count",
+      "value": "",
+      "data": {
+        "label": "Tally",
+        "count": 0,
+        "step": 0,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "count",
+      "value": "12.5",
+      "data": {
+        "label": "Tally",
+        "count": 12.5,
+        "step": 0,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "count",
+      "value": "not a number",
+      "data": {
+        "label": "Tally",
+        "count": 0,
+        "step": 0,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "count",
+      "value": "1",
+      "data": {
+        "label": "Tally",
+        "count": 1,
+        "step": 0,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "count",
+      "value": "true",
+      "data": {
+        "label": "Tally",
+        "count": 0,
+        "step": 0,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "count",
+      "value": "yes",
+      "data": {
+        "label": "Tally",
+        "count": 0,
+        "step": 0,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "count",
+      "value": "on",
+      "data": {
+        "label": "Tally",
+        "count": 0,
+        "step": 0,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "count",
+      "value": "off",
+      "data": {
+        "label": "Tally",
+        "count": 0,
+        "step": 0,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "count",
+      "value": "0",
+      "data": {
+        "label": "Tally",
+        "count": 0,
+        "step": 0,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "count",
+      "value": " 8 ",
+      "data": {
+        "label": "Tally",
+        "count": 8,
+        "step": 0,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "count",
+      "value": "3abc",
+      "data": {
+        "label": "Tally",
+        "count": 3,
+        "step": 0,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "count",
+      "value": "-4e2",
+      "data": {
+        "label": "Tally",
+        "count": -400,
+        "step": 0,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "count",
+      "value": "Infinity",
+      "data": {
+        "label": "Tally",
+        "count": 0,
+        "step": 0,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "count",
+      "value": "NaN",
+      "data": {
+        "label": "Tally",
+        "count": 0,
+        "step": 0,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "count",
+      "value": [],
+      "data": {
+        "label": "Tally",
+        "count": 0,
+        "step": 0,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "count",
+      "value": [
+        {
+          "t": 0,
+          "v": 4
+        },
+        {
+          "t": 1,
+          "v": 9
+        }
+      ],
+      "data": {
+        "label": "Tally",
+        "count": 9,
+        "step": 0,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "count",
+      "value": [
+        {
+          "t": 5,
+          "v": -2.5
+        }
+      ],
+      "data": {
+        "label": "Tally",
+        "count": -2.5,
+        "step": 0,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 3,
+      "key": "count",
+      "value": 0,
+      "data": {
+        "label": "Tally",
+        "count": 0,
+        "step": -2,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 3,
+      "key": "count",
+      "value": 1,
+      "data": {
+        "label": "Tally",
+        "count": 1,
+        "step": -2,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 3,
+      "key": "count",
+      "value": -1,
+      "data": {
+        "label": "Tally",
+        "count": -1,
+        "step": -2,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 3,
+      "key": "count",
+      "value": 7,
+      "data": {
+        "label": "Tally",
+        "count": 7,
+        "step": -2,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 3,
+      "key": "count",
+      "value": 2.5,
+      "data": {
+        "label": "Tally",
+        "count": 2.5,
+        "step": -2,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 3,
+      "key": "count",
+      "value": 2.6,
+      "data": {
+        "label": "Tally",
+        "count": 2.6,
+        "step": -2,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 3,
+      "key": "count",
+      "value": -2.5,
+      "data": {
+        "label": "Tally",
+        "count": -2.5,
+        "step": -2,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 3,
+      "key": "count",
+      "value": 0.5,
+      "data": {
+        "label": "Tally",
+        "count": 0.5,
+        "step": -2,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 3,
+      "key": "count",
+      "value": 4.9,
+      "data": {
+        "label": "Tally",
+        "count": 4.9,
+        "step": -2,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 3,
+      "key": "count",
+      "value": 5,
+      "data": {
+        "label": "Tally",
+        "count": 5,
+        "step": -2,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 3,
+      "key": "count",
+      "value": 10,
+      "data": {
+        "label": "Tally",
+        "count": 10,
+        "step": -2,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 3,
+      "key": "count",
+      "value": 50,
+      "data": {
+        "label": "Tally",
+        "count": 50,
+        "step": -2,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 3,
+      "key": "count",
+      "value": 150,
+      "data": {
+        "label": "Tally",
+        "count": 150,
+        "step": -2,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 3,
+      "key": "count",
+      "value": 1e+21,
+      "data": {
+        "label": "Tally",
+        "count": 1e+21,
+        "step": -2,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 3,
+      "key": "count",
+      "value": 1.7976931348623157e+308,
+      "data": {
+        "label": "Tally",
+        "count": 1.7976931348623157e+308,
+        "step": -2,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 3,
+      "key": "count",
+      "value": true,
+      "data": {
+        "label": "Tally",
+        "count": 1,
+        "step": -2,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 3,
+      "key": "count",
+      "value": false,
+      "data": {
+        "label": "Tally",
+        "count": 0,
+        "step": -2,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 3,
+      "key": "count",
+      "value": "",
+      "data": {
+        "label": "Tally",
+        "count": 0,
+        "step": -2,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 3,
+      "key": "count",
+      "value": "12.5",
+      "data": {
+        "label": "Tally",
+        "count": 12.5,
+        "step": -2,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 3,
+      "key": "count",
+      "value": "not a number",
+      "data": {
+        "label": "Tally",
+        "count": 0,
+        "step": -2,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 3,
+      "key": "count",
+      "value": "1",
+      "data": {
+        "label": "Tally",
+        "count": 1,
+        "step": -2,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 3,
+      "key": "count",
+      "value": "true",
+      "data": {
+        "label": "Tally",
+        "count": 0,
+        "step": -2,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 3,
+      "key": "count",
+      "value": "yes",
+      "data": {
+        "label": "Tally",
+        "count": 0,
+        "step": -2,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 3,
+      "key": "count",
+      "value": "on",
+      "data": {
+        "label": "Tally",
+        "count": 0,
+        "step": -2,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 3,
+      "key": "count",
+      "value": "off",
+      "data": {
+        "label": "Tally",
+        "count": 0,
+        "step": -2,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 3,
+      "key": "count",
+      "value": "0",
+      "data": {
+        "label": "Tally",
+        "count": 0,
+        "step": -2,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 3,
+      "key": "count",
+      "value": " 8 ",
+      "data": {
+        "label": "Tally",
+        "count": 8,
+        "step": -2,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 3,
+      "key": "count",
+      "value": "3abc",
+      "data": {
+        "label": "Tally",
+        "count": 3,
+        "step": -2,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 3,
+      "key": "count",
+      "value": "-4e2",
+      "data": {
+        "label": "Tally",
+        "count": -400,
+        "step": -2,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 3,
+      "key": "count",
+      "value": "Infinity",
+      "data": {
+        "label": "Tally",
+        "count": 0,
+        "step": -2,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 3,
+      "key": "count",
+      "value": "NaN",
+      "data": {
+        "label": "Tally",
+        "count": 0,
+        "step": -2,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 3,
+      "key": "count",
+      "value": [],
+      "data": {
+        "label": "Tally",
+        "count": 0,
+        "step": -2,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 3,
+      "key": "count",
+      "value": [
+        {
+          "t": 0,
+          "v": 4
+        },
+        {
+          "t": 1,
+          "v": 9
+        }
+      ],
+      "data": {
+        "label": "Tally",
+        "count": 9,
+        "step": -2,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 3,
+      "key": "count",
+      "value": [
+        {
+          "t": 5,
+          "v": -2.5
+        }
+      ],
+      "data": {
+        "label": "Tally",
+        "count": -2.5,
+        "step": -2,
+        "skin": "tally"
+      }
+    }
+  ],
+  "commands": [
+    {
+      "sample": 0,
+      "key": "increment",
+      "payload": null,
+      "hasPayload": false,
+      "data": {
+        "label": "Tally",
+        "count": 1,
+        "step": 1,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "decrement",
+      "payload": null,
+      "hasPayload": false,
+      "data": {
+        "label": "Tally",
+        "count": -1,
+        "step": 1,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "reset",
+      "payload": null,
+      "hasPayload": false,
+      "data": {
+        "label": "Tally",
+        "count": 0,
+        "step": 1,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "increment",
+      "payload": null,
+      "hasPayload": false,
+      "data": {
+        "label": "Tally",
+        "count": 7,
+        "step": 3,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "decrement",
+      "payload": null,
+      "hasPayload": false,
+      "data": {
+        "label": "Tally",
+        "count": 1,
+        "step": 3,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "reset",
+      "payload": null,
+      "hasPayload": false,
+      "data": {
+        "label": "Tally",
+        "count": 0,
+        "step": 3,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "increment",
+      "payload": null,
+      "hasPayload": false,
+      "data": {
+        "label": "Tally",
+        "count": -1.5,
+        "step": 0,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "decrement",
+      "payload": null,
+      "hasPayload": false,
+      "data": {
+        "label": "Tally",
+        "count": -3.5,
+        "step": 0,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 2,
+      "key": "reset",
+      "payload": null,
+      "hasPayload": false,
+      "data": {
+        "label": "Tally",
+        "count": 0,
+        "step": 0,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 3,
+      "key": "increment",
+      "payload": null,
+      "hasPayload": false,
+      "data": {
+        "label": "Tally",
+        "count": -1,
+        "step": -2,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 3,
+      "key": "decrement",
+      "payload": null,
+      "hasPayload": false,
+      "data": {
+        "label": "Tally",
+        "count": 3,
+        "step": -2,
+        "skin": "tally"
+      }
+    },
+    {
+      "sample": 3,
+      "key": "reset",
+      "payload": null,
+      "hasPayload": false,
+      "data": {
+        "label": "Tally",
+        "count": 0,
+        "step": -2,
+        "skin": "tally"
+      }
+    }
+  ]
+}

@@ -1,0 +1,472 @@
+{
+  "format": "grovepad-board",
+  "v": 2,
+  "workspaces": {
+    "workspace": {
+      "id": "workspace",
+      "name": "Workspace",
+      "rootCanvasId": "canvas",
+      "createdAt": 1
+    }
+  },
+  "canvases": {
+    "canvas": {
+      "id": "canvas",
+      "name": "Origin",
+      "workspaceId": "workspace",
+      "parentCanvasId": null,
+      "shared": true,
+      "gridIntensity": 100,
+      "linksVisible": true,
+      "relationStrict": false
+    },
+    "second": {
+      "id": "second",
+      "name": "Second",
+      "workspaceId": "workspace",
+      "parentCanvasId": "canvas"
+    }
+  },
+  "widgets": {
+    "a": {
+      "id": "a",
+      "type": "counter",
+      "title": "a",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 280,
+        "height": 200
+      },
+      "data": {
+        "label": "Tally",
+        "count": 0,
+        "step": 1,
+        "skin": "tally"
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "b": {
+      "id": "b",
+      "type": "number_input",
+      "title": "b",
+      "canvasId": "canvas",
+      "position": {
+        "x": 400,
+        "y": 0
+      },
+      "size": {
+        "width": 280,
+        "height": 160
+      },
+      "data": {
+        "label": "Value",
+        "value": 0,
+        "min": 0,
+        "max": 100,
+        "step": 1
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "c": {
+      "id": "c",
+      "type": "toggle",
+      "title": "c",
+      "canvasId": "canvas",
+      "position": {
+        "x": 800,
+        "y": 0
+      },
+      "size": {
+        "width": 240,
+        "height": 160
+      },
+      "data": {
+        "label": "Condition",
+        "value": false
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "t": {
+      "id": "t",
+      "type": "text",
+      "title": "t",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 400
+      },
+      "size": {
+        "width": 320,
+        "height": 200
+      },
+      "data": {
+        "text": "",
+        "mode": "plain",
+        "color": "yellow"
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "d": {
+      "id": "d",
+      "type": "checklist",
+      "title": "d",
+      "canvasId": "second",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 280,
+        "height": 160
+      },
+      "data": {
+        "mode": "list",
+        "items": [
+          {
+            "id": "uuid-0025",
+            "label": "New task",
+            "done": false,
+            "status": "todo",
+            "due": "",
+            "day": 0,
+            "time": "09:00",
+            "start": 0,
+            "span": 1,
+            "quadrant": 0
+          }
+        ]
+      },
+      "metadata": {
+        "badges": []
+      }
+    }
+  },
+  "relations": {
+    "parent": {
+      "id": "parent",
+      "fromId": "a",
+      "toId": "b",
+      "type": "parent",
+      "isResolved": false
+    },
+    "coParent": {
+      "id": "coParent",
+      "fromId": "a",
+      "toId": "c",
+      "type": "co-parent",
+      "isResolved": true
+    },
+    "cousin": {
+      "id": "cousin",
+      "fromId": "b",
+      "toId": "c",
+      "type": "cousin",
+      "isResolved": false
+    },
+    "blocker": {
+      "id": "blocker",
+      "fromId": "c",
+      "toId": "t",
+      "type": "blocker",
+      "isResolved": false
+    },
+    "conflict": {
+      "id": "conflict",
+      "fromId": "t",
+      "toId": "a",
+      "type": "conflict",
+      "isResolved": true
+    },
+    "crossCanvas": {
+      "id": "crossCanvas",
+      "fromId": "a",
+      "toId": "d",
+      "type": "parent",
+      "isResolved": false
+    }
+  },
+  "connections": {
+    "value-identity": {
+      "id": "value-identity",
+      "fromId": "a",
+      "fromField": "count",
+      "toId": "b",
+      "kind": "value",
+      "toField": "value",
+      "transform": {
+        "op": "identity"
+      },
+      "enabled": true
+    },
+    "value-scale": {
+      "id": "value-scale",
+      "fromId": "a",
+      "fromField": "count",
+      "toId": "b",
+      "kind": "value",
+      "toField": "value",
+      "transform": {
+        "op": "scale",
+        "factor": 2
+      },
+      "enabled": true
+    },
+    "value-offset": {
+      "id": "value-offset",
+      "fromId": "a",
+      "fromField": "count",
+      "toId": "b",
+      "kind": "value",
+      "toField": "value",
+      "transform": {
+        "op": "offset",
+        "amount": 1
+      },
+      "enabled": true
+    },
+    "value-clamp": {
+      "id": "value-clamp",
+      "fromId": "a",
+      "fromField": "count",
+      "toId": "b",
+      "kind": "value",
+      "toField": "value",
+      "transform": {
+        "op": "clamp",
+        "min": 0,
+        "max": 100
+      },
+      "enabled": true
+    },
+    "value-map_range": {
+      "id": "value-map_range",
+      "fromId": "a",
+      "fromField": "count",
+      "toId": "b",
+      "kind": "value",
+      "toField": "value",
+      "transform": {
+        "op": "map_range",
+        "inMin": 0,
+        "inMax": 100,
+        "outMin": 0,
+        "outMax": 1
+      },
+      "enabled": true
+    },
+    "value-round": {
+      "id": "value-round",
+      "fromId": "a",
+      "fromField": "count",
+      "toId": "b",
+      "kind": "value",
+      "toField": "value",
+      "transform": {
+        "op": "round"
+      },
+      "enabled": true
+    },
+    "value-invert": {
+      "id": "value-invert",
+      "fromId": "a",
+      "fromField": "count",
+      "toId": "b",
+      "kind": "value",
+      "toField": "value",
+      "transform": {
+        "op": "invert"
+      },
+      "enabled": true
+    },
+    "value-threshold": {
+      "id": "value-threshold",
+      "fromId": "a",
+      "fromField": "count",
+      "toId": "b",
+      "kind": "value",
+      "toField": "value",
+      "transform": {
+        "op": "threshold",
+        "value": 1
+      },
+      "enabled": true
+    },
+    "value-format": {
+      "id": "value-format",
+      "fromId": "a",
+      "fromField": "count",
+      "toId": "b",
+      "kind": "value",
+      "toField": "value",
+      "transform": {
+        "op": "format",
+        "template": "{value}"
+      },
+      "enabled": true
+    },
+    "value-bare": {
+      "id": "value-bare",
+      "fromId": "b",
+      "fromField": "value",
+      "toId": "a",
+      "kind": "value",
+      "toField": "count",
+      "enabled": true
+    },
+    "value-disabled": {
+      "id": "value-disabled",
+      "fromId": "c",
+      "fromField": "value",
+      "toId": "a",
+      "kind": "value",
+      "toField": "count",
+      "enabled": false
+    },
+    "trigger-rising": {
+      "id": "trigger-rising",
+      "fromId": "c",
+      "fromField": "value",
+      "toId": "a",
+      "kind": "trigger",
+      "command": "increment",
+      "edge": "rising",
+      "enabled": true
+    },
+    "trigger-falling": {
+      "id": "trigger-falling",
+      "fromId": "c",
+      "fromField": "value",
+      "toId": "a",
+      "kind": "trigger",
+      "command": "increment",
+      "edge": "falling",
+      "enabled": true
+    },
+    "trigger-change": {
+      "id": "trigger-change",
+      "fromId": "c",
+      "fromField": "value",
+      "toId": "a",
+      "kind": "trigger",
+      "command": "increment",
+      "edge": "change",
+      "enabled": true
+    },
+    "trigger-payload": {
+      "id": "trigger-payload",
+      "fromId": "t",
+      "fromField": "text",
+      "toId": "d",
+      "kind": "trigger",
+      "command": "add_item",
+      "edge": "change",
+      "transform": {
+        "op": "format",
+        "template": "[wired] {value}"
+      },
+      "enabled": true
+    },
+    "crossCanvasWire": {
+      "id": "crossCanvasWire",
+      "fromId": "a",
+      "fromField": "count",
+      "toId": "d",
+      "kind": "value",
+      "toField": "done_count",
+      "enabled": true
+    }
+  },
+  "glues": {
+    "plain": {
+      "id": "plain",
+      "widgetIds": [
+        "a",
+        "b"
+      ]
+    },
+    "named": {
+      "id": "named",
+      "widgetIds": [
+        "b",
+        "c"
+      ],
+      "name": "  Research   cluster  "
+    },
+    "folded": {
+      "id": "folded",
+      "widgetIds": [
+        "c",
+        "t"
+      ],
+      "collapsed": true,
+      "restore": {
+        "c": {
+          "x": 800,
+          "y": 0,
+          "width": 240,
+          "height": 160,
+          "iconified": false
+        },
+        "t": {
+          "x": 0,
+          "y": 400,
+          "width": 320,
+          "height": 200,
+          "iconified": true
+        },
+        "ghost": {
+          "x": 1,
+          "y": 1,
+          "width": 1,
+          "height": 1,
+          "iconified": false
+        }
+      },
+      "foldedAt": {
+        "x": 700,
+        "y": 20
+      }
+    },
+    "crossCanvas": {
+      "id": "crossCanvas",
+      "widgetIds": [
+        "a",
+        "d"
+      ]
+    }
+  },
+  "activePacks": [
+    "education",
+    "life"
+  ],
+  "activeWorkspaceId": "workspace",
+  "activeCanvasId": "second",
+  "canvasViews": {
+    "canvas": {
+      "pan": {
+        "x": -12.5,
+        "y": 40
+      },
+      "zoom": 0.75
+    },
+    "second": {
+      "pan": {
+        "x": 0,
+        "y": 0
+      },
+      "zoom": 10
+    }
+  }
+}

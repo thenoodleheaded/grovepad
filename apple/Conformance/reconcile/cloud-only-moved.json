@@ -1,0 +1,393 @@
+{
+  "name": "cloud-only-moved",
+  "base": {
+    "format": "grovepad-board",
+    "v": 2,
+    "workspaces": {
+      "workspace": {
+        "id": "workspace",
+        "name": "Workspace",
+        "rootCanvasId": "canvas",
+        "createdAt": 1
+      }
+    },
+    "canvases": {
+      "canvas": {
+        "id": "canvas",
+        "name": "Origin",
+        "workspaceId": "workspace",
+        "parentCanvasId": null
+      }
+    },
+    "widgets": {
+      "a": {
+        "id": "a",
+        "type": "text",
+        "title": "a",
+        "canvasId": "canvas",
+        "position": {
+          "x": 0,
+          "y": 0
+        },
+        "size": {
+          "width": 320,
+          "height": 200
+        },
+        "data": {
+          "text": "base a"
+        },
+        "metadata": {
+          "badges": []
+        }
+      },
+      "b": {
+        "id": "b",
+        "type": "text",
+        "title": "b",
+        "canvasId": "canvas",
+        "position": {
+          "x": 300,
+          "y": 0
+        },
+        "size": {
+          "width": 320,
+          "height": 200
+        },
+        "data": {
+          "text": "base b"
+        },
+        "metadata": {
+          "badges": []
+        }
+      },
+      "c": {
+        "id": "c",
+        "type": "text",
+        "title": "c",
+        "canvasId": "canvas",
+        "position": {
+          "x": 600,
+          "y": 0
+        },
+        "size": {
+          "width": 320,
+          "height": 200
+        },
+        "data": {
+          "text": "base c"
+        },
+        "metadata": {
+          "badges": []
+        }
+      }
+    },
+    "relations": {},
+    "connections": {},
+    "glues": {},
+    "activePacks": [
+      "life"
+    ]
+  },
+  "local": {
+    "format": "grovepad-board",
+    "v": 2,
+    "workspaces": {
+      "workspace": {
+        "id": "workspace",
+        "name": "Workspace",
+        "rootCanvasId": "canvas",
+        "createdAt": 1
+      }
+    },
+    "canvases": {
+      "canvas": {
+        "id": "canvas",
+        "name": "Origin",
+        "workspaceId": "workspace",
+        "parentCanvasId": null
+      }
+    },
+    "widgets": {
+      "a": {
+        "id": "a",
+        "type": "text",
+        "title": "a",
+        "canvasId": "canvas",
+        "position": {
+          "x": 0,
+          "y": 0
+        },
+        "size": {
+          "width": 320,
+          "height": 200
+        },
+        "data": {
+          "text": "base a"
+        },
+        "metadata": {
+          "badges": []
+        }
+      },
+      "b": {
+        "id": "b",
+        "type": "text",
+        "title": "b",
+        "canvasId": "canvas",
+        "position": {
+          "x": 300,
+          "y": 0
+        },
+        "size": {
+          "width": 320,
+          "height": 200
+        },
+        "data": {
+          "text": "base b"
+        },
+        "metadata": {
+          "badges": []
+        }
+      },
+      "c": {
+        "id": "c",
+        "type": "text",
+        "title": "c",
+        "canvasId": "canvas",
+        "position": {
+          "x": 600,
+          "y": 0
+        },
+        "size": {
+          "width": 320,
+          "height": 200
+        },
+        "data": {
+          "text": "base c"
+        },
+        "metadata": {
+          "badges": []
+        }
+      }
+    },
+    "relations": {},
+    "connections": {},
+    "glues": {},
+    "activePacks": [
+      "life"
+    ]
+  },
+  "cloud": {
+    "format": "grovepad-board",
+    "v": 2,
+    "workspaces": {
+      "workspace": {
+        "id": "workspace",
+        "name": "Workspace",
+        "rootCanvasId": "canvas",
+        "createdAt": 1
+      }
+    },
+    "canvases": {
+      "canvas": {
+        "id": "canvas",
+        "name": "Origin",
+        "workspaceId": "workspace",
+        "parentCanvasId": null
+      }
+    },
+    "widgets": {
+      "a": {
+        "id": "a",
+        "type": "text",
+        "title": "a",
+        "canvasId": "canvas",
+        "position": {
+          "x": 0,
+          "y": 0
+        },
+        "size": {
+          "width": 320,
+          "height": 200
+        },
+        "data": {
+          "text": "cloud a"
+        },
+        "metadata": {
+          "badges": []
+        }
+      },
+      "b": {
+        "id": "b",
+        "type": "text",
+        "title": "b",
+        "canvasId": "canvas",
+        "position": {
+          "x": 300,
+          "y": 0
+        },
+        "size": {
+          "width": 320,
+          "height": 200
+        },
+        "data": {
+          "text": "cloud b"
+        },
+        "metadata": {
+          "badges": []
+        }
+      },
+      "c": {
+        "id": "c",
+        "type": "text",
+        "title": "c",
+        "canvasId": "canvas",
+        "position": {
+          "x": 600,
+          "y": 0
+        },
+        "size": {
+          "width": 320,
+          "height": 200
+        },
+        "data": {
+          "text": "cloud edited c"
+        },
+        "metadata": {
+          "badges": []
+        }
+      },
+      "e": {
+        "id": "e",
+        "type": "text",
+        "title": "e",
+        "canvasId": "canvas",
+        "position": {
+          "x": 300,
+          "y": 300
+        },
+        "size": {
+          "width": 320,
+          "height": 200
+        },
+        "data": {
+          "text": "cloud new e"
+        },
+        "metadata": {
+          "badges": []
+        }
+      }
+    },
+    "relations": {},
+    "connections": {},
+    "glues": {},
+    "activePacks": []
+  },
+  "merged": {
+    "format": "grovepad-board",
+    "v": 2,
+    "workspaces": {
+      "workspace": {
+        "id": "workspace",
+        "name": "Workspace",
+        "rootCanvasId": "canvas",
+        "createdAt": 1
+      }
+    },
+    "canvases": {
+      "canvas": {
+        "id": "canvas",
+        "name": "Origin",
+        "workspaceId": "workspace",
+        "parentCanvasId": null
+      }
+    },
+    "widgets": {
+      "a": {
+        "id": "a",
+        "type": "text",
+        "title": "a",
+        "canvasId": "canvas",
+        "position": {
+          "x": 0,
+          "y": 0
+        },
+        "size": {
+          "width": 320,
+          "height": 200
+        },
+        "data": {
+          "text": "cloud a"
+        },
+        "metadata": {
+          "badges": []
+        }
+      },
+      "b": {
+        "id": "b",
+        "type": "text",
+        "title": "b",
+        "canvasId": "canvas",
+        "position": {
+          "x": 300,
+          "y": 0
+        },
+        "size": {
+          "width": 320,
+          "height": 200
+        },
+        "data": {
+          "text": "cloud b"
+        },
+        "metadata": {
+          "badges": []
+        }
+      },
+      "c": {
+        "id": "c",
+        "type": "text",
+        "title": "c",
+        "canvasId": "canvas",
+        "position": {
+          "x": 600,
+          "y": 0
+        },
+        "size": {
+          "width": 320,
+          "height": 200
+        },
+        "data": {
+          "text": "cloud edited c"
+        },
+        "metadata": {
+          "badges": []
+        }
+      },
+      "e": {
+        "id": "e",
+        "type": "text",
+        "title": "e",
+        "canvasId": "canvas",
+        "position": {
+          "x": 300,
+          "y": 300
+        },
+        "size": {
+          "width": 320,
+          "height": 200
+        },
+        "data": {
+          "text": "cloud new e"
+        },
+        "metadata": {
+          "badges": []
+        }
+      }
+    },
+    "relations": {},
+    "connections": {},
+    "glues": {},
+    "activePacks": []
+  },
+  "keptBothTitles": [],
+  "mergedJson": "{\"format\":\"grovepad-board\",\"v\":2,\"workspaces\":{\"workspace\":{\"id\":\"workspace\",\"name\":\"Workspace\",\"rootCanvasId\":\"canvas\",\"createdAt\":1}},\"canvases\":{\"canvas\":{\"id\":\"canvas\",\"name\":\"Origin\",\"workspaceId\":\"workspace\",\"parentCanvasId\":null}},\"widgets\":{\"a\":{\"id\":\"a\",\"type\":\"text\",\"title\":\"a\",\"canvasId\":\"canvas\",\"position\":{\"x\":0,\"y\":0},\"size\":{\"width\":320,\"height\":200},\"data\":{\"text\":\"cloud a\"},\"metadata\":{\"badges\":[]}},\"b\":{\"id\":\"b\",\"type\":\"text\",\"title\":\"b\",\"canvasId\":\"canvas\",\"position\":{\"x\":300,\"y\":0},\"size\":{\"width\":320,\"height\":200},\"data\":{\"text\":\"cloud b\"},\"metadata\":{\"badges\":[]}},\"c\":{\"id\":\"c\",\"type\":\"text\",\"title\":\"c\",\"canvasId\":\"canvas\",\"position\":{\"x\":600,\"y\":0},\"size\":{\"width\":320,\"height\":200},\"data\":{\"text\":\"cloud edited c\"},\"metadata\":{\"badges\":[]}},\"e\":{\"id\":\"e\",\"type\":\"text\",\"title\":\"e\",\"canvasId\":\"canvas\",\"position\":{\"x\":300,\"y\":300},\"size\":{\"width\":320,\"height\":200},\"data\":{\"text\":\"cloud new e\"},\"metadata\":{\"badges\":[]}}},\"relations\":{},\"connections\":{},\"glues\":{},\"activePacks\":[]}"
+}

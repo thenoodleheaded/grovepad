@@ -1,0 +1,444 @@
+{
+  "outputs": [
+    {
+      "key": "count",
+      "label": "Items",
+      "valueType": "number",
+      "unit": "count",
+      "index": 0,
+      "timeSensitive": false
+    }
+  ],
+  "inputs": [
+    {
+      "key": "add_item",
+      "label": "Add bullet from wire",
+      "kind": "command",
+      "valueType": null,
+      "unit": null,
+      "acceptsPayload": true,
+      "index": 0
+    }
+  ],
+  "samples": [
+    {
+      "items": [
+        {
+          "id": "uuid-0001",
+          "text": "First point"
+        }
+      ],
+      "skin": "dots"
+    },
+    {
+      "items": [
+        {
+          "id": "b1",
+          "text": "one"
+        },
+        {
+          "id": "b2",
+          "text": "   "
+        },
+        {
+          "id": "b3",
+          "text": "three"
+        }
+      ],
+      "skin": "numbered"
+    }
+  ],
+  "gets": [
+    {
+      "sample": 0,
+      "key": "count",
+      "value": 1
+    },
+    {
+      "sample": 1,
+      "key": "count",
+      "value": 2
+    }
+  ],
+  "sets": [],
+  "commands": [
+    {
+      "sample": 0,
+      "key": "add_item",
+      "payload": null,
+      "hasPayload": false,
+      "data": {
+        "items": [
+          {
+            "id": "uuid-0001",
+            "text": "First point"
+          },
+          {
+            "id": "uuid-0001",
+            "text": "New item"
+          }
+        ],
+        "skin": "dots"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "add_item",
+      "payload": "Buy milk",
+      "hasPayload": true,
+      "data": {
+        "items": [
+          {
+            "id": "uuid-0001",
+            "text": "First point"
+          },
+          {
+            "id": "uuid-0001",
+            "text": "Buy milk"
+          }
+        ],
+        "skin": "dots"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "add_item",
+      "payload": "  spaced  ",
+      "hasPayload": true,
+      "data": {
+        "items": [
+          {
+            "id": "uuid-0001",
+            "text": "First point"
+          },
+          {
+            "id": "uuid-0001",
+            "text": "spaced"
+          }
+        ],
+        "skin": "dots"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "add_item",
+      "payload": "",
+      "hasPayload": true,
+      "data": {
+        "items": [
+          {
+            "id": "uuid-0001",
+            "text": "First point"
+          },
+          {
+            "id": "uuid-0001",
+            "text": "New item"
+          }
+        ],
+        "skin": "dots"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "add_item",
+      "payload": 42,
+      "hasPayload": true,
+      "data": {
+        "items": [
+          {
+            "id": "uuid-0001",
+            "text": "First point"
+          },
+          {
+            "id": "uuid-0001",
+            "text": "42"
+          }
+        ],
+        "skin": "dots"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "add_item",
+      "payload": true,
+      "hasPayload": true,
+      "data": {
+        "items": [
+          {
+            "id": "uuid-0001",
+            "text": "First point"
+          },
+          {
+            "id": "uuid-0001",
+            "text": "true"
+          }
+        ],
+        "skin": "dots"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "add_item",
+      "payload": [
+        {
+          "t": 0,
+          "v": 1
+        }
+      ],
+      "hasPayload": true,
+      "data": {
+        "items": [
+          {
+            "id": "uuid-0001",
+            "text": "First point"
+          },
+          {
+            "id": "uuid-0001",
+            "text": "1"
+          }
+        ],
+        "skin": "dots"
+      }
+    },
+    {
+      "sample": 0,
+      "key": "add_item",
+      "payload": "https://example.com/x",
+      "hasPayload": true,
+      "data": {
+        "items": [
+          {
+            "id": "uuid-0001",
+            "text": "First point"
+          },
+          {
+            "id": "uuid-0001",
+            "text": "https://example.com/x"
+          }
+        ],
+        "skin": "dots"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "add_item",
+      "payload": null,
+      "hasPayload": false,
+      "data": {
+        "items": [
+          {
+            "id": "b1",
+            "text": "one"
+          },
+          {
+            "id": "b2",
+            "text": "   "
+          },
+          {
+            "id": "b3",
+            "text": "three"
+          },
+          {
+            "id": "uuid-0001",
+            "text": "New item"
+          }
+        ],
+        "skin": "numbered"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "add_item",
+      "payload": "Buy milk",
+      "hasPayload": true,
+      "data": {
+        "items": [
+          {
+            "id": "b1",
+            "text": "one"
+          },
+          {
+            "id": "b2",
+            "text": "   "
+          },
+          {
+            "id": "b3",
+            "text": "three"
+          },
+          {
+            "id": "uuid-0001",
+            "text": "Buy milk"
+          }
+        ],
+        "skin": "numbered"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "add_item",
+      "payload": "  spaced  ",
+      "hasPayload": true,
+      "data": {
+        "items": [
+          {
+            "id": "b1",
+            "text": "one"
+          },
+          {
+            "id": "b2",
+            "text": "   "
+          },
+          {
+            "id": "b3",
+            "text": "three"
+          },
+          {
+            "id": "uuid-0001",
+            "text": "spaced"
+          }
+        ],
+        "skin": "numbered"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "add_item",
+      "payload": "",
+      "hasPayload": true,
+      "data": {
+        "items": [
+          {
+            "id": "b1",
+            "text": "one"
+          },
+          {
+            "id": "b2",
+            "text": "   "
+          },
+          {
+            "id": "b3",
+            "text": "three"
+          },
+          {
+            "id": "uuid-0001",
+            "text": "New item"
+          }
+        ],
+        "skin": "numbered"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "add_item",
+      "payload": 42,
+      "hasPayload": true,
+      "data": {
+        "items": [
+          {
+            "id": "b1",
+            "text": "one"
+          },
+          {
+            "id": "b2",
+            "text": "   "
+          },
+          {
+            "id": "b3",
+            "text": "three"
+          },
+          {
+            "id": "uuid-0001",
+            "text": "42"
+          }
+        ],
+        "skin": "numbered"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "add_item",
+      "payload": true,
+      "hasPayload": true,
+      "data": {
+        "items": [
+          {
+            "id": "b1",
+            "text": "one"
+          },
+          {
+            "id": "b2",
+            "text": "   "
+          },
+          {
+            "id": "b3",
+            "text": "three"
+          },
+          {
+            "id": "uuid-0001",
+            "text": "true"
+          }
+        ],
+        "skin": "numbered"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "add_item",
+      "payload": [
+        {
+          "t": 0,
+          "v": 1
+        }
+      ],
+      "hasPayload": true,
+      "data": {
+        "items": [
+          {
+            "id": "b1",
+            "text": "one"
+          },
+          {
+            "id": "b2",
+            "text": "   "
+          },
+          {
+            "id": "b3",
+            "text": "three"
+          },
+          {
+            "id": "uuid-0001",
+            "text": "1"
+          }
+        ],
+        "skin": "numbered"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "add_item",
+      "payload": "https://example.com/x",
+      "hasPayload": true,
+      "data": {
+        "items": [
+          {
+            "id": "b1",
+            "text": "one"
+          },
+          {
+            "id": "b2",
+            "text": "   "
+          },
+          {
+            "id": "b3",
+            "text": "three"
+          },
+          {
+            "id": "uuid-0001",
+            "text": "https://example.com/x"
+          }
+        ],
+        "skin": "numbered"
+      }
+    }
+  ]
+}

@@ -1,0 +1,754 @@
+{
+  "outputs": [
+    {
+      "key": "value",
+      "label": "On / off",
+      "valueType": "boolean",
+      "unit": null,
+      "index": 0,
+      "timeSensitive": false
+    }
+  ],
+  "inputs": [
+    {
+      "key": "value",
+      "label": "On / off",
+      "kind": "field",
+      "valueType": "boolean",
+      "unit": null,
+      "acceptsPayload": false,
+      "index": 0
+    },
+    {
+      "key": "reset",
+      "label": "Switch off",
+      "kind": "command",
+      "valueType": null,
+      "unit": null,
+      "acceptsPayload": false,
+      "index": 1
+    }
+  ],
+  "samples": [
+    {
+      "label": "Condition",
+      "value": false
+    },
+    {
+      "label": "Condition",
+      "value": true,
+      "skin": "power"
+    }
+  ],
+  "gets": [
+    {
+      "sample": 0,
+      "key": "value",
+      "value": false
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": true
+    }
+  ],
+  "sets": [
+    {
+      "sample": 0,
+      "key": "value",
+      "value": 0,
+      "data": {
+        "label": "Condition",
+        "value": false
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": 1,
+      "data": {
+        "label": "Condition",
+        "value": true
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": -1,
+      "data": {
+        "label": "Condition",
+        "value": false
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": 7,
+      "data": {
+        "label": "Condition",
+        "value": true
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": 2.5,
+      "data": {
+        "label": "Condition",
+        "value": true
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": 2.6,
+      "data": {
+        "label": "Condition",
+        "value": true
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": -2.5,
+      "data": {
+        "label": "Condition",
+        "value": false
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": 0.5,
+      "data": {
+        "label": "Condition",
+        "value": false
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": 4.9,
+      "data": {
+        "label": "Condition",
+        "value": true
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": 5,
+      "data": {
+        "label": "Condition",
+        "value": true
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": 10,
+      "data": {
+        "label": "Condition",
+        "value": true
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": 50,
+      "data": {
+        "label": "Condition",
+        "value": true
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": 150,
+      "data": {
+        "label": "Condition",
+        "value": true
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": 1e+21,
+      "data": {
+        "label": "Condition",
+        "value": true
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": 1.7976931348623157e+308,
+      "data": {
+        "label": "Condition",
+        "value": true
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": true,
+      "data": {
+        "label": "Condition",
+        "value": true
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": false,
+      "data": {
+        "label": "Condition",
+        "value": false
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": "",
+      "data": {
+        "label": "Condition",
+        "value": false
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": "12.5",
+      "data": {
+        "label": "Condition",
+        "value": false
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": "not a number",
+      "data": {
+        "label": "Condition",
+        "value": false
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": "1",
+      "data": {
+        "label": "Condition",
+        "value": true
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": "true",
+      "data": {
+        "label": "Condition",
+        "value": true
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": "yes",
+      "data": {
+        "label": "Condition",
+        "value": true
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": "on",
+      "data": {
+        "label": "Condition",
+        "value": true
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": "off",
+      "data": {
+        "label": "Condition",
+        "value": false
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": "0",
+      "data": {
+        "label": "Condition",
+        "value": false
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": " 8 ",
+      "data": {
+        "label": "Condition",
+        "value": false
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": "3abc",
+      "data": {
+        "label": "Condition",
+        "value": false
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": "-4e2",
+      "data": {
+        "label": "Condition",
+        "value": false
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": "Infinity",
+      "data": {
+        "label": "Condition",
+        "value": false
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": "NaN",
+      "data": {
+        "label": "Condition",
+        "value": false
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": [],
+      "data": {
+        "label": "Condition",
+        "value": false
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": [
+        {
+          "t": 0,
+          "v": 4
+        },
+        {
+          "t": 1,
+          "v": 9
+        }
+      ],
+      "data": {
+        "label": "Condition",
+        "value": true
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value",
+      "value": [
+        {
+          "t": 5,
+          "v": -2.5
+        }
+      ],
+      "data": {
+        "label": "Condition",
+        "value": true
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": 0,
+      "data": {
+        "label": "Condition",
+        "value": false,
+        "skin": "power"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": 1,
+      "data": {
+        "label": "Condition",
+        "value": true,
+        "skin": "power"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": -1,
+      "data": {
+        "label": "Condition",
+        "value": false,
+        "skin": "power"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": 7,
+      "data": {
+        "label": "Condition",
+        "value": true,
+        "skin": "power"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": 2.5,
+      "data": {
+        "label": "Condition",
+        "value": true,
+        "skin": "power"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": 2.6,
+      "data": {
+        "label": "Condition",
+        "value": true,
+        "skin": "power"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": -2.5,
+      "data": {
+        "label": "Condition",
+        "value": false,
+        "skin": "power"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": 0.5,
+      "data": {
+        "label": "Condition",
+        "value": false,
+        "skin": "power"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": 4.9,
+      "data": {
+        "label": "Condition",
+        "value": true,
+        "skin": "power"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": 5,
+      "data": {
+        "label": "Condition",
+        "value": true,
+        "skin": "power"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": 10,
+      "data": {
+        "label": "Condition",
+        "value": true,
+        "skin": "power"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": 50,
+      "data": {
+        "label": "Condition",
+        "value": true,
+        "skin": "power"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": 150,
+      "data": {
+        "label": "Condition",
+        "value": true,
+        "skin": "power"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": 1e+21,
+      "data": {
+        "label": "Condition",
+        "value": true,
+        "skin": "power"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": 1.7976931348623157e+308,
+      "data": {
+        "label": "Condition",
+        "value": true,
+        "skin": "power"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": true,
+      "data": {
+        "label": "Condition",
+        "value": true,
+        "skin": "power"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": false,
+      "data": {
+        "label": "Condition",
+        "value": false,
+        "skin": "power"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": "",
+      "data": {
+        "label": "Condition",
+        "value": false,
+        "skin": "power"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": "12.5",
+      "data": {
+        "label": "Condition",
+        "value": false,
+        "skin": "power"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": "not a number",
+      "data": {
+        "label": "Condition",
+        "value": false,
+        "skin": "power"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": "1",
+      "data": {
+        "label": "Condition",
+        "value": true,
+        "skin": "power"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": "true",
+      "data": {
+        "label": "Condition",
+        "value": true,
+        "skin": "power"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": "yes",
+      "data": {
+        "label": "Condition",
+        "value": true,
+        "skin": "power"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": "on",
+      "data": {
+        "label": "Condition",
+        "value": true,
+        "skin": "power"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": "off",
+      "data": {
+        "label": "Condition",
+        "value": false,
+        "skin": "power"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": "0",
+      "data": {
+        "label": "Condition",
+        "value": false,
+        "skin": "power"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": " 8 ",
+      "data": {
+        "label": "Condition",
+        "value": false,
+        "skin": "power"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": "3abc",
+      "data": {
+        "label": "Condition",
+        "value": false,
+        "skin": "power"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": "-4e2",
+      "data": {
+        "label": "Condition",
+        "value": false,
+        "skin": "power"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": "Infinity",
+      "data": {
+        "label": "Condition",
+        "value": false,
+        "skin": "power"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": "NaN",
+      "data": {
+        "label": "Condition",
+        "value": false,
+        "skin": "power"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": [],
+      "data": {
+        "label": "Condition",
+        "value": false,
+        "skin": "power"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": [
+        {
+          "t": 0,
+          "v": 4
+        },
+        {
+          "t": 1,
+          "v": 9
+        }
+      ],
+      "data": {
+        "label": "Condition",
+        "value": true,
+        "skin": "power"
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value",
+      "value": [
+        {
+          "t": 5,
+          "v": -2.5
+        }
+      ],
+      "data": {
+        "label": "Condition",
+        "value": true,
+        "skin": "power"
+      }
+    }
+  ],
+  "commands": [
+    {
+      "sample": 0,
+      "key": "reset",
+      "payload": null,
+      "hasPayload": false,
+      "data": {
+        "label": "Condition",
+        "value": false
+      }
+    },
+    {
+      "sample": 1,
+      "key": "reset",
+      "payload": null,
+      "hasPayload": false,
+      "data": {
+        "label": "Condition",
+        "value": false,
+        "skin": "power"
+      }
+    }
+  ]
+}

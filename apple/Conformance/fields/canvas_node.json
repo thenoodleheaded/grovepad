@@ -1,0 +1,17 @@
+{
+  "outputs": [],
+  "inputs": [],
+  "samples": [
+    {
+      "canvasId": "",
+      "skin": "portal"
+    },
+    {
+      "canvasId": "child",
+      "skin": "cover"
+    }
+  ],
+  "gets": [],
+  "sets": [],
+  "commands": []
+}

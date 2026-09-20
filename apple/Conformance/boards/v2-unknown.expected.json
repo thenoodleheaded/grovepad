@@ -1,0 +1,86 @@
+{
+  "parse": "ok",
+  "mode": "parse",
+  "widgetIds": [
+    "alpha",
+    "future"
+  ],
+  "widgetTypes": {
+    "alpha": "text",
+    "future": "text"
+  },
+  "opaqueWidgets": {
+    "future": "quantum_planner"
+  },
+  "relationIds": [
+    "futureRelation"
+  ],
+  "connectionIds": [],
+  "glueIds": [
+    "futureGlue"
+  ],
+  "activePacks": [
+    "life"
+  ],
+  "unknownRelationIds": [
+    "futureRelationKind"
+  ],
+  "unknownConnectionIds": [
+    "futureConnectionKind",
+    "futureTransform"
+  ],
+  "unknownGlueIds": [],
+  "unknownBoardFields": [
+    "futureBoardField"
+  ],
+  "rawActivePacks": [
+    "life",
+    "quantum_research"
+  ],
+  "device": {
+    "activeWorkspaceId": "workspace",
+    "activeCanvasId": "canvas",
+    "canvasViews": {
+      "canvas": {
+        "pan": {
+          "x": 10,
+          "y": 20
+        },
+        "zoom": 1,
+        "futureViewField": "kept"
+      }
+    }
+  },
+  "serialized": "{\"futureBoardField\":{\"mode\":\"tomorrow\"},\"format\":\"grovepad-board\",\"v\":2,\"workspaces\":{\"workspace\":{\"id\":\"workspace\",\"name\":\"Workspace\",\"rootCanvasId\":\"canvas\",\"createdAt\":1,\"futureWorkspaceField\":\"kept\"}},\"canvases\":{\"canvas\":{\"id\":\"canvas\",\"name\":\"Origin\",\"workspaceId\":\"workspace\",\"parentCanvasId\":null,\"futureCanvasField\":{\"kept\":true}}},\"widgets\":{\"alpha\":{\"id\":\"alpha\",\"type\":\"text\",\"title\":\"Alpha\",\"canvasId\":\"canvas\",\"position\":{\"x\":0,\"y\":0},\"size\":{\"width\":240,\"height\":160},\"data\":{\"text\":\"Known widget\",\"futureDataField\":[1,2,3]},\"metadata\":{\"badges\":[],\"futureMetadataField\":\"kept\"},\"futureWidgetField\":{\"nested\":\"kept\"}},\"future\":{\"id\":\"future\",\"type\":\"quantum_planner\",\"title\":\"Future plan\",\"canvasId\":\"canvas\",\"position\":{\"x\":320,\"y\":0},\"size\":{\"width\":280,\"height\":200},\"data\":{\"entanglements\":[{\"id\":\"q1\",\"state\":\"maybe\"}]},\"metadata\":{\"badges\":[],\"futureChrome\":\"prismatic\"},\"futureWidgetField\":{\"deep\":{\"value\":42}}}},\"relations\":{\"futureRelationKind\":{\"id\":\"futureRelationKind\",\"fromId\":\"alpha\",\"toId\":\"future\",\"type\":\"supports\",\"isResolved\":false,\"futureRelationSemantics\":{\"strength\":0.8}},\"futureRelation\":{\"id\":\"futureRelation\",\"fromId\":\"alpha\",\"toId\":\"future\",\"type\":\"parent\",\"isResolved\":false,\"futureRelationField\":\"kept\"}},\"connections\":{\"futureConnectionKind\":{\"id\":\"futureConnectionKind\",\"fromId\":\"alpha\",\"fromField\":\"text\",\"toId\":\"future\",\"kind\":\"stream\",\"enabled\":true,\"futureStreamMode\":\"batched\"},\"futureTransform\":{\"id\":\"futureTransform\",\"fromId\":\"alpha\",\"fromField\":\"text\",\"toId\":\"future\",\"toField\":\"prompt\",\"kind\":\"value\",\"transform\":{\"op\":\"quantize\",\"steps\":8},\"enabled\":true}},\"glues\":{\"futureGlue\":{\"id\":\"futureGlue\",\"widgetIds\":[\"alpha\",\"future\"],\"futureGlueField\":\"kept\"}},\"activePacks\":[\"life\",\"quantum_research\"]}",
+  "sha256": "1516ba88c82ea08765e5ae3aada7332ab1fe45279272866b55e3c8eca1237ce9",
+  "canonical": "{\"activePacks\":[\"life\",\"quantum_research\"],\"canvases\":{\"canvas\":{\"futureCanvasField\":{\"kept\":true},\"id\":\"canvas\",\"name\":\"Origin\",\"parentCanvasId\":null,\"workspaceId\":\"workspace\"}},\"connections\":{\"futureConnectionKind\":{\"enabled\":true,\"fromField\":\"text\",\"fromId\":\"alpha\",\"futureStreamMode\":\"batched\",\"id\":\"futureConnectionKind\",\"kind\":\"stream\",\"toId\":\"future\"},\"futureTransform\":{\"enabled\":true,\"fromField\":\"text\",\"fromId\":\"alpha\",\"id\":\"futureTransform\",\"kind\":\"value\",\"toField\":\"prompt\",\"toId\":\"future\",\"transform\":{\"op\":\"quantize\",\"steps\":8}}},\"format\":\"grovepad-board\",\"futureBoardField\":{\"mode\":\"tomorrow\"},\"glues\":{\"futureGlue\":{\"futureGlueField\":\"kept\",\"id\":\"futureGlue\",\"widgetIds\":[\"alpha\",\"future\"]}},\"relations\":{\"futureRelation\":{\"fromId\":\"alpha\",\"futureRelationField\":\"kept\",\"id\":\"futureRelation\",\"isResolved\":false,\"toId\":\"future\",\"type\":\"parent\"},\"futureRelationKind\":{\"fromId\":\"alpha\",\"futureRelationSemantics\":{\"strength\":0.8},\"id\":\"futureRelationKind\",\"isResolved\":false,\"toId\":\"future\",\"type\":\"supports\"}},\"v\":2,\"widgets\":{\"alpha\":{\"canvasId\":\"canvas\",\"data\":{\"futureDataField\":[1,2,3],\"text\":\"Known widget\"},\"futureWidgetField\":{\"nested\":\"kept\"},\"id\":\"alpha\",\"metadata\":{\"badges\":[],\"futureMetadataField\":\"kept\"},\"position\":{\"x\":0,\"y\":0},\"size\":{\"height\":160,\"width\":240},\"title\":\"Alpha\",\"type\":\"text\"},\"future\":{\"canvasId\":\"canvas\",\"data\":{\"entanglements\":[{\"id\":\"q1\",\"state\":\"maybe\"}]},\"futureWidgetField\":{\"deep\":{\"value\":42}},\"id\":\"future\",\"metadata\":{\"badges\":[],\"futureChrome\":\"prismatic\"},\"position\":{\"x\":320,\"y\":0},\"size\":{\"height\":200,\"width\":280},\"title\":\"Future plan\",\"type\":\"quantum_planner\"}},\"workspaces\":{\"workspace\":{\"createdAt\":1,\"futureWorkspaceField\":\"kept\",\"id\":\"workspace\",\"name\":\"Workspace\",\"rootCanvasId\":\"canvas\"}}}",
+  "canonicalSha256": "53eb56e7e15898bc0c20d85e5fe67e6cf645cd3da2514ff2809daee7024c6d12",
+  "split": {
+    "index": {
+      "canonical": "{\"activePacks\":[\"life\",\"quantum_research\"],\"boardFormat\":\"grovepad-board\",\"boardVersion\":2,\"canvases\":{\"canvas\":{\"futureCanvasField\":{\"kept\":true},\"id\":\"canvas\",\"name\":\"Origin\",\"parentCanvasId\":null,\"workspaceId\":\"workspace\"}},\"connections\":{},\"extra\":{\"futureBoardField\":{\"mode\":\"tomorrow\"}},\"format\":\"grovepad-board-index\",\"glues\":{},\"relations\":{},\"v\":1,\"workspaces\":{\"workspace\":{\"createdAt\":1,\"futureWorkspaceField\":\"kept\",\"id\":\"workspace\",\"name\":\"Workspace\",\"rootCanvasId\":\"canvas\"}}}",
+      "sha256": "e8d7353a413e34eb78fdedd86827dd6bcb6874e981e46fbe5b257a8319ebc231",
+      "pretty": "{\n  \"format\": \"grovepad-board-index\",\n  \"v\": 1,\n  \"boardFormat\": \"grovepad-board\",\n  \"boardVersion\": 2,\n  \"workspaces\": {\n    \"workspace\": {\n      \"id\": \"workspace\",\n      \"name\": \"Workspace\",\n      \"rootCanvasId\": \"canvas\",\n      \"createdAt\": 1,\n      \"futureWorkspaceField\": \"kept\"\n    }\n  },\n  \"canvases\": {\n    \"canvas\": {\n      \"id\": \"canvas\",\n      \"name\": \"Origin\",\n      \"workspaceId\": \"workspace\",\n      \"parentCanvasId\": null,\n      \"futureCanvasField\": {\n        \"kept\": true\n      }\n    }\n  },\n  \"activePacks\": [\n    \"life\",\n    \"quantum_research\"\n  ],\n  \"relations\": {},\n  \"connections\": {},\n  \"glues\": {},\n  \"extra\": {\n    \"futureBoardField\": {\n      \"mode\": \"tomorrow\"\n    }\n  }\n}"
+    },
+    "canvases": {
+      "canvas": {
+        "canonical": "{\"canvasId\":\"canvas\",\"connections\":{\"futureConnectionKind\":{\"enabled\":true,\"fromField\":\"text\",\"fromId\":\"alpha\",\"futureStreamMode\":\"batched\",\"id\":\"futureConnectionKind\",\"kind\":\"stream\",\"toId\":\"future\"},\"futureTransform\":{\"enabled\":true,\"fromField\":\"text\",\"fromId\":\"alpha\",\"id\":\"futureTransform\",\"kind\":\"value\",\"toField\":\"prompt\",\"toId\":\"future\",\"transform\":{\"op\":\"quantize\",\"steps\":8}}},\"format\":\"grovepad-canvas\",\"glues\":{\"futureGlue\":{\"futureGlueField\":\"kept\",\"id\":\"futureGlue\",\"widgetIds\":[\"alpha\",\"future\"]}},\"relations\":{\"futureRelation\":{\"fromId\":\"alpha\",\"futureRelationField\":\"kept\",\"id\":\"futureRelation\",\"isResolved\":false,\"toId\":\"future\",\"type\":\"parent\"},\"futureRelationKind\":{\"fromId\":\"alpha\",\"futureRelationSemantics\":{\"strength\":0.8},\"id\":\"futureRelationKind\",\"isResolved\":false,\"toId\":\"future\",\"type\":\"supports\"}},\"v\":1,\"widgets\":{\"alpha\":{\"canvasId\":\"canvas\",\"data\":{\"futureDataField\":[1,2,3],\"text\":\"Known widget\"},\"futureWidgetField\":{\"nested\":\"kept\"},\"id\":\"alpha\",\"metadata\":{\"badges\":[],\"futureMetadataField\":\"kept\"},\"position\":{\"x\":0,\"y\":0},\"size\":{\"height\":160,\"width\":240},\"title\":\"Alpha\",\"type\":\"text\"},\"future\":{\"canvasId\":\"canvas\",\"data\":{\"entanglements\":[{\"id\":\"q1\",\"state\":\"maybe\"}]},\"futureWidgetField\":{\"deep\":{\"value\":42}},\"id\":\"future\",\"metadata\":{\"badges\":[],\"futureChrome\":\"prismatic\"},\"position\":{\"x\":320,\"y\":0},\"size\":{\"height\":200,\"width\":280},\"title\":\"Future plan\",\"type\":\"quantum_planner\"}}}",
+        "sha256": "007e622e33992f0eb2a88068f9315e638d0be2c1ae801c2c6fc259bfd54af197",
+        "pretty": "{\n  \"format\": \"grovepad-canvas\",\n  \"v\": 1,\n  \"canvasId\": \"canvas\",\n  \"widgets\": {\n    \"alpha\": {\n      \"id\": \"alpha\",\n      \"type\": \"text\",\n      \"title\": \"Alpha\",\n      \"canvasId\": \"canvas\",\n      \"position\": {\n        \"x\": 0,\n        \"y\": 0\n      },\n      \"size\": {\n        \"width\": 240,\n        \"height\": 160\n      },\n      \"data\": {\n        \"text\": \"Known widget\",\n        \"futureDataField\": [\n          1,\n          2,\n          3\n        ]\n      },\n      \"metadata\": {\n        \"badges\": [],\n        \"futureMetadataField\": \"kept\"\n      },\n      \"futureWidgetField\": {\n        \"nested\": \"kept\"\n      }\n    },\n    \"future\": {\n      \"id\": \"future\",\n      \"type\": \"quantum_planner\",\n      \"title\": \"Future plan\",\n      \"canvasId\": \"canvas\",\n      \"position\": {\n        \"x\": 320,\n        \"y\": 0\n      },\n      \"size\": {\n        \"width\": 280,\n        \"height\": 200\n      },\n      \"data\": {\n        \"entanglements\": [\n          {\n            \"id\": \"q1\",\n            \"state\": \"maybe\"\n          }\n        ]\n      },\n      \"metadata\": {\n        \"badges\": [],\n        \"futureChrome\": \"prismatic\"\n      },\n      \"futureWidgetField\": {\n        \"deep\": {\n          \"value\": 42\n        }\n      }\n    }\n  },\n  \"relations\": {\n    \"futureRelationKind\": {\n      \"id\": \"futureRelationKind\",\n      \"fromId\": \"alpha\",\n      \"toId\": \"future\",\n      \"type\": \"supports\",\n      \"isResolved\": false,\n      \"futureRelationSemantics\": {\n        \"strength\": 0.8\n      }\n    },\n    \"futureRelation\": {\n      \"id\": \"futureRelation\",\n      \"fromId\": \"alpha\",\n      \"toId\": \"future\",\n      \"type\": \"parent\",\n      \"isResolved\": false,\n      \"futureRelationField\": \"kept\"\n    }\n  },\n  \"connections\": {\n    \"futureConnectionKind\": {\n      \"id\": \"futureConnectionKind\",\n      \"fromId\": \"alpha\",\n      \"fromField\": \"text\",\n      \"toId\": \"future\",\n      \"kind\": \"stream\",\n      \"enabled\": true,\n      \"futureStreamMode\": \"batched\"\n    },\n    \"futureTransform\": {\n      \"id\": \"futureTransform\",\n      \"fromId\": \"alpha\",\n      \"fromField\": \"text\",\n      \"toId\": \"future\",\n      \"toField\": \"prompt\",\n      \"kind\": \"value\",\n      \"transform\": {\n        \"op\": \"quantize\",\n        \"steps\": 8\n      },\n      \"enabled\": true\n    }\n  },\n  \"glues\": {\n    \"futureGlue\": {\n      \"id\": \"futureGlue\",\n      \"widgetIds\": [\n        \"alpha\",\n        \"future\"\n      ],\n      \"futureGlueField\": \"kept\"\n    }\n  }\n}"
+      }
+    }
+  },
+  "edits": [
+    {
+      "widgetId": "future",
+      "position": {
+        "x": 999,
+        "y": 999
+      }
+    }
+  ],
+  "afterEdits": "{\"futureBoardField\":{\"mode\":\"tomorrow\"},\"format\":\"grovepad-board\",\"v\":2,\"workspaces\":{\"workspace\":{\"id\":\"workspace\",\"name\":\"Workspace\",\"rootCanvasId\":\"canvas\",\"createdAt\":1,\"futureWorkspaceField\":\"kept\"}},\"canvases\":{\"canvas\":{\"id\":\"canvas\",\"name\":\"Origin\",\"workspaceId\":\"workspace\",\"parentCanvasId\":null,\"futureCanvasField\":{\"kept\":true}}},\"widgets\":{\"alpha\":{\"id\":\"alpha\",\"type\":\"text\",\"title\":\"Alpha\",\"canvasId\":\"canvas\",\"position\":{\"x\":0,\"y\":0},\"size\":{\"width\":240,\"height\":160},\"data\":{\"text\":\"Known widget\",\"futureDataField\":[1,2,3]},\"metadata\":{\"badges\":[],\"futureMetadataField\":\"kept\"},\"futureWidgetField\":{\"nested\":\"kept\"}},\"future\":{\"id\":\"future\",\"type\":\"quantum_planner\",\"title\":\"Future plan\",\"canvasId\":\"canvas\",\"position\":{\"x\":320,\"y\":0},\"size\":{\"width\":280,\"height\":200},\"data\":{\"entanglements\":[{\"id\":\"q1\",\"state\":\"maybe\"}]},\"metadata\":{\"badges\":[],\"futureChrome\":\"prismatic\"},\"futureWidgetField\":{\"deep\":{\"value\":42}}}},\"relations\":{\"futureRelationKind\":{\"id\":\"futureRelationKind\",\"fromId\":\"alpha\",\"toId\":\"future\",\"type\":\"supports\",\"isResolved\":false,\"futureRelationSemantics\":{\"strength\":0.8}},\"futureRelation\":{\"id\":\"futureRelation\",\"fromId\":\"alpha\",\"toId\":\"future\",\"type\":\"parent\",\"isResolved\":false,\"futureRelationField\":\"kept\"}},\"connections\":{\"futureConnectionKind\":{\"id\":\"futureConnectionKind\",\"fromId\":\"alpha\",\"fromField\":\"text\",\"toId\":\"future\",\"kind\":\"stream\",\"enabled\":true,\"futureStreamMode\":\"batched\"},\"futureTransform\":{\"id\":\"futureTransform\",\"fromId\":\"alpha\",\"fromField\":\"text\",\"toId\":\"future\",\"toField\":\"prompt\",\"kind\":\"value\",\"transform\":{\"op\":\"quantize\",\"steps\":8},\"enabled\":true}},\"glues\":{\"futureGlue\":{\"id\":\"futureGlue\",\"widgetIds\":[\"alpha\",\"future\"],\"futureGlueField\":\"kept\"}},\"activePacks\":[\"life\",\"quantum_research\"]}",
+  "activePacksVariants": {
+    "cleared": "[\"quantum_research\"]",
+    "swapped": "[\"quantum_research\",\"software_eng\"]"
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "\"\"": "\"\"",
+  "\"plain\"": "\"plain\"",
+  "\"quote\\\"inside\"": "\"quote\\\"inside\"",
+  "\"back\\\\slash\"": "\"back\\\\slash\"",
+  "\"slash/not/escaped\"": "\"slash/not/escaped\"",
+  "\"line\\nbreak\"": "\"line\\nbreak\"",
+  "\"tab\\there\"": "\"tab\\there\"",
+  "\"cr\\r\"": "\"cr\\r\"",
+  "\"bs\\b\"": "\"bs\\b\"",
+  "\"ff\\f\"": "\"ff\\f\"",
+  "\"ctl\\u0001\\u001f\"": "\"ctl\\u0001\\u001f\"",
+  "\"del\"": "\"del\"",
+  "\"café\"": "\"café\"",
+  "\"日本\"": "\"日本\"",
+  "\"emoji 😀\"": "\"emoji 😀\"",
+  "\"lone \\ud800 high\"": "\"lone \\ud800 high\"",
+  "\"lone \\udc00 low\"": "\"lone \\udc00 low\"",
+  "\"sep  \"": "\"sep  \"",
+  "\"<script>\"": "\"<script>\"",
+  "\"&amp;\"": "\"&amp;\"",
+  "\"\\u0000nul\"": "\"\\u0000nul\"",
+  "\"\\u001b[31m\"": "\"\\u001b[31m\"",
+  "\"mixed 😀𐀀 end\"": "\"mixed 😀𐀀 end\"",
+  "\" nbsp\"": "\" nbsp\""
+}

@@ -1,0 +1,156 @@
+{
+  "format": "grovepad-board",
+  "v": 2,
+  "workspaces": {
+    "first": {
+      "id": "first",
+      "name": "First",
+      "rootCanvasId": "root1",
+      "createdAt": 10,
+      "sortIndex": 1,
+      "tint": "#fff"
+    },
+    "second": {
+      "id": "second",
+      "name": "Second",
+      "rootCanvasId": "root2",
+      "createdAt": 20
+    },
+    "rootless": {
+      "id": "rootless",
+      "name": "Rootless",
+      "rootCanvasId": "missing",
+      "createdAt": 30
+    },
+    "badShape": {
+      "id": "badShape",
+      "name": "Bad",
+      "rootCanvasId": "root1"
+    }
+  },
+  "canvases": {
+    "root1": {
+      "id": "root1",
+      "name": "Root 1",
+      "workspaceId": "first",
+      "parentCanvasId": null
+    },
+    "child1": {
+      "id": "child1",
+      "name": "Child 1",
+      "workspaceId": "first",
+      "parentCanvasId": "root1"
+    },
+    "grandchild1": {
+      "id": "grandchild1",
+      "name": "Grandchild",
+      "workspaceId": "first",
+      "parentCanvasId": "child1"
+    },
+    "orphan": {
+      "id": "orphan",
+      "name": "Orphan",
+      "workspaceId": "first",
+      "parentCanvasId": "vanished"
+    },
+    "root2": {
+      "id": "root2",
+      "name": "Root 2",
+      "workspaceId": "second",
+      "parentCanvasId": null
+    },
+    "ofRootless": {
+      "id": "ofRootless",
+      "name": "Of rootless",
+      "workspaceId": "rootless",
+      "parentCanvasId": null
+    },
+    "noWorkspace": {
+      "id": "noWorkspace",
+      "name": "No workspace",
+      "workspaceId": "ghost",
+      "parentCanvasId": null
+    },
+    "badIntensity": {
+      "id": "badIntensity",
+      "name": "Bad",
+      "workspaceId": "first",
+      "parentCanvasId": null,
+      "gridIntensity": 150
+    }
+  },
+  "widgets": {
+    "onOrphan": {
+      "id": "onOrphan",
+      "type": "text",
+      "title": "onOrphan",
+      "canvasId": "orphan",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 320,
+        "height": 200
+      },
+      "data": {
+        "text": "",
+        "mode": "plain",
+        "color": "yellow"
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "onRoot2": {
+      "id": "onRoot2",
+      "type": "text",
+      "title": "onRoot2",
+      "canvasId": "root2",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 320,
+        "height": 200
+      },
+      "data": {
+        "text": "",
+        "mode": "plain",
+        "color": "yellow"
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "onGrandchild": {
+      "id": "onGrandchild",
+      "type": "text",
+      "title": "onGrandchild",
+      "canvasId": "grandchild1",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 320,
+        "height": 200
+      },
+      "data": {
+        "text": "",
+        "mode": "plain",
+        "color": "yellow"
+      },
+      "metadata": {
+        "badges": []
+      }
+    }
+  },
+  "relations": {},
+  "connections": {},
+  "glues": {},
+  "activePacks": [],
+  "activeWorkspaceId": "second",
+  "activeCanvasId": "root1"
+}

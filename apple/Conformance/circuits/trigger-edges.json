@@ -1,0 +1,439 @@
+{
+  "name": "trigger-edges",
+  "widgets": {
+    "list": {
+      "id": "list",
+      "type": "checklist",
+      "title": "list",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 280,
+        "height": 200
+      },
+      "data": {
+        "items": [
+          {
+            "id": "i1",
+            "label": "a",
+            "done": true
+          },
+          {
+            "id": "i2",
+            "label": "b",
+            "done": false
+          }
+        ]
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "rising": {
+      "id": "rising",
+      "type": "counter",
+      "title": "rising",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 280,
+        "height": 200
+      },
+      "data": {
+        "label": "Tally",
+        "count": 100,
+        "step": 1,
+        "skin": "tally"
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "falling": {
+      "id": "falling",
+      "type": "counter",
+      "title": "falling",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 280,
+        "height": 200
+      },
+      "data": {
+        "label": "Tally",
+        "count": 200,
+        "step": 1,
+        "skin": "tally"
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "change": {
+      "id": "change",
+      "type": "counter",
+      "title": "change",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 280,
+        "height": 200
+      },
+      "data": {
+        "label": "Tally",
+        "count": 300,
+        "step": 1,
+        "skin": "tally"
+      },
+      "metadata": {
+        "badges": []
+      }
+    }
+  },
+  "connections": {
+    "r": {
+      "id": "r",
+      "enabled": true,
+      "fromId": "list",
+      "fromField": "all_done",
+      "toId": "rising",
+      "kind": "trigger",
+      "command": "increment",
+      "edge": "rising"
+    },
+    "f": {
+      "id": "f",
+      "enabled": true,
+      "fromId": "list",
+      "fromField": "all_done",
+      "toId": "falling",
+      "kind": "trigger",
+      "command": "decrement",
+      "edge": "falling"
+    },
+    "c": {
+      "id": "c",
+      "enabled": true,
+      "fromId": "list",
+      "fromField": "all_done",
+      "toId": "change",
+      "kind": "trigger",
+      "command": "reset",
+      "edge": "change"
+    }
+  },
+  "steps": [
+    {
+      "label": "first observation baselines false",
+      "seeds": [
+        "list"
+      ],
+      "expect": {
+        "writes": {},
+        "firedIds": [],
+        "executeRequests": [],
+        "memory": {
+          "r": {
+            "serialized": "b:false",
+            "bool": false
+          },
+          "f": {
+            "serialized": "b:false",
+            "bool": false
+          },
+          "c": {
+            "serialized": "b:false",
+            "bool": false
+          }
+        },
+        "widgetsAfter": {
+          "list": {
+            "items": [
+              {
+                "id": "i1",
+                "label": "a",
+                "done": true
+              },
+              {
+                "id": "i2",
+                "label": "b",
+                "done": false
+              }
+            ]
+          },
+          "rising": {
+            "label": "Tally",
+            "count": 100,
+            "step": 1,
+            "skin": "tally"
+          },
+          "falling": {
+            "label": "Tally",
+            "count": 200,
+            "step": 1,
+            "skin": "tally"
+          },
+          "change": {
+            "label": "Tally",
+            "count": 300,
+            "step": 1,
+            "skin": "tally"
+          }
+        }
+      }
+    },
+    {
+      "label": "false→true",
+      "seeds": [
+        "list"
+      ],
+      "edits": {
+        "list": {
+          "items": [
+            {
+              "id": "i1",
+              "label": "a",
+              "done": true
+            },
+            {
+              "id": "i2",
+              "label": "b",
+              "done": true
+            }
+          ]
+        }
+      },
+      "expect": {
+        "writes": {
+          "rising": {
+            "label": "Tally",
+            "count": 101,
+            "step": 1,
+            "skin": "tally"
+          },
+          "change": {
+            "label": "Tally",
+            "count": 0,
+            "step": 1,
+            "skin": "tally"
+          }
+        },
+        "firedIds": [
+          "r",
+          "c"
+        ],
+        "executeRequests": [],
+        "memory": {
+          "r": {
+            "serialized": "b:true",
+            "bool": true
+          },
+          "f": {
+            "serialized": "b:true",
+            "bool": true
+          },
+          "c": {
+            "serialized": "b:true",
+            "bool": true
+          }
+        },
+        "widgetsAfter": {
+          "list": {
+            "items": [
+              {
+                "id": "i1",
+                "label": "a",
+                "done": true
+              },
+              {
+                "id": "i2",
+                "label": "b",
+                "done": true
+              }
+            ]
+          },
+          "rising": {
+            "label": "Tally",
+            "count": 101,
+            "step": 1,
+            "skin": "tally"
+          },
+          "falling": {
+            "label": "Tally",
+            "count": 200,
+            "step": 1,
+            "skin": "tally"
+          },
+          "change": {
+            "label": "Tally",
+            "count": 0,
+            "step": 1,
+            "skin": "tally"
+          }
+        }
+      }
+    },
+    {
+      "label": "true→false",
+      "seeds": [
+        "list"
+      ],
+      "edits": {
+        "list": {
+          "items": [
+            {
+              "id": "i1",
+              "label": "a",
+              "done": false
+            },
+            {
+              "id": "i2",
+              "label": "b",
+              "done": true
+            }
+          ]
+        }
+      },
+      "expect": {
+        "writes": {
+          "falling": {
+            "label": "Tally",
+            "count": 199,
+            "step": 1,
+            "skin": "tally"
+          },
+          "change": {
+            "label": "Tally",
+            "count": 0,
+            "step": 1,
+            "skin": "tally"
+          }
+        },
+        "firedIds": [
+          "f",
+          "c"
+        ],
+        "executeRequests": [],
+        "memory": {
+          "r": {
+            "serialized": "b:false",
+            "bool": false
+          },
+          "f": {
+            "serialized": "b:false",
+            "bool": false
+          },
+          "c": {
+            "serialized": "b:false",
+            "bool": false
+          }
+        },
+        "widgetsAfter": {
+          "list": {
+            "items": [
+              {
+                "id": "i1",
+                "label": "a",
+                "done": false
+              },
+              {
+                "id": "i2",
+                "label": "b",
+                "done": true
+              }
+            ]
+          },
+          "rising": {
+            "label": "Tally",
+            "count": 101,
+            "step": 1,
+            "skin": "tally"
+          },
+          "falling": {
+            "label": "Tally",
+            "count": 199,
+            "step": 1,
+            "skin": "tally"
+          },
+          "change": {
+            "label": "Tally",
+            "count": 0,
+            "step": 1,
+            "skin": "tally"
+          }
+        }
+      }
+    },
+    {
+      "label": "unchanged",
+      "seeds": [
+        "list"
+      ],
+      "expect": {
+        "writes": {},
+        "firedIds": [],
+        "executeRequests": [],
+        "memory": {
+          "r": {
+            "serialized": "b:false",
+            "bool": false
+          },
+          "f": {
+            "serialized": "b:false",
+            "bool": false
+          },
+          "c": {
+            "serialized": "b:false",
+            "bool": false
+          }
+        },
+        "widgetsAfter": {
+          "list": {
+            "items": [
+              {
+                "id": "i1",
+                "label": "a",
+                "done": false
+              },
+              {
+                "id": "i2",
+                "label": "b",
+                "done": true
+              }
+            ]
+          },
+          "rising": {
+            "label": "Tally",
+            "count": 101,
+            "step": 1,
+            "skin": "tally"
+          },
+          "falling": {
+            "label": "Tally",
+            "count": 199,
+            "step": 1,
+            "skin": "tally"
+          },
+          "change": {
+            "label": "Tally",
+            "count": 0,
+            "step": 1,
+            "skin": "tally"
+          }
+        }
+      }
+    }
+  ]
+}

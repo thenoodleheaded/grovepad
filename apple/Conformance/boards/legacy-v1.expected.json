@@ -1,0 +1,71 @@
+{
+  "parse": "ok",
+  "mode": "migrate-v1",
+  "widgetIds": [
+    "note",
+    "unknown",
+    "counter",
+    "bullets"
+  ],
+  "widgetTypes": {
+    "note": "text",
+    "unknown": "text",
+    "counter": "counter",
+    "bullets": "bullets"
+  },
+  "opaqueWidgets": {
+    "unknown": "hologram"
+  },
+  "relationIds": [
+    "keep",
+    "toUnknown"
+  ],
+  "connectionIds": [
+    "ok"
+  ],
+  "glueIds": [
+    "pair"
+  ],
+  "activePacks": [
+    "life"
+  ],
+  "unknownRelationIds": [],
+  "unknownConnectionIds": [],
+  "unknownGlueIds": [],
+  "unknownBoardFields": [
+    "legacyTopLevel"
+  ],
+  "rawActivePacks": [
+    "life",
+    "mystery"
+  ],
+  "device": {
+    "activeWorkspaceId": "ws-default",
+    "activeCanvasId": "uuid-0001",
+    "canvasViews": {}
+  },
+  "serialized": "{\"legacyTopLevel\":\"kept as unknown field\",\"format\":\"grovepad-board\",\"v\":2,\"workspaces\":{\"ws-default\":{\"id\":\"ws-default\",\"name\":\"My Workspace\",\"rootCanvasId\":\"uuid-0001\",\"createdAt\":1789000000000}},\"canvases\":{\"uuid-0001\":{\"id\":\"uuid-0001\",\"name\":\"Origin\",\"workspaceId\":\"ws-default\",\"parentCanvasId\":null}},\"widgets\":{\"note\":{\"id\":\"note\",\"type\":\"text\",\"title\":\"Old note\",\"position\":{\"x\":0,\"y\":0},\"size\":{\"width\":240,\"height\":160},\"data\":{\"text\":\"from v1\"},\"metadata\":{\"badges\":[]},\"canvasId\":\"uuid-0001\"},\"unknown\":{\"id\":\"unknown\",\"type\":\"hologram\",\"title\":\"Future\",\"position\":{\"x\":600,\"y\":0},\"size\":{\"width\":240,\"height\":160},\"data\":{\"beam\":3},\"metadata\":{\"badges\":[]},\"canvasId\":\"uuid-0001\"},\"counter\":{\"id\":\"counter\",\"type\":\"counter\",\"title\":\"Count\",\"position\":{\"x\":0,\"y\":300},\"size\":{\"width\":240,\"height\":160},\"data\":{\"label\":\"Tally\",\"count\":4,\"step\":1},\"metadata\":{\"badges\":[]},\"canvasId\":\"uuid-0001\"},\"bullets\":{\"id\":\"bullets\",\"type\":\"bullets\",\"title\":\"Old bullets\",\"position\":{\"x\":300,\"y\":300},\"size\":{\"width\":240,\"height\":160},\"data\":{\"items\":[{\"id\":\"bullets:bullet:0\",\"text\":\"a\"},{\"id\":\"bullets:bullet:1\",\"text\":\"b\"}]},\"metadata\":{\"badges\":[]},\"canvasId\":\"uuid-0001\"}},\"relations\":{\"keep\":{\"id\":\"keep\",\"fromId\":\"note\",\"toId\":\"counter\",\"type\":\"parent\",\"isResolved\":false},\"toUnknown\":{\"id\":\"toUnknown\",\"fromId\":\"note\",\"toId\":\"unknown\",\"type\":\"cousin\",\"isResolved\":false}},\"connections\":{\"ok\":{\"id\":\"ok\",\"fromId\":\"counter\",\"fromField\":\"count\",\"toId\":\"note\",\"kind\":\"value\",\"toField\":\"text\",\"enabled\":true}},\"glues\":{\"pair\":{\"id\":\"pair\",\"widgetIds\":[\"note\",\"counter\"]}},\"activePacks\":[\"life\",\"mystery\"]}",
+  "sha256": "e200241489879c0e21e86fbbfd495a4de445db32fb727c4f1f555d552fb21459",
+  "canonical": "{\"activePacks\":[\"life\",\"mystery\"],\"canvases\":{\"uuid-0001\":{\"id\":\"uuid-0001\",\"name\":\"Origin\",\"parentCanvasId\":null,\"workspaceId\":\"ws-default\"}},\"connections\":{\"ok\":{\"enabled\":true,\"fromField\":\"count\",\"fromId\":\"counter\",\"id\":\"ok\",\"kind\":\"value\",\"toField\":\"text\",\"toId\":\"note\"}},\"format\":\"grovepad-board\",\"glues\":{\"pair\":{\"id\":\"pair\",\"widgetIds\":[\"note\",\"counter\"]}},\"legacyTopLevel\":\"kept as unknown field\",\"relations\":{\"keep\":{\"fromId\":\"note\",\"id\":\"keep\",\"isResolved\":false,\"toId\":\"counter\",\"type\":\"parent\"},\"toUnknown\":{\"fromId\":\"note\",\"id\":\"toUnknown\",\"isResolved\":false,\"toId\":\"unknown\",\"type\":\"cousin\"}},\"v\":2,\"widgets\":{\"bullets\":{\"canvasId\":\"uuid-0001\",\"data\":{\"items\":[{\"id\":\"bullets:bullet:0\",\"text\":\"a\"},{\"id\":\"bullets:bullet:1\",\"text\":\"b\"}]},\"id\":\"bullets\",\"metadata\":{\"badges\":[]},\"position\":{\"x\":300,\"y\":300},\"size\":{\"height\":160,\"width\":240},\"title\":\"Old bullets\",\"type\":\"bullets\"},\"counter\":{\"canvasId\":\"uuid-0001\",\"data\":{\"count\":4,\"label\":\"Tally\",\"step\":1},\"id\":\"counter\",\"metadata\":{\"badges\":[]},\"position\":{\"x\":0,\"y\":300},\"size\":{\"height\":160,\"width\":240},\"title\":\"Count\",\"type\":\"counter\"},\"note\":{\"canvasId\":\"uuid-0001\",\"data\":{\"text\":\"from v1\"},\"id\":\"note\",\"metadata\":{\"badges\":[]},\"position\":{\"x\":0,\"y\":0},\"size\":{\"height\":160,\"width\":240},\"title\":\"Old note\",\"type\":\"text\"},\"unknown\":{\"canvasId\":\"uuid-0001\",\"data\":{\"beam\":3},\"id\":\"unknown\",\"metadata\":{\"badges\":[]},\"position\":{\"x\":600,\"y\":0},\"size\":{\"height\":160,\"width\":240},\"title\":\"Future\",\"type\":\"hologram\"}},\"workspaces\":{\"ws-default\":{\"createdAt\":1789000000000,\"id\":\"ws-default\",\"name\":\"My Workspace\",\"rootCanvasId\":\"uuid-0001\"}}}",
+  "canonicalSha256": "7165f785996f2baaa7de7e70f8affbfb85823c9f7273b3bfb1a727204069eade",
+  "split": {
+    "index": {
+      "canonical": "{\"activePacks\":[\"life\",\"mystery\"],\"boardFormat\":\"grovepad-board\",\"boardVersion\":2,\"canvases\":{\"uuid-0001\":{\"id\":\"uuid-0001\",\"name\":\"Origin\",\"parentCanvasId\":null,\"workspaceId\":\"ws-default\"}},\"connections\":{},\"extra\":{\"legacyTopLevel\":\"kept as unknown field\"},\"format\":\"grovepad-board-index\",\"glues\":{},\"relations\":{},\"v\":1,\"workspaces\":{\"ws-default\":{\"createdAt\":1789000000000,\"id\":\"ws-default\",\"name\":\"My Workspace\",\"rootCanvasId\":\"uuid-0001\"}}}",
+      "sha256": "0a18e9aa82412eb5338278cbebc88afb9eeffeb639a59b236f655c7fabae8f44",
+      "pretty": "{\n  \"format\": \"grovepad-board-index\",\n  \"v\": 1,\n  \"boardFormat\": \"grovepad-board\",\n  \"boardVersion\": 2,\n  \"workspaces\": {\n    \"ws-default\": {\n      \"id\": \"ws-default\",\n      \"name\": \"My Workspace\",\n      \"rootCanvasId\": \"uuid-0001\",\n      \"createdAt\": 1789000000000\n    }\n  },\n  \"canvases\": {\n    \"uuid-0001\": {\n      \"id\": \"uuid-0001\",\n      \"name\": \"Origin\",\n      \"workspaceId\": \"ws-default\",\n      \"parentCanvasId\": null\n    }\n  },\n  \"activePacks\": [\n    \"life\",\n    \"mystery\"\n  ],\n  \"relations\": {},\n  \"connections\": {},\n  \"glues\": {},\n  \"extra\": {\n    \"legacyTopLevel\": \"kept as unknown field\"\n  }\n}"
+    },
+    "canvases": {
+      "uuid-0001": {
+        "canonical": "{\"canvasId\":\"uuid-0001\",\"connections\":{\"ok\":{\"enabled\":true,\"fromField\":\"count\",\"fromId\":\"counter\",\"id\":\"ok\",\"kind\":\"value\",\"toField\":\"text\",\"toId\":\"note\"}},\"format\":\"grovepad-canvas\",\"glues\":{\"pair\":{\"id\":\"pair\",\"widgetIds\":[\"note\",\"counter\"]}},\"relations\":{\"keep\":{\"fromId\":\"note\",\"id\":\"keep\",\"isResolved\":false,\"toId\":\"counter\",\"type\":\"parent\"},\"toUnknown\":{\"fromId\":\"note\",\"id\":\"toUnknown\",\"isResolved\":false,\"toId\":\"unknown\",\"type\":\"cousin\"}},\"v\":1,\"widgets\":{\"bullets\":{\"canvasId\":\"uuid-0001\",\"data\":{\"items\":[{\"id\":\"bullets:bullet:0\",\"text\":\"a\"},{\"id\":\"bullets:bullet:1\",\"text\":\"b\"}]},\"id\":\"bullets\",\"metadata\":{\"badges\":[]},\"position\":{\"x\":300,\"y\":300},\"size\":{\"height\":160,\"width\":240},\"title\":\"Old bullets\",\"type\":\"bullets\"},\"counter\":{\"canvasId\":\"uuid-0001\",\"data\":{\"count\":4,\"label\":\"Tally\",\"step\":1},\"id\":\"counter\",\"metadata\":{\"badges\":[]},\"position\":{\"x\":0,\"y\":300},\"size\":{\"height\":160,\"width\":240},\"title\":\"Count\",\"type\":\"counter\"},\"note\":{\"canvasId\":\"uuid-0001\",\"data\":{\"text\":\"from v1\"},\"id\":\"note\",\"metadata\":{\"badges\":[]},\"position\":{\"x\":0,\"y\":0},\"size\":{\"height\":160,\"width\":240},\"title\":\"Old note\",\"type\":\"text\"},\"unknown\":{\"canvasId\":\"uuid-0001\",\"data\":{\"beam\":3},\"id\":\"unknown\",\"metadata\":{\"badges\":[]},\"position\":{\"x\":600,\"y\":0},\"size\":{\"height\":160,\"width\":240},\"title\":\"Future\",\"type\":\"hologram\"}}}",
+        "sha256": "17725152415a52f6bdf67f62a54dfc2575bde31cad1836fd7fd15ffbf4e15b66",
+        "pretty": "{\n  \"format\": \"grovepad-canvas\",\n  \"v\": 1,\n  \"canvasId\": \"uuid-0001\",\n  \"widgets\": {\n    \"note\": {\n      \"id\": \"note\",\n      \"type\": \"text\",\n      \"title\": \"Old note\",\n      \"position\": {\n        \"x\": 0,\n        \"y\": 0\n      },\n      \"size\": {\n        \"width\": 240,\n        \"height\": 160\n      },\n      \"data\": {\n        \"text\": \"from v1\"\n      },\n      \"metadata\": {\n        \"badges\": []\n      },\n      \"canvasId\": \"uuid-0001\"\n    },\n    \"unknown\": {\n      \"id\": \"unknown\",\n      \"type\": \"hologram\",\n      \"title\": \"Future\",\n      \"position\": {\n        \"x\": 600,\n        \"y\": 0\n      },\n      \"size\": {\n        \"width\": 240,\n        \"height\": 160\n      },\n      \"data\": {\n        \"beam\": 3\n      },\n      \"metadata\": {\n        \"badges\": []\n      },\n      \"canvasId\": \"uuid-0001\"\n    },\n    \"counter\": {\n      \"id\": \"counter\",\n      \"type\": \"counter\",\n      \"title\": \"Count\",\n      \"position\": {\n        \"x\": 0,\n        \"y\": 300\n      },\n      \"size\": {\n        \"width\": 240,\n        \"height\": 160\n      },\n      \"data\": {\n        \"label\": \"Tally\",\n        \"count\": 4,\n        \"step\": 1\n      },\n      \"metadata\": {\n        \"badges\": []\n      },\n      \"canvasId\": \"uuid-0001\"\n    },\n    \"bullets\": {\n      \"id\": \"bullets\",\n      \"type\": \"bullets\",\n      \"title\": \"Old bullets\",\n      \"position\": {\n        \"x\": 300,\n        \"y\": 300\n      },\n      \"size\": {\n        \"width\": 240,\n        \"height\": 160\n      },\n      \"data\": {\n        \"items\": [\n          {\n            \"id\": \"bullets:bullet:0\",\n            \"text\": \"a\"\n          },\n          {\n            \"id\": \"bullets:bullet:1\",\n            \"text\": \"b\"\n          }\n        ]\n      },\n      \"metadata\": {\n        \"badges\": []\n      },\n      \"canvasId\": \"uuid-0001\"\n    }\n  },\n  \"relations\": {\n    \"keep\": {\n      \"id\": \"keep\",\n      \"fromId\": \"note\",\n      \"toId\": \"counter\",\n      \"type\": \"parent\",\n      \"isResolved\": false\n    },\n    \"toUnknown\": {\n      \"id\": \"toUnknown\",\n      \"fromId\": \"note\",\n      \"toId\": \"unknown\",\n      \"type\": \"cousin\",\n      \"isResolved\": false\n    }\n  },\n  \"connections\": {\n    \"ok\": {\n      \"id\": \"ok\",\n      \"fromId\": \"counter\",\n      \"fromField\": \"count\",\n      \"toId\": \"note\",\n      \"kind\": \"value\",\n      \"toField\": \"text\",\n      \"enabled\": true\n    }\n  },\n  \"glues\": {\n    \"pair\": {\n      \"id\": \"pair\",\n      \"widgetIds\": [\n        \"note\",\n        \"counter\"\n      ]\n    }\n  }\n}"
+      }
+    }
+  },
+  "mintedRootCanvasId": "uuid-0001",
+  "migrationClockMs": 1789000000000,
+  "activePacksVariants": {
+    "cleared": "[\"mystery\"]",
+    "swapped": "[\"mystery\",\"software_eng\"]"
+  }
+}

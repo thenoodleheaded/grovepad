@@ -1,0 +1,196 @@
+{
+  "outputs": [
+    {
+      "key": "grade",
+      "label": "Grade %",
+      "valueType": "number",
+      "unit": "percent",
+      "index": 0,
+      "timeSensitive": false
+    },
+    {
+      "key": "passing",
+      "label": "Passing",
+      "valueType": "boolean",
+      "unit": null,
+      "index": 1,
+      "timeSensitive": false
+    },
+    {
+      "key": "gpa",
+      "label": "GPA",
+      "valueType": "number",
+      "unit": null,
+      "index": 2,
+      "timeSensitive": false
+    }
+  ],
+  "inputs": [],
+  "samples": [
+    {
+      "components": [
+        {
+          "id": "uuid-0001",
+          "name": "Exams",
+          "score": 0,
+          "weight": 50
+        },
+        {
+          "id": "uuid-0002",
+          "name": "Homework",
+          "score": 0,
+          "weight": 50
+        }
+      ],
+      "mode": "weighted",
+      "gpa": {
+        "courses": [
+          {
+            "id": "uuid-0003",
+            "name": "",
+            "credits": 3,
+            "points": 4
+          }
+        ]
+      }
+    },
+    {
+      "components": [
+        {
+          "id": "g1",
+          "name": "Exams",
+          "score": 80,
+          "weight": 60
+        },
+        {
+          "id": "g2",
+          "name": "HW",
+          "score": 95.5,
+          "weight": 40
+        }
+      ],
+      "mode": "weighted",
+      "gpa": {
+        "courses": [
+          {
+            "id": "c1",
+            "name": "A",
+            "credits": 3,
+            "points": 4
+          },
+          {
+            "id": "c2",
+            "name": "B",
+            "credits": 4,
+            "points": 3.3
+          }
+        ]
+      }
+    },
+    {
+      "components": [
+        {
+          "id": "g1",
+          "name": "Exams",
+          "score": 50,
+          "weight": 0
+        }
+      ],
+      "mode": "weighted",
+      "gpa": {
+        "courses": []
+      }
+    },
+    {
+      "components": [
+        {
+          "id": "g1",
+          "name": "Exams",
+          "score": 59.94,
+          "weight": 1
+        },
+        {
+          "id": "g2",
+          "name": "HW",
+          "score": 60.06,
+          "weight": 1
+        }
+      ],
+      "mode": "weighted",
+      "gpa": {
+        "courses": [
+          {
+            "id": "uuid-0003",
+            "name": "",
+            "credits": 3,
+            "points": 4
+          }
+        ]
+      }
+    }
+  ],
+  "gets": [
+    {
+      "sample": 0,
+      "key": "grade",
+      "value": 0
+    },
+    {
+      "sample": 0,
+      "key": "passing",
+      "value": false
+    },
+    {
+      "sample": 0,
+      "key": "gpa",
+      "value": 4
+    },
+    {
+      "sample": 1,
+      "key": "grade",
+      "value": 86.2
+    },
+    {
+      "sample": 1,
+      "key": "passing",
+      "value": true
+    },
+    {
+      "sample": 1,
+      "key": "gpa",
+      "value": 3.6
+    },
+    {
+      "sample": 2,
+      "key": "grade",
+      "value": 0
+    },
+    {
+      "sample": 2,
+      "key": "passing",
+      "value": false
+    },
+    {
+      "sample": 2,
+      "key": "gpa",
+      "value": 0
+    },
+    {
+      "sample": 3,
+      "key": "grade",
+      "value": 60
+    },
+    {
+      "sample": 3,
+      "key": "passing",
+      "value": true
+    },
+    {
+      "sample": 3,
+      "key": "gpa",
+      "value": 4
+    }
+  ],
+  "sets": [],
+  "commands": []
+}

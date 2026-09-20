@@ -1,0 +1,154 @@
+{
+  "canvasId": "canvas",
+  "seedSnapshot": {
+    "canvasId": "canvas",
+    "canvas": {
+      "id": "canvas",
+      "name": "Origin",
+      "gridIntensity": 60
+    },
+    "widgets": {
+      "note": {
+        "id": "note",
+        "type": "text",
+        "title": "note",
+        "canvasId": "canvas",
+        "position": {
+          "x": 10,
+          "y": 20
+        },
+        "size": {
+          "width": 320,
+          "height": 200
+        },
+        "data": {
+          "text": "Hello café 👋"
+        },
+        "metadata": {
+          "badges": []
+        }
+      },
+      "counter": {
+        "id": "counter",
+        "type": "counter",
+        "title": "Tally",
+        "canvasId": "canvas",
+        "position": {
+          "x": 10,
+          "y": 260
+        },
+        "size": {
+          "width": 280,
+          "height": 200
+        },
+        "data": {
+          "label": "Tally",
+          "count": 0,
+          "step": 1,
+          "skin": "tally"
+        },
+        "metadata": {
+          "badges": []
+        }
+      }
+    },
+    "relations": {
+      "r2": {
+        "id": "r2",
+        "fromId": "note",
+        "toId": "counter",
+        "type": "blocker",
+        "isResolved": false
+      }
+    },
+    "connections": {},
+    "glues": {}
+  },
+  "seedUpdate": "AR1lACgBBmNhbnZhcwJpZAF3BmNhbnZhcygBBmNhbnZhcwRuYW1lAXcGT3JpZ2luKAEGY2FudmFzDWdyaWRJbnRlbnNpdHkBfTwnAQd3aWRnZXRzBG5vdGUBKABlAwJpZAF3BG5vdGUoAGUDBHR5cGUBdwR0ZXh0KABlAwV0aXRsZQF3BG5vdGUoAGUDCGNhbnZhc0lkAXcGY2FudmFzKABlAwhwb3NpdGlvbgF2AgF4fQoBeX0UKABlAwRzaXplAXYCBXdpZHRofYAFBmhlaWdodH2IAygAZQMEZGF0YQF2ACgAZQMIbWV0YWRhdGEBdgEGYmFkZ2VzdQAnAQd3aWRnZXRzB2NvdW50ZXIBKABlDAJpZAF3B2NvdW50ZXIoAGUMBHR5cGUBdwdjb3VudGVyKABlDAV0aXRsZQF3BVRhbGx5KABlDAhjYW52YXNJZAF3BmNhbnZhcygAZQwIcG9zaXRpb24BdgIBeH0KAXl9hAQoAGUMBHNpemUBdgIFd2lkdGh9mAQGaGVpZ2h0fYgDKABlDARkYXRhAXYEBWxhYmVsdwVUYWxseQVjb3VudH0ABHN0ZXB9AQRza2ludwV0YWxseSgAZQwIbWV0YWRhdGEBdgEGYmFkZ2VzdQAnAQlyZWxhdGlvbnMCcjIBKABlFQJpZAF3AnIyKABlFQZmcm9tSWQBdwRub3RlKABlFQR0b0lkAXcHY291bnRlcigAZRUEdHlwZQF3B2Jsb2NrZXIoAGUVCmlzUmVzb2x2ZWQBeScBBXRleHRzBG5vdGUCBABlGxBIZWxsbyBjYWbDqSDwn5GLAA==",
+  "aliceUpdate": "AQLKAQCoZQgBdgIBeH0oAXl9kAFEZRwET2gsIAFlAQgB",
+  "bobUpdate": "AQOvAgCoZQEBdwdSZW5hbWVkqGUGAXcIR3JlZXRpbmeEZSgBIQFlAwEBBgEVBg==",
+  "mergedSnapshot": {
+    "canvasId": "canvas",
+    "canvas": {
+      "id": "canvas",
+      "name": "Renamed",
+      "gridIntensity": 60
+    },
+    "widgets": {
+      "note": {
+        "id": "note",
+        "type": "text",
+        "title": "Greeting",
+        "canvasId": "canvas",
+        "position": {
+          "x": 40,
+          "y": 80
+        },
+        "size": {
+          "width": 320,
+          "height": 200
+        },
+        "data": {
+          "text": "Oh, Hello café 👋!"
+        },
+        "metadata": {
+          "badges": []
+        }
+      },
+      "counter": {
+        "id": "counter",
+        "type": "counter",
+        "title": "Tally",
+        "canvasId": "canvas",
+        "position": {
+          "x": 10,
+          "y": 260
+        },
+        "size": {
+          "width": 280,
+          "height": 200
+        },
+        "data": {
+          "label": "Tally",
+          "count": 0,
+          "step": 1,
+          "skin": "tally"
+        },
+        "metadata": {
+          "badges": []
+        }
+      }
+    },
+    "relations": {},
+    "connections": {},
+    "glues": {}
+  },
+  "awareness": {
+    "clientId": 404,
+    "state": {
+      "userId": "user-1",
+      "name": "Ada",
+      "color": "#60a5fa",
+      "role": "editor",
+      "cursor": {
+        "x": 12.5,
+        "y": -3
+      },
+      "selectedWidgetIds": [
+        "note"
+      ],
+      "editingWidgetId": null,
+      "camera": {
+        "pan": {
+          "x": 100,
+          "y": 50
+        },
+        "zoom": 1.25
+      },
+      "lastSeenAt": 1789000000000
+    },
+    "first": "AZQDAdoBeyJ1c2VySWQiOiJ1c2VyLTEiLCJuYW1lIjoiQWRhIiwiY29sb3IiOiIjNjBhNWZhIiwicm9sZSI6ImVkaXRvciIsImN1cnNvciI6eyJ4IjoxMi41LCJ5IjotM30sInNlbGVjdGVkV2lkZ2V0SWRzIjpbIm5vdGUiXSwiZWRpdGluZ1dpZGdldElkIjpudWxsLCJjYW1lcmEiOnsicGFuIjp7IngiOjEwMCwieSI6NTB9LCJ6b29tIjoxLjI1fSwibGFzdFNlZW5BdCI6MTc4OTAwMDAwMDAwMH0=",
+    "second": "AZQDAs0BeyJ1c2VySWQiOiJ1c2VyLTEiLCJuYW1lIjoiQWRhIiwiY29sb3IiOiIjNjBhNWZhIiwicm9sZSI6ImVkaXRvciIsImN1cnNvciI6bnVsbCwic2VsZWN0ZWRXaWRnZXRJZHMiOlsibm90ZSJdLCJlZGl0aW5nV2lkZ2V0SWQiOm51bGwsImNhbWVyYSI6eyJwYW4iOnsieCI6MTAwLCJ5Ijo1MH0sInpvb20iOjEuMjV9LCJsYXN0U2VlbkF0IjoxNzg5MDAwMDAwMDAwfQ==",
+    "removed": "AZQDAwRudWxs"
+  }
+}

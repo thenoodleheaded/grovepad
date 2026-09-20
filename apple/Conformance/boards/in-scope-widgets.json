@@ -1,0 +1,1005 @@
+{
+  "format": "grovepad-board",
+  "v": 2,
+  "workspaces": {
+    "workspace": {
+      "id": "workspace",
+      "name": "Workspace",
+      "rootCanvasId": "canvas",
+      "createdAt": 1
+    }
+  },
+  "canvases": {
+    "canvas": {
+      "id": "canvas",
+      "name": "Origin",
+      "workspaceId": "workspace",
+      "parentCanvasId": null
+    },
+    "child": {
+      "id": "child",
+      "name": "Child",
+      "workspaceId": "workspace",
+      "parentCanvasId": "canvas",
+      "gridIntensity": 60,
+      "linksVisible": false
+    }
+  },
+  "widgets": {
+    "w-canvas_node": {
+      "id": "w-canvas_node",
+      "type": "canvas_node",
+      "title": "Canvas",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 280,
+        "height": 80
+      },
+      "data": {
+        "canvasId": "child",
+        "skin": "portal"
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "w-text": {
+      "id": "w-text",
+      "type": "text",
+      "title": "Text",
+      "canvasId": "canvas",
+      "position": {
+        "x": 480,
+        "y": 0
+      },
+      "size": {
+        "width": 320,
+        "height": 200
+      },
+      "data": {
+        "text": "",
+        "mode": "plain",
+        "color": "yellow"
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "w-bullets": {
+      "id": "w-bullets",
+      "type": "bullets",
+      "title": "Bullets",
+      "canvasId": "canvas",
+      "position": {
+        "x": 960,
+        "y": 0
+      },
+      "size": {
+        "width": 240,
+        "height": 120
+      },
+      "data": {
+        "items": [
+          {
+            "id": "uuid-0001",
+            "text": "First point"
+          }
+        ],
+        "skin": "dots"
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "w-code": {
+      "id": "w-code",
+      "type": "code",
+      "title": "Code Snippet",
+      "canvasId": "canvas",
+      "position": {
+        "x": 1440,
+        "y": 0
+      },
+      "size": {
+        "width": 360,
+        "height": 200
+      },
+      "data": {
+        "language": "ts",
+        "code": ""
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "w-outline": {
+      "id": "w-outline",
+      "type": "outline",
+      "title": "Outline",
+      "canvasId": "canvas",
+      "position": {
+        "x": 1920,
+        "y": 0
+      },
+      "size": {
+        "width": 400,
+        "height": 280
+      },
+      "data": {
+        "skin": "tree",
+        "items": [
+          {
+            "id": "uuid-0002",
+            "text": "First idea",
+            "depth": 0,
+            "collapsed": false
+          }
+        ]
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "w-checklist": {
+      "id": "w-checklist",
+      "type": "checklist",
+      "title": "Tasks",
+      "canvasId": "canvas",
+      "position": {
+        "x": 2400,
+        "y": 0
+      },
+      "size": {
+        "width": 280,
+        "height": 160
+      },
+      "data": {
+        "mode": "list",
+        "items": [
+          {
+            "id": "uuid-0003",
+            "label": "New task",
+            "done": false,
+            "status": "todo",
+            "due": "",
+            "day": 0,
+            "time": "09:00",
+            "start": 0,
+            "span": 1,
+            "quadrant": 0
+          }
+        ]
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "w-pros_cons": {
+      "id": "w-pros_cons",
+      "type": "pros_cons",
+      "title": "Pros & Cons",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 400
+      },
+      "size": {
+        "width": 420,
+        "height": 200
+      },
+      "data": {
+        "skin": "balance",
+        "topic": "",
+        "pros": [
+          {
+            "id": "uuid-0004",
+            "text": ""
+          }
+        ],
+        "cons": [
+          {
+            "id": "uuid-0005",
+            "text": ""
+          }
+        ]
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "w-decision": {
+      "id": "w-decision",
+      "type": "decision",
+      "title": "Decision Picker",
+      "canvasId": "canvas",
+      "position": {
+        "x": 480,
+        "y": 400
+      },
+      "size": {
+        "width": 300,
+        "height": 200
+      },
+      "data": {
+        "question": "",
+        "options": [
+          "",
+          ""
+        ],
+        "pickedIndex": null,
+        "mode": "simple",
+        "weights": [
+          1,
+          1
+        ],
+        "history": [],
+        "lastRolledAt": null,
+        "noRepeatWindow": 1
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "w-meeting_notes": {
+      "id": "w-meeting_notes",
+      "type": "meeting_notes",
+      "title": "Meeting Notes",
+      "canvasId": "canvas",
+      "position": {
+        "x": 960,
+        "y": 400
+      },
+      "size": {
+        "width": 340,
+        "height": 280
+      },
+      "data": {
+        "skin": "agenda",
+        "date": "2026-09-10",
+        "attendees": "",
+        "notes": "",
+        "actions": []
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "w-flashcards": {
+      "id": "w-flashcards",
+      "type": "flashcards",
+      "title": "Study Deck",
+      "canvasId": "canvas",
+      "position": {
+        "x": 1440,
+        "y": 400
+      },
+      "size": {
+        "width": 360,
+        "height": 240
+      },
+      "data": {
+        "cards": [
+          {
+            "id": "uuid-0006",
+            "front": "",
+            "back": ""
+          }
+        ],
+        "current": 0,
+        "mode": "flashcards",
+        "vocabulary": {
+          "terms": [
+            {
+              "id": "uuid-0007",
+              "term": "",
+              "definition": "",
+              "known": false
+            }
+          ]
+        },
+        "quiz": {
+          "prompt": "",
+          "options": [
+            {
+              "id": "uuid-0008",
+              "text": "",
+              "correct": true
+            },
+            {
+              "id": "uuid-0009",
+              "text": "",
+              "correct": false
+            }
+          ],
+          "picked": null
+        }
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "w-goal_tracker": {
+      "id": "w-goal_tracker",
+      "type": "goal_tracker",
+      "title": "Goal",
+      "canvasId": "canvas",
+      "position": {
+        "x": 1920,
+        "y": 400
+      },
+      "size": {
+        "width": 360,
+        "height": 280
+      },
+      "data": {
+        "goal": "",
+        "milestones": [
+          {
+            "id": "uuid-0010",
+            "label": "",
+            "done": false
+          }
+        ],
+        "mode": "milestones",
+        "simple": {
+          "label": "Progress",
+          "percent": 40
+        },
+        "hours": {
+          "subject": "",
+          "targetHours": 10,
+          "loggedHours": 0
+        },
+        "okr": {
+          "objective": "Meaningful objective",
+          "keyResults": [
+            {
+              "id": "uuid-0011",
+              "label": "Key result",
+              "current": 0,
+              "target": 100,
+              "weight": 1
+            }
+          ]
+        }
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "w-reading_list": {
+      "id": "w-reading_list",
+      "type": "reading_list",
+      "title": "Reading List",
+      "canvasId": "canvas",
+      "position": {
+        "x": 2400,
+        "y": 400
+      },
+      "size": {
+        "width": 320,
+        "height": 160
+      },
+      "data": {
+        "items": [
+          {
+            "id": "uuid-0012",
+            "title": "",
+            "status": "queued"
+          }
+        ]
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "w-grade_calc": {
+      "id": "w-grade_calc",
+      "type": "grade_calc",
+      "title": "Grades",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 800
+      },
+      "size": {
+        "width": 320,
+        "height": 200
+      },
+      "data": {
+        "components": [
+          {
+            "id": "uuid-0013",
+            "name": "Exams",
+            "score": 0,
+            "weight": 50
+          },
+          {
+            "id": "uuid-0014",
+            "name": "Homework",
+            "score": 0,
+            "weight": 50
+          }
+        ],
+        "mode": "weighted",
+        "gpa": {
+          "courses": [
+            {
+              "id": "uuid-0015",
+              "name": "",
+              "credits": 3,
+              "points": 4
+            }
+          ]
+        }
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "w-formula_sheet": {
+      "id": "w-formula_sheet",
+      "type": "formula_sheet",
+      "title": "Formula Sheet",
+      "canvasId": "canvas",
+      "position": {
+        "x": 480,
+        "y": 800
+      },
+      "size": {
+        "width": 320,
+        "height": 200
+      },
+      "data": {
+        "formulas": [
+          {
+            "id": "uuid-0016",
+            "name": "",
+            "expression": ""
+          }
+        ]
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "w-citation": {
+      "id": "w-citation",
+      "type": "citation",
+      "title": "Citations",
+      "canvasId": "canvas",
+      "position": {
+        "x": 960,
+        "y": 800
+      },
+      "size": {
+        "width": 340,
+        "height": 200
+      },
+      "data": {
+        "style": "APA",
+        "sources": [
+          {
+            "id": "uuid-0017",
+            "title": "",
+            "author": "",
+            "year": ""
+          }
+        ]
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "w-counter": {
+      "id": "w-counter",
+      "type": "counter",
+      "title": "Counter",
+      "canvasId": "canvas",
+      "position": {
+        "x": 1440,
+        "y": 800
+      },
+      "size": {
+        "width": 280,
+        "height": 200
+      },
+      "data": {
+        "label": "Tally",
+        "count": 0,
+        "step": 1,
+        "skin": "tally"
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "w-habit": {
+      "id": "w-habit",
+      "type": "habit",
+      "title": "Habit Tracker",
+      "canvasId": "canvas",
+      "position": {
+        "x": 1920,
+        "y": 800
+      },
+      "size": {
+        "width": 320,
+        "height": 200
+      },
+      "data": {
+        "label": "Daily habit",
+        "days": [
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false
+        ],
+        "streak": 0,
+        "skin": "week_grid"
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "w-timekeeper": {
+      "id": "w-timekeeper",
+      "type": "timekeeper",
+      "title": "Time",
+      "canvasId": "canvas",
+      "position": {
+        "x": 2400,
+        "y": 800
+      },
+      "size": {
+        "width": 240,
+        "height": 240
+      },
+      "data": {
+        "mode": "countdown",
+        "countdown": {
+          "label": "Timer",
+          "durationSeconds": 300,
+          "remainingSeconds": 300,
+          "endAt": null
+        },
+        "pomodoro": {
+          "label": "Focus",
+          "workMinutes": 25,
+          "breakMinutes": 5,
+          "phase": "work",
+          "endAt": null,
+          "remainingSeconds": 1500,
+          "completed": 0
+        },
+        "stopwatch": {
+          "elapsedMs": 0,
+          "startedAt": null,
+          "laps": []
+        },
+        "deadline": {
+          "label": "Launch day",
+          "targetDate": "2026-09-24"
+        },
+        "worldClock": {
+          "zones": [
+            "America/New_York",
+            "Europe/London",
+            "Asia/Tokyo"
+          ]
+        }
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "w-calendar": {
+      "id": "w-calendar",
+      "type": "calendar",
+      "title": "Calendar",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 1200
+      },
+      "size": {
+        "width": 280,
+        "height": 240
+      },
+      "data": {
+        "year": 2026,
+        "month": 8,
+        "markedDates": [],
+        "skin": "month"
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "w-rating": {
+      "id": "w-rating",
+      "type": "rating",
+      "title": "Rating",
+      "canvasId": "canvas",
+      "position": {
+        "x": 480,
+        "y": 1200
+      },
+      "size": {
+        "width": 320,
+        "height": 160
+      },
+      "data": {
+        "label": "Rate it",
+        "value": 0,
+        "skin": "stars"
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "w-calculator": {
+      "id": "w-calculator",
+      "type": "calculator",
+      "title": "Calculator",
+      "canvasId": "canvas",
+      "position": {
+        "x": 960,
+        "y": 1200
+      },
+      "size": {
+        "width": 280,
+        "height": 360
+      },
+      "data": {
+        "expression": "",
+        "result": ""
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "w-bar_chart": {
+      "id": "w-bar_chart",
+      "type": "bar_chart",
+      "title": "Chart",
+      "canvasId": "canvas",
+      "position": {
+        "x": 1440,
+        "y": 1200
+      },
+      "size": {
+        "width": 400,
+        "height": 280
+      },
+      "data": {
+        "title": "Chart",
+        "mode": "bar",
+        "unit": "",
+        "bars": [
+          {
+            "id": "uuid-0018",
+            "label": "A",
+            "value": 3,
+            "color": "#38bdf8"
+          },
+          {
+            "id": "uuid-0019",
+            "label": "B",
+            "value": 5,
+            "color": "#a3e635"
+          }
+        ]
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "w-table": {
+      "id": "w-table",
+      "type": "table",
+      "title": "Table",
+      "canvasId": "canvas",
+      "position": {
+        "x": 1920,
+        "y": 1200
+      },
+      "size": {
+        "width": 440,
+        "height": 200
+      },
+      "data": {
+        "rows": [
+          [
+            "Item",
+            "Owner",
+            "Status"
+          ],
+          [
+            "",
+            "",
+            ""
+          ],
+          [
+            "",
+            "",
+            ""
+          ]
+        ]
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "w-metrics": {
+      "id": "w-metrics",
+      "type": "metrics",
+      "title": "Metrics",
+      "canvasId": "canvas",
+      "position": {
+        "x": 2400,
+        "y": 1200
+      },
+      "size": {
+        "width": 400,
+        "height": 280
+      },
+      "data": {
+        "tiles": [
+          {
+            "id": "uuid-0020",
+            "label": "Users",
+            "value": "128",
+            "unit": "",
+            "trend": "up"
+          },
+          {
+            "id": "uuid-0021",
+            "label": "Revenue",
+            "value": "3.2",
+            "unit": "k",
+            "trend": "flat"
+          }
+        ]
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "w-mood_tracker": {
+      "id": "w-mood_tracker",
+      "type": "mood_tracker",
+      "title": "Mood Tracker",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 1600
+      },
+      "size": {
+        "width": 300,
+        "height": 160
+      },
+      "data": {
+        "days": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "w-links": {
+      "id": "w-links",
+      "type": "links",
+      "title": "Link List",
+      "canvasId": "canvas",
+      "position": {
+        "x": 480,
+        "y": 1600
+      },
+      "size": {
+        "width": 300,
+        "height": 160
+      },
+      "data": {
+        "items": [
+          {
+            "id": "uuid-0022",
+            "label": "grovepad",
+            "url": "https://example.com"
+          }
+        ]
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "w-poll": {
+      "id": "w-poll",
+      "type": "poll",
+      "title": "Poll",
+      "canvasId": "canvas",
+      "position": {
+        "x": 960,
+        "y": 1600
+      },
+      "size": {
+        "width": 340,
+        "height": 240
+      },
+      "data": {
+        "skin": "bars",
+        "question": "Which direction?",
+        "options": [
+          {
+            "id": "uuid-0023",
+            "label": "Option A",
+            "votes": 0
+          },
+          {
+            "id": "uuid-0024",
+            "label": "Option B",
+            "votes": 0
+          }
+        ]
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "w-text_input": {
+      "id": "w-text_input",
+      "type": "text_input",
+      "title": "Text Input",
+      "canvasId": "canvas",
+      "position": {
+        "x": 1440,
+        "y": 1600
+      },
+      "size": {
+        "width": 300,
+        "height": 200
+      },
+      "data": {
+        "label": "Input",
+        "value": "",
+        "placeholder": "Type a value…",
+        "multiline": false,
+        "skin": "single_line"
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "w-number_input": {
+      "id": "w-number_input",
+      "type": "number_input",
+      "title": "Number Input",
+      "canvasId": "canvas",
+      "position": {
+        "x": 1920,
+        "y": 1600
+      },
+      "size": {
+        "width": 280,
+        "height": 160
+      },
+      "data": {
+        "label": "Value",
+        "value": 0,
+        "min": 0,
+        "max": 100,
+        "step": 1
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "w-toggle": {
+      "id": "w-toggle",
+      "type": "toggle",
+      "title": "Toggle",
+      "canvasId": "canvas",
+      "position": {
+        "x": 2400,
+        "y": 1600
+      },
+      "size": {
+        "width": 240,
+        "height": 160
+      },
+      "data": {
+        "label": "Condition",
+        "value": false
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "w-date_picker": {
+      "id": "w-date_picker",
+      "type": "date_picker",
+      "title": "Date",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 2000
+      },
+      "size": {
+        "width": 280,
+        "height": 160
+      },
+      "data": {
+        "label": "Target date",
+        "date": "2026-09-11",
+        "time": "",
+        "includeTime": false,
+        "mode": "date_time"
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "w-formula": {
+      "id": "w-formula",
+      "type": "formula",
+      "title": "Formula",
+      "canvasId": "canvas",
+      "position": {
+        "x": 480,
+        "y": 2000
+      },
+      "size": {
+        "width": 320,
+        "height": 240
+      },
+      "data": {
+        "label": "Calculation",
+        "a": 0,
+        "b": 0,
+        "operator": "add"
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "w-status": {
+      "id": "w-status",
+      "type": "status",
+      "title": "Status",
+      "canvasId": "canvas",
+      "position": {
+        "x": 960,
+        "y": 2000
+      },
+      "size": {
+        "width": 280,
+        "height": 120
+      },
+      "data": {
+        "label": "Status",
+        "value": "not_started"
+      },
+      "metadata": {
+        "badges": []
+      }
+    }
+  },
+  "relations": {},
+  "connections": {},
+  "glues": {},
+  "activePacks": []
+}

@@ -1,0 +1,25 @@
+{
+  "format": "another-app",
+  "v": 2,
+  "workspaces": {
+    "workspace": {
+      "id": "workspace",
+      "name": "Workspace",
+      "rootCanvasId": "canvas",
+      "createdAt": 1
+    }
+  },
+  "canvases": {
+    "canvas": {
+      "id": "canvas",
+      "name": "Origin",
+      "workspaceId": "workspace",
+      "parentCanvasId": null
+    }
+  },
+  "widgets": {},
+  "relations": {},
+  "connections": {},
+  "glues": {},
+  "activePacks": []
+}

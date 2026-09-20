@@ -1,0 +1,274 @@
+{
+  "name": "coercion-via-target-setter",
+  "widgets": {
+    "toggle": {
+      "id": "toggle",
+      "type": "toggle",
+      "title": "toggle",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 280,
+        "height": 200
+      },
+      "data": {
+        "label": "Condition",
+        "value": true
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "counter": {
+      "id": "counter",
+      "type": "counter",
+      "title": "counter",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 280,
+        "height": 200
+      },
+      "data": {
+        "label": "Tally",
+        "count": 0,
+        "step": 1,
+        "skin": "tally"
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "input": {
+      "id": "input",
+      "type": "number_input",
+      "title": "input",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 280,
+        "height": 200
+      },
+      "data": {
+        "label": "",
+        "value": 0,
+        "min": 0,
+        "max": 10,
+        "step": 1
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "text": {
+      "id": "text",
+      "type": "text",
+      "title": "text",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 280,
+        "height": 200
+      },
+      "data": {
+        "text": ""
+      },
+      "metadata": {
+        "badges": []
+      }
+    }
+  },
+  "connections": {
+    "boolToCount": {
+      "id": "boolToCount",
+      "enabled": true,
+      "fromId": "toggle",
+      "fromField": "value",
+      "toId": "counter",
+      "kind": "value",
+      "toField": "count"
+    },
+    "countToClamped": {
+      "id": "countToClamped",
+      "enabled": true,
+      "fromId": "counter",
+      "fromField": "count",
+      "toId": "input",
+      "kind": "value",
+      "toField": "value",
+      "transform": {
+        "op": "scale",
+        "factor": 100
+      }
+    },
+    "countToText": {
+      "id": "countToText",
+      "enabled": true,
+      "fromId": "counter",
+      "fromField": "count",
+      "toId": "text",
+      "kind": "value",
+      "toField": "text",
+      "transform": {
+        "op": "format",
+        "template": "Count is {value}"
+      }
+    }
+  },
+  "steps": [
+    {
+      "label": "deliver",
+      "seeds": [
+        "toggle"
+      ],
+      "expect": {
+        "writes": {
+          "counter": {
+            "label": "Tally",
+            "count": 1,
+            "step": 1,
+            "skin": "tally"
+          },
+          "input": {
+            "label": "",
+            "value": 10,
+            "min": 0,
+            "max": 10,
+            "step": 1
+          },
+          "text": {
+            "text": "Count is 1"
+          }
+        },
+        "firedIds": [
+          "boolToCount",
+          "countToClamped",
+          "countToText"
+        ],
+        "executeRequests": [],
+        "memory": {
+          "boolToCount": {
+            "serialized": "b:true",
+            "bool": true
+          },
+          "countToClamped": {
+            "serialized": "n:100",
+            "bool": true
+          },
+          "countToText": {
+            "serialized": "t:Count is 1",
+            "bool": false
+          }
+        },
+        "widgetsAfter": {
+          "toggle": {
+            "label": "Condition",
+            "value": true
+          },
+          "counter": {
+            "label": "Tally",
+            "count": 1,
+            "step": 1,
+            "skin": "tally"
+          },
+          "input": {
+            "label": "",
+            "value": 10,
+            "min": 0,
+            "max": 10,
+            "step": 1
+          },
+          "text": {
+            "text": "Count is 1"
+          }
+        }
+      }
+    },
+    {
+      "label": "toggle off",
+      "seeds": [
+        "toggle"
+      ],
+      "edits": {
+        "toggle": {
+          "label": "Condition",
+          "value": false
+        }
+      },
+      "expect": {
+        "writes": {
+          "counter": {
+            "label": "Tally",
+            "count": 0,
+            "step": 1,
+            "skin": "tally"
+          },
+          "input": {
+            "label": "",
+            "value": 0,
+            "min": 0,
+            "max": 10,
+            "step": 1
+          },
+          "text": {
+            "text": "Count is 0"
+          }
+        },
+        "firedIds": [
+          "boolToCount",
+          "countToClamped",
+          "countToText"
+        ],
+        "executeRequests": [],
+        "memory": {
+          "boolToCount": {
+            "serialized": "b:false",
+            "bool": false
+          },
+          "countToClamped": {
+            "serialized": "n:0",
+            "bool": false
+          },
+          "countToText": {
+            "serialized": "t:Count is 0",
+            "bool": false
+          }
+        },
+        "widgetsAfter": {
+          "toggle": {
+            "label": "Condition",
+            "value": false
+          },
+          "counter": {
+            "label": "Tally",
+            "count": 0,
+            "step": 1,
+            "skin": "tally"
+          },
+          "input": {
+            "label": "",
+            "value": 0,
+            "min": 0,
+            "max": 10,
+            "step": 1
+          },
+          "text": {
+            "text": "Count is 0"
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,170 @@
+{
+  "widgets": {
+    "clock": {
+      "id": "clock",
+      "type": "timekeeper",
+      "title": "clock",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 280,
+        "height": 200
+      },
+      "data": {
+        "mode": "countdown",
+        "countdown": {
+          "label": "Timer",
+          "durationSeconds": 300,
+          "remainingSeconds": 300,
+          "endAt": null
+        },
+        "pomodoro": {
+          "label": "Focus",
+          "workMinutes": 25,
+          "breakMinutes": 5,
+          "phase": "work",
+          "endAt": null,
+          "remainingSeconds": 1500,
+          "completed": 0
+        },
+        "stopwatch": {
+          "elapsedMs": 0,
+          "startedAt": null,
+          "laps": []
+        },
+        "deadline": {
+          "label": "Launch day",
+          "targetDate": "2026-09-24"
+        },
+        "worldClock": {
+          "zones": [
+            "America/New_York",
+            "Europe/London",
+            "Asia/Tokyo"
+          ]
+        }
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "calendar": {
+      "id": "calendar",
+      "type": "calendar",
+      "title": "calendar",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 280,
+        "height": 200
+      },
+      "data": {
+        "year": 2026,
+        "month": 8,
+        "markedDates": [],
+        "skin": "month"
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "text": {
+      "id": "text",
+      "type": "text",
+      "title": "text",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 280,
+        "height": 200
+      },
+      "data": {
+        "text": ""
+      },
+      "metadata": {
+        "badges": []
+      }
+    }
+  },
+  "connections": {
+    "days": {
+      "id": "days",
+      "enabled": true,
+      "fromId": "clock",
+      "fromField": "days_left",
+      "toId": "text",
+      "kind": "value",
+      "toField": "text"
+    },
+    "today": {
+      "id": "today",
+      "enabled": true,
+      "fromId": "calendar",
+      "fromField": "today",
+      "toId": "text",
+      "kind": "value",
+      "toField": "text"
+    },
+    "mode": {
+      "id": "mode",
+      "enabled": true,
+      "fromId": "clock",
+      "fromField": "mode",
+      "toId": "text",
+      "kind": "value",
+      "toField": "text"
+    },
+    "back": {
+      "id": "back",
+      "enabled": true,
+      "fromId": "text",
+      "fromField": "text",
+      "toId": "clock",
+      "kind": "trigger",
+      "command": "reset",
+      "edge": "change"
+    }
+  },
+  "cases": [
+    {
+      "connectionIds": [
+        "days",
+        "today",
+        "mode",
+        "back"
+      ],
+      "sourceIds": [
+        "clock",
+        "calendar"
+      ]
+    },
+    {
+      "connectionIds": [
+        "mode",
+        "back"
+      ],
+      "sourceIds": []
+    },
+    {
+      "connectionIds": [
+        "today"
+      ],
+      "sourceIds": [
+        "calendar"
+      ]
+    },
+    {
+      "connectionIds": [],
+      "sourceIds": []
+    }
+  ]
+}

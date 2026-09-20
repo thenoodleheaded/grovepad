@@ -1,0 +1,114 @@
+{
+  "format": "grovepad-board",
+  "v": 2,
+  "workspaces": {
+    "ws": {
+      "id": "ws",
+      "name": "WS",
+      "rootCanvasId": "canvas-origin",
+      "createdAt": 1
+    }
+  },
+  "canvases": {
+    "canvas-origin": {
+      "id": "canvas-origin",
+      "name": "Origin",
+      "workspaceId": "ws",
+      "parentCanvasId": null
+    },
+    "child": {
+      "id": "child",
+      "name": "Child",
+      "workspaceId": "ws",
+      "parentCanvasId": "canvas-origin"
+    }
+  },
+  "widgets": {
+    "door": {
+      "id": "door",
+      "type": "canvas_node",
+      "title": "door",
+      "canvasId": "canvas-origin",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 280,
+        "height": 80
+      },
+      "data": {
+        "canvasId": "child",
+        "skin": "portal"
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "backDoor": {
+      "id": "backDoor",
+      "type": "canvas_node",
+      "title": "backDoor",
+      "canvasId": "child",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 280,
+        "height": 80
+      },
+      "data": {
+        "canvasId": "canvas-origin",
+        "skin": "portal"
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "note": {
+      "id": "note",
+      "type": "text",
+      "title": "note",
+      "canvasId": "canvas-origin",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 320,
+        "height": 200
+      },
+      "data": {
+        "text": "",
+        "mode": "plain",
+        "color": "yellow"
+      },
+      "metadata": {
+        "badges": []
+      }
+    }
+  },
+  "relations": {},
+  "connections": {},
+  "glues": {},
+  "activePacks": [],
+  "activeWorkspaceId": "ws",
+  "activeCanvasId": "canvas-origin",
+  "canvasViews": {
+    "canvas-origin": {
+      "pan": {
+        "x": 5,
+        "y": 6
+      },
+      "zoom": 1
+    },
+    "child": {
+      "pan": {
+        "x": 0,
+        "y": 0
+      },
+      "zoom": 1
+    }
+  }
+}

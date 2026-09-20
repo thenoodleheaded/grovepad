@@ -1,0 +1,152 @@
+{
+  "name": "cycle-terminates",
+  "widgets": {
+    "a": {
+      "id": "a",
+      "type": "counter",
+      "title": "a",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 280,
+        "height": 200
+      },
+      "data": {
+        "label": "Tally",
+        "count": 1,
+        "step": 1,
+        "skin": "tally"
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "b": {
+      "id": "b",
+      "type": "counter",
+      "title": "b",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 280,
+        "height": 200
+      },
+      "data": {
+        "label": "Tally",
+        "count": 2,
+        "step": 1,
+        "skin": "tally"
+      },
+      "metadata": {
+        "badges": []
+      }
+    }
+  },
+  "connections": {
+    "forward": {
+      "id": "forward",
+      "enabled": true,
+      "fromId": "a",
+      "fromField": "count",
+      "toId": "b",
+      "kind": "value",
+      "toField": "count"
+    },
+    "backward": {
+      "id": "backward",
+      "enabled": true,
+      "fromId": "b",
+      "fromField": "count",
+      "toId": "a",
+      "kind": "value",
+      "toField": "count"
+    }
+  },
+  "steps": [
+    {
+      "label": "seed a",
+      "seeds": [
+        "a"
+      ],
+      "expect": {
+        "writes": {
+          "b": {
+            "label": "Tally",
+            "count": 1,
+            "step": 1,
+            "skin": "tally"
+          }
+        },
+        "firedIds": [
+          "forward"
+        ],
+        "executeRequests": [],
+        "memory": {
+          "forward": {
+            "serialized": "n:1",
+            "bool": true
+          },
+          "backward": {
+            "serialized": "n:1",
+            "bool": true
+          }
+        },
+        "widgetsAfter": {
+          "a": {
+            "label": "Tally",
+            "count": 1,
+            "step": 1,
+            "skin": "tally"
+          },
+          "b": {
+            "label": "Tally",
+            "count": 1,
+            "step": 1,
+            "skin": "tally"
+          }
+        }
+      }
+    },
+    {
+      "label": "seed b after commit",
+      "seeds": [
+        "b"
+      ],
+      "expect": {
+        "writes": {},
+        "firedIds": [],
+        "executeRequests": [],
+        "memory": {
+          "forward": {
+            "serialized": "n:1",
+            "bool": true
+          },
+          "backward": {
+            "serialized": "n:1",
+            "bool": true
+          }
+        },
+        "widgetsAfter": {
+          "a": {
+            "label": "Tally",
+            "count": 1,
+            "step": 1,
+            "skin": "tally"
+          },
+          "b": {
+            "label": "Tally",
+            "count": 1,
+            "step": 1,
+            "skin": "tally"
+          }
+        }
+      }
+    }
+  ]
+}

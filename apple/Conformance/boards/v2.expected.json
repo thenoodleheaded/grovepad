@@ -1,0 +1,51 @@
+{
+  "parse": "ok",
+  "mode": "parse",
+  "widgetIds": [
+    "alpha"
+  ],
+  "widgetTypes": {
+    "alpha": "text"
+  },
+  "opaqueWidgets": {},
+  "relationIds": [],
+  "connectionIds": [],
+  "glueIds": [],
+  "activePacks": [],
+  "unknownRelationIds": [],
+  "unknownConnectionIds": [],
+  "unknownGlueIds": [],
+  "unknownBoardFields": [],
+  "rawActivePacks": [],
+  "device": {
+    "activeWorkspaceId": "workspace",
+    "activeCanvasId": "canvas",
+    "canvasViews": {
+      "canvas": {
+        "pan": {
+          "x": 10,
+          "y": 20
+        },
+        "zoom": 1
+      }
+    }
+  },
+  "serialized": "{\"format\":\"grovepad-board\",\"v\":2,\"workspaces\":{\"workspace\":{\"id\":\"workspace\",\"name\":\"Workspace\",\"rootCanvasId\":\"canvas\",\"createdAt\":1}},\"canvases\":{\"canvas\":{\"id\":\"canvas\",\"name\":\"Origin\",\"workspaceId\":\"workspace\",\"parentCanvasId\":null}},\"widgets\":{\"alpha\":{\"id\":\"alpha\",\"type\":\"text\",\"title\":\"Alpha\",\"canvasId\":\"canvas\",\"position\":{\"x\":0,\"y\":0},\"size\":{\"width\":240,\"height\":160},\"data\":{\"text\":\"\"},\"metadata\":{\"badges\":[]}}},\"relations\":{},\"connections\":{},\"glues\":{},\"activePacks\":[]}",
+  "sha256": "fb7fe28f96824e1f5a8db5ecf63baeca4f406c704367a1c635618a80bf231f52",
+  "canonical": "{\"activePacks\":[],\"canvases\":{\"canvas\":{\"id\":\"canvas\",\"name\":\"Origin\",\"parentCanvasId\":null,\"workspaceId\":\"workspace\"}},\"connections\":{},\"format\":\"grovepad-board\",\"glues\":{},\"relations\":{},\"v\":2,\"widgets\":{\"alpha\":{\"canvasId\":\"canvas\",\"data\":{\"text\":\"\"},\"id\":\"alpha\",\"metadata\":{\"badges\":[]},\"position\":{\"x\":0,\"y\":0},\"size\":{\"height\":160,\"width\":240},\"title\":\"Alpha\",\"type\":\"text\"}},\"workspaces\":{\"workspace\":{\"createdAt\":1,\"id\":\"workspace\",\"name\":\"Workspace\",\"rootCanvasId\":\"canvas\"}}}",
+  "canonicalSha256": "2532f2f011bfc2efa469e080b9971b0d1718106e0c951c60588d8af7fe5cf1b0",
+  "split": {
+    "index": {
+      "canonical": "{\"activePacks\":[],\"boardFormat\":\"grovepad-board\",\"boardVersion\":2,\"canvases\":{\"canvas\":{\"id\":\"canvas\",\"name\":\"Origin\",\"parentCanvasId\":null,\"workspaceId\":\"workspace\"}},\"connections\":{},\"extra\":{},\"format\":\"grovepad-board-index\",\"glues\":{},\"relations\":{},\"v\":1,\"workspaces\":{\"workspace\":{\"createdAt\":1,\"id\":\"workspace\",\"name\":\"Workspace\",\"rootCanvasId\":\"canvas\"}}}",
+      "sha256": "8aeda9811054eff883f2d04c0f14b77584d1b5a02d970317ef0e97baf76dbf29",
+      "pretty": "{\n  \"format\": \"grovepad-board-index\",\n  \"v\": 1,\n  \"boardFormat\": \"grovepad-board\",\n  \"boardVersion\": 2,\n  \"workspaces\": {\n    \"workspace\": {\n      \"id\": \"workspace\",\n      \"name\": \"Workspace\",\n      \"rootCanvasId\": \"canvas\",\n      \"createdAt\": 1\n    }\n  },\n  \"canvases\": {\n    \"canvas\": {\n      \"id\": \"canvas\",\n      \"name\": \"Origin\",\n      \"workspaceId\": \"workspace\",\n      \"parentCanvasId\": null\n    }\n  },\n  \"activePacks\": [],\n  \"relations\": {},\n  \"connections\": {},\n  \"glues\": {},\n  \"extra\": {}\n}"
+    },
+    "canvases": {
+      "canvas": {
+        "canonical": "{\"canvasId\":\"canvas\",\"connections\":{},\"format\":\"grovepad-canvas\",\"glues\":{},\"relations\":{},\"v\":1,\"widgets\":{\"alpha\":{\"canvasId\":\"canvas\",\"data\":{\"text\":\"\"},\"id\":\"alpha\",\"metadata\":{\"badges\":[]},\"position\":{\"x\":0,\"y\":0},\"size\":{\"height\":160,\"width\":240},\"title\":\"Alpha\",\"type\":\"text\"}}}",
+        "sha256": "04a6a0b5f0836bb0698f09dcb0922c49bd9cc902d3fcdfd293e74948f7857cee",
+        "pretty": "{\n  \"format\": \"grovepad-canvas\",\n  \"v\": 1,\n  \"canvasId\": \"canvas\",\n  \"widgets\": {\n    \"alpha\": {\n      \"id\": \"alpha\",\n      \"type\": \"text\",\n      \"title\": \"Alpha\",\n      \"canvasId\": \"canvas\",\n      \"position\": {\n        \"x\": 0,\n        \"y\": 0\n      },\n      \"size\": {\n        \"width\": 240,\n        \"height\": 160\n      },\n      \"data\": {\n        \"text\": \"\"\n      },\n      \"metadata\": {\n        \"badges\": []\n      }\n    }\n  },\n  \"relations\": {},\n  \"connections\": {},\n  \"glues\": {}\n}"
+      }
+    }
+  }
+}

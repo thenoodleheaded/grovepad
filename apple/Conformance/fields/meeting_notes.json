@@ -1,0 +1,139 @@
+{
+  "outputs": [
+    {
+      "key": "actions_done",
+      "label": "Actions done",
+      "valueType": "boolean",
+      "unit": null,
+      "index": 0,
+      "timeSensitive": false
+    }
+  ],
+  "inputs": [
+    {
+      "key": "uncheck_all",
+      "label": "Reopen all actions",
+      "kind": "command",
+      "valueType": null,
+      "unit": null,
+      "acceptsPayload": false,
+      "index": 0
+    }
+  ],
+  "samples": [
+    {
+      "skin": "agenda",
+      "date": "2026-09-10",
+      "attendees": "",
+      "notes": "",
+      "actions": []
+    },
+    {
+      "skin": "agenda",
+      "date": "2026-09-10",
+      "attendees": "",
+      "notes": "",
+      "actions": [
+        {
+          "id": "a1",
+          "text": "ship",
+          "done": true
+        },
+        {
+          "id": "a2",
+          "text": "test",
+          "done": true
+        }
+      ]
+    },
+    {
+      "skin": "agenda",
+      "date": "2026-09-10",
+      "attendees": "",
+      "notes": "",
+      "actions": [
+        {
+          "id": "a1",
+          "text": "ship",
+          "done": false
+        }
+      ]
+    }
+  ],
+  "gets": [
+    {
+      "sample": 0,
+      "key": "actions_done",
+      "value": false
+    },
+    {
+      "sample": 1,
+      "key": "actions_done",
+      "value": true
+    },
+    {
+      "sample": 2,
+      "key": "actions_done",
+      "value": false
+    }
+  ],
+  "sets": [],
+  "commands": [
+    {
+      "sample": 0,
+      "key": "uncheck_all",
+      "payload": null,
+      "hasPayload": false,
+      "data": {
+        "skin": "agenda",
+        "date": "2026-09-10",
+        "attendees": "",
+        "notes": "",
+        "actions": []
+      }
+    },
+    {
+      "sample": 1,
+      "key": "uncheck_all",
+      "payload": null,
+      "hasPayload": false,
+      "data": {
+        "skin": "agenda",
+        "date": "2026-09-10",
+        "attendees": "",
+        "notes": "",
+        "actions": [
+          {
+            "id": "a1",
+            "text": "ship",
+            "done": false
+          },
+          {
+            "id": "a2",
+            "text": "test",
+            "done": false
+          }
+        ]
+      }
+    },
+    {
+      "sample": 2,
+      "key": "uncheck_all",
+      "payload": null,
+      "hasPayload": false,
+      "data": {
+        "skin": "agenda",
+        "date": "2026-09-10",
+        "attendees": "",
+        "notes": "",
+        "actions": [
+          {
+            "id": "a1",
+            "text": "ship",
+            "done": false
+          }
+        ]
+      }
+    }
+  ]
+}

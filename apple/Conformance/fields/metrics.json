@@ -1,0 +1,1717 @@
+{
+  "outputs": [
+    {
+      "key": "value_1",
+      "label": "Tile 1 value",
+      "valueType": "number",
+      "unit": null,
+      "index": 0,
+      "timeSensitive": false
+    }
+  ],
+  "inputs": [
+    {
+      "key": "value_1",
+      "label": "Tile 1 value",
+      "kind": "field",
+      "valueType": "number",
+      "unit": null,
+      "acceptsPayload": false,
+      "index": 0
+    }
+  ],
+  "samples": [
+    {
+      "tiles": [
+        {
+          "id": "uuid-0001",
+          "label": "Users",
+          "value": "128",
+          "unit": "",
+          "trend": "up"
+        },
+        {
+          "id": "uuid-0002",
+          "label": "Revenue",
+          "value": "3.2",
+          "unit": "k",
+          "trend": "flat"
+        }
+      ]
+    },
+    {
+      "tiles": [
+        {
+          "id": "t1",
+          "label": "Users",
+          "value": "128.5",
+          "unit": "",
+          "trend": "up"
+        }
+      ]
+    },
+    {
+      "tiles": []
+    }
+  ],
+  "gets": [
+    {
+      "sample": 0,
+      "key": "value_1",
+      "value": 128
+    },
+    {
+      "sample": 1,
+      "key": "value_1",
+      "value": 128.5
+    },
+    {
+      "sample": 2,
+      "key": "value_1",
+      "value": 0
+    }
+  ],
+  "sets": [
+    {
+      "sample": 0,
+      "key": "value_1",
+      "value": 0,
+      "data": {
+        "tiles": [
+          {
+            "id": "uuid-0001",
+            "label": "Users",
+            "value": "0",
+            "unit": "",
+            "trend": "up"
+          },
+          {
+            "id": "uuid-0002",
+            "label": "Revenue",
+            "value": "3.2",
+            "unit": "k",
+            "trend": "flat"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value_1",
+      "value": 1,
+      "data": {
+        "tiles": [
+          {
+            "id": "uuid-0001",
+            "label": "Users",
+            "value": "1",
+            "unit": "",
+            "trend": "up"
+          },
+          {
+            "id": "uuid-0002",
+            "label": "Revenue",
+            "value": "3.2",
+            "unit": "k",
+            "trend": "flat"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value_1",
+      "value": -1,
+      "data": {
+        "tiles": [
+          {
+            "id": "uuid-0001",
+            "label": "Users",
+            "value": "-1",
+            "unit": "",
+            "trend": "up"
+          },
+          {
+            "id": "uuid-0002",
+            "label": "Revenue",
+            "value": "3.2",
+            "unit": "k",
+            "trend": "flat"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value_1",
+      "value": 7,
+      "data": {
+        "tiles": [
+          {
+            "id": "uuid-0001",
+            "label": "Users",
+            "value": "7",
+            "unit": "",
+            "trend": "up"
+          },
+          {
+            "id": "uuid-0002",
+            "label": "Revenue",
+            "value": "3.2",
+            "unit": "k",
+            "trend": "flat"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value_1",
+      "value": 2.5,
+      "data": {
+        "tiles": [
+          {
+            "id": "uuid-0001",
+            "label": "Users",
+            "value": "2.5",
+            "unit": "",
+            "trend": "up"
+          },
+          {
+            "id": "uuid-0002",
+            "label": "Revenue",
+            "value": "3.2",
+            "unit": "k",
+            "trend": "flat"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value_1",
+      "value": 2.6,
+      "data": {
+        "tiles": [
+          {
+            "id": "uuid-0001",
+            "label": "Users",
+            "value": "2.6",
+            "unit": "",
+            "trend": "up"
+          },
+          {
+            "id": "uuid-0002",
+            "label": "Revenue",
+            "value": "3.2",
+            "unit": "k",
+            "trend": "flat"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value_1",
+      "value": -2.5,
+      "data": {
+        "tiles": [
+          {
+            "id": "uuid-0001",
+            "label": "Users",
+            "value": "-2.5",
+            "unit": "",
+            "trend": "up"
+          },
+          {
+            "id": "uuid-0002",
+            "label": "Revenue",
+            "value": "3.2",
+            "unit": "k",
+            "trend": "flat"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value_1",
+      "value": 0.5,
+      "data": {
+        "tiles": [
+          {
+            "id": "uuid-0001",
+            "label": "Users",
+            "value": "0.5",
+            "unit": "",
+            "trend": "up"
+          },
+          {
+            "id": "uuid-0002",
+            "label": "Revenue",
+            "value": "3.2",
+            "unit": "k",
+            "trend": "flat"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value_1",
+      "value": 4.9,
+      "data": {
+        "tiles": [
+          {
+            "id": "uuid-0001",
+            "label": "Users",
+            "value": "4.9",
+            "unit": "",
+            "trend": "up"
+          },
+          {
+            "id": "uuid-0002",
+            "label": "Revenue",
+            "value": "3.2",
+            "unit": "k",
+            "trend": "flat"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value_1",
+      "value": 5,
+      "data": {
+        "tiles": [
+          {
+            "id": "uuid-0001",
+            "label": "Users",
+            "value": "5",
+            "unit": "",
+            "trend": "up"
+          },
+          {
+            "id": "uuid-0002",
+            "label": "Revenue",
+            "value": "3.2",
+            "unit": "k",
+            "trend": "flat"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value_1",
+      "value": 10,
+      "data": {
+        "tiles": [
+          {
+            "id": "uuid-0001",
+            "label": "Users",
+            "value": "10",
+            "unit": "",
+            "trend": "up"
+          },
+          {
+            "id": "uuid-0002",
+            "label": "Revenue",
+            "value": "3.2",
+            "unit": "k",
+            "trend": "flat"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value_1",
+      "value": 50,
+      "data": {
+        "tiles": [
+          {
+            "id": "uuid-0001",
+            "label": "Users",
+            "value": "50",
+            "unit": "",
+            "trend": "up"
+          },
+          {
+            "id": "uuid-0002",
+            "label": "Revenue",
+            "value": "3.2",
+            "unit": "k",
+            "trend": "flat"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value_1",
+      "value": 150,
+      "data": {
+        "tiles": [
+          {
+            "id": "uuid-0001",
+            "label": "Users",
+            "value": "150",
+            "unit": "",
+            "trend": "up"
+          },
+          {
+            "id": "uuid-0002",
+            "label": "Revenue",
+            "value": "3.2",
+            "unit": "k",
+            "trend": "flat"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value_1",
+      "value": 1e+21,
+      "data": {
+        "tiles": [
+          {
+            "id": "uuid-0001",
+            "label": "Users",
+            "value": "1e+21",
+            "unit": "",
+            "trend": "up"
+          },
+          {
+            "id": "uuid-0002",
+            "label": "Revenue",
+            "value": "3.2",
+            "unit": "k",
+            "trend": "flat"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value_1",
+      "value": 1.7976931348623157e+308,
+      "data": {
+        "tiles": [
+          {
+            "id": "uuid-0001",
+            "label": "Users",
+            "value": "1.7976931348623157e+308",
+            "unit": "",
+            "trend": "up"
+          },
+          {
+            "id": "uuid-0002",
+            "label": "Revenue",
+            "value": "3.2",
+            "unit": "k",
+            "trend": "flat"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value_1",
+      "value": true,
+      "data": {
+        "tiles": [
+          {
+            "id": "uuid-0001",
+            "label": "Users",
+            "value": "1",
+            "unit": "",
+            "trend": "up"
+          },
+          {
+            "id": "uuid-0002",
+            "label": "Revenue",
+            "value": "3.2",
+            "unit": "k",
+            "trend": "flat"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value_1",
+      "value": false,
+      "data": {
+        "tiles": [
+          {
+            "id": "uuid-0001",
+            "label": "Users",
+            "value": "0",
+            "unit": "",
+            "trend": "up"
+          },
+          {
+            "id": "uuid-0002",
+            "label": "Revenue",
+            "value": "3.2",
+            "unit": "k",
+            "trend": "flat"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value_1",
+      "value": "",
+      "data": {
+        "tiles": [
+          {
+            "id": "uuid-0001",
+            "label": "Users",
+            "value": "0",
+            "unit": "",
+            "trend": "up"
+          },
+          {
+            "id": "uuid-0002",
+            "label": "Revenue",
+            "value": "3.2",
+            "unit": "k",
+            "trend": "flat"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value_1",
+      "value": "12.5",
+      "data": {
+        "tiles": [
+          {
+            "id": "uuid-0001",
+            "label": "Users",
+            "value": "12.5",
+            "unit": "",
+            "trend": "up"
+          },
+          {
+            "id": "uuid-0002",
+            "label": "Revenue",
+            "value": "3.2",
+            "unit": "k",
+            "trend": "flat"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value_1",
+      "value": "not a number",
+      "data": {
+        "tiles": [
+          {
+            "id": "uuid-0001",
+            "label": "Users",
+            "value": "0",
+            "unit": "",
+            "trend": "up"
+          },
+          {
+            "id": "uuid-0002",
+            "label": "Revenue",
+            "value": "3.2",
+            "unit": "k",
+            "trend": "flat"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value_1",
+      "value": "1",
+      "data": {
+        "tiles": [
+          {
+            "id": "uuid-0001",
+            "label": "Users",
+            "value": "1",
+            "unit": "",
+            "trend": "up"
+          },
+          {
+            "id": "uuid-0002",
+            "label": "Revenue",
+            "value": "3.2",
+            "unit": "k",
+            "trend": "flat"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value_1",
+      "value": "true",
+      "data": {
+        "tiles": [
+          {
+            "id": "uuid-0001",
+            "label": "Users",
+            "value": "0",
+            "unit": "",
+            "trend": "up"
+          },
+          {
+            "id": "uuid-0002",
+            "label": "Revenue",
+            "value": "3.2",
+            "unit": "k",
+            "trend": "flat"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value_1",
+      "value": "yes",
+      "data": {
+        "tiles": [
+          {
+            "id": "uuid-0001",
+            "label": "Users",
+            "value": "0",
+            "unit": "",
+            "trend": "up"
+          },
+          {
+            "id": "uuid-0002",
+            "label": "Revenue",
+            "value": "3.2",
+            "unit": "k",
+            "trend": "flat"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value_1",
+      "value": "on",
+      "data": {
+        "tiles": [
+          {
+            "id": "uuid-0001",
+            "label": "Users",
+            "value": "0",
+            "unit": "",
+            "trend": "up"
+          },
+          {
+            "id": "uuid-0002",
+            "label": "Revenue",
+            "value": "3.2",
+            "unit": "k",
+            "trend": "flat"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value_1",
+      "value": "off",
+      "data": {
+        "tiles": [
+          {
+            "id": "uuid-0001",
+            "label": "Users",
+            "value": "0",
+            "unit": "",
+            "trend": "up"
+          },
+          {
+            "id": "uuid-0002",
+            "label": "Revenue",
+            "value": "3.2",
+            "unit": "k",
+            "trend": "flat"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value_1",
+      "value": "0",
+      "data": {
+        "tiles": [
+          {
+            "id": "uuid-0001",
+            "label": "Users",
+            "value": "0",
+            "unit": "",
+            "trend": "up"
+          },
+          {
+            "id": "uuid-0002",
+            "label": "Revenue",
+            "value": "3.2",
+            "unit": "k",
+            "trend": "flat"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value_1",
+      "value": " 8 ",
+      "data": {
+        "tiles": [
+          {
+            "id": "uuid-0001",
+            "label": "Users",
+            "value": "8",
+            "unit": "",
+            "trend": "up"
+          },
+          {
+            "id": "uuid-0002",
+            "label": "Revenue",
+            "value": "3.2",
+            "unit": "k",
+            "trend": "flat"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value_1",
+      "value": "3abc",
+      "data": {
+        "tiles": [
+          {
+            "id": "uuid-0001",
+            "label": "Users",
+            "value": "3",
+            "unit": "",
+            "trend": "up"
+          },
+          {
+            "id": "uuid-0002",
+            "label": "Revenue",
+            "value": "3.2",
+            "unit": "k",
+            "trend": "flat"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value_1",
+      "value": "-4e2",
+      "data": {
+        "tiles": [
+          {
+            "id": "uuid-0001",
+            "label": "Users",
+            "value": "-400",
+            "unit": "",
+            "trend": "up"
+          },
+          {
+            "id": "uuid-0002",
+            "label": "Revenue",
+            "value": "3.2",
+            "unit": "k",
+            "trend": "flat"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value_1",
+      "value": "Infinity",
+      "data": {
+        "tiles": [
+          {
+            "id": "uuid-0001",
+            "label": "Users",
+            "value": "0",
+            "unit": "",
+            "trend": "up"
+          },
+          {
+            "id": "uuid-0002",
+            "label": "Revenue",
+            "value": "3.2",
+            "unit": "k",
+            "trend": "flat"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value_1",
+      "value": "NaN",
+      "data": {
+        "tiles": [
+          {
+            "id": "uuid-0001",
+            "label": "Users",
+            "value": "0",
+            "unit": "",
+            "trend": "up"
+          },
+          {
+            "id": "uuid-0002",
+            "label": "Revenue",
+            "value": "3.2",
+            "unit": "k",
+            "trend": "flat"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value_1",
+      "value": [],
+      "data": {
+        "tiles": [
+          {
+            "id": "uuid-0001",
+            "label": "Users",
+            "value": "0",
+            "unit": "",
+            "trend": "up"
+          },
+          {
+            "id": "uuid-0002",
+            "label": "Revenue",
+            "value": "3.2",
+            "unit": "k",
+            "trend": "flat"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value_1",
+      "value": [
+        {
+          "t": 0,
+          "v": 4
+        },
+        {
+          "t": 1,
+          "v": 9
+        }
+      ],
+      "data": {
+        "tiles": [
+          {
+            "id": "uuid-0001",
+            "label": "Users",
+            "value": "9",
+            "unit": "",
+            "trend": "up"
+          },
+          {
+            "id": "uuid-0002",
+            "label": "Revenue",
+            "value": "3.2",
+            "unit": "k",
+            "trend": "flat"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 0,
+      "key": "value_1",
+      "value": [
+        {
+          "t": 5,
+          "v": -2.5
+        }
+      ],
+      "data": {
+        "tiles": [
+          {
+            "id": "uuid-0001",
+            "label": "Users",
+            "value": "-2.5",
+            "unit": "",
+            "trend": "up"
+          },
+          {
+            "id": "uuid-0002",
+            "label": "Revenue",
+            "value": "3.2",
+            "unit": "k",
+            "trend": "flat"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value_1",
+      "value": 0,
+      "data": {
+        "tiles": [
+          {
+            "id": "t1",
+            "label": "Users",
+            "value": "0",
+            "unit": "",
+            "trend": "up"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value_1",
+      "value": 1,
+      "data": {
+        "tiles": [
+          {
+            "id": "t1",
+            "label": "Users",
+            "value": "1",
+            "unit": "",
+            "trend": "up"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value_1",
+      "value": -1,
+      "data": {
+        "tiles": [
+          {
+            "id": "t1",
+            "label": "Users",
+            "value": "-1",
+            "unit": "",
+            "trend": "up"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value_1",
+      "value": 7,
+      "data": {
+        "tiles": [
+          {
+            "id": "t1",
+            "label": "Users",
+            "value": "7",
+            "unit": "",
+            "trend": "up"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value_1",
+      "value": 2.5,
+      "data": {
+        "tiles": [
+          {
+            "id": "t1",
+            "label": "Users",
+            "value": "2.5",
+            "unit": "",
+            "trend": "up"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value_1",
+      "value": 2.6,
+      "data": {
+        "tiles": [
+          {
+            "id": "t1",
+            "label": "Users",
+            "value": "2.6",
+            "unit": "",
+            "trend": "up"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value_1",
+      "value": -2.5,
+      "data": {
+        "tiles": [
+          {
+            "id": "t1",
+            "label": "Users",
+            "value": "-2.5",
+            "unit": "",
+            "trend": "up"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value_1",
+      "value": 0.5,
+      "data": {
+        "tiles": [
+          {
+            "id": "t1",
+            "label": "Users",
+            "value": "0.5",
+            "unit": "",
+            "trend": "up"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value_1",
+      "value": 4.9,
+      "data": {
+        "tiles": [
+          {
+            "id": "t1",
+            "label": "Users",
+            "value": "4.9",
+            "unit": "",
+            "trend": "up"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value_1",
+      "value": 5,
+      "data": {
+        "tiles": [
+          {
+            "id": "t1",
+            "label": "Users",
+            "value": "5",
+            "unit": "",
+            "trend": "up"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value_1",
+      "value": 10,
+      "data": {
+        "tiles": [
+          {
+            "id": "t1",
+            "label": "Users",
+            "value": "10",
+            "unit": "",
+            "trend": "up"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value_1",
+      "value": 50,
+      "data": {
+        "tiles": [
+          {
+            "id": "t1",
+            "label": "Users",
+            "value": "50",
+            "unit": "",
+            "trend": "up"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value_1",
+      "value": 150,
+      "data": {
+        "tiles": [
+          {
+            "id": "t1",
+            "label": "Users",
+            "value": "150",
+            "unit": "",
+            "trend": "up"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value_1",
+      "value": 1e+21,
+      "data": {
+        "tiles": [
+          {
+            "id": "t1",
+            "label": "Users",
+            "value": "1e+21",
+            "unit": "",
+            "trend": "up"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value_1",
+      "value": 1.7976931348623157e+308,
+      "data": {
+        "tiles": [
+          {
+            "id": "t1",
+            "label": "Users",
+            "value": "1.7976931348623157e+308",
+            "unit": "",
+            "trend": "up"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value_1",
+      "value": true,
+      "data": {
+        "tiles": [
+          {
+            "id": "t1",
+            "label": "Users",
+            "value": "1",
+            "unit": "",
+            "trend": "up"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value_1",
+      "value": false,
+      "data": {
+        "tiles": [
+          {
+            "id": "t1",
+            "label": "Users",
+            "value": "0",
+            "unit": "",
+            "trend": "up"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value_1",
+      "value": "",
+      "data": {
+        "tiles": [
+          {
+            "id": "t1",
+            "label": "Users",
+            "value": "0",
+            "unit": "",
+            "trend": "up"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value_1",
+      "value": "12.5",
+      "data": {
+        "tiles": [
+          {
+            "id": "t1",
+            "label": "Users",
+            "value": "12.5",
+            "unit": "",
+            "trend": "up"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value_1",
+      "value": "not a number",
+      "data": {
+        "tiles": [
+          {
+            "id": "t1",
+            "label": "Users",
+            "value": "0",
+            "unit": "",
+            "trend": "up"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value_1",
+      "value": "1",
+      "data": {
+        "tiles": [
+          {
+            "id": "t1",
+            "label": "Users",
+            "value": "1",
+            "unit": "",
+            "trend": "up"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value_1",
+      "value": "true",
+      "data": {
+        "tiles": [
+          {
+            "id": "t1",
+            "label": "Users",
+            "value": "0",
+            "unit": "",
+            "trend": "up"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value_1",
+      "value": "yes",
+      "data": {
+        "tiles": [
+          {
+            "id": "t1",
+            "label": "Users",
+            "value": "0",
+            "unit": "",
+            "trend": "up"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value_1",
+      "value": "on",
+      "data": {
+        "tiles": [
+          {
+            "id": "t1",
+            "label": "Users",
+            "value": "0",
+            "unit": "",
+            "trend": "up"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value_1",
+      "value": "off",
+      "data": {
+        "tiles": [
+          {
+            "id": "t1",
+            "label": "Users",
+            "value": "0",
+            "unit": "",
+            "trend": "up"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value_1",
+      "value": "0",
+      "data": {
+        "tiles": [
+          {
+            "id": "t1",
+            "label": "Users",
+            "value": "0",
+            "unit": "",
+            "trend": "up"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value_1",
+      "value": " 8 ",
+      "data": {
+        "tiles": [
+          {
+            "id": "t1",
+            "label": "Users",
+            "value": "8",
+            "unit": "",
+            "trend": "up"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value_1",
+      "value": "3abc",
+      "data": {
+        "tiles": [
+          {
+            "id": "t1",
+            "label": "Users",
+            "value": "3",
+            "unit": "",
+            "trend": "up"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value_1",
+      "value": "-4e2",
+      "data": {
+        "tiles": [
+          {
+            "id": "t1",
+            "label": "Users",
+            "value": "-400",
+            "unit": "",
+            "trend": "up"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value_1",
+      "value": "Infinity",
+      "data": {
+        "tiles": [
+          {
+            "id": "t1",
+            "label": "Users",
+            "value": "0",
+            "unit": "",
+            "trend": "up"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value_1",
+      "value": "NaN",
+      "data": {
+        "tiles": [
+          {
+            "id": "t1",
+            "label": "Users",
+            "value": "0",
+            "unit": "",
+            "trend": "up"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value_1",
+      "value": [],
+      "data": {
+        "tiles": [
+          {
+            "id": "t1",
+            "label": "Users",
+            "value": "0",
+            "unit": "",
+            "trend": "up"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value_1",
+      "value": [
+        {
+          "t": 0,
+          "v": 4
+        },
+        {
+          "t": 1,
+          "v": 9
+        }
+      ],
+      "data": {
+        "tiles": [
+          {
+            "id": "t1",
+            "label": "Users",
+            "value": "9",
+            "unit": "",
+            "trend": "up"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 1,
+      "key": "value_1",
+      "value": [
+        {
+          "t": 5,
+          "v": -2.5
+        }
+      ],
+      "data": {
+        "tiles": [
+          {
+            "id": "t1",
+            "label": "Users",
+            "value": "-2.5",
+            "unit": "",
+            "trend": "up"
+          }
+        ]
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value_1",
+      "value": 0,
+      "data": {
+        "tiles": []
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value_1",
+      "value": 1,
+      "data": {
+        "tiles": []
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value_1",
+      "value": -1,
+      "data": {
+        "tiles": []
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value_1",
+      "value": 7,
+      "data": {
+        "tiles": []
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value_1",
+      "value": 2.5,
+      "data": {
+        "tiles": []
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value_1",
+      "value": 2.6,
+      "data": {
+        "tiles": []
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value_1",
+      "value": -2.5,
+      "data": {
+        "tiles": []
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value_1",
+      "value": 0.5,
+      "data": {
+        "tiles": []
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value_1",
+      "value": 4.9,
+      "data": {
+        "tiles": []
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value_1",
+      "value": 5,
+      "data": {
+        "tiles": []
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value_1",
+      "value": 10,
+      "data": {
+        "tiles": []
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value_1",
+      "value": 50,
+      "data": {
+        "tiles": []
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value_1",
+      "value": 150,
+      "data": {
+        "tiles": []
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value_1",
+      "value": 1e+21,
+      "data": {
+        "tiles": []
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value_1",
+      "value": 1.7976931348623157e+308,
+      "data": {
+        "tiles": []
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value_1",
+      "value": true,
+      "data": {
+        "tiles": []
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value_1",
+      "value": false,
+      "data": {
+        "tiles": []
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value_1",
+      "value": "",
+      "data": {
+        "tiles": []
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value_1",
+      "value": "12.5",
+      "data": {
+        "tiles": []
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value_1",
+      "value": "not a number",
+      "data": {
+        "tiles": []
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value_1",
+      "value": "1",
+      "data": {
+        "tiles": []
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value_1",
+      "value": "true",
+      "data": {
+        "tiles": []
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value_1",
+      "value": "yes",
+      "data": {
+        "tiles": []
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value_1",
+      "value": "on",
+      "data": {
+        "tiles": []
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value_1",
+      "value": "off",
+      "data": {
+        "tiles": []
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value_1",
+      "value": "0",
+      "data": {
+        "tiles": []
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value_1",
+      "value": " 8 ",
+      "data": {
+        "tiles": []
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value_1",
+      "value": "3abc",
+      "data": {
+        "tiles": []
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value_1",
+      "value": "-4e2",
+      "data": {
+        "tiles": []
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value_1",
+      "value": "Infinity",
+      "data": {
+        "tiles": []
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value_1",
+      "value": "NaN",
+      "data": {
+        "tiles": []
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value_1",
+      "value": [],
+      "data": {
+        "tiles": []
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value_1",
+      "value": [
+        {
+          "t": 0,
+          "v": 4
+        },
+        {
+          "t": 1,
+          "v": 9
+        }
+      ],
+      "data": {
+        "tiles": []
+      }
+    },
+    {
+      "sample": 2,
+      "key": "value_1",
+      "value": [
+        {
+          "t": 5,
+          "v": -2.5
+        }
+      ],
+      "data": {
+        "tiles": []
+      }
+    }
+  ],
+  "commands": []
+}

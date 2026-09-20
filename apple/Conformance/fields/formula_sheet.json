@@ -1,0 +1,57 @@
+{
+  "outputs": [
+    {
+      "key": "count",
+      "label": "Formulas",
+      "valueType": "number",
+      "unit": null,
+      "index": 0,
+      "timeSensitive": false
+    }
+  ],
+  "inputs": [],
+  "samples": [
+    {
+      "formulas": [
+        {
+          "id": "uuid-0001",
+          "name": "",
+          "expression": ""
+        }
+      ]
+    },
+    {
+      "formulas": [
+        {
+          "id": "f1",
+          "name": "Area",
+          "expression": "πr²"
+        },
+        {
+          "id": "f2",
+          "name": " ",
+          "expression": ""
+        },
+        {
+          "id": "f3",
+          "name": "",
+          "expression": "E=mc²"
+        }
+      ]
+    }
+  ],
+  "gets": [
+    {
+      "sample": 0,
+      "key": "count",
+      "value": 0
+    },
+    {
+      "sample": 1,
+      "key": "count",
+      "value": 2
+    }
+  ],
+  "sets": [],
+  "commands": []
+}

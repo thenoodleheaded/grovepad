@@ -1,0 +1,190 @@
+{
+  "name": "baseline-records-without-writing",
+  "widgets": {
+    "counter": {
+      "id": "counter",
+      "type": "counter",
+      "title": "counter",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 280,
+        "height": 200
+      },
+      "data": {
+        "label": "Tally",
+        "count": 3,
+        "step": 1,
+        "skin": "tally"
+      },
+      "metadata": {
+        "badges": []
+      }
+    },
+    "goal": {
+      "id": "goal",
+      "type": "goal_tracker",
+      "title": "goal",
+      "canvasId": "canvas",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 280,
+        "height": 200
+      },
+      "data": {
+        "goal": "",
+        "mode": "simple",
+        "simple": {
+          "label": "Progress",
+          "percent": 0
+        },
+        "milestones": []
+      },
+      "metadata": {
+        "badges": []
+      }
+    }
+  },
+  "connections": {
+    "w": {
+      "id": "w",
+      "enabled": true,
+      "fromId": "counter",
+      "fromField": "count",
+      "toId": "goal",
+      "kind": "value",
+      "toField": "percent"
+    }
+  },
+  "steps": [
+    {
+      "label": "baseline",
+      "seeds": [
+        "counter"
+      ],
+      "baselineOnly": true,
+      "expect": {
+        "writes": {},
+        "firedIds": [],
+        "executeRequests": [],
+        "memory": {
+          "w": {
+            "serialized": "n:3",
+            "bool": true
+          }
+        },
+        "widgetsAfter": {
+          "counter": {
+            "label": "Tally",
+            "count": 3,
+            "step": 1,
+            "skin": "tally"
+          },
+          "goal": {
+            "goal": "",
+            "mode": "simple",
+            "simple": {
+              "label": "Progress",
+              "percent": 0
+            },
+            "milestones": []
+          }
+        }
+      }
+    },
+    {
+      "label": "silent",
+      "seeds": [
+        "counter"
+      ],
+      "expect": {
+        "writes": {},
+        "firedIds": [],
+        "executeRequests": [],
+        "memory": {
+          "w": {
+            "serialized": "n:3",
+            "bool": true
+          }
+        },
+        "widgetsAfter": {
+          "counter": {
+            "label": "Tally",
+            "count": 3,
+            "step": 1,
+            "skin": "tally"
+          },
+          "goal": {
+            "goal": "",
+            "mode": "simple",
+            "simple": {
+              "label": "Progress",
+              "percent": 0
+            },
+            "milestones": []
+          }
+        }
+      }
+    },
+    {
+      "label": "bump",
+      "seeds": [
+        "counter"
+      ],
+      "edits": {
+        "counter": {
+          "label": "Tally",
+          "count": 5,
+          "step": 1,
+          "skin": "tally"
+        }
+      },
+      "expect": {
+        "writes": {
+          "goal": {
+            "goal": "",
+            "mode": "simple",
+            "simple": {
+              "label": "Progress",
+              "percent": 5
+            },
+            "milestones": []
+          }
+        },
+        "firedIds": [
+          "w"
+        ],
+        "executeRequests": [],
+        "memory": {
+          "w": {
+            "serialized": "n:5",
+            "bool": true
+          }
+        },
+        "widgetsAfter": {
+          "counter": {
+            "label": "Tally",
+            "count": 5,
+            "step": 1,
+            "skin": "tally"
+          },
+          "goal": {
+            "goal": "",
+            "mode": "simple",
+            "simple": {
+              "label": "Progress",
+              "percent": 5
+            },
+            "milestones": []
+          }
+        }
+      }
+    }
+  ]
+}

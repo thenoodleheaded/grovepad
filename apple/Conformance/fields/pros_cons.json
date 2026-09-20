@@ -1,0 +1,83 @@
+{
+  "outputs": [
+    {
+      "key": "pros_count",
+      "label": "Pros",
+      "valueType": "number",
+      "unit": "count",
+      "index": 0,
+      "timeSensitive": false
+    },
+    {
+      "key": "cons_count",
+      "label": "Cons",
+      "valueType": "number",
+      "unit": "count",
+      "index": 1,
+      "timeSensitive": false
+    }
+  ],
+  "inputs": [],
+  "samples": [
+    {
+      "skin": "balance",
+      "topic": "",
+      "pros": [
+        {
+          "id": "uuid-0001",
+          "text": ""
+        }
+      ],
+      "cons": [
+        {
+          "id": "uuid-0002",
+          "text": ""
+        }
+      ]
+    },
+    {
+      "skin": "balance",
+      "topic": "",
+      "pros": [
+        {
+          "id": "p1",
+          "text": "fast"
+        },
+        {
+          "id": "p2",
+          "text": " "
+        }
+      ],
+      "cons": [
+        {
+          "id": "c1",
+          "text": "costly"
+        }
+      ]
+    }
+  ],
+  "gets": [
+    {
+      "sample": 0,
+      "key": "pros_count",
+      "value": 0
+    },
+    {
+      "sample": 0,
+      "key": "cons_count",
+      "value": 0
+    },
+    {
+      "sample": 1,
+      "key": "pros_count",
+      "value": 1
+    },
+    {
+      "sample": 1,
+      "key": "cons_count",
+      "value": 1
+    }
+  ],
+  "sets": [],
+  "commands": []
+}
